@@ -115,7 +115,7 @@
         if (batchGrace == null) {
             errors.put("batchGrace","batchGrace");
         }
-        int size = mucService.getLogMaxBatchSize();
+        int size = mucService.getLogConversationBatchSize();
         Duration batchInterval = mucService.getLogMaxBatchInterval();
         Duration batchGracePeriod = mucService.getLogBatchGracePeriod();
         // Try to obtain an int from the provided strings
@@ -145,7 +145,7 @@
         }
 
         if (errors.size() == 0) {
-            mucService.setLogMaxBatchSize( size );
+            mucService.setLogConversationBatchSize( size );
             mucService.setLogMaxBatchInterval( batchInterval );
             mucService.setLogBatchGracePeriod( batchGracePeriod );
             // Log the event
@@ -273,7 +273,7 @@
             </td>
             <td width="99%">
                 <input type="number" name="maxbatchsize" size="15" maxlength="50" min="1"
-                       value="<%= mucService.getLogMaxBatchSize() %>">
+                       value="<%= mucService.getLogConversationBatchSize() %>">
             </td>
         </tr>
         <tr valign="middle">

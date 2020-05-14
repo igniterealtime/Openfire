@@ -131,7 +131,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The maximum amount of logs to be written to the database in one iteration.
      */
-    private int logConversationBatchSize;
+    private int logMaxConversationBatchSize;
 
     /**
      * The maximum time between database writes of log batches.
@@ -1262,10 +1262,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.tasks.log.maxbatchsize");
-        logConversationBatchSize = 500;
+        logMaxConversationBatchSize = 500;
         if (value != null) {
             try {
-                logConversationBatchSize = Integer.parseInt(value);
+                logMaxConversationBatchSize = Integer.parseInt(value);
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.log.maxbatchsize for service "+chatServiceName, e);
@@ -1307,19 +1307,44 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Sets the number of messages to save to the database on each run of the logging process.
+     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
+     * {@link #setLogMaxConversationBatchSize(int)} - so please use that instead.
+     * @param size the number of messages to save to the database on each run of the logging process.
+     * @deprecated Use {@link #setLogMaxConversationBatchSize(int)} instead.
+     */
+    @Override
+    @Deprecated
+    public void setLogConversationBatchSize(int size)
+    {
+        setLogMaxConversationBatchSize(size);
+    }
+
+    /**
+     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
+     * {@link #getLogMaxConversationBatchSize()} - so please use that instead.
+     * @return the number of messages to save to the database on each run of the logging process.
+     * @deprecated Use {@link #getLogMaxConversationBatchSize()} instead.
+     */
+    @Override
+    @Deprecated
+    public int getLogConversationBatchSize()
+    {
+        return getLogMaxConversationBatchSize();
+    }
+
+    /**
+     * Sets the maximum number of messages to save to the database on each run of the archiving process.
      * Even though the saving of queued conversations takes place in another thread it is not
      * recommended specifying a big number.
      *
-     * @param size the number of messages to save to the database on each run of the logging process.
+     * @param size the maximum number of messages to save to the database on each run of the archiving process.
      */
     @Override
-    public void setLogConversationBatchSize(int size)
-    {
-        if ( this.logConversationBatchSize == size ) {
+    public void setLogMaxConversationBatchSize(int size) {
+        if ( this.logMaxConversationBatchSize == size ) {
             return;
         }
-        this.logConversationBatchSize = size;
+        this.logMaxConversationBatchSize = size;
 
         if (archiver != null) {
             archiver.setMaxWorkQueueSize(size);
@@ -1328,36 +1353,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Returns the number of messages to save to the database on each run of the logging process.
-     *
-     * @return the number of messages to save to the database on each run of the logging process.
+     * Returns the maximum number of messages to save to the database on each run of the archiving process.
+     * @return the maximum number of messages to save to the database on each run of the archiving process.
      */
     @Override
-    public int getLogConversationBatchSize()
-    {
-        return logConversationBatchSize;
-    }
-
-    /**
-     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
-     * {@link #setLogConversationBatchSize(int)} - so please use that instead.
-     * @param size the number of messages to save to the database on each run of the logging process.
-     * @deprecated Use {@link #setLogConversationBatchSize(int)} instead.
-     */
-    public void setLogMaxConversationBatchSize(int size) {
-        setLogConversationBatchSize(size);
-    }
-
-    /**
-     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
-     * {@link #getLogConversationBatchSize()} - so please use that instead.
-     * @return the number of messages to save to the database on each run of the logging process.
-     * @deprecated Use {@link #getLogConversationBatchSize()} instead.
-     */
     public int getLogMaxConversationBatchSize() {
-        return getLogConversationBatchSize();
+        return logMaxConversationBatchSize;
     }
 
+    /**
+     * Sets the maximum time allowed to elapse between writing archive batches to the database.
+     * @param interval the maximum time allowed to elapse between writing archive batches to the database.
+     */
     @Override
     public void setLogMaxBatchInterval( Duration interval )
     {
@@ -1372,26 +1379,38 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.maxbatchinterval", Long.toString( interval.toMillis() ) );
     }
 
+    /**
+     * Returns the maximum time allowed to elapse between writing archive entries to the database.
+     * @return the maximum time allowed to elapse between writing archive entries to the database.
+     */
     @Override
     public Duration getLogMaxBatchInterval()
     {
         return logMaxBatchInterval;
     }
 
+    /**
+     * Sets the maximum time to wait for a next incoming entry before writing the batch to the database.
+     * @param interval the maximum time to wait for a next incoming entry before writing the batch to the database.
+     */
     @Override
-    public void setLogBatchGracePeriod( Duration period )
+    public void setLogBatchGracePeriod( Duration interval )
     {
-        if ( this.logBatchGracePeriod.equals( period ) ) {
+        if ( this.logBatchGracePeriod.equals( interval ) ) {
             return;
         }
 
-        this.logBatchGracePeriod = period;
+        this.logBatchGracePeriod = interval;
         if (archiver != null) {
-            archiver.setGracePeriod(period);
+            archiver.setGracePeriod(interval);
         }
-        MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.batchgrace", Long.toString( period.toMillis() ) );
+        MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.batchgrace", Long.toString( interval.toMillis() ) );
     }
 
+    /**
+     * Returns the maximum time to wait for a next incoming entry before writing the batch to the database.
+     * @return the maximum time to wait for a next incoming entry before writing the batch to the database.
+     */
     @Override
     public Duration getLogBatchGracePeriod()
     {
@@ -1409,7 +1428,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             synchronized (this) {
                 result = this.archiver;
                 if (result == null) {
-                    result = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod);
+                    result = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod);
                     XMPPServer.getInstance().getArchiveManager().add(result);
                     this.archiver = result;
                 }

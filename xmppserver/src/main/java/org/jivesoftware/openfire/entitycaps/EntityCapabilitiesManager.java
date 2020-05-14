@@ -30,6 +30,8 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -54,6 +56,8 @@ import org.xmpp.packet.Presence;
  *
  */
 public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener {
+
+    private static final Logger Log = LoggerFactory.getLogger( EntityCapabilitiesManager.class );
 
     /**
      * A XEP-0115 described identifier for the Openfire server software,
@@ -172,6 +176,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             // The 'ver' hash is in the cache already, so let's update the
             // entityCapabilitiesUserMap for the user that sent the caps
             // packet.
+            Log.trace( "Registering 'ver' (for recognized caps) for {}", packet.getFrom() );
             final String oldVerAttribute = entityCapabilitiesUserMap.put( packet.getFrom(), newVerAttribute );
 
             // If this replaced another 'ver' hash, purge the capabilities if needed.
@@ -196,6 +201,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             final EntityCapabilities caps = new EntityCapabilities();
             caps.setHashAttribute(hashAttribute);
             caps.setVerAttribute(newVerAttribute);
+            Log.trace( "Querying 'ver' for unrecognized caps. Querying: {}", packet.getFrom() );
             verAttributes.put(packetId, caps);
 
             final IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
@@ -329,6 +335,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 caps.addFeature(feature);
             }
 
+            Log.trace( "Received response to querying 'ver'. Caps now recognized. Received response from: {}", packet.getFrom() );
             entityCapabilitiesMap.put(caps.getVerAttribute(), caps);
             final String oldVerAttribute = entityCapabilitiesUserMap.put( packet.getFrom(), caps.getVerAttribute() );
 

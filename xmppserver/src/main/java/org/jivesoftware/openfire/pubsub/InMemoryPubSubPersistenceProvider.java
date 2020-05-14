@@ -110,8 +110,9 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Removing node: {}", node.getUniqueIdentifier() );
 
-        synchronized ( node.getUniqueIdentifier().toString().intern() )
-        {
+        final Lock lock = serviceIdToNodesCache.getLock( node.getUniqueIdentifier().getServiceIdentifier() );
+        try {
+            lock.lock();
             serviceIdToNodesCache.computeIfPresent( node.getService().getUniqueIdentifier(), ( s, list ) -> {
                 list.remove( node );
                 return list.isEmpty() ? null : list;
@@ -120,6 +121,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
             {
                 purgeNode( (LeafNode) node );
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -128,10 +131,16 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Loading nodes for service: {}", service.getServiceID() );
 
-        final List<Node> nodes = serviceIdToNodesCache.get( service.getUniqueIdentifier() );
-        if ( nodes != null )
-        {
-            nodes.forEach( service::addNode );
+        final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
+        try {
+            lock.lock();
+            final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
+            if ( nodes != null )
+            {
+                nodes.forEach(service::addNode);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -140,11 +149,17 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Loading node: {}", nodeIdentifier );
 
-        final List<Node> nodes = serviceIdToNodesCache.get( service.getUniqueIdentifier() );
-        if ( nodes != null )
-        {
-            final Optional<Node> optionalNode = nodes.stream().filter( node -> node.getUniqueIdentifier().equals( nodeIdentifier ) ).findAny();
-            optionalNode.ifPresent( service::addNode );
+        final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
+        try {
+            lock.lock();
+            final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
+            if ( nodes != null )
+            {
+                final Optional<Node> optionalNode = nodes.stream().filter(node -> node.getUniqueIdentifier().equals(nodeIdentifier)).findAny();
+                optionalNode.ifPresent(service::addNode);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 

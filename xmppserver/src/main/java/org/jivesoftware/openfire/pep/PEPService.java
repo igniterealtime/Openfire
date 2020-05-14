@@ -406,7 +406,7 @@ public class PEPService implements PubSubService, Cacheable {
                 if (entityCaps != null) {
                     if (!entityCaps.containsFeature(nodeID + "+notify")) {
                         Log.trace( "Not sending notification to full JID '{}' of recipient '{}': CAPS does not have {}+notify", recipientFullJID, recipientJID, nodeID );
-                        return; // TODO should this not be a 'continue' instead of a 'return'? We're now not evaluating any other full JIDs anymore?
+                        continue;
                     }
                 }
 
@@ -421,7 +421,7 @@ public class PEPService implements PubSubService, Cacheable {
                             AccessModel accessModel = leafNode.getAccessModel();
                             if (!accessModel.canAccessItems(leafNode, recipientFullJID, publisher)) {
                                 Log.trace( "Not sending notification to full JID '{}' of recipient '{}': This full JID is not allowed to access items on node {}", recipientFullJID, recipientJID, nodeID );
-                                return; // TODO should this not be a 'continue' instead of a 'return'? We're now not evaluating any other full JIDs anymore?
+                                continue;
                             }
 
                             break;

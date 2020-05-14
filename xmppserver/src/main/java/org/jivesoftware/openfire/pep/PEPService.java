@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -42,6 +43,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.Cacheable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -57,6 +60,8 @@ import org.xmpp.packet.PacketExtension;
  * @author Armando Jagucki 
  */
 public class PEPService implements PubSubService, Cacheable {
+
+    private static final Logger Log = LoggerFactory.getLogger( PEPService.class );
 
     /**
      * The bare JID that this service is identified by.
@@ -320,6 +325,9 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
+        if ( Log.isTraceEnabled() ) {
+            Log.trace( "Service '{}' is broadcasting a notification on node '{}' to a collection of JIDs: {}", this.getServiceID(), node.getNodeID(), jids.stream().map(JID::toString).collect(Collectors.joining(", ")) );
+        }
         message.setFrom(getAddress());
         for (JID jid : jids) {
             message.setTo(jid);
@@ -330,6 +338,8 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void sendNotification(Node node, Message message, JID recipientJID) {
+        Log.trace( "Service '{}' attempts to send a notification on node '{}' to recipient: {} (processing)", this.getServiceID(), node.getNodeID(), recipientJID );
+
         message.setTo(recipientJID);
         message.setFrom(getAddress());
         message.setID(StringUtils.randomString(8));
@@ -355,8 +365,12 @@ public class PEPService implements PubSubService, Cacheable {
 
             recipientFullJIDs.add(recipientJID);
         }
+        if ( Log.isTraceEnabled() ) {
+            Log.trace("For recipient '{}' these JIDs are found: {}", recipientJID, recipientFullJIDs.stream().map(JID::toString).collect(Collectors.joining(", ")));
+        }
 
         if (recipientFullJIDs.isEmpty()) {
+            Log.trace( "Sending notification to recipient address: '{}' (no full JIDs found for recipient '{}').", message.getTo(), recipientJID );
             router.route(message);
             return;
         }
@@ -391,7 +405,8 @@ public class PEPService implements PubSubService, Cacheable {
                 EntityCapabilities entityCaps = entityCapsManager.getEntityCapabilities(recipientFullJID);
                 if (entityCaps != null) {
                     if (!entityCaps.containsFeature(nodeID + "+notify")) {
-                        return;
+                        Log.trace( "Not sending notification to full JID '{}' of recipient '{}': CAPS does not have {}+notify", recipientFullJID, recipientJID, nodeID );
+                        return; // TODO should this not be a 'continue' instead of a 'return'? We're now not evaluating any other full JIDs anymore?
                     }
                 }
 
@@ -405,7 +420,8 @@ public class PEPService implements PubSubService, Cacheable {
                             // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
                             AccessModel accessModel = leafNode.getAccessModel();
                             if (!accessModel.canAccessItems(leafNode, recipientFullJID, publisher)) {
-                                return;
+                                Log.trace( "Not sending notification to full JID '{}' of recipient '{}': This full JID is not allowed to access items on node {}", recipientFullJID, recipientJID, nodeID );
+                                return; // TODO should this not be a 'continue' instead of a 'return'? We're now not evaluating any other full JIDs anymore?
                             }
 
                             break;
@@ -427,14 +443,19 @@ public class PEPService implements PubSubService, Cacheable {
                     extendedMessage.addExtension(new PacketExtension(addresses));
 
                     extendedMessage.setTo(recipientFullJID);
+                    Log.trace( "Sending notification to recipient address: '{}'", extendedMessage.getTo() );
                     router.route(extendedMessage);
+                } else {
+                    Log.trace( "Not sending notification to full JID '{}' of recipient '{}': This full JID is not allowed probe presence of publisher '{}'", recipientFullJID, recipientJID, publisher );
                 }
             }
             catch (IndexOutOfBoundsException e) {
                 // Do not add addressing extension to message.
+                Log.trace( "IndexOutOfBoundException occurred while trying to send PEP notification.", e );
             }
             catch (UserNotFoundException e) {
                 // Do not add addressing extension to message.
+                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getNodeID(), message.getTo(), e );
                 router.route(message);
             }
             catch (NullPointerException e) {
@@ -446,6 +467,7 @@ public class PEPService implements PubSubService, Cacheable {
                 catch (UserNotFoundException e1) {
                     // Do nothing
                 }
+                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getNodeID(), message.getTo(), e );
                 router.route(message);
             }
         }

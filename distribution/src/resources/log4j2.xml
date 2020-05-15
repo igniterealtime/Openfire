@@ -89,6 +89,7 @@
             <AppenderRef ref="info-out"/>
             <AppenderRef ref="warn-out"/>
             <AppenderRef ref="error-out"/>
+            <AppenderRef ref="console"/>
         </Root>
     </Loggers>
 </Configuration>

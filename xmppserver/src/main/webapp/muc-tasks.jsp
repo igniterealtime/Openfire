@@ -115,9 +115,9 @@
         if (batchGrace == null) {
             errors.put("batchGrace","batchGrace");
         }
-        int size = mucService.getArchiver().getMaxWorkQueueSize();
-        Duration batchInterval = mucService.getArchiver().getMaxPurgeInterval();
-        Duration batchGracePeriod = mucService.getArchiver().getGracePeriod();
+        int size = mucService.getLogMaxConversationBatchSize();
+        Duration batchInterval = mucService.getLogMaxBatchInterval();
+        Duration batchGracePeriod = mucService.getLogBatchGracePeriod();
         // Try to obtain an int from the provided strings
         if (errors.size() == 0) {
             try {
@@ -145,9 +145,9 @@
         }
 
         if (errors.size() == 0) {
-            mucService.getArchiver().setMaxWorkQueueSize( size );
-            mucService.getArchiver().setMaxPurgeInterval( batchInterval );
-            mucService.getArchiver().setGracePeriod( batchGracePeriod );
+            mucService.setLogMaxConversationBatchSize( size );
+            mucService.setLogMaxBatchInterval( batchInterval );
+            mucService.setLogBatchGracePeriod( batchGracePeriod );
             // Log the event
             webManager.logEvent("edited muc conversation log settings for service "+mucname, "maxBatchSize = "+maxBatchSize+"\nmaxBatchInterval = "+maxBatchInterval+"\nbatchGrace = "+batchGrace);
             response.sendRedirect("muc-tasks.jsp?logSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
@@ -273,7 +273,7 @@
             </td>
             <td width="99%">
                 <input type="number" name="maxbatchsize" size="15" maxlength="50" min="1"
-                       value="<%= mucService.getArchiver().getMaxWorkQueueSize() %>">
+                       value="<%= mucService.getLogConversationBatchSize() %>">
             </td>
         </tr>
         <tr valign="middle">
@@ -282,7 +282,7 @@
             </td>
             <td width="99%">
                 <input type="number" name="maxbatchinterval" size="15" maxlength="50" min="0"
-                 value="<%= mucService.getArchiver().getMaxPurgeInterval().toMillis() %>">
+                 value="<%= mucService.getLogMaxBatchInterval().toMillis() %>">
             </td>
         </tr>
         <tr valign="middle">
@@ -291,7 +291,7 @@
             </td>
             <td width="99%">
                 <input type="number" name="batchgrace" size="15" maxlength="50" min="0"
-                       value="<%= mucService.getArchiver().getGracePeriod().toMillis() %>">
+                       value="<%= mucService.getLogBatchGracePeriod().toMillis() %>">
             </td>
         </tr>
         </table>

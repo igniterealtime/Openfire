@@ -29,6 +29,7 @@ import org.jivesoftware.util.ImmediateFuture;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -1292,10 +1293,18 @@ public class PubSubEngine {
      */
     public static CreateNodeResponse createNodeHelper(PubSubService service, JID requester, Element configuration, String nodeID, DataForm publishOptions) {
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester))) {
+    	boolean isLocalOrRegistered=false;
+    	if (JiveGlobals.getBooleanProperty("xmpp.pubsub.create.localuser", false)) {
+    		isLocalOrRegistered = XMPPServer.getInstance().isLocal(requester);   		
+    	} else {
+    		isLocalOrRegistered = UserManager.getInstance().isRegisteredUser(requester);
+    	}
+
+        if (!service.canCreateNode(requester) || (!isComponent(requester) && !isLocalOrRegistered)) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
-        }
+        }        
+    
         DataForm completedForm = null;
         CollectionNode parentNode = null;
         String newNodeID = nodeID;

@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -189,13 +190,20 @@ public class PEPServiceManager {
     public PEPService create(JID owner) {
         // Return an error if the packet is from an anonymous, unregistered user
         // or remote user
-        if (!XMPPServer.getInstance().isLocal(owner)
-                || !UserManager.getInstance().isRegisteredUser(owner.getNode())) {
+    	
+    	boolean isRegistered=false;
+    	if (JiveGlobals.getBooleanProperty("xmpp.pubsub.create.localuser", false)) {
+    		isRegistered = true;   		
+    	} else {
+    		isRegistered = UserManager.getInstance().isRegisteredUser(owner.getNode());
+    	}
+
+        if (!XMPPServer.getInstance().isLocal(owner) || !isRegistered) {
             throw new IllegalArgumentException(
                     "Request must be initiated by a local, registered user, but is not: "
                             + owner);
         }
-
+        
         PEPService pepService = null;
         final String bareJID = owner.toBareJID();
         final Lock lock = CacheFactory.getLock(owner, pepServices);

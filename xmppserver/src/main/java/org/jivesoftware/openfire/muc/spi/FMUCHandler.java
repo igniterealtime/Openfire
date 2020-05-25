@@ -1,0 +1,1033 @@
+/*
+ * Copyright (C) 2020 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jivesoftware.openfire.muc.spi;
+
+import org.dom4j.Element;
+import org.dom4j.QName;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.muc.FMUCException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.*;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.text.ParseException;
+import java.util.*;
+import java.util.concurrent.*;
+
+// TODO: monitor health of s2s connection, somehow?
+public class FMUCHandler
+{
+    private static final Logger Log = LoggerFactory.getLogger( FMUCHandler.class );
+
+    /**
+     * Qualified name of the element that denotes FMUC functionality, as specified by XEP-0289.
+     */
+    public static final QName FMUC = QName.get("fmuc", "http://isode.com/protocol/fmuc");
+
+    /**
+     * The room for which this handler operates.
+     */
+    private final LocalMUCRoom room;
+
+    /**
+     * The router used to send packets for the room.
+     */
+    private final PacketRouter router;
+
+    /**
+     * Indicates if FMUC functionality is available for the room.
+     */
+    private boolean fmucEnabled;
+
+    /**
+     * Configuration that dictates if the local room should actively start joining remote rooms.
+     */
+    private OutboundJoinConfiguration outboundJoinConfiguration;
+
+    private OutboundJoinProgress outboundJoin;
+
+    /**
+     * The addresses of the remote rooms that have connected to the local room (in which the remote rooms have taken the
+     * role of 'joining FMUC nodes' while the local room has taken the role of the 'joined FMUC node').
+     */
+    private Map<JID, InboundJoin> inboundJoins = new HashMap<>();
+
+    public FMUCHandler( @Nonnull LocalMUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
+        this.room = chatroom;
+        this.router = packetRouter;
+        this.fmucEnabled = MUCPersistenceManager.getBooleanProperty(chatroom.getMUCService().getServiceName(), "room.fmucEnabled", true); // FIXME: set the default to 'false'
+    }
+
+    public void setFmucEnabled(boolean fmucEnabled) {
+        this.fmucEnabled = fmucEnabled;
+    }
+
+    public boolean isFmucEnabled() {
+        return fmucEnabled;
+    }
+
+    /**
+     * Propagates a stanza to the FMUC set, if FMUC is active for this room.
+     *
+     * Note that when a master-slave mode is active, we need to wait for an echo back, before the message can be
+     * broadcasted locally. This method will return a CompletableFuture object that is completed as soon as processing
+     * can continue. This doesn't necessarily mean that processing/propagating has been completed (eg: when the FMUC
+     * is configured to use master-master mode, a completed Future instance will be returned.
+     *
+     * When FMUC is not active, this method will return a completed Future instance.
+     *
+     * @param stanza the stanza to be propagated through FMUC.
+     * @param sender the role of the sender that is the original author of the stanza.
+     * @return A future object that completes when the stanza can be propagated locally.
+     */
+    public synchronized CompletableFuture<?> propagate( @Nonnull Packet stanza, @Nonnull MUCRole sender )
+    {
+        Log.debug( "(room: '{}'): A stanza (type: {}, from: {}) is to be propagated in the FMUC node set.", room.getJID(), stanza.getClass().getSimpleName(), stanza.getFrom() );
+
+        /* TODO this implementation currently is blocking, and synchronous: inbound propagation only occurs after outbound
+                propagation has been started. Is this needed? What should happen if outbound propagation fails? When the
+                mode used is master/slave, then it is reasonable to assume that a failed outbound propagation makes the
+                message propagation fail completely (and thus should not be propagated to the inbound nodes or locally?
+        */
+        // propagate to joined FMUC node (conditionally blocks, depending on FMUC mode that's in effect).
+        final CompletableFuture<?> propagateToOutbound = propagateOutbound( stanza, sender );
+
+        // propagate to all joining FMUC nodes (need never block).
+        final CompletableFuture<?> propagateToInbound = propagateInbound( stanza, sender );
+
+        // Return a Future that completes when all of the Futures constructed above complete.
+        return CompletableFuture.allOf( propagateToOutbound, propagateToInbound );
+    }
+
+    /**
+     * Makes a user in our XMPP domain join the FMUC room.
+     *
+     * The join event is propagated to all nodes in the FMUC set that the room is part of.
+     *
+     * When 'outbound' federation is desired, but has not yet been established (when this is the first user to join the
+     * room), federation is initiated.
+     *
+     * Depending on the configuration and state of the FMUC set, the join operation is considered 'blocking'. In case of
+     * a FMUC based on master-slave mode, for example, the operation cannot continue until the remote FMUC node has
+     * echo'd back the join. To accommodate this behavior, this method will return a Future instance. The Future will
+     * immediately be marked as 'done' when the operation need not have 'blocking' behavior. Note that in such cases,
+     * the Future being 'done' does explicitly <em>not</em> indicate that the remote FMUC node has received, processed
+     * and/or accepted the event.
+     *
+     * If the local room is not configured to federate with another room, an invocation of this method will do nothing.
+     *
+     * @param mucRole The role in which the user is joining the room.
+     * @return A future object that completes when the stanza can be propagated locally.
+     */
+    public synchronized Future<?> join( @Nonnull MUCRole mucRole )
+    {
+        Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
+
+        // Do we need to initiate a new outbound federation (are we configured to have an outbound federation, but has one not been started yet?
+        final CompletableFuture<?> propagateToOutbound;
+        if ( outboundJoinConfiguration != null) {
+            if ( outboundJoin == null ) {
+                Log.trace( "(room: '{}'): FMUC configuration contains configuration for a remote MUC that needs to be joined: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
+                // When a new federation is established, there's no need to explicitly propagate the join too - that's implicitly done as part of the initialization of the new federation.
+                propagateToOutbound = initiateFederationOutbound( mucRole );
+            } else {
+                Log.trace( "(room: '{}'): FMUC configuration contains configuration for a remote MUC: {}. Federation with this MUC has already been established.", room.getJID(), outboundJoinConfiguration.getPeer() );
+                // propagate to existing the existing joined FMUC node (be blocking if master/slave mode!)
+                propagateToOutbound = propagateOutbound( generateJoinStanza( mucRole ), mucRole );
+            }
+        } else {
+            // Nothing to do!
+            Log.trace( "(room: '{}'): FMUC configuration does not contain a remote MUC that needs to be joined.", room.getJID() );
+            propagateToOutbound = CompletableFuture.completedFuture(null);
+        }
+
+        /* TODO this implementation currently is blocking, and synchronous: inbound propagation only occurs after outbound
+                propagation has been started. Is this needed? What should happen if outbound propagation fails? When the
+                mode used is master/slave, then it is reasonable to assume that a failed outbound join makes the join fail
+                (and thus should not be propagated to the inbound nodes. */
+
+        // propagate to all joining FMUC nodes (need never block).
+        final CompletableFuture<?> propagateToInbound = propagateInbound( generateJoinStanza( mucRole ), mucRole );
+
+        // Return a Future that completes when all of the Futures constructed above complete.
+        return CompletableFuture.allOf( propagateToOutbound, propagateToInbound );
+    }
+
+    /**
+     * Attempt to establish a federation with a remote MUC room. In this relation 'our' room will take the role of
+     * 'joining FMUC node'.
+     *
+     * @param toJoinNode Address of the (remote) MUC to federate with.
+     * @return A future that holds the stanzas returned as part of the federation attempt (which represents the success or failure of the join attempt).
+     */
+    private CompletableFuture<?> initiateFederationOutbound( @Nonnull MUCRole mucRole )
+    {
+        Log.debug( "(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
+
+        final Presence joinStanza = enrichWithFMUCElement( generateJoinStanza( mucRole ), mucRole );
+        joinStanza.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), mucRole.getNickname() ) );
+        joinStanza.setTo( new JID( outboundJoinConfiguration.getPeer().getNode(), outboundJoinConfiguration.getPeer().getDomain(), mucRole.getNickname() ) );
+
+        Log.trace( "(room: '{}'): Registering a callback to be used when the federation request to '{}' has completed.", room.getJID(), outboundJoinConfiguration.getPeer() );
+        final CompletableFuture<List<Packet>> result = new CompletableFuture<>();
+        outboundJoin = new OutboundJoinProgress( outboundJoinConfiguration.getPeer(), result );
+
+        Log.trace( "(room: '{}'): Sending FMUC join request.", room.getJID() );
+        router.route(joinStanza);
+
+        return result;
+    }
+
+    /**
+     * Sends a stanza to the joined FMUC node, when the local node has established such an outbound join.
+     *
+     * Note that when a master-slave mode is active, we need to wait for an echo back, before the message can be
+     * broadcasted locally. This method will return a CompletableFuture object that is completed as soon as processing
+     * can continue. This doesn't necessarily mean that processing/propagating has been completed (eg: when the FMUC
+     * is configured to use master-master mode, a completed Future instance will be returned.
+     *
+     * @param stanza The stanza to be sent.
+     * @param sender Representation of the sender of the stanza.
+     * @return A future object that completes when the stanza can be propagated locally.
+     */
+    private CompletableFuture<?> propagateOutbound( @Nonnull Packet stanza, @Nonnull MUCRole sender )
+    {
+        if ( outboundJoin == null )
+        {
+            Log.trace("(room: '{}'): No remote MUC joined. No need to propagate outbound.", room.getJID());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        if ( !outboundJoinConfiguration.wantsStanzasSentBy( sender ) ) {
+            Log.trace("(room: '{}'): Skipping outbound propagation to peer '{}', as this peer needs not be sent stanzas sent by '{}' (potentially because it's a master-slave mode joined FMUC and the sender originates on that node).", room.getJID(), outboundJoin.getPeer(), sender );
+            return CompletableFuture.completedFuture(null);
+        }
+
+        Log.debug( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joined FMUC node {}.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), outboundJoinConfiguration.getPeer() );
+
+        final CompletableFuture<?> result = new CompletableFuture<>();
+        final Packet enriched = enrichWithFMUCElement( stanza, sender );
+        enriched.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), sender.getNickname() ) );
+        enriched.setTo( new JID( outboundJoinConfiguration.getPeer().getNode(), outboundJoinConfiguration.getPeer().getDomain(), sender.getNickname() ) );
+
+        // When we're in a master-slave mode with the remote FMUC node that we're joining to, we must wait for it
+        // to echo back the presence data, before we can distribute it in the local room.
+        final boolean mustBlock = outboundJoinConfiguration.getMode() == FMUCMode.MasterSlave;
+        if ( !mustBlock ) {
+            Log.trace( "(room: '{}'): No need to wait for for an echo back from joined FMUC node {} of the propagation of stanza sent by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), sender.getUserAddress(), sender.getRoleAddress() );
+            result.complete( null );
+        } else {
+            Log.debug( "(room: '{}'): An echo back from joined FMUC node {} of the propagation of stanza snet by user '{}' (as '{}') needs to be received before the join event can be propagated locally.", room.getJID(), outboundJoinConfiguration.getPeer(), sender.getUserAddress(), sender.getRoleAddress() );
+
+            // register callback to complete this future when echo is received back.
+            outboundJoin.registerEchoCallback( enriched, result );
+        }
+
+        // Send the outbound stanza.
+        router.route( enriched );
+
+        return result;
+    }
+
+    /**
+     * Sends a stanza to all joined FMUC node, when the local node has accepted such inbound joins from remote peers.
+     *
+     * Optionally, the address if one particular peer can be provided to avoid propagation of the stanza to that
+     * particular node. This is to be used to prevent 'echos back' to the originating FMUC node, when appropriate.
+     *
+     * @param stanza The stanza to be sent.
+     * @param sender Representation of the sender of the stanza.
+     * @return A future object that completes when the stanza can be propagated locally.
+     */
+    private CompletableFuture<?> propagateInbound( @Nonnull Packet stanza, @Nonnull MUCRole sender )
+    {
+        if ( inboundJoins.isEmpty() )
+        {
+            Log.trace("(room: '{}'): No remote MUC joining us. No need to propagate inbound.", room.getJID());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        Log.trace( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the all {} joining FMUC nodes.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), inboundJoins.size() );
+
+        for( final InboundJoin inboundJoin : inboundJoins.values() )
+        {
+            if ( !inboundJoin.wantsStanzasSentBy( sender ) ) {
+                Log.trace("(room: '{}'): Skipping inbound propagation to peer '{}', as this peer needs not be sent stanzas sent by '{}' (potentially because it's a master-slave mode joined FMUC and the sender originates on that node).", room.getJID(), inboundJoin.getPeer(), sender );
+                continue;
+            }
+
+            Log.trace( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joining FMUC node '{}'", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), inboundJoin.getPeer() );
+            final Packet enriched = enrichWithFMUCElement( stanza, sender );
+            enriched.setFrom( sender.getRoleAddress());
+            enriched.setTo( inboundJoin.getPeer() );
+            router.route( enriched );
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    /**
+     * Adds an FMUC child element to the stanza, if such an element does not yet exist.
+     *
+     * This method provides the functionally opposite implementation of {@link #createCopyWithoutFMUC(Packet)}.
+     *
+     * @param stanza The stanza to which an FMUC child element is to be added.
+     * @param <S> Type of stanza
+     * @return A copy of the stanza, with an added FMUC child element.
+     */
+    private static <S extends Packet> S enrichWithFMUCElement( @Nonnull S stanza, @Nonnull MUCRole mucRole )
+    {
+        // Defensive copy - ensure that the original stanza (that might be routed locally) is not modified).
+        final S result = (S) stanza.createCopy();
+
+        final Element fmuc = result.getElement().element(FMUC);
+        if ( fmuc != null ) {
+            return result;
+        }
+
+        result.getElement().addElement( FMUC ).addAttribute( "from", mucRole.getUserAddress().toString() );
+
+        return result;
+    }
+
+    /**
+     * Removes FMUC child elements from the stanza, if such an element exists.
+     *
+     * This method provides the functionally opposite implementation of {@link #enrichWithFMUCElement(Packet, MUCRole)}.
+     *
+     * @param stanza The stanza from which an FMUC child element is to be removed.
+     * @param <S> Type of stanza
+     * @return A copy of the stanza, without FMUC child element.
+     */
+    public static <S extends Packet> S createCopyWithoutFMUC( S stanza )
+    {
+        final S result = (S) stanza.createCopy();
+        final Iterator<Element> elementIterator = result.getElement().elementIterator(FMUC);
+        while (elementIterator.hasNext()) {
+            elementIterator.next();
+            elementIterator.remove();
+        }
+        return result;
+    }
+
+    /**
+     * Creates a stanza that represents a room 'join' in a MUC room.
+     *
+     * @param mucRole Representation of the (local) user that caused the join to be initiated.
+     */
+    // TODO this does not have any FMUC specifics. Must this exist in this class?
+    private Presence generateJoinStanza( @Nonnull MUCRole mucRole )
+    {
+        Log.debug( "(room: '{}'): Generating a stanza that represents the joining of local user '{}' (as '{}').", room.getJID(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
+        final Presence joinStanza = new Presence();
+        joinStanza.getElement().addElement(QName.get("x", "http://jabber.org/protocol/muc"));
+        final Element mucUser = joinStanza.getElement().addElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
+        final Element mucUserItem = mucUser.addElement("item");
+        mucUserItem.addAttribute("affiliation", mucRole.getAffiliation().toString());
+        mucUserItem.addAttribute("role", mucRole.getRole().toString());
+
+        // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
+        if (!room.canAnyoneDiscoverJID()) {
+            if (MUCRole.Role.moderator == mucRole.getRole()) {
+                mucUserItem.addAttribute("jid", mucRole.getUserAddress().toString());
+            }
+            else {
+                mucUserItem.addAttribute("jid", null);
+            }
+        }
+
+        return joinStanza;
+    }
+
+    public synchronized void process( @Nonnull final Packet stanza )
+    {
+        Log.trace( "(room: '{}'): Processing stanza from '{}'.", room.getJID(), stanza.getFrom() );
+        final JID remoteMUC = stanza.getFrom().asBareJID();
+
+        if ( stanza.getElement().element(FMUC) == null ) {
+            throw new IllegalArgumentException( "Unable to process stanza that does not have FMUC data: " + stanza.toXML() );
+        }
+
+        if ( remoteMUC.getNode() == null ) {
+            throw new IllegalArgumentException( "Unable to process stanza that did not originate from a MUC room (the 'from' address has no node-part):" + stanza.toXML() );
+        }
+
+        InboundJoin inboundJoin;
+        if ( outboundJoin != null && outboundJoin.getPeer().equals( remoteMUC ))
+        {
+            Log.trace("(room: '{}'): Received stanza from '{}' that is identified as outbound FMUC node.", room.getJID(), remoteMUC);
+            outboundJoin.evaluateForCallbackCompletion(stanza);
+
+            if ( !outboundJoin.isJoinComplete() )
+            {
+                Log.trace("(room: '{}'): Queueing stanza from '{}' as partial FMUC join response.", room.getJID(), remoteMUC);
+                outboundJoin.addResponse(stanza);
+
+                if ( outboundJoin.isJoinComplete() )
+                {
+                    Log.debug("(room: '{}'): Received a complete FMUC join response from '{}'.", room.getJID(), remoteMUC);
+                    finishOutboundJoin();
+                }
+            } else {
+                processRegularMUCStanza( stanza );
+            }
+        }
+        else if ( (inboundJoin = inboundJoins.get( remoteMUC.asBareJID() ) ) != null )
+        {
+            Log.trace("(room: '{}'): Received stanza from '{}' that is identified as inbound FMUC node.", room.getJID(), remoteMUC);
+            processRegularMUCStanza( stanza );
+        }
+        else
+        {
+            Log.trace("(room: '{}'): Received stanza from '{}' that is not a known FMUC node.", room.getJID(), remoteMUC ); //Treating as inbound FMUC node join request.", room.getJID(), remoteMUC);
+            if ( isFMUCJoinRequest( stanza ) ) {
+                if ( !isAcceptingFMUCJoiningNode( remoteMUC )) {
+                    rejectJoiningFMUCNode( (Presence) stanza );
+                } else {
+                    inboundJoin = new InboundJoin(remoteMUC);
+                    final JID occupant = getFMUCFromJID(stanza);
+                    inboundJoin.addOccupant( occupant );
+                    inboundJoins.put(remoteMUC, inboundJoin); // TODO make thread safe.
+                    acceptJoiningFMUCNode( (Presence) stanza );
+                    makeRemoteOccupantJoinRoom( (Presence) stanza );
+                }
+            } else {
+                Log.debug("(room: '{}'): Unable to process stanza from '{}'. Ignoring: {}", room.getJID(), remoteMUC, stanza.toXML() );
+                if ( stanza instanceof IQ && ((IQ) stanza).isRequest() ) {
+                    final IQ errorResult = IQ.createResultIQ( (IQ) stanza);
+                    errorResult.setError(PacketError.Condition.service_unavailable);
+                    router.route( errorResult );
+                }
+            }
+        }
+    }
+
+    /**
+     * Processes a stanza that is received from another node in the FMUC set, by translating it into 'regular' MUC data.
+     *
+     * This implementation processes data (only) as 'regular' MUC data. It does not apply changes to the FMUC set (eg:
+     * removing or adding joining FMUC nodes).
+     *
+     * The provided input is expected to be a stanza received from another node in the FMUC set. It is stripped from
+     * FMUC data, after which it is distributed to the local users.
+     *
+     * Additionally, it is sent out to all (other) FMUC nodes that are known.
+     *
+     * @param stanza The data to be processed.
+     */
+    private void processRegularMUCStanza( @Nonnull final Packet stanza )
+    {
+        final Element fmuc = stanza.getElement().element(FMUC);
+        if (fmuc == null) {
+            throw new IllegalArgumentException( "Provided stanza must have an 'fmuc' child element (but does not).");
+        }
+
+        final JID remoteMUC = stanza.getFrom().asBareJID();
+        final JID author = new JID( fmuc.attributeValue("from") ); // TODO input validation.
+        final MUCRole senderRole = room.getOccupantByFullJID( author );
+        Log.trace("(room: '{}'): Processing stanza from remote FMUC peer '{}' as regular room traffic. Sender of stanza: {}", room.getJID(), remoteMUC, author );
+
+        // Strip all FMUC data.
+        final Packet stripped = createCopyWithoutFMUC( stanza );
+
+        // Distribute. Note that this will distribute both to the local node, as well as to all FMUC nodes in the the FMUC set.
+        if ( stripped instanceof Presence ) {
+            RemoteFMUCNode remoteFMUCNode = inboundJoins.get(remoteMUC);
+            if ( remoteFMUCNode == null && outboundJoinConfiguration != null && remoteMUC.equals(outboundJoinConfiguration.getPeer())) {
+                remoteFMUCNode = outboundJoinConfiguration;
+            }
+            if ( remoteFMUCNode != null )
+            {
+                final boolean isLeave = ((Presence) stripped).getType() == Presence.Type.unavailable;
+                final boolean isJoin = ((Presence) stripped).isAvailable();
+
+                if ( isLeave )
+                {
+                    Log.trace("(room: '{}'): Occupant '{}' left room on remote FMUC peer '{}'", room.getJID(), author, remoteMUC );
+                    remoteFMUCNode.removeOccupant(author);
+                }
+                if ( isJoin )
+                {
+                    Log.trace("(room: '{}'): Occupant '{}' joined room on remote FMUC peer '{}'", room.getJID(), author, remoteMUC );
+                    remoteFMUCNode.addOccupant(author);
+                }
+            }
+            // FIXME implement sharing of presence.
+            Log.error( "Processing of presence stanzas received from other FMUC nodes is pending implementation!", new UnsupportedOperationException());
+        } else {
+            room.send( stripped, senderRole );
+        }
+    }
+
+    private void finishOutboundJoin()
+    {
+        Log.trace("(room: '{}'): Finish setting up the outbound FMUC join with '{}'.", room.getJID(), outboundJoin.getPeer() );
+        if ( !outboundJoin.isJoinComplete() ) {
+            throw new IllegalStateException( "Cannot finish outbound join from '"+ room.getJID()+"' to '"+outboundJoin.getPeer()+"', as it is not complete!" );
+        }
+
+        if ( outboundJoin.isRejected() )
+        {
+            Log.trace("(room: '{}'): Notifying callback waiting for the complete FMUC join response from '{}' with a rejection.", room.getJID(), outboundJoin.getPeer() );
+            outboundJoin.getCallback().completeExceptionally( new FMUCException( outboundJoin.getRejectionMessage() ));
+        }
+        else
+        {
+            Log.trace("(room: '{}'): Synchronizing state of local room with joined FMUC node '{}'.", room.getJID(), outboundJoin.getPeer() );
+
+            // Before processing the data in context of the local FMUC room, ensure that the FMUC metadata state is up-to-date.
+            for ( final Packet response : outboundJoin.getResponses() ) {
+                if ( response instanceof Presence ) {
+                    final JID occupantOnJoinedNode = getFMUCFromJID(response);
+                    outboundJoinConfiguration.addOccupant( occupantOnJoinedNode );
+                }
+            }
+
+            // Use received data to augment state of the local room.
+            for ( final Packet response : outboundJoin.getResponses() ) {
+                try
+                {
+                    if ( response instanceof Presence ) {
+                        makeRemoteOccupantJoinRoom((Presence) response);
+                    } else if ( response instanceof Message && response.getElement().element("body") != null) {
+                        addRemoteHistoryToRoom((Message) response);
+                    } else if ( response instanceof Message && response.getElement().element("subject") != null) {
+                        applyRemoteSubjectToRoom((Message) response);
+                    }
+                } catch ( Exception e ) {
+                    Log.error( "(room: '{}'): An unexpected exception occurred while processing FMUC join response stanzas.", room.getJID(), e );
+                }
+            }
+
+            Log.trace("(room: '{}'): Notifying callback waiting for the complete FMUC join response from '{}' with success.", room.getJID(), outboundJoin.getPeer() );
+            outboundJoin.getCallback().complete( null );
+        }
+    }
+
+    private void applyRemoteSubjectToRoom( @Nonnull final Message message )
+    {
+        try
+        {
+            room.changeSubject(createCopyWithoutFMUC(message), room.getRole()); // Using the room-role itself to set the subject (bypasses auth checks, which should ensure it is actually set).
+        }
+        catch ( ForbiddenException e ) {
+            // This should not be possible, as we're using a role above that should bypass the auth checks that throw this exception!
+            Log.error( "(room: '{}'): An unexpected exception occurred while processing FMUC join response stanzas.", room.getJID(), e );
+        }
+    }
+
+    private void addRemoteHistoryToRoom( @Nonnull final Message message )
+    {
+        final Element fmuc = message.getElement().element(FMUC);
+        if ( fmuc == null ) {
+            throw new IllegalArgumentException( "Argument 'presence' should be an FMUC presence, but it does not appear to be: it is missing the FMUC child element." );
+        }
+
+        final JID userJID = new JID( fmuc.attributeValue("from"));
+        final String nickname = message.getFrom().getResource();
+        Date sentDate;
+        final Element delay = message.getChildElement("x","urn:xmpp:delay");
+        if ( delay != null ) {
+            final String stamp = delay.attributeValue("stamp");
+            try
+            {
+                sentDate = new XMPPDateTimeFormat().parseString(stamp);
+            }
+            catch ( ParseException e )
+            {
+                Log.warn( "Cannot parse 'stamp' from delay element in message as received in FMUC join: {}", message, e );
+                sentDate = null;
+            }
+        } else {
+            sentDate = null;
+            Log.warn( "Missing delay element in message received in FMUC join: {}", message );
+        }
+
+        final Message cleanedUpMessage = createCopyWithoutFMUC(message);
+        room.getRoomHistory().addOldMessage( userJID.toString(), nickname, sentDate, cleanedUpMessage.getSubject(), cleanedUpMessage.getBody(), cleanedUpMessage.toXML() );
+    }
+
+    /**
+     * Parses the JID from an FMUC stanza.
+     *
+     * More specifically, this method returns the JID representation of the 'from' attribute value of the 'fmuc' child
+     * element in the stanza. A runtime exception is thrown when no such value exists, or when that value is not a
+     * valid JID.
+     *
+     * @param stanza An FMUC stanza
+     * @return A JID.
+     * @throws RuntimeException when no valid JID value is found in the 'from' attribute of the FMUC child element.
+     */
+    public static JID getFMUCFromJID( @Nonnull final Packet stanza )
+    {
+        final Element fmuc = stanza.getElement().element(FMUC);
+        if ( fmuc == null ) {
+            throw new IllegalArgumentException( "Argument 'stanza' should be an FMUC stanza, but it does not appear to be: it is missing the FMUC child element." );
+        }
+
+        final String fromValue = fmuc.attributeValue( "from" );
+
+        if ( fromValue == null ) {
+            throw new IllegalArgumentException( "Argument 'stanza' should be a valid FMUC stanza, but it does not appear to be: it is missing a 'from' attribute value in the FMUC child element." );
+        }
+
+        final JID userJID = new JID( fromValue );
+        return userJID;
+    }
+
+    private void makeRemoteOccupantJoinRoom( @Nonnull final Presence presence )
+    {
+        // FIXME: better input validation / better problem handling when remote node sends crappy data!
+        final Element mucUser = presence.getElement().element(QName.get("x","http://jabber.org/protocol/muc#user"));
+        final Element fmuc = presence.getElement().element(FMUC);
+        if ( fmuc == null ) {
+            throw new IllegalArgumentException( "Argument 'presence' should be an FMUC presence, but it does not appear to be: it is missing the FMUC child element." );
+        }
+
+        final JID remoteMUC = presence.getFrom().asBareJID();
+        final String nickname = presence.getFrom().getResource();
+
+        Log.debug( "(room: '{}'): Occupant on remote peer '{}' joins the room with nickname '{}'.", room.getJID(), remoteMUC, nickname );
+
+        MUCRole.Role role;
+        if ( mucUser != null && mucUser.element("item") != null && mucUser.element("item").attributeValue("role") != null ) {
+            try {
+                role = MUCRole.Role.valueOf(mucUser.element("item").attributeValue("role"));
+            } catch ( IllegalArgumentException e ) {
+                Log.info( "Cannot parse role as received in FMUC join, using default role instead: {}", presence, e );
+                role = MUCRole.Role.participant;
+            }
+        } else {
+            Log.info( "Cannot parse role as received in FMUC join, using default role instead: {}", presence );
+            role = MUCRole.Role.participant;
+        }
+
+        MUCRole.Affiliation affiliation;
+        if ( mucUser != null && mucUser.element("item") != null && mucUser.element("item").attributeValue("affiliation") != null ) {
+            try {
+                affiliation = MUCRole.Affiliation.valueOf(mucUser.element("item").attributeValue("affiliation"));
+            } catch ( IllegalArgumentException e ) {
+                Log.info( "Cannot parse affiliation as received in FMUC join, using default role instead: {}", presence, e );
+                affiliation = MUCRole.Affiliation.none;
+            }
+        } else {
+            Log.info( "Cannot parse affiliation as received in FMUC join, using default role instead: {}", presence );
+            affiliation = MUCRole.Affiliation.none;
+        }
+
+        final JID userJID = getFMUCFromJID( presence );
+
+        final LocalMUCUser user = new LocalMUCUser(room.getMUCService(), router, userJID );
+
+        final LocalMUCRole joinRole = new LocalMUCRole( room.getMUCService(), room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence), router);
+        joinRole.setReportedFmucAddress( userJID );
+
+        // Update the (local) room state to now include this occupant.
+        room.doJoinRoom( joinRole );
+
+        // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
+        // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
+        room.sendInitialPresenceToExistingOccupants( joinRole );
+    }
+
+
+    /**
+     * Checks if the entity that attempts to join, which is assumed to represent a remote, joining FMUC node.
+     *
+     * @param joiningPeer the address of the remote room that attempts to join the local room.
+     * @return true if the remote MUC is allowed to join, otherwise false.
+     */
+    private boolean isAcceptingFMUCJoiningNode( @Nonnull final JID joiningPeer )
+    {
+        if ( !joiningPeer.asBareJID().equals(joiningPeer) ) {
+            throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
+        }
+        // TODO replace this with a per-room configurable options (similar to other options that are configurable).
+        final boolean result = MUCPersistenceManager.getBooleanProperty(this.room.getMUCService().getServiceName(), "room.fmucEnabled", this.room.isFmucEnabled() );
+
+        Log.trace( "Remote room '{}' {} join room '{}' using FMUC.", joiningPeer, result ? "can" : "cannot", room.getJID() );
+        return result;
+    }
+
+    private void rejectJoiningFMUCNode( @Nonnull final Presence joinRequest )
+    {
+        Log.trace("(room: '{}'): Rejecting FMUC join request from '{}'.", room.getJID(), joinRequest.getFrom().asBareJID() );
+        final Presence rejection = new Presence();
+        rejection.setTo( joinRequest.getFrom() );
+        rejection.setFrom( this.room.getJID() );
+        rejection.addChildElement( FMUC.getName(), FMUC.getNamespaceURI() ).addElement("reject");
+        router.route( rejection );
+    }
+
+    private void acceptJoiningFMUCNode( @Nonnull final Presence joinRequest )
+    {
+        final JID joiningPeer = joinRequest.getFrom().asBareJID();
+        Log.trace("(room: '{}'): Accept FMUC join request from '{}'.", room.getJID(), joiningPeer );
+
+        // Send occupants
+        afterJoinSendOccupants( joiningPeer );
+
+        // Send history
+        afterJoinSendHistory( joiningPeer );
+
+        // Send subject
+        afterJoinSendSubject( joiningPeer );
+    }
+
+    private void afterJoinSendOccupants( @Nonnull final JID joiningPeer )
+    {
+        if ( !joiningPeer.asBareJID().equals(joiningPeer) ) {
+            throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
+        }
+
+        Log.trace("(room: '{}'): Sending current occupants to joining node '{}'.", room.getJID(), joiningPeer );
+
+        for ( final MUCRole occupant : room.getOccupants() ) {
+            if ( occupant.getReportedFmucAddress() != null && occupant.getReportedFmucAddress().asBareJID().equals( joiningPeer ) ) {
+                Log.trace("(room: '{}'): Skipping occupant '{}' as that originates from the joining node.", room.getJID(), occupant );
+                continue;
+            }
+
+            // TODO can we use occupant.getPresence() for this?
+            // TODO do we need to worry about who we're exposing data to?
+            final Presence presence = new Presence();
+            presence.setFrom( occupant.getRoleAddress() );
+            presence.setTo( joiningPeer );
+            final Presence enriched = enrichWithFMUCElement( presence, occupant );
+            final Element xitem = enriched.addChildElement( "x", "http://jabber.org/protocol/muc#user" ).addElement( "item" );
+            xitem.addAttribute( "affiliation", occupant.getAffiliation().toString() );
+            xitem.addAttribute( "role", occupant.getRole().toString() );
+            xitem.addAttribute( "jid", occupant.getRoleAddress().toString() );
+
+            router.route( enriched );
+        }
+    }
+
+    private void afterJoinSendHistory( @Nonnull final JID joiningPeer )
+    {
+        if ( !joiningPeer.asBareJID().equals(joiningPeer) ) {
+            throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
+        }
+
+        Log.trace("(room: '{}'): Sending history to joining node '{}'.", room.getJID(), joiningPeer );
+        // FIXME send history. Can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomHistoryAfterJoin be reused?
+    }
+
+    private void afterJoinSendSubject( @Nonnull final JID joiningPeer )
+    {
+        if ( !joiningPeer.asBareJID().equals(joiningPeer) ) {
+            throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
+        }
+
+        Log.trace("(room: '{}'): Sending subject to joining node '{}'.", room.getJID(), joiningPeer );
+
+        // TODO can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomSubjectAfterJoin be re-used?
+        final Message roomSubject = new Message();
+        roomSubject.setFrom( this.room.getJID() );
+        roomSubject.setTo( joiningPeer );
+        roomSubject.setType( Message.Type.groupchat );
+        roomSubject.setID( UUID.randomUUID().toString() );
+        final Element subjectEl = roomSubject.getElement().addElement( "subject" );
+        if ( room.getSubject() != null && !room.getSubject().isEmpty() ) {
+            subjectEl.setText( room.getSubject() );
+        }
+        router.route( roomSubject );
+    }
+
+    public static boolean isSubject( @Nonnull final Packet stanza )
+    {
+        final Element fmuc = stanza.getElement().element(FMUC);
+        if (fmuc == null) {
+            throw new IllegalArgumentException( "Provided stanza must have an 'fmuc' child element (but does not).");
+        }
+
+        final boolean result = stanza instanceof Message && stanza.getElement().element("subject") != null;
+        Log.trace( "Stanza from '{}' was determined to {} a stanza containing a MUC subject.", stanza.getFrom(), result ? "be" : "not be" );
+        return result;
+    }
+
+    public static boolean isFMUCReject( @Nonnull final Packet stanza )
+    {
+        final Element fmuc = stanza.getElement().element(FMUC);
+        if (fmuc == null) {
+            throw new IllegalArgumentException( "Provided stanza must have an 'fmuc' child element (but does not).");
+        }
+
+        final boolean result = stanza instanceof Presence && fmuc.element("reject") != null;
+        Log.trace( "Stanza from '{}' was determined to {} a stanza containing a FMUC join reject.", stanza.getFrom(), result ? "be" : "not be" );
+        return result;
+    }
+
+    public static boolean isFMUCJoinRequest( @Nonnull Packet stanza )
+    {
+        final Element fmuc = stanza.getElement().element(FMUC);
+        if (fmuc == null) {
+            throw new IllegalArgumentException( "Provided stanza must have an 'fmuc' child element (but does not).");
+        }
+
+        final boolean result =
+            (stanza instanceof Presence) &&
+                stanza.getElement().element( QName.get( "x", "http://jabber.org/protocol/muc") ) != null &&
+                stanza.getElement().element( QName.get( "x", "http://jabber.org/protocol/muc#user") ) != null;
+
+        Log.trace( "Stanza from '{}' was determined to {} a stanza containing a FMUC join request.", stanza.getFrom(), result ? "be" : "not be" );
+        return result;
+    }
+
+    abstract static class RemoteFMUCNode implements Serializable
+    {
+        private final Logger Log;
+
+        /**
+         * The address of the remote MUC room that is federating with us, in which 'our' MUC room takes the role of
+         * 'joined FMUC node' while the room that federates with us (who's address is recorded in this field) takes the
+         * role of 'joining FMUC node'.
+         */
+        private final JID peer;
+
+        /**
+         * The addresses of the occupants of the MUC that are joined through this FMUC node.
+         */
+        private final Set<JID> occupants = new HashSet<>();
+
+        public JID getPeer() {
+            return peer;
+        }
+
+        RemoteFMUCNode( @Nonnull final JID peer ) {
+            this.peer = peer.asBareJID();
+            Log = LoggerFactory.getLogger( this.getClass().getName() + ".[peer: " + peer + "]" );
+        }
+
+        public boolean wantsStanzasSentBy( @Nonnull final MUCRole sender ) {
+            // Only send data if the sender is not an entity on this remote FMUC node.
+            return sender.getReportedFmucAddress() == null || !occupants.contains( sender.getReportedFmucAddress() );
+        }
+
+        public boolean addOccupant( @Nonnull final JID occupant ) {
+            Log.trace( "Adding remote occupant: '{}'", occupant );
+            return occupants.add( occupant );
+        }
+
+        public boolean removeOccupant( @Nonnull final JID occupant ) {
+            Log.trace( "Removing remote occupant: '{}'", occupant );
+            return occupants.remove( occupant );
+        }
+    }
+
+    static class InboundJoin extends RemoteFMUCNode
+    {
+        public InboundJoin( @Nonnull final JID peer )
+        {
+            super(peer);
+        }
+    }
+
+    static class OutboundJoinConfiguration extends RemoteFMUCNode
+    {
+        private final FMUCMode mode;
+
+        public OutboundJoinConfiguration( @Nonnull final JID peer, @Nonnull final FMUCMode mode ) {
+            super(peer);
+            this.mode = mode;
+        }
+
+        public FMUCMode getMode()
+        {
+            return mode;
+        }
+
+        @Override
+        public boolean wantsStanzasSentBy( @Nonnull MUCRole sender ) {
+            if ( FMUCMode.MasterSlave == mode ) {
+                return true; // always wants stanzas - if only because the data needs to be echo'd back.
+            }
+
+            return super.wantsStanzasSentBy(sender);
+        }
+    }
+
+    static class OutboundJoinProgress implements Serializable
+    {
+        /**
+         * The address of the remote MUC room with which we are attempting to federate, in which 'our' MUC room takes the role of
+         * 'joining FMUC node' while the room that federates with us (who's address is recorded in this field) takes the
+         * role of 'joined FMUC node'.
+         */
+        private final JID peer;
+
+        /**
+         * The future that is awaiting completion of the join operation.
+         */
+        private final CompletableFuture<List<Packet>> callback;
+
+        private final ArrayList<Packet> responses;
+
+        /**
+         * The state of the federation join. Null means that the request is pending completion. True means a successful
+         * join was achieved, while false means that the join request failed.
+         */
+        private Boolean joinResult;
+
+        /**
+         * A list of stanzas that need to have been echo'd by a remote FMUC node, before they can be processed locally.
+         * This collection _does not_ include stanzas needed to set up the initial join. This collection is only used
+         * for subsequent stanzas that are shared in a setting where echo-ing is required (due to the mode of the
+         * federation being defined as 'master-slave').
+         */
+        private final Set<PendingCallback> pendingEcho = new HashSet<>();
+
+        public OutboundJoinProgress( @Nonnull final JID peer, @Nonnull final CompletableFuture<List<Packet>> callback )
+        {
+            this.peer = peer.asBareJID();
+            this.callback = callback;
+            this.responses = new ArrayList<>();
+        }
+
+        public JID getPeer() {
+            return peer;
+        }
+
+        public synchronized CompletableFuture<List<Packet>> getCallback() {
+            return callback;
+        }
+
+        public synchronized ArrayList<Packet> getResponses() {
+            return responses;
+        }
+
+        synchronized void addResponse( @Nonnull final Packet stanza ) {
+            this.responses.add( stanza );
+            if (joinResult == null) {
+                if ( isSubject( stanza ) ) {
+                    joinResult = true;
+                }
+                if ( isFMUCReject( stanza ) ) {
+                    joinResult = false;
+                }
+            }
+        }
+
+        public synchronized boolean isJoinComplete() {
+            return joinResult != null;
+        }
+
+        public synchronized boolean isRejected() {
+            return joinResult != null && !joinResult;
+        }
+
+        public synchronized String getRejectionMessage()
+        {
+            if (!isRejected()) {
+                throw new IllegalStateException( "Cannot get rejection message, as rejection did not occur." );
+            }
+
+            final Packet stanza = this.responses.get( this.responses.size() -1 );
+            final Element fmuc = stanza.getElement().element(FMUC);
+            return fmuc.elementText("reject");
+        }
+
+        public synchronized boolean isSuccessful() {
+            return joinResult != null && joinResult;
+        }
+
+        public synchronized void evaluateForCallbackCompletion( @Nonnull Packet stanza )
+        {
+            Log.trace( "Evaluating stanza for callback completion..." );
+            if ( stanza.getElement().element(FMUC) == null ) {
+                throw new IllegalArgumentException( "Argument 'stanza' must have an FMUC child element." );
+            }
+
+            // Ignore if we do not have a callback waiting for this stanza.
+            final Iterator<PendingCallback> iter = pendingEcho.iterator();
+            while (iter.hasNext()) {
+                final PendingCallback item = iter.next();
+                if ( item.isMatch(stanza) ) {
+                    Log.trace( "Invoking callback, as peer '{}' echo'd back stanza: {}", this.peer, stanza.toXML() );
+                    item.complete();
+                    iter.remove();
+                }
+            }
+            Log.trace( "Finished evaluating stanza for callback completion." );
+        }
+
+        public synchronized void registerEchoCallback( @Nonnull final Packet stanza, @Nonnull final CompletableFuture<?> result )
+        {
+            if ( stanza.getElement().element(FMUC) == null ) {
+                throw new IllegalArgumentException( "Argument 'stanza' must have an FMUC child element." );
+            }
+
+            Log.trace( "Registering callback to be invoked when peer '{}' echos back stanza {}", this.peer, stanza.toXML() );
+            pendingEcho.add( new PendingCallback( stanza, result ) );
+        }
+    }
+
+    /**
+     * Represents a callback waiting for a stanza to be echo'd back from a remote FMUC node.
+     */
+    static class PendingCallback {
+
+        final CompletableFuture<?> callback;
+        final Class<? extends Packet> type;
+        final JID remoteFMUCNode;
+        final List<Element> elements;
+
+        public <S extends Packet> PendingCallback( @Nonnull S original, @Nonnull CompletableFuture<?> callback ) {
+            if (!hasFMUCElement(original)) {
+                throw new IllegalArgumentException( "Provided stanza must be a stanza that is sent to a remote FMUC node, but was not (the FMUC child element is missing): " + original );
+            }
+            this.type = getType( original );
+            this.remoteFMUCNode = original.getTo().asBareJID();
+            this.elements = original.getElement().elements();
+            this.callback = callback;
+        }
+
+        private void complete() {
+            callback.complete( null );
+        }
+
+        public <S extends Packet> boolean isMatch( @Nonnull S stanza )
+        {
+            if (!hasFMUCElement(stanza)) {
+                throw new IllegalArgumentException( "Provided stanza must be a stanza that was sent by remote FMUC node, but was not (the FMUC child element is missing): " + stanza );
+            }
+
+            if (!stanza.getClass().equals(type)) {
+                return false;
+            }
+
+            if (!stanza.getFrom().asBareJID().equals( remoteFMUCNode )) {
+                return false;
+            }
+
+            // All child elements of the echo'd stanza must equal the original.
+            return elements.equals( stanza.getElement().elements() );
+        }
+
+        protected static boolean hasFMUCElement( @Nonnull Packet stanza ) {
+            return stanza.getElement().element(FMUC) != null;
+        }
+
+        protected static Class<? extends Packet> getType( @Nonnull Packet stanza ) {
+            return stanza.getClass();
+        }
+    }
+}

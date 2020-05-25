@@ -31,6 +31,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+
 /**
  * Implementation of a local room occupant.
  * 
@@ -95,14 +97,9 @@ public class LocalMUCRole implements MUCRole {
     private Element extendedInformation;
 
     /**
-     * A fragment containing the FMUC extension as reported by the joining FMUC node, if any.
-     */
-    private Element reportedFmucInformation;
-
-    /**
      * The address of the person on the joining FMUC node, if the person joined through FMUC (otherwise null).
      */
-    private transient JID reportedFmucJID; // transient: can be deduced from reportedFmucInformation.
+    private JID reportedFmucJID;
 
     /**
      * Create a new role.
@@ -141,9 +138,6 @@ public class LocalMUCRole implements MUCRole {
             voiceOnly = element.element("deaf-occupant") != null;
         }
 
-        // Set FMUC information, when provided.
-        setFmucInfo( presence );
-
         // Add the new role to the list of roles
         user.addRole(room.getName(), this);
     }
@@ -160,12 +154,6 @@ public class LocalMUCRole implements MUCRole {
         Element element = newPresence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc"));
         if (element != null) {
             newPresence.getElement().remove(element);
-        }
-
-        // When joined through FMUC, inbound presence is expected to always have an FMUC element.
-        if ( isRemoteFmuc() ) {
-            // TODO what should happen when there's no FMUC element, or if it contains conflicting/updated data?
-            setFmucInfo( presence );
         }
 
         this.presence = newPresence;
@@ -256,6 +244,10 @@ public class LocalMUCRole implements MUCRole {
         return reportedFmucJID;
     }
 
+    public void setReportedFmucAddress( @Nonnull final JID reportedFmucAddress ) {
+        this.reportedFmucJID = reportedFmucAddress;
+    }
+
     @Override
     public boolean isLocal() {
         return true;
@@ -282,10 +274,17 @@ public class LocalMUCRole implements MUCRole {
         if (packet == null) {
             return;
         }
+
+        if (this.isRemoteFmuc()) {
+            // Sending stanzas to individual occupants that are on remote FMUC nodes defeats the purpose of FMUC, which is to reduce message. This reduction is based on sending data just once, and have it 'fan out' on the remote node (as opposed to sending each occupant on that node a distinct stanza from this node).
+            Log.warn( "Sending data directly to an entity ({}) on a remote FMUC node. Instead of individual messages, we expect data to be sent just once (and be fanned out locally by the remote node).", this, new Throwable() );
+
+            // Check if stanza needs to be enriched with FMUC metadata.
+            augmentOutboundStanzaWithFMUCData(packet);
+        }
+
         packet.setTo(user.getAddress());
 
-        // Check if stanza needs to be enriched with FMUC metadata.
-        augmentOutboundStanzaWithFMUCData(packet);
 
         router.route(packet);
     }
@@ -299,14 +298,6 @@ public class LocalMUCRole implements MUCRole {
         ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:role", role.toString());
         updatePresence();
-    }
-
-    private void setFmucInfo( final Presence presence ) {
-        reportedFmucInformation = presence.getElement().element(QName.get("fmuc", "http://isode.com/protocol/fmuc"));
-        if ( reportedFmucInformation != null) {
-            // the 'from' attribute seems to be required in the XEP. Throwing an exception on a missing of malformed value is OK.
-            reportedFmucJID = new JID(reportedFmucInformation.attributeValue("from"));
-        }
     }
 
     private void updatePresence() {
@@ -363,5 +354,20 @@ public class LocalMUCRole implements MUCRole {
         } else if (!user.equals(other.user))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "LocalMUCRole{" +
+            "room=" + room +
+            ", user=" + user +
+            ", nick='" + nick + '\'' +
+            ", role=" + role +
+            ", affiliation=" + affiliation +
+            ", voiceOnly=" + voiceOnly +
+            ", rJID=" + rJID +
+            ", reportedFmucJID=" + reportedFmucJID +
+            '}';
     }
 }

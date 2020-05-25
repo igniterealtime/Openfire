@@ -402,7 +402,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final String roomName = recipient != null ? recipient.getNode() : null;
                 final JID userJid = packet.getFrom();
                 try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString()).lock()) {
-                    getChatUser(userJid, roomName).process(packet);
+                    if ( !packet.getElement().elements(FMUCHandler.FMUC).isEmpty() ) {
+                        final MUCRoom chatRoom = getChatRoom(roomName);
+                        if ( chatRoom != null ) {
+                            chatRoom.getFmucHandler().process(packet);
+                        } else {
+                            Log.warn( "Unable to prcoess FMUC stanza, as room it's addressed to does not exist: {}", roomName );
+                            // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
+                        }
+                    } else {
+                        getChatUser(userJid, roomName).process(packet);
+                    }
                 }
             }
         }
@@ -621,7 +631,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             kickedPresence =
                                     room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
                             // Send the updated presence to the room occupants
-                            room.send(kickedPresence);
+                            room.send(kickedPresence, room.getRole());
                         }
                         catch (final NotAllowedException e) {
                             // Do nothing since we cannot kick owners or admins

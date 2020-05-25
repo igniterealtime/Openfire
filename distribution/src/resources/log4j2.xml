@@ -83,6 +83,9 @@
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
 
+        <!-- TODO: The next line should not be present after develoment of FMUC functionality has been completed. -->
+        <Logger name="org.jivesoftware.openfire.muc" level="all"/>
+
         <Root level="info">
             <AppenderRef ref="all-out"/>
             <AppenderRef ref="debug-out"/>

@@ -164,8 +164,13 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
 
     @Override
     public void send(Packet packet) {
-        // Check if stanza needs to be enriched with FMUC metadata.
-        augmentOutboundStanzaWithFMUCData(packet);
+        if (this.isRemoteFmuc()) {
+            // Sending stanzas to individual occupants that are on remote FMUC nodes defeats the purpose of FMUC, which is to reduce message. This reduction is based on sending data just once, and have it 'fan out' on the remote node (as opposed to sending each occupant on that node a distinct stanza from this node).
+            Log.warn( "Sending data directly to an entity ({}) on a remote FMUC node. Instead of individual messages, we expect data to be sent just once (and be fanned out locally by the remote node).", this, new Throwable() );
+
+            // Check if stanza needs to be enriched with FMUC metadata.
+            augmentOutboundStanzaWithFMUCData(packet);
+        }
 
         XMPPServer.getInstance().getRoutingTable().routePacket(userAddress, packet, false);
     }

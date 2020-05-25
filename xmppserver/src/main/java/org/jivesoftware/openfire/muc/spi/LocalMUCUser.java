@@ -875,11 +875,6 @@ public class LocalMUCUser implements MUCUser
             Log.debug("Request from '{}' to join room '{}' rejected: user attempts to use nickname '{}' which is different from the reserved nickname.", packet.getFrom(), roomName, nickname, e);
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You're trying to join with a nickname different than the reserved nickname.");
         }
-        catch ( FMUCException e )
-        {
-            Log.debug("Request from '{}' to join room '{}' rejected: user attempts to join using FMUC, which is unavailable.", packet.getFrom(), roomName, e);
-            sendFMUCJoinReject( packet, e.getMessage() );
-        }
     }
 
     /**
@@ -957,7 +952,7 @@ public class LocalMUCUser implements MUCUser
         final Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
         frag.element("item").addAttribute("nick", nickname);
         frag.addElement("status").addAttribute("code", "303");
-        chatRoom.send(presence);
+        chatRoom.send(presence, preExistingRole);
 
         // Send availability presence for the new nickname
         final String oldNick = preExistingRole.getNickname();

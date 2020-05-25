@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.muc;
 import org.dom4j.Element;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.muc.spi.FMUCHandler;
 import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
 import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
@@ -255,8 +256,7 @@ public interface MUCRoom extends Externalizable, Result {
                       @Nonnull Presence presence)
         throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
-            ConflictException, ServiceUnavailableException, NotAcceptableException,
-            FMUCException;
+            ConflictException, ServiceUnavailableException, NotAcceptableException;
 
     /**
      * Remove a member from the chat room.
@@ -549,6 +549,8 @@ public interface MUCRoom extends Externalizable, Result {
 
     IQAdminHandler getIQAdminHandler();
 
+    FMUCHandler getFmucHandler();
+
     /**
      * Returns the history of the room which includes chat transcripts.
      *
@@ -808,13 +810,13 @@ public interface MUCRoom extends Externalizable, Result {
 
     /**
      * Returns true if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
-     * When joining nodes are attemping a join, a rejection will be returned when this feature is disabled.
+     * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
      */
     boolean isFmucEnabled();
 
     /**
      * Sets if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
-     * When joining nodes are attemping a join, a rejection will be returned when this feature is disabled.
+     * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
      */
     void setFmucEnabled( boolean fmucEnabled );
 
@@ -1004,6 +1006,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sends a packet to the user.
      *
      * @param packet The packet to send
+     * @param sender Representation of the entity that sent the stanza.
      */
-    void send( Packet packet );
+    void send( @Nonnull Packet packet, @Nonnull MUCRole sender );
 }

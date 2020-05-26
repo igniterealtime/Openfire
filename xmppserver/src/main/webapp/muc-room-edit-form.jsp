@@ -532,7 +532,7 @@
                             </c:when>
                             <c:otherwise>
                                 <td><fmt:message key="muc.room.edit.form.service" />:</td>
-                                <td><c:out value="${roomJID.domain}"/>/td>
+                                <td><c:out value="${roomJID.domain}"/></td>
                             </c:otherwise>
                         </c:choose>
                     </tr>

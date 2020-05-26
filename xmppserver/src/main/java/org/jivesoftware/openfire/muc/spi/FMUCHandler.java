@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.muc.FMUCException;
 import org.jivesoftware.openfire.muc.ForbiddenException;
 import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoomHistory;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -304,6 +305,30 @@ public class FMUCHandler
         }
 
         result.getElement().addElement( FMUC ).addAttribute( "from", mucRole.getUserAddress().toString() );
+
+        return result;
+    }
+
+    /**
+     * Adds an FMUC child element to the stanza, if such an element does not yet exist.
+     *
+     * This method provides the functionally opposite implementation of {@link #createCopyWithoutFMUC(Packet)}.
+     *
+     * @param stanza The stanza to which an FMUC child element is to be added.
+     * @param <S> Type of stanza
+     * @return A copy of the stanza, with an added FMUC child element.
+     */
+    private static <S extends Packet> S enrichWithFMUCElement( @Nonnull S stanza, @Nonnull JID userAddress )
+    {
+        // Defensive copy - ensure that the original stanza (that might be routed locally) is not modified).
+        final S result = (S) stanza.createCopy();
+
+        final Element fmuc = result.getElement().element(FMUC);
+        if ( fmuc != null ) {
+            return result;
+        }
+
+        result.getElement().addElement( FMUC ).addAttribute( "from", userAddress.toString() );
 
         return result;
     }
@@ -727,8 +752,27 @@ public class FMUCHandler
             throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
         }
 
+        // TODO. Can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomHistoryAfterJoin be reused to reduce duplicate code and responsibilities?
         Log.trace("(room: '{}'): Sending history to joining node '{}'.", room.getJID(), joiningPeer );
-        // FIXME send history. Can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomHistoryAfterJoin be reused?
+        final MUCRoomHistory roomHistory = room.getRoomHistory();
+        final Iterator<Message> history = roomHistory.getMessageHistory();
+        while (history.hasNext()) {
+            // The message stanza in the history is the original stanza (with original addressing), which we can leverage
+            // to obtain the 'real' jid of the sender. Note that this sender need not be in the room any more, so we can't
+            // depend on having a MUCRole for it.
+            final Message oldMessage = history.next();
+
+            final JID originalAuthorUserAddress = oldMessage.getFrom();
+            final JID originalAuthorRoleAddress = new JID( room.getJID().getNode(), room.getJID().getDomain(), originalAuthorUserAddress.getResource() );
+
+            final Message enriched = enrichWithFMUCElement( oldMessage, originalAuthorUserAddress );
+
+            // Correct the addressing of the stanza.
+            enriched.setFrom( originalAuthorRoleAddress );
+            enriched.setTo( joiningPeer );
+
+            router.route( enriched );
+        }
     }
 
     private void afterJoinSendSubject( @Nonnull final JID joiningPeer )

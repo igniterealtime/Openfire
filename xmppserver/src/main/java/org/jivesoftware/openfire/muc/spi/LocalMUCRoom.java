@@ -617,7 +617,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                     Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
                 }
 
-                doJoinRoom( joinRole );
+                addOccupantRole( joinRole );
 
             } else {
                 // Grab the existing one.
@@ -662,28 +662,33 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         return joinRole;
     }
 
-    public MUCRole doJoinRoom( @Nonnull MUCRole joinRole )
+    /**
+     * Update internal state to have a user removed from the room.
+     *
+     * This method does not send out stanzas, trigger event handlers or perform cluster tasks.
+     *
+     * @param role Representation of the user to leave the room.
+     */
+    void doLeaveRoom( @Nonnull MUCRole role )
     {
-        Log.trace( "Joining room {}: {}", this.getJID(), joinRole );
+        Log.trace( "Joining room {}: {}", this.getJID(), role );
         lock.writeLock().lock();
         try
         {
             // Add the new user as an occupant of this room.
-            occupantsByNickname.compute(joinRole.getNickname().toLowerCase(), ( nick, occupants ) -> {
+            occupantsByNickname.compute(role.getNickname().toLowerCase(), ( nick, occupants ) -> {
                 List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
-                ret.add(joinRole);
+                ret.add(role);
                 return ret;
             });
 
             // Update the tables of occupants based on the bare and full JID.
-            occupantsByBareJID.compute(joinRole.getUserAddress().asBareJID(), ( jid, occupants ) -> {
+            occupantsByBareJID.compute(role.getUserAddress().asBareJID(), ( jid, occupants ) -> {
                 List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
-                ret.add(joinRole);
+                ret.add(role);
                 return ret;
             });
-            occupantsByFullJID.put(joinRole.getUserAddress(), joinRole);
-
-            return joinRole;
+            occupantsByFullJID.put(role.getUserAddress(), role);
         } finally {
             lock.writeLock().unlock();
         }
@@ -1024,18 +1029,77 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     /**
-     * Sends presence of new occupant to existing occupants.
+     * Adds the role of the occupant from all the internal occupants collections.
      *
-     * @param joinRole the role of the new occupant in the room.
+     * @param leaveRole the role to add.
      */
-    void sendInitialPresenceToExistingOccupants(MUCRole joinRole) {
+    void addOccupantRole( @Nonnull MUCRole role )
+    {
+        Log.trace( "Add occupant to room {}: {}", this.getJID(), role );
+        lock.writeLock().lock();
+        try
+        {
+            // Add the new user as an occupant of this room.
+            occupantsByNickname.compute(role.getNickname().toLowerCase(), ( nick, occupants ) -> {
+                List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
+                ret.add(role);
+                return ret;
+            });
+
+            // Update the tables of occupants based on the bare and full JID.
+            occupantsByBareJID.compute(role.getUserAddress().asBareJID(), ( jid, occupants ) -> {
+                List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
+                ret.add(role);
+                return ret;
+            });
+            occupantsByFullJID.put(role.getUserAddress(), role);
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Sends presence of a leaving occupant to other occupants.
+     *
+     * @param joinRole the role of the occupant that is leaving.
+     */
+    void sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), joinRole.getChatRoom().getJID() );
+        Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), leaveRole.getChatRoom().getJID() );
         try {
-            final Presence joinPresence = joinRole.getPresence().createCopy();
-            broadcastPresence(joinPresence, true, joinRole);
-        } catch (Exception e) {
-            Log.error( "An exception occurred while sending initial presence of new occupant '"+joinRole.getUserAddress()+"' to the existing occupants of room: '"+joinRole.getChatRoom().getJID()+"'.", e);
+            Presence originalPresence = leaveRole.getPresence();
+            Presence presence = originalPresence.createCopy();
+            presence.setType(Presence.Type.unavailable);
+            presence.setStatus(null);
+            // Change (or add) presence information about roles and affiliations
+            Element childElement = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+            if (childElement == null) {
+                childElement = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
+            }
+            Element item = childElement.element("item");
+            if (item == null) {
+                item = childElement.addElement("item");
+            }
+            item.addAttribute("role", "none");
+
+            // Check to see if the user's original presence is one we should broadcast
+            // a leave packet for. Need to check the original presence because we just
+            // set the role to "none" above, which is always broadcast.
+            if(!shouldBroadcastPresence(originalPresence)){
+                // Inform the leaving user that he/she has left the room
+                leaveRole.send(presence);
+            }
+            else {
+                if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
+                    // Inform the rest of the room occupants that the user has left the room
+                    if (JOIN_PRESENCE_ENABLE.getValue()) {
+                        broadcastPresence(presence, false, leaveRole);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            Log.error( "An exception occurred while sending leave presence of occupant '"+leaveRole.getUserAddress()+"' to the other occupants of room: '"+leaveRole.getChatRoom().getJID()+"'.", e);
         }
     }
 
@@ -1090,41 +1154,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             CacheFactory.doClusterTask(event);
         }
 
-        try {
-            Presence originalPresence = leaveRole.getPresence();
-            Presence presence = originalPresence.createCopy();
-            presence.setType(Presence.Type.unavailable);
-            presence.setStatus(null);
-            // Change (or add) presence information about roles and affiliations
-            Element childElement = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-            if (childElement == null) {
-                childElement = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
-            }
-            Element item = childElement.element("item");
-            if (item == null) {
-                item = childElement.addElement("item");
-            }
-            item.addAttribute("role", "none");
-
-            // Check to see if the user's original presence is one we should broadcast
-            // a leave packet for. Need to check the original presence because we just
-            // set the role to "none" above, which is always broadcast.
-            if(!shouldBroadcastPresence(originalPresence)){
-                // Inform the leaving user that he/she has left the room
-                leaveRole.send(presence);
-            }
-            else {
-                if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
-                    // Inform the rest of the room occupants that the user has left the room
-                    if (JOIN_PRESENCE_ENABLE.getValue()) {
-                        broadcastPresence(presence, false, leaveRole);
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
+        sendLeavePresenceToExistingOccupants(leaveRole);
 
         // Remove occupant from room and destroy room if empty and not persistent
         OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
@@ -1140,7 +1170,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         lock.writeLock().lock();
         try {
             // Removes the role from the room
-            removeOccupantRole(leaveRole, event.isOriginator());
+            removeOccupantRole(leaveRole);
+
+            if ( event.isOriginator() ) {
+                // Fire event that occupant left the room
+                MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+            }
 
             // TODO Implement this: If the room owner becomes unavailable for any reason before
             // submitting the form (e.g., a lost connection), the service will receive a presence
@@ -1170,13 +1205,29 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     /**
+     * Sends presence of new occupant to existing occupants.
+     *
+     * @param joinRole the role of the new occupant in the room.
+     */
+    void sendInitialPresenceToExistingOccupants(MUCRole joinRole) {
+        // Send the presence of this new occupant to existing occupants
+        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), joinRole.getChatRoom().getJID() );
+        try {
+            final Presence joinPresence = joinRole.getPresence().createCopy();
+            broadcastPresence(joinPresence, true, joinRole);
+        } catch (Exception e) {
+            Log.error( "An exception occurred while sending initial presence of new occupant '"+joinRole.getUserAddress()+"' to the existing occupants of room: '"+joinRole.getChatRoom().getJID()+"'.", e);
+        }
+    }
+
+    /**
      * Removes the role of the occupant from all the internal occupants collections. The role will
      * also be removed from the user's roles.
      *
      * @param leaveRole the role to remove.
-     * @param originator true if this JVM is the one that originated the event.
      */
-    private void removeOccupantRole(MUCRole leaveRole, boolean originator) {
+    void removeOccupantRole(MUCRole leaveRole) {
+        Log.trace( "Remove occupant from room {}: {}", this.getJID(), leaveRole );
         JID userAddress = leaveRole.getUserAddress();
         // Notify the user that he/she is no longer in the room
         leaveRole.destroy();
@@ -1201,10 +1252,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         finally {
             lock.writeLock().unlock();
         }
-        if (originator) {
-            // Fire event that occupant left the room
-            MUCEventDispatcher.occupantLeft(getRole().getRoleAddress(), userAddress, nickname);
-        }
     }
 
     public void destroyRoom(DestroyRoomRequest destroyRequest) {
@@ -1226,7 +1273,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                     else {
                         hasRemoteOccupants = true;
                     }
-                    removeOccupantRole(leaveRole, destroyRequest.isOriginator());
+                    removeOccupantRole(leaveRole);
+
+                    if (  destroyRequest.isOriginator() ) {
+                        // Fire event that occupant left the room
+                        MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+                    }
                 }
             }
             endTime = System.currentTimeMillis();

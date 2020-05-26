@@ -18,10 +18,7 @@ package org.jivesoftware.openfire.muc.spi;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.muc.FMUCException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoomHistory;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -384,7 +381,7 @@ public class FMUCHandler
 
     public synchronized void process( @Nonnull final Packet stanza )
     {
-        Log.trace( "(room: '{}'): Processing stanza from '{}'.", room.getJID(), stanza.getFrom() );
+        Log.trace( "(room: '{}'): Processing stanza from '{}': {}", room.getJID(), stanza.getFrom(), stanza.toXML() );
         final JID remoteMUC = stanza.getFrom().asBareJID();
 
         if ( stanza.getElement().element(FMUC) == null ) {
@@ -411,7 +408,11 @@ public class FMUCHandler
                     Log.debug("(room: '{}'): Received a complete FMUC join response from '{}'.", room.getJID(), remoteMUC);
                     finishOutboundJoin();
                 }
-            } else {
+            }
+            else if ( stanza instanceof Presence && stanza.getElement().element(FMUC).element("left") != null ) {
+                processLeftInstruction( (Presence) stanza );
+            }
+            else {
                 processRegularMUCStanza( stanza );
             }
         }
@@ -446,10 +447,42 @@ public class FMUCHandler
     }
 
     /**
-     * Processes a stanza that is received from another node in the FMUC set, by translating it into 'regular' MUC data.
+     * Process a 'left' notification that is sent to us by the remote joined node.
      *
-     * This implementation processes data (only) as 'regular' MUC data. It does not apply changes to the FMUC set (eg:
-     * removing or adding joining FMUC nodes).
+     * All occupants of the room will be notified that the occupants that joined through the node that has disconnected
+     * us are no longer available (in a typical scenario, no such local occupants are expected to be in the room, as the
+     * 'left' notification should be trigged by the last occupant having left the room).
+     *
+     * @param stanza The stanza that informed us that the FMUC peer considers us disconnected.
+     */
+    private void processLeftInstruction( @Nonnull final Presence stanza )
+    {
+        if ( stanza.getElement().element(FMUC) == null ) {
+            throw new IllegalArgumentException( "Unable to process stanza that does not have FMUC data: " + stanza.toXML() );
+        }
+
+        Log.trace("(room: '{}'): FMUC peer '{}' informed us that we left the FMUC set.", room.getJID(), outboundJoinConfiguration.getPeer() );
+
+        // This *should* only occur after all of our local users have left the room. For good measure, send out
+        // 'leave' for all occupants from the now disconnected FMUC node anyway.
+        for ( final JID occupantOnRemoteNode : outboundJoinConfiguration.occupants ) {
+            final MUCRole role = room.getOccupantByFullJID( occupantOnRemoteNode );
+
+            final Presence leave = new Presence();
+            leave.setType(Presence.Type.unavailable);
+            leave.setTo(role.getRoleAddress());
+            leave.setFrom(role.getUserAddress());
+            leave.setStatus("FMUC node disconnect");
+
+            makeRemoteOccupantLeaveRoom( leave );
+        }
+
+        outboundJoinConfiguration = null;
+        outboundJoin = null;
+    }
+
+    /**
+     * Processes a stanza that is received from another node in the FMUC set, by translating it into 'regular' MUC data.
      *
      * The provided input is expected to be a stanza received from another node in the FMUC set. It is stripped from
      * FMUC data, after which it is distributed to the local users.
@@ -488,15 +521,33 @@ public class FMUCHandler
                 {
                     Log.trace("(room: '{}'): Occupant '{}' left room on remote FMUC peer '{}'", room.getJID(), author, remoteMUC );
                     remoteFMUCNode.removeOccupant(author);
-                }
-                if ( isJoin )
-                {
+                    makeRemoteOccupantLeaveRoom( (Presence) stanza );
+
+                    // The joined room confirms that the joining room has left the set by sending a presence stanza from the bare JID
+                    // of the joined room to the bare JID of the joining room with an FMUC payload containing an element 'left'.
+                    if ( remoteFMUCNode instanceof InboundJoin && remoteFMUCNode.occupants.isEmpty() ) {
+                        Log.trace("(room: '{}'): Last occupant that joined on remote FMUC peer '{}' has now left the room. The peer has left the FMUC node set.", room.getJID(), remoteMUC );
+                        final Presence leaveFMUCSet = new Presence();
+                        leaveFMUCSet.setTo( remoteMUC );
+                        leaveFMUCSet.setFrom( room.getJID() );
+                        leaveFMUCSet.getElement().addElement( FMUC ).addElement( "left" );
+                        inboundJoins.remove(remoteMUC);
+
+                        router.route( leaveFMUCSet );
+                    }
+                } else if ( isJoin ) {
                     Log.trace("(room: '{}'): Occupant '{}' joined room on remote FMUC peer '{}'", room.getJID(), author, remoteMUC );
                     remoteFMUCNode.addOccupant(author);
+                    makeRemoteOccupantJoinRoom( (Presence) stanza );
+                } else {
+                    // FIXME implement sharing of presence.
+                    Log.error("Processing of presence stanzas received from other FMUC nodes is pending implementation! Ignored stanza: {}", stanza.toXML(), new UnsupportedOperationException());
                 }
             }
-            // FIXME implement sharing of presence.
-            Log.error( "Processing of presence stanzas received from other FMUC nodes is pending implementation!", new UnsupportedOperationException());
+            else
+            {
+                Log.warn( "Unable to process stanza: {}", stanza.toXML() );
+            }
         } else {
             room.send( stripped, senderRole );
         }
@@ -618,6 +669,18 @@ public class FMUCHandler
         return userJID;
     }
 
+    /**
+     * Processes a presence stanza that is expected to be an FMUC-flavored 'room join' representation, and adds the
+     * remote user to the room.
+     *
+     * This method will <em>not</em> make modifications to the state of the FMUC node set. It expects those changes to
+     * be taken care of by the caller.
+     *
+     * This method provides the functionally opposite implementation of {@link #makeRemoteOccupantLeaveRoom(Presence)}.
+     *
+     * @param presence The stanza representing a user on a federated FMUC node joining the room (cannot be null).
+     * @see #makeRemoteOccupantLeaveRoom(Presence)
+     */
     private void makeRemoteOccupantJoinRoom( @Nonnull final Presence presence )
     {
         // FIXME: better input validation / better problem handling when remote node sends crappy data!
@@ -666,13 +729,49 @@ public class FMUCHandler
         joinRole.setReportedFmucAddress( userJID );
 
         // Update the (local) room state to now include this occupant.
-        room.doJoinRoom( joinRole );
+        room.addOccupantRole( joinRole );
 
         // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
         // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
         room.sendInitialPresenceToExistingOccupants( joinRole );
+
+        // Fire event that occupant joined the room.
+        MUCEventDispatcher.occupantJoined( room.getJID(), joinRole.getUserAddress(), joinRole.getNickname());
     }
 
+    /**
+     * Processes a presence stanza that is expected to be an FMUC-flavored 'leave join' representation, and adds the
+     * remote user to the room.
+     *
+     * This method will <em>not</em> make modifications to the state of the FMUC node set. It expects those changes to
+     * be taken care of by the caller.
+     *
+     * This method provides the functionally opposite implementation of {@link #makeRemoteOccupantJoinRoom(Presence)}.
+     *
+     * @param presence The stanza representing a user on a federated FMUC node leaving the room (cannot be null).
+     * @see #makeRemoteOccupantJoinRoom(Presence)
+     */
+    private void makeRemoteOccupantLeaveRoom( @Nonnull final Presence presence )
+    {
+        // FIXME: better input validation / better problem handling when remote node sends crappy data!
+        final Element fmuc = presence.getElement().element(FMUC);
+        if ( fmuc == null ) {
+            throw new IllegalArgumentException( "Argument 'presence' should be an FMUC presence, but it does not appear to be: it is missing the FMUC child element." );
+        }
+        final JID userJID = getFMUCFromJID( presence );
+
+        final MUCRole leaveRole = room.getOccupantByFullJID( userJID );
+        leaveRole.setPresence( createCopyWithoutFMUC(presence) ); // update presence to reflect the 'leave' - this is used later to broadcast to other occupants.
+
+        // Send presence to inform all occupants of the room that the user has left.
+        room.sendLeavePresenceToExistingOccupants( leaveRole );
+
+        // Update the (local) room state to now include this occupant.
+        room.removeOccupantRole( leaveRole );
+
+        // Fire event that occupant left the room.
+        MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+    }
 
     /**
      * Checks if the entity that attempts to join, which is assumed to represent a remote, joining FMUC node.
@@ -850,7 +949,7 @@ public class FMUCHandler
         /**
          * The addresses of the occupants of the MUC that are joined through this FMUC node.
          */
-        private final Set<JID> occupants = new HashSet<>();
+        protected final Set<JID> occupants = new HashSet<>();
 
         public JID getPeer() {
             return peer;

@@ -341,7 +341,7 @@ public class LocalMUCUser implements MUCUser
         }
         else
         {
-            Log.debug("Rejecting message stanza sent by '{}' to room '{}': Sender is not an occupant of the room.", packet.getFrom(), roomName);
+            Log.debug("Rejecting message stanza sent by '{}' to room '{}': Sender is not an occupant of the room: {}", packet.getFrom(), roomName, packet.toXML());
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not in the room.");
         }
     }

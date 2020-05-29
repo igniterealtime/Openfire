@@ -730,7 +730,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         joinRole.send(roomSubject);
     }
 
-    private boolean alreadyJoinedWithThisNick( @Nonnull LocalMUCUser user, @Nonnull String nickname )
+    boolean alreadyJoinedWithThisNick( @Nonnull LocalMUCUser user, @Nonnull String nickname )
     {
         if (occupantsByNickname.containsKey(nickname.toLowerCase())) {
             List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
@@ -1604,12 +1604,20 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * An empty role that represents the room itself in the chatroom. Chatrooms need to be able to
      * speak (server messages) and so must have their own role in the chatroom.
      */
-    private class RoomRole implements MUCRole {
+    static class RoomRole implements MUCRole {
 
         private final MUCRoom room;
 
-        private RoomRole(MUCRoom room) {
+        private final JID reportedFmucAddress;
+
+        RoomRole(MUCRoom room) {
             this.room = room;
+            this.reportedFmucAddress = null;
+        }
+
+        RoomRole(MUCRoom room, JID reportedFmucAddress) {
+            this.room = room;
+            this.reportedFmucAddress = reportedFmucAddress;
         }
 
         @Override
@@ -1673,7 +1681,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         @Override
         public JID getRoleAddress() {
             if (crJID == null) {
-                crJID = new JID(room.getName(), mucService.getServiceDomain(), null, true);
+                crJID = new JID(room.getName(), room.getMUCService().getServiceDomain(), null, true);
             }
             return crJID;
         }
@@ -1685,7 +1693,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
         @Override
         public JID getReportedFmucAddress() {
-            return null;
+            return reportedFmucAddress;
         }
 
         @Override

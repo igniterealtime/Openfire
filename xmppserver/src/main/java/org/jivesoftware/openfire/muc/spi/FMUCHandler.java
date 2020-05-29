@@ -213,7 +213,7 @@ public class FMUCHandler
      */
     private CompletableFuture<?> initiateFederationOutbound( @Nonnull MUCRole mucRole )
     {
-        Log.debug("(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration, mucRole.getUserAddress(), mucRole.getRoleAddress() );
+        Log.debug("(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
 
         final Presence joinStanza = enrichWithFMUCElement( generateJoinStanza( mucRole ), mucRole );
         joinStanza.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), mucRole.getNickname() ) );
@@ -223,7 +223,7 @@ public class FMUCHandler
         final CompletableFuture<List<Packet>> result = new CompletableFuture<>();
         outboundJoinProgress = new OutboundJoinProgress(outboundJoinConfiguration.getPeer(), result );
 
-        Log.trace( "(room: '{}'): Sending FMUC join request.", room.getJID() );
+        Log.trace( "(room: '{}'): Sending FMUC join request: {}", room.getJID(), joinStanza.toXML() );
         router.route(joinStanza);
 
         return result;
@@ -243,15 +243,15 @@ public class FMUCHandler
      */
     private CompletableFuture<?> propagateOutbound( @Nonnull Packet stanza, @Nonnull MUCRole sender )
     {
+        Log.trace("(room: '{}'): Propagate outbound, stanza: {}, sender: {}", room.getJID(), stanza, sender);
         if ( outboundJoin == null )
         {
             Log.trace("(room: '{}'): No remote MUC joined. No need to propagate outbound.", room.getJID());
             return CompletableFuture.completedFuture(null);
         }
 
-        if ( !outboundJoin.wantsStanzasSentBy(sender ) ) {
-            Log.trace("(room: '{}'): Skipping outbound propagation to peer '{}', as this peer needs not be sent stanzas sent by '{}' (potentially because it's a master-slave mode joined FMUC and the sender originates on that node).", room.getJID(), outboundJoinProgress
-                .getPeer(), sender );
+        if ( !outboundJoin.wantsStanzasSentBy( sender ) ) {
+            Log.trace("(room: '{}'): Skipping outbound propagation to peer '{}', as this peer needs not be sent stanzas sent by '{}' (potentially because it's a master-master mode joined FMUC and the sender originates on that node).", room.getJID(), outboundJoin.getPeer(), sender );
             return CompletableFuture.completedFuture(null);
         }
 
@@ -293,6 +293,7 @@ public class FMUCHandler
      */
     private CompletableFuture<?> propagateInbound( @Nonnull Packet stanza, @Nonnull MUCRole sender )
     {
+        Log.trace("(room: '{}'): Propagate inbound, stanza: {}, sender: {}", room.getJID(), stanza, sender);
         if ( inboundJoins.isEmpty() )
         {
             Log.trace("(room: '{}'): No remote MUC joining us. No need to propagate inbound.", room.getJID());
@@ -323,10 +324,11 @@ public class FMUCHandler
      * This method provides the functionally opposite implementation of {@link #createCopyWithoutFMUC(Packet)}.
      *
      * @param stanza The stanza to which an FMUC child element is to be added.
+     * @param sender Representation of the originator of the stanza.
      * @param <S> Type of stanza
      * @return A copy of the stanza, with an added FMUC child element.
      */
-    private static <S extends Packet> S enrichWithFMUCElement( @Nonnull S stanza, @Nonnull MUCRole mucRole )
+    private static <S extends Packet> S enrichWithFMUCElement( @Nonnull S stanza, @Nonnull MUCRole sender )
     {
         // Defensive copy - ensure that the original stanza (that might be routed locally) is not modified).
         final S result = (S) stanza.createCopy();
@@ -336,7 +338,14 @@ public class FMUCHandler
             return result;
         }
 
-        result.getElement().addElement( FMUC ).addAttribute( "from", mucRole.getUserAddress().toString() );
+        final JID from;
+        if ( sender instanceof LocalMUCRoom.RoomRole ) {
+            // This role represents the room itself as the sender. Rooms do not have a 'user' address.
+            from = sender.getRoleAddress();
+        } else {
+            from = sender.getUserAddress();
+        }
+        result.getElement().addElement( FMUC ).addAttribute( "from", from.toString() );
 
         return result;
     }
@@ -347,10 +356,11 @@ public class FMUCHandler
      * This method provides the functionally opposite implementation of {@link #createCopyWithoutFMUC(Packet)}.
      *
      * @param stanza The stanza to which an FMUC child element is to be added.
+     * @param sender Representation of the originator of the stanza.
      * @param <S> Type of stanza
      * @return A copy of the stanza, with an added FMUC child element.
      */
-    private static <S extends Packet> S enrichWithFMUCElement( @Nonnull S stanza, @Nonnull JID userAddress )
+    private static <S extends Packet> S enrichWithFMUCElement( @Nonnull S stanza, @Nonnull JID sender )
     {
         // Defensive copy - ensure that the original stanza (that might be routed locally) is not modified).
         final S result = (S) stanza.createCopy();
@@ -360,7 +370,7 @@ public class FMUCHandler
             return result;
         }
 
-        result.getElement().addElement( FMUC ).addAttribute( "from", userAddress.toString() );
+        result.getElement().addElement( FMUC ).addAttribute( "from", sender.toString() );
 
         return result;
     }
@@ -611,6 +621,9 @@ public class FMUCHandler
                 }
             }
 
+            // Use a room role that can be used to identify the remote fmuc node (to prevent data from being echo'd back)
+            final LocalMUCRoom.RoomRole roomRole = new LocalMUCRoom.RoomRole( room, outboundJoin.getPeer() );
+
             // Use received data to augment state of the local room.
             for ( final Packet response : outboundJoinProgress.getResponses() ) {
                 try
@@ -620,7 +633,7 @@ public class FMUCHandler
                     } else if ( response instanceof Message && response.getElement().element("body") != null) {
                         addRemoteHistoryToRoom((Message) response);
                     } else if ( response instanceof Message && response.getElement().element("subject") != null) {
-                        applyRemoteSubjectToRoom((Message) response);
+                        applyRemoteSubjectToRoom((Message) response, roomRole);
                     }
                 } catch ( Exception e ) {
                     Log.error( "(room: '{}'): An unexpected exception occurred while processing FMUC join response stanzas.", room.getJID(), e );
@@ -632,11 +645,12 @@ public class FMUCHandler
         }
     }
 
-    private void applyRemoteSubjectToRoom( @Nonnull final Message message )
+    private void applyRemoteSubjectToRoom( @Nonnull final Message message, @Nonnull final MUCRole mucRole )
     {
         try
         {
-            room.changeSubject(createCopyWithoutFMUC(message), room.getRole()); // Using the room-role itself to set the subject (bypasses auth checks, which should ensure it is actually set).
+            Log.trace("(room: '{}'): Received subject from joined FMUC node '{}'. Applying it locally.", room.getJID(), mucRole.getReportedFmucAddress() );
+            room.changeSubject(createCopyWithoutFMUC(message), mucRole);
         }
         catch ( ForbiddenException e ) {
             // This should not be possible, as we're using a role above that should bypass the auth checks that throw this exception!
@@ -650,6 +664,8 @@ public class FMUCHandler
         if ( fmuc == null ) {
             throw new IllegalArgumentException( "Argument 'presence' should be an FMUC presence, but it does not appear to be: it is missing the FMUC child element." );
         }
+
+        Log.trace("(room: '{}'): Received history from joined FMUC node '{}'. Applying it locally.", room.getJID(), outboundJoinProgress.getPeer() );
 
         final JID userJID = new JID( fmuc.attributeValue("from"));
         final String nickname = message.getFrom().getResource();
@@ -762,15 +778,23 @@ public class FMUCHandler
         final LocalMUCRole joinRole = new LocalMUCRole( room.getMUCService(), room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence), router);
         joinRole.setReportedFmucAddress( userJID );
 
-        // Update the (local) room state to now include this occupant.
-        room.addOccupantRole( joinRole );
+        final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( user, nickname );
+        if (clientOnlyJoin)
+        {
+            Log.warn( "(room: '{}'): Ignoring join of occupant on remote peer '{}' with nickname '{}' as this user is already in the room.", room.getJID(), remoteMUC, nickname );
+        }
+        else
+        {
+            // Update the (local) room state to now include this occupant.
+            room.addOccupantRole(joinRole);
 
-        // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
-        // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
-        room.sendInitialPresenceToExistingOccupants( joinRole );
+            // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
+            // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
+            room.sendInitialPresenceToExistingOccupants(joinRole);
 
-        // Fire event that occupant joined the room.
-        MUCEventDispatcher.occupantJoined( room.getJID(), joinRole.getUserAddress(), joinRole.getNickname());
+            // Fire event that occupant joined the room.
+            MUCEventDispatcher.occupantJoined(room.getJID(), joinRole.getUserAddress(), joinRole.getNickname());
+        }
     }
 
     /**
@@ -916,16 +940,31 @@ public class FMUCHandler
         Log.trace("(room: '{}'): Sending subject to joining node '{}'.", room.getJID(), joiningPeer );
 
         // TODO can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomSubjectAfterJoin be re-used?
-        final Message roomSubject = new Message();
-        roomSubject.setFrom( this.room.getJID() );
-        roomSubject.setTo( joiningPeer );
-        roomSubject.setType( Message.Type.groupchat );
-        roomSubject.setID( UUID.randomUUID().toString() );
-        final Element subjectEl = roomSubject.getElement().addElement( "subject" );
-        if ( room.getSubject() != null && !room.getSubject().isEmpty() ) {
-            subjectEl.setText( room.getSubject() );
+        final MUCRoomHistory roomHistory = room.getRoomHistory();
+        Message roomSubject = roomHistory.getChangedSubject();
+        if ( roomSubject == null ) {
+            roomSubject = new Message();
+            roomSubject.setFrom(this.room.getJID()); // This might break FMUC, as it does not include the nickname of the author of the subject.
+            roomSubject.setTo(joiningPeer);
+            roomSubject.setType(Message.Type.groupchat);
+            roomSubject.setID(UUID.randomUUID().toString());
+            final Element subjectEl = roomSubject.getElement().addElement("subject");
+            if ( room.getSubject() != null && !room.getSubject().isEmpty() )
+            {
+                subjectEl.setText(room.getSubject());
+            }
         }
-        router.route( roomSubject );
+
+        final JID originalAuthorUserAddress = roomSubject.getFrom();
+        final JID originalAuthorRoleAddress = new JID( room.getJID().getNode(), room.getJID().getDomain(), originalAuthorUserAddress.getResource() );
+
+        final Message enriched = enrichWithFMUCElement( roomSubject, originalAuthorUserAddress );
+
+        // Correct the addressing of the stanza.
+        enriched.setFrom( originalAuthorRoleAddress );
+        enriched.setTo( joiningPeer );
+
+        router.route( enriched );
     }
 
     public static boolean isSubject( @Nonnull final Packet stanza )
@@ -994,8 +1033,8 @@ public class FMUCHandler
         }
 
         public boolean wantsStanzasSentBy( @Nonnull final MUCRole sender ) {
-            // Only send data if the sender is not an entity on this remote FMUC node.
-            return sender.getReportedFmucAddress() == null || !occupants.contains( sender.getReportedFmucAddress() );
+            // Only send data if the sender is not an entity on this remote FMUC node, or the remote FMUC node itself.
+            return sender.getReportedFmucAddress() == null || (!occupants.contains( sender.getReportedFmucAddress() ) && !peer.equals( sender.getReportedFmucAddress()) );
         }
 
         public boolean addOccupant( @Nonnull final JID occupant ) {

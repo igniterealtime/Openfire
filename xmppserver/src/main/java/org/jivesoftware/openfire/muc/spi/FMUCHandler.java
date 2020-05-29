@@ -543,19 +543,16 @@ public class FMUCHandler
         final MUCRole senderRole = room.getOccupantByFullJID( author );
         Log.trace("(room: '{}'): Processing stanza from remote FMUC peer '{}' as regular room traffic. Sender of stanza: {}", room.getJID(), remoteMUC, author );
 
-        // Strip all FMUC data.
-        final Packet stripped = createCopyWithoutFMUC( stanza );
-
         // Distribute. Note that this will distribute both to the local node, as well as to all FMUC nodes in the the FMUC set.
-        if ( stripped instanceof Presence ) {
+        if ( stanza instanceof Presence ) {
             RemoteFMUCNode remoteFMUCNode = inboundJoins.get(remoteMUC);
             if ( remoteFMUCNode == null && outboundJoin != null && remoteMUC.equals(outboundJoin.getPeer())) {
                 remoteFMUCNode = outboundJoin;
             }
             if ( remoteFMUCNode != null )
             {
-                final boolean isLeave = ((Presence) stripped).getType() == Presence.Type.unavailable;
-                final boolean isJoin = ((Presence) stripped).isAvailable();
+                final boolean isLeave = ((Presence) stanza).getType() == Presence.Type.unavailable;
+                final boolean isJoin = ((Presence) stanza).isAvailable();
 
                 if ( isLeave )
                 {
@@ -589,6 +586,20 @@ public class FMUCHandler
                 Log.warn( "Unable to process stanza: {}", stanza.toXML() );
             }
         } else {
+            // Strip all FMUC data.
+            final Packet stripped = createCopyWithoutFMUC( stanza );
+
+            // The 'stripped' stanza is going to be distributed locally. Act as if it originates from a local user, instead of the remote FMUC one.
+            final JID from;
+            if ( author != null ) {
+                from = senderRole.getRoleAddress();
+            } else {
+                Log.trace("(room: '{}'): FMUC stanza did not have 'from' value. Using room JID instead.", room.getJID() );
+                from = room.getJID();
+            }
+            stripped.setFrom( from );
+            stripped.setTo( room.getJID() );
+
             room.send( stripped, senderRole );
         }
     }

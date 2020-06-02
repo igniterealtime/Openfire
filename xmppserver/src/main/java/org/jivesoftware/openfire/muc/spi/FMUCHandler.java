@@ -470,10 +470,12 @@ public class FMUCHandler
         {
             Log.trace("(room: '{}'): Received stanza from '{}' that is not a known FMUC node.", room.getJID(), remoteMUC ); //Treating as inbound FMUC node join request.", room.getJID(), remoteMUC);
             if ( isFMUCJoinRequest( stanza ) ) {
-                if ( !isAcceptingFMUCJoiningNode( remoteMUC )) {
-                    rejectJoiningFMUCNode( (Presence) stanza );
-                } else {
+                try
+                {
+                    checkAcceptingFMUCJoiningNodePreconditions(remoteMUC);
                     acceptJoiningFMUCNode( (Presence) stanza );
+                } catch ( final FMUCException e ) {
+                    rejectJoiningFMUCNode( (Presence) stanza, e.getMessage() );
                 }
             } else {
                 Log.debug("(room: '{}'): Unable to process stanza from '{}'. Ignoring: {}", room.getJID(), remoteMUC, stanza.toXML() );
@@ -843,33 +845,58 @@ public class FMUCHandler
     }
 
     /**
-     * Checks if the entity that attempts to join, which is assumed to represent a remote, joining FMUC node.
+     * Checks if the entity that attempts to join, which is assumed to represent a remote, joining FMUC node, is allowed
+     * to join the local ('joined') FMUC node.
      *
-     * @param joiningPeer the address of the remote room that attempts to join the local room.
-     * @return true if the remote MUC is allowed to join, otherwise false.
+     * @param joiningPeer the address of the remote room that attempts to join the local FMUC node.
+     * @throws FMUCException when the peer cannot join the local FMUC node.
      */
-    private boolean isAcceptingFMUCJoiningNode( @Nonnull final JID joiningPeer )
+    private void checkAcceptingFMUCJoiningNodePreconditions( @Nonnull final JID joiningPeer ) throws FMUCException
     {
         if ( !joiningPeer.asBareJID().equals(joiningPeer) ) {
             throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
         }
-        // TODO replace this with a per-room configurable options (similar to other options that are configurable).
-        final boolean result = MUCPersistenceManager.getBooleanProperty(this.room.getMUCService().getServiceName(), "room.fmucEnabled", this.room.isFmucEnabled() );
 
-        Log.trace( "Remote room '{}' {} join room '{}' using FMUC.", joiningPeer, result ? "can" : "cannot", room.getJID() );
-        return result;
+        // TODO replace this with a per-room configurable options (similar to other options that are configurable).
+        if ( !MUCPersistenceManager.getBooleanProperty(this.room.getMUCService().getServiceName(), "room.fmucEnabled", this.room.isFmucEnabled() ) )
+        {
+            Log.info( "(room: '{}'): Rejecting join request of remote joining peer '{}': FMUC functionality is not enabled.", room.getJID(), joiningPeer );
+            throw new FMUCException( "FMUC functionality is not enabled." );
+        }
+
+        if ( this.outboundJoinConfiguration != null && joiningPeer.equals( this.outboundJoinConfiguration.getPeer()) ) {
+            Log.info( "(room: '{}'): Rejecting join request of remote joining peer '{}': The local, joined node is set up to federate with the joining node (cannot have circular federation).", room.getJID(), joiningPeer );
+            throw new FMUCException( "The joined node is set up to federate with the joining node (cannot have circular federation)." );
+        }
+
+        Log.debug( "(room: '{}'): Accepting join request of remote joining peer '{}'.", room.getJID(), joiningPeer );
     }
 
-    private void rejectJoiningFMUCNode( @Nonnull final Presence joinRequest )
+    /**
+     * Sends a stanza back to a remote, joining FMUC node that represents rejection of an FMUC join request.
+     *
+     * @param joinRequest The request to join that is being rejected
+     * @param rejectionMessage An optional, human readable message that describes the reason for the rejection.
+     */
+    private void rejectJoiningFMUCNode( @Nonnull final Presence joinRequest, @Nullable final String rejectionMessage )
     {
         Log.trace("(room: '{}'): Rejecting FMUC join request from '{}'.", room.getJID(), joinRequest.getFrom().asBareJID() );
         final Presence rejection = new Presence();
         rejection.setTo( joinRequest.getFrom() );
         rejection.setFrom( this.room.getJID() );
-        rejection.addChildElement( FMUC.getName(), FMUC.getNamespaceURI() ).addElement("reject");
+        final Element rejectEl = rejection.addChildElement( FMUC.getName(), FMUC.getNamespaceURI() ).addElement("reject");
+        if ( rejectionMessage != null && !rejectionMessage.trim().isEmpty() ) {
+            rejectEl.setText( rejectionMessage );
+        }
         router.route( rejection );
     }
 
+    /**
+     * Sends a stanza back to a remote, joining FMUC node that represents acceptance of a FMUC join request.
+     *
+     * @param joinRequest The request to join that is being accepted.
+     * @param rejectionMessage An optional, human readable message that describes the reason for the rejection.
+     */
     private void acceptJoiningFMUCNode( @Nonnull final Presence joinRequest )
     {
         Log.trace("(room: '{}'): Accepting FMUC join request from '{}'.", room.getJID(), joinRequest.getFrom().asBareJID() );

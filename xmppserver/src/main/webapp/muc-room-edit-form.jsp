@@ -33,8 +33,6 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
-<%@ page import="org.jivesoftware.openfire.muc.spi.FMUCHandler" %>
-<%@ page import="org.jivesoftware.openfire.muc.spi.FMUCMode" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -104,7 +102,6 @@
     boolean canchangenick = ParamUtils.getBooleanParameter(request, "roomconfig_canchangenick");
     boolean registration = ParamUtils.getBooleanParameter(request, "roomconfig_registration");
     String roomSubject = ParamUtils.getParameter(request, "room_topic", true);
-    String fmucOutboundJIDString = ParamUtils.getParameter(request,"roomconfig_fmuc_outbound_jid", true);
 
     if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() < 1) {
         // No services exist, so redirect to where one can configure the services
@@ -179,21 +176,6 @@
             errors.put("room_topic_longer","room_topic_longer");
         }
 
-        JID fmucOutboundJID = null;
-        if (fmucOutboundJIDString != null && !fmucOutboundJIDString.isEmpty()) {
-            try {
-                fmucOutboundJID = new JID( fmucOutboundJIDString );
-                if ( fmucOutboundJID.getNode() == null ) {
-                    errors.put("fmuc_outbound_jid", "no_node");
-                }
-                if ( fmucOutboundJID.getResource() != null ) {
-                    errors.put("fmuc_outbound_jid", "no_bare_jid");
-                }
-            } catch (IllegalArgumentException e) {
-                errors.put("fmuc_outbound_jid", "invalid_jid");
-                fmucOutboundJID = null;
-            }
-        }
         if (create && errors.size() == 0) {
             if (roomName == null || roomName.contains("@")) {
                 errors.put("roomName","roomName");
@@ -291,12 +273,6 @@
             // Send the IQ packet that will modify the room's configuration
             room.getIQOwnerHandler().handleIQ(iq, room.getRole());
 
-            if (fmucOutboundJID != null) {
-                final FMUCHandler.OutboundJoinConfiguration configuration = new FMUCHandler.OutboundJoinConfiguration(fmucOutboundJID, FMUCMode.MasterMaster);
-                final FMUCHandler fmucHandler = room.getFmucHandler();
-                fmucHandler.setOutboundJoinConfiguration(configuration);
-            }
-
             // Changes good, so redirect
             String params;
             if (create) {
@@ -359,7 +335,6 @@
             reservedNick = room.isLoginRestrictedToNickname();
             canchangenick = room.canChangeNickname();
             registration = room.isRegistrationEnabled();
-            fmucOutboundJIDString = room.getFmucHandler().getOutboundJoinConfiguration() == null ? "" : room.getFmucHandler().getOutboundJoinConfiguration().getPeer().toString();
         }
     }
     roomName = roomName == null ? "" : roomName;
@@ -394,7 +369,6 @@
     pageContext.setAttribute("canchangenick", canchangenick);
     pageContext.setAttribute("registration", registration);
     pageContext.setAttribute("enableLog", enableLog);
-    pageContext.setAttribute("fmucOutboundJID", fmucOutboundJIDString);
 
 %>
 
@@ -620,10 +594,6 @@
                                 <option value="anyone" ${allowpm eq 'anyone' ? 'selected' : ''}><fmt:message key="muc.room.edit.form.anyone" /></option>
                             </select>
                         </td>
-                    </tr>
-                    <tr>
-                        <td><label for="roomconfig_fmuc_outbound_jid">Establish FMUC federation with</label>:</td>
-                        <td><input name="roomconfig_fmuc_outbound_jid" id="roomconfig_fmuc_outbound_jid" value="${empty fmucOutboundJID ? "" : fn:escapeXml(fmucOutboundJID)}" type="text" size="40"></td>
                     </tr>
                 </tbody>
                 </table>

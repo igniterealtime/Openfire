@@ -715,7 +715,7 @@ public class FMUCHandler
         final JID userJID = new JID( fmuc.attributeValue("from"));
         final String nickname = message.getFrom().getResource();
         Date sentDate;
-        final Element delay = message.getChildElement("x","urn:xmpp:delay");
+        final Element delay = message.getChildElement("delay","urn:xmpp:delay");
         if ( delay != null ) {
             final String stamp = delay.attributeValue("stamp");
             try

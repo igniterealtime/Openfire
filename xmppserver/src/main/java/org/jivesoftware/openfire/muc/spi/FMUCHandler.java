@@ -579,8 +579,8 @@ public class FMUCHandler
                 if ( isLeave )
                 {
                     Log.trace("(room: '{}'): Occupant '{}' left room on remote FMUC peer '{}'", room.getJID(), author, remoteMUC );
-                    remoteFMUCNode.removeOccupant(author);
                     makeRemoteOccupantLeaveRoom( (Presence) stanza );
+                    remoteFMUCNode.removeOccupant(author); // Remove occupant only after the leave stanzas have been sent, otherwise the author is (no longer) recognized as an occupant of the particular node when the leave is being processed.
 
                     // The joined room confirms that the joining room has left the set by sending a presence stanza from the bare JID
                     // of the joined room to the bare JID of the joining room with an FMUC payload containing an element 'left'.

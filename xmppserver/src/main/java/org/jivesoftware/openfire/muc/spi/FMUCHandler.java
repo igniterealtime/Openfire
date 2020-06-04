@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 // TODO: monitor health of s2s connection, somehow?
+// FIXME: persist state (so that configuration survives a restart!)
 public class FMUCHandler
 {
     private static final Logger Log = LoggerFactory.getLogger( FMUCHandler.class );
@@ -82,10 +83,275 @@ public class FMUCHandler
         this.room = chatroom;
         this.router = packetRouter;
         this.fmucEnabled = MUCPersistenceManager.getBooleanProperty(chatroom.getMUCService().getServiceName(), "room.fmucEnabled", true); // FIXME: set the default to 'false'
+        if ( fmucEnabled ) {
+            startOutbound();
+        }
+    }
+
+    /**
+     * Starts federation, which will cause a federation attempt with the outbound ('joined') node, if one is configured,
+     * and there currently are occupants in the room.
+     */
+    public synchronized void startOutbound()
+    {
+        Log.debug( "(room: '{}'): FMUC outbound federation is being started...", room.getJID() );
+
+        final Collection<MUCRole> occupants = room.getOccupants();
+        if ( occupants.isEmpty() ) {
+            Log.trace("(room: '{}'): No occupants in the room. No need to initiate an FMUC join.", room.getJID());
+        } else {
+            Log.trace("(room: '{}'): {} occupant(s) in the room. Initiating an FMUC join for each of them.", room.getJID(), occupants.size());
+            for ( final MUCRole occupant : occupants ) {
+                try {
+                    Log.trace("(room: '{}'): Making occupant '{}' join the FMUC room.", room.getJID(), occupant.getUserAddress());
+                    join( occupant, false, true );
+                } catch ( Exception e ) {
+                    Log.trace("(room: '{}'): An exception occurred while making occupant '{}' join the FMUC room.", room.getJID(), occupant.getUserAddress(), e);
+                }
+            }
+        }
+        Log.debug( "(room: '{}'): Finished starting FMUC outbound federation.", room.getJID() );
+    }
+
+    /**
+     * Stops federation, which will cause any joined and joining nodes to be disconnected.
+     */
+    public synchronized void stop()
+    {
+        Log.debug( "(room: '{}'): FMUC federation is being stopped...", room.getJID() );
+
+        // Keep track of all occupants that are becoming unavailable due to them having joined on remote nodes.
+        final Set<JID> removedRemoteOccupants = new HashSet<>();
+
+        final Set<JID> removedOccupantsInbound = doStopInbound();
+        final Set<JID> removedOccupantsOutbound = doStopOutbound();
+        removedRemoteOccupants.addAll( removedOccupantsInbound );
+        removedRemoteOccupants.addAll( removedOccupantsOutbound );
+
+        Log.trace( "(room: '{}'): Done disconnecting inbound and outbound nodes from the node set. Now removing all their ({}) occupants from the room.", room.getJID(), removedRemoteOccupants.size() );
+        makeRemoteOccupantLeaveRoom( removedRemoteOccupants );
+
+        Log.debug( "(room: '{}'): Finished stopping FMUC federation.", room.getJID() );
+    }
+
+    /**
+     * Stops inbound federation, which will cause existing federation with all of the inbound ('joining') nodes, if any
+     * are established, to be teared down.
+     */
+    public synchronized void stopInbound() {
+        final Set<JID> removedOccupants = doStopInbound();
+
+        Log.trace( "(room: '{}'): Removing all ({}) occupants from the room for remote inbound node(s) that we just disconnected from.", room.getJID(), removedOccupants.size() );
+        makeRemoteOccupantLeaveRoom( removedOccupants );
+
+        Log.debug( "(room: '{}'): Finished stopping inbound FMUC federation.", room.getJID() );
+    }
+
+    /**
+     * Stops inbound federation, which will cause existing federation with one specific inbound ('joining') nodes to be
+     * teared down.
+     *
+     * @param peer the address of the remote node (must be a bare JID).
+     */
+    public synchronized void stopInbound( @Nonnull JID peer )
+    {
+        if ( !peer.asBareJID().equals(peer) ) {
+            throw new IllegalArgumentException( "Expected argument 'peer' to be a bare JID, but it was not: " + peer );
+        }
+
+        final Set<JID> removedOccupants = doStopInbound( peer );
+
+        Log.trace( "(room: '{}'): Removing all ({}) occupants from the room for remote inbound node '{}' that we just disconnected from.", room.getJID(), removedOccupants.size(), peer );
+        makeRemoteOccupantLeaveRoom( removedOccupants );
+
+        Log.debug( "(room: '{}'): Finished stopping inbound FMUC federation.", room.getJID() );
+    }
+
+    /**
+     * The workhorse implementation of stopping inbound federation, that returns a list of JIDs representing the
+     * occupants from the remote, joining nodes that are no longer in the room as a result of stopping the federation. For
+     * these occupants, a presence stanza should be shared with the remainder of the occupants. It is desirable to send
+     * these stanzas only after all any other nodes that are to be disconnected have been disconnected (to prevent
+     * sharing updates with other remote nodes that we might also be disconnecting from. This method does
+     * therefor not send these stanzas. Instead, it returns the addresses that should be send stanzas. This allows
+     * callers to aggregate addresses, and send the the stanzas in one iteration.
+     *
+     * The implementation in this method will inform the remote, joining node that they left the local, joined node by
+     * sending it a 'left' message.
+     *
+     * @return The JIDs of occupants on the remote, joining node that are no longer in the room.
+     */
+    private synchronized Set<JID> doStopInbound() {
+        return doStopInbound( null );
+    }
+
+    /**
+     * Identical to {@link #doStopInbound()} but used to disconnect just one node, instead of all of them.
+     *
+     * When null is passed as an argument, all inbound nodes are disconnected (equivalent to a call to {@link #doStopInbound()}).
+     *
+     * @param peer the address of the remote node (must be a bare JID), or null to remove all nodes.
+     * @return The JIDs of occupants on the remote, joining node that are no longer in the room.
+     * @see #doStopInbound()
+     */
+    private synchronized Set<JID> doStopInbound( @Nullable JID peer ) {
+        if ( peer != null && !peer.asBareJID().equals(peer) ) {
+            throw new IllegalArgumentException( "Expected argument 'peer' to be null or a bare JID, but it was not: " + peer );
+        }
+
+        final Set<JID> result = new HashSet<>();
+        if ( inboundJoins.isEmpty() ) {
+            Log.trace( "(room: '{}'): No remote MUC joining us. No need to inform joining nodes that they have now left.", room.getJID() );
+        } else {
+            final Iterator<Map.Entry<JID, InboundJoin>> iterator = inboundJoins.entrySet().iterator();
+            while ( iterator.hasNext() )
+            {
+                final InboundJoin inboundJoin = iterator.next().getValue();
+                if ( peer != null && !inboundJoin.getPeer().equals( peer )) {
+                    // This is not the peer you're looking for.
+                    continue;
+                }
+                iterator.remove(); // Remove inboundJoin so that it's no longer send stanzas, and incoming stanzas are being treated as if from an unconnected entity.
+
+                result.addAll( inboundJoin.occupants );
+
+                try
+                {
+                    Log.trace("(room: '{}'): Informing joining node '{}' that it is leaving the FMUC node set.", room.getJID(), inboundJoin.getPeer());
+                    final Presence left = new Presence();
+                    left.setFrom(room.getJID());
+                    left.setTo(inboundJoin.getPeer());
+                    left.getElement().addElement(FMUC).addElement("left");
+                    router.route(left);
+                }
+                catch ( Exception e )
+                {
+                    Log.warn("(room: '{}'): An exception occurred while informing joining node '{}' that it is leaving the FMUC node set.", room.getJID(), inboundJoin.getPeer(), e);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Stops outbound federation, which will cause existing federation with the outbound ('joined') node, if one is
+     * established, to be teared down.
+     */
+    public synchronized void stopOutbound()
+    {
+        final Set<JID> removedOccupants = doStopOutbound();
+
+        Log.trace("(room: '{}'): Removing all ({}) occupants from the room for remote outbound node that we just disconnected from.", room.getJID(), removedOccupants.size());
+        makeRemoteOccupantLeaveRoom( removedOccupants );
+
+        Log.debug( "(room: '{}'): Finished stopping outbound FMUC federation.", room.getJID() );
+    }
+
+    /**
+     * The workhorse implementation of stopping outbound federation, that returns a list of JIDs representing the
+     * occupants from the remote, joined node that are no longer in the room as a result of stopping the federation. For
+     * these occupants, a presence stanza should be shared with the remainder of the occupants. It is desirable to send
+     * these stanzas only after all any other nodes that are to be disconnected have been disconnected (to prevent
+     * sharing updates with other remote nodes that we might also be disconnecting from. This method does
+     * therefor not send these stanzas. Instead, it returns the addresses that should be send stanzas. This allows
+     * callers to aggregate addresses, and send the the stanzas in one iteration.
+     *
+     * The implementation in this method will inform the remote, joined node that the local, joining node has left, by
+     * sending it presence stanzas for all occupants that the local, joining node has contributed to the FMUC set. After
+     * the remote, joined, node has received the last stanza, it should conclude that the local, joining node has left
+     * (it should respond with a 'left' message, although this implementation does not depend on that).
+     *
+     * @return The JIDs of occupants on the remote, joined node that are no longer in the room.
+     */
+    private synchronized Set<JID> doStopOutbound()
+    {
+        Log.debug("(room: '{}'): Stopping federation with remote node that we joined (if any).", room.getJID());
+        final Set<JID> result = new HashSet<>();
+
+        // TODO handle case where outboundJoinProgress is not null (where an outbound join is in progress of being set up).
+        if ( outboundJoin == null ) {
+            Log.trace("(room: '{}'): We did not join a remote node. No need to inform one that we have left.", room.getJID());
+        } else {
+            Log.trace("(room: '{}'): Informing joined node '{}' that we are leaving the FMUC node set.", room.getJID(), outboundJoin.getPeer());
+
+            // Remove outboundJoin so that it's no longer send stanzas, and incoming stanzas are being treated as if from an unconnected entity.
+            // We'll need to store some state to be able to process things later though.
+            final JID peer = outboundJoin.getPeer();
+            final Set<PendingCallback> pendingEcho = outboundJoin.pendingEcho;
+            final Set<JID> theirOccupants = outboundJoin.occupants;
+
+            outboundJoin = null;
+            outboundJoinProgress = null;
+
+            result.addAll( theirOccupants );
+
+            // If we're waiting for an echo of a stanza that we've sent to this MUC, that now will no longer arrive. Make sure that we unblock all threads waiting for such an echo.
+            if ( !pendingEcho.isEmpty() )
+            {
+                Log.trace("(room: '{}'): Completing {} callbacks that were waiting for an echo from peer '{}' that is being disconnected from.", room.getJID(), pendingEcho.size(), peer );
+                for ( final PendingCallback pendingCallback : pendingEcho )
+                {
+                    try {
+                        pendingCallback.complete(); // TODO maybe completeExceptionally?
+                    } catch ( Exception e ) {
+                        Log.warn("(room: '{}'): An exception occurred while completing callback pending echo from peer '{}' (that we're disconnecting from).", room.getJID(), peer, e);
+                    }
+                }
+            }
+
+            // Find all the occupants that the local node contributed to the FMUC set (those are the occupants that are
+            // not joined through the remote, joined node). Note that these can include occupants that are on other nodes!
+            final Set<MUCRole> occupantsToLeave = new HashSet<>( room.getOccupants() );
+            occupantsToLeave.removeIf( mucRole -> mucRole.getReportedFmucAddress() != null && theirOccupants.contains( mucRole.getReportedFmucAddress() ));
+            Log.trace("(room: '{}'): Identified {} occupants that the local node contributed to the FMUC set.", room.getJID(), occupantsToLeave.size());
+
+            // Inform the remote, joined node that these are now all gone.
+            for ( final MUCRole occupantToLeave : occupantsToLeave ) {
+                try
+                {
+                    Log.trace("(room: '{}'): Informing joined node '{}' that occupant '{}' left the MUC.", room.getJID(), peer, occupantToLeave.getUserAddress());
+
+                    final Presence leave = occupantToLeave.getPresence().createCopy();
+                    leave.setType(Presence.Type.unavailable);
+                    leave.setTo(new JID(peer.getNode(), peer.getDomain(), occupantToLeave.getNickname()));
+                    leave.setFrom(occupantToLeave.getRoleAddress());
+
+                    // Change (or add) presence information about roles and affiliations
+                    Element childElement = leave.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                    if ( childElement == null )
+                    {
+                        childElement = leave.addChildElement("x", "http://jabber.org/protocol/muc#user");
+                    }
+                    Element item = childElement.element("item");
+                    if ( item == null )
+                    {
+                        item = childElement.addElement("item");
+                    }
+                    item.addAttribute("role", "none");
+
+                    final Presence enriched = enrichWithFMUCElement(leave, occupantToLeave.getReportedFmucAddress() != null ? occupantToLeave.getReportedFmucAddress() : occupantToLeave.getUserAddress());
+
+                    router.route(enriched);
+                } catch ( Exception e ) {
+                    Log.warn("(room: '{}'): An exception occurred while informing joined node '{}' that occupant '{}' left the MUC.", room.getJID(), peer, occupantToLeave.getUserAddress(), e);
+                }
+            }
+        }
+
+        Log.trace("(room: '{}'): Finished stopping federation with remote node that we joined (if any).", room.getJID());
+        return result;
     }
 
     public void setFmucEnabled(boolean fmucEnabled) {
-        this.fmucEnabled = fmucEnabled;
+        if ( this.fmucEnabled != fmucEnabled ) {
+            this.fmucEnabled = fmucEnabled;
+            Log.debug( "(room: '{}'): Changing availability of FMUC to {}.", room.getJID(), fmucEnabled );
+            if (fmucEnabled) {
+                startOutbound();
+            } else {
+                stop();
+            }
+        }
     }
 
     public boolean isFmucEnabled() {
@@ -94,13 +360,34 @@ public class FMUCHandler
 
     public synchronized void setOutboundJoinConfiguration( @Nullable final OutboundJoinConfiguration config )
     {
-        // TODO allow for better configuration, even when federation has already been set up.
-        if ( outboundJoinProgress != null || outboundJoin != null ) {
-            throw new IllegalStateException( "Cannot change Outbound FMUC configuration when an existing outbound FMUC connection is in progress." );
+        // TODO Allow for this.
+        if ( outboundJoinProgress != null ) {
+            throw new IllegalStateException( "Cannot change Outbound FMUC configuration when an existing outbound FMUC connection is in process of being set up." );
         }
 
-        this.outboundJoinConfiguration = config;
-
+        Log.debug( "(room: '{}'): Changing outbound join configuration.", room.getJID() );
+        if ( this.outboundJoinConfiguration == null && config != null ) {
+            Log.trace( "(room: '{}'): Did not, but now has, outbound join configuration. Starting federation...", room.getJID() );
+            this.outboundJoinConfiguration = config;
+            startOutbound();
+        } else if ( this.outboundJoinConfiguration != null && config == null ) {
+            Log.trace( "(room: '{}'): Had, but now no longer has, outbound join configuration. Stopping federation...", room.getJID() );
+            this.outboundJoinConfiguration = config;
+            stopOutbound();
+        } else if ( this.outboundJoinConfiguration != null && config != null ) {
+            if ( outboundJoin == null ) {
+                this.outboundJoinConfiguration = config;
+            } else {
+                if ( outboundJoin.getConfiguration().equals( config ) ) {
+                    // no change
+                } else {
+                    Log.trace( "(room: '{}'): Already had outbound join configuration, now got a different config. Restarting federation...", room.getJID() );
+                    stopOutbound();
+                    this.outboundJoinConfiguration = config;
+                    startOutbound();
+                }
+            }
+        }
     }
 
     public synchronized OutboundJoinConfiguration getOutboundJoinConfiguration() {
@@ -162,33 +449,42 @@ public class FMUCHandler
      */
     public synchronized Future<?> join( @Nonnull MUCRole mucRole )
     {
+        return join( mucRole, true, true );
+    }
+
+    protected synchronized Future<?> join( @Nonnull MUCRole mucRole, final boolean includeInbound, final boolean includeOutbound )
+    {
         Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
 
-        // Do we need to initiate a new outbound federation (are we configured to have an outbound federation, but has one not been started yet?
         final CompletableFuture<?> propagateToOutbound;
-        if ( outboundJoinConfiguration != null) {
-            if ( outboundJoin == null ) {
-                if ( outboundJoinProgress == null ) {
-                    Log.trace("(room: '{}'): FMUC configuration contains configuration for a remote MUC that needs to be joined: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
-                    // When a new federation is established, there's no need to explicitly propagate the join too - that's implicitly done as part of the initialization of the new federation.
-                    propagateToOutbound = initiateFederationOutbound( mucRole );
-                } else {
-                    // Kind of an edge case? Unsure if this is being processed properly.
-                    Log.info("(room: '{}'): Received a FMUC 'join' request for a remote MUC that we're already in process of joining: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
-                    return outboundJoinProgress.getCallback();
-                }
-            }
-            else
-            {
-                // TODO Doesn't this imply some kind of problem - why would we be joining a MUC that we've already joined?
-                Log.warn("(room: '{}'): FMUC configuration contains configuration for a remote MUC: {}. Federation with this MUC has already been established.", room.getJID(), outboundJoin.getPeer() );
-                // propagate to existing the existing joined FMUC node (be blocking if master/slave mode!)
-                propagateToOutbound = propagateOutbound( generateJoinStanza( mucRole ), mucRole );
-            }
-        } else {
-            // Nothing to do!
-            Log.trace( "(room: '{}'): FMUC configuration does not contain a remote MUC that needs to be joined.", room.getJID() );
+        if ( !includeOutbound ) {
+            Log.trace( "(room: '{}'): skip propagating to outbound, as instructed.", room.getJID() );
             propagateToOutbound = CompletableFuture.completedFuture(null);
+        } else {
+            // Do we need to initiate a new outbound federation (are we configured to have an outbound federation, but has one not been started yet?
+            if ( outboundJoinConfiguration != null) {
+                if ( outboundJoin == null ) {
+                    if ( outboundJoinProgress == null ) {
+                        Log.trace("(room: '{}'): FMUC configuration contains configuration for a remote MUC that needs to be joined: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
+                        // When a new federation is established, there's no need to explicitly propagate the join too - that's implicitly done as part of the initialization of the new federation.
+                        propagateToOutbound = initiateFederationOutbound( mucRole );
+                    } else {
+                        Log.debug("(room: '{}'): Received a FMUC 'join' request for a remote MUC that we're already in process of joining: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
+                        return outboundJoinProgress.addToQueue( generateJoinStanza( mucRole ), mucRole ); // queue a new join stanza to be sent after the ongoing join completes.
+                    }
+                }
+                else
+                {
+                    // TODO Doesn't this imply some kind of problem - why would we be joining a MUC that we've already joined?
+                    Log.warn("(room: '{}'): FMUC configuration contains configuration for a remote MUC: {}. Federation with this MUC has already been established.", room.getJID(), outboundJoin.getPeer() );
+                    // propagate to existing the existing joined FMUC node (be blocking if master/slave mode!)
+                    propagateToOutbound = propagateOutbound( generateJoinStanza( mucRole ), mucRole );
+                }
+            } else {
+                // Nothing to do!
+                Log.trace( "(room: '{}'): FMUC configuration does not contain a remote MUC that needs to be joined.", room.getJID() );
+                propagateToOutbound = CompletableFuture.completedFuture(null);
+            }
         }
 
         /* TODO this implementation currently is blocking, and synchronous: inbound propagation only occurs after outbound
@@ -197,7 +493,13 @@ public class FMUCHandler
                 (and thus should not be propagated to the inbound nodes. */
 
         // propagate to all joining FMUC nodes (need never block).
-        final CompletableFuture<?> propagateToInbound = propagateInbound( generateJoinStanza( mucRole ), mucRole );
+        final CompletableFuture<?> propagateToInbound;
+        if ( !includeInbound ) {
+            Log.trace( "(room: '{}'): skip propagating to inbound, as instructed.", room.getJID() );
+            propagateToInbound = CompletableFuture.completedFuture(null);
+        } else {
+            propagateToInbound = propagateInbound( generateJoinStanza( mucRole ), mucRole );
+        }
 
         // Return a Future that completes when all of the Futures constructed above complete.
         return CompletableFuture.allOf( propagateToOutbound, propagateToInbound );
@@ -527,17 +829,7 @@ public class FMUCHandler
 
         // This *should* only occur after all of our local users have left the room. For good measure, send out
         // 'leave' for all occupants from the now disconnected FMUC node anyway.
-        for ( final JID occupantOnRemoteNode : outboundJoin.occupants ) {
-            final MUCRole role = room.getOccupantByFullJID( occupantOnRemoteNode );
-
-            final Presence leave = new Presence();
-            leave.setType(Presence.Type.unavailable);
-            leave.setTo(role.getRoleAddress());
-            leave.setFrom(role.getUserAddress());
-            leave.setStatus("FMUC node disconnect");
-
-            makeRemoteOccupantLeaveRoom( leave );
-        }
+        makeRemoteOccupantLeaveRoom( outboundJoin.occupants );
 
         outboundJoin = null;
         outboundJoinProgress = null;
@@ -653,7 +945,7 @@ public class FMUCHandler
             for ( final Packet response : outboundJoinProgress.getResponses() ) {
                 if ( response instanceof Presence ) {
                     final JID occupantOnJoinedNode = getFMUCFromJID(response);
-                    outboundJoin.addOccupant(occupantOnJoinedNode );
+                    outboundJoin.addOccupant( occupantOnJoinedNode );
                 }
             }
 
@@ -843,7 +1135,44 @@ public class FMUCHandler
     }
 
     /**
-     * Processes a presence stanza that is expected to be an FMUC-flavored 'leave join' representation, and adds the
+     * Removes a remote user from the room.
+     *
+     * This method is intended to be used when a remote node is being disconnected from the FMUC node set, without having
+     * sent 'leave' presence stanzas for its occupants. This method generates such presence stanzas, and delegates
+     * further processing to {@link makeRemoteOccupantLeaveRoom}
+     *
+     * @param occupant The occupants to be removed from the room.
+     */
+    private void makeRemoteOccupantLeaveRoom( @Nonnull Set<JID> removedRemoteOccupants ) {
+        for ( final JID removedRemoteOccupant : removedRemoteOccupants )
+        {
+            try
+            {
+                Log.trace("(room: '{}'): Removing occupant '{}' that was joined through a (now presumably disconnected) remote node.", room.getJID(), removedRemoteOccupant);
+                final MUCRole role = room.getOccupantByFullJID( removedRemoteOccupant );
+                if ( role == null ) {
+                    Log.warn("(room: '{}'): Unable to remove '{}' as it currently is not registered as an occupant of this room.", room.getJID(), removedRemoteOccupant);
+                    continue;
+                }
+
+                final Presence leave = new Presence();
+                leave.setType(Presence.Type.unavailable);
+                leave.setTo(role.getRoleAddress());
+                leave.setFrom(role.getUserAddress());
+                leave.setStatus("FMUC node disconnect");
+                final Presence enriched = enrichWithFMUCElement( leave, role.getReportedFmucAddress() );
+
+                makeRemoteOccupantLeaveRoom( enriched );
+            }
+            catch ( Exception e )
+            {
+                Log.warn("(room: '{}'): An exception occurred while removing occupant '{}' from a (now presumably disconnected) remote node.", room.getJID(), removedRemoteOccupant, e);
+            }
+        }
+    }
+
+    /**
+     * Processes a presence stanza that is expected to be an FMUC-flavored 'leave' representation, and removes the
      * remote user to the room.
      *
      * This method will <em>not</em> make modifications to the state of the FMUC node set. It expects those changes to
@@ -1145,6 +1474,22 @@ public class FMUCHandler
         {
             return peer;
         }
+
+        @Override
+        public boolean equals( final Object o )
+        {
+            if ( this == o ) { return true; }
+            if ( o == null || getClass() != o.getClass() ) { return false; }
+            final OutboundJoinConfiguration that = (OutboundJoinConfiguration) o;
+            return mode == that.mode &&
+                peer.equals(that.peer);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(mode, peer);
+        }
     }
 
     static class OutboundJoin extends RemoteFMUCNode
@@ -1172,6 +1517,10 @@ public class FMUCHandler
         public FMUCMode getMode()
         {
             return mode;
+        }
+
+        public OutboundJoinConfiguration getConfiguration() {
+            return new OutboundJoinConfiguration( getPeer(), getMode() );
         }
 
         @Override

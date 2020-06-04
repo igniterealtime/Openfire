@@ -1406,6 +1406,14 @@ public class FMUCHandler
         return result;
     }
 
+    public OutboundJoin getOutboundJoin() {
+        return outboundJoin;
+    }
+
+    public Collection<InboundJoin> getInboundJoins() {
+        return inboundJoins.values();
+    }
+
     abstract static class RemoteFMUCNode implements Serializable
     {
         private final Logger Log;
@@ -1445,9 +1453,13 @@ public class FMUCHandler
             Log.trace( "Removing remote occupant: '{}'", occupant );
             return occupants.remove( occupant );
         }
+
+        public Set<JID> getOccupants() {
+            return occupants;
+        }
     }
 
-    static class InboundJoin extends RemoteFMUCNode
+    public static class InboundJoin extends RemoteFMUCNode
     {
         public InboundJoin( @Nonnull final JID peer )
         {
@@ -1492,7 +1504,7 @@ public class FMUCHandler
         }
     }
 
-    static class OutboundJoin extends RemoteFMUCNode
+    public static class OutboundJoin extends RemoteFMUCNode
     {
         private final FMUCMode mode;
 

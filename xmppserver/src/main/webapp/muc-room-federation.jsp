@@ -226,31 +226,91 @@
 <br>
 
 <p>
-    <fmt:message key="muc.room.occupants.detail.info" />
+    Currently, federation with these MUCs has been established.
 </p>
 
 <div class="jive-table">
     <table cellpadding="0" cellspacing="0" border="0" width="100%">
         <thead>
         <tr>
-            <th scope="col"><fmt:message key="muc.room.occupants.user" /></th>
-            <th scope="col"><fmt:message key="muc.room.occupants.nickname" /></th>
-            <th scope="col"><fmt:message key="muc.room.occupants.role" /></th>
-            <th scope="col"><fmt:message key="muc.room.occupants.affiliation" /></th>
-            <th scope="col"><fmt:message key="muc.room.occupants.kick" /></th>
+            <th scope="col">Remote MUC address</th>
+            <th scope="col">Federation direction</th>
+            <th scope="col">Occupants on node</th>
+            <th scope="col">Close</th>
         </tr>
         </thead>
         <tbody>
-        <% for (MUCRole role : room.getOccupants()) { %>
+        <c:if test="${empty room.fmucHandler.outboundJoin and empty room.fmucHandler.inboundJoins}">
         <tr>
-            <td><%= StringUtils.escapeHTMLTags(role.getUserAddress().toString()) %></td>
-            <td><%= StringUtils.escapeHTMLTags(role.getNickname().toString()) %></td>
-            <td><%= StringUtils.escapeHTMLTags(role.getRole().toString()) %></td>
-            <td><%= StringUtils.escapeHTMLTags(role.getAffiliation().toString()) %></td>
-            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1&csrf=${csrf}" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
+            <td colspan="4">(Currently, there is no ongoing federation)</td>
         </tr>
-        <% } %>
-        </tbody>
+        </c:if>
+        <c:if test="${not empty room.fmucHandler.outboundJoin}">
+            <c:forEach var="occupant" items="${room.fmucHandler.outboundJoin.occupants}" varStatus="status">
+                <tr>
+                    <td>
+                        <c:choose>
+                            <c:when test="${status.first}">
+                                <c:out value="${room.fmucHandler.outboundJoin.peer}"/>
+                            </c:when>
+                            <c:otherwise>&nbsp;</c:otherwise>
+                        </c:choose>
+                    </td>
+                    <td>
+                        <c:choose>
+                            <c:when test="${status.first}">
+                                Outbound (mode: <c:out value="${room.fmucHandler.outboundJoin.mode}"/>)
+                            </c:when>
+                            <c:otherwise>&nbsp;</c:otherwise>
+                        </c:choose>
+                    </td>
+                    <td>
+                        <c:out value="${occupant}"/>
+                    </td>
+                    <td width="1%" align="center" style="border-right:1px #ccc solid;">
+                        <c:choose>
+                            <c:when test="${status.first}">
+                                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                            </c:when>
+                            <c:otherwise>&nbsp;</c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+            </c:forEach>
+        </c:if>
+        <c:forEach var="inboundJoin" items="${room.fmucHandler.inboundJoins}">
+            <c:forEach var="occupant" items="${inboundJoin.occupants}" varStatus="status">
+            <tr>
+                <td>
+                    <c:choose>
+                        <c:when test="${status.first}">
+                            <c:out value="${inboundJoin.peer}"/>
+                        </c:when>
+                        <c:otherwise>&nbsp;</c:otherwise>
+                    </c:choose>
+                </td>
+                <td>
+                    <c:choose>
+                        <c:when test="${status.first}">
+                            Inbound
+                        </c:when>
+                        <c:otherwise>&nbsp;</c:otherwise>
+                    </c:choose>
+                </td>
+                <td>
+                    <c:out value="${occupant}"/>
+                </td>
+                <td width="1%" align="center" style="border-right:1px #ccc solid;">
+                    <c:choose>
+                        <c:when test="${status.first}">
+                            <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                        </c:when>
+                        <c:otherwise>&nbsp;</c:otherwise>
+                    </c:choose>
+                </td>
+            </tr>
+            </c:forEach>
+        </c:forEach>
     </table>
 </div>
 

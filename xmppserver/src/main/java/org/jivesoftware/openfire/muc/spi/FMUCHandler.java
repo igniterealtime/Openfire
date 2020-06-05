@@ -509,7 +509,7 @@ public class FMUCHandler
      * Attempt to establish a federation with a remote MUC room. In this relation 'our' room will take the role of
      * 'joining FMUC node'.
      *
-     * @param toJoinNode Address of the (remote) MUC to federate with.
+     * @param mucRole Occupant that joined the room, triggering the federation to be initiated.
      * @return A future object that completes when the join can be propagated locally.
      */
     private CompletableFuture<?> initiateFederationOutbound( @Nonnull MUCRole mucRole )
@@ -1141,7 +1141,7 @@ public class FMUCHandler
      * sent 'leave' presence stanzas for its occupants. This method generates such presence stanzas, and delegates
      * further processing to {@link makeRemoteOccupantLeaveRoom}
      *
-     * @param occupant The occupants to be removed from the room.
+     * @param removedRemoteOccupants The occupants to be removed from the room.
      */
     private void makeRemoteOccupantLeaveRoom( @Nonnull Set<JID> removedRemoteOccupants ) {
         for ( final JID removedRemoteOccupant : removedRemoteOccupants )
@@ -1256,7 +1256,6 @@ public class FMUCHandler
      * Sends a stanza back to a remote, joining FMUC node that represents acceptance of a FMUC join request.
      *
      * @param joinRequest The request to join that is being accepted.
-     * @param rejectionMessage An optional, human readable message that describes the reason for the rejection.
      */
     private void acceptJoiningFMUCNode( @Nonnull final Presence joinRequest )
     {

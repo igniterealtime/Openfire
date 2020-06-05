@@ -908,7 +908,6 @@ public class LocalMUCUser implements MUCUser
      * Process a request to change a nickname.
      *
      * @param packet          The stanza representing the nickname-change request.
-     * @param roomName        The name of the room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza.
      * @param nickname        The requested nickname.
      */

@@ -1031,7 +1031,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     /**
      * Adds the role of the occupant from all the internal occupants collections.
      *
-     * @param leaveRole the role to add.
+     * @param role the role to add.
      */
     void addOccupantRole( @Nonnull MUCRole role )
     {
@@ -1061,7 +1061,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     /**
      * Sends presence of a leaving occupant to other occupants.
      *
-     * @param joinRole the role of the occupant that is leaving.
+     * @param leaveRole the role of the occupant that is leaving.
      */
     void sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
         // Send the presence of this new occupant to existing occupants

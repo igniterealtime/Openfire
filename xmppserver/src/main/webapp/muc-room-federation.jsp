@@ -240,9 +240,22 @@
         </tr>
         </thead>
         <tbody>
-        <c:if test="${empty room.fmucHandler.outboundJoin and empty room.fmucHandler.inboundJoins}">
+        <c:if test="${empty room.fmucHandler.outboundJoin and empty room.fmucHandler.outboundJoinProgress and empty room.fmucHandler.inboundJoins}">
         <tr>
             <td colspan="4">(Currently, there is no ongoing federation)</td>
+        </tr>
+        </c:if>
+        <c:if test="${not empty room.fmucHandler.outboundJoinProgress}">
+        <tr>
+            <td>
+                <c:out value="${room.fmucHandler.outboundJoinProgress.peer}"/>
+            </td>
+            <td colspan="2">
+                Outbound, federation being established...
+            </td>
+            <td width="1%" align="center" style="border-right:1px #ccc solid;">
+                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoinProgress.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+            </td>
         </tr>
         </c:if>
         <c:if test="${not empty room.fmucHandler.outboundJoin}">

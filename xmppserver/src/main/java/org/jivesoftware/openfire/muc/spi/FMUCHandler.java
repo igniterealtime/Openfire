@@ -1431,6 +1431,10 @@ public class FMUCHandler
         return outboundJoin;
     }
 
+    public OutboundJoinProgress getOutboundJoinProgress() {
+        return outboundJoinProgress;
+    }
+
     public Collection<InboundJoin> getInboundJoins() {
         return inboundJoins.values();
     }
@@ -1605,7 +1609,7 @@ public class FMUCHandler
         }
     }
 
-    static class OutboundJoinProgress implements Serializable
+    public static class OutboundJoinProgress implements Serializable
     {
         private final Logger Log;
 

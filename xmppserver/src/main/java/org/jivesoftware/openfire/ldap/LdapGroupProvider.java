@@ -247,6 +247,10 @@ public class LdapGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> search(String key, String value) {
+        if (key.equals("sharedRoster.displayName")){
+            return super.search(key,value);
+        }
+
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));

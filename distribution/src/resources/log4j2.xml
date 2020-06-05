@@ -80,8 +80,12 @@
             <AppenderRef ref="console"/>
         </Logger>
 
+        <Logger name="org.jivesoftware.openfire.SessionManager" level="debug"/>
+
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
+
+        <Logger name="org.apache.mina.filter.executor.OrderedThreadPoolExecutor" level="warn"/>
 
         <Root level="info">
             <AppenderRef ref="all-out"/>

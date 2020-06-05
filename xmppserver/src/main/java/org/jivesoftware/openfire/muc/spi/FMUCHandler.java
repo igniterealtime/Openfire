@@ -272,8 +272,7 @@ public class FMUCHandler
             Log.trace("(room: '{}'): We are not in progress of joining a remote node. No need to abort such an effort.", room.getJID());
         } else {
             Log.trace("(room: '{}'): Aborting the ongoing effort of joining remote node '{}'.", room.getJID(), outboundJoinProgress.getPeer());
-            outboundJoinProgress.abort();
-            outboundJoinProgress = null;
+            abortOutboundJoinProgress();
         }
 
         if ( outboundJoin == null) {
@@ -371,14 +370,12 @@ public class FMUCHandler
         if ( this.outboundJoinProgress != null ) {
             if (config == null) {
                 Log.trace( "(room: '{}'): Had, but now no longer has, outbound join configuration. Aborting ongoing federation attempt...", room.getJID() );
-                outboundJoinProgress.abort();
-                outboundJoinProgress = null;
+                abortOutboundJoinProgress();
             } else if ( this.outboundJoinProgress.getPeer().equals( config.getPeer() ) ) {
                 Log.trace( "(room: '{}'): New configuration matches peer that ongoing federation attempt is made with. Allowing attempt to continue.", room.getJID() );
             } else {
                 Log.trace( "(room: '{}'): New configuration targets a different peer that ongoing federation attempt is made with. Aborting attempt.", room.getJID() );
-                outboundJoinProgress.abort();
-                outboundJoinProgress = null;
+                abortOutboundJoinProgress();
             }
         }
 
@@ -1439,6 +1436,14 @@ public class FMUCHandler
         return inboundJoins.values();
     }
 
+    public void abortOutboundJoinProgress()
+    {
+        if ( outboundJoinProgress != null ) {
+            outboundJoinProgress.abort();
+            outboundJoinProgress = null;
+        }
+    }
+
     abstract static class RemoteFMUCNode implements Serializable
     {
         private final Logger Log;
@@ -1740,7 +1745,7 @@ public class FMUCHandler
             return joinResult != null && joinResult;
         }
 
-        public synchronized void abort()
+        synchronized void abort()
         {
             Log.trace( "Aborting federation attempt." );
 
@@ -1762,7 +1767,7 @@ public class FMUCHandler
             callback.completeExceptionally( new IllegalStateException( "Federation with peer " + peer + " has been aborted.") );
         }
 
-        class QueuedStanza {
+        static class QueuedStanza {
             final Packet stanza;
             final MUCRole sender;
             final CompletableFuture<?> future;

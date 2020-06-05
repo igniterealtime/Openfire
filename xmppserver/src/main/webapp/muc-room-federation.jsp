@@ -16,8 +16,7 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.muc.MUCRole,
-                 org.jivesoftware.openfire.muc.MUCRoom,
+<%@ page import="org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.openfire.muc.spi.FMUCHandler,
                  org.jivesoftware.openfire.muc.spi.FMUCMode,
                  org.jivesoftware.util.CookieUtils,
@@ -41,7 +40,9 @@
 <%  // Get parameters
     final JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     final String roomName = roomJID.getNode();
-    final String outboundJoinPeerString = ParamUtils.getParameter(request, "roomconfig_fmuc_outbound_jid", true );
+    final String outboundJoinPeerString = ParamUtils.getParameter(request, "roomconfig_fmuc_outbound_jid", true);
+    String stopSessionString = ParamUtils.getParameter(request,"stopSession", true);
+    JID stopSession = stopSessionString != null && !stopSessionString.isEmpty() ? new JID(stopSessionString) : null;
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -49,9 +50,10 @@
 
     Map<String, String> errors = new HashMap<>();
 
-    if (save) {
+    if (save || stopSession != null) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             save = false;
+            stopSession = null;
             errors.put("csrf", "CSRF Failure!");
         }
     }
@@ -64,6 +66,37 @@
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
         response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        return;
+    }
+    final FMUCHandler fmucHandler = room.getFmucHandler();
+
+    if (stopSession != null)
+    {
+        boolean stoppedSomething = false;
+        final FMUCHandler.OutboundJoin outboundJoin = fmucHandler.getOutboundJoin();
+        if ( outboundJoin != null && outboundJoin.getPeer().equals( stopSession )) {
+            fmucHandler.stopOutbound();
+            stoppedSomething = true;
+            webManager.logEvent("closed FMUC outbound join to " + stopSession, null);
+        }
+        final FMUCHandler.OutboundJoinProgress outboundJoinProgress = fmucHandler.getOutboundJoinProgress();
+        if ( outboundJoinProgress != null && outboundJoinProgress.getPeer().equals(stopSession )) {
+            fmucHandler.abortOutboundJoinProgress();
+            stoppedSomething = true;
+            webManager.logEvent("closed FMUC outbound join attempt (in progress) to " + stopSession, null);
+        }
+        final JID finalStopSession = stopSession;
+        if (fmucHandler.getInboundJoins().stream().anyMatch(j -> j.getPeer().equals(finalStopSession))) {
+            fmucHandler.stopInbound(stopSession);
+            stoppedSomething = true;
+            webManager.logEvent("closed FMUC inbound join from " + stopSession, null);
+        }
+
+        if (stoppedSomething) {
+            response.sendRedirect("muc-room-federation.jsp?closeSuccess=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
+        } else {
+            response.sendRedirect("muc-room-federation.jsp?closeError=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
+        }
         return;
     }
 
@@ -95,7 +128,7 @@
                 outboundJoinConfiguration = new FMUCHandler.OutboundJoinConfiguration(outboundJoinPeer, FMUCMode.MasterMaster ); // We currently do not support another mode than master-master.
             }
             try {
-                room.getFmucHandler().setOutboundJoinConfiguration(outboundJoinConfiguration);
+                fmucHandler.setOutboundJoinConfiguration(outboundJoinConfiguration);
             } catch ( Exception e ) {
                 LoggerFactory.getLogger("muc-room-federation.jsp").warn("An exception occurred while trying to apply an FMUC config change to room {}", roomJID, e );
                 errors.put( "fmuchandler", e.getMessage() );
@@ -111,7 +144,7 @@
     pageContext.setAttribute( "errors", errors );
     pageContext.setAttribute( "room", room );
     pageContext.setAttribute( "roomJIDBare", roomJID.toBareJID() );
-    pageContext.setAttribute( "fmucOutboundJID", room.getFmucHandler().getOutboundJoinConfiguration() == null ? "" : room.getFmucHandler().getOutboundJoinConfiguration().getPeer().toString());
+    pageContext.setAttribute("fmucOutboundJID", fmucHandler.getOutboundJoinConfiguration() == null ? "" : fmucHandler.getOutboundJoinConfiguration().getPeer().toString());
 
 %>
 
@@ -131,6 +164,17 @@
 <c:if test="${param.success and empty errors}">
     <admin:infoBox type="success">
         <fmt:message key="muc.room.federation.saved_successfully"/>
+    </admin:infoBox>
+</c:if>
+<c:if test="${param.closeSuccess and empty errors}">
+    <admin:infoBox type="success">
+        Successfully closed a session.
+    </admin:infoBox>
+</c:if>
+
+<c:if test="${param.closeError}">
+    <admin:infoBox type="warn">
+        Unable to close session.
     </admin:infoBox>
 </c:if>
 
@@ -254,7 +298,7 @@
                 Outbound, federation being established...
             </td>
             <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoinProgress.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoinProgress.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
             </td>
         </tr>
         </c:if>
@@ -279,7 +323,7 @@
                     </c:choose>
                 </td>
                 <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
             <!-- Add rows for all occupants beyond the first one. -->
@@ -319,7 +363,7 @@
                     <c:out value="${occupant}"/>
                 </td>
                 <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
             <!-- Add rows for all occupants beyond the first one. -->

@@ -192,7 +192,7 @@ public class PEPServiceManager {
         // or remote user
     	
     	boolean isRegistered=false;
-    	if (PUBSUB_NONREGUSER.getValue()){
+    	if (PubSubEngine.PUBSUB_NONREGUSER.getValue()){
     		isRegistered = true;   		
     	} else {
     		isRegistered = UserManager.getInstance().isRegisteredUser(owner.getNode());

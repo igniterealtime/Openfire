@@ -172,6 +172,16 @@ public abstract class VirtualConnection implements Connection {
     @Override
     public void reinit(LocalSession session) {
         this.session = session;
+
+        // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
+        // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
+        // during the callback. OF-2014
+        for ( final Map.Entry<ConnectionCloseListener, Object> entry : listeners.entrySet() )
+        {
+            if ( entry.getValue() instanceof LocalSession ) {
+                entry.setValue( session );
+            }
+        }
     }
 
     /**

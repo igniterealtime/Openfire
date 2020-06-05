@@ -29,6 +29,7 @@ import org.jivesoftware.util.ImmediateFuture;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -46,6 +47,12 @@ import java.util.concurrent.Future;
  */
 public class PubSubEngine {
 
+	private static final SystemProperty<Boolean> PUBSUB_NONREGUSER = SystemProperty.Builder.ofType(Boolean.class)
+		    .setKey("xmpp.pubsub.createnode.nonregistereduser")
+		    .setDefaultValue(false)
+		    .setDynamic(true)
+		    .build();
+	
     private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
     private static final String MUTEX_SUFFIX_USER = " psu";
@@ -1292,10 +1299,18 @@ public class PubSubEngine {
      */
     public static CreateNodeResponse createNodeHelper(PubSubService service, JID requester, Element configuration, String nodeID, DataForm publishOptions) {
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester))) {
+    	boolean isLocalOrRegistered=false;
+    	if (PUBSUB_NONREGUSER.getValue()) {
+    		isLocalOrRegistered = XMPPServer.getInstance().isLocal(requester);   		
+    	} else {
+    		isLocalOrRegistered = UserManager.getInstance().isRegisteredUser(requester);
+    	}
+
+        if (!service.canCreateNode(requester) || (!isComponent(requester) && !isLocalOrRegistered)) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
-        }
+        }        
+    
         DataForm completedForm = null;
         CollectionNode parentNode = null;
         String newNodeID = nodeID;
@@ -1407,14 +1422,15 @@ public class PubSubEngine {
         try {
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
             JID owner = requester.asBareJID();
+            final DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration( !collectionType );
             synchronized ( (newNodeID + MUTEX_SUFFIX_NODE).intern()) {
                 if (service.getNode(newNodeID) == null) {
                     // Create the node
                     if (collectionType) {
-                        newNode = new CollectionNode(service, parentNode, newNodeID, requester);
+                        newNode = new CollectionNode(service.getUniqueIdentifier(), parentNode, newNodeID, requester, defaultConfiguration);
                     }
                     else {
-                        newNode = new LeafNode(service, parentNode, newNodeID, requester);
+                        newNode = new LeafNode(service.getUniqueIdentifier(), parentNode, newNodeID, requester, defaultConfiguration);
                     }
                     // Add the creator as the node owner
                     newNode.addOwner(owner);
@@ -1553,14 +1569,9 @@ public class PubSubEngine {
         }
 
         // Delete the node
-        if (node.delete()) {
-            // Return that node was deleted successfully
-            router.route(IQ.createResultIQ(iq));
-        }
-        else {
-            // Some error occured while trying to delete the node
-            sendErrorPacket(iq, PacketError.Condition.internal_server_error, null);
-        }
+        node.delete();
+        // Return that node was deleted successfully
+        router.route(IQ.createResultIQ(iq));
     }
 
     private void purgeNode(PubSubService service, IQ iq, Element purgeElement) {
@@ -1946,7 +1957,7 @@ public class PubSubEngine {
     }
 
     public void shutdown(PubSubService service) {
-        PubSubPersistenceManager.shutdown();
+    	PubSubPersistenceProviderManager.getInstance().shutdown();
         if (service != null) {
 
             if (service.getManager() != null) {

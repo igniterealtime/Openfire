@@ -268,8 +268,15 @@ public class FMUCHandler
         Log.debug("(room: '{}'): Stopping federation with remote node that we joined (if any).", room.getJID());
         final Set<JID> result = new HashSet<>();
 
-        // TODO handle case where outboundJoinProgress is not null (where an outbound join is in progress of being set up).
-        if ( outboundJoin == null ) {
+        if ( outboundJoinProgress == null ) {
+            Log.trace("(room: '{}'): We are not in progress of joining a remote node. No need to abort such an effort.", room.getJID());
+        } else {
+            Log.trace("(room: '{}'): Aborting the ongoing effort of joining remote node '{}'.", room.getJID(), outboundJoinProgress.getPeer());
+            outboundJoinProgress.abort();
+            outboundJoinProgress = null;
+        }
+
+        if ( outboundJoin == null) {
             Log.trace("(room: '{}'): We did not join a remote node. No need to inform one that we have left.", room.getJID());
         } else {
             Log.trace("(room: '{}'): Informing joined node '{}' that we are leaving the FMUC node set.", room.getJID(), outboundJoin.getPeer());
@@ -281,7 +288,6 @@ public class FMUCHandler
             final Set<JID> theirOccupants = outboundJoin.occupants;
 
             outboundJoin = null;
-            outboundJoinProgress = null;
 
             result.addAll( theirOccupants );
 
@@ -360,12 +366,22 @@ public class FMUCHandler
 
     public synchronized void setOutboundJoinConfiguration( @Nullable final OutboundJoinConfiguration config )
     {
-        // TODO Allow for this.
-        if ( outboundJoinProgress != null ) {
-            throw new IllegalStateException( "Cannot change Outbound FMUC configuration when an existing outbound FMUC connection is in process of being set up." );
+        Log.debug( "(room: '{}'): Changing outbound join configuration. Existing: {}, New: {}", room.getJID(), this.outboundJoinConfiguration, config );
+
+        if ( this.outboundJoinProgress != null ) {
+            if (config == null) {
+                Log.trace( "(room: '{}'): Had, but now no longer has, outbound join configuration. Aborting ongoing federation attempt...", room.getJID() );
+                outboundJoinProgress.abort();
+                outboundJoinProgress = null;
+            } else if ( this.outboundJoinProgress.getPeer().equals( config.getPeer() ) ) {
+                Log.trace( "(room: '{}'): New configuration matches peer that ongoing federation attempt is made with. Allowing attempt to continue.", room.getJID() );
+            } else {
+                Log.trace( "(room: '{}'): New configuration targets a different peer that ongoing federation attempt is made with. Aborting attempt.", room.getJID() );
+                outboundJoinProgress.abort();
+                outboundJoinProgress = null;
+            }
         }
 
-        Log.debug( "(room: '{}'): Changing outbound join configuration.", room.getJID() );
         if ( this.outboundJoinConfiguration == null && config != null ) {
             Log.trace( "(room: '{}'): Did not, but now has, outbound join configuration. Starting federation...", room.getJID() );
             this.outboundJoinConfiguration = config;
@@ -376,10 +392,16 @@ public class FMUCHandler
             stopOutbound();
         } else if ( this.outboundJoinConfiguration != null && config != null ) {
             if ( outboundJoin == null ) {
-                this.outboundJoinConfiguration = config;
+                if ( this.outboundJoinConfiguration.equals( config ) ) {
+                    // no change
+                } else {
+                    Log.trace( "(room: '{}'): Applying new configuration.", room.getJID() );
+                    this.outboundJoinConfiguration = config;
+                    startOutbound();
+                }
             } else {
                 if ( outboundJoin.getConfiguration().equals( config ) ) {
-                    // no change
+                    Log.trace( "(room: '{}'): New configuration matches configuration of established federation. Not applying any change.", room.getJID() );
                 } else {
                     Log.trace( "(room: '{}'): Already had outbound join configuration, now got a different config. Restarting federation...", room.getJID() );
                     stopOutbound();
@@ -1501,6 +1523,15 @@ public class FMUCHandler
         {
             return Objects.hash(mode, peer);
         }
+
+        @Override
+        public String toString()
+        {
+            return "OutboundJoinConfiguration{" +
+                "peer=" + peer +
+                ", mode=" + mode +
+                '}';
+        }
     }
 
     public static class OutboundJoin extends RemoteFMUCNode
@@ -1576,6 +1607,8 @@ public class FMUCHandler
 
     static class OutboundJoinProgress implements Serializable
     {
+        private final Logger Log;
+
         /**
          * The address of the remote MUC room with which we are attempting to federate, in which 'our' MUC room takes the role of
          * 'joining FMUC node' while the room that federates with us (who's address is recorded in this field) takes the
@@ -1591,7 +1624,7 @@ public class FMUCHandler
         /**
          * A list of stanzas that have been sent from the remote room to the local room as part of the 'join' effort.
          *
-         * This list is expected to contain (presence of) each particiapnt, a message history, and a subject stanza.
+         * This list is expected to contain (presence of) each participant, a message history, and a subject stanza.
          */
         private final ArrayList<Packet> responses;
 
@@ -1605,12 +1638,13 @@ public class FMUCHandler
 
         /**
          * The state of the federation join. Null means that the request is pending completion. True means a successful
-         * join was achieved, while false means that the join request failed.
+         * join was achieved, while false means that the join request failed or was aborted.
          */
         private Boolean joinResult;
 
         public OutboundJoinProgress( @Nonnull final JID peer, @Nonnull final CompletableFuture<List<Packet>> callback )
         {
+            Log = LoggerFactory.getLogger( this.getClass().getName() + ".[peer: " + peer + "]" );
             this.peer = peer.asBareJID();
             this.callback = callback;
             this.responses = new ArrayList<>();
@@ -1660,6 +1694,7 @@ public class FMUCHandler
                 result.complete(null);
             }
 
+            Log.trace( "Adding stanza (type {}) from '{}' to queue, to be sent to peer as soon as federation has been established.", stanza.getClass().getSimpleName(), sender.getUserAddress() );
             queue.add( new QueuedStanza( stanza, sender, result ) );
 
             return result;
@@ -1672,6 +1707,7 @@ public class FMUCHandler
          * @return A list of queued stanzas (possibly empty).
          */
         public synchronized List<QueuedStanza> purgeQueue() {
+            Log.trace( "Purging queue (size: {}) of stanzas to be sent to peer as soon as federation has been established.", queue.size() );
             final List<QueuedStanza> result = new ArrayList<>( queue );
             queue.clear();
             return result;
@@ -1698,6 +1734,28 @@ public class FMUCHandler
 
         public synchronized boolean isSuccessful() {
             return joinResult != null && joinResult;
+        }
+
+        public synchronized void abort()
+        {
+            Log.trace( "Aborting federation attempt." );
+
+            joinResult = false;
+
+            // Messages that are queued to be sent after federation has been established might have threads blocking on that delivery. That now will no longer happen. Make sure that we unblock all threads waiting for such an echo.
+            if ( !queue.isEmpty() )
+            {
+                Log.trace("Completing {} callbacks for queued stanzas might be waiting for federation to be established.", queue.size() );
+                for ( final QueuedStanza pendingCallback : queue )
+                {
+                    try {
+                        pendingCallback.future.complete( null ); // TODO maybe completeExceptionally?
+                    } catch ( Exception e ) {
+                        Log.warn("An exception occurred while completing callback for a queued message.", e);
+                    }
+                }
+            }
+            callback.completeExceptionally( new IllegalStateException( "Federation with peer " + peer + " has been aborted.") );
         }
 
         class QueuedStanza {

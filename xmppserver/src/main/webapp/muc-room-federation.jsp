@@ -259,69 +259,81 @@
         </tr>
         </c:if>
         <c:if test="${not empty room.fmucHandler.outboundJoin}">
+            <!-- Always have at least one row, containing the first occupant if the remote room has occupants. -->
+            <tr>
+                <td>
+                    <c:out value="${room.fmucHandler.outboundJoin.peer}"/>
+                </td>
+                <td>
+                    Outbound (mode: <c:out value="${room.fmucHandler.outboundJoin.mode}"/>)
+                </td>
+                <td>
+                    <!-- Add the first occupant, if there's one -->
+                    <c:choose>
+                        <c:when test="${not empty room.fmucHandler.outboundJoin.occupants}">
+                            <c:forEach var="occupant" items="${room.fmucHandler.outboundJoin.occupants}" end="0">
+                                <c:out value="${occupant}"/>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>&nbsp;</c:otherwise>
+                    </c:choose>
+                </td>
+                <td width="1%" align="center" style="border-right:1px #ccc solid;">
+                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                </td>
+            </tr>
+            <!-- Add rows for all occupants beyond the first one. -->
             <c:forEach var="occupant" items="${room.fmucHandler.outboundJoin.occupants}" varStatus="status">
-                <tr>
-                    <td>
-                        <c:choose>
-                            <c:when test="${status.first}">
-                                <c:out value="${room.fmucHandler.outboundJoin.peer}"/>
-                            </c:when>
-                            <c:otherwise>&nbsp;</c:otherwise>
-                        </c:choose>
-                    </td>
-                    <td>
-                        <c:choose>
-                            <c:when test="${status.first}">
-                                Outbound (mode: <c:out value="${room.fmucHandler.outboundJoin.mode}"/>)
-                            </c:when>
-                            <c:otherwise>&nbsp;</c:otherwise>
-                        </c:choose>
-                    </td>
-                    <td>
-                        <c:out value="${occupant}"/>
-                    </td>
-                    <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                        <c:choose>
-                            <c:when test="${status.first}">
-                                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
-                            </c:when>
-                            <c:otherwise>&nbsp;</c:otherwise>
-                        </c:choose>
-                    </td>
-                </tr>
+                <c:if test="${not status.first}">
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <c:out value="${occupant}"/>
+                        </td>
+                        <td>&nbsp;</td>
+                    </tr>
+                </c:if>
             </c:forEach>
         </c:if>
         <c:forEach var="inboundJoin" items="${room.fmucHandler.inboundJoins}">
-            <c:forEach var="occupant" items="${inboundJoin.occupants}" varStatus="status">
+            <!-- Always have at least one row, containing the first occupant if the remote room has occupants. -->
             <tr>
                 <td>
+                    <c:out value="${inboundJoin.peer}"/>
+                </td>
+                <td>
+                    Inbound
+                </td>
+                <td>
+                    <!-- Add the first occupant, if there's one -->
                     <c:choose>
-                        <c:when test="${status.first}">
-                            <c:out value="${inboundJoin.peer}"/>
+                        <c:when test="${not empty inboundJoin.occupants}">
+                            <c:forEach var="occupant" items="${inboundJoin.occupants}" end="0">
+                                <c:out value="${occupant}"/>
+                            </c:forEach>
                         </c:when>
                         <c:otherwise>&nbsp;</c:otherwise>
                     </c:choose>
-                </td>
-                <td>
-                    <c:choose>
-                        <c:when test="${status.first}">
-                            Inbound
-                        </c:when>
-                        <c:otherwise>&nbsp;</c:otherwise>
-                    </c:choose>
-                </td>
-                <td>
+
                     <c:out value="${occupant}"/>
                 </td>
                 <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                    <c:choose>
-                        <c:when test="${status.first}">
-                            <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
-                        </c:when>
-                        <c:otherwise>&nbsp;</c:otherwise>
-                    </c:choose>
+                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
                 </td>
             </tr>
+            <!-- Add rows for all occupants beyond the first one. -->
+            <c:forEach var="occupant" items="${inboundJoin.occupants}" varStatus="status">
+                <c:if test="${not status.first}">
+                <tr>
+                    <td>&nbsp;</td>
+                    <td>&nbsp;</td>
+                    <td>
+                        <c:out value="${occupant}"/>
+                    </td>
+                    <td>&nbsp;</td>
+                </tr>
+                </c:if>
             </c:forEach>
         </c:forEach>
     </table>

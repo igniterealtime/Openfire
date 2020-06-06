@@ -262,7 +262,7 @@ public class WebManager extends WebBean {
             Thread.sleep(3000L);
         }
         catch (Exception ignored) {
-            // Ignore.
+            Log.trace("Sleep got interrupted.");
         }
     }
 

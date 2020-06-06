@@ -7,6 +7,8 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.ParamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -20,6 +22,9 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 public class PubSubServiceInfo {
+
+    private static final Logger Log = LoggerFactory.getLogger(PubSubServiceInfo.class);
+
     private PubSubService pubSubService;
 
     private PubSubModule pubSubModule;
@@ -123,6 +128,7 @@ public class PubSubServiceInfo {
                     return xmppServer.createJID(username, null);
                 }
             } catch (IllegalArgumentException e) {
+                Log.debug("Unable to parse value '{}' as a JID.", username);
             }
         }
         // Return null if JID is invalid or user not registered
@@ -137,6 +143,7 @@ public class PubSubServiceInfo {
                     return true;
                 }
             } catch (GroupNotFoundException e) {
+                Log.debug("Group with name '{}' not found", groupName);
             }
         }
         return false;

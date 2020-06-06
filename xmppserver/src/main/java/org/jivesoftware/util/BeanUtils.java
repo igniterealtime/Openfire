@@ -232,8 +232,8 @@ public class BeanUtils {
             try {
                 return dateFormatter.format((Date)value);
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying format value {} as a date.", value, ex);
             }
         }
         if (value instanceof Color) {

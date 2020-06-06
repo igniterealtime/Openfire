@@ -175,8 +175,8 @@ public class LdapUserProvider implements UserProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug( "An exception occurred while closing the LDAP context after attempting to load user {}", username, ex);
             }
         }
     }

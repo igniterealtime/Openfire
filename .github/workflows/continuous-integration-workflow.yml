@@ -102,6 +102,7 @@ jobs:
           pushd aioxmpp
           mkdir output
           python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only -e 'test_set_topic' -e 'test_publish_and_purge' -e 'test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
           popd
       - name: Expose test output
         uses: actions/upload-artifact@v1

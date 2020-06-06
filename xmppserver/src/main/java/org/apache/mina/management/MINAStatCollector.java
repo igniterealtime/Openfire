@@ -295,12 +295,12 @@ public class MINAStatCollector {
                     Log.trace("Sleep interrupted");
                 }
 
-                long tmpMsgWritten = 0l;
-                long tmpMsgRead = 0l;
-                long tmpBytesWritten = 0l;
-                long tmpBytesRead = 0l;
-                long tmpScheduledWrites = 0l;
-                long tmpQueuevedEvents = 0l;
+                long tmpMsgWritten = 0L;
+                long tmpMsgRead = 0L;
+                long tmpBytesWritten = 0L;
+                long tmpBytesRead = 0L;
+                long tmpScheduledWrites = 0L;
+                long tmpQueuevedEvents = 0L;
 
                 for (IoSession session : polledSessions)
                 {

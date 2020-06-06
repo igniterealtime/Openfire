@@ -289,7 +289,7 @@ public interface MultiUserChatService extends Component {
      * Returns the maximum time allowed to elapse between writing archive entries to the database.
      * @return the maximum time allowed to elapse between writing archive entries to the database.
      */
-    default Duration getLogMaxBatchInterval() { return Duration.ofSeconds(10l); }
+    default Duration getLogMaxBatchInterval() { return Duration.ofSeconds(10L); }
 
     /**
      * Sets the maximum time allowed to elapse between writing archive batches to the database.
@@ -301,7 +301,7 @@ public interface MultiUserChatService extends Component {
      * Returns the maximum time to wait for a next incoming entry before writing the batch to the database.
      * @return the maximum time to wait for a next incoming entry before writing the batch to the database.
      */
-    default Duration getLogBatchGracePeriod() { return Duration.ofSeconds(1l); }
+    default Duration getLogBatchGracePeriod() { return Duration.ofSeconds(1L); }
 
     /**
      * Sets the maximum time to wait for a next incoming entry before writing the batch to the database.

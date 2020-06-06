@@ -121,8 +121,8 @@ public class AuditorImpl implements Auditor {
     }
 
     protected void setMaxValues(int totalSize, int fileSize, int days) {
-        maxTotalSize = (long) totalSize * 1024l * 1024l;
-        maxFileSize = (long) fileSize * 1024l * 1024l;
+        maxTotalSize = (long) totalSize * 1024L * 1024L;
+        maxFileSize = (long) fileSize * 1024L * 1024L;
         maxDays = days;
     }
 

@@ -314,7 +314,7 @@ public class XMPPPacketReader {
         catch (XmlPullParserException e) {
             Log.trace("An exception occurred while trying to get the last hartbeat.", e);
         }
-        return lastActive > lastHeartbeat ? lastActive : lastHeartbeat;
+        return Math.max(lastActive, lastHeartbeat);
     }
 
     /*

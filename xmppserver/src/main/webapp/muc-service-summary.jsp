@@ -94,7 +94,7 @@
 <%  if (numPages > 1) { %>
 
     <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > servicesCount ? servicesCount:start+range) %>,
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(Math.min(start + range, servicesCount)) %>,
 
 <%  } %>
 <fmt:message key="muc.service.summary.sorted" />

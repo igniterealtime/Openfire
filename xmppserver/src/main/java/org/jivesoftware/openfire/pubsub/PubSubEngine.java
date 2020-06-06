@@ -16,10 +16,25 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
@@ -27,17 +42,18 @@ import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.ImmediateFuture;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.*;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * A PubSubEngine is responsible for handling packets sent to a pub-sub service.
@@ -48,6 +64,12 @@ public class PubSubEngine {
 
     private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
+	public static final SystemProperty<Boolean> PUBSUB_NONREGUSER = SystemProperty.Builder.ofType(Boolean.class)
+		    .setKey("xmpp.pubsub.createnode.nonregistereduser")
+		    .setDefaultValue(false)
+		    .setDynamic(true)
+		    .build();
+	
     private static final String MUTEX_SUFFIX_USER = " psu";
     private static final String MUTEX_SUFFIX_NODE = " psn";
     /**
@@ -1291,11 +1313,20 @@ public class PubSubEngine {
      * @return {@link CreateNodeResponse}
      */
     public static CreateNodeResponse createNodeHelper(PubSubService service, JID requester, Element configuration, String nodeID, DataForm publishOptions) {
-        // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester))) {
+
+    	// Verify that sender has permissions to create nodes
+    	boolean isLocalOrRegistered=false;
+    	if (PUBSUB_NONREGUSER.getValue()) {
+    		isLocalOrRegistered = XMPPServer.getInstance().isLocal(requester);   		
+    	} else {
+    		isLocalOrRegistered = UserManager.getInstance().isRegisteredUser(requester);
+    	}
+
+        if (!service.canCreateNode(requester) || (!isComponent(requester) && !isLocalOrRegistered)) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
         }
+        
         DataForm completedForm = null;
         CollectionNode parentNode = null;
         String newNodeID = nodeID;

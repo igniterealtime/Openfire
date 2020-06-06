@@ -2045,7 +2045,7 @@ public class PubSubEngine {
      * Checks to see if the jid given is a component by looking at the routing
      * table. Similar to {@link InternalComponentManager#hasComponent(JID)}.
      * 
-     * @param jid
+     * @param jid The address to look up.
      * @return {@code true} if the JID is a component, {@code false<.tt> if not.
      */
     private static boolean isComponent(JID jid) {

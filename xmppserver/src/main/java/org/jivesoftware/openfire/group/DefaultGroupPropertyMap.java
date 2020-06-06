@@ -250,7 +250,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         // so they are not implemented
         
         /**
-         * @throws UnsupportedOperationException
+         * @throws UnsupportedOperationException Always thrown, as this implementation does not support the optional functionality.
          */
         @Override
         public boolean removeAll(Collection<?> c) {
@@ -258,7 +258,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         }
 
         /**
-         * @throws UnsupportedOperationException
+         * @throws UnsupportedOperationException Always thrown, as this implementation does not support the optional functionality.
          */
         @Override
         public boolean retainAll(Collection<?> c) {
@@ -268,7 +268,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         // per docs for {@link Map.entrySet}, these methods are not supported
 
         /**
-         * @throws UnsupportedOperationException
+         * @throws UnsupportedOperationException Always thrown, as this implementation does not support the optional functionality.
          */
         @Override
         public boolean add(Entry<K, V> o) {
@@ -276,7 +276,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         }
 
         /**
-         * @throws UnsupportedOperationException
+         * @throws UnsupportedOperationException Always thrown, as this implementation does not support the optional functionality.
          */
         @Override
         public boolean addAll(Collection<? extends Entry<K, V>> c) {

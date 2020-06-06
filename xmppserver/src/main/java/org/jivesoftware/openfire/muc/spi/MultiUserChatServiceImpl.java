@@ -1419,7 +1419,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     /**
      * Accessor uses the "double-check idiom" for proper lazy instantiation.
-     * @return
+     * @return An Archiver instance, never null.
      */
     @Override
     public Archiver getArchiver() {

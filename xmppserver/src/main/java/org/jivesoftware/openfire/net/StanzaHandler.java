@@ -782,7 +782,7 @@ public abstract class StanzaHandler {
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
      * @return the created session or null.
-     * @throws org.xmlpull.v1.XmlPullParserException
+     * @throws org.xmlpull.v1.XmlPullParserException when XML parsing causes an error.
      *
      */
     abstract boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)

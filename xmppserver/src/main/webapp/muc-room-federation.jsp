@@ -29,6 +29,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -145,7 +146,6 @@
     pageContext.setAttribute( "room", room );
     pageContext.setAttribute( "roomJIDBare", roomJID.toBareJID() );
     pageContext.setAttribute("fmucOutboundJID", fmucHandler.getOutboundJoinConfiguration() == null ? "" : fmucHandler.getOutboundJoinConfiguration().getPeer().toString());
-
 %>
 
 <html>
@@ -172,8 +172,14 @@
     </admin:infoBox>
 </c:if>
 
+<c:if test="${not room.fmucEnabled}">
+    <admin:infoBox type="warning">
+        Federation (FMUC) functionality is disabled by configuration! Please use the system property <code>xmpp.muc.room.fmuc.enabled</code> to enable it!
+    </admin:infoBox>
+</c:if>
+
 <c:if test="${param.closeError}">
-    <admin:infoBox type="warn">
+    <admin:infoBox type="warning">
         Unable to close session.
     </admin:infoBox>
 </c:if>

@@ -18,8 +18,10 @@ package org.jivesoftware.openfire.muc.spi;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,19 @@ import java.util.concurrent.*;
 public class FMUCHandler
 {
     private static final Logger Log = LoggerFactory.getLogger( FMUCHandler.class );
+
+    public static final SystemProperty<Boolean> FMUC_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.muc.room.fmuc.enabled")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .addListener( isEnabled -> {
+            XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
+                service -> service.getChatRooms().forEach(
+                    mucRoom -> mucRoom.getFmucHandler().setFmucEnabled(isEnabled)
+                )
+            );
+        })
+        .build();
 
     /**
      * Qualified name of the element that denotes FMUC functionality, as specified by XEP-0289.
@@ -83,7 +98,7 @@ public class FMUCHandler
     public FMUCHandler( @Nonnull LocalMUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
-        this.fmucEnabled = JiveGlobals.getBooleanProperty("xmpp.muc.room.fmucEnabled", false);
+        this.fmucEnabled = FMUC_ENABLED.getValue();
         if ( fmucEnabled ) {
             startOutbound();
         }
@@ -1259,7 +1274,7 @@ public class FMUCHandler
         }
 
         // TODO replace this with a per-room configurable options (similar to other options that are configurable).
-        if ( !JiveGlobals.getBooleanProperty("xmpp.muc.room.fmucEnabled", this.room.isFmucEnabled() ) )
+        if ( !FMUC_ENABLED.getValue() )
         {
             Log.info( "(room: '{}'): Rejecting join request of remote joining peer '{}': FMUC functionality is not enabled.", room.getJID(), joiningPeer );
             throw new FMUCException( "FMUC functionality is not enabled." );

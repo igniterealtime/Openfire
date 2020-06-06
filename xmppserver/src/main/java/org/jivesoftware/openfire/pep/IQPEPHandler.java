@@ -26,7 +26,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;

@@ -41,7 +41,6 @@ import org.xmpp.packet.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS

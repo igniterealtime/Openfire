@@ -28,7 +28,6 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;

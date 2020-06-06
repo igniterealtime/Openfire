@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,7 +26,6 @@ import org.dom4j.Element;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
-import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 

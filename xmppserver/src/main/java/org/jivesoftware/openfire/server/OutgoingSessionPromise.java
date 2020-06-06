@@ -349,7 +349,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     }
                     catch ( PacketRejectedException ex )
                     {
-                        Log.debug( "Reply got rejected by an interceptor: ", reply, ex );
+                        Log.debug( "Reply got rejected by an interceptor: {}", reply, ex );
                     }
                 }
             }

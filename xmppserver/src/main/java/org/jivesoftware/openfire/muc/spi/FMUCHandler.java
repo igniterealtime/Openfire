@@ -430,6 +430,11 @@ public class FMUCHandler
      */
     public synchronized CompletableFuture<?> propagate( @Nonnull Packet stanza, @Nonnull MUCRole sender )
     {
+        if ( !fmucEnabled ) {
+            Log.debug( "(room: '{}'): FMUC disabled, skipping FMUC propagation.", room.getJID() );
+            return CompletableFuture.completedFuture(null);
+        }
+
         Log.debug( "(room: '{}'): A stanza (type: {}, from: {}) is to be propagated in the FMUC node set.", room.getJID(), stanza.getClass().getSimpleName(), stanza.getFrom() );
 
         /* TODO this implementation currently is blocking, and synchronous: inbound propagation only occurs after outbound
@@ -474,6 +479,11 @@ public class FMUCHandler
 
     protected synchronized Future<?> join( @Nonnull MUCRole mucRole, final boolean includeInbound, final boolean includeOutbound )
     {
+        if ( !fmucEnabled ) {
+            Log.debug( "(room: '{}'): FMUC disabled, skipping FMUC join.", room.getJID() );
+            return CompletableFuture.completedFuture(null);
+        }
+
         Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
 
         final CompletableFuture<?> propagateToOutbound;
@@ -768,6 +778,16 @@ public class FMUCHandler
 
     public synchronized void process( @Nonnull final Packet stanza )
     {
+        if ( !fmucEnabled ) {
+            Log.debug( "(room: '{}'): FMUC disabled, skipping processing of stanza: {}", room.getJID(), stanza.toXML() );
+            if ( stanza instanceof IQ && ((IQ) stanza).isRequest() ) {
+                final IQ errorResult = IQ.createResultIQ( (IQ) stanza);
+                errorResult.setError(PacketError.Condition.service_unavailable);
+                router.route( errorResult );
+            }
+            return;
+        }
+
         Log.trace( "(room: '{}'): Processing stanza from '{}': {}", room.getJID(), stanza.getFrom(), stanza.toXML() );
         final JID remoteMUC = stanza.getFrom().asBareJID();
 

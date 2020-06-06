@@ -793,6 +793,7 @@ public class LocalMUCUser implements MUCUser
             {
                 sendErrorPacket(packet, PacketError.Condition.unexpected_request, "Unexpected stanza type: " + packet.getType());
             }
+            return;
         }
 
         final MUCRoom room;

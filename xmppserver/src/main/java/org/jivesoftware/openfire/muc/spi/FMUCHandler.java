@@ -19,6 +19,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +83,7 @@ public class FMUCHandler
     public FMUCHandler( @Nonnull LocalMUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
-        this.fmucEnabled = MUCPersistenceManager.getBooleanProperty(chatroom.getMUCService().getServiceName(), "room.fmucEnabled", true); // FIXME: set the default to 'false'
+        this.fmucEnabled = JiveGlobals.getBooleanProperty("xmpp.muc.room.fmucEnabled", false);
         if ( fmucEnabled ) {
             startOutbound();
         }
@@ -1238,7 +1239,7 @@ public class FMUCHandler
         }
 
         // TODO replace this with a per-room configurable options (similar to other options that are configurable).
-        if ( !MUCPersistenceManager.getBooleanProperty(this.room.getMUCService().getServiceName(), "room.fmucEnabled", this.room.isFmucEnabled() ) )
+        if ( !JiveGlobals.getBooleanProperty("xmpp.muc.room.fmucEnabled", this.room.isFmucEnabled() ) )
         {
             Log.info( "(room: '{}'): Rejecting join request of remote joining peer '{}': FMUC functionality is not enabled.", room.getJID(), joiningPeer );
             throw new FMUCException( "FMUC functionality is not enabled." );

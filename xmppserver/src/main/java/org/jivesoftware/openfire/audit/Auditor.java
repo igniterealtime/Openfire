@@ -38,20 +38,6 @@ public interface Auditor {
     void audit(Packet packet, Session session);
 
     /**
-     * Audit any packet that was dropped (undeliverables, etc).
-     *
-     * @param packet the packet that was dropped.
-     */
-    //void auditDroppedPacket(XMPPPacket packet);
-
-    /**
-     * Audit a non-packet event.
-     *
-     * @param event the event being audited.
-     */
-    //void audit(AuditEvent event);
-
-    /**
      * Prepares the auditor for system shutdown.
      */
     void stop();

@@ -1378,8 +1378,8 @@ public class LdapManager {
                 if (ctx != null)
                     ctx.close();
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to verify that DN '{}' is a group.", dn, ex);
             }
         }
     }
@@ -2371,8 +2371,8 @@ public class LdapManager {
                 if (ctx != null) {
                     ctx.close();
                 }
-            } catch (Exception ignored) {
-                // Ignore.
+            } catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve a single attribute element for {}.", attribute, ex);
             }
         }
     }
@@ -2412,15 +2412,15 @@ public class LdapManager {
                 if (values != null)
                     values.close();
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close values after trying to read attribute {}.", attributeName, ex);
             }
             try {
                 if (ctx != null)
                     ctx.close();
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to read attribute {}.", attributeName, ex);
             }
         }
     }

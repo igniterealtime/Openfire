@@ -19,7 +19,6 @@ import java.net.InetSocketAddress;
 
 import org.dom4j.Namespace;
 import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;

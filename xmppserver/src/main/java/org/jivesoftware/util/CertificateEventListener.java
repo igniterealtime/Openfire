@@ -18,10 +18,6 @@ package org.jivesoftware.util;
 
 import org.jivesoftware.openfire.keystore.CertificateStore;
 
-import java.security.KeyStore;
-import java.security.cert.X509Certificate;
-import java.util.List;
-
 /**
  * Interface to listen for certificate events. Use
  * the {@link CertificateManager#addListener(CertificateEventListener)} method to register for events.

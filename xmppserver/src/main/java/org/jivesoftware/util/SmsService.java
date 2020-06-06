@@ -390,7 +390,7 @@ public class SmsService
                 if ( getNumActive() > 0 )
                 {
                     // This can occur when an SMS is being sent while the property is being updated at the same time.
-                    Log.warn( "Note that property change for '{}' will not affect one or more sessions that are currently actively used (although changes will be applied after the session is rotated out, due to time-based eviction)." );
+                    Log.warn( "Note that property change for '{}' will not affect one or more sessions that are currently actively used (although changes will be applied after the session is rotated out, due to time-based eviction).", propertyName );
                 }
                 clear();
             }

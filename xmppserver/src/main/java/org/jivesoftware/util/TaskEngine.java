@@ -80,7 +80,7 @@ public class TaskEngine {
         try {
             return executor.submit(task);
         } catch (Throwable t) {
-            Log.warn("Failed to schedule task; will retry using caller's thread: {0}", t.getMessage());
+            Log.warn("Failed to schedule task; will retry using caller's thread.", t);
             FutureTask<?> result = new FutureTask<>(task, null);
             result.run();
             return result;

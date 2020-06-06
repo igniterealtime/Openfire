@@ -223,8 +223,8 @@ public class AdminConsole {
         try {
             in.close();
         }
-        catch (Exception ignored) {
-            // Ignore.
+        catch (Exception ex) {
+            Log.debug("An exception occurred while trying to close the input stream that was used to read admin-sidebar.xml", ex);
         }
 
         // Load other admin-sidebar.xml files from the classpath
@@ -246,8 +246,8 @@ public class AdminConsole {
                                     in.close();
                                 }
                             }
-                            catch (Exception ignored) {
-                                // Ignore.
+                            catch (Exception ex) {
+                                Log.debug("An exception occurred while trying to close the input stream that was used to read admin-sidebar.xml", ex);
                             }
                         }
                     }

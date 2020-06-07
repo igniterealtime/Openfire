@@ -355,7 +355,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void processPacket(final Packet packet) {
+
+        Log.trace( "Routing stanza: {}", packet.toXML() );
         if (!isServiceEnabled()) {
+            Log.trace( "Service is disabled. Ignoring stanza." );
             return;
         }
         // The MUC service will receive all the packets whose domain matches the domain of the MUC
@@ -365,6 +368,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
                 if (process((IQ)packet)) {
+                    Log.trace( "Done processing IQ stanza." );
                     return;
                 }
             } else if (packet instanceof Message) {
@@ -372,6 +376,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (msg.getType() == Message.Type.error) {
                     // Bounced message, drop user.
                     removeUser(packet.getFrom());
+                    Log.trace( "Done processing Message stanza." );
                     return;
                 }
             } else if (packet instanceof Presence) {
@@ -379,13 +384,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (pres.getType() == Presence.Type.error) {
                     // Bounced presence, drop user.
                     removeUser(packet.getFrom());
+                    Log.trace( "Done processing Presence stanza." );
                     return;
                 }
             }
 
             if ( packet.getTo().getNode() == null )
             {
-                // This was addressed at the service itself, which by now should have been handled.
+                Log.trace( "Stanza was addressed at the service itself, which by now should have been handled." );
                 if ( packet instanceof IQ && ((IQ) packet).isRequest() )
                 {
                     final IQ reply = IQ.createResultIQ( (IQ) packet );
@@ -397,12 +403,25 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
             else
             {
-                // The packet is a normal packet that should possibly be sent to the room
+                Log.trace( "The stanza is a normal packet that should possibly be sent to the room." );
                 final JID recipient = packet.getTo();
                 final String roomName = recipient != null ? recipient.getNode() : null;
                 final JID userJid = packet.getFrom();
+                Log.trace( "Stanza recipient: {}, room name: {}, sender: {}", recipient, roomName, userJid );
                 try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString()).lock()) {
-                    getChatUser(userJid, roomName).process(packet);
+                    if ( !packet.getElement().elements(FMUCHandler.FMUC).isEmpty() ) {
+                        Log.trace( "Stanza is a FMUC stanza." );
+                        final MUCRoom chatRoom = getChatRoom(roomName);
+                        if ( chatRoom != null ) {
+                            chatRoom.getFmucHandler().process(packet);
+                        } else {
+                            Log.warn( "Unable to process FMUC stanza, as room it's addressed to does not exist: {}", roomName );
+                            // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
+                        }
+                    } else {
+                        Log.trace( "Stanza is a regular MUC stanza." );
+                        getChatUser(userJid, roomName).process(packet);
+                    }
                 }
             }
         }
@@ -621,7 +640,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             kickedPresence =
                                     room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
                             // Send the updated presence to the room occupants
-                            room.send(kickedPresence);
+                            room.send(kickedPresence, room.getRole());
                         }
                         catch (final NotAllowedException e) {
                             // Do nothing since we cannot kick owners or admins

@@ -358,7 +358,7 @@ public class IQAdminHandler {
 
             // Send the updated presences to the room occupants
             for (Presence presence : presences) {
-                room.send(presence);
+                room.send(presence, room.getRole());
             }
         }
     }
@@ -374,7 +374,7 @@ public class IQAdminHandler {
             result.addAttribute("nick", role.getNickname());
         }
         catch (UserNotFoundException e) {
-            // the JID is note currently an occupant
+            // the JID is not currently an occupant
         }
         return result;
     }

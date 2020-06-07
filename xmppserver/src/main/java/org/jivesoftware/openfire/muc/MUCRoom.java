@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.muc;
 import org.dom4j.Element;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.muc.spi.FMUCHandler;
 import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
 import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
@@ -32,6 +33,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.Result;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Externalizable;
 import java.util.Collection;
 import java.util.Date;
@@ -246,8 +249,12 @@ public interface MUCRoom extends Externalizable, Result {
      * @throws NotAcceptableException       If the registered user is trying to join with a
      *                                      nickname different than the reserved nickname.
      */
-    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, LocalMUCUser user,
-            Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
+    MUCRole joinRoom( @Nonnull String nickname,
+                      @Nullable String password,
+                      @Nullable HistoryRequest historyRequest,
+                      @Nonnull LocalMUCUser user,
+                      @Nonnull Presence presence)
+        throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
             ConflictException, ServiceUnavailableException, NotAcceptableException;
 
@@ -542,6 +549,8 @@ public interface MUCRoom extends Externalizable, Result {
 
     IQAdminHandler getIQAdminHandler();
 
+    FMUCHandler getFmucHandler();
+
     /**
      * Returns the history of the room which includes chat transcripts.
      *
@@ -800,6 +809,18 @@ public interface MUCRoom extends Externalizable, Result {
     void setRegistrationEnabled( boolean registrationEnabled );
 
     /**
+     * Returns true if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
+     * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
+     */
+    boolean isFmucEnabled();
+
+    /**
+     * Sets if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
+     * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
+     */
+    void setFmucEnabled( boolean fmucEnabled );
+
+    /**
      * Returns the maximum number of occupants that can be simultaneously in the room. If the number
      * is zero then there is no limit.
      *
@@ -985,6 +1006,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sends a packet to the user.
      *
      * @param packet The packet to send
+     * @param sender Representation of the entity that sent the stanza.
      */
-    void send( Packet packet );
+    void send( @Nonnull Packet packet, @Nonnull MUCRole sender );
 }

@@ -437,7 +437,7 @@ public class IQOwnerHandler {
 
         // Send the updated presences to the room occupants
         for (Object presence : presences) {
-            room.send((Presence) presence);
+            room.send((Presence) presence, room.getRole());
         }
     }
 

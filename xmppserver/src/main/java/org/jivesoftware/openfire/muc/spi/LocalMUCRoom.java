@@ -55,10 +55,7 @@ import org.jivesoftware.openfire.muc.cluster.UpdateOccupantRequest;
 import org.jivesoftware.openfire.muc.cluster.UpdatePresence;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
@@ -1450,16 +1447,15 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         if (presence == null) {
             return;
         }
+
+        // Some clients send a presence update to the room, rather than to their own nickname.
+        if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && presence.getTo() != null && presence.getTo().getResource() == null && sender.getRoleAddress() != null) {
+            presence.setTo( sender.getRoleAddress() );
+        }
+
         if (!shouldBroadcastPresence(presence)) {
             // Just send the presence to the sender of the presence
-            try {
-                for (MUCRole occupant : getOccupantsByNickname(presence.getFrom().getResource())) {
-                    occupant.send(presence);
-                }
-            }
-            catch (UserNotFoundException e) {
-                // Do nothing
-            }
+            sender.send(presence);
             return;
         }
 
@@ -1469,11 +1465,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         fmucHandler.propagate( presence, sender )
             .thenRunAsync( () -> {
                 // Broadcast presence to occupants hosted by other cluster nodes
-                BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, presence, isJoinPresence);
+                BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
                 CacheFactory.doClusterTask(request);
 
                 // Broadcast presence to occupants connected to this JVM
-                request = new BroadcastPresenceRequest(this, presence, isJoinPresence);
+                request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
                 request.setOriginator(true);
                 request.run();
             }
@@ -1490,15 +1486,23 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         if (!canAnyoneDiscoverJID()) {
             jid = frag.element("item").attributeValue("jid");
         }
+
         for (MUCRole occupant : occupantsByFullJID.values()) {
             try
             {
+                if (occupant.getPresence().getFrom().equals(to)) {
+                    // A race condition can occur where 'occupantsByFullJID' does not yet (or no longer, in case of a 'leave') contain
+                    // the originator of the presence stanza. To work around this, the "self-presence" is sent after all other occupants
+                    // have been processed.
+                    continue; // Skip for now.
+                }
+
                 // Do not send broadcast presence to occupants hosted in other cluster nodes or other FMUC nodes.
                 if (!occupant.isLocal() || occupant.isRemoteFmuc()) {
                     continue;
                 }
-                // Don't include the occupant's JID if the room is semi-anon and the new occupant
-                // is not a moderator
+
+                // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
                 if (!canAnyoneDiscoverJID()) {
                     if (MUCRole.Role.moderator == occupant.getRole()) {
                         frag.element("item").addAttribute("jid", jid);
@@ -1507,35 +1511,47 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                         frag.element("item").addAttribute("jid", null);
                     }
                 }
-                // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
-                if (occupant.getPresence().getFrom().equals(to)) {
-                    Presence selfPresence = presence.createCopy();
-                    Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                    fragSelfPresence.addElement("status").addAttribute("code", "110");
-
-                    // Only in the context of entering the room status code 100, 201 and 210 should be sent.
-                    // http://xmpp.org/registrar/mucstatus.html
-                    if (presenceRequest.isJoinPresence()) {
-                        boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
-                        if (canAnyoneDiscoverJID()) {
-                            // // XEP-0045: Example 26.
-                            // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
-                            fragSelfPresence.addElement("status").addAttribute("code", "100");
-                        }
-                        if (isRoomNew) {
-                            fragSelfPresence.addElement("status").addAttribute("code", "201");
-                        }
-                    }
-
-                    occupant.send(selfPresence);
-                } else {
-                    occupant.send(presence);
-                }
+                occupant.send(presence);
             }
             catch ( Exception e )
             {
                 Log.warn( "An unexpected exception prevented a presence update from {} to be broadcasted to {}.", presence.getFrom(), occupant.getUserAddress(), e );
             }
+        }
+
+        // A race condition can occur where 'occupantsByFullJID' does not yet (or no longer, in case of a 'leave') contain
+        // the originator of the presence stanza. To work around this, the "self-presence" is sent after all other occupants
+        // have been processed.
+        try
+        {
+            // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
+            Presence selfPresence = presence.createCopy();
+            Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+            fragSelfPresence.addElement("status").addAttribute("code", "110");
+
+            // Only in the context of entering the room status code 100, 201 and 210 should be sent.
+            // http://xmpp.org/registrar/mucstatus.html
+            if ( presenceRequest.isJoinPresence() )
+            {
+                boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
+                if ( canAnyoneDiscoverJID() )
+                {
+                    // // XEP-0045: Example 26.
+                    // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
+                    fragSelfPresence.addElement("status").addAttribute("code", "100");
+                }
+                if ( isRoomNew )
+                {
+                    fragSelfPresence.addElement("status").addAttribute("code", "201");
+                }
+            }
+
+            selfPresence.setTo( presenceRequest.getUserAddressSender() ); // Cannot depend on a occupant being present, due to race conditions!
+            router.route(selfPresence);
+        }
+        catch ( Exception e )
+        {
+            Log.warn( "An unexpected exception prevented a presence update to be echo'd back to the sender {}.", presenceRequest.getUserAddressSender(), e );
         }
     }
 

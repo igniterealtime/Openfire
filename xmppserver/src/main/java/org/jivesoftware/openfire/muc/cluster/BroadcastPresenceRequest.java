@@ -18,12 +18,16 @@ package org.jivesoftware.openfire.muc.cluster;
 
 import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,19 +45,26 @@ public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
 
     private Presence presence;
 
+    private JID userAddressSender;
+
     private boolean isJoinPresence;
 
     public BroadcastPresenceRequest() {
     }
 
-    public BroadcastPresenceRequest(LocalMUCRoom room, Presence message, boolean isJoinPresence) {
+    public BroadcastPresenceRequest( LocalMUCRoom room, MUCRole sender, Presence message, boolean isJoinPresence) {
         super(room);
+        this.userAddressSender = sender.getUserAddress();
         this.presence = message;
         this.isJoinPresence = isJoinPresence;
     }
 
     public Presence getPresence() {
         return presence;
+    }
+
+    public JID getUserAddressSender() {
+        return userAddressSender;
     }
 
     public boolean isJoinPresence() {
@@ -87,6 +98,7 @@ public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
+        ExternalizableUtil.getInstance().writeSerializable(out, userAddressSender);
     }
 
     @Override
@@ -94,5 +106,6 @@ public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
         super.readExternal(in);
         Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
         presence = new Presence(packetElement, true);
+        userAddressSender = (JID) ExternalizableUtil.getInstance().readSerializable(in);
     }
 }

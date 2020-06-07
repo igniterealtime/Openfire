@@ -136,7 +136,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             int countPage=0;
 
             NamingEnumeration<? extends Attribute> i = attrs.getAll();
-             String groupMemberField = manager.getGroupMemberField();
+            String groupMemberField = manager.getGroupMemberField();
             String searchString = groupMemberField.contains(";range=")?groupMemberField.substring(0,groupMemberField.indexOf(";range=")):groupMemberField;
             while (i.hasMore())
             {

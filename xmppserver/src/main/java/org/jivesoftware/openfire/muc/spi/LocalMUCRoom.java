@@ -1148,13 +1148,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public void leaveRoom(MUCRole leaveRole) {
+        sendLeavePresenceToExistingOccupants(leaveRole);
+
         if (leaveRole.isLocal()) {
             // Ask other cluster nodes to remove occupant from room
             OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
             CacheFactory.doClusterTask(event);
         }
-
-        sendLeavePresenceToExistingOccupants(leaveRole);
 
         // Remove occupant from room and destroy room if empty and not persistent
         OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);

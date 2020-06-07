@@ -895,8 +895,8 @@ public class LocalMUCUser implements MUCUser
             Log.trace("Occupant '{}' of room '{}' is leaving.", preExistingRole.getUserAddress(), roomName);
             // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down)
             preExistingRole.setPresence(packet);
-            removeRole(roomName);
             preExistingRole.getChatRoom().leaveRoom(preExistingRole);
+            removeRole(roomName);
         }
         else
         {

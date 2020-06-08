@@ -54,6 +54,15 @@ public enum ConnectionType
     }
 
     /**
+     * Flag that indicates whether the connections of this type are client-oriented.
+     * @return true if it is SOCKET_C2S or its fallback is SOCKET_C2S.
+     */
+	public boolean isC2S()
+    {
+        return SOCKET_C2S == this || SOCKET_C2S == this.getFallback();
+    }
+
+    /**
      * Returns the prefix used for the name of properties that are used to configure connections of this type.
      * @return A property name prefix (never null or an empty string).
      */

@@ -102,20 +102,20 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     .setKey("xmpp.offline.autoclean.daystolive")
     .setDefaultValue(Duration.ofDays(365))
     .setChronoUnit(ChronoUnit.DAYS)
-    .setDynamic(true)
+    .setDynamic(false)
     .build();
 
      public static final SystemProperty<Duration> OFFLINE_AUTOCLEAN_CHECKINTERVAL = SystemProperty.Builder.ofType(Duration.class)
     .setKey("xmpp.offline.autoclean.checkinterval")
     .setDefaultValue(Duration.ofMinutes(30))
     .setChronoUnit(ChronoUnit.MINUTES)
-    .setDynamic(true)
+    .setDynamic(false)
     .build();
 
      public static final SystemProperty<Boolean> OFFLINE_AUTOCLEAN_ENABLE = SystemProperty.Builder.ofType(Boolean.class)
     .setKey("xmpp.offline.autoclean.enabled")
     .setDefaultValue(false)
-    .setDynamic(true)
+    .setDynamic(false)
     .build();
     
     private long daystolive = 365; //days

@@ -171,7 +171,9 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         for (int n=0;n<standardAttributes.length;n++)
                         {
                             if (!standardAttributes[n].contains(manager.getGroupMemberField()))
+                            {
                                 stdAttr.add(standardAttributes[n]);
+                            }
                         }
                         countPage++;
                         stdAttr.add(genRangePart(countPage));
@@ -182,12 +184,15 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         {
                             members.addAll(tmpGroup.getMembers());
                         }
-                        else // no next found
+                        else
+                        {
+                            // no next found
                             break;
+                        }
                     }
                     catch (Exception e)
                     {
-                        // no next found, cause of missing attribute
+                        Log.debug("breaking the loop, cause we did not found a necessary attribute"); // no next found, cause of missing attribute
                         break;
                     }
                 }while (true);
@@ -330,10 +335,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                     ldapfilter.substring(ldapfilter.indexOf("=", 
                             ldapfilter.indexOf(searchRangeStr)+searchRangeStr.length()));
         }
-        
-        if (Log.isDebugEnabled()) {
-            Log.debug("Trying to find group names using query: " + ldapfilter);
-        }
+                
+        Log.debug("Trying to find group names using query: {}", ldapfilter);        
         
         // Perform the LDAP query
         return manager.retrieveList(

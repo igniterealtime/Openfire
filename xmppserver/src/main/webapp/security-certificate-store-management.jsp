@@ -90,7 +90,7 @@
 
         for ( final ConnectionType connectionType : toUpdate )
         {
-            if ( connectionType == SOCKET_C2S || (connectionType.getFallback() != null && connectionType.getFallback() == SOCKET_C2S ) )
+            if ( connectionType.isC2S() )
             {
                 if ( locTrustC2S == null || locTrustC2S.isEmpty() )
                 {
@@ -121,7 +121,7 @@
                 {
                     final String locTrust;
                     final String pwdTrust;
-                    if ( connectionType == SOCKET_C2S || (connectionType.getFallback() != null && connectionType.getFallback() == SOCKET_C2S) )
+                    if ( connectionType.isC2S() )
                     {
                         locTrust = locTrustC2S;
                         pwdTrust = pwdTrustC2S;

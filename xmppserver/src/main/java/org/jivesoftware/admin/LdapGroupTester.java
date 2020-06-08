@@ -123,8 +123,8 @@ public class LdapGroupTester {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve groups.", ex);
             }
         }
         return groups;

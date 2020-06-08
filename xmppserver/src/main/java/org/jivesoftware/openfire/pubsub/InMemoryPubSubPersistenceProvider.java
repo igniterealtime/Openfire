@@ -231,7 +231,22 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public void savePublishedItem( PublishedItem item )
     {
         log.debug( "Saving published item for node {}: {}", item.getNode().getUniqueIdentifier(), item.getID() );
-        CacheUtil.addValueToMultiValuedCache( itemsCache, item.getNode().getUniqueIdentifier(), item, LinkedList::new );
+        final Lock lock = CacheFactory.getLock( item.getNode().getUniqueIdentifier(), itemsCache );
+        try {
+            lock.lock();
+
+            // Find and remove an item with the same ID, if one is present.
+            final LinkedList<PublishedItem> allNodeItems = itemsCache.get(item.getNode().getUniqueIdentifier());
+            if (allNodeItems != null) {
+                final Optional<PublishedItem> oldItem = allNodeItems.stream().filter(i -> i.getUniqueIdentifier().equals(item.getUniqueIdentifier())).findAny();
+                oldItem.ifPresent(publishedItem -> CacheUtil.removeValueFromMultiValuedCache(itemsCache, item.getNode().getUniqueIdentifier(), publishedItem));
+            }
+
+            // Add the new item.
+            CacheUtil.addValueToMultiValuedCache( itemsCache, item.getNode().getUniqueIdentifier(), item, LinkedList::new );
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -356,6 +371,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
             lock.lock();
             if ( serviceIdToNodesCache.containsKey( id ) ) {
                 final PEPService pepService = new PEPService( XMPPServer.getInstance(), jid );
+                pepService.initialize();
 
                 // The JDBC variant stores subscriptions in the database. The in-memory variant cannot rely on this.
                 // Subscriptions have to be repopulated from the roster instead.

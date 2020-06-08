@@ -1766,7 +1766,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * Saves the node configuration to the backend store.
      */
     public void saveToDB() {
-        // Make the room persistent
+        // Make the node persistent
         if (!savedToDB) {
             PubSubPersistenceProviderManager.getInstance().getProvider().createNode(this);
             // Set that the node is now in the DB

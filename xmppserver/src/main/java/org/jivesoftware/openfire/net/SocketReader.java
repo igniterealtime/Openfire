@@ -19,7 +19,7 @@ package org.jivesoftware.openfire.net;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
-import java.util.Map;
+
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;

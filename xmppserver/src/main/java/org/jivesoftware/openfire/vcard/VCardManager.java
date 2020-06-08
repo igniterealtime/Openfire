@@ -31,8 +31,6 @@ import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;

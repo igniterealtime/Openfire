@@ -205,6 +205,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Checks if a session is currently in the detached state (ie, has no connection,
+     * but has not been formally closed yet either).
+     *
+     * @param localSession A session
+     * @return true if the session is currently in 'detached' state, otherwise 'false'.
+     */
+    public boolean isDetached(LocalSession localSession) {
+        return this.detachedSessions.containsKey(localSession.getStreamID());
+    }
+
+    /**
      * Remove a session as being detached. This is idempotent.
      * This should be called by the LocalSession itself either when resumed or when
      * closed.
@@ -730,7 +741,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         if (session.getAddress() != null && routingTable != null &&
                 session.getAddress().toBareJID().trim().length() != 0) {
             // Update route to unavailable session (anonymous or not)
-            routingTable.addClientRoute(session.getAddress(), session);
+            routingTable.removeClientRoute(session.getAddress());
         }
     }
 
@@ -1294,13 +1305,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             try {
                 LocalClientSession session = (LocalClientSession) handback;
                 if (session.isDetached()) {
-                    Log.debug("Closing session is detached already.");
+                    Log.debug("Closing session with address {} and streamID {} is detached already.", session.getAddress(), session.getStreamID());
                     return;
                 }
                 if (session.getStreamManager().getResume()) {
-                    Log.debug("Closing session has SM enabled; detaching.");
+                    Log.debug("Closing session with address {} and streamID {} has SM enabled; detaching.", session.getAddress(), session.getStreamID());
                     session.setDetached();
                     return;
+                } else {
+                    Log.debug("Closing session with address {} and streamID {} does not have SM enabled.", session.getAddress(), session.getStreamID());
                 }
                 try {
                     if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&

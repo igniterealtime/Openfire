@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.ldap;
 
 import org.jivesoftware.openfire.auth.AuthorizationPolicy;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attribute;
@@ -43,6 +45,8 @@ import java.util.Enumeration;
  * @author Jay Kline
  */
 public class LdapAuthorizationPolicy implements AuthorizationPolicy {
+
+    private static final Logger Log = LoggerFactory.getLogger(LdapAuthorizationPolicy.class) ;
 
     private LdapManager manager;
     private String usernameField;
@@ -109,8 +113,8 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve authorized principals for user {}.", username, ex);
             }
         }
         return authorized;

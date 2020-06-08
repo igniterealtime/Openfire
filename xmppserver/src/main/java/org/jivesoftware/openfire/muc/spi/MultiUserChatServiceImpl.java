@@ -24,22 +24,38 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.disco.*;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.handler.IQvCardHandler;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.HistoryStrategy;
+import org.jivesoftware.openfire.muc.MUCEventDelegate;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MUCUser;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.*;
-import org.jivesoftware.openfire.archive.Archiver;
+import org.jivesoftware.util.AutoCloseableReentrantLock;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +64,26 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.DataForm.Type;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -216,7 +247,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Queue that holds the messages to log for the rooms that need to log their conversations.
      */
-    private Archiver<ConversationLogEntry> archiver;
+    private volatile Archiver<ConversationLogEntry> archiver;
 
     /**
      * Max number of hours that a persistent room may be empty before the service removes the
@@ -324,7 +355,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void processPacket(final Packet packet) {
+
+        Log.trace( "Routing stanza: {}", packet.toXML() );
         if (!isServiceEnabled()) {
+            Log.trace( "Service is disabled. Ignoring stanza." );
             return;
         }
         // The MUC service will receive all the packets whose domain matches the domain of the MUC
@@ -334,6 +368,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
                 if (process((IQ)packet)) {
+                    Log.trace( "Done processing IQ stanza." );
                     return;
                 }
             } else if (packet instanceof Message) {
@@ -341,6 +376,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (msg.getType() == Message.Type.error) {
                     // Bounced message, drop user.
                     removeUser(packet.getFrom());
+                    Log.trace( "Done processing Message stanza." );
                     return;
                 }
             } else if (packet instanceof Presence) {
@@ -348,13 +384,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (pres.getType() == Presence.Type.error) {
                     // Bounced presence, drop user.
                     removeUser(packet.getFrom());
+                    Log.trace( "Done processing Presence stanza." );
                     return;
                 }
             }
 
             if ( packet.getTo().getNode() == null )
             {
-                // This was addressed at the service itself, which by now should have been handled.
+                Log.trace( "Stanza was addressed at the service itself, which by now should have been handled." );
                 if ( packet instanceof IQ && ((IQ) packet).isRequest() )
                 {
                     final IQ reply = IQ.createResultIQ( (IQ) packet );
@@ -366,12 +403,25 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
             else
             {
-                // The packet is a normal packet that should possibly be sent to the room
+                Log.trace( "The stanza is a normal packet that should possibly be sent to the room." );
                 final JID recipient = packet.getTo();
                 final String roomName = recipient != null ? recipient.getNode() : null;
                 final JID userJid = packet.getFrom();
+                Log.trace( "Stanza recipient: {}, room name: {}, sender: {}", recipient, roomName, userJid );
                 try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString()).lock()) {
-                    getChatUser(userJid, roomName).process(packet);
+                    if ( !packet.getElement().elements(FMUCHandler.FMUC).isEmpty() ) {
+                        Log.trace( "Stanza is a FMUC stanza." );
+                        final MUCRoom chatRoom = getChatRoom(roomName);
+                        if ( chatRoom != null ) {
+                            chatRoom.getFmucHandler().process(packet);
+                        } else {
+                            Log.warn( "Unable to process FMUC stanza, as room it's addressed to does not exist: {}", roomName );
+                            // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
+                        }
+                    } else {
+                        Log.trace( "Stanza is a regular MUC stanza." );
+                        getChatUser(userJid, roomName).process(packet);
+                    }
                 }
             }
         }
@@ -590,7 +640,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             kickedPresence =
                                     room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
                             // Send the updated presence to the room occupants
-                            room.send(kickedPresence);
+                            room.send(kickedPresence, room.getRole());
                         }
                         catch (final NotAllowedException e) {
                             // Do nothing since we cannot kick owners or admins
@@ -602,12 +652,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
-    }
-
-    @Override
-    public Archiver<ConversationLogEntry> getArchiver()
-    {
-        return archiver;
     }
 
     /**
@@ -1281,22 +1325,66 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
-    public void setLogMaxConversationBatchSize( int size )
+    /**
+     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
+     * {@link #setLogMaxConversationBatchSize(int)} - so please use that instead.
+     * @param size the number of messages to save to the database on each run of the logging process.
+     * @deprecated Use {@link #setLogMaxConversationBatchSize(int)} instead.
+     */
+    @Override
+    @Deprecated
+    public void setLogConversationBatchSize(int size)
     {
+        setLogMaxConversationBatchSize(size);
+    }
+
+    /**
+     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
+     * {@link #getLogMaxConversationBatchSize()} - so please use that instead.
+     * @return the number of messages to save to the database on each run of the logging process.
+     * @deprecated Use {@link #getLogMaxConversationBatchSize()} instead.
+     */
+    @Override
+    @Deprecated
+    public int getLogConversationBatchSize()
+    {
+        return getLogMaxConversationBatchSize();
+    }
+
+    /**
+     * Sets the maximum number of messages to save to the database on each run of the archiving process.
+     * Even though the saving of queued conversations takes place in another thread it is not
+     * recommended specifying a big number.
+     *
+     * @param size the maximum number of messages to save to the database on each run of the archiving process.
+     */
+    @Override
+    public void setLogMaxConversationBatchSize(int size) {
         if ( this.logMaxConversationBatchSize == size ) {
             return;
         }
         this.logMaxConversationBatchSize = size;
 
-        archiver.setMaxWorkQueueSize( size );
+        if (archiver != null) {
+            archiver.setMaxWorkQueueSize(size);
+        }
         MUCPersistenceManager.setProperty( chatServiceName, "tasks.log.maxbatchsize", Integer.toString( size));
     }
 
-    public int getLogMaxConversationBatchSize()
-    {
+    /**
+     * Returns the maximum number of messages to save to the database on each run of the archiving process.
+     * @return the maximum number of messages to save to the database on each run of the archiving process.
+     */
+    @Override
+    public int getLogMaxConversationBatchSize() {
         return logMaxConversationBatchSize;
     }
 
+    /**
+     * Sets the maximum time allowed to elapse between writing archive batches to the database.
+     * @param interval the maximum time allowed to elapse between writing archive batches to the database.
+     */
+    @Override
     public void setLogMaxBatchInterval( Duration interval )
     {
         if ( this.logMaxBatchInterval.equals( interval ) ) {
@@ -1304,50 +1392,89 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         this.logMaxBatchInterval = interval;
 
-        archiver.setMaxPurgeInterval( interval );
+        if (archiver != null) {
+            archiver.setMaxPurgeInterval(interval);
+        }
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.maxbatchinterval", Long.toString( interval.toMillis() ) );
     }
 
+    /**
+     * Returns the maximum time allowed to elapse between writing archive entries to the database.
+     * @return the maximum time allowed to elapse between writing archive entries to the database.
+     */
+    @Override
     public Duration getLogMaxBatchInterval()
     {
         return logMaxBatchInterval;
     }
 
-    public void setLogBatchGracePeriod( Duration period )
+    /**
+     * Sets the maximum time to wait for a next incoming entry before writing the batch to the database.
+     * @param interval the maximum time to wait for a next incoming entry before writing the batch to the database.
+     */
+    @Override
+    public void setLogBatchGracePeriod( Duration interval )
     {
-        if ( this.logBatchGracePeriod.equals( period ) ) {
+        if ( this.logBatchGracePeriod.equals( interval ) ) {
             return;
         }
 
-        this.logBatchGracePeriod = period;
-        archiver.setGracePeriod( period );
-        MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.batchgrace", Long.toString( period.toMillis() ) );
+        this.logBatchGracePeriod = interval;
+        if (archiver != null) {
+            archiver.setGracePeriod(interval);
+        }
+        MUCPersistenceManager.setProperty(chatServiceName, "tasks.log.batchgrace", Long.toString( interval.toMillis() ) );
+    }
+
+    /**
+     * Returns the maximum time to wait for a next incoming entry before writing the batch to the database.
+     * @return the maximum time to wait for a next incoming entry before writing the batch to the database.
+     */
+    @Override
+    public Duration getLogBatchGracePeriod()
+    {
+        return logBatchGracePeriod;
+    }
+
+    /**
+     * Accessor uses the "double-check idiom" for proper lazy instantiation.
+     * @return An Archiver instance, never null.
+     */
+    @Override
+    public Archiver getArchiver() {
+        Archiver result = this.archiver;
+        if (result == null) {
+            synchronized (this) {
+                result = this.archiver;
+                if (result == null) {
+                    result = new ConversationLogEntryArchiver("MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod);
+                    XMPPServer.getInstance().getArchiveManager().add(result);
+                    this.archiver = result;
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override
     public void start() {
         XMPPServer.getInstance().addServerListener( this );
 
-        // Run through the users every 5 minutes after a 5 minutes server startup delay (default
-        // values)
+        // Run through the users every 5 minutes after a 5 minutes server startup delay (default values)
         userTimeoutTask = new UserTimeoutTask();
         TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
-        archiver = new ConversationLogEntryArchiver( "MUC Service " + this.getAddress().toString(), logMaxConversationBatchSize, logMaxBatchInterval, logBatchGracePeriod );
-        XMPPServer.getInstance().getArchiveManager().add( archiver );
 
         // Remove unused rooms from memory
-        long cleanupFreq = JiveGlobals.getLongProperty(
-            "xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
+        long cleanupFreq = JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
         TaskEngine.getInstance().schedule(new CleanupTask(), cleanupFreq, cleanupFreq);
 
         // Set us up to answer disco item requests
         XMPPServer.getInstance().getIQDiscoItemsHandler().addServerItemsProvider(this);
         XMPPServer.getInstance().getIQDiscoInfoHandler().setServerNodeInfoProvider(this.getServiceDomain(), this);
 
-        final ArrayList<String> params = new ArrayList<>();
-        params.clear();
-        params.add(getServiceDomain());
-        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", params));
+        Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", Collections.singletonList(getServiceDomain())));
+
         // Load all the persistent rooms to memory
         for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
@@ -1361,7 +1488,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         routingTable.removeComponentRoute(getAddress());
         broadcastShutdown();
         XMPPServer.getInstance().removeServerListener( this );
-        XMPPServer.getInstance().getArchiveManager().remove( archiver );
+        if (archiver != null) {
+            XMPPServer.getInstance().getArchiveManager().remove(archiver);
+        }
     }
 
     @Override
@@ -1483,7 +1612,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void logConversation(final MUCRoom room, final Message message, final JID sender) {
         // Only log messages that have a subject or body. Otherwise ignore it.
         if (message.getSubject() != null || message.getBody() != null) {
-            archiver.archive( new ConversationLogEntry( new Date() ,room, message, sender) );
+            getArchiver().archive( new ConversationLogEntry( new Date(), room, message, sender) );
         }
     }
 

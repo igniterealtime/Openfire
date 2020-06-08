@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.disco;
 
-import org.dom4j.Element;
-
 import java.util.Iterator;
 
 /**

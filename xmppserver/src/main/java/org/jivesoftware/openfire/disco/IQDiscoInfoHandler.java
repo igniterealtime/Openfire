@@ -18,11 +18,9 @@ package org.jivesoftware.openfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQPrivateHandler;
-import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jivesoftware.admin.AdminConsole;

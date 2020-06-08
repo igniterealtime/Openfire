@@ -42,6 +42,7 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
     private boolean voiceOnly;
     private JID roleAddress;
     private JID userAddress;
+    private JID reportedFmucAddress;
     private NodeID nodeID;
     private boolean sendPresence;
 
@@ -56,6 +57,7 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
         voiceOnly = occupant.isVoiceOnly();
         roleAddress = occupant.getRoleAddress();
         userAddress = occupant.getUserAddress();
+        reportedFmucAddress = occupant.getReportedFmucAddress();
         nodeID = XMPPServer.getInstance().getNodeID();
     }
 
@@ -86,6 +88,10 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
 
     public JID getUserAddress() {
         return userAddress;
+    }
+
+    public JID getReportedFmucAddress() {
+        return reportedFmucAddress;
     }
 
     public NodeID getNodeID() {
@@ -139,6 +145,10 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
         ExternalizableUtil.getInstance().writeBoolean(out, voiceOnly);
         ExternalizableUtil.getInstance().writeSerializable(out, roleAddress);
         ExternalizableUtil.getInstance().writeSerializable(out, userAddress);
+        ExternalizableUtil.getInstance().writeBoolean(out, reportedFmucAddress != null);
+        if ( reportedFmucAddress != null ) {
+            ExternalizableUtil.getInstance().writeSerializable(out, reportedFmucAddress);
+        }
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID.toByteArray());
         ExternalizableUtil.getInstance().writeBoolean(out, sendPresence);
     }
@@ -153,6 +163,11 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
         voiceOnly = ExternalizableUtil.getInstance().readBoolean(in);
         roleAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         userAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            reportedFmucAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        } else {
+            reportedFmucAddress = null;
+        }
         nodeID = NodeID.getInstance(ExternalizableUtil.getInstance().readByteArray(in));
         sendPresence = ExternalizableUtil.getInstance().readBoolean(in);
     }

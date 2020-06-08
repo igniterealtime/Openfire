@@ -78,7 +78,7 @@ function cleanup {
 function setUpAioxmppEnvironment {
     AIOXMPPDIR="${BASEDIR}/aioxmpp"
     AIOXMPPCONFIG="${AIOXMPPDIR}/openfire-config.ini"
-    git clone -b feature/e2etest-improvements https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
+    git clone -b devel https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     pushd "${AIOXMPPDIR}"
     which pip3
     sudo pip3 install nose

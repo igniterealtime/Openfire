@@ -163,6 +163,172 @@ hr {
     <div id="pageBody">
 
 
+<h2>4.6.0-beta -- <span style="font-weight: normal;">June 7, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-872'>OF-872</a>] -         Openfire violates RFC 6120 § 10.3.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1696'>OF-1696</a>] -         Personal Eventing menu shows exception on a first try
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1888'>OF-1888</a>] -         Faulty assumption in RoutingTableImpl leads to NPE
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1975'>OF-1975</a>] -         Do not trigger offlinemessagelisteners when no message is stored
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1992'>OF-1992</a>] -         IQPEPHandler does not consistently identify &quot;addressed to server&quot; stanzas
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1993'>OF-1993</a>] -         Prepared Statement should always close on method exit
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1995'>OF-1995</a>] -         It should be possible to query anonymous users for service discovery
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1998'>OF-1998</a>] -         HTTP Bind session listeners are never invoked
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2012'>OF-2012</a>] -         Should not add client route when client becomes unavailable.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2016'>OF-2016</a>] -         Do not depend on existing PEP service when creating PEP service
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2038'>OF-2038</a>] -         Shared groups should not be looked up in LDAP
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1968'>OF-1968</a>] -         Avatar support for MUC rooms.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1978'>OF-1978</a>] -         MUC: add configuration that allows join presence to be suppressed
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1989'>OF-1989</a>] -         Introduce in-memory only pubsub persistence provider
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2030'>OF-2030</a>] -         Add support for XEP-0289: Federated MUC for Constrained Environments
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2031'>OF-2031</a>] -         CVE-2020-10683 Update dom4j to 2.1.3 or later
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1837'>OF-1837</a>] -         JDBC providers should have an option to escape data
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1869'>OF-1869</a>] -         Announce PEP feature support for &#39;auto-subscribe&#39; and &#39;filtered notifications&#39;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1981'>OF-1981</a>] -         Allow roster item &#39;ask&#39; to be modified.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1982'>OF-1982</a>] -         Add -Djdk.tls.ephemeralDHKeySize=matched  and/or Djsse.SSLEngine.acceptLargeFragments=true to startup parameters
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1983'>OF-1983</a>] -         Provide start argument to run dev mode
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1984'>OF-1984</a>] -         Replace DummyExternalizableUtil
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1985'>OF-1985</a>] -         Decouple Pubsub implementation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1986'>OF-1986</a>] -         Don&#39;t unconditionally auto-create PEPService.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1987'>OF-1987</a>] -         Improve PubSub Caching
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1988'>OF-1988</a>] -         Introduce pluggable provider mechanism for PubSub persistency
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1990'>OF-1990</a>] -         pubsub: split cache from persistence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1994'>OF-1994</a>] -         Properly deny anonymous users access to Private Storage
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1996'>OF-1996</a>] -         Improve shutdown sequence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2000'>OF-2000</a>] -         Don&#39;t use intern&#39;ed strings to synchronize on
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2001'>OF-2001</a>] -         IQ Bind results should not have a &#39;from&#39; value.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2002'>OF-2002</a>] -         Do not offer private blocking to anonymous users.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2003'>OF-2003</a>] -         Bump slf4j to version 1.7.30
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2004'>OF-2004</a>] -         Have an ad-hoc command accessible to everyone
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2008'>OF-2008</a>] -         Autosetup should allow for users to be provisioned
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2025'>OF-2025</a>] -         PEP publishing should evaluate all recipient JIDs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2032'>OF-2032</a>] -         Make connection type fallback for WEBADMIN c2s
+</li>
+</ul>
+
+
+<h2>4.5.2 -- <span style="font-weight: normal;">May 18, 2020</span></h2>
+	    <h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-963'>OF-963</a>] -         WebSocket keep-alive is not working as expected
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1963'>OF-1963</a>] -         Cross Site Scripting (XSS) issues - CSW Document No: C1055
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1964'>OF-1964</a>] -         SystemProperty should load classes with Thread.getContextClassloader as fallback
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1970'>OF-1970</a>] -         Undeliverable messages routed to unavailable full jid should be routed to other resources with prio 0 (not 1) or higher.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1977'>OF-1977</a>] -         Pubsub notifications should be sent to subscribers of parent nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1999'>OF-1999</a>] -         Prevent potential arithmetic overflow
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2013'>OF-2013</a>] -         Fix detection of &#39;detached&#39; state of a connection
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2014'>OF-2014</a>] -         Reset ConnectionListener callback object on re-init
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2015'>OF-2015</a>] -         Remove the session that was used for resumption immediately
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2017'>OF-2017</a>] -         Update Jetty to 9.4.28.v20200408
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2026'>OF-2026</a>] -         Stable and Unique Stanza Identifier need not be UUID
+</li>
+</ul>
+
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-158'>OF-158</a>] -         Set through the admin console the MUC room configuration form&#39;s default values
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1966'>OF-1966</a>] -         Add Japanese translation
+</li>
+</ul>
+
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1969'>OF-1969</a>] -         Log username when auth fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1974'>OF-1974</a>] -         Openfire should not disclose Jetty version within HTTP header for websocket connections
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1976'>OF-1976</a>] -         Allow any number of maximum MUC occupants to be configured.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1979'>OF-1979</a>] -         Guard against invalid SASL responses
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1997'>OF-1997</a>] -         Bump Bouncy Castle version to v1.65
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2019'>OF-2019</a>] -         Allow Archiver to start polling only after work is produced.
+</li>
+</ul>
+
+
+<h2>4.5.1 -- <span style="font-weight: normal;">January 31, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1946'>OF-1946</a>] -         Cache &quot;Percent Used&quot; values are incorrect
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1959'>OF-1959</a>] -         Can not connect to LDAP/AD on new installations
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1961'>OF-1961</a>] -         Potential ClassCastException with LDAP setup
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1962'>OF-1962</a>] -         MySQL serverTimezone not set
+</li>
+</ul>
+
+
 <h2>4.5.0 -- <span style="font-weight: normal;">January 10, 2020</span></h2>
 <h2>        Bug
 </h2>
@@ -660,6 +826,8 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1784'>OF-1784</a>] -         Don&#39;t write to connection if connection cannot be written to.
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1786'>OF-1786</a>] -         Update MINA to 2.1.3 to avoid high CPU usage on Linux
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1788'>OF-1788</a>] -         MUC messages should be written to database immediately
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1790'>OF-1790</a>] -         Improve concurrency and performance of conversation log history.
 </li>

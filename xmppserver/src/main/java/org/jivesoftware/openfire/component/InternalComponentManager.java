@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.component;
 
 import org.dom4j.Element;
-import org.eclipse.jetty.server.Authentication.SendSuccess;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;

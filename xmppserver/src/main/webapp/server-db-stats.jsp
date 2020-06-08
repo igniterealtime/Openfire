@@ -224,7 +224,7 @@
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
-            for (int i = 0; i < ((list.length > 20) ? 20 : list.length); i++) {
+            for ( int i = 0; i < (Math.min(list.length, 20)); i++) {
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
@@ -291,7 +291,7 @@
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
-            for (int i = 0; i < ((list.length > 10) ? 10 : list.length); i++) {
+            for ( int i = 0; i < (Math.min(list.length, 10)); i++) {
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
@@ -358,7 +358,7 @@
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
-            for (int i = 0; i < ((list.length > 10) ? 10 : list.length); i++) {
+            for ( int i = 0; i < (Math.min(list.length, 10)); i++) {
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
@@ -425,7 +425,7 @@
             out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
             out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
 
-            for (int i = 0; i < ((list.length > 10) ? 10 : list.length); i++) {
+            for ( int i = 0; i < (Math.min(list.length, 10)); i++) {
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");

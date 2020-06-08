@@ -201,7 +201,7 @@ class IQMUCRegisterHandler {
                 }
                 // Send the updated presences to the room occupants
                 for (Presence presence : presences) {
-                    room.send(presence);
+                    room.send(presence, room.getRole());
                 }
 
             }

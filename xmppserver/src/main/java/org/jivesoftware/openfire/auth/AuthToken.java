@@ -17,8 +17,6 @@
 package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.openfire.XMPPServerInfo;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.JiveGlobals;
 
 /**
  * A token that proves that a user has successfully authenticated.

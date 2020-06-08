@@ -106,6 +106,9 @@ import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
+import org.jivesoftware.openfire.roster.DefaultRosterItemProvider;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterItemProvider;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
@@ -570,6 +573,39 @@ public class XMPPServer {
             logger.warn("There was an unexpected error encountered when "
                 + "setting the new admin information. Please check your error "
                 + "logs and try to remedy the problem.");
+        }
+
+        // Import any provisioned users.
+        try {
+            RosterItemProvider rosterItemProvider = null;
+            for (int userId = 1; userId < Integer.MAX_VALUE; userId++ ) {
+                final String username = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".username" );
+                final String password = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".password" );
+                if (username == null || password == null) {
+                    break;
+                }
+                final String name = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".name" );
+                final String email = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".email" );
+
+                final User user = UserManager.getInstance().createUser(username, password, name, email );
+                for (int itemId = 1; itemId < Integer.MAX_VALUE; itemId++) {
+                    final String jid = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".roster.item" + itemId + ".jid" );
+                    if (jid == null) {
+                        break;
+                    }
+                    final String nickname = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".roster.item" + itemId + ".nickname" );
+                    final RosterItem rosterItem = new RosterItem(new JID(jid), RosterItem.SubType.BOTH, RosterItem.AskType.NONE, RosterItem.RecvType.NONE, nickname, null);
+
+                    if (rosterItemProvider == null) {
+                        // Modules have not started at this point, so we can't go through the roster. Use the default provider instead.
+                        rosterItemProvider = new DefaultRosterItemProvider();
+                    }
+                    rosterItemProvider.createItem(user.getUsername(), rosterItem);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.warn("There was an unexpected error encountered when provisioning auto-setup provided users.", e);
         }
 
         // finish setup

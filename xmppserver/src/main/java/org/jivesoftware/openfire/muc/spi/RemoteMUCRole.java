@@ -51,6 +51,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     private boolean voiceOnly;
     private JID roleAddress;
     private JID userAddress;
+    private JID reportedFmucAddress;
     private MUCRoom room;
     private NodeID nodeID;
 
@@ -69,6 +70,7 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
         voiceOnly = event.isVoiceOnly();
         roleAddress = event.getRoleAddress();
         userAddress = event.getUserAddress();
+        reportedFmucAddress = event.getReportedFmucAddress();
         room = event.getRoom();
         this.nodeID = event.getNodeID();
     }
@@ -146,6 +148,11 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
     }
 
     @Override
+    public JID getReportedFmucAddress() {
+        return reportedFmucAddress;
+    }
+
+    @Override
     public boolean isLocal() {
         return false;
     }
@@ -157,6 +164,14 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
 
     @Override
     public void send(Packet packet) {
+        if (this.isRemoteFmuc()) {
+            // Sending stanzas to individual occupants that are on remote FMUC nodes defeats the purpose of FMUC, which is to reduce message. This reduction is based on sending data just once, and have it 'fan out' on the remote node (as opposed to sending each occupant on that node a distinct stanza from this node).
+            Log.warn( "Sending data directly to an entity ({}) on a remote FMUC node. Instead of individual messages, we expect data to be sent just once (and be fanned out locally by the remote node).", this, new Throwable() );
+
+            // Check if stanza needs to be enriched with FMUC metadata.
+            augmentOutboundStanzaWithFMUCData(packet);
+        }
+
         XMPPServer.getInstance().getRoutingTable().routePacket(userAddress, packet, false);
     }
 
@@ -170,6 +185,10 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
         ExternalizableUtil.getInstance().writeBoolean(out, voiceOnly);
         ExternalizableUtil.getInstance().writeSerializable(out, roleAddress);
         ExternalizableUtil.getInstance().writeSerializable(out, userAddress);
+        ExternalizableUtil.getInstance().writeBoolean(out, reportedFmucAddress != null);
+        if ( reportedFmucAddress != null ) {
+            ExternalizableUtil.getInstance().writeSerializable(out, reportedFmucAddress);
+        }
         ExternalizableUtil.getInstance().writeByteArray(out, nodeID.toByteArray());
     }
 
@@ -183,6 +202,11 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
         voiceOnly = ExternalizableUtil.getInstance().readBoolean(in);
         roleAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         userAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            reportedFmucAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        } else {
+            reportedFmucAddress = null;
+        }
         nodeID = NodeID.getInstance(ExternalizableUtil.getInstance().readByteArray(in));
     }
 }

@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A SocketSendingTracker keeps track of all the sockets that are currently sending data and
  * checks the health of the sockets to detect hanged connections. If a sending operation takes
@@ -36,6 +39,7 @@ package org.jivesoftware.openfire.net;
  */
 public class SocketSendingTracker {
 
+    private static final Logger Log = LoggerFactory.getLogger(SocketSendingTracker.class );
 
     private static SocketSendingTracker instance = new SocketSendingTracker();
 
@@ -81,6 +85,7 @@ public class SocketSendingTracker {
                             wait(10000);
                         }
                         catch (InterruptedException e) {
+                            Log.trace("Sleep interrupted");
                         }
                     }
                 }

@@ -101,8 +101,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
      *                        filled with visited DNs. If flatten of hierarchies of groups is active
      *                        ({@link LdapManager#isFlattenNestedGroups()}, this will prevent endless loops
      *                        for cyclic hierarchies.
-     * @return
-     * @throws NamingException
+     * @return A group (never null)
+     * @throws NamingException When a group can't be read from LDAP.
      */
     private Group getGroupByDN(LdapName groupDN, Set<String> membersToIgnore) throws NamingException {
         LdapContext ctx = null;
@@ -133,8 +133,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug( "An exception was ignored while trying to close the Ldap context after trying to get a group.", ex );
             }
         }
     }
@@ -247,6 +247,10 @@ public class LdapGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> search(String key, String value) {
+        if (key.equals("sharedRoster.displayName")){
+            return super.search(key,value);
+        }
+
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));

@@ -181,6 +181,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
             "VALUES (?,?,?,?,?,?)";
+    private static final String UPDATE_ITEM =
+            "UPDATE ofPubsubItem SET jid=?, creationDate=?, payload=? " +
+            "WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_ITEM =
             "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_ITEMS =
@@ -264,7 +267,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(ADD_NODE);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
             pstmt.setString(4, StringUtils.dateToMillis(node.getCreationDate()));
@@ -1141,8 +1144,20 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public void savePublishedItem(PublishedItem item)
+    public void savePublishedItem(PublishedItem item) {
+        // When an item with the given itemId exists, it must be overwritten (says the XEP)
+        final boolean create = getPublishedItem( item.getNode(), item.getUniqueIdentifier() ) == null;
+        if ( create ) {
+            createPublishedItem( item );
+        } else {
+            updatePublishedItem( item );
+        }
+    }
+
+    public void createPublishedItem(PublishedItem item)
     {
+        log.trace( "Creating published item: {} (write to database)", item.getUniqueIdentifier() );
+
         Connection con;
         PreparedStatement pstmt = null;
         try {
@@ -1156,7 +1171,30 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(6, item.getPayloadXML());
             pstmt.execute();
         } catch (SQLException ex) {
-            log.error("Published item could not be written to database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
+            log.error("Published item could not be created in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
+        } finally {
+            DbConnectionManager.closeStatement(pstmt);
+        }
+    }
+
+    public void updatePublishedItem(PublishedItem item)
+    {
+        log.trace( "Updating published item: {} (write to database)", item.getUniqueIdentifier() );
+
+        Connection con;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_ITEM);
+            pstmt.setString(1, item.getPublisher().toString());
+            pstmt.setString(2, StringUtils.dateToMillis( item.getCreationDate()));
+            pstmt.setString(3, item.getPayloadXML());
+            pstmt.setString(4, item.getNode().getService().getServiceID());
+            pstmt.setString(5, encodeNodeID(item.getNodeID()));
+            pstmt.setString(6, item.getID());
+            pstmt.execute();
+        } catch (SQLException ex) {
+            log.error("Published item could not be updated in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
             DbConnectionManager.closeStatement(pstmt);
         }
@@ -1714,6 +1752,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
                 // Create a new PEPService
                 pepService = new PEPService(XMPPServer.getInstance(), serviceID);
+                pepService.initialize();
             }
         } catch (SQLException sqle) {
             log.error(sqle.getMessage(), sqle);

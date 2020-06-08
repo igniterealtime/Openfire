@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.pubsub;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;

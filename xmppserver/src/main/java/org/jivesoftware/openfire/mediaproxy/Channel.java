@@ -50,9 +50,9 @@ abstract class Channel implements Runnable {
     /**
      * Creates a Channel according to the parameters.
      *
-     * @param dataSocket
-     * @param host
-     * @param port
+     * @param dataSocket datasocket to used to send and receive packets
+     * @param host       default destination host for received packets
+     * @param port       default destination port for received packets
      */
     public Channel(DatagramSocket dataSocket, InetAddress host, int port) {
         this.dataSocket = dataSocket;

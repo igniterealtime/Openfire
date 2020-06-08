@@ -41,7 +41,6 @@ import org.xmpp.packet.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS
@@ -782,7 +781,7 @@ public abstract class StanzaHandler {
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
      * @return the created session or null.
-     * @throws org.xmlpull.v1.XmlPullParserException
+     * @throws org.xmlpull.v1.XmlPullParserException when XML parsing causes an error.
      *
      */
     abstract boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)

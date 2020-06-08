@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 
 /**
  * Servlet which handles requests to the HTTP binding service. It determines if there is currently

@@ -487,6 +487,11 @@
                           url="muc-room-affiliations.jsp"
                           description="${sidebar.muc-room-affiliations.descr}"/>
 
+                    <!-- Federation -->
+                    <item id="muc-room-federation" name="${sidebar.muc-room-federation}"
+                          url="muc-room-federation.jsp"
+                          description="${sidebar.muc-room-federation.descr}"/>
+
                     <!-- Delete Room -->
                     <item id="muc-room-delete" name="${sidebar.muc-room-delete}"
                           url="muc-room-delete.jsp"

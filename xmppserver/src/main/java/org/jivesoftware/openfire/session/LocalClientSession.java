@@ -26,7 +26,6 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.privacy.PrivacyList;

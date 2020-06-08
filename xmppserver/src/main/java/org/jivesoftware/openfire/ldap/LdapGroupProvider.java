@@ -99,7 +99,13 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         String groupMemberField = manager.getGroupMemberField();
         groupMemberField = groupMemberField.contains(";range=")?groupMemberField.substring(0,groupMemberField.indexOf(";range=")):groupMemberField;
         
-        return groupMemberField+";range=" + i * 1500 + "-" + ((i + 1) * 1500 - 1);
+        int pageSize = JiveGlobals.getIntProperty("ldap.pagedResultsSize",1500);
+        if (pageSize==-1)
+        {
+            pageSize=1500;
+        }
+        
+        return groupMemberField+";range=" + i * pageSize + "-" + ((i + 1) * pageSize - 1);
     }
 
     /**

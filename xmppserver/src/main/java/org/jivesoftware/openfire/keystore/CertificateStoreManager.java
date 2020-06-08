@@ -476,7 +476,7 @@ public class CertificateStoreManager extends BasicModule
         final String defaultValue;
 
         // OF-1191: For client-oriented connection types, Openfire traditionally uses a different truststore.
-        if ( type.isC2S() )
+        if ( type.isClientOriented() )
         {
             defaultValue = "resources" + File.separator + "security" + File.separator + "client.truststore";
         }
@@ -583,7 +583,7 @@ public class CertificateStoreManager extends BasicModule
             }
 
             // Client-to-Server trust stores
-            if ( connectionType.isC2S() )
+            if ( connectionType.isClientOriented() )
             {
                 if ( c2sTrustStoreConfiguration == null )
                 {

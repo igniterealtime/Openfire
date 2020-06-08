@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNameManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -325,8 +326,18 @@ public class Roster implements Cacheable, Externalizable {
         }
         org.xmpp.packet.Roster roster = new org.xmpp.packet.Roster();
         roster.setType(IQ.Type.set);
-        org.xmpp.packet.Roster.Item item = roster.addItem(user, nickname, null,
+        org.xmpp.packet.Roster.Item item;
+
+        try {
+            UserManager.getUserProvider().loadUser(user.toBareJID());
+            item = roster.addItem(user, nickname, org.xmpp.packet.Roster.Ask.subscribe,
+                org.xmpp.packet.Roster.Subscription.from, groups);
+            Log.info("Adding an existing user to the roster {}. Changing subscription to from", user.toBareJID());
+        } catch (UserNotFoundException e) {
+            item = roster.addItem(user, nickname, org.xmpp.packet.Roster.Ask.subscribe,
                 org.xmpp.packet.Roster.Subscription.none, groups);
+            Log.info("Adding an non-existing user to the roster {}. Init with none subscription", user.toBareJID());
+        }
 
         RosterItem rosterItem = new RosterItem(item);
         // Fire event indicating that a roster item is about to be added

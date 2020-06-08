@@ -25,6 +25,7 @@ import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZInputStream;
+import org.xmpp.packet.StreamError;
 
 /**
  * Process incoming packets using a blocking model. Once a session has been created
@@ -157,6 +159,20 @@ class BlockingReadingMode extends SocketReadingMode {
                 else if (socketReader.connection.isClosed()) {
                     socketReader.open = false;
                     socketReader.session = null;
+                }
+            }
+            else if ("error".equals(tag)) {
+                try {
+                    final StreamError error = new StreamError( doc );
+                    Log.info( "Peer '{}' sent a stream error: '{}'{}. Closing connection.", socketReader.session != null ? socketReader.session.getAddress() : "(unknown)", error.getCondition().toXMPP(), error.getText() != null ? " ('" + error.getText() +"')" : "" );
+                } catch ( Exception e ) {
+                    Log.debug( "An unexpected exception occurred while trying to parse a stream error.", e );
+                } finally {
+                    if ( socketReader.session != null ) {
+                        socketReader.session.close();
+                        socketReader.session = null;
+                    }
+                    socketReader.open = false;
                 }
             }
             else if ("compress".equals(tag))

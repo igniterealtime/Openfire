@@ -456,22 +456,25 @@ public class Roster implements Cacheable, Externalizable {
             RosterItem.SubType subType = itemToRemove.getSubStatus();
 
             // Cancel any existing presence subscription between the user and the contact
-            if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
-                Presence presence = new Presence();
-                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
-                presence.setTo(itemToRemove.getJid());
-                presence.setType(Presence.Type.unsubscribe);
-                XMPPServer.getInstance().getPacketRouter().route(presence);
-            }
-
-            // cancel any existing presence subscription between the contact and the user
-            if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
-                Presence presence = new Presence();
-                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
-                presence.setTo(itemToRemove.getJid());
-                presence.setType(Presence.Type.unsubscribed);
-                XMPPServer.getInstance().getPacketRouter().route(presence);
-            }
+            // Since we pre-approve presences, even if someone deletes us from their roster
+            // we should still allow them to probe for our presence
+            // Uncomment to revert to standard XMPP functionality
+//            if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
+//                Presence presence = new Presence();
+//                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
+//                presence.setTo(itemToRemove.getJid());
+//                presence.setType(Presence.Type.unsubscribe);
+//                XMPPServer.getInstance().getPacketRouter().route(presence);
+//            }
+//
+//            // cancel any existing presence subscription between the contact and the user
+//            if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
+//                Presence presence = new Presence();
+//                presence.setFrom(XMPPServer.getInstance().createJID(username, null));
+//                presence.setTo(itemToRemove.getJid());
+//                presence.setType(Presence.Type.unsubscribed);
+//                XMPPServer.getInstance().getPacketRouter().route(presence);
+//            }
 
             // If removing the user was successful, remove the user from the subscriber list:
             RosterItem item = rosterItems.remove(user.toBareJID());

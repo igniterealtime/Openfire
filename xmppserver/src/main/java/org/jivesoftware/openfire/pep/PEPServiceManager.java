@@ -15,11 +15,8 @@
  */
 package org.jivesoftware.openfire.pep;
 
-import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.pubsub.CollectionNode;
-import org.jivesoftware.openfire.pubsub.Node;
-import org.jivesoftware.openfire.pubsub.PubSubEngine;
+import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.cache.Cache;
@@ -29,10 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -47,8 +40,6 @@ public class PEPServiceManager {
     public static final Logger Log = LoggerFactory
             .getLogger(PEPServiceManager.class);
 
-    private final static String GET_PEP_SERVICE = "SELECT DISTINCT serviceID FROM ofPubsubNode WHERE serviceID=?";
-
     /**
      * Cache of PEP services. Table, Key: bare JID (String); Value: PEPService
      */
@@ -61,23 +52,99 @@ public class PEPServiceManager {
      * Retrieves a PEP service -- attempting first from memory, then from the
      * database.
      *
-     * @param jid
-     *            the JID of the user that owns the PEP service.
-     * @return the requested PEP service if found or null if not found.
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param uniqueIdentifier
+     *            the unique identifier of the PEP service.
+     * @return the requested PEP service.
      */
-    public PEPService getPEPService(JID jid) {
-        return getPEPService( jid.toBareJID() );
+    public PEPService getPEPService( PubSubService.UniqueIdentifier uniqueIdentifier )
+    {
+        return getPEPService( uniqueIdentifier, true );
     }
 
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the
      * database.
      *
-     * @param jid
-     *            the bare JID of the user that owns the PEP service.
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param uniqueIdentifier
+     *            the unique identifier of the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
      * @return the requested PEP service if found or null if not found.
      */
-    public PEPService getPEPService(String jid) {
+    public PEPService getPEPService( PubSubService.UniqueIdentifier uniqueIdentifier, boolean autoCreate )
+    {
+        // PEP Services use the JID as their service identifier.
+        final JID needle;
+        try {
+            needle = new JID(uniqueIdentifier.getServiceId());
+        } catch (IllegalArgumentException ex) {
+            Log.warn( "Unable to get PEP service. Provided unique identifier does not contain a valid JID: " + uniqueIdentifier, ex );
+            return null;
+        }
+        return getPEPService( needle, autoCreate );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the JID of the user that owns the PEP service.
+     * @return the requested PEP service.
+     */
+    public PEPService getPEPService( JID jid ) {
+        return getPEPService( jid, true );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the JID of the user that owns the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
+     * @return the requested PEP service if found or null if not found.
+     */
+    public PEPService getPEPService( JID jid, boolean autoCreate ) {
+        return getPEPService( jid.toBareJID(), autoCreate );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the bare JID of the user that owns the PEP service.
+     * @return the requested PEP service.
+     */
+    public PEPService getPEPService( String jid ) {
+        return getPEPService( jid, true );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the bare JID of the user that owns the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
+     * @return the requested PEP service if found or null if not found.
+     */
+    public PEPService getPEPService( String jid, boolean autoCreate ) {
         PEPService pepService;
 
         final Lock lock = CacheFactory.getLock(jid, pepServices);
@@ -85,15 +152,33 @@ public class PEPServiceManager {
             lock.lock();
             if (pepServices.containsKey(jid)) {
                 // lookup in cache
-                pepService = pepServices.get(jid).get();
+                if ( pepServices.get(jid).isAbsent() && autoCreate ) {
+                    // needs auto-create despite negative cache.
+                    pepService = null;
+                } else {
+                    return pepServices.get(jid).get();
+                }
             } else {
                 // lookup in database.
-                pepService = loadPEPServiceFromDB(jid);
-
-                // always add to the cache, even if it doesn't exist. This will
-                // prevent future database lookups.
-                pepServices.put(jid, CacheableOptional.of(pepService));
+                pepService = PubSubPersistenceProviderManager.getInstance().getProvider().loadPEPServiceFromDB(jid);
             }
+
+            if ( pepService != null ) {
+                Log.debug("PEP: Restored service for {} from the database.", jid);
+                pubSubEngine.start(pepService);
+            } else if (autoCreate) {
+                Log.debug("PEP: Auto-created service for {}.", jid);
+                pepService = this.create(new JID( jid ));
+
+                // Probe presences
+                pubSubEngine.start(pepService);
+
+                // Those who already have presence subscriptions to jidFrom
+                // will now automatically be subscribed to this new
+                // PEPService.
+                XMPPServer.getInstance().getIQPEPHandler().addSubscriptionForRosterItems( pepService );
+            }
+            pepServices.put(jid, CacheableOptional.of(pepService));
         } finally {
             lock.unlock();
         }
@@ -111,16 +196,20 @@ public class PEPServiceManager {
                             + owner);
         }
 
-        PEPService pepService;
+        PEPService pepService = null;
         final String bareJID = owner.toBareJID();
         final Lock lock = CacheFactory.getLock(owner, pepServices);
         try {
             lock.lock();
 
-            pepService = pepServices.get(bareJID).get();
+            if (pepServices.get(bareJID) != null) {
+                pepService = pepServices.get(bareJID).get();
+            }
+
             if (pepService == null) {
                 pepService = new PEPService(XMPPServer.getInstance(), bareJID);
                 pepServices.put(bareJID, CacheableOptional.of(pepService));
+                pepService.initialize();
 
                 if (Log.isDebugEnabled()) {
                     Log.debug("PEPService created for : " + bareJID);
@@ -134,76 +223,43 @@ public class PEPServiceManager {
     }
 
     /**
-     * Loads a PEP service from the database, if it exists.
-     *
-     * @param jid
-     *            the JID of the owner of the PEP service.
-     * @return the loaded PEP service, or null if not found.
-     */
-    private PEPService loadPEPServiceFromDB(String jid) {
-        PEPService pepService = null;
-
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            // Get all PEP services
-            pstmt = con.prepareStatement(GET_PEP_SERVICE);
-            pstmt.setString(1, jid);
-            rs = pstmt.executeQuery();
-            // Restore old PEPServices
-            while (rs.next()) {
-                String serviceID = rs.getString(1);
-
-                // Create a new PEPService
-                pepService = new PEPService(XMPPServer.getInstance(), serviceID);
-                pepServices.put(serviceID, CacheableOptional.of(pepService));
-                pubSubEngine.start(pepService);
-
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEP: Restored service for " + serviceID
-                            + " from the database.");
-                }
-            }
-        } catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-
-        return pepService;
-    }
-
-    /**
      * Deletes the {@link PEPService} belonging to the specified owner.
      *
      * @param owner
      *            The JID of the owner of the service to be deleted.
      */
     public void remove(JID owner) {
-        PEPService service;
 
         final Lock lock = CacheFactory.getLock(owner, pepServices);
         try {
             lock.lock();
-            service = pepServices.remove(owner.toBareJID()).get();
+
+            // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
+            // after all nodes are deleted.
+            final CacheableOptional<PEPService> optional = pepServices.get(owner.toBareJID());
+            if ( optional == null ) {
+                return;
+            }
+
+            if ( optional.isPresent() )
+            {
+                // Delete the user's PEP nodes from memory and the database.
+                CollectionNode rootNode = optional.get().getRootCollectionNode();
+                for ( final Node node : optional.get().getNodes() )
+                {
+                    if ( rootNode.isChildNode(node) )
+                    {
+                        node.delete();
+                    }
+                }
+                rootNode.delete();
+            }
+
+            // All nodes are now deleted. The service itself can now be deleted.
+            pepServices.remove(owner.toBareJID()).get();
         } finally {
             lock.unlock();
         }
-
-        if (service == null) {
-            return;
-        }
-
-        // Delete the user's PEP nodes from memory and the database.
-        CollectionNode rootNode = service.getRootCollectionNode();
-        for (final Node node : service.getNodes()) {
-            if (rootNode.isChildNode(node)) {
-                node.delete();
-            }
-        }
-        rootNode.delete();
     }
 
     public void start(PEPService pepService) {

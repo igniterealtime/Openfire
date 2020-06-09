@@ -119,6 +119,20 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         loadAdminsSQL = JiveGlobals.getProperty("jdbcGroupProvider.loadAdminsSQL");
     }
 
+    /**
+     * XMPP disallows some characters in identifiers, requiring them to be escaped.
+     *
+     * This implementation assumes that the database returns properly escaped identifiers,
+     * but can apply escaping by setting the value of the 'jdbcGroupProvider.isEscaped'
+     * property to 'false'.
+     *
+     * @return 'false' if this implementation needs to escape database content before processing.
+     */
+    protected boolean assumePersistedDataIsEscaped()
+    {
+        return JiveGlobals.getBooleanProperty( "jdbcGroupProvider.isEscaped", true );
+    }
+
     private Connection getConnection() throws SQLException {
         if (useConnectionProvider)
             return DbConnectionManager.getConnection();
@@ -179,10 +193,19 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
                 if (user != null) {
                     JID userJID;
                     if (user.contains("@")) {
-                        userJID = new JID(user);
+                        if ( !assumePersistedDataIsEscaped()) {
+                            // OF-1837: When the database does not hold escaped data, escape values before processing them further.
+                            final int splitIndex = user.lastIndexOf( "@" );
+                            final String node = user.substring( 0, splitIndex );
+                            userJID = new JID( JID.escapeNode( node ) + user.substring( splitIndex ) );
+                        } else {
+                            userJID = new JID(user);
+                        }
                     }
                     else {
-                        userJID = server.createJID(user, null); 
+                        // OF-1837: When the database does not hold escaped data, escape values before processing them further.
+                        final String processedNode = assumePersistedDataIsEscaped() ? user : JID.escapeNode( user );
+                        userJID = server.createJID(processedNode, null);
                     }
                     members.add(userJID);
                 }
@@ -276,9 +299,20 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
+            // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+            final String queryValue;
+            if ( server.isLocal(user) ) {
+                queryValue = assumePersistedDataIsEscaped() ? user.getNode() : JID.unescapeNode( user.getNode() );
+            } else {
+                String value = user.toString();
+                final int splitIndex = value.lastIndexOf( "@" );
+                final String node = value.substring( 0, splitIndex );
+                final String processedNode = assumePersistedDataIsEscaped() ? node : JID.unescapeNode( node );
+                queryValue = processedNode + value.substring( splitIndex );
+            }
             con = getConnection();
             pstmt = con.prepareStatement(userGroupsSQL);
-            pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toString());
+            pstmt.setString(1, queryValue);
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));

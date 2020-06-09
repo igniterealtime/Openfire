@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.net;
 
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.security.*;
 import java.util.Arrays;
 

@@ -16,12 +16,17 @@
 
 package org.jivesoftware.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
  * Assists JSP writers in getting parameters and attributes.
  */
 public class ParamUtils {
+
+    private static final Logger Log = LoggerFactory.getLogger(ParamUtils.class);
 
     /**
      * Returns a parameter as a string.
@@ -165,7 +170,8 @@ public class ParamUtils {
             try {
                 num = Integer.parseInt(temp);
             }
-            catch (Exception ignored) {
+            catch (Exception ex) {
+                Log.trace("An exception occurred while trying to parse parameter '{}' value '{}' as an integer. Will return default value '{}'", name, temp, defaultNum, ex);
             }
             return num;
         }
@@ -219,7 +225,8 @@ public class ParamUtils {
             try {
                 num = Double.parseDouble(temp);
             }
-            catch (Exception ignored) {
+            catch (Exception ex) {
+                Log.trace("An exception occurred while trying to parse parameter '{}' value '{}' as a double. Will return default value '{}'", name, temp, defaultNum, ex);
             }
             return num;
         }
@@ -246,7 +253,8 @@ public class ParamUtils {
             try {
                 num = Long.parseLong(temp);
             }
-            catch (Exception ignored) {
+            catch (Exception ex) {
+                Log.trace("An exception occurred while trying to parse parameter '{}' value '{}' as a long. Will return default value '{}'", name, temp, defaultNum, ex);
             }
             return num;
         }
@@ -355,7 +363,8 @@ public class ParamUtils {
             try {
                 num = Integer.parseInt(temp);
             }
-            catch (Exception ignored) {
+            catch (Exception ex) {
+                Log.trace("An exception occurred while trying to parse attribute '{}' value '{}' as an integer. Will return default value '{}'", name, temp, defaultNum, ex);
             }
             return num;
         }
@@ -380,7 +389,8 @@ public class ParamUtils {
             try {
                 num = Long.parseLong(temp);
             }
-            catch (Exception ignored) {
+            catch (Exception ex) {
+                Log.trace("An exception occurred while trying to parse attribute '{}' value '{}' as a long. Will return default value '{}'", name, temp, defaultNum, ex);
             }
             return num;
         }

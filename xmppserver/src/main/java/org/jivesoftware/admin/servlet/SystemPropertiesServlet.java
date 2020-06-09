@@ -8,9 +8,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.ListPager;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.ParamUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
@@ -93,7 +95,7 @@ public class SystemPropertiesServlet extends HttpServlet {
         final HttpSession session = request.getSession();
         final Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
         if (csrfCookie == null || !csrfCookie.getValue().equals(request.getParameter("csrf"))) {
-            session.setAttribute("errorMessage", "CSRF Failure!");
+            session.setAttribute("errorMessage", LocaleUtils.getLocalizedString("global.csrf.failed"));
         } else {
             final WebManager webManager = new WebManager();
             webManager.init(request, response, session, session.getServletContext());
@@ -103,7 +105,9 @@ public class SystemPropertiesServlet extends HttpServlet {
                     saveProperty(request, webManager);
                     break;
                 case "cancel":
-                    session.setAttribute("warningMessage", String.format("No changes were made to the property %s", request.getParameter("key")));
+                    session.setAttribute("warningMessage",
+                        String.format("No changes were made to the property %s",
+                            StringEscapeUtils.escapeXml11(request.getParameter("key"))));
                     break;
                 case "encrypt":
                     encryptProperty(request, webManager);
@@ -112,14 +116,16 @@ public class SystemPropertiesServlet extends HttpServlet {
                     deleteProperty(request, webManager);
                     break;
                 default:
-                    session.setAttribute("warningMessage", String.format("Unexpected request action '%s'", action));
+                    session.setAttribute("warningMessage",
+                        String.format("Unexpected request action '%s'",
+                            StringEscapeUtils.escapeXml11(action)));
                     break;
             }
         }
         response.sendRedirect(request.getRequestURI() + ListPager.getQueryString(request, '?', SEARCH_FIELDS));
     }
 
-    private void saveProperty(final HttpServletRequest request, WebManager webManager) {
+    private void saveProperty(final HttpServletRequest request, final WebManager webManager) {
         final String key = request.getParameter("key");
         final boolean oldEncrypt = JiveGlobals.isPropertyEncrypted(key);
         final String oldValueToLog = oldEncrypt ? "***********" : JiveGlobals.getProperty(key);
@@ -127,7 +133,9 @@ public class SystemPropertiesServlet extends HttpServlet {
         final boolean encrypt = ParamUtils.getBooleanAttribute(request, "encrypt");
         final boolean alreadyExists = JiveGlobals.getProperty(key) != null;
         JiveGlobals.setProperty(key, value, encrypt);
-        request.getSession().setAttribute("successMessage", String.format("The property %s was %s", key, alreadyExists ? "updated" : "created"));
+        request.getSession().setAttribute("successMessage",
+            String.format("The property %s was %s",
+                StringEscapeUtils.escapeXml11(key), alreadyExists ? "updated" : "created"));
         final String newValueToLog = encrypt ? "***********" : value;
         final String details = alreadyExists
             ? String.format("Value of property changed from '%s' to '%s'", oldValueToLog, newValueToLog)
@@ -144,14 +152,16 @@ public class SystemPropertiesServlet extends HttpServlet {
         }
         JiveGlobals.setPropertyEncrypted(key, true);
         webManager.logEvent("Encrypted server property " + key, null);
-        request.getSession().setAttribute("successMessage", String.format("The property %s was encrypted", key));
+        request.getSession().setAttribute("successMessage",
+            String.format("The property %s was encrypted", StringEscapeUtils.escapeXml11(key)));
     }
 
     private void deleteProperty(final HttpServletRequest request, final WebManager webManager) {
         final String key = request.getParameter("key");
         JiveGlobals.deleteProperty(key);
         webManager.logEvent("deleted server property " + key, null);
-        request.getSession().setAttribute("successMessage", String.format("The property %s was deleted", key));
+        request.getSession().setAttribute("successMessage",
+            String.format("The property %s was deleted", StringEscapeUtils.escapeXml11(key)));
     }
 
     private Predicate<CompoundProperty> getSearchPredicate(final Search search) {

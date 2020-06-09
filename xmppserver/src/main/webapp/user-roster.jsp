@@ -163,7 +163,7 @@
 <%  if (numPages > 1) { %>
 
     <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > rosterCount ? rosterCount:start+range) %>,
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(Math.min(start + range, rosterCount)) %>,
 
 <%  } %>
 <fmt:message key="user.roster.sorted" />

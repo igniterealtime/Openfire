@@ -116,6 +116,7 @@ public final class Fixtures {
             doReturn(email).when(user).getEmail();
             doReturn(new Date()).when(user).getCreationDate();
             doReturn(new Date()).when(user).getModificationDate();
+            users.put(username, user);
             return user;
         }
 

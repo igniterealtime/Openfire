@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.sasl;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.io.IOException;
 import javax.security.sasl.Sasl;
@@ -139,7 +140,7 @@ public class SaslServerPlainImpl implements SaslServer {
                 }
                 return null;
             }
-        } catch (UnsupportedCallbackException | IOException e) {
+        } catch (UnsupportedCallbackException | IOException | NoSuchElementException e) {
             aborted = true;
             throw new SaslException("PLAIN authentication failed for: "+username, e);
         }

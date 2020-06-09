@@ -1188,7 +1188,8 @@ public final class StringUtils {
         }
         try {
             return Optional.of(Integer.valueOf(value));
-        } catch (final NumberFormatException ignored) {
+        } catch (final NumberFormatException ex) {
+            Log.trace("An exception occurred while trying to parse value '{}' as an integer. Will return empty.", value, ex);
             return Optional.empty();
         }
     }
@@ -1210,7 +1211,8 @@ public final class StringUtils {
         }
         try {
             return Optional.of(Double.valueOf(value));
-        } catch (final NumberFormatException ignored) {
+        } catch (final NumberFormatException ex) {
+            Log.trace("An exception occurred while trying to parse value '{}' as long. Will return empty.", value, ex);
             return Optional.empty();
         }
     }

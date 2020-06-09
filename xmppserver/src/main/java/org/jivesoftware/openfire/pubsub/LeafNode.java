@@ -16,17 +16,24 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.pubsub.models.AccessModel;
+import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -42,9 +49,6 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * @author Matt Tucker
  */
 public class LeafNode extends Node {
-
-    private static final String genIdSeed = UUID.randomUUID().toString();
-    private static final AtomicLong sequenceCounter = new AtomicLong();
 
     /**
      * Flag that indicates whether to persist items to storage. Note that when the
@@ -70,18 +74,29 @@ public class LeafNode extends Node {
     /**
      * The last item published to this node.  In a cluster this may have occurred on a different cluster node.
      */
-    private PublishedItem lastPublished;
+    private transient PublishedItem lastPublished;
 
     // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
 
-    public LeafNode(PubSubService service, CollectionNode parentNode, String nodeID, JID creator) {
-        super(service, parentNode, nodeID, creator);
-        // Configure node with default values (get them from the pubsub service)
-        DefaultNodeConfiguration defaultConfiguration = service.getDefaultNodeConfiguration(true);
+    public LeafNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, boolean persistPublishedItems, int maxPublishedItems, int maxPayloadSize, boolean sendItemSubscribe)
+    {
+        super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        this.persistPublishedItems = persistPublishedItems;
+        this.maxPublishedItems = maxPublishedItems;
+        this.maxPayloadSize = maxPayloadSize;
+        this.sendItemSubscribe = sendItemSubscribe;
+    }
+
+    public LeafNode(PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration) {
+        super(serviceId, parentNode, nodeID, creator, defaultConfiguration);
         this.persistPublishedItems = defaultConfiguration.isPersistPublishedItems();
         this.maxPublishedItems = defaultConfiguration.getMaxPublishedItems();
         this.maxPayloadSize = defaultConfiguration.getMaxPayloadSize();
         this.sendItemSubscribe = defaultConfiguration.isSendItemSubscribe();
+    }
+
+    public LeafNode() { // to be used only for serialization;
+        super();
     }
 
     @Override
@@ -226,7 +241,7 @@ public class LeafNode extends Node {
                 
                 // Make sure that the published item has a unique ID if NOT assigned by publisher
                 if (itemID == null) {
-                    itemID = genIdSeed + sequenceCounter.getAndIncrement();
+                    itemID = UUID.randomUUID().toString();
                 }
 
                 // Create a new published item
@@ -238,7 +253,7 @@ public class LeafNode extends Node {
                 // Add the new published item to the queue of items to add to the database. The
                 // queue is going to be processed by another thread
                 if (isPersistPublishedItems()) {
-                    PubSubPersistenceManager.savePublishedItem(newItem);
+                    PubSubPersistenceProviderManager.getInstance().getProvider().savePublishedItem(newItem);
                 }
             }
         }
@@ -275,7 +290,7 @@ public class LeafNode extends Node {
     public void deleteItems(List<PublishedItem> toDelete) {
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
-            PubSubPersistenceManager.removePublishedItem(item);
+            PubSubPersistenceProviderManager.getInstance().getProvider().removePublishedItem(item);
             if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
                 lastPublished = null;
             }
@@ -329,7 +344,7 @@ public class LeafNode extends Node {
             }
         }
         // Send the result
-        service.send(result);
+        getService().send(result);
     }
 
     @Override
@@ -337,12 +352,14 @@ public class LeafNode extends Node {
         if (!isItemRequired()) {
             return null;
         }
+
+        final PublishedItem.UniqueIdentifier itemIdentifier = new PublishedItem.UniqueIdentifier( getUniqueIdentifier(), itemID );
         synchronized (this) {
-            if (lastPublished != null && lastPublished.getID().equals(itemID)) {
+            if (lastPublished != null && lastPublished.getUniqueIdentifier().equals( itemIdentifier )) {
                 return lastPublished;
             }
         }
-        return PubSubPersistenceManager.getPublishedItem(this, itemID);
+        return PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItem(this, itemIdentifier);
     }
 
     @Override
@@ -352,7 +369,7 @@ public class LeafNode extends Node {
 
     @Override
     public synchronized List<PublishedItem> getPublishedItems(int recentItems) {
-        List<PublishedItem> publishedItems = PubSubPersistenceManager.getPublishedItems(this, recentItems);
+        List<PublishedItem> publishedItems = PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItems(this, recentItems);
         if (lastPublished != null) {
             // The persistent items may not contain the last item, if it wasn't persisted anymore (e.g. if node configuration changed).
             // Therefore check, if the last item has been persisted.
@@ -379,7 +396,7 @@ public class LeafNode extends Node {
     @Override
     public synchronized PublishedItem getLastPublishedItem() {
         if (lastPublished == null){
-            lastPublished = PubSubPersistenceManager.getLastPublishedItem(this);
+    		lastPublished = PubSubPersistenceProviderManager.getInstance().getProvider().getLastPublishedItem(this);
         }
         return lastPublished;
     }
@@ -416,7 +433,7 @@ public class LeafNode extends Node {
      * published items will be deleted with the exception of the last published item.
      */
     public void purge() {
-        PubSubPersistenceManager.purgeNode(this);
+        PubSubPersistenceProviderManager.getInstance().getProvider().purgeNode(this);
         // Broadcast purge notification to subscribers
         // Build packet to broadcast to subscribers
         Message message = new Message();
@@ -425,5 +442,42 @@ public class LeafNode extends Node {
         items.addAttribute("node", nodeID);
         // Send notification that the node configuration has changed
         broadcastNodeEvent(message, false);
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = super.getCachedSize(); // parent.
+        size += CacheSizes.sizeOfBoolean(); // persistPublishedItems
+        size += CacheSizes.sizeOfInt(); // maxPublishedItems
+        size += CacheSizes.sizeOfInt(); // maxPayloadSize
+        size += CacheSizes.sizeOfBoolean(); // sendItemSubscribe
+        // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
+        return size;
+    }
+
+    @Override
+    public void writeExternal( ObjectOutput out ) throws IOException
+    {
+        super.writeExternal( out );
+
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        util.writeBoolean( out, persistPublishedItems );
+        util.writeInt( out, maxPublishedItems );
+        util.writeInt( out, maxPayloadSize );
+        util.writeBoolean( out, sendItemSubscribe );
+        // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
+    }
+
+    @Override
+    public void readExternal( ObjectInput in ) throws IOException, ClassNotFoundException
+    {
+        super.readExternal( in );
+        final ExternalizableUtil util = ExternalizableUtil.getInstance();
+        persistPublishedItems = util.readBoolean( in );
+        maxPublishedItems = util.readInt( in );
+        maxPayloadSize = util.readInt( in );
+        sendItemSubscribe = util.readBoolean( in );
+        // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
     }
 }

@@ -180,6 +180,15 @@
             </tr>
             <tr>
                 <td>
+                    <input type="radio" name="localeCode" value="ja_JP" <%= ("ja_JP".equals(locale.toString()) ? "checked" : "") %>
+                           id="locja" />
+                </td>
+                <td colspan="2">
+                    <label for="locja">日本語 (ja_JP)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <input type="radio" name="localeCode" value="nl" <%= ("nl".equals(locale.toString()) ? "checked" : "") %>
                      id="loc06" />
                 </td>

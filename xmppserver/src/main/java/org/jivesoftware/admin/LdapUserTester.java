@@ -133,8 +133,8 @@ public class LdapUserTester {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to get a sample of data from LDAP.", ex);
             }
         }
         return usernames;
@@ -180,8 +180,8 @@ public class LdapUserTester {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to get attributes for user {}.", username, ex);
             }
         }
         return userAttributes;

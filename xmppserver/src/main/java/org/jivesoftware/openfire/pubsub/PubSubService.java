@@ -21,8 +21,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
-import java.util.Collection;
-import java.util.Map;
+import java.io.Serializable;
+import java.util.*;
 
 /**
  * A PubSubService is responsible for keeping the hosted nodes by the service, the default
@@ -126,7 +126,7 @@ public interface PubSubService {
     Node getNode(String nodeID);
 
     /**
-     * Retuns the collection of nodes hosted by the pubsub service. The collection does
+     * Returns the collection of nodes hosted by the pubsub service. The collection does
      * not support modifications.
      *
      * @return the collection of nodes hosted by the pubsub service.
@@ -239,4 +239,65 @@ public interface PubSubService {
      * @return the ad-hoc commands manager used for this service.
      */
     AdHocCommandManager getManager();
+
+    /**
+     * Returns a value that uniquely identifies this service in the XMPP domain.
+     *
+     * @return Unique identifier for this service
+     */
+    default UniqueIdentifier getUniqueIdentifier() {
+        return new UniqueIdentifier( getServiceID() );
+    }
+
+    /**
+     * A unique identifier for an item, in context of all nodes of all services in the system.
+     *
+     * The property that uniquely identifies a service within the system is its serviceId.
+     */
+    final class UniqueIdentifier implements Serializable
+    {
+        private final String serviceId;
+
+        public UniqueIdentifier( final String serviceId ) {
+            if ( serviceId == null ) {
+                throw new IllegalArgumentException( "Argument 'serviceId' cannot be null." );
+            }
+            this.serviceId = serviceId;
+        }
+
+        public String getServiceId() { return serviceId; }
+
+        public boolean owns( Node.UniqueIdentifier nodeIdentifier )
+        {
+            return this.equals( nodeIdentifier.getServiceIdentifier() );
+        }
+
+        public boolean owns( PublishedItem.UniqueIdentifier itemIdentifier )
+        {
+            return this.equals( itemIdentifier.getServiceIdentifier() );
+        }
+
+        @Override
+        public boolean equals( final Object o )
+        {
+            if ( this == o ) { return true; }
+            if ( o == null || getClass() != o.getClass() ) { return false; }
+            final UniqueIdentifier that = (UniqueIdentifier) o;
+            return serviceId.equals( that.serviceId );
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash( serviceId );
+        }
+
+        @Override
+        public String toString()
+        {
+            return "PubSubService.UniqueIdentifier{" +
+                    "serviceId='" + getServiceId() + '\'' +
+                    '}';
+        }
+    }
 }

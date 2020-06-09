@@ -5,7 +5,6 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,6 +12,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.ListPager;
 import org.jivesoftware.util.LocaleUtils;
@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+@SuppressWarnings("serial")
 @WebServlet(value = "/SystemCacheDetails.jsp")
 public class SystemCacheDetailsServlet extends HttpServlet {
 
@@ -55,7 +56,7 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             .map(Collection::stream)
             .orElseGet(Stream::empty)
             .map(entry -> new AbstractMap.SimpleEntry<>(secretKey ? "************" : entry.getKey().toString(), secretValue ? "************" : entry.getValue().toString()))
-            .sorted(Comparator.comparing(Map.Entry::getKey))
+            .sorted(Map.Entry.comparingByKey())
             .collect(Collectors.toList());
 
         // Find what we're searching for
@@ -114,15 +115,18 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             .map(cache -> (Cache<?, ?>) cache);
         if(optionalCache.isPresent()) {
             if(optionalCache.get().remove(key) != null ) {
-                session.setAttribute("successMessage", LocaleUtils.getLocalizedString("system.cache-details.deleted", Collections.singletonList(key)) );
+                session.setAttribute("successMessage", LocaleUtils.getLocalizedString("system.cache-details.deleted",
+                    Collections.singletonList(StringEscapeUtils.escapeXml11(key))));
                 final WebManager webManager = new WebManager();
                 webManager.init(request, response, session, session.getServletContext());
                 webManager.logEvent(String.format("Key '%s' deleted from cache '%s'", key, cacheName), null);
             } else {
-                session.setAttribute("errorMessage", LocaleUtils.getLocalizedString("system.cache-details.key_not_found", Collections.singletonList(key)) );
+                session.setAttribute("errorMessage", LocaleUtils.getLocalizedString("system.cache-details.key_not_found",
+                    Collections.singletonList(StringEscapeUtils.escapeXml11(key))));
             }
         } else {
-            request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found", Collections.singletonList(cacheName)));
+            request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found",
+                Collections.singletonList(StringEscapeUtils.escapeXml11(cacheName))));
         }
     }
 

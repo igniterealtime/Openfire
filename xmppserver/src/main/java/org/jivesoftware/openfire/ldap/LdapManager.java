@@ -855,7 +855,7 @@ public class LdapManager {
                     Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                     ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( baseDN, userRDN ));
+                    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute(baseDN, userRDN).toString());
                     ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                 } catch (java.io.IOException ex) {
@@ -898,7 +898,7 @@ public class LdapManager {
                      * the secure connection has been established. */
                     if (!(startTlsEnabled && !sslEnabled)) {
                         env.put(Context.SECURITY_AUTHENTICATION, "simple");
-                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
+                        env.put(Context.SECURITY_PRINCIPAL, createNewAbsolute(alternateBaseDN, userRDN).toString());
                         env.put(Context.SECURITY_CREDENTIALS, password);
                     }
 
@@ -939,7 +939,7 @@ public class LdapManager {
                             Log.debug("... peer host: {}, CipherSuite: {}", session.getPeerHost(), session.getCipherSuite());
 
                             ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute( alternateBaseDN, userRDN ));
+                            ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, createNewAbsolute(alternateBaseDN, userRDN).toString());
                             ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
 
                         } catch (java.io.IOException ex) {
@@ -1378,8 +1378,8 @@ public class LdapManager {
                 if (ctx != null)
                     ctx.close();
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to verify that DN '{}' is a group.", dn, ex);
             }
         }
     }
@@ -2371,8 +2371,8 @@ public class LdapManager {
                 if (ctx != null) {
                     ctx.close();
                 }
-            } catch (Exception ignored) {
-                // Ignore.
+            } catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve a single attribute element for {}.", attribute, ex);
             }
         }
     }
@@ -2412,15 +2412,15 @@ public class LdapManager {
                 if (values != null)
                     values.close();
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close values after trying to read attribute {}.", attributeName, ex);
             }
             try {
                 if (ctx != null)
                     ctx.close();
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to read attribute {}.", attributeName, ex);
             }
         }
     }

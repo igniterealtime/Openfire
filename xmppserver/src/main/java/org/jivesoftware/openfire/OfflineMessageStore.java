@@ -88,7 +88,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      * Pattern to use for detecting invalid XML characters. Invalid XML characters will
      * be removed from the stored offline messages.
      */
-    private Pattern pattern = Pattern.compile("&\\#[\\d]+;");
+    private Pattern pattern = Pattern.compile("&#[\\d]+;");
 
     /**
      * Returns the instance of {@code OfflineMessageStore} being used by the XMPPServer.
@@ -116,25 +116,34 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      * Adds a message to this message store. Messages will be stored and made
      * available for later delivery.
      *
+     * Note that certain messages are ignored by this implementation, for example, messages that are carbon copies,
+     * have 'no-store' hints, or for which the intended recipient is not a local user. When a message is discarded for
+     * reasons like these, this method will return 'false'.
+     *
      * @param message the message to store.
+     * @return true when data was stored, otherwise false.
      */
-    public void addMessage(Message message) {
+    public boolean addMessage(Message message) {
         if (message == null) {
-            return;
+            Log.trace( "Not storing null message." );
+            return false;
         }
         if(!shouldStoreMessage(message)) {
-            return;
+            Log.trace( "Not storing message, as 'should store' returned false." );
+            return false;
         }
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
         if (username == null || !UserManager.getInstance().isRegisteredUser(recipient)) {
-            return;
+            Log.trace( "Not storing message for which the recipient ({}) is not a registered user.", recipient );
+            return false;
         }
         else
         if (!XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals(recipient.getDomain())) {
+            Log.trace( "Not storing message for which the recipient ({}) is not a local user.", recipient );
             // Do not store messages sent to users of remote servers
-            return;
+            return false;
         }
 
         long messageID = SequenceManager.nextID(JiveConstants.OFFLINE);
@@ -154,9 +163,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             pstmt.setString(5, msgXML);
             pstmt.executeUpdate();
         }
-
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            return false;
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -168,6 +177,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             size += msgXML.length();
             sizeCache.put(username, size);
         }
+        return true;
     }
 
     /**
@@ -327,9 +337,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
     private void removeUsernameFromSizeCache(String username) {
         // Update the cached size if it exists.
-        if (sizeCache.containsKey(username)) {
-            sizeCache.remove(username);
-        }
+        sizeCache.remove(username);
     }
 
     /**
@@ -459,18 +467,18 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     }
 
     @Override
-    public void userCreated(User user, Map params) {
+    public void userCreated(User user, Map<String, Object> params) {
         //Do nothing
     }
 
     @Override
-    public void userDeleting(User user, Map params) {
+    public void userDeleting(User user, Map<String, Object> params) {
         // Delete all offline messages of the user
         deleteMessages(user.getUsername());
     }
 
     @Override
-    public void userModified(User user, Map params) {
+    public void userModified(User user, Map<String, Object> params) {
         //Do nothing
     }
 
@@ -500,7 +508,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     /**
      * Decide whether a message should be stored offline according to XEP-0160 and XEP-0334.
      *
-     * @param message
+     * @param message The message to evaluate. Cannot be null.
      * @return <code>true</code> if the message should be stored offline, <code>false</code> otherwise.
      */
     static boolean shouldStoreMessage(final Message message) {

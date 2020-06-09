@@ -42,7 +42,7 @@ import org.xmpp.packet.JID;
  * It is best used with the JDBCAuthProvider &amp; JDBCGroupProvider to provide integration
  * between your external system and Openfire. All data is treated as read-only so any
  * set operations will result in an exception.
- * <p>For the seach facility, the SQL will be constructed from the SQL in the <i>search</i>
+ * <p>For the search facility, the SQL will be constructed from the SQL in the <i>search</i>
  * section below, as well as the <i>usernameField</i>, the <i>nameField</i> and the
  * <i>emailField</i>.</p>
  * <p>To enable this provider, set the following in the system properties:</p>
@@ -130,6 +130,20 @@ public class JDBCUserProvider implements UserProvider {
         emailField = JiveGlobals.getProperty("jdbcUserProvider.emailField");
     }
 
+    /**
+     * XMPP disallows some characters in identifiers, requiring them to be escaped.
+     *
+     * This implementation assumes that the database returns properly escaped identifiers,
+     * but can apply escaping by setting the value of the 'jdbcUserProvider.isEscaped'
+     * property to 'false'.
+     *
+     * @return 'false' if this implementation needs to escape database content before processing.
+     */
+    protected boolean assumePersistedDataIsEscaped()
+    {
+        return JiveGlobals.getBooleanProperty( "jdbcUserProvider.isEscaped", true );
+    }
+
     @Override
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
@@ -138,20 +152,23 @@ public class JDBCUserProvider implements UserProvider {
             }
             username = username.substring(0,username.lastIndexOf("@"));
         }
+
+        // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+        final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = getConnection();
             pstmt = con.prepareStatement(loadUserSQL);
-            pstmt.setString(1, username);
+            pstmt.setString(1, queryValue);
             rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new UserNotFoundException();
             }
             String name = rs.getString(1);
             String email = rs.getString(2);
-
             return new User(username, name, email, new Date(), new Date());
         }
         catch (Exception e) {
@@ -201,7 +218,7 @@ public class JDBCUserProvider implements UserProvider {
     @Override
     public Collection<User> getUsers() {
         Collection<String> usernames = getUsernames(0, Integer.MAX_VALUE);
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[0]));
     }
 
     @Override
@@ -224,7 +241,14 @@ public class JDBCUserProvider implements UserProvider {
                 DbConnectionManager.setFetchSize(pstmt, 500);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    usernames.add(rs.getString(1));
+                    // OF-1837: When the database does not hold escaped data, escape values before processing them further.
+                    final String username;
+                    if (assumePersistedDataIsEscaped()) {
+                        username = rs.getString(1);
+                    } else {
+                        username = JID.escapeNode( rs.getString(1) );
+                    }
+                    usernames.add(username);
                 }
             }
             else {
@@ -234,7 +258,14 @@ public class JDBCUserProvider implements UserProvider {
                 DbConnectionManager.scrollResultSet(rs, startIndex);
                 int count = 0;
                 while (rs.next() && count < numResults) {
-                    usernames.add(rs.getString(1));
+                    // OF-1837: When the database does not hold escaped data, escape values before processing them further.
+                    final String username;
+                    if (assumePersistedDataIsEscaped()) {
+                        username = rs.getString(1);
+                    } else {
+                        username = JID.escapeNode( rs.getString(1) );
+                    }
+                    usernames.add(username);
                     count++;
                 }
             }
@@ -255,7 +286,7 @@ public class JDBCUserProvider implements UserProvider {
     @Override
     public Collection<User> getUsers(int startIndex, int numResults) {
         Collection<String> usernames = getUsernames(startIndex, numResults);
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[0]));
     }
     
     @Override
@@ -395,7 +426,7 @@ public class JDBCUserProvider implements UserProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[0]));
     }
 
     @Override

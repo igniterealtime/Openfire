@@ -18,7 +18,6 @@ package org.jivesoftware.database.bugfix;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SchemaManager;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.pubsub.CollectionNode;
 import org.jivesoftware.openfire.pubsub.Node;

@@ -195,7 +195,7 @@
             overallTotal += (double)cache.getMaxCacheSize();
         }
         int entries = cache.size();
-        memUsed = (double)cache.getCacheSize()/(1024*1024);
+        memUsed = (double)cache.getLongCacheSize()/(1024*1024);
         totalMem = (double)cache.getMaxCacheSize()/(1024*1024);
         usedMem = 100*memUsed/totalMem;
         hits = cache.getCacheHits();

@@ -20,13 +20,14 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -60,6 +61,8 @@ import org.xmpp.packet.Presence;
 public class OutgoingSessionPromise implements RoutableChannelHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
+
+    private static final Interner<String> domainBasedMutex = Interners.newWeakInterner();
 
     private static OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
@@ -123,7 +126,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                             boolean newProcessor = false;
                             PacketsProcessor packetsProcessor;
                             String domain = packet.getTo().getDomain();
-                            synchronized (domain.intern()) {
+                            synchronized (domainBasedMutex.intern(domain)) {
                                 packetsProcessor = packetsProcessors.get(domain);
                                 if (packetsProcessor == null) {
                                     packetsProcessor =
@@ -184,7 +187,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     }
 
     private void processorDone(PacketsProcessor packetsProcessor) {
-        synchronized(packetsProcessor.getDomain().intern()) {
+        synchronized(domainBasedMutex.intern(packetsProcessor.getDomain())) {
             if (packetsProcessor.isDone()) {
                 packetsProcessors.remove(packetsProcessor.getDomain());
             }
@@ -345,7 +348,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     }
                     catch ( PacketRejectedException ex )
                     {
-                        Log.debug( "Reply got rejected by an interceptor: ", reply, ex );
+                        Log.debug( "Reply got rejected by an interceptor: {}", reply, ex );
                     }
                 }
             }

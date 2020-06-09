@@ -291,6 +291,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
         final int port = getHttpBindUnsecurePort();
         if (port > 0) {
             HttpConfiguration httpConfig = new HttpConfiguration();
+            httpConfig.setSendServerVersion( false );
             configureProxiedConnector(httpConfig);
             ServerConnector connector = new ServerConnector(httpBindServer, new HttpConnectionFactory(httpConfig));
 
@@ -324,6 +325,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
                 httpsConfig.setSecurePort(securePort);
                 configureProxiedConnector(httpsConfig);
                 httpsConfig.addCustomizer(new SecureRequestCustomizer());
+                httpsConfig.setSendServerVersion( false );
 
                 final ServerConnector sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));
                 sslConnector.setHost(getBindInterface());

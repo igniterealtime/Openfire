@@ -282,7 +282,7 @@ iframe {
     float:left;
     font-size:11pt;
     margin:0;
-    padding:4px 2px 5px 0;
+    padding:2px 2px 0 0;
 }
 #jive-header #jive-nav ul li a, #jive-header #jive-nav ul li a:visited {
     color:#333333;
@@ -323,7 +323,7 @@ iframe {
     color:#FFFFFF;
     float:left;
     font-size:11pt;
-    margin:9px 0 0 0;
+    margin:4px 0 0 0;
     padding:0 1px 2px 0;
 }
 #jive-subnav ul li a, #jive-subnav ul li a:visited {
@@ -337,8 +337,6 @@ iframe {
 #jive-subnav ul li a:hover, #jive-subnav ul li a:active {
     background-color:#E3E3E3;
     text-decoration:underline;
-}
-#jive-subnav ul li.current {
 }
 #jive-subnav ul li.current a, #jive-subnav ul li.current a:visited {
     background-color:#F9F9F9;

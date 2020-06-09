@@ -10,8 +10,12 @@ import org.xmpp.packet.PacketExtension;
  * @author Christian Schudt
  */
 public final class Received extends PacketExtension {
+
+    public static final String NAME = "received";
+    public static final String NAMESPACE = "urn:xmpp:carbons:2";
+
     public Received(Forwarded forwarded) {
-        super("received", "urn:xmpp:carbons:2");
+        super(NAME, NAMESPACE);
         element.add(forwarded.getElement());
     }
 }

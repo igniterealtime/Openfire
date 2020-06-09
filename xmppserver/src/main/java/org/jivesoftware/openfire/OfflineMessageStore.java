@@ -640,7 +640,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                         }
                     }
                 } catch (Exception e) {
-                    Log.error("Offline message cleaning - Could not set timer for check interval!", e.fillInStackTrace());
+                    Log.error("Offline message cleaning - Could not set timer for check interval!", e);
                 }
             }
         }, 10 * 1000, checkinterval * 60 * 1000); //starts after 10 seconds and repeat...
@@ -653,7 +653,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 timer.cancel();
                 timer.purge();
             } catch (Exception e) {
-                Log.warn("Offline message cleaning - Could not stop the timer!", e.fillInStackTrace());
+                Log.warn("Offline message cleaning - Could not stop the timer!", e);
             }
         }
         timer = null;
@@ -690,7 +690,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
     private boolean deleteOldOfflineMessagesFromDB() {
 
-        Log.info("Offline message cleaning - Deleting offline messages older than "+String.valueOf(daystolive)+" days.");
+        Log.info("Offline message cleaning - Deleting offline messages older than {} days.",daystolive);
 
         Connection con = null;
 
@@ -708,15 +708,19 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             pstmt.setString(1,creationDatePast);
 
             if (pstmt.execute())
+            {
                 Log.info("Offline message cleaning - Cleaning successful");
+            }
             else
+            {
                 Log.info("Offline message cleaning - Error while execute the cleaining sql script!");
+            }
 
             pstmt.close();
 
             return true;
         } catch (SQLException sqle) {
-            Log.error("Offline message cleaning - "+sqle.getMessage(), sqle);
+            Log.warn("Offline message cleaning - ", sqle);
             return false;
         } finally {
             DbConnectionManager.closeConnection(con);

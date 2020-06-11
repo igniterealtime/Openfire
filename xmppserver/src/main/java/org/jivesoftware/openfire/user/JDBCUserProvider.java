@@ -16,26 +16,19 @@
 
 package org.jivesoftware.openfire.user;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.ExternalDbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * The JDBC user provider allows you to use an external database to define the users.
@@ -50,11 +43,12 @@ import org.xmpp.packet.JID;
  * <li>{@code provider.user.className = org.jivesoftware.openfire.user.JDBCUserProvider}</li>
  * </ul>
  * <p>
- * Then you need to set your driver, connection string and SQL statements:
+ * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
+ * to see what properties you <b>must</b> set. <br />
  * </p>
+ *
+ * And finally you need to set the SQL statements:
  * <ul>
- * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
- * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
  * <li>{@code jdbcUserProvider.loadUserSQL = SELECT name,email FROM myUser WHERE user = ?}</li>
  * <li>{@code jdbcUserProvider.userCountSQL = SELECT COUNT(*) FROM myUser}</li>
  * <li>{@code jdbcUserProvider.allUsersSQL = SELECT user FROM myUser}</li>
@@ -64,7 +58,7 @@ import org.xmpp.packet.JID;
  * <li>{@code jdbcUserProvider.emailField = mymailField}</li>
  * </ul>
  *
- * In order to use the configured JDBC connection provider do not use a JDBC
+ * In order to use the configured JDBC connection provider (to Openfire's database) do not use a JDBC
  * connection string, set the following property
  *
  * <ul>
@@ -78,8 +72,6 @@ public class JDBCUserProvider implements UserProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(JDBCUserProvider.class);
 
-    private String connectionString;
-
     private String loadUserSQL;
     private String userCountSQL;
     private String allUsersSQL;
@@ -90,13 +82,14 @@ public class JDBCUserProvider implements UserProvider {
     private boolean useConnectionProvider;
     private static final boolean IS_READ_ONLY = true;
 
+    // Connections to the externalDB
+    private ExternalDbConnectionManager externalDb;
+
     /**
      * Constructs a new JDBC user provider.
      */
     public JDBCUserProvider() {
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("jdbcProvider.driver");
-        JiveGlobals.migrateProperty("jdbcProvider.connectionString");
         JiveGlobals.migrateProperty("jdbcUserProvider.loadUserSQL");
         JiveGlobals.migrateProperty("jdbcUserProvider.userCountSQL");
         JiveGlobals.migrateProperty("jdbcUserProvider.allUsersSQL");
@@ -107,17 +100,9 @@ public class JDBCUserProvider implements UserProvider {
 
         useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcUserProvider.useConnectionProvider");
 
-            // Load the JDBC driver and connection string.
+        // Load the JDBC driver and connection string.
         if (!useConnectionProvider) {
-            String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
-            try {
-                Class.forName(jdbcDriver).newInstance();
-            }
-            catch (Exception e) {
-                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-                return;
-            }
-            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
+            externalDb = ExternalDbConnectionManager.getInstance();
         }
 
         // Load database statements for user data.
@@ -468,12 +453,15 @@ public class JDBCUserProvider implements UserProvider {
         Log.debug(callingMethod + " results: " + sb.toString());
     }
 
+    /**
+     * @return Returns a SQLConnection from the DefaultConnectionProvider of this class
+     * @throws SQLException If an SQLexception was thrown in the underlying get connection
+     */
     private Connection getConnection() throws SQLException {
         if (useConnectionProvider) {
             return DbConnectionManager.getConnection();
-        } else
-        {
-            return DriverManager.getConnection(connectionString);
+        } else {
+            return externalDb.getConnection();
         }
     }
 }

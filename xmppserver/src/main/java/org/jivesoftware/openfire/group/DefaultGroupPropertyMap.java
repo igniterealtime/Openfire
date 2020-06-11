@@ -1,22 +1,17 @@
 package org.jivesoftware.openfire.group;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.ExternalDbConnectionManager;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.PersistableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Default implementation of a writable {@link Map} to manage group properties.
@@ -33,19 +28,25 @@ import org.slf4j.LoggerFactory;
 public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
     private static final long serialVersionUID = 3128889631577167040L;
-    private static final Logger logger = LoggerFactory.getLogger(DefaultGroupPropertyMap.class);
+    private static final Logger log = LoggerFactory.getLogger(DefaultGroupPropertyMap.class);
 
     // moved from {@link Group} as these are specific to the default provider
-    private static final String DELETE_PROPERTY =
+    private String DELETE_PROPERTY =
             "DELETE FROM ofGroupProp WHERE groupName=? AND name=?";
-    private static final String DELETE_ALL_PROPERTIES =
+    private String DELETE_ALL_PROPERTIES =
             "DELETE FROM ofGroupProp WHERE groupName=?";
-    private static final String UPDATE_PROPERTY =
+    private String UPDATE_PROPERTY =
         "UPDATE ofGroupProp SET propValue=? WHERE name=? AND groupName=?";
-    private static final String INSERT_PROPERTY =
+    private String INSERT_PROPERTY =
         "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
 
     private Group group;
+
+    //private String dbConnection;
+    private boolean arePropertiesReadonly = false;
+
+    private ExternalDbConnectionManager exDb;
+    private boolean useExternalDatabase = false;
     
     /**
      * Group properties map constructor; requires associated {@link Group} instance
@@ -53,6 +54,55 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      */
     public DefaultGroupPropertyMap(Group group) {
         this.group = group;
+    }
+
+    /**
+     * @param group The group that owns these properties
+     * @param deleteProperty Request to use to delete a group property
+     * @param deleteAllProperties SQL request to use to delete all properties for this group
+     * @param updateProperty SQL request to use to update a property of this group
+     * @param insertProperty SQL request to use to insert a new property for this group
+     * @param propertiesReadonly If set to TRUE, the properties modification will not be reflecting into the database
+     */
+    public DefaultGroupPropertyMap(Group group, String deleteProperty, String deleteAllProperties,
+                                   String updateProperty, String insertProperty, boolean propertiesReadonly) {
+        this(group);
+        if (StringUtils.isNotBlank(deleteProperty)) { this.DELETE_PROPERTY = deleteProperty; }
+        if (StringUtils.isNotBlank(deleteAllProperties)) { this.DELETE_ALL_PROPERTIES = deleteAllProperties; }
+        if (StringUtils.isNotBlank(updateProperty)) { this.UPDATE_PROPERTY = updateProperty; }
+        if (StringUtils.isNotBlank(insertProperty)) { this.INSERT_PROPERTY = insertProperty; }
+        this.arePropertiesReadonly = propertiesReadonly;
+    }
+
+    /**
+     * @param group The group that owns these properties
+     * @param useExternalDb Set to true to use an external DB
+     * @param deleteProperty Request to use to delete a group property
+     * @param deleteAllProperties SQL request to use to delete all properties for this group
+     * @param updateProperty SQL request to use to update a property of this group
+     * @param insertProperty SQL request to use to insert a new property for this group
+     * @param propertiesReadonly If set to TRUE, the properties modification will not be reflected into the database
+     */
+    public DefaultGroupPropertyMap(Group group, boolean useExternalDb, String deleteProperty, String deleteAllProperties,
+                                   String updateProperty, String insertProperty, boolean propertiesReadonly) {
+        this(group, deleteProperty, deleteAllProperties, updateProperty, insertProperty, propertiesReadonly);
+        if (useExternalDb) {
+            this.useExternalDatabase = true;
+            exDb = ExternalDbConnectionManager.getInstance();
+        }
+    }
+
+    /**
+     * Return a SQL connection to the database.
+     * @return Return a {@link Connection} to the database
+     * @throws SQLException from the underlying {@link Connection} creation
+     */
+    private Connection getConnection() throws SQLException {
+        if (useExternalDatabase) {
+            return exDb.getConnection();
+        } else {
+            return DbConnectionManager.getConnection();
+        }
     }
     
     /**
@@ -70,8 +120,8 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         V originalValue = super.put(key, value);
         // we only support persistence for <String, String>
         if (persist && key instanceof String && value instanceof String) {
-            if (logger.isDebugEnabled())
-                logger.debug("Persisting group property [" + key + "]: " + value);
+            if (log.isDebugEnabled())
+                log.debug("Persisting group property [" + key + "]: " + value);
             if (originalValue instanceof String) { // existing property		
                 updateProperty((String)key, (String)value, (String)originalValue);
             } else {
@@ -349,8 +399,8 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     }
 
     /**
-     * Remove group property from the database when the {@link Iterator.remove}
-     * method is invoked via the {@link Map.entrySet} set
+     * Remove group property from the database when the {@link Iterator#remove()}
+     * method is invoked via the {@link Map#entrySet()} set
      */
     private class EntryIterator<E> implements Iterator<Entry<K, V>> {
 
@@ -397,7 +447,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     }
     
     /**
-     * Update the database when a group property is updated via {@link Map.Entry.setValue}
+     * Update the database when a group property is updated via {@link Map.Entry#setValue(Object)}
      */
     private class EntryWrapper<E> implements Entry<K,V> {
         private Entry<K,V> delegate;
@@ -463,19 +513,19 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private synchronized void insertProperty(String key, String value) {
         Connection con = null;
         PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(INSERT_PROPERTY);
-            pstmt.setString(1, group.getName());
-            pstmt.setString(2, key);
-            pstmt.setString(3, value);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+        if (!arePropertiesReadonly) {
+            try {
+                con = this.getConnection();
+                pstmt = con.prepareStatement(INSERT_PROPERTY);
+                pstmt.setString(1, group.getName());
+                pstmt.setString(2, key);
+                pstmt.setString(3, value);
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                DbConnectionManager.closeConnection(pstmt, con);
+            }
         }
         Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
@@ -494,19 +544,19 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private synchronized void updateProperty(String key, String value, String originalValue) {
         Connection con = null;
         PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PROPERTY);
-            pstmt.setString(1, value);
-            pstmt.setString(2, key);
-            pstmt.setString(3, group.getName());
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+        if (!arePropertiesReadonly) {
+            try {
+                con = this.getConnection();
+                pstmt = con.prepareStatement(UPDATE_PROPERTY);
+                pstmt.setString(1, value);
+                pstmt.setString(2, key);
+                pstmt.setString(3, group.getName());
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                DbConnectionManager.closeConnection(pstmt, con);
+            }
         }
         Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
@@ -524,18 +574,18 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private synchronized void deleteProperty(String key) {
         Connection con = null;
         PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, group.getName());
-            pstmt.setString(2, key);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+        if (!arePropertiesReadonly) {
+            try {
+                con = this.getConnection();
+                pstmt = con.prepareStatement(DELETE_PROPERTY);
+                pstmt.setString(1, group.getName());
+                pstmt.setString(2, key);
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                DbConnectionManager.closeConnection(pstmt, con);
+            }
         }
         Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
@@ -550,17 +600,17 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private synchronized void deleteAllProperties() {
         Connection con = null;
         PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_ALL_PROPERTIES);
-            pstmt.setString(1, group.getName());
-            pstmt.executeUpdate();
-        }
-        catch (SQLException e) {
-            logger.error(e.getMessage(), e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+        if (!arePropertiesReadonly) {
+            try {
+                con = this.getConnection();
+                pstmt = con.prepareStatement(DELETE_ALL_PROPERTIES);
+                pstmt.setString(1, group.getName());
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                DbConnectionManager.closeConnection(pstmt, con);
+            }
         }
         Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");

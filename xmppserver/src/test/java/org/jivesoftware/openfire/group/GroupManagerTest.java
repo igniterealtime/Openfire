@@ -256,5 +256,10 @@ public class GroupManagerTest {
         public PersistableMap<String, String> loadProperties(final Group group) {
             return mockGroupProvider.loadProperties(group);
         }
+
+        @Override
+        public boolean arePropertiesReadOnly() {
+            return false;
+        }
     }
 }

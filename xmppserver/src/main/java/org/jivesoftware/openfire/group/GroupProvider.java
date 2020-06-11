@@ -278,5 +278,13 @@ public interface GroupProvider {
      * @return The properties for the given group
      */
     PersistableMap<String,String> loadProperties(Group group);
+
+
+    /**
+     * @return Should return false if the Groups properties are writable in the backend (like in
+     * {@link DefaultGroupProvider}), true otherwise. It will depend of the implementation of the
+     * {@link GroupProvider} used.
+     */
+    boolean arePropertiesReadOnly();
     
 }

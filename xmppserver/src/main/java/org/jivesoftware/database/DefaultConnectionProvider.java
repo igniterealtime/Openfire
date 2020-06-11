@@ -21,6 +21,7 @@ import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.jivesoftware.util.JiveConstants;
@@ -70,10 +71,34 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     private boolean mysqlUseUnicode;
 
     /**
+     * Defines if we are creating a {@link DefaultConnectionProvider} from custom properties (for example to access
+     * an external database for the {@link org.jivesoftware.openfire.group.JDBCGroupProvider}).
+     */
+    private boolean useExternalDatabase = false;
+
+    private boolean isStarted = false;
+
+    /**
      * Creates a new DefaultConnectionProvider.
      */
     public DefaultConnectionProvider() {
         loadProperties();
+    }
+
+    /**
+     * This constructor allow to build an empty {@link DefaultConnectionProvider} which MUST be setup using the
+     * various setters available.
+     * @param useExternalDatabase Pass TRUE to build an empty {@link DefaultConnectionProvider}. Passing FALSE will
+     *                            behave like calling {@link DefaultConnectionProvider#DefaultConnectionProvider()}
+     *                            which then will load properties from Openfire parameter file.
+     */
+    public DefaultConnectionProvider(boolean useExternalDatabase) {
+        if (useExternalDatabase) {
+            this.useExternalDatabase = true;
+        } else {
+            // Default behaviour is to use the parameters to connect to Openfire's DB
+            loadProperties();
+        }
     }
 
     @Override
@@ -84,8 +109,13 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     @Override
     public Connection getConnection() throws SQLException {
         if (dataSource == null) {
-            throw new SQLException("Check JDBC properties; data source was not be initialised");
+            throw new SQLException("Check JDBC properties; data source was not initialized");
         }
+
+        if (useExternalDatabase && StringUtils.isBlank(serverURL)) {
+            throw new SQLException("This instance setup is incomplete, no serverURL for classes JDBCUserProvider/JDBCGroupProvider.");
+        }
+
         // DBCP doesn't expose the number of refused connections, so count them ourselves
         try {
             return dataSource.getConnection();
@@ -98,10 +128,12 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     @Override
     public void start() {
 
-        try {
-            Class.forName(driver);
-        } catch (final ClassNotFoundException e) {
-            throw new RuntimeException("Unable to find JDBC driver " + driver, e);
+        if (!useExternalDatabase) {
+            try {
+                Class.forName(driver);
+            } catch (final ClassNotFoundException e) {
+                throw new RuntimeException("Unable to find JDBC driver " + driver, e);
+            }
         }
 
         final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, username, password);
@@ -125,6 +157,8 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
         poolableConnectionFactory.setPool(connectionPool);
         dataSource = new PoolingDataSource<>(connectionPool);
+
+        this.isStarted = true;
     }
 
     @Override
@@ -135,9 +169,17 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     public void destroy() {
         try {
             dataSource.close();
+            this.isStarted = false;
         } catch (final Exception e) {
             Log.error("Unable to close the data source", e);
         }
+    }
+
+    /**
+     * @return Return true if this object was created with useExternalDatabase=TRUE, false otherwise
+     */
+    public boolean isUseExternalDatabase() {
+        return useExternalDatabase;
     }
 
     /**
@@ -158,7 +200,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setDriver(String driver) {
         this.driver = driver;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -177,7 +219,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setServerURL(String serverURL) {
         this.serverURL = serverURL;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -198,7 +240,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setUsername(String username) {
         this.username = username;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -219,7 +261,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setPassword(String password) {
         this.password = password;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -240,7 +282,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setMinConnections(int minConnections) {
         this.minConnections = minConnections;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -263,7 +305,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -287,7 +329,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      */
     public void setConnectionTimeout(double connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
-        saveProperties();
+        if (!useExternalDatabase) { saveProperties(); }
     }
 
     /**
@@ -337,6 +379,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
 
     public long getMaxBorrowWaitTime() {
         return connectionPool.getMaxBorrowWaitTimeMillis();
+    }
+
+    public boolean isStarted() {
+        return isStarted;
     }
 
     /**
@@ -436,6 +482,11 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      * Save properties as Jive properties.
      */
     private void saveProperties() {
+        // Security check: if this instance is used to connect to an external database, we don't modify the
+        // parameters for Openfire's database !
+        if (useExternalDatabase) {
+            return;
+        }
 
         JiveGlobals.setXMLProperty("database.defaultProvider.driver", driver);
         JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", serverURL);

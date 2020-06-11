@@ -474,6 +474,10 @@
 <admin:contentBox title="${contactlistsettingsboxtitle}">
 
     <form name="groupshare">
+        <c:if test="${webManager.groupManager.provider.arePropertiesReadOnly()}">
+            <admin:infobox type="info"><fmt:message key="group.properties.read_only"/></admin:infobox>
+        </c:if>
+
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
         ${listPager.hiddenFields}
@@ -485,7 +489,8 @@
         <table width="80%" cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <td width="1%">
-                    <input type="radio" name="enableRosterGroups" value="false" id="rb201" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "checked" : ""} onClick="toggleReadOnly();">
+                    <input type="radio" name="enableRosterGroups" value="false" id="rb201" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "checked" : ""}
+                            ${webManager.groupManager.provider.arePropertiesReadOnly() ? 'disabled' : 'onClick="toggleReadOnly();"'} >
                 </td>
                 <td width="99%">
                     <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
@@ -493,14 +498,16 @@
             </tr>
             <tr>
                 <td width="1%" valign="top">
-                    <input type="radio" name="enableRosterGroups" value="true" id="rb202" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "" : "checked"} onClick="toggleReadOnly();"">
+                    <input type="radio" name="enableRosterGroups" value="true" id="rb202" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "" : "checked"}
+                            ${webManager.groupManager.provider.arePropertiesReadOnly() ? 'disabled' : 'onClick="toggleReadOnly();"'} >
                 </td>
                 <td width="99%">
                     <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>
 
                     <div id="jive-roster">
                         <b><label for="groupDisplayName"><fmt:message key="group.edit.share_display_name" /></label></b>
-                        <p><input type="text" id="groupDisplayName" name="groupDisplayName" size="45" maxlength="100" value="${fn:escapeXml(group.properties['sharedRoster.displayName'])}">
+                        <p><input type="text" id="groupDisplayName" name="groupDisplayName" size="45" maxlength="100" value="${fn:escapeXml(group.properties['sharedRoster.displayName'])}"
+                            ${webManager.groupManager.provider.arePropertiesReadOnly() ? 'readonly' : ''} >
                         <c:if test="${not empty errors['groupDisplayName']}">
                             <br><span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span>
                         </c:if>
@@ -509,7 +516,8 @@
                         <table cellpadding="2" cellspacing="0" border="0" width="100%">
                             <tr>
                                 <td width="1%" nowrap>
-                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.properties["sharedRoster.showInRoster"] eq "nobody" ) or ( group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and empty groupNames ) ? "checked" : "" }>
+                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
+                                    ${( group.properties["sharedRoster.showInRoster"] eq "nobody" ) or ( group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and empty groupNames ) ? "checked" : "" } >
                                 </td>
                                 <td width="99%">
                                     <label for="rb001"><fmt:message key="group.edit.share_group_only" /></label>
@@ -517,7 +525,7 @@
                             </tr>
                             <tr>
                                 <td width="1%" nowrap>
-                                    <input type="radio" name="showGroup" value="everybody" id="rb002" ${group.properties["sharedRoster.showInRoster"] eq "everybody" ? "checked" : ""}>
+                                    <input type="radio" name="showGroup" value="everybody" id="rb002" ${group.properties["sharedRoster.showInRoster"] eq "everybody" ? "checked" : ""} >
                                 </td>
                                 <td width="99%">
                                     <label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
@@ -525,7 +533,7 @@
                             </tr>
                             <tr>
                                 <td width="1%" nowrap>
-                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and not empty groupNames ? "checked" : ""}>
+                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and not empty groupNames ? "checked" : ""} >
                                 </td>
                                 <td width="99%">
                                     <label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
@@ -535,7 +543,7 @@
                                 <td width="1%" nowrap></td>
                                 <td width="99%">
                                     <select name="groupNames" id="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;"
-                                            multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
+                                            multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" >
 
                                         <c:forEach var="g" items="${groups}">
                                             <!-- Do not offer the edited group in the list of groups. Members of the editing group can always see each other -->
@@ -552,12 +560,14 @@
                     </div>
                 </td>
             </tr>
-            <tr>
-                <td width="1%"></td>
-                <td width="99%">
-                    <input type="submit" name="updateContactListSettings" value="<fmt:message key="group.edit.share_save" />">
-                </td>
-            </tr>
+            <c:if test="${not webManager.groupManager.provider.arePropertiesReadOnly()}">
+                <tr>
+                    <td width="1%"></td>
+                    <td width="99%">
+                        <input type="submit" name="updateContactListSettings" value="<fmt:message key="group.edit.share_save" />">
+                    </td>
+                </tr>
+            </c:if>
         </table>
 
     </form>
@@ -757,7 +767,7 @@
 <script type="text/javascript">
     function toggleReadOnly()
     {
-        var disabled = document.getElementById('rb201').checked;
+        var disabled = document.getElementById('rb201').checked || ${webManager.groupManager.provider.arePropertiesReadOnly()};
 
         document.getElementById( 'groupDisplayName' ).disabled = disabled;
         document.getElementById( 'rb001' ).disabled = disabled;

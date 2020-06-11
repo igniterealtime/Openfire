@@ -312,5 +312,15 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return result;
-    }	
+    }
+
+    /**
+     * In the default mode, the Group properties are editable and writable in the backend
+     * @return Return if the properties are read-only, which means that you can't write any modification of
+     * the properties into the backend.
+     */
+    @Override
+    public boolean arePropertiesReadOnly() {
+        return false;
+    }
 }

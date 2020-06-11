@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.ExternalDbConnectionManager;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -43,10 +44,11 @@ import org.xmpp.packet.JID;
  * <li>{@code provider.admin.className = org.jivesoftware.openfire.admin.JDBCAdminProvider}</li>
  * </ul>
  *
- * Then you need to set your driver, connection string and SQL statements:
+ * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
+ * to see what properties you <b>must</b> set. <br />
+ *
+ * And below are the SQL statements that should be set:
  * <ul>
- * <li>{@code jdbcProvider.driver = com.mysql.jdbc.Driver}</li>
- * <li>{@code jdbcProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
  * <li>{@code jdbcAdminProvider.getAdminsSQL = SELECT user FROM myAdmins}</li>
  * </ul>
  * <p>
@@ -76,15 +78,13 @@ public class JDBCAdminProvider implements AdminProvider {
     private final String xmppDomain;
     private final boolean useConnectionProvider;
 
-    private String connectionString;
+    private ExternalDbConnectionManager externalDb;
 
     /**
      * Constructs a new JDBC admin provider.
      */
     public JDBCAdminProvider() {
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("jdbcProvider.driver");
-        JiveGlobals.migrateProperty("jdbcProvider.connectionString");
         JiveGlobals.migrateProperty("jdbcAdminProvider.getAdminsSQL");
 
         xmppDomain = XMPPServerInfo.XMPP_DOMAIN.getValue();
@@ -97,14 +97,7 @@ public class JDBCAdminProvider implements AdminProvider {
 
         // Load the JDBC driver and connection string
         if (!useConnectionProvider) {
-            String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
-            try {
-                Class.forName(jdbcDriver).newInstance();
-            } catch (Exception e) {
-                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
-                return;
-            }
-            connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");
+            externalDb = ExternalDbConnectionManager.getInstance();
         }
     }
 
@@ -197,7 +190,8 @@ public class JDBCAdminProvider implements AdminProvider {
     private Connection getConnection() throws SQLException {
         if (useConnectionProvider) {
             return DbConnectionManager.getConnection();
+        } else {
+            return externalDb.getConnection();
         }
-        return DriverManager.getConnection(connectionString);
     }
 }

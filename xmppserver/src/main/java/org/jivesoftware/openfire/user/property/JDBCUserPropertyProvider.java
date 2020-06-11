@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.user.property;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.ExternalDbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +40,10 @@ import java.util.Map;
  * <li>{@code provider.userproperty.className = org.jivesoftware.openfire.user.property.JDBCUserPropertyProvider}</li>
  * </ul>
  *
- * Then you need to set your driver, connection string and SQL statements:
- *
+ * Then you need to set the <b>driver properties</b>. Check the documentation of the class {@link ExternalDbConnectionManager}
+ * to see what properties you <b>must</b> set. <br />
+ * Below are the SQL statements you can define (with examples):
  * <ul>
- * <li>{@code jdbcUserPropertyProvider.driver = com.mysql.jdbc.Driver}</li>
- * <li>{@code jdbcUserPropertyProvider.connectionString = jdbc:mysql://localhost/dbname?user=username&amp;password=secret}</li>
  * <li>{@code jdbcUserPropertyProvider.loadPropertySQL = SELECT propName, propValue FROM myUser WHERE user = ? AND propName = ?}</li>
  * <li>{@code jdbcUserPropertyProvider.loadPropertiesSQL = SELECT propValue FROM myUser WHERE user = ?}</li>
  * </ul>
@@ -61,9 +61,10 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
 
     private String loadPropertySQL;
     private String loadPropertiesSQL;
-    private String connectionString;
 
     private boolean useConnectionProvider;
+
+    private ExternalDbConnectionManager externalDb;
 
     /**
      * Constructs a new JDBC user property provider.
@@ -71,27 +72,14 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
     public JDBCUserPropertyProvider()
     {
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.driver" );
-        JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.connectionString" );
         JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.loadPropertySQL" );
         JiveGlobals.migrateProperty( "jdbcUserPropertyProvider.loadPropertiesSQL" );
 
         useConnectionProvider = JiveGlobals.getBooleanProperty( "jdbcUserProvider.useConnectionProvider" );
 
         // Load the JDBC driver and connection string.
-        if ( !useConnectionProvider )
-        {
-            String jdbcDriver = JiveGlobals.getProperty( "jdbcUserPropertyProvider.driver" );
-            try
-            {
-                Class.forName( jdbcDriver ).newInstance();
-            }
-            catch ( Exception e )
-            {
-                Log.error( "Unable to load JDBC driver: " + jdbcDriver, e );
-                return;
-            }
-            connectionString = JiveGlobals.getProperty( "jdbcProvider.connectionString" );
+        if ( !useConnectionProvider ) {
+            externalDb = ExternalDbConnectionManager.getInstance();
         }
 
         // Load database statements for user data.
@@ -113,15 +101,11 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         return JiveGlobals.getBooleanProperty( "jdbcUserPropertyProvider.isEscaped", true );
     }
 
-    private Connection getConnection() throws SQLException
-    {
-        if ( useConnectionProvider )
-        {
+    private Connection getConnection() throws SQLException {
+        if ( useConnectionProvider ) {
             return DbConnectionManager.getConnection();
-        }
-        else
-        {
-            return DriverManager.getConnection( connectionString );
+        } else {
+            return externalDb.getConnection();
         }
     }
 

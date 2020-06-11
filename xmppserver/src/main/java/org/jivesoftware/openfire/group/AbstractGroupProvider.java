@@ -20,25 +20,25 @@ import org.xmpp.packet.JID;
  * Shared base class for Openfire GroupProvider implementations. By default
  * all mutator methods throw {@link UnsupportedOperationException}. In
  * addition, group search operations are disabled.
- * 
+ *
  * Subclasses may optionally implement these capabilities, and must also
  * at minimum implement the {@link GroupProvider#getGroup(String)} method.
  *
  * @author Tom Evans
  */
 public abstract class AbstractGroupProvider implements GroupProvider {
-    
+
     private static final Logger Log = LoggerFactory.getLogger(AbstractGroupProvider.class);
 
     private static final String GROUPLIST_CONTAINERS =
             "SELECT groupName from ofGroupProp " +
             "where name='sharedRoster.groupList' " +
             "AND propValue LIKE ?";
-    private static final String PUBLIC_GROUPS = 
+    private static final String PUBLIC_GROUPS =
             "SELECT groupName from ofGroupProp " +
             "WHERE name='sharedRoster.showInRoster' " +
             "AND propValue='everybody'";
-    private static final String GROUPS_FOR_PROP = 
+    private static final String GROUPS_FOR_PROP =
             "SELECT groupName from ofGroupProp " +
             "WHERE name=? " +
             "AND propValue=?";
@@ -46,7 +46,17 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
             "AND propValue IS NOT NULL AND propValue <> 'nobody'";
     private static final String LOAD_PROPERTIES =
-            "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";    	
+            "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
+
+    // Default requests to manipulate Group Properties and reflect changes directly into database
+    protected static final String DELETE_PROPERTY =
+        "DELETE FROM ofGroupProp WHERE groupName=? AND name=?";
+    protected static final  String DELETE_ALL_PROPERTIES =
+        "DELETE FROM ofGroupProp WHERE groupName=?";
+    protected static final  String UPDATE_PROPERTY =
+        "UPDATE ofGroupProp SET propValue=? WHERE name=? AND groupName=?";
+    protected static final  String INSERT_PROPERTY =
+        "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
 
 
     // Mutator methods disabled for read-only group providers
@@ -121,7 +131,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     // Search methods may be overridden by read-only group providers
-    
+
     /**
      * Returns true if the provider supports group search capability. This implementation
      * always returns false.
@@ -214,7 +224,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         }
         return groupNames;
     }
-    
+
     @Override
     public Collection<String> search(String key, String value) {
         Set<String> groupNames = new HashSet<>();
@@ -271,7 +281,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     /**
      * Returns a custom {@link Map} that updates the database whenever
      * a property value is added, changed, or deleted.
-     * 
+     *
      * @param group The target group
      * @return The properties for the given group
      */
@@ -280,7 +290,8 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         // custom map implementation persists group property changes
         // whenever one of the standard mutator methods are called
         String name = group.getName();
-        PersistableMap<String,String> result = new DefaultGroupPropertyMap<>(group);
+        PersistableMap<String,String> result = new DefaultGroupPropertyMap<>(group, DELETE_PROPERTY,
+            DELETE_ALL_PROPERTIES, UPDATE_PROPERTY, INSERT_PROPERTY, false);
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -316,8 +327,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
     /**
      * In the default mode, the Group properties are editable and writable in the backend
-     * @return Return if the properties are read-only, which means that you can't write any modification of
-     * the properties into the backend.
+     * @return Return false as by default AbstractGroupProvider allows to write Group Properties into the database.
      */
     @Override
     public boolean arePropertiesReadOnly() {

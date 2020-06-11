@@ -20,7 +20,7 @@ import java.util.*;
  * infrequent and therefore does not try to optimize database I/O for performance.
  * Each call to a {@link Map} mutator method (direct or indirect via {@link Iterator})
  * will result in a corresponding synchronous update to the database.
- * 
+ *
  * @param <K> Property key
  * @param <V> Property value
  */
@@ -31,30 +31,17 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private static final Logger log = LoggerFactory.getLogger(DefaultGroupPropertyMap.class);
 
     // moved from {@link Group} as these are specific to the default provider
-    private String DELETE_PROPERTY =
-            "DELETE FROM ofGroupProp WHERE groupName=? AND name=?";
-    private String DELETE_ALL_PROPERTIES =
-            "DELETE FROM ofGroupProp WHERE groupName=?";
-    private String UPDATE_PROPERTY =
-        "UPDATE ofGroupProp SET propValue=? WHERE name=? AND groupName=?";
-    private String INSERT_PROPERTY =
-        "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
+    private String deleteProperty;
+    private String deleteAllProperties;
+    private String updateProperty;
+    private String insertProperty;
 
-    private Group group;
+    private final Group group;
 
-    //private String dbConnection;
     private boolean arePropertiesReadonly = false;
 
     private ExternalDbConnectionManager exDb;
     private boolean useExternalDatabase = false;
-    
-    /**
-     * Group properties map constructor; requires associated {@link Group} instance
-     * @param group The group that owns these properties
-     */
-    public DefaultGroupPropertyMap(Group group) {
-        this.group = group;
-    }
 
     /**
      * @param group The group that owns these properties
@@ -66,11 +53,11 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      */
     public DefaultGroupPropertyMap(Group group, String deleteProperty, String deleteAllProperties,
                                    String updateProperty, String insertProperty, boolean propertiesReadonly) {
-        this(group);
-        if (StringUtils.isNotBlank(deleteProperty)) { this.DELETE_PROPERTY = deleteProperty; }
-        if (StringUtils.isNotBlank(deleteAllProperties)) { this.DELETE_ALL_PROPERTIES = deleteAllProperties; }
-        if (StringUtils.isNotBlank(updateProperty)) { this.UPDATE_PROPERTY = updateProperty; }
-        if (StringUtils.isNotBlank(insertProperty)) { this.INSERT_PROPERTY = insertProperty; }
+        this.group = group;
+        if (StringUtils.isNotBlank(deleteProperty)) { this.deleteProperty = deleteProperty; }
+        if (StringUtils.isNotBlank(deleteAllProperties)) { this.deleteAllProperties = deleteAllProperties; }
+        if (StringUtils.isNotBlank(updateProperty)) { this.updateProperty = updateProperty; }
+        if (StringUtils.isNotBlank(insertProperty)) { this.insertProperty = insertProperty; }
         this.arePropertiesReadonly = propertiesReadonly;
     }
 
@@ -104,12 +91,12 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             return DbConnectionManager.getConnection();
         }
     }
-    
+
     /**
      * Custom method to put properties into the map, optionally without
-     * triggering persistence. This is used when the map is being 
+     * triggering persistence. This is used when the map is being
      * initially loaded from the database.
-     * 
+     *
      * @param key The property name
      * @param value The property value
      * @param persist True if the changes should be persisted to the database
@@ -122,7 +109,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         if (persist && key instanceof String && value instanceof String) {
             if (log.isDebugEnabled())
                 log.debug("Persisting group property [" + key + "]: " + value);
-            if (originalValue instanceof String) { // existing property		
+            if (originalValue instanceof String) { // existing property
                 updateProperty((String)key, (String)value, (String)originalValue);
             } else {
                 insertProperty((String)key, (String)value);
@@ -139,7 +126,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             return put(key, value, true);
         }
     }
-    
+
     @Override
     public V remove(Object key) {
         V result = super.remove(key);
@@ -180,7 +167,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private class PersistenceAwareKeySet<E> extends AbstractSet<K> {
 
         private Set<K> delegate;
-        
+
         /**
          * Sole constructor; requires wrapped {@link Set} for delegation
          * @param delegate A collection of keys from the map
@@ -207,7 +194,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
         private Iterator<K> delegate;
         private K current;
-        
+
         /**
          * Sole constructor; requires wrapped {@link Iterator} for delegation
          * @param delegate An iterator for all the keys from the map
@@ -215,7 +202,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public KeyIterator(Iterator<K> delegate) {
             this.delegate = delegate;
         }
-        
+
         /**
          * Delegated to corresponding method in the backing {@link Iterator}
          */
@@ -246,14 +233,14 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             current = null;
         }
     }
-    
+
     /**
      * Persistence-aware {@link Set} for group properties (as {@link Map.Entry})
      */
     private class PersistenceAwareEntrySet<E> implements Set<Entry<K, V>> {
 
         private Set<Entry<K, V>> delegate;
-        
+
         /**
          * Sole constructor; requires wrapped {@link Set} for delegation
          * @param delegate A collection of entries ({@link Map.Entry}) from the map
@@ -273,7 +260,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         /**
          * Removes the given key from the backing map, and applies the
          * corresponding update to the database.
-         * 
+         *
          * @param o A {@link Map.Entry} within this set
          * @return True if the set contained the given key
          */
@@ -298,7 +285,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
         // these methods are problematic (and not really necessary),
         // so they are not implemented
-        
+
         /**
          * @throws UnsupportedOperationException Always thrown, as this implementation does not support the optional functionality.
          */
@@ -314,7 +301,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public boolean retainAll(Collection<?> c) {
             throw new UnsupportedOperationException();
         }
-        
+
         // per docs for {@link Map.entrySet}, these methods are not supported
 
         /**
@@ -334,7 +321,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         }
 
         // remaining {@link Set} methods can be delegated safely
-        
+
         /**
          * Delegated to corresponding method in the backing {@link Set}
          */
@@ -406,7 +393,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
         private Iterator<Entry<K,V>> delegate;
         private EntryWrapper<E> current;
-        
+
         /**
          * Sole constructor; requires wrapped {@link Iterator} for delegation
          * @param delegate An iterator for all the keys from the map
@@ -445,7 +432,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             current = null;
         }
     }
-    
+
     /**
      * Update the database when a group property is updated via {@link Map.Entry#setValue(Object)}
      */
@@ -459,7 +446,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public EntryWrapper(Entry<K,V> delegate) {
             this.delegate = delegate;
         }
-        
+
         /**
          * Delegated to corresponding method in the backing {@link Map.Entry}
          */
@@ -467,7 +454,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public K getKey() {
             return delegate.getKey();
         }
-        
+
         /**
          * Delegated to corresponding method in the backing {@link Map.Entry}
          */
@@ -475,13 +462,13 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public V getValue() {
             return delegate.getValue();
         }
-        
+
         /**
          * Set the value of the property corresponding to this entry. This
          * method also updates the database as needed depending on the new
          * property value. A null value will cause the property to be deleted
          * from the database.
-         * 
+         *
          * @param value The new property value
          * @return The old value of the corresponding property
          */
@@ -506,7 +493,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
     /**
      * Persist a new group property to the database for the current group
-     * 
+     *
      * @param key Property name
      * @param value Property value
      */
@@ -516,7 +503,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         if (!arePropertiesReadonly) {
             try {
                 con = this.getConnection();
-                pstmt = con.prepareStatement(INSERT_PROPERTY);
+                pstmt = con.prepareStatement(insertProperty);
                 pstmt.setString(1, group.getName());
                 pstmt.setString(2, key);
                 pstmt.setString(3, value);
@@ -536,7 +523,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
     /**
      * Update the value of an existing group property for the current group
-     * 
+     *
      * @param key Property name
      * @param value Property value
      * @param originalValue Original property value
@@ -547,7 +534,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         if (!arePropertiesReadonly) {
             try {
                 con = this.getConnection();
-                pstmt = con.prepareStatement(UPDATE_PROPERTY);
+                pstmt = con.prepareStatement(updateProperty);
                 pstmt.setString(1, value);
                 pstmt.setString(2, key);
                 pstmt.setString(3, group.getName());
@@ -568,7 +555,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
     /**
      * Delete a group property from the database for the current group
-     * 
+     *
      * @param key Property name
      */
     private synchronized void deleteProperty(String key) {
@@ -577,7 +564,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         if (!arePropertiesReadonly) {
             try {
                 con = this.getConnection();
-                pstmt = con.prepareStatement(DELETE_PROPERTY);
+                pstmt = con.prepareStatement(deleteProperty);
                 pstmt.setString(1, group.getName());
                 pstmt.setString(2, key);
                 pstmt.executeUpdate();
@@ -603,7 +590,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         if (!arePropertiesReadonly) {
             try {
                 con = this.getConnection();
-                pstmt = con.prepareStatement(DELETE_ALL_PROPERTIES);
+                pstmt = con.prepareStatement(deleteAllProperties);
                 pstmt.setString(1, group.getName());
                 pstmt.executeUpdate();
             } catch (SQLException e) {

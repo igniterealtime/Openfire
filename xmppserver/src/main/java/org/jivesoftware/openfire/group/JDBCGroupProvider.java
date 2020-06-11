@@ -75,7 +75,7 @@ import java.util.*;
  *     <li>{@code jdbcGroupPropertyProvider.insertPropertySQL = "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)"}</li>
  * </ul>
  *
- * If you want to manually Group properties to be read-only, set the following propertie to true:
+ * If you want to set Group Properties to be read-only, set the following property to true:
  * <ul>
  *     <li>{@code jdbcGroupPropertyProvider.groupPropertyReadonly = true}</li></li>
  * </ul>
@@ -86,38 +86,38 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(JDBCGroupProvider.class);
 
-    private String groupCountSQL;
-    private String descriptionSQL;
-    private String allGroupsSQL;
-    private String userGroupsSQL;
-    private String loadMembersSQL;
-    private String loadAdminsSQL;
+    private final String groupCountSQL;
+    private final String descriptionSQL;
+    private final String allGroupsSQL;
+    private final String userGroupsSQL;
+    private final String loadMembersSQL;
+    private final String loadAdminsSQL;
 
-    private boolean useConnectionProvider;
+    private final boolean useConnectionProvider;
 
     // Keys to use for the SQL properties to manipulate Group Properties
-    private static final String GRPLIST_CONTAINER = "jdbcGroupPropertyProvider.grouplistContainersSQL";
-    private static final String PUB_GROUP = "jdbcGroupPropertyProvider.publicGroupsSQL";
-    private static final String GROUPS_FOR_PROP = "jdbcGroupPropertyProvider.groupsForPropSQL";
-    private static final String LOAD_SHARED_GROUPS = "jdbcGroupPropertyProvider.loadSharedGroupsSQL";
-    private static final String LOAD_PROPERTIES = "jdbcGroupPropertyProvider.loadPropertiesSQL";
-    private static final String DEL_PROP = "jdbcGroupPropertyProvider.deletePropertySQL";
-    private static final String DEL_ALL_PROP = "jdbcGroupPropertyProvider.deleteAllPropertiesSQL";
-    private static final String UPDATE_PROP = "jdbcGroupPropertyProvider.updatePropertySQL";
-    private static final String INSERT_PROP = "jdbcGroupPropertyProvider.insertPropertySQL";
-    private static final String GRO_PROP_RO = "jdbcGroupPropertyProvider.groupPropertyReadonly";
-    private String grouplistContainersSQL;
-    private String publicGroupsSQL;
-    private String groupsForPropSQL;
-    private String loadSharedGroupsSQL;
-    private String loadPropertiesSQL;
-    private String deletePropertySQL;
-    private String deleteAllPropertiesSQL;
-    private String updatePropertySQL;
-    private String insertPropertySQL;
-    private boolean groupPropReadonly;
+    private static final String KEY_GRPLIST_CONTAINER = "jdbcGroupPropertyProvider.grouplistContainersSQL";
+    private static final String KEY_PUB_GROUP = "jdbcGroupPropertyProvider.publicGroupsSQL";
+    private static final String KEY_GROUPS_FOR_PROP = "jdbcGroupPropertyProvider.groupsForPropSQL";
+    private static final String KEY_LOAD_SHARED_GROUPS = "jdbcGroupPropertyProvider.loadSharedGroupsSQL";
+    private static final String KEY_LOAD_PROPERTIES = "jdbcGroupPropertyProvider.loadPropertiesSQL";
+    private static final String KEY_DEL_PROP = "jdbcGroupPropertyProvider.deletePropertySQL";
+    private static final String KEY_DEL_ALL_PROP = "jdbcGroupPropertyProvider.deleteAllPropertiesSQL";
+    private static final String KEY_UPDATE_PROP = "jdbcGroupPropertyProvider.updatePropertySQL";
+    private static final String KEY_INSERT_PROP = "jdbcGroupPropertyProvider.insertPropertySQL";
+    private static final String KEY_GROUP_PROP_RO = "jdbcGroupPropertyProvider.groupPropertyReadonly";
+    private final String grouplistContainersSQL;
+    private final String publicGroupsSQL;
+    private final String groupsForPropSQL;
+    private final String loadSharedGroupsSQL;
+    private final String loadPropertiesSQL;
+    private final String deletePropertySQL;
+    private final String deleteAllPropertiesSQL;
+    private final String updatePropertySQL;
+    private final String insertPropertySQL;
+    private final boolean groupPropReadonly;
 
-    private XMPPServer server = XMPPServer.getInstance();
+    private final XMPPServer server = XMPPServer.getInstance();
 
     // Connections to the external database
     private ExternalDbConnectionManager exDb;
@@ -134,16 +134,16 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         JiveGlobals.migrateProperty("jdbcGroupProvider.loadMembersSQL");
         JiveGlobals.migrateProperty("jdbcGroupProvider.loadAdminsSQL");
 
-        JiveGlobals.migrateProperty(GRPLIST_CONTAINER);
-        JiveGlobals.migrateProperty(PUB_GROUP);
-        JiveGlobals.migrateProperty(GROUPS_FOR_PROP);
-        JiveGlobals.migrateProperty(LOAD_SHARED_GROUPS);
-        JiveGlobals.migrateProperty(LOAD_PROPERTIES);
-        JiveGlobals.migrateProperty(DEL_PROP);
-        JiveGlobals.migrateProperty(DEL_ALL_PROP);
-        JiveGlobals.migrateProperty(UPDATE_PROP);
-        JiveGlobals.migrateProperty(INSERT_PROP);
-        JiveGlobals.migrateProperty(GRO_PROP_RO);
+        JiveGlobals.migrateProperty(KEY_GRPLIST_CONTAINER);
+        JiveGlobals.migrateProperty(KEY_PUB_GROUP);
+        JiveGlobals.migrateProperty(KEY_GROUPS_FOR_PROP);
+        JiveGlobals.migrateProperty(KEY_LOAD_SHARED_GROUPS);
+        JiveGlobals.migrateProperty(KEY_LOAD_PROPERTIES);
+        JiveGlobals.migrateProperty(KEY_DEL_PROP);
+        JiveGlobals.migrateProperty(KEY_DEL_ALL_PROP);
+        JiveGlobals.migrateProperty(KEY_UPDATE_PROP);
+        JiveGlobals.migrateProperty(KEY_INSERT_PROP);
+        JiveGlobals.migrateProperty(KEY_GROUP_PROP_RO);
 
         useConnectionProvider = JiveGlobals.getBooleanProperty("jdbcGroupProvider.useConnectionProvider");
 
@@ -161,20 +161,20 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
 
         // If any of those is blank, then the methods implementation will rely on the default method from
         // the super-class
-        grouplistContainersSQL = JiveGlobals.getProperty(GRPLIST_CONTAINER);
-        publicGroupsSQL = JiveGlobals.getProperty(PUB_GROUP);
-        groupsForPropSQL = JiveGlobals.getProperty(GROUPS_FOR_PROP);
-        loadSharedGroupsSQL = JiveGlobals.getProperty(LOAD_SHARED_GROUPS);
-        loadPropertiesSQL = JiveGlobals.getProperty(LOAD_PROPERTIES);
+        grouplistContainersSQL = JiveGlobals.getProperty(KEY_GRPLIST_CONTAINER);
+        publicGroupsSQL = JiveGlobals.getProperty(KEY_PUB_GROUP);
+        groupsForPropSQL = JiveGlobals.getProperty(KEY_GROUPS_FOR_PROP);
+        loadSharedGroupsSQL = JiveGlobals.getProperty(KEY_LOAD_SHARED_GROUPS);
+        loadPropertiesSQL = JiveGlobals.getProperty(KEY_LOAD_PROPERTIES);
 
         // If any of those is blank, then we have to set it to its default value. See class DefaultGroupPropertyMap.java
-        deletePropertySQL = JiveGlobals.getProperty(DEL_PROP,"DELETE FROM ofGroupProp WHERE groupName=? AND name=?");
-        deleteAllPropertiesSQL = JiveGlobals.getProperty(DEL_ALL_PROP,"DELETE FROM ofGroupProp WHERE groupName=?");
-        updatePropertySQL = JiveGlobals.getProperty(UPDATE_PROP,"UPDATE ofGroupProp SET propValue=? WHERE name=? AND groupName=?");
-        insertPropertySQL = JiveGlobals.getProperty(INSERT_PROP,"INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)");
+        deletePropertySQL = JiveGlobals.getProperty(KEY_DEL_PROP, DELETE_PROPERTY);
+        deleteAllPropertiesSQL = JiveGlobals.getProperty(KEY_DEL_ALL_PROP, DELETE_ALL_PROPERTIES);
+        updatePropertySQL = JiveGlobals.getProperty(KEY_UPDATE_PROP, UPDATE_PROPERTY);
+        insertPropertySQL = JiveGlobals.getProperty(KEY_INSERT_PROP, INSERT_PROPERTY);
 
         // Check if the group properties has been manually set to read-only
-        groupPropReadonly = JiveGlobals.getBooleanProperty(GRO_PROP_RO, false);
+        groupPropReadonly = JiveGlobals.getBooleanProperty(KEY_GROUP_PROP_RO, false);
     }
 
     /**
@@ -532,11 +532,12 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
         String name = group.getName();
         PersistableMap<String,String> result;
         if (useConnectionProvider) {
-            // We use the default connectionProvider
+            /*  the 'connectionProvider' var indicates the legacy behaviour where we were using the connectionProvider
+                of the main Openfire's db to retrieve group properties */
             result = new DefaultGroupPropertyMap<>(group, deletePropertySQL, deleteAllPropertiesSQL, updatePropertySQL,
                 insertPropertySQL, groupPropReadonly);
         } else {
-            // We use the connectionProvider specifically configured for the JDBCGroupProvider
+            /*  The new behaviour OF-2036 is to use the custom connectionProvider to an externalDatabase */
             result = new DefaultGroupPropertyMap<>(group, true, deletePropertySQL, deleteAllPropertiesSQL,
                 updatePropertySQL, insertPropertySQL, groupPropReadonly);
         }

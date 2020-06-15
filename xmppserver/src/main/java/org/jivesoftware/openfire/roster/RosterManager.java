@@ -596,6 +596,26 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
             }
         }
+
+        Log.info("Checking for roster items for a newly created account");
+        // See what contacts have that new user in their roster and try to subscribe to them
+        for (Iterator<String> it = getRosterItemProvider().getUsernames(newUserJID.toBareJID()); it.hasNext(); ) {
+            String user = it.next();
+            // Try to get a subscription to that new user
+            Log.info("Trying to subscribe {} to {}", user, newUserJID);
+            try {
+                Roster roster = getRoster(user);
+                RosterItem item = roster.getRosterItem(newUserJID);
+                // Set the subscription type to "from" so they can get a presence
+                if (item.subStatus == RosterItem.SubType.NONE) {
+                    Log.info("Pre-approving {} from {}", newUserJID, user);
+                    item.subStatus = RosterItem.SubType.FROM;
+                    roster.updateRosterItem(item);
+                }
+            } catch (UserNotFoundException e) {
+                Log.error("Cannot pre-approve subscription for new user {} in roster for {}, {}", newUserJID, user, e);
+            }
+        }
     }
 
     @Override

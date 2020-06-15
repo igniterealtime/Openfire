@@ -603,13 +603,12 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             String user = it.next();
             // Try to get a subscription to that new user
             Log.info("Trying to subscribe {} to {}", user, newUserJID);
-            sendSubscribeRequest(server.createJID(user, null), newUserJID, true);
             try {
                 Roster roster = getRoster(user);
                 RosterItem item = roster.getRosterItem(newUserJID);
                 // Set the subscription type to "from" so they can get a presence
                 if (item.subStatus == RosterItem.SubType.NONE) {
-                    Log.info("Pre-approving {} from", newUserJID, user);
+                    Log.info("Pre-approving {} from {}", newUserJID, user);
                     item.subStatus = RosterItem.SubType.FROM;
                     roster.updateRosterItem(item);
                 }

@@ -660,38 +660,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     /**
-     * Update internal state to have a user removed from the room.
-     *
-     * This method does not send out stanzas, trigger event handlers or perform cluster tasks.
-     *
-     * @param role Representation of the user to leave the room.
-     */
-    void doLeaveRoom( @Nonnull MUCRole role )
-    {
-        Log.trace( "Joining room {}: {}", this.getJID(), role );
-        lock.writeLock().lock();
-        try
-        {
-            // Add the new user as an occupant of this room.
-            occupantsByNickname.compute(role.getNickname().toLowerCase(), ( nick, occupants ) -> {
-                List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
-                ret.add(role);
-                return ret;
-            });
-
-            // Update the tables of occupants based on the bare and full JID.
-            occupantsByBareJID.compute(role.getUserAddress().asBareJID(), ( jid, occupants ) -> {
-                List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
-                ret.add(role);
-                return ret;
-            });
-            occupantsByFullJID.put(role.getUserAddress(), role);
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    /**
      * Sends the room history to a user that just joined the room.
      */
     private void sendRoomHistoryAfterJoin( @Nonnull final LocalMUCUser user, @Nonnull MUCRole joinRole, @Nullable HistoryRequest historyRequest )

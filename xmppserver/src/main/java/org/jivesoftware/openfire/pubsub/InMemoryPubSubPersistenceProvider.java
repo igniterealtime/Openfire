@@ -23,6 +23,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -58,15 +59,15 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         // which makes it crucial to avoid cache entries from being purged. Note that the caches from DefaultPubSubPersistenceProvider
         // cannot be re-used for the same reason: data is not stored in those caches indefinitely.
         defaultNodeConfigurationCache = CacheFactory.createCache( "Pubsub InMemory Default Node Config" );
-        defaultNodeConfigurationCache.setMaxCacheSize( -1 );
+        defaultNodeConfigurationCache.setMaxCacheSize( -1L );
         defaultNodeConfigurationCache.setMaxLifetime( -1L );
 
         serviceIdToNodesCache = CacheFactory.createCache( "Pubsub InMemory Nodes" );
-        serviceIdToNodesCache.setMaxCacheSize( -1 );
+        serviceIdToNodesCache.setMaxCacheSize( -1L );
         serviceIdToNodesCache.setMaxLifetime( -1L );
 
         itemsCache = CacheFactory.createCache( "Pubsub InMemory Published Items" );
-        itemsCache.setMaxCacheSize( -1 );
+        itemsCache.setMaxCacheSize( -1L );
         itemsCache.setMaxLifetime( -1L );
     }
 
@@ -93,7 +94,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Updating node: {}", node.getUniqueIdentifier() );
 
         final PubSubService.UniqueIdentifier serviceIdentifier = node.getUniqueIdentifier().getServiceIdentifier();
-        final Lock lock = CacheFactory.getLock(serviceIdentifier, serviceIdToNodesCache );
+        final Lock lock = serviceIdToNodesCache.getLock(serviceIdentifier);
         lock.lock();
         try {
             CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node );
@@ -255,7 +256,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public void savePublishedItem( PublishedItem item )
     {
         log.debug( "Saving published item for node {}: {}", item.getNode().getUniqueIdentifier(), item.getID() );
-        final Lock lock = CacheFactory.getLock( item.getNode().getUniqueIdentifier(), itemsCache );
+        final Lock lock = itemsCache.getLock(item.getNode().getUniqueIdentifier());
         lock.lock();
         try {
 
@@ -285,7 +286,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Getting published items for node {}", node.getUniqueIdentifier() );
         List<PublishedItem> publishedItems;
-        final Lock lock = CacheFactory.getLock( node.getUniqueIdentifier(), itemsCache );
+        final Lock lock = itemsCache.getLock( node.getUniqueIdentifier() );
         lock.lock();
         try {
             final List<PublishedItem> items = itemsCache.get( node.getUniqueIdentifier() );
@@ -375,7 +376,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         Node.UniqueIdentifier uid = leafNode.getUniqueIdentifier();
         log.debug( "Purging node {}", uid );
 
-        final Lock lock = CacheFactory.getLock( leafNode.getUniqueIdentifier(), itemsCache );
+        final Lock lock = itemsCache.getLock( leafNode.getUniqueIdentifier() );
         lock.lock();
         try {
             itemsCache.remove( leafNode.getUniqueIdentifier() );
@@ -390,11 +391,11 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public PEPService loadPEPServiceFromDB(String jid)
     {
         final PubSubService.UniqueIdentifier id = new PubSubService.UniqueIdentifier( jid );
-        final Lock lock = CacheFactory.getLock( id, itemsCache );
+        final Lock lock = serviceIdToNodesCache.getLock( id );
         lock.lock();
         try {
             if ( serviceIdToNodesCache.containsKey( id ) ) {
-                final PEPService pepService = new PEPService( XMPPServer.getInstance(), jid );
+                final PEPService pepService = new PEPService( XMPPServer.getInstance(), new JID(jid) );
                 pepService.initialize();
 
                 // The JDBC variant stores subscriptions in the database. The in-memory variant cannot rely on this.

@@ -215,7 +215,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
      * Pseudo-random number generator is used to offset timing for scheduled tasks
      * within a cluster (so they don't run at the same time on all members).
      */
-    private Random prng = new Random();
+    private final Random prng = new Random();
 
     /**
      * Purge timer delay is configurable, but not less than 60 seconds (default: 5 mins)
@@ -1386,10 +1386,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         DefaultNodeConfiguration result = defaultNodeConfigurationCache.get( key );
         if ( result == null )
         {
-            final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+            final Lock lock = defaultNodeConfigurationCache.getLock( DEFAULT_CONF_CACHE );
+            lock.lock();
             try
             {
-                lock.lock();
                 result = defaultNodeConfigurationCache.get( key );
                 if ( result == null )
                 {
@@ -1453,11 +1453,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     {
         final String key = getDefaultNodeConfigurationCacheKey( serviceIdentifier, config.isLeaf() );
 
-        final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+        final Lock lock = defaultNodeConfigurationCache.getLock( DEFAULT_CONF_CACHE );
+        lock.lock();
         try
         {
-            lock.lock();
-
             Connection con = null;
             PreparedStatement pstmt = null;
             try {
@@ -1506,7 +1505,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void updateDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config)
     {
-        final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+        final Lock lock = defaultNodeConfigurationCache.getLock( DEFAULT_CONF_CACHE );
+        lock.lock();
         try {
             Connection con = null;
             PreparedStatement pstmt = null;

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -44,11 +44,7 @@ import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -69,6 +65,37 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
+
+    /**
+     * Returns the permission policy for creating nodes. A false value means that not anyone can
+     * create a node, only the JIDs listed in <code>xmpp.pubsub.create.jid</code> are allowed to create
+     * nodes.
+     */
+    public static SystemProperty<Boolean> PUBSUB_CREATE_ANYONE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.pubsub.create.anyone")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+
+    /**
+     * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
+     * create nodes.
+     */
+    public static SystemProperty<Set<JID>> PUBSUB_ALLOWED_TO_CREATE = SystemProperty.Builder.ofType(Set.class)
+        .setKey("xmpp.pubsub.create.jid")
+        .setDynamic(false)
+        .setDefaultValue( new HashSet<>() )
+        .buildSet(JID.class);
+
+    /**
+     * Bare jids of users that are system administrators of the PubSub service. A sysadmin
+     * has the same permissions as a node owner.
+     */
+    public static SystemProperty<Set<JID>> PUBSUB_SYSADMINS = SystemProperty.Builder.ofType(Set.class)
+        .setKey("xmpp.pubsub.sysadmin.jid")
+        .setDynamic(false)
+        .setDefaultValue( new HashSet<>() )
+        .buildSet(JID.class);
 
     /**
      * the chat service's hostname
@@ -100,30 +127,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     private final AdHocCommandManager manager;
     
     /**
-     * Returns the permission policy for creating nodes. A true value means that not anyone can
-     * create a node, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
-     * nodes.
-     */
-    private boolean nodeCreationRestricted = false;
-
-    /**
      * Flag that indicates if a user may have more than one subscription with the node. When multiple
      * subscriptions is enabled each subscription request, event notification and unsubscription request
      * should include a subid attribute.
      */
     private boolean multipleSubscriptionsEnabled = true;
-
-    /**
-     * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
-     * create nodes.
-     */
-    private final Collection<String> allowedToCreate = new CopyOnWriteArrayList<>();
-
-    /**
-     * Bare jids of users that are system administrators of the PubSub service. A sysadmin
-     * has the same permissions as a node owner.
-     */
-    private final Collection<String> sysadmins = new CopyOnWriteArrayList<>();
 
     /**
      * The packet router for the server.
@@ -248,8 +256,9 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public boolean isServiceAdmin(JID user) {
-        return sysadmins.contains(user.toBareJID()) || allowedToCreate.contains(user.toBareJID()) ||
-                InternalComponentManager.getInstance().hasComponent(user);
+        return PUBSUB_SYSADMINS.getValue().contains(user.asBareJID())
+            || PUBSUB_ALLOWED_TO_CREATE.getValue().contains(user.asBareJID())
+            || InternalComponentManager.getInstance().hasComponent(user);
     }
 
     @Override
@@ -304,42 +313,33 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return new JID(null, getServiceDomain(), null);
     }
 
-    public Collection<String> getUsersAllowedToCreate() {
-        return allowedToCreate;
+    public Collection<JID> getUsersAllowedToCreate() {
+        return PUBSUB_ALLOWED_TO_CREATE.getValue();
     }
 
-    public Collection<String> getSysadmins() {
-        return sysadmins;
+    public Collection<JID> getSysadmins() {
+        return PUBSUB_SYSADMINS.getValue();
     }
 
-    public void setSysadmins(Collection<String> userJIDs) {
-        sysadmins.clear();
-        for (String JID : userJIDs) {
-            sysadmins.add(JID.trim().toLowerCase());
-        }
-        updateSysadminProperty();
+    public void setSysadmins(Collection<JID> userJIDs) {
+        PUBSUB_SYSADMINS.setValue( userJIDs.stream().map(JID::asBareJID).collect(Collectors.toSet()) );
     }
 
-    public void addSysadmin(String userJID) {
-        sysadmins.add(userJID.trim().toLowerCase());
-        // Update the config.
-        updateSysadminProperty();
+    public void addSysadmin(JID userJID) {
+        final Set<JID> existing = PUBSUB_SYSADMINS.getValue();
+        existing.add( userJID.asBareJID() );
+        PUBSUB_SYSADMINS.setValue( existing );
     }
 
-    public void removeSysadmin(String userJID) {
-        sysadmins.remove(userJID.trim().toLowerCase());
-        // Update the config.
-        updateSysadminProperty();
-    }
-
-    private void updateSysadminProperty() {
-        String[] jids = new String[sysadmins.size()];
-        jids = sysadmins.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
+    public void removeSysadmin(JID userJID) {
+        final Set<JID> existing = PUBSUB_SYSADMINS.getValue();
+        existing.remove( userJID ); // just in case...
+        existing.remove( userJID.asBareJID() );
+        PUBSUB_SYSADMINS.setValue( existing );
     }
 
     public boolean isNodeCreationRestricted() {
-        return nodeCreationRestricted;
+        return !PUBSUB_CREATE_ANYONE.getValue();
     }
 
     @Override
@@ -348,36 +348,26 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public void setNodeCreationRestricted(boolean nodeCreationRestricted) {
-        this.nodeCreationRestricted = nodeCreationRestricted;
-        JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(!nodeCreationRestricted));
+        PUBSUB_CREATE_ANYONE.setValue(!nodeCreationRestricted);
     }
 
-    public void setUserAllowedToCreate(Collection<String> userJIDs) {
-        allowedToCreate.clear();
-        for (String JID : userJIDs) {
-            allowedToCreate.add(JID.trim().toLowerCase());
-        }
-        updateUserAllowedToCreateProperty();
+    public void setUserAllowedToCreate(Collection<JID> userJIDs) {
+        PUBSUB_ALLOWED_TO_CREATE.setValue( userJIDs.stream().map(JID::asBareJID).collect(Collectors.toSet()) );
     }
 
-    public void addUserAllowedToCreate(String userJID) {
+    public void addUserAllowedToCreate(JID userJID) {
         // Update the list of allowed JIDs to create nodes.
-        allowedToCreate.add(userJID.trim().toLowerCase());
-        // Update the config.
-        updateUserAllowedToCreateProperty();
+        final Set<JID> existing = PUBSUB_ALLOWED_TO_CREATE.getValue();
+        existing.add( userJID.asBareJID() );
+        PUBSUB_ALLOWED_TO_CREATE.setValue( existing );
     }
 
-    public void removeUserAllowedToCreate(String userJID) {
+    public void removeUserAllowedToCreate(JID userJID) {
         // Update the list of allowed JIDs to create nodes.
-        allowedToCreate.remove(userJID.trim().toLowerCase());
-        // Update the config.
-        updateUserAllowedToCreateProperty();
-    }
-
-    private void updateUserAllowedToCreateProperty() {
-        String[] jids = new String[allowedToCreate.size()];
-        jids = allowedToCreate.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
+        final Set<JID> existing = PUBSUB_ALLOWED_TO_CREATE.getValue();
+        existing.remove( userJID ); // just in case...
+        existing.remove( userJID.asBareJID() );
+        PUBSUB_ALLOWED_TO_CREATE.setValue( existing );
     }
 
     @Override
@@ -400,25 +390,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (serviceName == null) {
             serviceName = "pubsub";
         }
-        // Load the list of JIDs that are sysadmins of the PubSub service
-        String property = JiveGlobals.getProperty("xmpp.pubsub.sysadmin.jid");
-        String[] jids;
-        if (property != null && !property.isEmpty()) {
-            jids = property.split(",");
-            for (String jid : jids) {
-                sysadmins.add(jid.trim().toLowerCase());
-            }
-        }
-        nodeCreationRestricted = !JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", true);
-        // Load the list of JIDs that are allowed to create nodes
-        property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
-        if (property != null && !property.isEmpty()) {
-            jids = property.split(",");
-            for (String jid : jids) {
-                allowedToCreate.add(jid.trim().toLowerCase());
-            }
-        }
-
         multipleSubscriptionsEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.multiple-subscriptions", true);
 
         routingTable = server.getRoutingTable();

@@ -1749,9 +1749,11 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             // Restore old PEPService
             while (rs.next()) {
                 String serviceID = rs.getString(1);
-
+                if ( jid.toString().equals( serviceID )) {
+                    log.warn( "Loading a PEP service for {} that has a different name: {}", jid, serviceID );
+                }
                 // Create a new PEPService
-                pepService = new PEPService(XMPPServer.getInstance(), serviceID);
+                pepService = new PEPService(XMPPServer.getInstance(), jid);
                 pepService.initialize();
             }
         } catch (SQLException sqle) {

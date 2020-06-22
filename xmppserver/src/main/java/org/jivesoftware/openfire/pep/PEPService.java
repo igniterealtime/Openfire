@@ -81,7 +81,7 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * The packet router for the server.
      */
-    private PacketRouter router = null;
+    private final PacketRouter router;
 
     /**
      * Default configuration to use for newly created leaf nodes.
@@ -94,12 +94,6 @@ public class PEPService implements PubSubService, Cacheable {
     private DefaultNodeConfiguration collectionDefaultConfiguration;
 
     /**
-     * Returns the permission policy for creating nodes. A true value means that
-     * not anyone can create a node, only the service admin.
-     */
-    private boolean nodeCreationRestricted = true;
-
-    /**
      * Keep a registry of the presence's show value of users that subscribed to
      * a node of the pep service and for which the node only delivers
      * notifications for online users or node subscriptions deliver events based
@@ -107,18 +101,18 @@ public class PEPService implements PubSubService, Cacheable {
      * the map. Note: Key-> bare JID and Value-> Map whose key is full JID of
      * connected resource and value is show value of the last received presence.
      */
-    private Map<JID, Map<JID, String>> barePresences = new ConcurrentHashMap<>();
+    private final Map<JID, Map<JID, String>> barePresences = new ConcurrentHashMap<>();
 
     /**
      * Manager that keeps the list of ad-hoc commands and processing command
      * requests.
      */
-    private AdHocCommandManager adHocCommandManager;
+    private final AdHocCommandManager adHocCommandManager;
 
     /**
      * Used to handle filtered-notifications.
      */
-    private EntityCapabilitiesManager entityCapsManager = EntityCapabilitiesManager.getInstance();
+    private final EntityCapabilitiesManager entityCapsManager = XMPPServer.getInstance().getEntityCapabilitiesManager();
 
     /**
      * Constructs a PEPService.
@@ -147,7 +141,7 @@ public class PEPService implements PubSubService, Cacheable {
         adHocCommandManager.addCommand(new PendingSubscriptionsCommand(this));
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration( this, true);
+        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -165,10 +159,10 @@ public class PEPService implements PubSubService, Cacheable {
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, leafDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
-        collectionDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, false);
+        collectionDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -184,7 +178,7 @@ public class PEPService implements PubSubService, Cacheable {
             collectionDefaultConfiguration.setReplyPolicy(null);
             collectionDefaultConfiguration.setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
     }
 
@@ -259,11 +253,7 @@ public class PEPService implements PubSubService, Cacheable {
     @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
-        if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
-            // The user is not allowed to create nodes
-            return false;
-        }
-        return true;
+        return !isNodeCreationRestricted() || isServiceAdmin(creator);
     }
 
     /**
@@ -280,11 +270,7 @@ public class PEPService implements PubSubService, Cacheable {
         roster = XMPPServer.getInstance().getRosterManager().getRoster(prober.getNode());
         RosterItem item = roster.getRosterItem(probee);
 
-        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-            return true;
-        }
-
-        return false;
+        return item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM;
     }
 
     @Override
@@ -308,8 +294,16 @@ public class PEPService implements PubSubService, Cacheable {
         return serviceOwner.equals(user.asBareJID());
     }
 
+    /**
+     * Returns the permission policy for creating nodes. A true value means that not anyone can create a node,
+     * only the service admin.
+     *
+     * Note that PEP services will always return 'true'.
+     *
+     * @return true
+     */
     public boolean isNodeCreationRestricted() {
-        return nodeCreationRestricted;
+        return true;
     }
 
     @Override
@@ -501,8 +495,7 @@ public class PEPService implements PubSubService, Cacheable {
         // Send the last published item of each leaf node to the recipient.
         for (Node leafNode : rootCollectionNode.getNodes()) {
             // Retrieve last published item for the leaf node.
-            PublishedItem leafLastPublishedItem = null;
-            leafLastPublishedItem = leafNode.getLastPublishedItem();
+            PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
             if (leafLastPublishedItem == null) {
                 continue;
             }

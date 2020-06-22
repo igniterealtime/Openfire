@@ -97,7 +97,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.
      */
-    private AdHocCommandManager manager;
+    private final AdHocCommandManager manager;
     
     /**
      * Returns the permission policy for creating nodes. A true value means that not anyone can
@@ -117,13 +117,13 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
      * create nodes.
      */
-    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<>();
+    private final Collection<String> allowedToCreate = new CopyOnWriteArrayList<>();
 
     /**
      * Bare jids of users that are system administrators of the PubSub service. A sysadmin
      * has the same permissions as a node owner.
      */
-    private Collection<String> sysadmins = new CopyOnWriteArrayList<>();
+    private final Collection<String> sysadmins = new CopyOnWriteArrayList<>();
 
     /**
      * The packet router for the server.
@@ -243,11 +243,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
-        if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
-            // The user is not allowed to create nodes
-            return false;
-        }
-        return true;
+        return !isNodeCreationRestricted() || isServiceAdmin(creator);
     }
 
     @Override
@@ -431,7 +427,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         engine = new PubSubEngine(router);
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, true);
+        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -449,11 +445,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, leafDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
         collectionDefaultConfiguration =
-                PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, false);
+                PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null ) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -470,7 +466,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             collectionDefaultConfiguration
                     .setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
 
         // Load nodes to memory
@@ -505,7 +501,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Start the pubsub engine
         engine.start(this);
         ArrayList<String> params = new ArrayList<>();
-        params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.pubsub", params));
     }
@@ -712,7 +707,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 return dataForms;
             }
         }
-        return new HashSet<DataForm>();
+        return new HashSet<>();
     }
 
     @Override
@@ -832,10 +827,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     /**
-     * Converts an array to a comma-delimitted String.
+     * Converts an array to a comma-delimited String.
      *
      * @param array the array.
-     * @return a comma delimtted String of the array values.
+     * @return a comma delimited String of the array values.
      */
     private static String fromArray(String [] array) {
         StringBuilder buf = new StringBuilder();

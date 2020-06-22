@@ -118,9 +118,9 @@ public class PEPServiceManager {
         jid = jid.asBareJID();
         PEPService pepService;
 
-        final Lock lock = CacheFactory.getLock(jid, pepServices);
+        final Lock lock = pepServices.getLock(jid);
+        lock.lock();
         try {
-            lock.lock();
             if (pepServices.containsKey(jid)) {
                 // lookup in cache
                 if ( pepServices.get(jid).isAbsent() && autoCreate ) {
@@ -203,9 +203,9 @@ public class PEPServiceManager {
 
         PEPService pepService = null;
         final JID bareJID = owner.asBareJID();
-        final Lock lock = CacheFactory.getLock(bareJID, pepServices);
+        final Lock lock = pepServices.getLock(bareJID);
+        lock.lock();
         try {
-            lock.lock();
 
             if (pepServices.get(bareJID) != null) {
                 pepService = pepServices.get(bareJID).get();
@@ -235,9 +235,9 @@ public class PEPServiceManager {
      */
     public void remove(JID owner) {
 
-        final Lock lock = CacheFactory.getLock(owner.asBareJID(), pepServices);
+        final Lock lock = pepServices.getLock(owner.asBareJID());
+        lock.lock();
         try {
-            lock.lock();
 
             // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
             // after all nodes are deleted.

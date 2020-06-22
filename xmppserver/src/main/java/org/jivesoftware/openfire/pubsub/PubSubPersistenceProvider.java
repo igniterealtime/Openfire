@@ -68,7 +68,12 @@ public interface PubSubPersistenceProvider
      */
     void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier);
 
-    void loadSubscription(PubSubService service, Node node, String subId);
+    @Deprecated
+    default void loadSubscription(PubSubService service, Node node, String subId) {
+        loadSubscription(node, subId);
+    }
+
+    void loadSubscription(Node node, String subId);
 
     /**
      * Creates a new affiliation of the user in the node.
@@ -141,24 +146,65 @@ public interface PubSubPersistenceProvider
      * @param isLeafType true if loading default configuration for leaf nodes.
      * @return the loaded default node configuration for the specified node type and service
      *         or <tt>null</tt> if none was found.
+     * @deprecated Replaced by {@link #loadDefaultConfiguration(PubSubService.UniqueIdentifier, boolean)}
      */
-    DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service, boolean isLeafType);
+    @Deprecated
+    default DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service, boolean isLeafType)
+    {
+        return loadDefaultConfiguration( service.getUniqueIdentifier(), isLeafType );
+    }
+
+    /**
+     * Loads from the database the default node configuration for the specified node type
+     * and pubsub service.
+     *
+     * @param serviceIdentifier Identifier of the service
+     * @param isLeafType true if loading default configuration for leaf nodes.
+     * @return the loaded default node configuration for the specified node type and service
+     *         or <tt>null</tt> if none was found.
+     */
+    DefaultNodeConfiguration loadDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, boolean isLeafType);
 
     /**
      * Creates a new default node configuration for the specified service.
      *
      * @param service the default node configuration used by this pubsub service.
      * @param config the default node configuration to create in the database.
+     * @deprecated Replaced by {@link #createDefaultConfiguration(PubSubService.UniqueIdentifier, DefaultNodeConfiguration)}
      */
-    void createDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config);
+    @Deprecated
+    default void createDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config)
+    {
+        createDefaultConfiguration(service.getUniqueIdentifier(), config);
+    }
+
+    /**
+     * Creates a new default node configuration for the specified service.
+     *
+     * @param serviceIdentifier Identifier of the service
+     * @param config the default node configuration to create in the database.
+     */
+    void createDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config);
 
     /**
      * Updates the default node configuration for the specified service.
      *
      * @param service the default node configuration used by this pubsub service.
      * @param config the default node configuration to update in the database.
+     * @deprecated Replaced by {@link #updateDefaultConfiguration(PubSubService.UniqueIdentifier, DefaultNodeConfiguration)}
      */
-    void updateDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config);
+    @Deprecated
+    default void updateDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config) {
+        updateDefaultConfiguration( service.getUniqueIdentifier(), config);
+    }
+
+    /**
+     * Updates the default node configuration for the specified service.
+     *
+     * @param serviceIdentifier Identifier of the service
+     * @param config the default node configuration to update in the database.
+     */
+    void updateDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config);
 
     /**
      * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.

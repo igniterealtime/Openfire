@@ -83,7 +83,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     /**
      * Nodes managed by this manager, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<>();
+    private final Map<Node.UniqueIdentifier, Node> nodes = new ConcurrentHashMap<>();
     
     /**
      * Keep a registry of the presence's show value of users that subscribed to a node of
@@ -747,7 +747,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 if (canDiscoverNode(pubNode)) {
                     final DiscoItem item = new DiscoItem(
                         new JID(serviceDomain), pubNode.getName(),
-                        pubNode.getNodeID(), null);
+                        pubNode.getUniqueIdentifier().getNodeId(), null);
                     answer.add(item);
                 }
             }
@@ -760,7 +760,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     for (Node nestedNode : pubNode.getNodes()) {
                         if (canDiscoverNode(nestedNode)) {
                             final DiscoItem item = new DiscoItem(new JID(serviceDomain), nestedNode.getName(),
-                                nestedNode.getNodeID(), null);
+                                nestedNode.getUniqueIdentifier().getNodeId(), null);
                             answer.add(item);
                         }
                     }
@@ -805,7 +805,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-    public Node getNode(String nodeID) {
+    public Node getNode(Node.UniqueIdentifier nodeID) {
         return nodes.get(nodeID);
     }
 
@@ -820,11 +820,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public void addNode(Node node) {
-        nodes.put(node.getNodeID(), node);
+        nodes.put(node.getUniqueIdentifier(), node);
     }
 
     @Override
-    public void removeNode(String nodeID) {
+    public void removeNode(Node.UniqueIdentifier nodeID) {
         nodes.remove(nodeID);
     }
 

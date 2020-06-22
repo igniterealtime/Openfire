@@ -76,7 +76,7 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * Nodes managed by this service, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<>();
+    private final Map<Node.UniqueIdentifier, Node> nodes = new ConcurrentHashMap<>();
 
     /**
      * The packet router for the server.
@@ -199,16 +199,16 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void addNode(Node node) {
-        nodes.put(node.getNodeID(), node);
+        nodes.put(node.getUniqueIdentifier(), node);
     }
 
     @Override
-    public void removeNode(String nodeID) {
+    public void removeNode(Node.UniqueIdentifier nodeID) {
         nodes.remove(nodeID);
     }
 
     @Override
-    public Node getNode(String nodeID) {
+    public Node getNode(Node.UniqueIdentifier nodeID) {
         return nodes.get(nodeID);
     }
 
@@ -326,7 +326,7 @@ public class PEPService implements PubSubService, Cacheable {
     @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
         if ( Log.isTraceEnabled() ) {
-            Log.trace( "Service '{}' is broadcasting a notification on node '{}' to a collection of JIDs: {}", this.getServiceID(), node.getNodeID(), jids.stream().map(JID::toString).collect(Collectors.joining(", ")) );
+            Log.trace( "Service '{}' is broadcasting a notification on node '{}' to a collection of JIDs: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), jids.stream().map(JID::toString).collect(Collectors.joining(", ")) );
         }
         message.setFrom(getAddress());
         for (JID jid : jids) {
@@ -338,7 +338,7 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void sendNotification(Node node, Message message, JID recipientJID) {
-        Log.trace( "Service '{}' attempts to send a notification on node '{}' to recipient: {} (processing)", this.getServiceID(), node.getNodeID(), recipientJID );
+        Log.trace( "Service '{}' attempts to send a notification on node '{}' to recipient: {} (processing)", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), recipientJID );
 
         message.setTo(recipientJID);
         message.setFrom(getAddress());
@@ -414,7 +414,7 @@ public class PEPService implements PubSubService, Cacheable {
                 // This full JID will be used as the "replyto" address in the addressing extension.
                 if (node.isCollectionNode()) {
                     for (Node leafNode : node.getNodes()) {
-                        if (leafNode.getNodeID().equals(nodeID)) {
+                        if (leafNode.getUniqueIdentifier().getNodeId().equals(nodeID)) {
                             publisher = leafNode.getPublishedItem(itemID).getPublisher();
 
                             // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
@@ -455,7 +455,7 @@ public class PEPService implements PubSubService, Cacheable {
             }
             catch (UserNotFoundException e) {
                 // Do not add addressing extension to message.
-                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getNodeID(), message.getTo(), e );
+                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
                 router.route(message);
             }
             catch (NullPointerException e) {
@@ -467,7 +467,7 @@ public class PEPService implements PubSubService, Cacheable {
                 catch (UserNotFoundException e1) {
                     // Do nothing
                 }
-                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getNodeID(), message.getTo(), e );
+                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
                 router.route(message);
             }
         }

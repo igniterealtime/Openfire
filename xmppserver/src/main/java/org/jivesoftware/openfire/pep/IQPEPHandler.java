@@ -559,7 +559,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                 AccessModel accessModel = node.getAccessModel();
                 if (accessModel.canAccessItems(node, senderJID, new JID(recipientJID))) {
                     Element item = defaultItem.createCopy();
-                    item.addAttribute("node", node.getNodeID());
+                    item.addAttribute("node", node.getUniqueIdentifier().getNodeId());
                     items.add(item);
                 }
             }
@@ -742,7 +742,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             dataForms.add(pubNode.getMetadataForm());
             return dataForms;
         }
-        return new HashSet<DataForm>();
+        return new HashSet<>();
     }
 
     @Override

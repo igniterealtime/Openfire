@@ -14,7 +14,7 @@ import org.xmpp.packet.JID;
 
 public abstract class NodeTask implements ClusterTask<Void>
 {
-
+    protected transient Node.UniqueIdentifier uniqueNodeIdentifier;
     protected String nodeId;
     protected String serviceId;
 
@@ -25,8 +25,13 @@ public abstract class NodeTask implements ClusterTask<Void>
 
     protected NodeTask(Node node)
     {
-        nodeId = node.getNodeID();
-        serviceId = node.getService().getServiceID();
+        uniqueNodeIdentifier = node.getUniqueIdentifier();
+        nodeId = node.getUniqueIdentifier().getNodeId();
+        serviceId = node.getUniqueIdentifier().getServiceIdentifier().getServiceId();
+    }
+
+    public Node.UniqueIdentifier getUniqueNodeIdentifier() {
+        return uniqueNodeIdentifier;
     }
 
     public String getNodeId()
@@ -70,5 +75,6 @@ public abstract class NodeTask implements ClusterTask<Void>
     {
         nodeId = ExternalizableUtil.getInstance().readSafeUTF(in);
         serviceId = ExternalizableUtil.getInstance().readSafeUTF(in);
+        uniqueNodeIdentifier = new Node.UniqueIdentifier( serviceId, nodeId );
     }
 }

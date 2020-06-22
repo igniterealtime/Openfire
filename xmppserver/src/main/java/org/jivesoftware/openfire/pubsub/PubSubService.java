@@ -123,7 +123,18 @@ public interface PubSubService {
      * @param nodeID the ID that uniquely identifies the node in the pubsub service.
      * @return the Node that matches the specified node ID or {@code null} if none was found.
      */
-    Node getNode(String nodeID);
+    default Node getNode(String nodeID) {
+        return getNode( new Node.UniqueIdentifier( getUniqueIdentifier(), nodeID));
+    };
+
+    /**
+     * Returns the {@link Node} that matches the specified node ID or {@code null} if
+     * none was found.
+     *
+     * @param nodeID the ID that uniquely identifies the node.
+     * @return the Node that matches the specified node ID or {@code null} if none was found.
+     */
+    Node getNode(Node.UniqueIdentifier nodeID);
 
     /**
      * Returns the collection of nodes hosted by the pubsub service. The collection does
@@ -141,7 +152,7 @@ public interface PubSubService {
     void addNode(Node node);
 
     /**
-     * Removes the specified node from the service. Most probaly the node was deleted from
+     * Removes the specified node from the service. Most probably the node was deleted from
      * the database as well.<p>
      *
      * A future version may support unloading of inactive nodes even though they may still
@@ -149,7 +160,20 @@ public interface PubSubService {
      *
      * @param nodeID the ID that uniquely identifies the node in the pubsub service.
      */
-    void removeNode(String nodeID);
+    default void removeNode(String nodeID) {
+        removeNode( new Node.UniqueIdentifier(getUniqueIdentifier(), nodeID));
+    };
+
+    /**
+     * Removes the specified node from the service. Most probably the node was deleted from
+     * the database as well.<p>
+     *
+     * A future version may support unloading of inactive nodes even though they may still
+     * exist in the database.
+     *
+     * @param nodeID the ID that uniquely identifies the node.
+     */
+    void removeNode(Node.UniqueIdentifier nodeID);
 
     /**
      * Broadcasts the specified Message containing an event notification to a list

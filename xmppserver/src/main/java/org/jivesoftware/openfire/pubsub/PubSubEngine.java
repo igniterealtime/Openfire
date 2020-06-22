@@ -174,7 +174,7 @@ public class PubSubEngine {
                     }
                     else {
                         // Sysadmin is trying to configure root collection node
-                        nodeID = service.getRootCollectionNode().getNodeID();
+                        nodeID = service.getRootCollectionNode().getUniqueIdentifier().getNodeId();
                     }
                 }
                 if (IQ.Type.get == iq.getType()) {
@@ -1054,7 +1054,7 @@ public class PubSubEngine {
             // Do not include the node id when node is the root collection node
             // or the results are for a specific node
             if (!node.isRootCollectionNode() && (nodeID == null)) {
-                subElement.addAttribute("node", node.getNodeID());
+                subElement.addAttribute("node", node.getUniqueIdentifier().getNodeId());
             }
             subElement.addAttribute("jid", subscription.getJID().toString());
             subElement.addAttribute("subscription", subscription.getState().name());
@@ -1092,7 +1092,7 @@ public class PubSubEngine {
                 Element affiliateElement = affiliationsElement.addElement("affiliation");
                 // Do not include the node id when node is the root collection node
                 if (!affiliate.getNode().isRootCollectionNode()) {
-                    affiliateElement.addAttribute("node", affiliate.getNode().getNodeID());
+                    affiliateElement.addAttribute("node", affiliate.getNode().getUniqueIdentifier().getNodeId());
                 }
                 affiliateElement.addAttribute("jid", affiliate.getJID().toString());
                 affiliateElement.addAttribute("affiliation", affiliate.getAffiliation().name());
@@ -1249,9 +1249,9 @@ public class PubSubEngine {
             Node newNode = response.newNode;
             String nodeID = createElement.attributeValue("node");
             // Include new nodeID if it has changed from the original nodeID
-            if (!newNode.getNodeID().equals(nodeID)) {
+            if (!newNode.getUniqueIdentifier().getNodeId().equals(nodeID)) {
                 Element elem = reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
-                elem.addElement("create").addAttribute("node", newNode.getNodeID());
+                elem.addElement("create").addAttribute("node", newNode.getUniqueIdentifier().getNodeId());
             }
             router.route(reply);
         }
@@ -1771,7 +1771,7 @@ public class PubSubEngine {
                     reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub#owner");
             Element entities = child.addElement("affiliations");
             if (!node.isRootCollectionNode()) {
-                entities.addAttribute("node", node.getNodeID());
+                entities.addAttribute("node", node.getUniqueIdentifier().getNodeId());
             }
             for (JID affiliateJID : invalidAffiliates) {
                 NodeAffiliate affiliate = node.getAffiliate(affiliateJID);

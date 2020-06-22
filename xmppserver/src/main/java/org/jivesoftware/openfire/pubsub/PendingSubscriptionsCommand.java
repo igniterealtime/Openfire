@@ -54,7 +54,7 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
                 LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.node"));
         for (Node node : service.getNodes()) {
             if (!node.isCollectionNode() && node.isAdmin(data.getOwner())) {
-                formField.addOption(null, node.getNodeID());
+                formField.addOption(null, node.getUniqueIdentifier().getNodeId());
             }
         }
         // Add the form to the command

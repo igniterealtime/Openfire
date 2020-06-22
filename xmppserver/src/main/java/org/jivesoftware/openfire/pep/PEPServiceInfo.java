@@ -29,6 +29,6 @@ public class PEPServiceInfo extends PubSubServiceInfo
 {
     public PEPServiceInfo( JID owner )
     {
-        super( new PEPServiceManager().getPEPService( owner.toBareJID() ) );
+        super( new PEPServiceManager().getPEPService( owner.asBareJID() ) );
     }
 }

@@ -1734,7 +1734,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 	}
 
     @Override
-    public PEPService loadPEPServiceFromDB(String jid) {
+    public PEPService loadPEPServiceFromDB(JID jid) {
         PEPService pepService = null;
 
         Connection con = null;
@@ -1744,7 +1744,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             // Get all PEP services
             pstmt = con.prepareStatement(GET_PEP_SERVICE);
-            pstmt.setString(1, jid);
+            pstmt.setString(1, jid.toString());
             rs = pstmt.executeQuery();
             // Restore old PEPService
             while (rs.next()) {

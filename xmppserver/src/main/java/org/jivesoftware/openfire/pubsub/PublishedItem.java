@@ -140,8 +140,8 @@ public class PublishedItem implements Serializable {
                     else
                     {
                         PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-                        node = serviceMgr.hasCachedService(new JID(serviceId)) ? (LeafNode) serviceMgr.getPEPService(
-                                serviceId).getNode(nodeId) : null;
+                        JID service = new JID( serviceId );
+                        node = serviceMgr.hasCachedService(service) ? (LeafNode) serviceMgr.getPEPService(service).getNode(nodeId) : null;
                     }
                 }
             }

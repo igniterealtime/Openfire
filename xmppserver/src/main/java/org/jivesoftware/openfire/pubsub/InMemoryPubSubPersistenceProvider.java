@@ -388,14 +388,14 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     }
 
     @Override
-    public PEPService loadPEPServiceFromDB(String jid)
+    public PEPService loadPEPServiceFromDB(JID jid)
     {
-        final PubSubService.UniqueIdentifier id = new PubSubService.UniqueIdentifier( jid );
+        final PubSubService.UniqueIdentifier id = new PubSubService.UniqueIdentifier( jid.toString() );
         final Lock lock = serviceIdToNodesCache.getLock( id );
         lock.lock();
         try {
             if ( serviceIdToNodesCache.containsKey( id ) ) {
-                final PEPService pepService = new PEPService( XMPPServer.getInstance(), new JID(jid) );
+                final PEPService pepService = new PEPService( XMPPServer.getInstance(), jid );
                 pepService.initialize();
 
                 // The JDBC variant stores subscriptions in the database. The in-memory variant cannot rely on this.

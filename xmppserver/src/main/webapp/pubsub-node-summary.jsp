@@ -47,7 +47,7 @@
     {
         pubSubServiceInfo = webManager.getPubSubInfo();
     }
-    else if ( XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( owner.toBareJID(), true ) != null )
+    else if ( XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( owner.asBareJID(), true ) != null )
     {
         PEPMode = true;
         pubSubServiceInfo = new PEPServiceInfo( owner );

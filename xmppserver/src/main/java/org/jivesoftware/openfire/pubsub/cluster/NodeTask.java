@@ -53,7 +53,8 @@ public abstract class NodeTask implements ClusterTask<Void>
         else
         {
             PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-            return serviceMgr.hasCachedService(new JID(serviceId)) ? serviceMgr.getPEPService(serviceId) : null;
+            JID service = new JID( serviceId );
+            return serviceMgr.hasCachedService(service) ? serviceMgr.getPEPService(service) : null;
         }
     }
 

@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.jivesoftware.openfire.pep.PEPService;
+import org.xmpp.packet.JID;
 
 import java.util.List;
 
@@ -237,8 +238,20 @@ public interface PubSubPersistenceProvider
      * @param jid
      *            the JID of the owner of the PEP service.
      * @return the loaded PEP service, or null if not found.
+     * @deprecated Replaced by {@link #loadPEPServiceFromDB(JID)}
      */
-    PEPService loadPEPServiceFromDB(String jid);
+    default PEPService loadPEPServiceFromDB(String jid) {
+        return loadPEPServiceFromDB( new JID(jid));
+    }
+
+    /**
+     * Loads a PEP service from the database, if it exists.
+     *
+     * @param jid
+     *            the JID of the owner of the PEP service.
+     * @return the loaded PEP service, or null if not found.
+     */
+    PEPService loadPEPServiceFromDB(JID jid);
 
     /**
      * Writes large changesets, using batches and transactions when available.

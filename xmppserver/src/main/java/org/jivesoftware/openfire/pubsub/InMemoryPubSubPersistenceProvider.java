@@ -94,8 +94,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
 
         final PubSubService.UniqueIdentifier serviceIdentifier = node.getUniqueIdentifier().getServiceIdentifier();
         final Lock lock = CacheFactory.getLock(serviceIdentifier, serviceIdToNodesCache );
+        lock.lock();
         try {
-            lock.lock();
             CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node );
             CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node, ArrayList::new );
         } finally {
@@ -110,8 +110,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
 
         final PubSubService.UniqueIdentifier serviceIdentifier = node.getUniqueIdentifier().getServiceIdentifier();
         final Lock lock = serviceIdToNodesCache.getLock( serviceIdentifier );
+        lock.lock();
         try {
-            lock.lock();
             serviceIdToNodesCache.computeIfPresent( serviceIdentifier, ( s, list ) -> {
                 list.remove( node );
                 return list.isEmpty() ? null : list;
@@ -141,8 +141,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Loading nodes for service: {}", service.getServiceID() );
 
         final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
+        lock.lock();
         try {
-            lock.lock();
             final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
             if ( nodes != null )
             {
@@ -159,8 +159,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Loading node: {}", nodeIdentifier );
 
         final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
+        lock.lock();
         try {
-            lock.lock();
             final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
             if ( nodes != null )
             {
@@ -256,8 +256,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Saving published item for node {}: {}", item.getNode().getUniqueIdentifier(), item.getID() );
         final Lock lock = CacheFactory.getLock( item.getNode().getUniqueIdentifier(), itemsCache );
+        lock.lock();
         try {
-            lock.lock();
 
             // Find and remove an item with the same ID, if one is present.
             final LinkedList<PublishedItem> allNodeItems = itemsCache.get(item.getNode().getUniqueIdentifier());
@@ -286,8 +286,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Getting published items for node {}", node.getUniqueIdentifier() );
         List<PublishedItem> publishedItems;
         final Lock lock = CacheFactory.getLock( node.getUniqueIdentifier(), itemsCache );
+        lock.lock();
         try {
-            lock.lock();
             final List<PublishedItem> items = itemsCache.get( node.getUniqueIdentifier() );
             publishedItems = items != null ? items : new ArrayList<>();
         } finally {
@@ -376,8 +376,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Purging node {}", uid );
 
         final Lock lock = CacheFactory.getLock( leafNode.getUniqueIdentifier(), itemsCache );
+        lock.lock();
         try {
-            lock.lock();
             itemsCache.remove( leafNode.getUniqueIdentifier() );
         } finally {
             lock.unlock();
@@ -391,8 +391,8 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         final PubSubService.UniqueIdentifier id = new PubSubService.UniqueIdentifier( jid );
         final Lock lock = CacheFactory.getLock( id, itemsCache );
+        lock.lock();
         try {
-            lock.lock();
             if ( serviceIdToNodesCache.containsKey( id ) ) {
                 final PEPService pepService = new PEPService( XMPPServer.getInstance(), jid );
                 pepService.initialize();

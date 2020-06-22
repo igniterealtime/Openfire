@@ -66,7 +66,7 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * The bare JID that this service is identified by.
      */
-    private String serviceOwnerJID;
+    private final JID serviceOwner;
 
     /**
      * Collection node that acts as the root node of the entire node hierarchy.
@@ -104,10 +104,10 @@ public class PEPService implements PubSubService, Cacheable {
      * a node of the pep service and for which the node only delivers
      * notifications for online users or node subscriptions deliver events based
      * on the user presence show value. Offline users will not have an entry in
-     * the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key is full JID of
+     * the map. Note: Key-> bare JID and Value-> Map whose key is full JID of
      * connected resource and value is show value of the last received presence.
      */
-    private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<>();
+    private Map<JID, Map<JID, String>> barePresences = new ConcurrentHashMap<>();
 
     /**
      * Manager that keeps the list of ad-hoc commands and processing command
@@ -122,12 +122,24 @@ public class PEPService implements PubSubService, Cacheable {
 
     /**
      * Constructs a PEPService.
+     *
+     * @param server  the XMPP server.
+     * @param bareJID the bare JID (service ID) of the user owning the service.
+     * @deprecated Replaced by {@link #PEPService(XMPPServer, JID)}
+     */
+    @Deprecated
+    public PEPService(XMPPServer server, String bareJID) {
+        this(server, new JID(bareJID).asBareJID());
+    }
+
+    /**
+     * Constructs a PEPService.
      * 
      * @param server  the XMPP server.
      * @param bareJID the bare JID (service ID) of the user owning the service.
      */
-    public PEPService(XMPPServer server, String bareJID) {
-        this.serviceOwnerJID = bareJID;
+    public PEPService(XMPPServer server, JID bareJID) {
+        this.serviceOwner = bareJID.asBareJID();
         router = server.getPacketRouter();
 
         // Initialize the ad-hoc commands manager to use for this pep service
@@ -182,18 +194,16 @@ public class PEPService implements PubSubService, Cacheable {
         // Ensure that we have a root collection node
         if (nodes.isEmpty()) {
             // Create root collection node
-            JID creatorJID = new JID(this.serviceOwnerJID);
-
-            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwnerJID, creatorJID, collectionDefaultConfiguration);
+            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwner.toString(), this.serviceOwner, collectionDefaultConfiguration);
 
             // Save new root node
             rootCollectionNode.saveToDB();
 
             // Add the creator as the node owner
-            rootCollectionNode.addOwner(creatorJID);
+            rootCollectionNode.addOwner(this.serviceOwner);
         }
         else {
-            rootCollectionNode = (CollectionNode) getNode(this.serviceOwnerJID);
+            rootCollectionNode = (CollectionNode) getNode(this.serviceOwner.toString());
         }
     }
 
@@ -224,13 +234,13 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public JID getAddress() {
-        return new JID(serviceOwnerJID);
+        return serviceOwner;
     }
 
     @Override
     public String getServiceID() {
         // The bare JID of the user is the service ID for PEP
-        return serviceOwnerJID;
+        return serviceOwner.toString();
     }
 
     @Override
@@ -294,14 +304,8 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public boolean isServiceAdmin(JID user) {
-        // Here we consider a 'service admin' to be the user that this PEPService
-        // is associated with.
-        if (serviceOwnerJID.equals(user.toBareJID())) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        // Here we consider a 'service admin' to be the user that this PEPService is associated with.
+        return serviceOwner.equals(user.asBareJID());
     }
 
     public boolean isNodeCreationRestricted() {
@@ -532,7 +536,7 @@ public class PEPService implements PubSubService, Cacheable {
     }
 
     @Override
-    public Map<String, Map<String, String>> getBarePresences() {
+    public Map<JID, Map<JID, String>> getSubscriberPresences() {
         return barePresences;
     }
 

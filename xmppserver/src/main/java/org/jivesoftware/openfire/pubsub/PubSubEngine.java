@@ -251,26 +251,26 @@ public class PubSubEngine {
     public void process(PubSubService service, Presence presence) {
         if (presence.isAvailable()) {
             JID subscriber = presence.getFrom();
-            Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+            Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
             if (fullPresences == null) {
                 synchronized ((subscriber.toBareJID() + MUTEX_SUFFIX_USER).intern()) {
-                    fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+                    fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
                     if (fullPresences == null) {
                         fullPresences = new ConcurrentHashMap<>();
-                        service.getBarePresences().put(subscriber.toBareJID(), fullPresences);
+                        service.getSubscriberPresences().put(subscriber.asBareJID(), fullPresences);
                     }
                 }
             }
             Presence.Show show = presence.getShow();
-            fullPresences.put(subscriber.toString(), show == null ? "online" : show.name());
+            fullPresences.put(subscriber, show == null ? "online" : show.name());
         }
         else if (presence.getType() == Presence.Type.unavailable) {
             JID subscriber = presence.getFrom();
-            Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+            Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
             if (fullPresences != null) {
-                fullPresences.remove(subscriber.toString());
+                fullPresences.remove(subscriber);
                 if (fullPresences.isEmpty()) {
-                    service.getBarePresences().remove(subscriber.toBareJID());
+                    service.getSubscriberPresences().remove(subscriber.asBareJID());
                 }
             }
         }
@@ -380,7 +380,7 @@ public class PubSubEngine {
         }
 
         LeafNode leafNode = (LeafNode) node;
-        Iterator itemElements = publishElement.elementIterator("item");
+        Iterator<Element> itemElements = publishElement.elementIterator("item");
 
         // Check that an item was included if node persist items or includes payload
         if (!itemElements.hasNext() && leafNode.isItemRequired()) {
@@ -398,12 +398,12 @@ public class PubSubEngine {
             return;
         }
         List<Element> items = new ArrayList<>();
-        List entries;
+        List<Element> entries;
         Element payload;
         while (itemElements.hasNext()) {
-            Element item = (Element) itemElements.next();
+            Element item = itemElements.next();
             entries = item.elements();
-            payload = entries.isEmpty() ? null : (Element) entries.get(0);
+            payload = entries.isEmpty() ? null : entries.get(0);
             // Check that a payload was included if node is configured to include payload
             // in notifications
             if (payload == null && leafNode.isPayloadDelivered()) {
@@ -1972,7 +1972,7 @@ public class PubSubEngine {
      *         of each connected resource.
      */
     public static Collection<String> getShowPresences(PubSubService service, JID subscriber) {
-        Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+        Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
         if (fullPresences == null) {
             // User is offline so return empty list
             return Collections.emptyList();
@@ -1983,7 +1983,7 @@ public class PubSubEngine {
         }
         else {
             // Look for the show value using the full JID
-            String show = fullPresences.get(subscriber.toString());
+            String show = fullPresences.get(subscriber);
             if (show == null) {
                 // User at the specified resource is offline so return empty list
                 return Collections.emptyList();
@@ -2026,14 +2026,14 @@ public class PubSubEngine {
      * @param user the JID of the affiliate to unsubscribe from his presence.
      */
     public static void presenceSubscriptionRequired(PubSubService service, Node node, JID user) {
-        Map<String, String> fullPresences = service.getBarePresences().get(user.toString());
+        Map<JID, String> fullPresences = service.getSubscriberPresences().get(user);
         if (fullPresences == null || fullPresences.isEmpty()) {
             Presence subscription = new Presence(Presence.Type.subscribe);
             subscription.setTo(user);
             subscription.setFrom(service.getAddress());
             service.send(subscription);
             // Sending subscription requests based on received presences may generate
-            // that a sunscription request is sent to an offline user (since offline
+            // that a subscription request is sent to an offline user (since offline
             // presences are not stored in the service's "barePresences"). However, this
             // not optimal algorithm shouldn't bother the user since the user's server
             // should reply when already subscribed to the user's presence instead of

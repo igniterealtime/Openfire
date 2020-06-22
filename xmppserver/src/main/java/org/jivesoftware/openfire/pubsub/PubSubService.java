@@ -23,6 +23,7 @@ import org.xmpp.packet.Packet;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A PubSubService is responsible for keeping the hosted nodes by the service, the default
@@ -61,13 +62,36 @@ public interface PubSubService {
      * Returns a registry of the presence's show value of users that subscribed to a node of
      * the pubsub service and for which the node only delivers notifications for online users
      * or node subscriptions deliver events based on the user presence show value. Offline
-     * users will not have an entry in the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
      * is full JID of connected resource and value is show value of the last received presence.
      * 
      * @return a registry of the presence's show value of users that subscribed to a node
      *         of the pubsub service.
+     * @deprecated Replaced by #getSubscriberPresences. Note, since being deprecated, changes to the return value are no longer applied!
      */
-    Map<String, Map<String, String>> getBarePresences();
+    default Map<String, Map<String, String>> getBarePresences() {
+        return getSubscriberPresences().entrySet().stream()
+            .collect(Collectors.toMap(
+                e -> e.getKey().toBareJID(),
+                e -> e.getValue().entrySet().stream()
+                    .collect( Collectors.toMap(
+                        v -> v.getKey().toString(),
+                        Map.Entry::getValue
+                    ))
+            ));
+    }
+
+    /**
+     * Returns a registry of the presence's show value of users that subscribed to a node of
+     * the pubsub service and for which the node only delivers notifications for online users
+     * or node subscriptions deliver events based on the user presence show value. Offline
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
+     * is full JID of connected resource and value is show value of the last received presence.
+     *
+     * @return a registry of the presence's show value of users that subscribed to a node
+     *         of the pubsub service.
+     */
+    Map<JID, Map<JID, String>> getSubscriberPresences();
 
     /**
      * Returns true if the pubsub service allows the specified user to create nodes.

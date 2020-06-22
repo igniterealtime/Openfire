@@ -92,8 +92,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
      * is full JID of connected resource and value is show value of the last received presence.
      */
-    private Map<String, Map<String, String>> barePresences =
-            new ConcurrentHashMap<>();
+    private final Map<JID, Map<JID, String>> barePresences = new ConcurrentHashMap<>();
     
     /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.
@@ -850,7 +849,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-    public Map<String, Map<String, String>> getBarePresences() {
+    public Map<JID, Map<JID, String>> getSubscriberPresences() {
         return barePresences;
     }
 

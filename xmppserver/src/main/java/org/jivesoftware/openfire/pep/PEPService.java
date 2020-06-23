@@ -50,6 +50,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
+import javax.annotation.Nonnull;
+
 /**
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
  * Pubsub" Version 1.0
@@ -483,6 +485,25 @@ public class PEPService implements PubSubService, Cacheable {
      * @param recipientJID the recipient that is to receive the last published item notifications.
      */
     public void sendLastPublishedItems(JID recipientJID) {
+        sendLastPublishedItems(recipientJID, null);
+    }
+
+    /**
+     * Sends an event notification for the last published item of each leaf node under the
+     * root collection node to the recipient JID. If the recipient has no subscription to
+     * the root collection node, has not yet been authorized, or is pending to be
+     * configured -- then no notifications are going to be sent.<p>
+     *
+     * Depending on the subscription configuration the event notifications may or may not have
+     * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
+     *
+     * An optional filter for nodes to be processed can be provided in the second argument to this method. When non-null
+     * only the nodes that match an ID in the argument will be processed.
+     *
+     * @param recipientJID the recipient that is to receive the last published item notifications.
+     * @param nodeIdFilter An optional filter of nodes to process (only IDs that are included in the filter are processed).
+     */
+    public void sendLastPublishedItems(JID recipientJID, Set<String> nodeIdFilter) {
         // Ensure the recipient has a subscription to this service's root collection node.
         NodeSubscription subscription = rootCollectionNode.getSubscription(recipientJID);
         if (subscription == null) {
@@ -494,6 +515,9 @@ public class PEPService implements PubSubService, Cacheable {
 
         // Send the last published item of each leaf node to the recipient.
         for (Node leafNode : rootCollectionNode.getNodes()) {
+            if ( nodeIdFilter != null && !nodeIdFilter.contains( leafNode.getUniqueIdentifier().getNodeId() ) ) {
+                continue;
+            }
             // Retrieve last published item for the leaf node.
             PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
             if (leafLastPublishedItem == null) {
@@ -544,4 +568,24 @@ public class PEPService implements PubSubService, Cacheable {
         return 600;
     }
 
+    @Override
+    public void entityCapabilitiesChanged( @Nonnull final JID entity,
+                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
+                                           @Nonnull final Set<String> featuresAdded,
+                                           @Nonnull final Set<String> featuresRemoved,
+                                           @Nonnull final Set<String> identitiesAdded,
+                                           @Nonnull final Set<String> identitiesRemoved )
+    {
+        // Look for new +notify features. Those are the nodes that the entity is now interested in.
+        final Set<String> nodeIDs = featuresAdded.stream()
+            .filter(feature -> feature.endsWith("+notify"))
+            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
+            .collect(Collectors.toSet());
+
+        if ( !nodeIDs.isEmpty() )
+        {
+            Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
+            sendLastPublishedItems(entity, nodeIDs);
+        }
+    }
 }

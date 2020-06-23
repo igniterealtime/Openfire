@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
@@ -44,8 +45,8 @@ import java.util.concurrent.Future;
  *
  * @author Matt Tucker
  */
-public class PubSubEngine {
-
+public class PubSubEngine
+{
     private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
     private static final String MUTEX_SUFFIX_USER = " psu";
@@ -1907,16 +1908,20 @@ public class PubSubEngine {
     }
 
     public void start(final PubSubService service) {
+        Log.debug( "Starting pubsub service '{}'", service.getUniqueIdentifier() );
+
         // Probe presences of users that this service has subscribed to (once the server
         // has started)
         
         if (XMPPServer.getInstance().isStarted()) {
+            XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
             probePresences(service);
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                 @Override
                 public void serverStarted() {
+                    XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
                     probePresences(service);
                 }
 
@@ -1942,8 +1947,11 @@ public class PubSubEngine {
     }
 
     public void shutdown(PubSubService service) {
-    	PubSubPersistenceProviderManager.getInstance().shutdown();
+    	PubSubPersistenceProviderManager.getInstance().shutdown(); // FIXME this does not seem right. We shouldn't be shutting down persistency (that's shared for all services) if just one service shuts down!
         if (service != null) {
+            Log.debug( "Shutting down pubsub service '{}'", service.getUniqueIdentifier() );
+
+            XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(service);
 
             if (service.getManager() != null) {
                 // Stop executing ad-hoc commands

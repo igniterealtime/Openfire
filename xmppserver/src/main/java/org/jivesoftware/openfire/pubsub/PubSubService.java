@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -40,8 +41,8 @@ import java.util.stream.Collectors;
  *
  * @author Matt Tucker
  */
-public interface PubSubService {
-
+public interface PubSubService extends EntityCapabilitiesListener
+{
     /**
      * Returns the XMPP address of the service.
      *

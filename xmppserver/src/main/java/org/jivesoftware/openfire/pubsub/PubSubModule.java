@@ -42,6 +42,7 @@ import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.*;
@@ -54,6 +55,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import javax.annotation.Nonnull;
 
 /**
  * Module that implements JEP-60: Publish-Subscribe. By default node collections and
@@ -849,5 +852,37 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
+    }
+
+    @Override
+    public void entityCapabilitiesChanged( @Nonnull final JID entity,
+                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
+                                           @Nonnull final Set<String> featuresAdded,
+                                           @Nonnull final Set<String> featuresRemoved,
+                                           @Nonnull final Set<String> identitiesAdded,
+                                           @Nonnull final Set<String> identitiesRemoved )
+    {
+        // Look for new +notify features. Those are the nodes that the entity is now interested in.
+        final Set<String> nodeIDs = featuresAdded.stream()
+            .filter(feature -> feature.endsWith("+notify"))
+            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
+            .collect(Collectors.toSet());
+
+        if ( !nodeIDs.isEmpty() )
+        {
+            Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
+            nodes.values().stream()
+                .filter( Node::isSendItemSubscribe )
+                .filter( node -> nodeIDs.contains( node.getUniqueIdentifier().getNodeId()) )
+                .forEach( node -> {
+                    final NodeSubscription subscription = node.getSubscription(entity);
+                    if (subscription != null && subscription.isActive()) {
+                        PublishedItem lastItem = node.getLastPublishedItem();
+                        if (lastItem != null) {
+                            subscription.sendLastPublishedItem(lastItem);
+                        }
+                    }
+                });
+        }
     }
 }

@@ -26,6 +26,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.xmpp.packet.JID;
 
+import java.util.Collections;
+
 import static org.mockito.Mockito.*;
 
 /**
@@ -81,13 +83,15 @@ public class EntityCapabilitiesListenerTest
         final EntityCapabilities caps = new EntityCapabilities();
         caps.setVerAttribute( "test-ver" );
         caps.setHashAttribute( "test-hash" );
+        caps.addFeature( "test-feature" );
+        caps.addIdentity( "test-identity" );
         manager.addListener( entity, userSpecific );
 
         // Execute system under test.
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, caps );
+        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, caps, caps.getFeatures(), Collections.emptySet(), caps.getIdentities(), Collections.emptySet() );
     }
 
     /**
@@ -103,13 +107,15 @@ public class EntityCapabilitiesListenerTest
         final EntityCapabilities caps = new EntityCapabilities();
         caps.setVerAttribute( "test-ver" );
         caps.setHashAttribute( "test-hash" );
+        caps.addFeature( "test-feature" );
+        caps.addIdentity( "test-identity" );
         manager.addListener( otherEntity, otherUserSpecific );
 
         // Execute system under test.
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( otherUserSpecific, never() ).entityCapabilitiesChanged( entity, caps );
+        verify( otherUserSpecific, never() ).entityCapabilitiesChanged( entity, caps, caps.getFeatures(), Collections.emptySet(), caps.getIdentities(), Collections.emptySet() );
     }
 
     /**
@@ -123,13 +129,15 @@ public class EntityCapabilitiesListenerTest
         final EntityCapabilities caps = new EntityCapabilities();
         caps.setVerAttribute( "test-ver" );
         caps.setHashAttribute( "test-hash" );
+        caps.addFeature( "test-feature" );
+        caps.addIdentity( "test-identity" );
         manager.addListener( allUsers );
 
         // Execute system under test.
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, caps );
+        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, caps, caps.getFeatures(), Collections.emptySet(), caps.getIdentities(), Collections.emptySet() );
     }
 
     /**
@@ -143,6 +151,8 @@ public class EntityCapabilitiesListenerTest
         final EntityCapabilities caps = new EntityCapabilities();
         caps.setVerAttribute( "test-ver" );
         caps.setHashAttribute( "test-hash" );
+        caps.addFeature( "test-feature" );
+        caps.addIdentity( "test-identity" );
         manager.addListener( allUsers );
         manager.addListener( entity, userSpecific );
 
@@ -151,8 +161,8 @@ public class EntityCapabilitiesListenerTest
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, caps );
-        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, caps );
+        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, caps, caps.getFeatures(), Collections.emptySet(), caps.getIdentities(), Collections.emptySet() );
+        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, caps, caps.getFeatures(), Collections.emptySet(), caps.getIdentities(), Collections.emptySet() );
     }
 
     /**
@@ -167,9 +177,13 @@ public class EntityCapabilitiesListenerTest
         final EntityCapabilities capsA = new EntityCapabilities();
         capsA.setVerAttribute( "test-ver-a" );
         capsA.setHashAttribute( "test-hash-a" );
+        capsA.addFeature( "test-feature-a" );
+        capsA.addIdentity( "test-identity-a" );
         final EntityCapabilities capsB = new EntityCapabilities();
         capsB.setVerAttribute( "test-ver-b" );
         capsB.setHashAttribute( "test-hash-b" );
+        capsB.addFeature( "test-feature-b" );
+        capsB.addIdentity( "test-identity-b" );
         manager.addListener( allUsers );
         manager.addListener( entity, userSpecific );
 
@@ -178,10 +192,10 @@ public class EntityCapabilitiesListenerTest
         manager.registerCapabilities( entity, capsB );
 
         // Verify results.
-        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, capsA );
-        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, capsB );
-        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, capsA );
-        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, capsB );
+        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, capsA, capsA.getFeatures(), Collections.emptySet(), capsA.getIdentities(), Collections.emptySet() );
+        verify( allUsers, times(1) ).entityCapabilitiesChanged( entity, capsB, capsB.getFeatures(), capsA.getFeatures(), capsB.getIdentities(), capsA.getIdentities() );
+        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, capsA, capsA.getFeatures(), Collections.emptySet(), capsA.getIdentities(), Collections.emptySet() );
+        verify( userSpecific, times(1) ).entityCapabilitiesChanged( entity, capsB, capsB.getFeatures(), capsA.getFeatures(), capsB.getIdentities(), capsA.getIdentities() );
     }
 
     /**
@@ -202,7 +216,7 @@ public class EntityCapabilitiesListenerTest
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( userSpecific, never() ).entityCapabilitiesChanged( entity, caps );
+        verify( userSpecific, never() ).entityCapabilitiesChanged( entity, caps, Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet() );
     }
 
     /**
@@ -224,7 +238,7 @@ public class EntityCapabilitiesListenerTest
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( userSpecific, never() ).entityCapabilitiesChanged( entity, caps );
+        verify( userSpecific, never() ).entityCapabilitiesChanged( entity, caps, Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet() );
     }
 
     /**
@@ -245,6 +259,6 @@ public class EntityCapabilitiesListenerTest
         manager.registerCapabilities( entity, caps );
 
         // Verify results.
-        verify( allUsers, never() ).entityCapabilitiesChanged( entity, caps );
+        verify( allUsers, never() ).entityCapabilitiesChanged( entity, caps, Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet() );
     }
 }

@@ -512,13 +512,18 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      */
     protected void registerCapabilities( @Nonnull JID entity, @Nonnull EntityCapabilities newCapabilities )
     {
-        entityCapabilitiesMap.put(newCapabilities.getVerAttribute(), newCapabilities );
+        entityCapabilitiesMap.put( newCapabilities.getVerAttribute(), newCapabilities );
         final String oldVerAttribute = entityCapabilitiesUserMap.put( entity, newCapabilities.getVerAttribute() );
 
         // Invoke listeners when capabilities changed.
-        if (oldVerAttribute == null || !oldVerAttribute.equals( newCapabilities.getVerAttribute() ) )
+        if (oldVerAttribute == null )
         {
-            dispatch( entity, newCapabilities );
+            dispatch( entity, newCapabilities, null );
+        }
+        else if ( !oldVerAttribute.equals( newCapabilities.getVerAttribute() ) )
+        {
+            final EntityCapabilities oldCapabilities = entityCapabilitiesMap.get( oldVerAttribute );
+            dispatch( entity, newCapabilities, oldCapabilities );
         }
 
         // If this replaced another 'ver' hash, purge the capabilities if needed.
@@ -589,13 +594,34 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * It is assumed that this method is used to notify listeners of a change in capabilities for a particular entity.
      *
      * @param entity The entity for which an event is to be dispatched
-     * @param updatedEntityCapabilities The capabilities to be included in the dispatch.
+     * @param updatedEntityCapabilities The most up-to-date capabilities.
+     * @param previousEntityCapabilities The capabilities, if any, prior to the update.
      */
-    protected void dispatch( @Nonnull JID entity, @Nonnull EntityCapabilities updatedEntityCapabilities ) {
+    protected void dispatch( @Nonnull JID entity, @Nonnull EntityCapabilities updatedEntityCapabilities, @Nullable EntityCapabilities previousEntityCapabilities ) {
         Log.trace( "Dispatching entity capabilities changed listeners for '{}'", entity );
+
+        // Calculate diffs
+        final Set<String> featuresInUpdate = updatedEntityCapabilities.getFeatures();
+        final Set<String> featuresExisting = previousEntityCapabilities == null ? Collections.emptySet() : previousEntityCapabilities.getFeatures();
+        final Set<String> identitiesInUpdate = updatedEntityCapabilities.getIdentities();
+        final Set<String> identitiesExisting = previousEntityCapabilities == null ? Collections.emptySet() :previousEntityCapabilities.getIdentities();
+
+        final Set<String> featuresAdded = new HashSet<>(featuresInUpdate);
+        featuresAdded.removeAll( featuresExisting );
+
+        final Set<String> featuresRemoved = new HashSet<>(featuresExisting);
+        featuresRemoved.removeAll( featuresInUpdate );
+
+        final Set<String> identitiesAdded = new HashSet<>(identitiesInUpdate);
+        identitiesAdded.removeAll( identitiesExisting );
+
+        final Set<String> identitiesRemoved = new HashSet<>(identitiesExisting);
+        identitiesRemoved.removeAll( identitiesInUpdate );
+
+        // Invoke event listeners.
         for ( final EntityCapabilitiesListener listener : allUserCapabilitiesListeners ) {
             try {
-                listener.entityCapabilitiesChanged( entity, updatedEntityCapabilities);
+                listener.entityCapabilitiesChanged( entity, updatedEntityCapabilities, featuresAdded, featuresRemoved, identitiesAdded, identitiesRemoved );
             } catch ( Exception e ) {
                 Log.warn( "An exception occurred while dispatching entity capabilities changed event for entity '{}' to listener '{}'.", entity, listener, e );
             }
@@ -607,7 +633,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             {
                 try
                 {
-                    listener.entityCapabilitiesChanged(entity, updatedEntityCapabilities);
+                    listener.entityCapabilitiesChanged( entity, updatedEntityCapabilities, featuresAdded, featuresRemoved, identitiesAdded, identitiesRemoved );
                 }
                 catch ( Exception e )
                 {

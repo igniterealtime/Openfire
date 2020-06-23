@@ -17,9 +17,17 @@
 package org.jivesoftware.openfire.entitycaps;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.SetMultimap;
 import org.dom4j.Element;
+import org.dom4j.Entity;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -37,6 +45,9 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * Implements server side mechanics for XEP-0115: "Entity Capabilities"
  * Version 1.4
@@ -53,7 +64,7 @@ import org.xmpp.packet.Presence;
  * sharing those same entity capabilities.
  * 
  * @author Armando Jagucki
- *
+ * @see <a href="https://xmpp.org/extensions/xep-0115.html>XEP-0115: Entity Capabilities</a>
  */
 public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener {
 
@@ -110,6 +121,16 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      */
     private Map<String, EntityCapabilities> verAttributes;
 
+    /**
+     * Listeners that are invoked when new or changed capabilities for an entity are detected.
+     */
+    private final Set<EntityCapabilitiesListener> allUserCapabilitiesListeners = new CopyOnWriteArraySet<>();
+
+    /**
+     * Listeners that are invoked when new or changed capabilities for a specific entity are detected.
+     */
+    private final SetMultimap<JID, EntityCapabilitiesListener> userSpecificCapabilitiesListener = HashMultimap.create();
+
     public EntityCapabilitiesManager() {
         super( "Entity Capabilities Manager" );
     }
@@ -128,6 +149,8 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     public void destroy()
     {
         UserEventDispatcher.removeListener( this );
+        allUserCapabilitiesListeners.clear();
+        userSpecificCapabilitiesListener.clear();
     }
 
     /**
@@ -172,18 +195,13 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         }
 
         // Check to see if the 'ver' hash is already in our cache.
-        if (isInCapsCache(newVerAttribute)) {
+        EntityCapabilities caps;
+        if ((caps = entityCapabilitiesMap.get(newVerAttribute)) != null) {
             // The 'ver' hash is in the cache already, so let's update the
             // entityCapabilitiesUserMap for the user that sent the caps
             // packet.
             Log.trace( "Registering 'ver' (for recognized caps) for {}", packet.getFrom() );
-            final String oldVerAttribute = entityCapabilitiesUserMap.put( packet.getFrom(), newVerAttribute );
-
-            // If this replaced another 'ver' hash, purge the capabilities if needed.
-            if ( oldVerAttribute != null && !oldVerAttribute.equals( newVerAttribute ) )
-            {
-                checkObsolete( oldVerAttribute );
-            }
+            registerCapabilities( packet.getFrom(), caps );
         }
         else {
             // The 'ver' hash is not in the cache so send out a disco#info query
@@ -198,7 +216,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
 
             String packetId = iq.getID();
             
-            final EntityCapabilities caps = new EntityCapabilities();
+            caps = new EntityCapabilities();
             caps.setHashAttribute(hashAttribute);
             caps.setVerAttribute(newVerAttribute);
             Log.trace( "Querying 'ver' for unrecognized caps. Querying: {}", packet.getFrom() );
@@ -336,14 +354,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             }
 
             Log.trace( "Received response to querying 'ver'. Caps now recognized. Received response from: {}", packet.getFrom() );
-            entityCapabilitiesMap.put(caps.getVerAttribute(), caps);
-            final String oldVerAttribute = entityCapabilitiesUserMap.put( packet.getFrom(), caps.getVerAttribute() );
-
-            // If this replaced another 'ver' hash, purge the capabilities if needed.
-            if ( oldVerAttribute != null && !oldVerAttribute.equals( caps.getVerAttribute() ) )
-            {
-                checkObsolete( oldVerAttribute );
-            }
+            registerCapabilities( packet.getFrom(), caps );
         }
 
         // Remove cached 'ver' attribute.
@@ -491,7 +502,121 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         }
         return results;
     }
-    
+
+    /**
+     * Registers that a particular entity has a particular set of capabilities, invoking event listeners when
+     * appropriate.
+     *
+     * @param entity The entity for which a set of capabilities is detected.
+     * @param newCapabilities The capabilities that are detected.
+     */
+    protected void registerCapabilities( @Nonnull JID entity, @Nonnull EntityCapabilities newCapabilities )
+    {
+        entityCapabilitiesMap.put(newCapabilities.getVerAttribute(), newCapabilities );
+        final String oldVerAttribute = entityCapabilitiesUserMap.put( entity, newCapabilities.getVerAttribute() );
+
+        // Invoke listeners when capabilities changed.
+        if (oldVerAttribute == null || !oldVerAttribute.equals( newCapabilities.getVerAttribute() ) )
+        {
+            dispatch( entity, newCapabilities );
+        }
+
+        // If this replaced another 'ver' hash, purge the capabilities if needed.
+        if ( oldVerAttribute != null && !oldVerAttribute.equals( newCapabilities.getVerAttribute() ) )
+        {
+            checkObsolete( oldVerAttribute );
+        }
+    }
+
+    /**
+     * Registers an event listener that will be invoked when the detected entity capabilities for a particular entity
+     * have changed.
+     *
+     * This method supports multiple event listeners per JID. Registration of the same combination of entity and listener
+     * will be ignored.
+     *
+     * @param entity The entity for which to listen for events.
+     * @param listener The event listener to be invoked when entity capabilities have changed.
+     */
+    public void addListener( @Nonnull JID entity, @Nonnull EntityCapabilitiesListener listener ) {
+        userSpecificCapabilitiesListener.put( entity, listener );
+    }
+
+    /**
+     * Removes a previously registered event listener for a particular entity, if such a combination is currently
+     * registered.
+     *
+     * @param entity The entity for which the listener was registered.
+     * @param listener The event listener to be removed.
+     */
+    public void removeListener( @Nonnull JID entity, @Nonnull EntityCapabilitiesListener listener ) {
+        userSpecificCapabilitiesListener.remove( entity, listener );
+    }
+
+    /**
+     * Removes all previously registered event listener for a particular entity, if any were registered.
+     *
+     * @param entity The entity for which listeners are to removed.
+     */
+    public void removeListeners( @Nonnull JID entity ) {
+        userSpecificCapabilitiesListener.removeAll( entity );
+    }
+
+    /**
+     * Registers an event listener that will be invoked when the detected entity capabilities for any entity
+     * have changed.
+     *
+     * If the listener already is registered, the invocation of this method will be a no-op.
+     *
+     * @param listener The event listener to be invoked when entity capabilities have changed.
+     */
+    public void addListener( @Nonnull EntityCapabilitiesListener listener ) {
+        allUserCapabilitiesListeners.add( listener );
+    }
+
+    /**
+     * Removes a previously registered event listener, if such a listener is currently registered.
+     *
+     * @param listener The event listener to be removed.
+     */
+    public void removeListener( @Nonnull EntityCapabilitiesListener listener ) {
+        allUserCapabilitiesListeners.remove( listener );
+    }
+
+    /**
+     * Invokes the entityCapabilitiesChanged method of all currently registered event listeners.
+     *
+     * It is assumed that this method is used to notify listeners of a change in capabilities for a particular entity.
+     *
+     * @param entity The entity for which an event is to be dispatched
+     * @param updatedEntityCapabilities The capabilities to be included in the dispatch.
+     */
+    protected void dispatch( @Nonnull JID entity, @Nonnull EntityCapabilities updatedEntityCapabilities ) {
+        Log.trace( "Dispatching entity capabilities changed listeners for '{}'", entity );
+        for ( final EntityCapabilitiesListener listener : allUserCapabilitiesListeners ) {
+            try {
+                listener.entityCapabilitiesChanged( entity, updatedEntityCapabilities);
+            } catch ( Exception e ) {
+                Log.warn( "An exception occurred while dispatching entity capabilities changed event for entity '{}' to listener '{}'.", entity, listener, e );
+            }
+        }
+        final Set<EntityCapabilitiesListener> userSpecificListeners = userSpecificCapabilitiesListener.get(entity);
+        if ( userSpecificListeners != null )
+        {
+            for ( final EntityCapabilitiesListener listener : userSpecificListeners )
+            {
+                try
+                {
+                    listener.entityCapabilitiesChanged(entity, updatedEntityCapabilities);
+                }
+                catch ( Exception e )
+                {
+                    Log.warn("An exception occurred while dispatching entity capabilities changed event for entity '{}' to listener '{}'.", entity, listener, e);
+                }
+            }
+        }
+    }
+
     @Override
     public void userDeleting(User user, Map<String, Object> params) {
         // Delete this user's association in entityCapabilitiesUserMap.
@@ -556,5 +681,13 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             return EntityCapabilitiesManager.generateVerHash( discoInfoResponse, "SHA-1" );
         }
         return null;
+    }
+
+    /** Exposed for test use only */
+    void clearCaches()
+    {
+        entityCapabilitiesMap.clear();
+        entityCapabilitiesUserMap.clear();
+        verAttributes.clear();
     }
 }

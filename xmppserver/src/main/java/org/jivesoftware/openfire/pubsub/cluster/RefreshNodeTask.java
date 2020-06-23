@@ -30,7 +30,7 @@ public class RefreshNodeTask extends NodeTask
     public void run()
     {
         log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());
-		PubSubPersistenceProviderManager.getInstance().getProvider().loadNode(getService(), new Node.UniqueIdentifier(getService().getUniqueIdentifier(), getNodeId()));
+		PubSubPersistenceProviderManager.getInstance().getProvider().loadNode(getService(), getUniqueNodeIdentifier());
     }
 
 }

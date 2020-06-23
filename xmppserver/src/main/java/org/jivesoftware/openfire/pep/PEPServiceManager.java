@@ -41,9 +41,9 @@ public class PEPServiceManager {
             .getLogger(PEPServiceManager.class);
 
     /**
-     * Cache of PEP services. Table, Key: bare JID (String); Value: PEPService
+     * Cache of PEP services. Table, Key: bare JID; Value: PEPService
      */
-    private final Cache<String, CacheableOptional<PEPService>> pepServices = CacheFactory
+    private final Cache<JID, CacheableOptional<PEPService>> pepServices = CacheFactory
         .createLocalCache("PEPServiceManager");
 
     private PubSubEngine pubSubEngine = null;
@@ -115,41 +115,12 @@ public class PEPServiceManager {
      * @return the requested PEP service if found or null if not found.
      */
     public PEPService getPEPService( JID jid, boolean autoCreate ) {
-        return getPEPService( jid.toBareJID(), autoCreate );
-    }
-
-    /**
-     * Retrieves a PEP service -- attempting first from memory, then from the
-     * database.
-     *
-     * This method will automatically create a PEP service if one does not exist.
-     *
-     * @param jid
-     *            the bare JID of the user that owns the PEP service.
-     * @return the requested PEP service.
-     */
-    public PEPService getPEPService( String jid ) {
-        return getPEPService( jid, true );
-    }
-
-    /**
-     * Retrieves a PEP service -- attempting first from memory, then from the
-     * database.
-     *
-     * This method can automatically create a PEP service if one does not exist.
-     *
-     * @param jid
-     *            the bare JID of the user that owns the PEP service.
-     * @param autoCreate
-     *            true if a PEP service that does not yet exist needs to be created.
-     * @return the requested PEP service if found or null if not found.
-     */
-    public PEPService getPEPService( String jid, boolean autoCreate ) {
+        jid = jid.asBareJID();
         PEPService pepService;
 
-        final Lock lock = CacheFactory.getLock(jid, pepServices);
+        final Lock lock = pepServices.getLock(jid);
+        lock.lock();
         try {
-            lock.lock();
             if (pepServices.containsKey(jid)) {
                 // lookup in cache
                 if ( pepServices.get(jid).isAbsent() && autoCreate ) {
@@ -168,7 +139,7 @@ public class PEPServiceManager {
                 pubSubEngine.start(pepService);
             } else if (autoCreate) {
                 Log.debug("PEP: Auto-created service for {}.", jid);
-                pepService = this.create(new JID( jid ));
+                pepService = this.create(jid);
 
                 // Probe presences
                 pubSubEngine.start(pepService);
@@ -186,6 +157,40 @@ public class PEPServiceManager {
         return pepService;
     }
 
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method will automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the bare JID of the user that owns the PEP service.
+     * @return the requested PEP service.
+     * @deprecated Replaced by {@link #getPEPService(JID)}
+     */
+    @Deprecated
+    public PEPService getPEPService( String jid ) {
+        return getPEPService( jid, true );
+    }
+
+    /**
+     * Retrieves a PEP service -- attempting first from memory, then from the
+     * database.
+     *
+     * This method can automatically create a PEP service if one does not exist.
+     *
+     * @param jid
+     *            the bare JID of the user that owns the PEP service.
+     * @param autoCreate
+     *            true if a PEP service that does not yet exist needs to be created.
+     * @return the requested PEP service if found or null if not found.
+     * @deprecated Replaced by {@link #getPEPService(JID, boolean)}
+     */
+    @Deprecated
+    public PEPService getPEPService( String jid, boolean autoCreate ) {
+        return getPEPService( new JID(jid), autoCreate );
+    }
+
     public PEPService create(JID owner) {
         // Return an error if the packet is from an anonymous, unregistered user
         // or remote user
@@ -197,10 +202,10 @@ public class PEPServiceManager {
         }
 
         PEPService pepService = null;
-        final String bareJID = owner.toBareJID();
-        final Lock lock = CacheFactory.getLock(owner, pepServices);
+        final JID bareJID = owner.asBareJID();
+        final Lock lock = pepServices.getLock(bareJID);
+        lock.lock();
         try {
-            lock.lock();
 
             if (pepServices.get(bareJID) != null) {
                 pepService = pepServices.get(bareJID).get();
@@ -230,13 +235,13 @@ public class PEPServiceManager {
      */
     public void remove(JID owner) {
 
-        final Lock lock = CacheFactory.getLock(owner, pepServices);
+        final Lock lock = pepServices.getLock(owner.asBareJID());
+        lock.lock();
         try {
-            lock.lock();
 
             // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
             // after all nodes are deleted.
-            final CacheableOptional<PEPService> optional = pepServices.get(owner.toBareJID());
+            final CacheableOptional<PEPService> optional = pepServices.get(owner.asBareJID());
             if ( optional == null ) {
                 return;
             }
@@ -256,7 +261,7 @@ public class PEPServiceManager {
             }
 
             // All nodes are now deleted. The service itself can now be deleted.
-            pepServices.remove(owner.toBareJID()).get();
+            pepServices.remove(owner.asBareJID()).get();
         } finally {
             lock.unlock();
         }
@@ -287,7 +292,7 @@ public class PEPServiceManager {
     }
 
     public boolean hasCachedService(JID owner) {
-        return pepServices.get(owner.toBareJID()) != null;
+        return pepServices.get(owner.asBareJID()) != null;
     }
 
     // mimics Shutdown, without killing the timer.

@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
@@ -44,8 +45,8 @@ import java.util.concurrent.Future;
  *
  * @author Matt Tucker
  */
-public class PubSubEngine {
-
+public class PubSubEngine
+{
     private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
     private static final String MUTEX_SUFFIX_USER = " psu";
@@ -174,7 +175,7 @@ public class PubSubEngine {
                     }
                     else {
                         // Sysadmin is trying to configure root collection node
-                        nodeID = service.getRootCollectionNode().getNodeID();
+                        nodeID = service.getRootCollectionNode().getUniqueIdentifier().getNodeId();
                     }
                 }
                 if (IQ.Type.get == iq.getType()) {
@@ -251,26 +252,26 @@ public class PubSubEngine {
     public void process(PubSubService service, Presence presence) {
         if (presence.isAvailable()) {
             JID subscriber = presence.getFrom();
-            Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+            Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
             if (fullPresences == null) {
                 synchronized ((subscriber.toBareJID() + MUTEX_SUFFIX_USER).intern()) {
-                    fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+                    fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
                     if (fullPresences == null) {
                         fullPresences = new ConcurrentHashMap<>();
-                        service.getBarePresences().put(subscriber.toBareJID(), fullPresences);
+                        service.getSubscriberPresences().put(subscriber.asBareJID(), fullPresences);
                     }
                 }
             }
             Presence.Show show = presence.getShow();
-            fullPresences.put(subscriber.toString(), show == null ? "online" : show.name());
+            fullPresences.put(subscriber, show == null ? "online" : show.name());
         }
         else if (presence.getType() == Presence.Type.unavailable) {
             JID subscriber = presence.getFrom();
-            Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+            Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
             if (fullPresences != null) {
-                fullPresences.remove(subscriber.toString());
+                fullPresences.remove(subscriber);
                 if (fullPresences.isEmpty()) {
-                    service.getBarePresences().remove(subscriber.toBareJID());
+                    service.getSubscriberPresences().remove(subscriber.asBareJID());
                 }
             }
         }
@@ -380,7 +381,7 @@ public class PubSubEngine {
         }
 
         LeafNode leafNode = (LeafNode) node;
-        Iterator itemElements = publishElement.elementIterator("item");
+        Iterator<Element> itemElements = publishElement.elementIterator("item");
 
         // Check that an item was included if node persist items or includes payload
         if (!itemElements.hasNext() && leafNode.isItemRequired()) {
@@ -398,12 +399,12 @@ public class PubSubEngine {
             return;
         }
         List<Element> items = new ArrayList<>();
-        List entries;
+        List<Element> entries;
         Element payload;
         while (itemElements.hasNext()) {
-            Element item = (Element) itemElements.next();
+            Element item = itemElements.next();
             entries = item.elements();
-            payload = entries.isEmpty() ? null : (Element) entries.get(0);
+            payload = entries.isEmpty() ? null : entries.get(0);
             // Check that a payload was included if node is configured to include payload
             // in notifications
             if (payload == null && leafNode.isPayloadDelivered()) {
@@ -1054,7 +1055,7 @@ public class PubSubEngine {
             // Do not include the node id when node is the root collection node
             // or the results are for a specific node
             if (!node.isRootCollectionNode() && (nodeID == null)) {
-                subElement.addAttribute("node", node.getNodeID());
+                subElement.addAttribute("node", node.getUniqueIdentifier().getNodeId());
             }
             subElement.addAttribute("jid", subscription.getJID().toString());
             subElement.addAttribute("subscription", subscription.getState().name());
@@ -1092,7 +1093,7 @@ public class PubSubEngine {
                 Element affiliateElement = affiliationsElement.addElement("affiliation");
                 // Do not include the node id when node is the root collection node
                 if (!affiliate.getNode().isRootCollectionNode()) {
-                    affiliateElement.addAttribute("node", affiliate.getNode().getNodeID());
+                    affiliateElement.addAttribute("node", affiliate.getNode().getUniqueIdentifier().getNodeId());
                 }
                 affiliateElement.addAttribute("jid", affiliate.getJID().toString());
                 affiliateElement.addAttribute("affiliation", affiliate.getAffiliation().name());
@@ -1249,9 +1250,9 @@ public class PubSubEngine {
             Node newNode = response.newNode;
             String nodeID = createElement.attributeValue("node");
             // Include new nodeID if it has changed from the original nodeID
-            if (!newNode.getNodeID().equals(nodeID)) {
+            if (!newNode.getUniqueIdentifier().getNodeId().equals(nodeID)) {
                 Element elem = reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
-                elem.addElement("create").addAttribute("node", newNode.getNodeID());
+                elem.addElement("create").addAttribute("node", newNode.getUniqueIdentifier().getNodeId());
             }
             router.route(reply);
         }
@@ -1771,7 +1772,7 @@ public class PubSubEngine {
                     reply.setChildElement("pubsub", "http://jabber.org/protocol/pubsub#owner");
             Element entities = child.addElement("affiliations");
             if (!node.isRootCollectionNode()) {
-                entities.addAttribute("node", node.getNodeID());
+                entities.addAttribute("node", node.getUniqueIdentifier().getNodeId());
             }
             for (JID affiliateJID : invalidAffiliates) {
                 NodeAffiliate affiliate = node.getAffiliate(affiliateJID);
@@ -1907,16 +1908,20 @@ public class PubSubEngine {
     }
 
     public void start(final PubSubService service) {
+        Log.debug( "Starting pubsub service '{}'", service.getUniqueIdentifier() );
+
         // Probe presences of users that this service has subscribed to (once the server
         // has started)
         
         if (XMPPServer.getInstance().isStarted()) {
+            XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
             probePresences(service);
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                 @Override
                 public void serverStarted() {
+                    XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
                     probePresences(service);
                 }
 
@@ -1942,8 +1947,11 @@ public class PubSubEngine {
     }
 
     public void shutdown(PubSubService service) {
-    	PubSubPersistenceProviderManager.getInstance().shutdown();
+    	PubSubPersistenceProviderManager.getInstance().shutdown(); // FIXME this does not seem right. We shouldn't be shutting down persistency (that's shared for all services) if just one service shuts down!
         if (service != null) {
+            Log.debug( "Shutting down pubsub service '{}'", service.getUniqueIdentifier() );
+
+            XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(service);
 
             if (service.getManager() != null) {
                 // Stop executing ad-hoc commands
@@ -1972,7 +1980,7 @@ public class PubSubEngine {
      *         of each connected resource.
      */
     public static Collection<String> getShowPresences(PubSubService service, JID subscriber) {
-        Map<String, String> fullPresences = service.getBarePresences().get(subscriber.toBareJID());
+        Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
         if (fullPresences == null) {
             // User is offline so return empty list
             return Collections.emptyList();
@@ -1983,7 +1991,7 @@ public class PubSubEngine {
         }
         else {
             // Look for the show value using the full JID
-            String show = fullPresences.get(subscriber.toString());
+            String show = fullPresences.get(subscriber);
             if (show == null) {
                 // User at the specified resource is offline so return empty list
                 return Collections.emptyList();
@@ -2026,14 +2034,14 @@ public class PubSubEngine {
      * @param user the JID of the affiliate to unsubscribe from his presence.
      */
     public static void presenceSubscriptionRequired(PubSubService service, Node node, JID user) {
-        Map<String, String> fullPresences = service.getBarePresences().get(user.toString());
+        Map<JID, String> fullPresences = service.getSubscriberPresences().get(user);
         if (fullPresences == null || fullPresences.isEmpty()) {
             Presence subscription = new Presence(Presence.Type.subscribe);
             subscription.setTo(user);
             subscription.setFrom(service.getAddress());
             service.send(subscription);
             // Sending subscription requests based on received presences may generate
-            // that a sunscription request is sent to an offline user (since offline
+            // that a subscription request is sent to an offline user (since offline
             // presences are not stored in the service's "barePresences"). However, this
             // not optimal algorithm shouldn't bother the user since the user's server
             // should reply when already subscribed to the user's presence instead of

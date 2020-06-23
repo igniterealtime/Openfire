@@ -34,7 +34,7 @@ public abstract class NodeChangeTask implements ClusterTask<Void>
     public NodeChangeTask(Node node)
     {
         this.node = node;
-        nodeId = node.getNodeID();
+        nodeId = node.getUniqueIdentifier().getNodeId();
     }
 
     @Override

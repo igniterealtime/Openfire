@@ -73,8 +73,7 @@ public class RosterAccess extends AccessModel {
         }
         else {
             // Subscriber is a remote user. This should never happen.
-            Log.warn("Node with access model Roster has a remote user as subscriber: " +
-                    node.getNodeID());
+            Log.warn("Node with access model Roster has a remote user as subscriber: {}", node.getUniqueIdentifier());
         }
         return false;
     }

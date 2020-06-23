@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -42,13 +42,10 @@ import org.jivesoftware.openfire.disco.DiscoServerItem;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -58,6 +55,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import javax.annotation.Nonnull;
 
 /**
  * Module that implements JEP-60: Publish-Subscribe. By default node collections and
@@ -69,6 +68,37 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
+
+    /**
+     * Returns the permission policy for creating nodes. A false value means that not anyone can
+     * create a node, only the JIDs listed in <code>xmpp.pubsub.create.jid</code> are allowed to create
+     * nodes.
+     */
+    public static SystemProperty<Boolean> PUBSUB_CREATE_ANYONE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.pubsub.create.anyone")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+
+    /**
+     * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
+     * create nodes.
+     */
+    public static SystemProperty<Set<JID>> PUBSUB_ALLOWED_TO_CREATE = SystemProperty.Builder.ofType(Set.class)
+        .setKey("xmpp.pubsub.create.jid")
+        .setDynamic(false)
+        .setDefaultValue( new HashSet<>() )
+        .buildSet(JID.class);
+
+    /**
+     * Bare jids of users that are system administrators of the PubSub service. A sysadmin
+     * has the same permissions as a node owner.
+     */
+    public static SystemProperty<Set<JID>> PUBSUB_SYSADMINS = SystemProperty.Builder.ofType(Set.class)
+        .setKey("xmpp.pubsub.sysadmin.jid")
+        .setDynamic(false)
+        .setDefaultValue( new HashSet<>() )
+        .buildSet(JID.class);
 
     /**
      * the chat service's hostname
@@ -83,7 +113,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     /**
      * Nodes managed by this manager, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<>();
+    private final Map<Node.UniqueIdentifier, Node> nodes = new ConcurrentHashMap<>();
     
     /**
      * Keep a registry of the presence's show value of users that subscribed to a node of
@@ -92,39 +122,19 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
      * is full JID of connected resource and value is show value of the last received presence.
      */
-    private Map<String, Map<String, String>> barePresences =
-            new ConcurrentHashMap<>();
+    private final Map<JID, Map<JID, String>> barePresences = new ConcurrentHashMap<>();
     
     /**
      * Manager that keeps the list of ad-hoc commands and processing command requests.
      */
-    private AdHocCommandManager manager;
+    private final AdHocCommandManager manager;
     
-    /**
-     * Returns the permission policy for creating nodes. A true value means that not anyone can
-     * create a node, only the JIDs listed in <code>allowedToCreate</code> are allowed to create
-     * nodes.
-     */
-    private boolean nodeCreationRestricted = false;
-
     /**
      * Flag that indicates if a user may have more than one subscription with the node. When multiple
      * subscriptions is enabled each subscription request, event notification and unsubscription request
      * should include a subid attribute.
      */
     private boolean multipleSubscriptionsEnabled = true;
-
-    /**
-     * Bare jids of users that are allowed to create nodes. An empty list means that anyone can
-     * create nodes.
-     */
-    private Collection<String> allowedToCreate = new CopyOnWriteArrayList<>();
-
-    /**
-     * Bare jids of users that are system administrators of the PubSub service. A sysadmin
-     * has the same permissions as a node owner.
-     */
-    private Collection<String> sysadmins = new CopyOnWriteArrayList<>();
 
     /**
      * The packet router for the server.
@@ -244,17 +254,14 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
-        if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
-            // The user is not allowed to create nodes
-            return false;
-        }
-        return true;
+        return !isNodeCreationRestricted() || isServiceAdmin(creator);
     }
 
     @Override
     public boolean isServiceAdmin(JID user) {
-        return sysadmins.contains(user.toBareJID()) || allowedToCreate.contains(user.toBareJID()) ||
-                InternalComponentManager.getInstance().hasComponent(user);
+        return PUBSUB_SYSADMINS.getValue().contains(user.asBareJID())
+            || PUBSUB_ALLOWED_TO_CREATE.getValue().contains(user.asBareJID())
+            || InternalComponentManager.getInstance().hasComponent(user);
     }
 
     @Override
@@ -309,42 +316,33 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         return new JID(null, getServiceDomain(), null);
     }
 
-    public Collection<String> getUsersAllowedToCreate() {
-        return allowedToCreate;
+    public Collection<JID> getUsersAllowedToCreate() {
+        return PUBSUB_ALLOWED_TO_CREATE.getValue();
     }
 
-    public Collection<String> getSysadmins() {
-        return sysadmins;
+    public Collection<JID> getSysadmins() {
+        return PUBSUB_SYSADMINS.getValue();
     }
 
-    public void setSysadmins(Collection<String> userJIDs) {
-        sysadmins.clear();
-        for (String JID : userJIDs) {
-            sysadmins.add(JID.trim().toLowerCase());
-        }
-        updateSysadminProperty();
+    public void setSysadmins(Collection<JID> userJIDs) {
+        PUBSUB_SYSADMINS.setValue( userJIDs.stream().map(JID::asBareJID).collect(Collectors.toSet()) );
     }
 
-    public void addSysadmin(String userJID) {
-        sysadmins.add(userJID.trim().toLowerCase());
-        // Update the config.
-        updateSysadminProperty();
+    public void addSysadmin(JID userJID) {
+        final Set<JID> existing = PUBSUB_SYSADMINS.getValue();
+        existing.add( userJID.asBareJID() );
+        PUBSUB_SYSADMINS.setValue( existing );
     }
 
-    public void removeSysadmin(String userJID) {
-        sysadmins.remove(userJID.trim().toLowerCase());
-        // Update the config.
-        updateSysadminProperty();
-    }
-
-    private void updateSysadminProperty() {
-        String[] jids = new String[sysadmins.size()];
-        jids = sysadmins.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.sysadmin.jid", fromArray(jids));
+    public void removeSysadmin(JID userJID) {
+        final Set<JID> existing = PUBSUB_SYSADMINS.getValue();
+        existing.remove( userJID ); // just in case...
+        existing.remove( userJID.asBareJID() );
+        PUBSUB_SYSADMINS.setValue( existing );
     }
 
     public boolean isNodeCreationRestricted() {
-        return nodeCreationRestricted;
+        return !PUBSUB_CREATE_ANYONE.getValue();
     }
 
     @Override
@@ -353,36 +351,26 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     public void setNodeCreationRestricted(boolean nodeCreationRestricted) {
-        this.nodeCreationRestricted = nodeCreationRestricted;
-        JiveGlobals.setProperty("xmpp.pubsub.create.anyone", Boolean.toString(!nodeCreationRestricted));
+        PUBSUB_CREATE_ANYONE.setValue(!nodeCreationRestricted);
     }
 
-    public void setUserAllowedToCreate(Collection<String> userJIDs) {
-        allowedToCreate.clear();
-        for (String JID : userJIDs) {
-            allowedToCreate.add(JID.trim().toLowerCase());
-        }
-        updateUserAllowedToCreateProperty();
+    public void setUserAllowedToCreate(Collection<JID> userJIDs) {
+        PUBSUB_ALLOWED_TO_CREATE.setValue( userJIDs.stream().map(JID::asBareJID).collect(Collectors.toSet()) );
     }
 
-    public void addUserAllowedToCreate(String userJID) {
+    public void addUserAllowedToCreate(JID userJID) {
         // Update the list of allowed JIDs to create nodes.
-        allowedToCreate.add(userJID.trim().toLowerCase());
-        // Update the config.
-        updateUserAllowedToCreateProperty();
+        final Set<JID> existing = PUBSUB_ALLOWED_TO_CREATE.getValue();
+        existing.add( userJID.asBareJID() );
+        PUBSUB_ALLOWED_TO_CREATE.setValue( existing );
     }
 
-    public void removeUserAllowedToCreate(String userJID) {
+    public void removeUserAllowedToCreate(JID userJID) {
         // Update the list of allowed JIDs to create nodes.
-        allowedToCreate.remove(userJID.trim().toLowerCase());
-        // Update the config.
-        updateUserAllowedToCreateProperty();
-    }
-
-    private void updateUserAllowedToCreateProperty() {
-        String[] jids = new String[allowedToCreate.size()];
-        jids = allowedToCreate.toArray(jids);
-        JiveGlobals.setProperty("xmpp.pubsub.create.jid", fromArray(jids));
+        final Set<JID> existing = PUBSUB_ALLOWED_TO_CREATE.getValue();
+        existing.remove( userJID ); // just in case...
+        existing.remove( userJID.asBareJID() );
+        PUBSUB_ALLOWED_TO_CREATE.setValue( existing );
     }
 
     @Override
@@ -405,25 +393,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (serviceName == null) {
             serviceName = "pubsub";
         }
-        // Load the list of JIDs that are sysadmins of the PubSub service
-        String property = JiveGlobals.getProperty("xmpp.pubsub.sysadmin.jid");
-        String[] jids;
-        if (property != null && !property.isEmpty()) {
-            jids = property.split(",");
-            for (String jid : jids) {
-                sysadmins.add(jid.trim().toLowerCase());
-            }
-        }
-        nodeCreationRestricted = !JiveGlobals.getBooleanProperty("xmpp.pubsub.create.anyone", true);
-        // Load the list of JIDs that are allowed to create nodes
-        property = JiveGlobals.getProperty("xmpp.pubsub.create.jid");
-        if (property != null && !property.isEmpty()) {
-            jids = property.split(",");
-            for (String jid : jids) {
-                allowedToCreate.add(jid.trim().toLowerCase());
-            }
-        }
-
         multipleSubscriptionsEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.multiple-subscriptions", true);
 
         routingTable = server.getRoutingTable();
@@ -432,7 +401,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         engine = new PubSubEngine(router);
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, true);
+        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -450,11 +419,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, leafDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
         collectionDefaultConfiguration =
-                PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, false);
+                PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null ) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -471,7 +440,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             collectionDefaultConfiguration
                     .setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
 
         // Load nodes to memory
@@ -506,7 +475,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Start the pubsub engine
         engine.start(this);
         ArrayList<String> params = new ArrayList<>();
-        params.clear();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.pubsub", params));
     }
@@ -713,7 +681,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 return dataForms;
             }
         }
-        return new HashSet<DataForm>();
+        return new HashSet<>();
     }
 
     @Override
@@ -747,7 +715,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 if (canDiscoverNode(pubNode)) {
                     final DiscoItem item = new DiscoItem(
                         new JID(serviceDomain), pubNode.getName(),
-                        pubNode.getNodeID(), null);
+                        pubNode.getUniqueIdentifier().getNodeId(), null);
                     answer.add(item);
                 }
             }
@@ -760,7 +728,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                     for (Node nestedNode : pubNode.getNodes()) {
                         if (canDiscoverNode(nestedNode)) {
                             final DiscoItem item = new DiscoItem(new JID(serviceDomain), nestedNode.getName(),
-                                nestedNode.getNodeID(), null);
+                                nestedNode.getUniqueIdentifier().getNodeId(), null);
                             answer.add(item);
                         }
                     }
@@ -805,7 +773,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-    public Node getNode(String nodeID) {
+    public Node getNode(Node.UniqueIdentifier nodeID) {
         return nodes.get(nodeID);
     }
 
@@ -820,11 +788,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public void addNode(Node node) {
-        nodes.put(node.getNodeID(), node);
+        nodes.put(node.getUniqueIdentifier(), node);
     }
 
     @Override
-    public void removeNode(String nodeID) {
+    public void removeNode(Node.UniqueIdentifier nodeID) {
         nodes.remove(nodeID);
     }
 
@@ -833,10 +801,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     /**
-     * Converts an array to a comma-delimitted String.
+     * Converts an array to a comma-delimited String.
      *
      * @param array the array.
-     * @return a comma delimtted String of the array values.
+     * @return a comma delimited String of the array values.
      */
     private static String fromArray(String [] array) {
         StringBuilder buf = new StringBuilder();
@@ -850,7 +818,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     }
 
     @Override
-    public Map<String, Map<String, String>> getBarePresences() {
+    public Map<JID, Map<JID, String>> getSubscriberPresences() {
         return barePresences;
     }
 
@@ -884,5 +852,37 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
+    }
+
+    @Override
+    public void entityCapabilitiesChanged( @Nonnull final JID entity,
+                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
+                                           @Nonnull final Set<String> featuresAdded,
+                                           @Nonnull final Set<String> featuresRemoved,
+                                           @Nonnull final Set<String> identitiesAdded,
+                                           @Nonnull final Set<String> identitiesRemoved )
+    {
+        // Look for new +notify features. Those are the nodes that the entity is now interested in.
+        final Set<String> nodeIDs = featuresAdded.stream()
+            .filter(feature -> feature.endsWith("+notify"))
+            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
+            .collect(Collectors.toSet());
+
+        if ( !nodeIDs.isEmpty() )
+        {
+            Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
+            nodes.values().stream()
+                .filter( Node::isSendItemSubscribe )
+                .filter( node -> nodeIDs.contains( node.getUniqueIdentifier().getNodeId()) )
+                .forEach( node -> {
+                    final NodeSubscription subscription = node.getSubscription(entity);
+                    if (subscription != null && subscription.isActive()) {
+                        PublishedItem lastItem = node.getLastPublishedItem();
+                        if (lastItem != null) {
+                            subscription.sendLastPublishedItem(lastItem);
+                        }
+                    }
+                });
+        }
     }
 }

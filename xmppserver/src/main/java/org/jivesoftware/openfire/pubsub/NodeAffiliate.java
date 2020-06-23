@@ -98,13 +98,13 @@ public class NodeAffiliate implements Cacheable
             for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
                 // Add items information
                 Element items = event.addElement("items");
-                items.addAttribute("node", getNode().getNodeID());
+                items.addAttribute("node", getNode().getUniqueIdentifier().getNodeId());
                 for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
                     // FIXME: This was added for compatibility with PEP supporting clients.
                     //        Alternate solution needed when XEP-0163 version > 1.0 is released.
                     //
                     // If the node ID looks like a JID, replace it with the published item's node ID.
-                    if (getNode().getNodeID().contains("@")) {
+                    if (getNode().getUniqueIdentifier().getNodeId().contains("@")) {
                         items.addAttribute("node", publishedItem.getNodeID());                        
                     }
 
@@ -119,7 +119,7 @@ public class NodeAffiliate implements Cacheable
                     // Add leaf leafNode information if affiliated leafNode and node
                     // where the item was published are different
                     if (leafNode != getNode()) {
-                        item.addAttribute("node", leafNode.getNodeID());
+                        item.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
                     }
                 }
                 // Send the event notification
@@ -138,7 +138,7 @@ public class NodeAffiliate implements Cacheable
             }
             // Add item information to the event notification
             Element items = event.addElement("items");
-            items.addAttribute("node", leafNode.getNodeID());
+            items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
             // Send the event notification
             sendEventNotification(notification, affectedSubscriptions);
             // Remove the added items information
@@ -171,7 +171,7 @@ public class NodeAffiliate implements Cacheable
             for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
                 // Add items information
                 Element items = event.addElement("items");
-                items.addAttribute("node", leafNode.getNodeID());
+                items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
                 for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
                     // Add retract information to the event notification
                     Element item = items.addElement("retract");

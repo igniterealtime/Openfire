@@ -50,6 +50,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
+import javax.annotation.Nonnull;
+
 /**
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
  * Pubsub" Version 1.0
@@ -66,7 +68,7 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * The bare JID that this service is identified by.
      */
-    private String serviceOwnerJID;
+    private final JID serviceOwner;
 
     /**
      * Collection node that acts as the root node of the entire node hierarchy.
@@ -76,12 +78,12 @@ public class PEPService implements PubSubService, Cacheable {
     /**
      * Nodes managed by this service, table: key nodeID (String); value Node
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<>();
+    private final Map<Node.UniqueIdentifier, Node> nodes = new ConcurrentHashMap<>();
 
     /**
      * The packet router for the server.
      */
-    private PacketRouter router = null;
+    private final PacketRouter router;
 
     /**
      * Default configuration to use for newly created leaf nodes.
@@ -94,31 +96,37 @@ public class PEPService implements PubSubService, Cacheable {
     private DefaultNodeConfiguration collectionDefaultConfiguration;
 
     /**
-     * Returns the permission policy for creating nodes. A true value means that
-     * not anyone can create a node, only the service admin.
-     */
-    private boolean nodeCreationRestricted = true;
-
-    /**
      * Keep a registry of the presence's show value of users that subscribed to
      * a node of the pep service and for which the node only delivers
      * notifications for online users or node subscriptions deliver events based
      * on the user presence show value. Offline users will not have an entry in
-     * the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key is full JID of
+     * the map. Note: Key-> bare JID and Value-> Map whose key is full JID of
      * connected resource and value is show value of the last received presence.
      */
-    private Map<String, Map<String, String>> barePresences = new ConcurrentHashMap<>();
+    private final Map<JID, Map<JID, String>> barePresences = new ConcurrentHashMap<>();
 
     /**
      * Manager that keeps the list of ad-hoc commands and processing command
      * requests.
      */
-    private AdHocCommandManager adHocCommandManager;
+    private final AdHocCommandManager adHocCommandManager;
 
     /**
      * Used to handle filtered-notifications.
      */
-    private EntityCapabilitiesManager entityCapsManager = EntityCapabilitiesManager.getInstance();
+    private final EntityCapabilitiesManager entityCapsManager = XMPPServer.getInstance().getEntityCapabilitiesManager();
+
+    /**
+     * Constructs a PEPService.
+     *
+     * @param server  the XMPP server.
+     * @param bareJID the bare JID (service ID) of the user owning the service.
+     * @deprecated Replaced by {@link #PEPService(XMPPServer, JID)}
+     */
+    @Deprecated
+    public PEPService(XMPPServer server, String bareJID) {
+        this(server, new JID(bareJID).asBareJID());
+    }
 
     /**
      * Constructs a PEPService.
@@ -126,8 +134,8 @@ public class PEPService implements PubSubService, Cacheable {
      * @param server  the XMPP server.
      * @param bareJID the bare JID (service ID) of the user owning the service.
      */
-    public PEPService(XMPPServer server, String bareJID) {
-        this.serviceOwnerJID = bareJID;
+    public PEPService(XMPPServer server, JID bareJID) {
+        this.serviceOwner = bareJID.asBareJID();
         router = server.getPacketRouter();
 
         // Initialize the ad-hoc commands manager to use for this pep service
@@ -135,7 +143,7 @@ public class PEPService implements PubSubService, Cacheable {
         adHocCommandManager.addCommand(new PendingSubscriptionsCommand(this));
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration( this, true);
+        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -153,10 +161,10 @@ public class PEPService implements PubSubService, Cacheable {
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, leafDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
-        collectionDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this, false);
+        collectionDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -172,7 +180,7 @@ public class PEPService implements PubSubService, Cacheable {
             collectionDefaultConfiguration.setReplyPolicy(null);
             collectionDefaultConfiguration.setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this, collectionDefaultConfiguration);
+            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
     }
 
@@ -182,33 +190,31 @@ public class PEPService implements PubSubService, Cacheable {
         // Ensure that we have a root collection node
         if (nodes.isEmpty()) {
             // Create root collection node
-            JID creatorJID = new JID(this.serviceOwnerJID);
-
-            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwnerJID, creatorJID, collectionDefaultConfiguration);
+            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwner.toString(), this.serviceOwner, collectionDefaultConfiguration);
 
             // Save new root node
             rootCollectionNode.saveToDB();
 
             // Add the creator as the node owner
-            rootCollectionNode.addOwner(creatorJID);
+            rootCollectionNode.addOwner(this.serviceOwner);
         }
         else {
-            rootCollectionNode = (CollectionNode) getNode(this.serviceOwnerJID);
+            rootCollectionNode = (CollectionNode) getNode(this.serviceOwner.toString());
         }
     }
 
     @Override
     public void addNode(Node node) {
-        nodes.put(node.getNodeID(), node);
+        nodes.put(node.getUniqueIdentifier(), node);
     }
 
     @Override
-    public void removeNode(String nodeID) {
+    public void removeNode(Node.UniqueIdentifier nodeID) {
         nodes.remove(nodeID);
     }
 
     @Override
-    public Node getNode(String nodeID) {
+    public Node getNode(Node.UniqueIdentifier nodeID) {
         return nodes.get(nodeID);
     }
 
@@ -224,13 +230,13 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public JID getAddress() {
-        return new JID(serviceOwnerJID);
+        return serviceOwner;
     }
 
     @Override
     public String getServiceID() {
         // The bare JID of the user is the service ID for PEP
-        return serviceOwnerJID;
+        return serviceOwner.toString();
     }
 
     @Override
@@ -249,11 +255,7 @@ public class PEPService implements PubSubService, Cacheable {
     @Override
     public boolean canCreateNode(JID creator) {
         // Node creation is always allowed for sysadmin
-        if (isNodeCreationRestricted() && !isServiceAdmin(creator)) {
-            // The user is not allowed to create nodes
-            return false;
-        }
-        return true;
+        return !isNodeCreationRestricted() || isServiceAdmin(creator);
     }
 
     /**
@@ -270,11 +272,7 @@ public class PEPService implements PubSubService, Cacheable {
         roster = XMPPServer.getInstance().getRosterManager().getRoster(prober.getNode());
         RosterItem item = roster.getRosterItem(probee);
 
-        if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-            return true;
-        }
-
-        return false;
+        return item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM;
     }
 
     @Override
@@ -294,18 +292,20 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public boolean isServiceAdmin(JID user) {
-        // Here we consider a 'service admin' to be the user that this PEPService
-        // is associated with.
-        if (serviceOwnerJID.equals(user.toBareJID())) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        // Here we consider a 'service admin' to be the user that this PEPService is associated with.
+        return serviceOwner.equals(user.asBareJID());
     }
 
+    /**
+     * Returns the permission policy for creating nodes. A true value means that not anyone can create a node,
+     * only the service admin.
+     *
+     * Note that PEP services will always return 'true'.
+     *
+     * @return true
+     */
     public boolean isNodeCreationRestricted() {
-        return nodeCreationRestricted;
+        return true;
     }
 
     @Override
@@ -326,7 +326,7 @@ public class PEPService implements PubSubService, Cacheable {
     @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
         if ( Log.isTraceEnabled() ) {
-            Log.trace( "Service '{}' is broadcasting a notification on node '{}' to a collection of JIDs: {}", this.getServiceID(), node.getNodeID(), jids.stream().map(JID::toString).collect(Collectors.joining(", ")) );
+            Log.trace( "Service '{}' is broadcasting a notification on node '{}' to a collection of JIDs: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), jids.stream().map(JID::toString).collect(Collectors.joining(", ")) );
         }
         message.setFrom(getAddress());
         for (JID jid : jids) {
@@ -338,7 +338,7 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void sendNotification(Node node, Message message, JID recipientJID) {
-        Log.trace( "Service '{}' attempts to send a notification on node '{}' to recipient: {} (processing)", this.getServiceID(), node.getNodeID(), recipientJID );
+        Log.trace( "Service '{}' attempts to send a notification on node '{}' to recipient: {} (processing)", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), recipientJID );
 
         message.setTo(recipientJID);
         message.setFrom(getAddress());
@@ -414,7 +414,7 @@ public class PEPService implements PubSubService, Cacheable {
                 // This full JID will be used as the "replyto" address in the addressing extension.
                 if (node.isCollectionNode()) {
                     for (Node leafNode : node.getNodes()) {
-                        if (leafNode.getNodeID().equals(nodeID)) {
+                        if (leafNode.getUniqueIdentifier().getNodeId().equals(nodeID)) {
                             publisher = leafNode.getPublishedItem(itemID).getPublisher();
 
                             // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
@@ -455,7 +455,7 @@ public class PEPService implements PubSubService, Cacheable {
             }
             catch (UserNotFoundException e) {
                 // Do not add addressing extension to message.
-                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getNodeID(), message.getTo(), e );
+                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
                 router.route(message);
             }
             catch (NullPointerException e) {
@@ -467,7 +467,7 @@ public class PEPService implements PubSubService, Cacheable {
                 catch (UserNotFoundException e1) {
                     // Do nothing
                 }
-                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getNodeID(), message.getTo(), e );
+                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
                 router.route(message);
             }
         }
@@ -485,6 +485,25 @@ public class PEPService implements PubSubService, Cacheable {
      * @param recipientJID the recipient that is to receive the last published item notifications.
      */
     public void sendLastPublishedItems(JID recipientJID) {
+        sendLastPublishedItems(recipientJID, null);
+    }
+
+    /**
+     * Sends an event notification for the last published item of each leaf node under the
+     * root collection node to the recipient JID. If the recipient has no subscription to
+     * the root collection node, has not yet been authorized, or is pending to be
+     * configured -- then no notifications are going to be sent.<p>
+     *
+     * Depending on the subscription configuration the event notifications may or may not have
+     * a payload, may not be sent if a keyword (i.e. filter) was defined and it was not matched.
+     *
+     * An optional filter for nodes to be processed can be provided in the second argument to this method. When non-null
+     * only the nodes that match an ID in the argument will be processed.
+     *
+     * @param recipientJID the recipient that is to receive the last published item notifications.
+     * @param nodeIdFilter An optional filter of nodes to process (only IDs that are included in the filter are processed).
+     */
+    public void sendLastPublishedItems(JID recipientJID, Set<String> nodeIdFilter) {
         // Ensure the recipient has a subscription to this service's root collection node.
         NodeSubscription subscription = rootCollectionNode.getSubscription(recipientJID);
         if (subscription == null) {
@@ -496,9 +515,11 @@ public class PEPService implements PubSubService, Cacheable {
 
         // Send the last published item of each leaf node to the recipient.
         for (Node leafNode : rootCollectionNode.getNodes()) {
+            if ( nodeIdFilter != null && !nodeIdFilter.contains( leafNode.getUniqueIdentifier().getNodeId() ) ) {
+                continue;
+            }
             // Retrieve last published item for the leaf node.
-            PublishedItem leafLastPublishedItem = null;
-            leafLastPublishedItem = leafNode.getLastPublishedItem();
+            PublishedItem leafLastPublishedItem = leafNode.getLastPublishedItem();
             if (leafLastPublishedItem == null) {
                 continue;
             }
@@ -532,7 +553,7 @@ public class PEPService implements PubSubService, Cacheable {
     }
 
     @Override
-    public Map<String, Map<String, String>> getBarePresences() {
+    public Map<JID, Map<JID, String>> getSubscriberPresences() {
         return barePresences;
     }
 
@@ -547,4 +568,24 @@ public class PEPService implements PubSubService, Cacheable {
         return 600;
     }
 
+    @Override
+    public void entityCapabilitiesChanged( @Nonnull final JID entity,
+                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
+                                           @Nonnull final Set<String> featuresAdded,
+                                           @Nonnull final Set<String> featuresRemoved,
+                                           @Nonnull final Set<String> identitiesAdded,
+                                           @Nonnull final Set<String> identitiesRemoved )
+    {
+        // Look for new +notify features. Those are the nodes that the entity is now interested in.
+        final Set<String> nodeIDs = featuresAdded.stream()
+            .filter(feature -> feature.endsWith("+notify"))
+            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
+            .collect(Collectors.toSet());
+
+        if ( !nodeIDs.isEmpty() )
+        {
+            Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
+            sendLastPublishedItems(entity, nodeIDs);
+        }
+    }
 }

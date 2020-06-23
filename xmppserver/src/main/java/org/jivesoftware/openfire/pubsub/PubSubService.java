@@ -17,12 +17,14 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A PubSubService is responsible for keeping the hosted nodes by the service, the default
@@ -39,8 +41,8 @@ import java.util.*;
  *
  * @author Matt Tucker
  */
-public interface PubSubService {
-
+public interface PubSubService extends EntityCapabilitiesListener
+{
     /**
      * Returns the XMPP address of the service.
      *
@@ -61,13 +63,36 @@ public interface PubSubService {
      * Returns a registry of the presence's show value of users that subscribed to a node of
      * the pubsub service and for which the node only delivers notifications for online users
      * or node subscriptions deliver events based on the user presence show value. Offline
-     * users will not have an entry in the map. Note: Key-&gt; bare JID and Value-&gt; Map whose key
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
      * is full JID of connected resource and value is show value of the last received presence.
      * 
      * @return a registry of the presence's show value of users that subscribed to a node
      *         of the pubsub service.
+     * @deprecated Replaced by #getSubscriberPresences. Note, since being deprecated, changes to the return value are no longer applied!
      */
-    Map<String, Map<String, String>> getBarePresences();
+    default Map<String, Map<String, String>> getBarePresences() {
+        return getSubscriberPresences().entrySet().stream()
+            .collect(Collectors.toMap(
+                e -> e.getKey().toBareJID(),
+                e -> e.getValue().entrySet().stream()
+                    .collect( Collectors.toMap(
+                        v -> v.getKey().toString(),
+                        Map.Entry::getValue
+                    ))
+            ));
+    }
+
+    /**
+     * Returns a registry of the presence's show value of users that subscribed to a node of
+     * the pubsub service and for which the node only delivers notifications for online users
+     * or node subscriptions deliver events based on the user presence show value. Offline
+     * users will not have an entry in the map. Note: Key-> bare JID and Value-> Map whose key
+     * is full JID of connected resource and value is show value of the last received presence.
+     *
+     * @return a registry of the presence's show value of users that subscribed to a node
+     *         of the pubsub service.
+     */
+    Map<JID, Map<JID, String>> getSubscriberPresences();
 
     /**
      * Returns true if the pubsub service allows the specified user to create nodes.
@@ -123,7 +148,18 @@ public interface PubSubService {
      * @param nodeID the ID that uniquely identifies the node in the pubsub service.
      * @return the Node that matches the specified node ID or {@code null} if none was found.
      */
-    Node getNode(String nodeID);
+    default Node getNode(String nodeID) {
+        return getNode( new Node.UniqueIdentifier( getUniqueIdentifier(), nodeID));
+    };
+
+    /**
+     * Returns the {@link Node} that matches the specified node ID or {@code null} if
+     * none was found.
+     *
+     * @param nodeID the ID that uniquely identifies the node.
+     * @return the Node that matches the specified node ID or {@code null} if none was found.
+     */
+    Node getNode(Node.UniqueIdentifier nodeID);
 
     /**
      * Returns the collection of nodes hosted by the pubsub service. The collection does
@@ -141,7 +177,7 @@ public interface PubSubService {
     void addNode(Node node);
 
     /**
-     * Removes the specified node from the service. Most probaly the node was deleted from
+     * Removes the specified node from the service. Most probably the node was deleted from
      * the database as well.<p>
      *
      * A future version may support unloading of inactive nodes even though they may still
@@ -149,7 +185,20 @@ public interface PubSubService {
      *
      * @param nodeID the ID that uniquely identifies the node in the pubsub service.
      */
-    void removeNode(String nodeID);
+    default void removeNode(String nodeID) {
+        removeNode( new Node.UniqueIdentifier(getUniqueIdentifier(), nodeID));
+    };
+
+    /**
+     * Removes the specified node from the service. Most probably the node was deleted from
+     * the database as well.<p>
+     *
+     * A future version may support unloading of inactive nodes even though they may still
+     * exist in the database.
+     *
+     * @param nodeID the ID that uniquely identifies the node.
+     */
+    void removeNode(Node.UniqueIdentifier nodeID);
 
     /**
      * Broadcasts the specified Message containing an event notification to a list

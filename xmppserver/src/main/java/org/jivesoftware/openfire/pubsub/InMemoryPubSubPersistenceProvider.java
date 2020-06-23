@@ -23,11 +23,9 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -61,15 +59,15 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         // which makes it crucial to avoid cache entries from being purged. Note that the caches from DefaultPubSubPersistenceProvider
         // cannot be re-used for the same reason: data is not stored in those caches indefinitely.
         defaultNodeConfigurationCache = CacheFactory.createCache( "Pubsub InMemory Default Node Config" );
-        defaultNodeConfigurationCache.setMaxCacheSize( -1 );
+        defaultNodeConfigurationCache.setMaxCacheSize( -1L );
         defaultNodeConfigurationCache.setMaxLifetime( -1L );
 
         serviceIdToNodesCache = CacheFactory.createCache( "Pubsub InMemory Nodes" );
-        serviceIdToNodesCache.setMaxCacheSize( -1 );
+        serviceIdToNodesCache.setMaxCacheSize( -1L );
         serviceIdToNodesCache.setMaxLifetime( -1L );
 
         itemsCache = CacheFactory.createCache( "Pubsub InMemory Published Items" );
-        itemsCache.setMaxCacheSize( -1 );
+        itemsCache.setMaxCacheSize( -1L );
         itemsCache.setMaxLifetime( -1L );
     }
 
@@ -95,11 +93,12 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Updating node: {}", node.getUniqueIdentifier() );
 
-        final Lock lock = CacheFactory.getLock( node.getService().getServiceID(), serviceIdToNodesCache );
+        final PubSubService.UniqueIdentifier serviceIdentifier = node.getUniqueIdentifier().getServiceIdentifier();
+        final Lock lock = serviceIdToNodesCache.getLock(serviceIdentifier);
+        lock.lock();
         try {
-            lock.lock();
-            CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, node.getService().getUniqueIdentifier(), node );
-            CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, node.getService().getUniqueIdentifier(), node, ArrayList::new );
+            CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node );
+            CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node, ArrayList::new );
         } finally {
             lock.unlock();
         }
@@ -110,9 +109,11 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Removing node: {}", node.getUniqueIdentifier() );
 
-        synchronized ( node.getUniqueIdentifier().toString().intern() )
-        {
-            serviceIdToNodesCache.computeIfPresent( node.getService().getUniqueIdentifier(), ( s, list ) -> {
+        final PubSubService.UniqueIdentifier serviceIdentifier = node.getUniqueIdentifier().getServiceIdentifier();
+        final Lock lock = serviceIdToNodesCache.getLock( serviceIdentifier );
+        lock.lock();
+        try {
+            serviceIdToNodesCache.computeIfPresent( serviceIdentifier, ( s, list ) -> {
                 list.remove( node );
                 return list.isEmpty() ? null : list;
             } );
@@ -120,6 +121,18 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
             {
                 purgeNode( (LeafNode) node );
             }
+
+            if ( node instanceof CollectionNode && node.getParent() == null ) {
+                log.debug( "Node is the root node. Also removing other service references." );
+                this.defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( serviceIdentifier, true ) );
+                this.defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( serviceIdentifier, false ) );
+                final Set<Node.UniqueIdentifier> toBeDeletedItemIds = this.itemsCache.keySet().stream().filter(key -> key.getServiceIdentifier().equals(serviceIdentifier)).collect(Collectors.toSet());
+                for ( final Node.UniqueIdentifier itemId : toBeDeletedItemIds ) {
+                    this.itemsCache.remove( itemId );
+                }
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -128,10 +141,16 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Loading nodes for service: {}", service.getServiceID() );
 
-        final List<Node> nodes = serviceIdToNodesCache.get( service.getUniqueIdentifier() );
-        if ( nodes != null )
-        {
-            nodes.forEach( service::addNode );
+        final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
+        lock.lock();
+        try {
+            final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
+            if ( nodes != null )
+            {
+                nodes.forEach(service::addNode);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -140,16 +159,22 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Loading node: {}", nodeIdentifier );
 
-        final List<Node> nodes = serviceIdToNodesCache.get( service.getUniqueIdentifier() );
-        if ( nodes != null )
-        {
-            final Optional<Node> optionalNode = nodes.stream().filter( node -> node.getUniqueIdentifier().equals( nodeIdentifier ) ).findAny();
-            optionalNode.ifPresent( service::addNode );
+        final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
+        lock.lock();
+        try {
+            final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
+            if ( nodes != null )
+            {
+                final Optional<Node> optionalNode = nodes.stream().filter(node -> node.getUniqueIdentifier().equals(nodeIdentifier)).findAny();
+                optionalNode.ifPresent(service::addNode);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
-    public void loadSubscription( PubSubService service, Node node, String subId )
+    public void loadSubscription( Node node, String subId )
     {
         // Affiliate change should already be stored in the node.
         log.debug( "Loading subscription {} for node: {} (NOP)", subId, node.getUniqueIdentifier() );
@@ -198,32 +223,32 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     }
 
     // This mimics the cache usage as pre-existed in DefaultPubSubPersenceProvider.
-    private static String getDefaultNodeConfigurationCacheKey( PubSubService service, boolean isLeafType )
+    private static String getDefaultNodeConfigurationCacheKey( PubSubService.UniqueIdentifier serviceIdentifier, boolean isLeafType )
     {
-        return service.getServiceID() + "|" + isLeafType;
+        return serviceIdentifier.getServiceId() + "|" + isLeafType;
     }
 
     @Override
-    public DefaultNodeConfiguration loadDefaultConfiguration( PubSubService service, boolean isLeafType )
+    public DefaultNodeConfiguration loadDefaultConfiguration( PubSubService.UniqueIdentifier serviceIdentifier, boolean isLeafType )
     {
-        log.debug( "Loading default node configuration for service {} (for leaf type: {}).", service.getServiceID(), isLeafType );
-        final String key = getDefaultNodeConfigurationCacheKey( service, isLeafType );
+        log.debug( "Loading default node configuration for service {} (for leaf type: {}).", serviceIdentifier, isLeafType );
+        final String key = getDefaultNodeConfigurationCacheKey( serviceIdentifier, isLeafType );
         return defaultNodeConfigurationCache.get( key );
     }
 
     @Override
-    public void createDefaultConfiguration( PubSubService service, DefaultNodeConfiguration config )
+    public void createDefaultConfiguration( PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config )
     {
-        log.debug( "Creating default node configuration for service {} (for leaf type: {}).", service.getServiceID(), config.isLeaf() );
-        final String key = getDefaultNodeConfigurationCacheKey( service, config.isLeaf() );
+        log.debug( "Creating default node configuration for service {} (for leaf type: {}).", serviceIdentifier, config.isLeaf() );
+        final String key = getDefaultNodeConfigurationCacheKey( serviceIdentifier, config.isLeaf() );
         defaultNodeConfigurationCache.put( key, config );
     }
 
     @Override
-    public void updateDefaultConfiguration( PubSubService service, DefaultNodeConfiguration config )
+    public void updateDefaultConfiguration( PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config )
     {
-        log.debug( "Updating default node configuration for service {} (for leaf type: {}).", service.getServiceID(), config.isLeaf() );
-        final String key = getDefaultNodeConfigurationCacheKey( service, config.isLeaf() );
+        log.debug( "Updating default node configuration for service {} (for leaf type: {}).", serviceIdentifier, config.isLeaf() );
+        final String key = getDefaultNodeConfigurationCacheKey( serviceIdentifier, config.isLeaf() );
         defaultNodeConfigurationCache.put( key, config );
     }
 
@@ -231,9 +256,9 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public void savePublishedItem( PublishedItem item )
     {
         log.debug( "Saving published item for node {}: {}", item.getNode().getUniqueIdentifier(), item.getID() );
-        final Lock lock = CacheFactory.getLock( item.getNode().getUniqueIdentifier(), itemsCache );
+        final Lock lock = itemsCache.getLock(item.getNode().getUniqueIdentifier());
+        lock.lock();
         try {
-            lock.lock();
 
             // Find and remove an item with the same ID, if one is present.
             final LinkedList<PublishedItem> allNodeItems = itemsCache.get(item.getNode().getUniqueIdentifier());
@@ -261,9 +286,9 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Getting published items for node {}", node.getUniqueIdentifier() );
         List<PublishedItem> publishedItems;
-        final Lock lock = CacheFactory.getLock( node.getUniqueIdentifier(), itemsCache );
+        final Lock lock = itemsCache.getLock( node.getUniqueIdentifier() );
+        lock.lock();
         try {
-            lock.lock();
             final List<PublishedItem> items = itemsCache.get( node.getUniqueIdentifier() );
             publishedItems = items != null ? items : new ArrayList<>();
         } finally {
@@ -351,9 +376,9 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         Node.UniqueIdentifier uid = leafNode.getUniqueIdentifier();
         log.debug( "Purging node {}", uid );
 
-        final Lock lock = CacheFactory.getLock( leafNode.getUniqueIdentifier(), itemsCache );
+        final Lock lock = itemsCache.getLock( leafNode.getUniqueIdentifier() );
+        lock.lock();
         try {
-            lock.lock();
             itemsCache.remove( leafNode.getUniqueIdentifier() );
         } finally {
             lock.unlock();
@@ -363,12 +388,12 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     }
 
     @Override
-    public PEPService loadPEPServiceFromDB(String jid)
+    public PEPService loadPEPServiceFromDB(JID jid)
     {
-        final PubSubService.UniqueIdentifier id = new PubSubService.UniqueIdentifier( jid );
-        final Lock lock = CacheFactory.getLock( id, itemsCache );
+        final PubSubService.UniqueIdentifier id = new PubSubService.UniqueIdentifier( jid.toString() );
+        final Lock lock = serviceIdToNodesCache.getLock( id );
+        lock.lock();
         try {
-            lock.lock();
             if ( serviceIdToNodesCache.containsKey( id ) ) {
                 final PEPService pepService = new PEPService( XMPPServer.getInstance(), jid );
                 pepService.initialize();

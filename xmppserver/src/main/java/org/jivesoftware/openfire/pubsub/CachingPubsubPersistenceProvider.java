@@ -10,6 +10,7 @@ import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -243,11 +244,11 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public void loadSubscription(PubSubService service, Node node, String subId)
+    public void loadSubscription(Node node, String subId)
     {
         flushPendingNode( node.getUniqueIdentifier() );
 
-        delegate.loadSubscription(service, node, subId);
+        delegate.loadSubscription(node, subId);
     }
 
     @Override
@@ -565,9 +566,8 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-
     @Override
-    public PEPService loadPEPServiceFromDB( final String jid )
+    public PEPService loadPEPServiceFromDB( final JID jid )
     {
         return delegate.loadPEPServiceFromDB( jid );
     }
@@ -581,21 +581,42 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
+    @Deprecated
     public DefaultNodeConfiguration loadDefaultConfiguration( final PubSubService service, final boolean isLeafType )
     {
         return delegate.loadDefaultConfiguration( service, isLeafType );
     }
 
     @Override
+    public DefaultNodeConfiguration loadDefaultConfiguration( final PubSubService.UniqueIdentifier serviceIdentifier, final boolean isLeafType )
+    {
+        return delegate.loadDefaultConfiguration( serviceIdentifier, isLeafType );
+    }
+
+    @Override
+    @Deprecated
     public void createDefaultConfiguration( final PubSubService service, final DefaultNodeConfiguration config )
     {
         delegate.createDefaultConfiguration( service, config );
     }
 
     @Override
+    public void createDefaultConfiguration( final PubSubService.UniqueIdentifier serviceIdentifier, final DefaultNodeConfiguration config )
+    {
+        delegate.createDefaultConfiguration( serviceIdentifier, config );
+    }
+
+    @Override
+    @Deprecated
     public void updateDefaultConfiguration( final PubSubService service, final DefaultNodeConfiguration config )
     {
         delegate.updateDefaultConfiguration( service, config );
+    }
+
+    @Override
+    public void updateDefaultConfiguration( final PubSubService.UniqueIdentifier serviceIdentifier, final DefaultNodeConfiguration config )
+    {
+        delegate.updateDefaultConfiguration( serviceIdentifier, config );
     }
 
     @Override

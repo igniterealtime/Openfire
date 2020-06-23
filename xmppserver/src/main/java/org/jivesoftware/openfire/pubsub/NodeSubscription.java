@@ -511,7 +511,7 @@ public class NodeSubscription {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.subscription.title"));
         List<String> params = new ArrayList<>();
-        params.add(node.getNodeID());
+        params.add(node.getUniqueIdentifier().getNodeId());
         form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.subscription.instruction", params));
         // Add the form fields and configure them for edition
         FormField formField = form.addField();
@@ -758,7 +758,7 @@ public class NodeSubscription {
         Element child = result.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
         Element entity = child.addElement("subscription");
         if (!node.isRootCollectionNode()) {
-            entity.addAttribute("node", node.getNodeID());
+            entity.addAttribute("node", node.getUniqueIdentifier().getNodeId());
         }
         entity.addAttribute("jid", getJID().toString());
         if (node.isMultipleSubscriptionsEnabled()) {
@@ -801,7 +801,7 @@ public class NodeSubscription {
         Element event = notification.getElement()
                 .addElement("event", "http://jabber.org/protocol/pubsub#event");
         Element items = event.addElement("items");
-        items.addAttribute("node", node.getNodeID());
+        items.addAttribute("node", node.getUniqueIdentifier().getNodeId());
         Element item = items.addElement("item");
         if (((LeafNode) node).isItemRequired()) {
             item.addAttribute("id", publishedItem.getID());

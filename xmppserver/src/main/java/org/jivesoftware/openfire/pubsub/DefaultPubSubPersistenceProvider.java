@@ -730,13 +730,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     private void loadNode(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> loadedNodes, Map<Node.UniqueIdentifier, Node.UniqueIdentifier> parentMappings, ResultSet rs) {
         Node node;
         try {
-            Node.UniqueIdentifier nodeID = new Node.UniqueIdentifier( serviceId, decodeNodeID(rs.getString(1)) );
+            Node.UniqueIdentifier nodeId = new Node.UniqueIdentifier( serviceId, decodeNodeID(rs.getString(1)) );
             boolean leaf = rs.getInt(2) == 1;
-            Node.UniqueIdentifier parent = new Node.UniqueIdentifier( serviceId,decodeNodeID(rs.getString(5)) );
             JID creator = new JID(rs.getString(22));
-            
-            if (parent != null) {
-            	parentMappings.put(nodeID, parent);
+
+            String parent = decodeNodeID(rs.getString(5));
+            if (parent != null && !parent.isEmpty()) {
+                Node.UniqueIdentifier parentId = new Node.UniqueIdentifier( serviceId, parent );
+                parentMappings.put(nodeId, parentId);
             }
 
             final boolean subscriptionEnabled = rs.getInt(16) == 1;
@@ -761,13 +762,13 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 final int maxPublishedItems = rs.getInt(9);
                 final int maxPayloadSize = rs.getInt(7);
                 final boolean sendItemSubscribe = rs.getInt(14) == 1;
-                node = new LeafNode(serviceId, null, nodeID.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
+                node = new LeafNode(serviceId, null, nodeId.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
             }
             else {
                 // Retrieving a collection node
                 final CollectionNode.LeafNodeAssociationPolicy associationPolicy = CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(27));
                 final int maxLeafNodes = rs.getInt(28);
-                node = new CollectionNode(serviceId, null, nodeID.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
+                node = new CollectionNode(serviceId, null, nodeId.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(3).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(4).trim())));

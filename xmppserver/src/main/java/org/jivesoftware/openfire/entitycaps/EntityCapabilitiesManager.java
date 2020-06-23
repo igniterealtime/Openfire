@@ -16,18 +16,9 @@
 
 package org.jivesoftware.openfire.entitycaps;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.stream.Collectors;
-
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 import org.dom4j.Element;
-import org.dom4j.Entity;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -47,6 +38,9 @@ import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 /**
  * Implements server side mechanics for XEP-0115: "Entity Capabilities"
@@ -104,6 +98,15 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     private Cache<JID, String> entityCapabilitiesUserMap;
 
     /**
+     * Entity Capabilities that were registered for a particular user, but
+     * are in progress of being updated (a new 'ver' value has been received).
+     *
+     * The old value is kept to be able to provide a 'diff' between the old
+     * and new capabilities, after the new 'ver' value has been looked up.
+     */
+    private Map<JID, String> capabilitiesBeingUpdated;
+
+    /**
      * Ver attributes are the hash strings that correspond to a certain
      * combination of entity capabilities. This hash string, representing a
      * particular identities+features combination, is found in the 'ver'
@@ -141,6 +144,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         super.initialize( server );
         entityCapabilitiesMap = CacheFactory.createLocalCache("Entity Capabilities");
         entityCapabilitiesUserMap = CacheFactory.createLocalCache("Entity Capabilities Users");
+        capabilitiesBeingUpdated = new HashMap<>();
         verAttributes = new HashMap<>();
         UserEventDispatcher.addListener( this );
     }
@@ -165,8 +169,14 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     }
 
     public void process(Presence packet) {
-        // Ignore unavailable presences
         if (Presence.Type.unavailable == packet.getType()) {
+            if (packet.getFrom() != null ) {
+                this.capabilitiesBeingUpdated.remove( packet.getFrom() );
+                final String oldVer = this.entityCapabilitiesUserMap.remove( packet.getFrom() );
+                if ( oldVer != null ) {
+                    checkObsolete( oldVer );
+                }
+            }
             return;
         }
 
@@ -204,6 +214,12 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             registerCapabilities( packet.getFrom(), caps );
         }
         else {
+            // If this entity previously had another registration, that now no longer is valid.
+            final String ver = entityCapabilitiesUserMap.remove(packet.getFrom());
+            if ( ver != null ) {
+                capabilitiesBeingUpdated.put( packet.getFrom(), ver );
+            }
+
             // The 'ver' hash is not in the cache so send out a disco#info query
             // so that we may begin recognizing this 'ver' hash.
             IQ iq = new IQ(IQ.Type.get);
@@ -513,7 +529,11 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     protected void registerCapabilities( @Nonnull JID entity, @Nonnull EntityCapabilities newCapabilities )
     {
         entityCapabilitiesMap.put( newCapabilities.getVerAttribute(), newCapabilities );
-        final String oldVerAttribute = entityCapabilitiesUserMap.put( entity, newCapabilities.getVerAttribute() );
+        String oldVerAttribute = entityCapabilitiesUserMap.put(entity, newCapabilities.getVerAttribute());
+        String updatedVerValue = capabilitiesBeingUpdated.remove( entity );
+        if (oldVerAttribute == null) {
+            oldVerAttribute = updatedVerValue;
+        }
 
         // Invoke listeners when capabilities changed.
         if (oldVerAttribute == null )
@@ -715,5 +735,6 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         entityCapabilitiesMap.clear();
         entityCapabilitiesUserMap.clear();
         verAttributes.clear();
+        capabilitiesBeingUpdated.clear();
     }
 }

@@ -148,7 +148,7 @@ jobs:
         with:
           java-version: 11
       - name: Run smack tests
-        continue-on-error: true
+        continue-on-error: false
         shell: bash
         run: |
           cat >"test.gradle" <<EOL

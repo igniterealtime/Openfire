@@ -1755,7 +1755,6 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 }
                 // Create a new PEPService
                 pepService = new PEPService(XMPPServer.getInstance(), jid);
-                pepService.initialize();
             }
         } catch (SQLException sqle) {
             log.error(sqle.getMessage(), sqle);

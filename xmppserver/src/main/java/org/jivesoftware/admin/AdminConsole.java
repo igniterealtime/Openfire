@@ -65,6 +65,7 @@ public class AdminConsole {
      */
     public static void addModel(String name, InputStream in) throws Exception {
         SAXReader saxReader = new SAXReader();
+        saxReader.setIgnoreComments(true);
         Document doc = saxReader.read(in);
         addModel(name, (Element)doc.selectSingleNode("/adminconsole"));
     }
@@ -214,6 +215,7 @@ public class AdminConsole {
         }
         try {
             SAXReader saxReader = new SAXReader();
+            saxReader.setIgnoreComments(true);
             Document doc = saxReader.read(in);
             coreModel = (Element)doc.selectSingleNode("/adminconsole");
         }

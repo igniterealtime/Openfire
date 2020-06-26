@@ -565,7 +565,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             		log.error("Could not find parent node " + entry.getValue() + " for node " + entry.getKey());
             	}
             	else {
-                    child.changeParent(parent.getUniqueIdentifier());
+                    child.changeParent(parent);
             	}
             }
             // Get JIDs associated with all nodes
@@ -654,7 +654,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             Node.UniqueIdentifier parentId = parentMapping.get(nodeIdentifier);
 			
 			if (parentId != null) {
-                nodes.get(nodeIdentifier).changeParent(parentId);
+                nodes.get(nodeIdentifier).changeParent((CollectionNode)nodes.get(parentId));
 			}
 				
 			// Get JIDs associated with all nodes

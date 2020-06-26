@@ -667,7 +667,7 @@ public abstract class Node implements Cacheable, Externalizable {
                     {
                         throw new NotAcceptableException("Specified node in field pubsub#collection [" + newParent + "] " + ((newParentNode == null) ? "does not exist" : "is not a collection node"));
                     }
-                    changeParent(newParentNode.getUniqueIdentifier());
+                    changeParent((CollectionNode)newParentNode);
                 }
                 else {
                     // Let subclasses be configured by specified fields
@@ -1929,26 +1929,20 @@ public abstract class Node implements Cacheable, Externalizable {
      *
      * @param newParent the new parent node of this node.
      */
-    protected void changeParent(Node.UniqueIdentifier newParent)
-    {
-        if (parentIdentifier == null && newParent == null) {
+    protected void changeParent(CollectionNode newParent) {
+        if (parent == newParent) {
             return;
         }
 
-        if (newParent != null && newParent.equals( parentIdentifier )) {
-            return;
-        }
-
-        final CollectionNode oldParent = getParent();
-        if (oldParent != null) {
+        if (parent != null) {
             // Remove this node from the current parent node
-            oldParent.removeChildNode(this);
+            parent.removeChildNode(this);
         }
         // Set the new parent of this node
-        parentIdentifier = newParent;
-        parent = null; // reset transient field.
-        if ( newParent != null ) {
-            getParent().addChildNode(this);
+        parent = newParent;
+        if (parent != null) {
+            // Add this node to the new parent node
+            parent.addChildNode(this);
         }
         if (savedToDB) {
             PubSubPersistenceProviderManager.getInstance().getProvider().updateNode(this);

@@ -132,6 +132,10 @@ public class PEPServiceManager {
             } else {
                 // lookup in database.
                 pepService = PubSubPersistenceProviderManager.getInstance().getProvider().loadPEPServiceFromDB(jid);
+                pepServices.put(jid, CacheableOptional.of(pepService));
+                if ( pepService != null ) {
+                    pepService.initialize();
+                }
             }
 
             if ( pepService != null ) {
@@ -149,7 +153,6 @@ public class PEPServiceManager {
                 // PEPService.
                 XMPPServer.getInstance().getIQPEPHandler().addSubscriptionForRosterItems( pepService );
             }
-            pepServices.put(jid, CacheableOptional.of(pepService));
         } finally {
             lock.unlock();
         }

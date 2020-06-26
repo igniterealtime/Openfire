@@ -247,6 +247,8 @@ public interface PubSubPersistenceProvider
     /**
      * Loads a PEP service from the database, if it exists.
      *
+     * Note that the returned service is not yet initialized!
+     *
      * @param jid
      *            the JID of the owner of the PEP service.
      * @return the loaded PEP service, or null if not found.

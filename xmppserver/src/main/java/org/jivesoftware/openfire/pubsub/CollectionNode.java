@@ -142,7 +142,7 @@ public class CollectionNode extends Node {
             // Set the parent on the children.
             for (Node node : childrenNodes)
             {
-                node.changeParent(this.getUniqueIdentifier());
+                node.changeParent(this);
             }
         }
     }
@@ -307,8 +307,9 @@ public class CollectionNode extends Node {
     @Override
     protected void deletingNode() {
         // Update child nodes to use the parent node of this node as the new parent node
+        final CollectionNode parent = getParent();
         for (Node node : getNodes()) {
-            node.changeParent(parentIdentifier);
+            node.changeParent(parent);
         }
     }
 

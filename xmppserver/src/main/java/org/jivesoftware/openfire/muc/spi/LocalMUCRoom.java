@@ -1028,7 +1028,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      *
      * @param leaveRole the role of the occupant that is leaving.
      */
-    void sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
+    CompletableFuture<Void> sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
         // Send the presence of this new occupant to existing occupants
         Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), leaveRole.getChatRoom().getJID() );
         try {
@@ -1053,12 +1053,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             if(!shouldBroadcastPresence(originalPresence)){
                 // Inform the leaving user that he/she has left the room
                 leaveRole.send(presence);
+                return CompletableFuture.completedFuture(null);
             }
             else {
                 if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
                     // Inform the rest of the room occupants that the user has left the room
                     if (JOIN_PRESENCE_ENABLE.getValue()) {
-                        broadcastPresence(presence, false, leaveRole);
+                        return broadcastPresence(presence, false, leaveRole);
                     }
                 }
             }
@@ -1066,6 +1067,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         catch (Exception e) {
             Log.error( "An exception occurred while sending leave presence of occupant '"+leaveRole.getUserAddress()+"' to the other occupants of room: '"+leaveRole.getChatRoom().getJID()+"'.", e);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     public void occupantAdded(OccupantAddedEvent event) {
@@ -1113,18 +1115,20 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public void leaveRoom(MUCRole leaveRole) {
-        sendLeavePresenceToExistingOccupants(leaveRole);
+        sendLeavePresenceToExistingOccupants(leaveRole)
+            .thenRunAsync( () -> {
+                if (leaveRole.isLocal()) {
+                    // Ask other cluster nodes to remove occupant from room
+                    OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
+                    CacheFactory.doClusterTask(event);
+                }
 
-        if (leaveRole.isLocal()) {
-            // Ask other cluster nodes to remove occupant from room
-            OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
-            CacheFactory.doClusterTask(event);
-        }
-
-        // Remove occupant from room and destroy room if empty and not persistent
-        OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
-        event.setOriginator(true);
-        event.run();
+                // Remove occupant from room and destroy room if empty and not persistent
+                OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
+                event.setOriginator(true);
+                event.run();
+            }
+        );
     }
 
     public void leaveRoom(OccupantLeftEvent event) {
@@ -1174,15 +1178,16 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      *
      * @param joinRole the role of the new occupant in the room.
      */
-    void sendInitialPresenceToExistingOccupants(MUCRole joinRole) {
+    CompletableFuture<Void> sendInitialPresenceToExistingOccupants( MUCRole joinRole) {
         // Send the presence of this new occupant to existing occupants
         Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), joinRole.getChatRoom().getJID() );
         try {
             final Presence joinPresence = joinRole.getPresence().createCopy();
-            broadcastPresence(joinPresence, true, joinRole);
+            return broadcastPresence(joinPresence, true, joinRole);
         } catch (Exception e) {
             Log.error( "An exception occurred while sending initial presence of new occupant '"+joinRole.getUserAddress()+"' to the existing occupants of room: '"+joinRole.getChatRoom().getJID()+"'.", e);
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
@@ -1411,9 +1416,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param isJoinPresence If the presence is sent in the context of joining the room.
      * @param sender The role of the entity that initiated the presence broadcast
      */
-    private void broadcastPresence(Presence presence, boolean isJoinPresence, @Nonnull MUCRole sender) {
+    private CompletableFuture<Void> broadcastPresence( Presence presence, boolean isJoinPresence, @Nonnull MUCRole sender) {
         if (presence == null) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         // Some clients send a presence update to the room, rather than to their own nickname.
@@ -1424,24 +1429,24 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         if (!shouldBroadcastPresence(presence)) {
             // Just send the presence to the sender of the presence
             sender.send(presence);
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
         // If FMUC is active, propagate the presence through FMUC first. Note that when a master-slave mode is active,
         // we need to wait for an echo back, before the message can be broadcasted locally. The 'propagate' method will
         // return a CompletableFuture object that is completed as soon as processing can continue.
-        fmucHandler.propagate( presence, sender )
-            .thenRunAsync( () -> {
-                // Broadcast presence to occupants hosted by other cluster nodes
-                BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
-                CacheFactory.doClusterTask(request);
+        return fmucHandler.propagate(presence, sender)
+            .thenRunAsync(() -> {
+                              // Broadcast presence to occupants hosted by other cluster nodes
+                              BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
+                              CacheFactory.doClusterTask(request);
 
-                // Broadcast presence to occupants connected to this JVM
-                request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
-                request.setOriginator(true);
-                request.run();
-            }
-        );
+                              // Broadcast presence to occupants connected to this JVM
+                              request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
+                              request.setOriginator(true);
+                              request.run();
+                          }
+            );
     }
 
     public void broadcast(BroadcastPresenceRequest presenceRequest) {

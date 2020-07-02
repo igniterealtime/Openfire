@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.text.MessageFormat;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -90,6 +92,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         .setKey("xmpp.muc.join.presence")
         .setDynamic(true)
         .setDefaultValue(true)
+        .build();
+
+    private static final SystemProperty<Duration> SELF_PRESENCE_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.muc.join.self-presence-timeout")
+        .setDynamic(true)
+        .setDefaultValue(Duration.ofSeconds( 2 ))
+        .setChronoUnit(ChronoUnit.MILLIS)
         .build();
 
     /**
@@ -632,7 +641,19 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
         // Exchange initial presence information between occupants of the room.
         sendInitialPresencesToNewOccupant( joinRole );
-        sendInitialPresenceToExistingOccupants( joinRole );
+
+        // OF-2042: XEP dictates an order of events. Wait for the presence exchange to finish, before progressing.
+        final CompletableFuture<Void> future = sendInitialPresenceToExistingOccupants(joinRole);
+        try {
+            final Duration timeout = SELF_PRESENCE_TIMEOUT.getValue();
+            future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch ( InterruptedException e ) {
+            Log.debug( "Presence broadcast has been interrupted before it completed. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+        } catch ( TimeoutException e ) {
+            Log.warn( "Presence broadcast has not yet been completed within the allocated period. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+        } catch ( ExecutionException e ) {
+            Log.warn( "Presence broadcast caused an exception. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+        }
 
         // If the room has just been created send the "room locked until configuration is confirmed" message.
         // It is assumed that the room is new based on the fact that it's locked and that it was locked when it was created.

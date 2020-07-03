@@ -149,10 +149,10 @@ jobs:
           java-version: 11
       - name: Run smack tests
         continue-on-error: false
-        working-directory: ./
         shell: bash
         run: |
           pwd
+          cd ..
           ls -l
           sh ./runIntegrationTests -gl
 

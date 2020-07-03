@@ -152,6 +152,7 @@ jobs:
         shell: bash
         run: |
           pwd
+          ls -l
           sh ./runIntegrationTests -gl
 
       - name: Stop Openfire

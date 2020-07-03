@@ -239,9 +239,9 @@ public class HttpBindServlet extends HttpServlet {
         if ("GET".equals(request.getMethod())) {
             if (JiveGlobals.getBooleanProperty("xmpp.httpbind.client.no-cache.enabled", true)) {
                 // Prevent caching of responses
-                response.addHeader("Cache-Control", "no-store");
+                response.setHeader("Cache-Control", "no-store");
                 response.addHeader("Cache-Control", "no-cache");
-                response.addHeader("Pragma", "no-cache");
+                response.setHeader("Pragma", "no-cache");
             }
             content = "_BOSH_(\"" + StringEscapeUtils.escapeEcmaScript(content) + "\")";
         }

@@ -151,7 +151,8 @@ jobs:
         continue-on-error: false
         shell: bash
         run: |
-          ./runIntegrationTests -gl
+          pwd
+          sh ./runIntegrationTests -gl
 
       - name: Stop Openfire
         shell: bash

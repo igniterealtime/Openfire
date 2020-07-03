@@ -36,6 +36,12 @@ import java.time.temporal.ChronoUnit;
 public class SoftwareVersionManager extends BasicModule implements SessionEventListener {
     private static final Logger Log = LoggerFactory.getLogger(SoftwareVersionManager.class);
 
+    public static final SystemProperty<Boolean> VERSION_QUERY_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("xmpp.client.version-query.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
     public static final SystemProperty<Duration> VERSION_QUERY_DELAY = SystemProperty.Builder.ofType( Duration.class )
         .setKey("xmpp.client.version-query.delay")
         .setChronoUnit(ChronoUnit.MILLIS)
@@ -81,7 +87,10 @@ public class SoftwareVersionManager extends BasicModule implements SessionEventL
 
     @Override
     public void resourceBound(Session session) {
-         // The server should not send requests to the client before the client session
+        if (!VERSION_QUERY_ENABLED.getValue()) {
+            return;
+        }
+        // The server should not send requests to the client before the client session
         // has been established (see IQSessionEstablishmentHandler). Sadly, Openfire
         // does not provide a hook for this. For now, the resource bound event is
         // used instead (which should be immediately followed by session establishment).

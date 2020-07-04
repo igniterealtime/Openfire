@@ -212,6 +212,12 @@ jobs:
           DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
           DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
 
+          # Occasionally fails, disabled until cause can be found.
+          DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+          DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
+          DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+          DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
+
           SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
           for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
             SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"

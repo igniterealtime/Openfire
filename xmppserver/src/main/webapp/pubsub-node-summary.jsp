@@ -47,7 +47,7 @@
     {
         pubSubServiceInfo = webManager.getPubSubInfo();
     }
-    else if ( XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( owner.toBareJID(), true ) != null )
+    else if ( XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( owner.asBareJID(), true ) != null )
     {
         PEPMode = true;
         pubSubServiceInfo = new PEPServiceInfo( owner );
@@ -61,7 +61,7 @@
     if ( pubSubServiceInfo != null )
     {
         nodes = pubSubServiceInfo.getLeafNodes();
-        nodes.sort(Comparator.comparing(node -> node.getNodeID().toLowerCase()));
+        nodes.sort(Comparator.comparing(node -> node.getUniqueIdentifier().getNodeId().toLowerCase()));
     }
     else
     {
@@ -73,7 +73,7 @@
     final String searchNodeId = ParamUtils.getStringParameter(request, "searchNodeId", "");
     if(!searchNodeId.trim().isEmpty()) {
         final String searchCriteria = searchNodeId.trim().toLowerCase();
-        filter = filter.and(node -> node.getNodeID().toLowerCase().contains(searchCriteria));
+        filter = filter.and(node -> node.getUniqueIdentifier().getNodeId().toLowerCase().contains(searchCriteria));
     }
     final String searchNodeName = ParamUtils.getStringParameter(request, "searchNodeName", "");
     if(!searchNodeName.trim().isEmpty()) {

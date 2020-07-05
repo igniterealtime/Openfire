@@ -458,15 +458,17 @@ public class StreamManager {
 
                 Log.debug( "Received acknowledgement from client: h={}", h );
 
-                if (!validateClientAcknowledgement(h)) {
-                    Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
-                    return;
-                }
+                synchronized ( this ) {
+                    if (!validateClientAcknowledgement(h)) {
+                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                        session.deliverRawText( error.toXML() );
+                        session.close();
+                        return;
+                    }
 
-                processClientAcknowledgement(h);
+                    processClientAcknowledgement(h);
+                }
             }
         }
     }

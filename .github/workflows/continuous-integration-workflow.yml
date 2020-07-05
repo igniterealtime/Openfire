@@ -148,7 +148,7 @@ jobs:
         with:
           java-version: 11
       - name: Run smack tests
-        continue-on-error: true
+        continue-on-error: false
         shell: bash
         run: |
           cat >"test.gradle" <<EOL
@@ -169,7 +169,25 @@ jobs:
 
           dependencies {
               compile group: 'org.igniterealtime.smack', name: 'smack-integration-test', version: smackVersion
+
+              // Workaround for https://discuss.gradle.org/t/unique-snapshot-dependencies-for-projects-own-subproject-in-pom-not-declared/35692?u=flow
+              // see https://discuss.gradle.org/t/how-to-force-a-dependency-version-while-also-substituting-a-transitive-dependency/26759/4?u=flow
+              components.all {
+                  allVariants {
+                      withDependencies { deps ->
+                          deps.each { dep ->
+                              if (dep.group == 'org.igniterealtime.smack') {
+                                  dep.version {
+                                      strictly smackVersion
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
           }
+
+          println "Sinttest with ${smackVersion}"
 
           run {
             // Pass all system properties down to the "application" run
@@ -182,17 +200,8 @@ jobs:
           DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
           #DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
 
-          # Flaps sometimes (Need fixes for OF-2039 / OF-2040)
-          DISABLED_INTEGRATION_TESTS+=(PubSubIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest.test)
-
           # Does sometimes not succeed in Travis (stress test is too much?)
           DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
-
-          # EntityCapsTest#testEntityCaps fails regularly. Possibly needs OF-2040
-          DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
 
           #FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
           DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
@@ -203,6 +212,12 @@ jobs:
           DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
           DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
 
+          # Occasionally fails, disabled until cause can be found.
+          DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+          DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
+          DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+          DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
+
           SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
           for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
             SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"
@@ -211,7 +226,12 @@ jobs:
           # Remove last ',' from the argument. Can't use ${SINTTEST_DISABLED_TESTS_ARGUMENT::-1} because bash on MacOS is infuriatingly incompatible.
           SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
 
-          #SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.enabledTests=EntityCapsTest"
+
+          gradle --console=plain \
+            --build-file test.gradle \
+            -PsmackVersion="${SMACK_VERSION}" \
+            -q dependencies
+
           gradle --console=plain \
             --stacktrace \
             run \

@@ -1251,13 +1251,14 @@ public class FMUCHandler
         leaveRole.setPresence( createCopyWithoutFMUC(presence) ); // update presence to reflect the 'leave' - this is used later to broadcast to other occupants.
 
         // Send presence to inform all occupants of the room that the user has left.
-        room.sendLeavePresenceToExistingOccupants( leaveRole );
+        room.sendLeavePresenceToExistingOccupants( leaveRole )
+            .thenRunAsync( () -> {
+                // Update the (local) room state to now include this occupant.
+                room.removeOccupantRole( leaveRole );
 
-        // Update the (local) room state to now include this occupant.
-        room.removeOccupantRole( leaveRole );
-
-        // Fire event that occupant left the room.
-        MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+                // Fire event that occupant left the room.
+                MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+            });
     }
 
     /**

@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns="http://usefulinc.com/ns/doap#"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xmpp="https://linkmauve.fr/ns/xmpp-doap#">
+    <Project>
+
+        <name>Openfire</name>
+        <short-name>openfire</short-name>
+
+        <shortdesc xml:lang="en">XMPP Server</shortdesc>
+        <description xml:lang="en">
+            Openfire is a real time collaboration (RTC) server licensed under the Open Source Apache License. It uses the only widely adopted open protocol for instant messaging, XMPP (also called Jabber). Openfire is incredibly easy to
+            setup and administer, but offers rock-solid security and performance.
+        </description>
+
+        <homepage rdf:resource="https://www.igniterealtime.org/projects/openfire/"/>
+        <bug-database rdf:resource="https://issues.igniterealtime.org/projects/OF/issues"/>
+        <category rdf:resource="https://linkmauve.fr/ns/xmpp-doap#category-server"/>
+        <license rdf:resource="http://usefulinc.com/doap/licenses/asl20"/>
+
+        <programming-language>Java</programming-language>
+        <os>Linux</os>
+        <os>Windows</os>
+        <os>MacOS</os>
+
+        <repository>
+            <GitRepository>
+                <location rdf:resource="https://github.com/igniterealtime/Openfire.git"/>
+                <browse rdf:resource="https://github.com/igniterealtime/Openfire"/>
+            </GitRepository>
+        </repository>
+
+        <implements rdf:resource="http://xmpp.org/rfcs/rfc6120.html"/>
+        <implements rdf:resource="http://xmpp.org/rfcs/rfc6121.html"/>
+        <implements rdf:resource="http://xmpp.org/rfcs/rfc6122.html"/>
+        <implements rdf:resource="http://xmpp.org/rfcs/rfc7590.html"/>
+        <implements rdf:resource="http://xmpp.org/rfcs/rfc7395.html"/>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0368.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0368.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0030.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0115.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0114.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0163.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0124.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0206.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0156.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0153.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0398.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0054.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0280.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0191.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0045.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0249.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0048.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0410.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0411.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0049.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0198.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0313.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0363.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0198.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0352.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0357.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0004.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0012.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0013.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0016.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0033.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0050.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0055.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0059.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0060.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0065.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0077.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0078.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0082.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0086.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0090.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0091.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0092.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0096.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0106.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0126.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0128.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0129.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0133.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0136.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0138.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0142.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0160.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0175.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0178.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0182.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0191.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0199.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0202.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0203.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0215.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0223.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0227.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0278.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0289.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0321.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0359.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+    </Project>
+</rdf:RDF>

@@ -57,9 +57,9 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     protected PubSubService.UniqueIdentifier serviceIdentifier;
     /**
-     * Keeps the Node that is containing this node.
+     * The ID of the node that is containing this node (if any). This node can be expected to be a CollectionNode.
      */
-    protected CollectionNode parent;
+    protected Node.UniqueIdentifier parentIdentifier;
     /**
      * The unique identifier for a node within the context of a pubsub service.
      */
@@ -186,6 +186,18 @@ public abstract class Node implements Cacheable, Externalizable {
     protected Map<String, NodeSubscription> subscriptionsByJID =
             new ConcurrentHashMap<>();
 
+    /**
+     * A transient reference to the service that this node belongs to. Note that this value is lazily initialized in
+     * {@link #getService()}. That method should be used instead of accessing this field directly.
+     */
+    private transient PubSubService service;
+
+    /**
+     * A transient reference to the node that is the parent of this node. Note that this value is lazily initialized in
+     * {@link #getParent()}. That method should be used instead of accessing this field directly.
+     */
+    private transient CollectionNode parent;
+
     Node() {} // to be used only for serialization;
 
     Node(PubSubService.UniqueIdentifier serviceId, CollectionNode parent, String nodeID, JID creator, DefaultNodeConfiguration configuration ) {
@@ -194,7 +206,7 @@ public abstract class Node implements Cacheable, Externalizable {
 
     Node(PubSubService.UniqueIdentifier serviceId, CollectionNode parent, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy) {
         this.serviceIdentifier = serviceId;
-        this.parent = parent;
+        this.parentIdentifier = parent == null ? null : parent.getUniqueIdentifier();
         this.nodeID = nodeID;
         this.creator = creator;
         long startTime = System.currentTimeMillis();
@@ -655,7 +667,7 @@ public abstract class Node implements Cacheable, Externalizable {
                     {
                         throw new NotAcceptableException("Specified node in field pubsub#collection [" + newParent + "] " + ((newParentNode == null) ? "does not exist" : "is not a collection node"));
                     }
-                    changeParent((CollectionNode) newParentNode);
+                    changeParent((CollectionNode)newParentNode);
                 }
                 else {
                     // Let subclasses be configured by specified fields
@@ -774,6 +786,7 @@ public abstract class Node implements Cacheable, Externalizable {
         broadcastNodeEvent(message, false);
 
         // And also to the subscribers of parent nodes with proper subscription depth
+        final CollectionNode parent = getParent();
         if (parent != null){
             parent.childNodeModified(this, message);
         }
@@ -806,7 +819,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#node");
         formField.setType(FormField.Type.text_single);
         formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.node"));
-        formField.addValue(getNodeID());
+        formField.addValue(nodeID);
 
         formField = form.addField();
         formField.setVariable("pubsub#subscriber_jid");
@@ -833,7 +846,7 @@ public abstract class Node implements Cacheable, Externalizable {
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.conf.title"));
         List<String> params = new ArrayList<>();
-        params.add(getNodeID());
+        params.add(nodeID);
         form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.conf.instruction", params));
 
         FormField formField = form.addField();
@@ -886,8 +899,9 @@ public abstract class Node implements Cacheable, Externalizable {
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.collection"));
         }
 
+        final CollectionNode parent = getParent();
         if (parent != null && !parent.isRootCollectionNode()) {
-            formField.addValue(parent.getNodeID());
+            formField.addValue(parent.getUniqueIdentifier().getNodeId());
         }
 
         formField = form.addField();
@@ -1195,18 +1209,25 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public PubSubService getService()
     {
-        if (getUniqueIdentifier().getServiceIdentifier().equals( XMPPServer.getInstance().getPubSubModule().getUniqueIdentifier() ) ) {
-            return XMPPServer.getInstance().getPubSubModule();
+        if ( service == null ) {
+            if (getUniqueIdentifier().getServiceIdentifier().equals( XMPPServer.getInstance().getPubSubModule().getUniqueIdentifier() ) ) {
+                service = XMPPServer.getInstance().getPubSubModule();
+            } else {
+                final PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
+                service = serviceMgr.getPEPService(getUniqueIdentifier().getServiceIdentifier(), false);
+            }
         }
-
-        final PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-        return serviceMgr.getPEPService( getUniqueIdentifier().getServiceIdentifier(), false );
+        return service;
     }
 
     /**
-     * Returns the unique identifier for a node within the context of a pubsub service.
+     * Returns the string representation of the unique identifier for a node within the context of a pubsub service.
+     *
+     * Preferably, use #getUniqueIdentifier() instead of this method, as that gives a more type-safe value than the
+     * String instance that's returned by this method.
      *
      * @return the unique identifier for a node within the context of a pubsub service.
+     * @see #getUniqueIdentifier()
      */
     public String getNodeID() {
         return nodeID;
@@ -1536,6 +1557,21 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return the collection node that is containing this node.
      */
     public CollectionNode getParent() {
+        if ( parentIdentifier == null ) {
+            return null;
+        }
+        if ( parent == null )
+        {
+            PubSubService service = getService();
+            if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getUniqueIdentifier().equals(parentIdentifier) )
+            {
+                parent = service.getRootCollectionNode();
+            }
+            else
+            {
+                parent = (CollectionNode) service.getNode(parentIdentifier.getNodeId());
+            }
+        }
         return parent;
     }
 
@@ -1546,7 +1582,7 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public Collection<CollectionNode> getParents() {
         Collection<CollectionNode> parents = new ArrayList<>();
-        CollectionNode myParent = parent;
+        CollectionNode myParent = getParent();
         while (myParent != null) {
             parents.add(myParent);
             myParent = myParent.getParent();
@@ -1697,9 +1733,9 @@ public abstract class Node implements Cacheable, Externalizable {
 
     void setSavedToDB(boolean savedToDB) {
         this.savedToDB = savedToDB;
-        if (savedToDB && parent != null) {
+        if (savedToDB && parentIdentifier != null) {
             // Notify the parent that he has a new child :)
-            parent.addChildNode(this);
+            getParent().addChildNode(this);
         }
     }
 
@@ -1782,8 +1818,8 @@ public abstract class Node implements Cacheable, Externalizable {
             // Add the new node to the list of available nodes
             getService().addNode(this);
             // Notify the parent (if any) that a new node has been added
-            if (parent != null) {
-                parent.childNodeAdded(this);
+            if (parentIdentifier != null) {
+                getParent().childNodeAdded(this);
             }
         }
         else {
@@ -1847,7 +1883,8 @@ public abstract class Node implements Cacheable, Externalizable {
         // Delete node from the database
         PubSubPersistenceProviderManager.getInstance().getProvider().removeNode(this);
         // Remove this node from the parent node (if any)
-        if (parent != null) {
+        if (parentIdentifier != null) {
+            final CollectionNode parent = getParent();
             // Notify the parent that the node has been removed from the parent node
             if (isNotifiedOfDelete()){
                 parent.childNodeDeleted(this);
@@ -1868,7 +1905,7 @@ public abstract class Node implements Cacheable, Externalizable {
         // Remove presence subscription when node was deleted.
         cancelPresenceSubscriptions();
         // Remove the node from memory
-        getService().removeNode(getNodeID());
+        getService().removeNode(nodeID);
         CacheFactory.doClusterTask(new RemoveNodeTask(this));
         // Clear collections in memory (clear them after broadcast was sent)
         affiliates.clear();
@@ -2266,7 +2303,7 @@ public abstract class Node implements Cacheable, Externalizable {
 
     @Override
     public String toString() {
-        return super.toString() + " - ID: " + getNodeID();
+        return super.toString() + " - ID: " + nodeID;
     }
 
     /**
@@ -2486,9 +2523,9 @@ public abstract class Node implements Cacheable, Externalizable {
         util.writeBoolean( out, notifyConfigChanges );
         util.writeBoolean( out, notifyDelete );
         util.writeBoolean( out, notifyRetract );
-        util.writeBoolean( out, parent != null );
-        if (parent != null) {
-            util.writeSerializable( out, parent.getUniqueIdentifier() );
+        util.writeBoolean( out, parentIdentifier != null );
+        if (parentIdentifier != null) {
+            util.writeSerializable( out, parentIdentifier );
         }
         util.writeSafeUTF( out, payloadType );
         util.writeBoolean( out, presenceBasedDelivery );
@@ -2553,14 +2590,13 @@ public abstract class Node implements Cacheable, Externalizable {
         notifyConfigChanges = util.readBoolean( in );
         notifyDelete = util.readBoolean( in );
         notifyRetract = util.readBoolean( in );
-        final UniqueIdentifier parentId;
         if ( util.readBoolean( in ) )
         {
-            parentId = (UniqueIdentifier) util.readSerializable(in );
+            parentIdentifier = (UniqueIdentifier) util.readSerializable( in );
         }
         else
         {
-            parentId = null;
+            parentIdentifier = null;
         }
         payloadType = util.readSafeUTF( in );
         presenceBasedDelivery = util.readBoolean( in );
@@ -2590,19 +2626,6 @@ public abstract class Node implements Cacheable, Externalizable {
 
             subscriptionsByID.put( subscription.getID(), subscription );
             subscriptionsByJID.put( subscription.getJID().toString(), subscription );
-        }
-
-        if (parentId != null)
-        {
-            PubSubService service = getService();
-            if ( service.getRootCollectionNode() != null && service.getRootCollectionNode().getUniqueIdentifier().equals( parentId ) )
-            {
-                parent = service.getRootCollectionNode();
-            }
-            else
-            {
-                parent = (CollectionNode) service.getNode( parentId.getNodeId() );
-            }
         }
     }
 }

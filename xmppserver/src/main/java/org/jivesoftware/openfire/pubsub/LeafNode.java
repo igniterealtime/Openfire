@@ -331,7 +331,7 @@ public class LeafNode extends Node {
         IQ result = IQ.createResultIQ(originalRequest);
         Element pubsubElem = result.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
         Element items = pubsubElem.addElement("items");
-        items.addAttribute("node", getNodeID());
+        items.addAttribute("node", nodeID);
         
         for (PublishedItem publishedItem : publishedItems) {
             Element item = items.addElement("item");

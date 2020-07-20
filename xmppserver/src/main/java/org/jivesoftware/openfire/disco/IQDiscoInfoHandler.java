@@ -41,6 +41,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -749,6 +750,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
                         final FormField fieldAdminAddresses = dataForm.addField();
                         fieldAdminAddresses.setVariable("admin-addresses");
+                        fieldAdminAddresses.setType(Type.list_multi);
 
                         final UserManager userManager = UserManager.getInstance();
                         for ( final JID admin : admins )

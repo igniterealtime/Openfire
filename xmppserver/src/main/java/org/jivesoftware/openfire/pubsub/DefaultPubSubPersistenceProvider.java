@@ -1188,7 +1188,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     {
         log.trace( "Updating published item: {} (write to database)", item.getUniqueIdentifier() );
 
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1203,7 +1203,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         } catch (SQLException ex) {
             log.error("Published item could not be updated in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

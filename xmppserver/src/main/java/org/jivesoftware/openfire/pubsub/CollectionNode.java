@@ -27,8 +27,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
@@ -323,6 +326,17 @@ public class CollectionNode extends Node {
         // TODO Possibly use a thread pool for sending packets (based on the jids size)
         for (NodeSubscription subscription : subscriptions) {
             getService().sendNotification(subscription.getNode(), notification, subscription.getJID());
+        }
+
+        // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification
+        if ( getService() instanceof PEPService ) {
+            final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(getService().getAddress().getNode());
+            for( final ClientSession session : sessions ) {
+                getService().sendNotification(child, notification, session.getAddress());
+                for (CollectionNode parentNode : getParents()) {
+                    getService().sendNotification(parentNode, notification, session.getAddress());
+                }
+            }
         }
     }
 

@@ -475,8 +475,8 @@ public class PEPService implements PubSubService, Cacheable {
 
     /**
      * Sends an event notification for the last published item of each leaf node under the
-     * root collection node to the recipient JID. If the recipient has no subscription to
-     * the root collection node, has not yet been authorized, or is pending to be
+     * root collection node to the recipient JID. If the recipient is not the owner of this service,
+     * has no subscription to the root collection node, has not yet been authorized, or is pending to be
      * configured -- then no notifications are going to be sent.<p>
      *
      * Depending on the subscription configuration the event notifications may or may not have
@@ -490,8 +490,8 @@ public class PEPService implements PubSubService, Cacheable {
 
     /**
      * Sends an event notification for the last published item of each leaf node under the
-     * root collection node to the recipient JID. If the recipient has no subscription to
-     * the root collection node, has not yet been authorized, or is pending to be
+     * root collection node to the recipient JID. If the recipient is not the owner of this service,
+     * has no subscription to the root collection node, has not yet been authorized, or is pending to be
      * configured -- then no notifications are going to be sent.<p>
      *
      * Depending on the subscription configuration the event notifications may or may not have
@@ -504,12 +504,13 @@ public class PEPService implements PubSubService, Cacheable {
      * @param nodeIdFilter An optional filter of nodes to process (only IDs that are included in the filter are processed).
      */
     public void sendLastPublishedItems(JID recipientJID, Set<String> nodeIdFilter) {
-        // Ensure the recipient has a subscription to this service's root collection node.
+        // Ensure the recipient has a subscription to this service's root collection node, or is its owner.
+        final boolean isOwner = recipientJID.asBareJID().equals(this.serviceOwner);
         NodeSubscription subscription = rootCollectionNode.getSubscription(recipientJID);
         if (subscription == null) {
             subscription = rootCollectionNode.getSubscription(new JID(recipientJID.toBareJID()));
         }
-        if (subscription == null) {
+        if (subscription == null && !isOwner) {
             return;
         }
 
@@ -525,7 +526,7 @@ public class PEPService implements PubSubService, Cacheable {
             }
 
             // Check if the published item can be sent to the subscriber
-            if (!subscription.canSendPublicationEvent(leafLastPublishedItem.getNode(), leafLastPublishedItem)) {
+            if (subscription != null && !subscription.canSendPublicationEvent(leafLastPublishedItem.getNode(), leafLastPublishedItem)) {
                 return;
             }
 
@@ -542,13 +543,13 @@ public class PEPService implements PubSubService, Cacheable {
                 item.add(leafLastPublishedItem.getPayload().createCopy());
             }
             // Add a message body (if required)
-            if (subscription.isIncludingBody()) {
+            if (subscription != null && subscription.isIncludingBody()) {
                 notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
             }
             // Include date when published item was created
             notification.getElement().addElement("delay", "urn:xmpp:delay").addAttribute("stamp", XMPPDateTimeFormat.format(leafLastPublishedItem.getCreationDate()));
             // Send the event notification to the subscriber
-            this.sendNotification(subscription.getNode(), notification, subscription.getJID());
+            this.sendNotification(subscription != null ? subscription.getNode() : leafNode, notification, subscription != null ? subscription.getJID() : recipientJID);
         }
     }
 

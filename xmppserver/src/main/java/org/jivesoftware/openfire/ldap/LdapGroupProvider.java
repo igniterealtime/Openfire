@@ -349,6 +349,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 LdapName userDN = null;
                 // If not posix mode, each group member is stored as a full DN.
                 if (!manager.isPosixMode()) {
+                    // Create an LDAP name with the full DN.
+                    userDN = new LdapName(username);
                     try {
                         // Try to find the username with a regex pattern match.
                         Matcher matcher = pattern.matcher(username);
@@ -361,8 +363,6 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         // example, Active Directory has a username field of
                         // sAMAccountName, but stores group members as "CN=...".
                         else {
-                            // Create an LDAP name with the full DN.
-                            userDN = new LdapName(username);
                             // Turn the LDAP name into something we can use in a
                             // search by stripping off the comma.
                             StringBuilder userFilter = new StringBuilder();
@@ -444,9 +444,6 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                                 true);
                             if (userDNStr != null)
                                 userDN = new LdapName(userDNStr);
-                        } else if (userDN == null) {
-                            // Create an LDAP name with the full DN.
-                            userDN = new LdapName(username);
                         }
                         if (userDN != null && manager.isGroupDN(userDN)) {
                             isGroup = true;

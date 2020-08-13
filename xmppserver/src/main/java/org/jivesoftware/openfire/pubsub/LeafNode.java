@@ -19,16 +19,14 @@ package org.jivesoftware.openfire.pubsub;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -208,9 +206,12 @@ public class LeafNode extends Node {
 
     /**
      * Publishes the list of items to the node. Event notifications will be sent to subscribers
-     * for the new published event. The published event may or may not include an item. When the
+     * for the new published event, as well as all connected resources of the owner, in case the node
+     * is a node in a PEP service.<p>
+     *
+     * The published event may or may not include an item. When the
      * node is not persistent and does not require payloads then an item is not going to be created
-     * nore included in the event notification.<p>
+     * or included in the event notification.<p>
      *
      * When an affiliate has many subscriptions to the node, the affiliate will get a
      * notification for each set of items that affected the same list of subscriptions.<p>
@@ -218,7 +219,7 @@ public class LeafNode extends Node {
      * When an item is included in the published event then a new {@link PublishedItem} is
      * going to be created and added to the list of published item. Each published item will
      * have a unique ID in the node scope. The new published item will be added to the end
-     * of the published list to keep the cronological order. When the max number of published
+     * of the published list to keep the chronological order. When the max number of published
      * items is exceeded then the oldest published items will be removed.<p>
      *
      * For performance reasons the newly added published items and the deleted items (if any)
@@ -269,6 +270,14 @@ public class LeafNode extends Node {
                 affiliatesToNotify.add(subscription.getAffiliate());
             }
         }
+
+        // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification (pending filtering)
+        // To ensure that happens, the affiliate that represents the owner of the PEP server is added here, if it's not already present.
+        if ( getService() instanceof PEPService && affiliatesToNotify.stream().noneMatch( a -> a.getAffiliation().equals(NodeAffiliate.Affiliation.owner))) {
+            final NodeAffiliate owner = getService().getRootCollectionNode().getAffiliate( getService().getAddress() );
+            affiliatesToNotify.add(owner);
+        }
+
         // TODO Use another thread for this (if # of subscribers is > X)????
         for (NodeAffiliate affiliate : affiliatesToNotify) {
             affiliate.sendPublishedNotifications(message, event, this, newPublishedItems);
@@ -277,13 +286,11 @@ public class LeafNode extends Node {
 
     /**
      * Deletes the list of published items from the node. Event notifications may be sent to
-     * subscribers for the deleted items. When an affiliate has many subscriptions to the node,
-     * the affiliate will get a notification for each set of items that affected the same list
-     * of subscriptions.<p>
+     * subscribers for the deleted items, as well as all connected resources of the service owner,
+     * if the service is a PEP service.<p>
      *
-     * For performance reasons the deleted published items are saved to the database
-     * using a background thread. Sending event notifications to node subscribers may
-     * also use another thread to ensure good performance.<p>
+     * When an affiliate has many subscriptions to the node, the affiliate will get a notification
+     * for each set of items that affected the same list of subscriptions.<p>
      *
      * @param toDelete list of items that were deleted from the node.
      */
@@ -313,6 +320,30 @@ public class LeafNode extends Node {
             // TODO Use another thread for this (if # of subscribers is > X)????
             for (NodeAffiliate affiliate : affiliatesToNotify) {
                 affiliate.sendDeletionNotifications(message, event, this, toDelete);
+            }
+
+            // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification.
+            if ( getService() instanceof PEPService )
+            {
+                final PEPService service = (PEPService) getService();
+                Element items = event.addElement("items");
+                items.addAttribute("node", getUniqueIdentifier().getNodeId());
+                for (PublishedItem publishedItem : toDelete) {
+                    // Add retract information to the event notification
+                    Element item = items.addElement("retract");
+                    if (isItemRequired()) {
+                        item.addAttribute("id", publishedItem.getID());
+                    }
+
+                    // Send the notification
+                    final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(service.getAddress().getNode());
+                    for ( final ClientSession session : sessions ) {
+                        service.sendNotification( this, message, session.getAddress() );
+                    }
+
+                    // Remove the added items information
+                    event.remove(items);
+                }
             }
         }
     }

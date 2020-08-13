@@ -106,6 +106,8 @@ cn: admins
 uniqueMember: cn=James Bond,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=GibtEsNicht
 uniqueMember: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=cycle1,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
@@ -114,6 +116,8 @@ cn: cycle1
 uniqueMember: cn=Lasmiranda Densivillja,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Peter Silie,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=cycle2,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=cycle2,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
@@ -122,6 +126,8 @@ cn: cycle2
 uniqueMember: cn=Cool Man,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Hans Wurst,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=cycle3,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=cycle3,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
@@ -130,6 +136,8 @@ cn: cycle3
 uniqueMember: cn=cycle1,ou=groups,dc=mobikat,dc=net
 uniqueMember: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Axel Schweis,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=group1,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
@@ -137,8 +145,10 @@ objectClass: top
 cn: group1
 uniqueMember: cn=Cool Man,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Hans Wurst,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
 uniqueMember: dc=mobikat,dc=net
 uniqueMember: cn=group2,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=group2,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
@@ -146,22 +156,28 @@ objectClass: top
 cn: group2
 uniqueMember: cn=Lasmiranda Densivillja,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Peter Silie,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=group3,ou=groups,dc=mobikat,dc=net
 uniqueMember: cn=group4,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=group3,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
 objectClass: top
 cn: group3
 uniqueMember: dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Axel Schweis,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=group4,ou=groups,dc=mobikat,dc=net
 objectClass: groupOfUniqueNames
 objectClass: top
 cn: group4
 uniqueMember: dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
 uniqueMember: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
 
 dn: cn=admins,ou=possixGroups,dc=mobikat,dc=net
 objectClass: uidObject
@@ -173,6 +189,7 @@ uid: admins
 memberUid: j.bond
 memberUid: gibtEsNicht
 memberUid: j.lopez
+memberUid: notExisting
 
 dn: cn=cycle1,ou=possixGroups,dc=mobikat,dc=net
 objectClass: uidObject
@@ -184,6 +201,7 @@ uid: cycle1
 memberUid: cycle2
 memberUid: p.silie
 memberUid: l.densivillja
+memberUid: notExisting
 
 dn: cn=cycle2,ou=possixGroups,dc=mobikat,dc=net
 objectClass: uidObject
@@ -195,6 +213,7 @@ uid: cycle2
 memberUid: h.wurst
 memberUid: c.man
 memberUid: cycle3
+memberUid: notExisting
 
 dn: cn=cycle3,ou=possixGroups,dc=mobikat,dc=net
 objectClass: uidObject
@@ -206,6 +225,7 @@ uid: cycle3
 memberUid: cycle1
 memberUid: a.schweis
 memberUid: j.lopez
+memberUid: notExisting
 
 dn: cn=group1,ou=possixGroups,dc=mobikat,dc=net
 objectClass: uidObject
@@ -215,6 +235,7 @@ cn: group1
 gidNumber: 0
 uid: group1
 memberUid: c.man
+memberUid: notExisting
 memberUid: h.wurst
 memberUid: group2
 
@@ -226,6 +247,7 @@ cn: group2
 gidNumber: 0
 uid: group2
 memberUid: p.silie
+memberUid: notExisting
 memberUid: l.densivillja
 memberUid: group3
 memberUid: group4
@@ -239,6 +261,7 @@ gidNumber: 0
 uid: group3
 memberUid: a.schweis
 memberUid: mobi
+memberUid: notExisting
 
 dn: cn=group4,ou=possixGroups,dc=mobikat,dc=net
 objectClass: uidObject
@@ -248,5 +271,6 @@ cn: group4
 gidNumber: 0
 uid: group4
 memberUid: mobi
+memberUid: notExisting
 memberUid: j.lopez
 

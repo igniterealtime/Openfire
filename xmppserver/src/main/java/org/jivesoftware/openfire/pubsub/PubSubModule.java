@@ -409,7 +409,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
             leafDefaultConfiguration.setDeliverPayloads(true);
             leafDefaultConfiguration.setLanguage("English");
-            leafDefaultConfiguration.setMaxPayloadSize(5120);
+            leafDefaultConfiguration.setMaxPayloadSize(10 * 1024 * 1024); // Probably should not be larger than the max read buffer for stanzas!);
             leafDefaultConfiguration.setNotifyConfigChanges(true);
             leafDefaultConfiguration.setNotifyDelete(true);
             leafDefaultConfiguration.setNotifyRetract(true);

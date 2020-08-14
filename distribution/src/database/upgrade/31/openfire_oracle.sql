@@ -2,7 +2,7 @@
 -- Oracle doesn't allow for a data type change. We'll create a new column, then rename it to replace the existing one.
 ALTER TABLE ofPubsubItem ADD ( temp clob NULL );
 UPDATE ofPubsubItem SET temp=payload, payload=null;
-ALTER TABLE ofPubsubItem DROP COLUMN y;
+ALTER TABLE ofPubsubItem DROP COLUMN payload;
 ALTER TABLE ofPubsubItem RENAME COLUMN temp TO payload;
 
 -- OF-2061: Update the default configuration for leaf nodes of PEP services (those with a serviceID that contain the '@' symbol) to ensure that items are persisted.

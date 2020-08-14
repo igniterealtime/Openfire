@@ -1349,7 +1349,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
         try
         {
-            log.debug( "Try to add the pending items as a dtabase batch." );
+            log.debug( "Try to add the pending items as a database batch." );
             removePublishedItems( con, delList, true ); // delete first (to remove possible duplicates), then add new items
             savePublishedItems( con, addList, true );
         }

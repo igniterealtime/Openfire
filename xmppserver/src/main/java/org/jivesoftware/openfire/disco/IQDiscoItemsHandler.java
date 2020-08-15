@@ -48,6 +48,7 @@ import java.io.ObjectOutput;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * IQDiscoItemsHandler is responsible for handling disco#items requests. This class holds a map with
@@ -570,6 +571,14 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             element = (Element) ExternalizableUtil.getInstance().readSerializable(in);
             ExternalizableUtil.getInstance().readExternalizableCollection(in, nodes, getClass().getClassLoader());
+        }
+
+        @Override
+        public String toString()
+        {
+            return "ClusteredServerItem{" +
+                "nodes=" + nodes.stream().map(NodeID::toString).collect(Collectors.joining(", ")) +
+                '}';
         }
     }
 

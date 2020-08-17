@@ -648,11 +648,13 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Answer features of the server itself.
                     final Set<String> result = new HashSet<>(serverFeatures.keySet());
 
-                    if ( !XMPPServer.getInstance().isLocal( senderJID ) || !UserManager.getInstance().isRegisteredUser( senderJID ) ) {
-                        // Remove features not available to users from other servers or anonymous users.
-                        // TODO this should be determined dynamically.
-                        result.remove(IQPrivateHandler.NAMESPACE);
-                        result.remove(IQBlockingHandler.NAMESPACE);
+                    if ( senderJID != null ) {
+                        if ( !XMPPServer.getInstance().isLocal( senderJID ) || !UserManager.getInstance().isRegisteredUser( senderJID ) ) {
+                            // Remove features not available to users from other servers or anonymous users.
+                            // TODO this should be determined dynamically.
+                            result.remove(IQPrivateHandler.NAMESPACE);
+                            result.remove(IQBlockingHandler.NAMESPACE);
+                        }
                     }
                     return result.iterator();
                 }

@@ -132,6 +132,7 @@ public class CacheFactory {
         cacheNames.put("Routing Users Cache", "routeUser");
         cacheNames.put("Routing AnonymousUsers Cache", "routeAnonymousUser");
         cacheNames.put("Routing User Sessions", "routeUserSessions");
+        cacheNames.put("Routing Result Listeners", "routeResultListeners");
         cacheNames.put("Components", "components");
         cacheNames.put("Components Sessions", "componentsSessions");
         cacheNames.put("Connection Managers Sessions", "connManagerSessions");
@@ -195,6 +196,8 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "routeAnonymousUser" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "routeUserSessions" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "routeUserSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeResultListeners" + PROPERTY_SUFFIX_SIZE, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "routeResultListeners" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "components" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "components" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "componentsSessions" + PROPERTY_SUFFIX_SIZE, -1L);

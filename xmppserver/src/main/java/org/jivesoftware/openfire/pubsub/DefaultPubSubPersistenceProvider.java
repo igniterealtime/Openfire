@@ -1165,7 +1165,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     {
         log.trace( "Creating published item: {} (write to database)", item.getUniqueIdentifier() );
 
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1180,7 +1180,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         } catch (SQLException ex) {
             log.error("Published item could not be created in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1243,7 +1243,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removePublishedItem(PublishedItem item) {
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1255,7 +1255,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         } catch (SQLException ex) {
             log.error("Failed to delete published item from DB: {}", item.getUniqueIdentifier(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

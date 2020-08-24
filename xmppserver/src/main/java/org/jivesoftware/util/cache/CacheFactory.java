@@ -876,13 +876,12 @@ public class CacheFactory {
     @SuppressWarnings("unchecked")
     public static synchronized void joinedCluster() {
         cacheFactoryStrategy = clusteredCacheFactoryStrategy;
-        // Loop through local caches and switch them to clustered cache (copy content)
+        // Loop through local caches and switch them to clustered cache (purge content)
         Arrays.stream(getAllCaches())
             .filter(CacheFactory::isClusterableCache)
             .forEach(cache -> {
                 final CacheWrapper cacheWrapper = ((CacheWrapper) cache);
                 final Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-                clusteredCache.putAll(cache);
                 cacheWrapper.setWrappedCache(clusteredCache);
             });
         clusteringStarting = false;
@@ -898,13 +897,12 @@ public class CacheFactory {
         clusteringStarted = false;
         cacheFactoryStrategy = localCacheFactoryStrategy;
 
-        // Loop through clustered caches and change them to local caches (copy content)
+        // Loop through clustered caches and change them to local caches (purge content)
         Arrays.stream(getAllCaches())
             .filter(CacheFactory::isClusterableCache)
             .forEach(cache -> {
                 final CacheWrapper cacheWrapper = ((CacheWrapper) cache);
                 final Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
-                standaloneCache.putAll(cache);
                 cacheWrapper.setWrappedCache(standaloneCache);
             });
         log.info("Clustering stopped; cache migration complete");

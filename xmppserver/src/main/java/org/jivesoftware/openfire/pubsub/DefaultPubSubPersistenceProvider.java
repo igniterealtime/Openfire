@@ -58,12 +58,12 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
 			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
 			"ofPubsubItem.serviceID = ? AND nodeID = ?";
-    
+
     private static final String PURGE_FOR_SIZE_ORACLE =
             "DELETE from ofPubsubItem where id in " +
             "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
-            "(SELECT * from (SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
-            "ORDER BY creationDate DESC) where rownum < ? order by rownum) noDelete " +
+            "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC FETCH FIRST ? ROWS ONLY) noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
             "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
 

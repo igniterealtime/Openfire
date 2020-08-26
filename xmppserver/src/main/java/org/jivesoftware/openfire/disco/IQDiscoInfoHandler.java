@@ -456,6 +456,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was gained by joining
+        // the cluster (eg: new server features provided by other cluster nodes now available to the local cluster node):
+        // the only cache that's being used in this implementation does not have an associated event listening mechanism
+        // when data is added to or removed from it.
     }
 
     @Override
@@ -478,6 +483,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
+        // the cluster (eg: server features provided only by other cluster nodes, now unavailable to the local cluster
+        // node): the only cache that's being used in this implementation does not have an associated event listening
+        // mechanism when data is added to or removed from it.
     }
 
     @Override

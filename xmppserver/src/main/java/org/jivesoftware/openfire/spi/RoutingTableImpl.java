@@ -1106,6 +1106,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Simulate that current session presence has just been received
             presenceUpdateHandler.process(session.getPresence());
         }
+        // TODO the above also (re)generates events on the local node, where these events had already occurred. Ideally, that should not happen.
+
+        // TODO shouldn't a similar action be done on the other nodes, so that the node that just joined gets informed about all sessions living on other cluster nodes?
     }
 
     @Override
@@ -1129,7 +1132,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        // TODO all clients on other nodes are now unavailable!
+        // TODO all clients on other nodes are now unavailable! Send out the appropriate presence updates/events
     }
 
     @Override

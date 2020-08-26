@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.Presence;
 
@@ -44,6 +46,7 @@ public class ClientSessionInfo implements Externalizable {
     private boolean offlineFloodStopped;
     private boolean messageCarbonsEnabled;
     private boolean hasRequestedBlocklist;
+    private NodeID nodeID;
 
     public ClientSessionInfo() {
     }
@@ -55,6 +58,7 @@ public class ClientSessionInfo implements Externalizable {
         offlineFloodStopped = session.isOfflineFloodStopped();
         messageCarbonsEnabled = session.isMessageCarbonsEnabled();
         hasRequestedBlocklist=session.hasRequestedBlocklist();
+        nodeID = XMPPServer.getInstance().getNodeID();
     }
 
     public Presence getPresence() {
@@ -79,6 +83,10 @@ public class ClientSessionInfo implements Externalizable {
     
     public boolean isMessageCarbonsEnabled() { return messageCarbonsEnabled; }
 
+    public NodeID getNodeID() {
+        return nodeID;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
@@ -93,6 +101,7 @@ public class ClientSessionInfo implements Externalizable {
         ExternalizableUtil.getInstance().writeBoolean(out, offlineFloodStopped);
         ExternalizableUtil.getInstance().writeBoolean(out, messageCarbonsEnabled);    
         ExternalizableUtil.getInstance().writeBoolean(out, hasRequestedBlocklist);
+        ExternalizableUtil.getInstance().writeSerializable(out, nodeID);
     }
 
     @Override
@@ -108,5 +117,6 @@ public class ClientSessionInfo implements Externalizable {
         offlineFloodStopped = ExternalizableUtil.getInstance().readBoolean(in);
         messageCarbonsEnabled = ExternalizableUtil.getInstance().readBoolean(in);
         hasRequestedBlocklist = ExternalizableUtil.getInstance().readBoolean(in);
+        nodeID = (NodeID) ExternalizableUtil.getInstance().readSerializable(in);
     }
 }

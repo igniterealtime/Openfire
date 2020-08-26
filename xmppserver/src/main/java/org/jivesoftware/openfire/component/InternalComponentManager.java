@@ -659,13 +659,13 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
     @Override
     public void joinedCluster()
     {
-        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
-        final NodeID defaultNodeID = XMPPServer.getInstance().getDefaultNodeID();
-        final NodeID nodeID = XMPPServer.getInstance().getNodeID();
-        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
-        {
-            CacheUtil.replaceValueInMultivaluedCache( componentCache, defaultNodeID, nodeID );
-        }
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
+        restoreCacheContent();
 
         // We joined a cluster. Determine what components run on other nodes,
         // and raise events for those that are not running on this node.
@@ -673,18 +673,18 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
         // would already have had events when the components became available to
         // them.
         componentCache.entrySet().stream()
-            .filter( entrySet -> !entrySet.getValue().contains( nodeID ) )
+            .filter( entrySet -> !entrySet.getValue().contains( XMPPServer.getInstance().getNodeID() ) )
             .forEach( entry -> {
                 Log.debug( "The local cluster node joined the cluster. The component '{}' is living on one (or more) other cluster nodes, but not ours. Invoking the 'component registered' event, and requesting service info.", entry.getKey());
                 notifyComponentRegistered( entry.getKey() );
                 // Request one of the cluster nodes to sent us a NotifyComponentInfo instance. This async request does not block the current thread, and will update the instance eventually, after which notifications are sent out.
-                CacheFactory.doClusterTask( new RequestComponentInfoNotification( entry.getKey(), nodeID ), entry.getValue().iterator().next().toByteArray() );
+                CacheFactory.doClusterTask( new RequestComponentInfoNotification( entry.getKey(), XMPPServer.getInstance().getNodeID() ), entry.getValue().iterator().next().toByteArray() );
             } );
 
         // Additionally, let other cluster nodes know about the components that the local
         // node offers, to allow them to raise events if needed.
         componentCache.entrySet().stream()
-            .filter( entrySet -> entrySet.getValue().contains( nodeID ) && entrySet.getValue().size() == 1 )
+            .filter( entrySet -> entrySet.getValue().contains( XMPPServer.getInstance().getNodeID() ) && entrySet.getValue().size() == 1 )
             .map( Map.Entry::getKey )
             .forEach( componentJID -> {
                 Log.debug( "The local cluster node joined the cluster. The component '{}' is living on our cluster node, but not on any others. Invoking the 'component registered' (and if applicable, the 'component info received') event on the remote nodes.", componentJID );
@@ -708,29 +708,35 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
     @Override
     public void leftCluster()
     {
-        // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
-        final NodeID defaultNodeID = XMPPServer.getInstance().getDefaultNodeID();
-        final NodeID nodeID = XMPPServer.getInstance().getNodeID();
-        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
-        {
-            CacheUtil.replaceValueInMultivaluedCache( componentCache, nodeID, defaultNodeID );
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
         }
 
-        // The local cluster node left the cluster.
-        //
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
         // Determine what components that we are broadcasting were available only on other
         // cluster nodes than the local one. For these, unavailability events need
         // to be sent out (eventing will be limited to the local node, as we're no longer
         // part of a cluster).
-        final Map<Boolean, Map<JID, HashSet<NodeID>>> modified = CacheUtil.retainValueInMultiValuedCache( componentCache, defaultNodeID );
+        final Iterator<Map.Entry<String, IQ>> iterator = componentInfo.entrySet().iterator();
+        while (iterator.hasNext()) {
+            // TODO: Iterating over the 'componentInfo' is not ideal, as there might be components for which there is no recorded data in 'componentInfo'. There currently is no other way to determine what components were active on the cluster though.
+            final Map.Entry<String, IQ> entry = iterator.next();
+            final JID domain = new JID(entry.getKey());
+            if ( !componentCache.containsKey( domain ) ) {
+                Log.debug( "The local cluster node left the cluster. The component '{}' was living on one (or more) other cluster nodes, and is no longer available. Invoking the 'component unregistered' event.", domain );
+                notifyComponentUnregistered( domain );
 
-        modified.get( false ).keySet().forEach( removedDomain -> {
-            Log.debug( "The local cluster node left the cluster. The component '{}' was living on one (or more) other cluster nodes, and is no longer available. Invoking the 'component unregistered' event.", removedDomain );
-            notifyComponentUnregistered( removedDomain );
-
-            // Also clean up the cache of cluster-wide service discovery results.
-            componentInfo.remove( removedDomain.toString() );
-        } );
+                // Also clean up the cache of cluster-wide service discovery results.
+                iterator.remove();
+            }
+        }
     }
 
     @Override
@@ -746,28 +752,48 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
         // For these, 'component unavailable' events need to be sent out. If the cluster
         // node exited cleanly, we won't find any entries to work on. If it did not
         // exit cleanly, all remaining cluster nodes will be in a race to clean up the
-        // same data. The implementation below accounts for that, by being thread- and
-        // cluster safe.
-        final Map<Boolean, Map<JID, HashSet<NodeID>>> modified = CacheUtil.removeValueFromMultiValuedCache( componentCache, NodeID.getInstance( nodeID ) );
+        // same data. The implementation below accounts for that, by only having the
+        // senior cluster node to perform the cleanup.
+        if (ClusterManager.isSeniorClusterMember())
+        {
+            final Map<Boolean, Map<JID, HashSet<NodeID>>> modified = CacheUtil.removeValueFromMultiValuedCache(componentCache, NodeID.getInstance(nodeID));
 
-        modified.get( false ).keySet().forEach( removedDomain -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which component '{}' was living. Invoking the 'component unregistered' event on all remaining cluster nodes.", NodeID.getInstance( nodeID ), removedDomain );
-            notifyComponentUnregistered( removedDomain );
+            modified.get(false).keySet().forEach(removedDomain -> {
+                Log.debug("Cluster node {} just left the cluster, and was the only node on which component '{}' was living. Invoking the 'component unregistered' event on all remaining cluster nodes.",
+                          NodeID.getInstance(nodeID),
+                          removedDomain);
+                notifyComponentUnregistered(removedDomain);
 
-            // As we have removed the disappeared components from the clustered cache, other nodes
-            // can no longer determine what components became unavailable. We'll need to broadcast
-            // the unavailable event over the entire cluster!
-            CacheFactory.doClusterTask( new NotifyComponentUnregistered( removedDomain ) );
+                // As we have removed the disappeared components from the clustered cache, other nodes
+                // can no longer determine what components became unavailable. We'll need to broadcast
+                // the unavailable event over the entire cluster!
+                CacheFactory.doClusterTask(new NotifyComponentUnregistered(removedDomain));
 
-            // Also clean up the cache of cluster-wide service discovery results.
-            componentInfo.remove( removedDomain.toString() );
-        } );
+                // Also clean up the cache of cluster-wide service discovery results.
+                componentInfo.remove(removedDomain.toString());
+            });
+        }
     }
 
     @Override
     public void markedAsSeniorClusterMember()
     {
         // No action needed.
+    }
+
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
+    private void restoreCacheContent() {
+        Log.trace( "Restoring cache content for cache '{}' by adding all component domains that are provided by the local cluster node.", componentCache.getName() );
+        routingTable.getComponentsDomains().stream()
+            .map(JID::new)
+            .filter(domain -> routingTable.isLocalRoute(domain))
+            .forEach(domain -> CacheUtil.addValueToMultiValuedCache( componentCache, domain, XMPPServer.getInstance().getNodeID(), HashSet::new ) );
     }
 
     /**

@@ -562,13 +562,67 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
     @Override
     public void joinedCluster() {
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+    }
+
+    @Override
+    public void joinedCluster(byte[] nodeID) {
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
+    }
+
+    @Override
+    public void leftCluster() {
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
+        }
+
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+    }
+
+    @Override
+    public void leftCluster(byte[] nodeID) {
+        // Another node left the cluster.
+
+        // Do nothing
+
+        // TODO: figure out how/if the directed presences that were provided by the node that left is cleaned up from the cache. Is it needed at all?
+    }
+
+    @Override
+    public void markedAsSeniorClusterMember() {
+        // Do nothing
+    }
+
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
+    private void restoreCacheContent() {
+        Log.trace( "Restoring cache content for cache '{}' by adding all directed presences that are provided by the local cluster node.", directedPresencesCache.getName() );
+
         // Populate directedPresencesCache with local content since when not in a cluster
         // we could still send directed presences to entities that when connected to a cluster
         // they will be replicated. An example would be MUC rooms.
         for (Map.Entry<String, ConcurrentLinkedQueue<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
             if (entry.getValue().isEmpty()) {
-                Log.warn("PresenceUpdateHandler - Skipping empty directed presences when joining cluster for sender: " +
-                        entry.getKey());
+                Log.warn("Skipping empty directed presences when joining cluster for sender: {}", entry.getKey());
                 continue;
             }
 
@@ -577,7 +631,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             // one go. We should first make sure that this doesn't lead to
             // deadlocks though! The tryLock() mechanism could be used to first
             // try one approach, but fall back on the other approach.
-            Lock lock = CacheFactory.getLock(entry.getKey(), directedPresencesCache);
+            Lock lock = directedPresencesCache.getLock(entry.getKey());
             try {
                 lock.lock();
                 directedPresencesCache.put(entry.getKey(), entry.getValue());
@@ -585,49 +639,5 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 lock.unlock();
             }
         }
-    }
-
-    @Override
-    public void joinedCluster(byte[] nodeID) {
-        // Do nothing
-    }
-
-    @Override
-    public void leftCluster() {
-        if (!XMPPServer.getInstance().isShuttingDown()) {
-            // Populate directedPresencesCache with local content
-            for (Map.Entry<String, ConcurrentLinkedQueue<DirectedPresence>> entry : localDirectedPresences.entrySet()) {
-                if (entry.getValue().isEmpty()) {
-                    Log.warn(
-                            "PresenceUpdateHandler - Skipping empty directed presences when leaving cluster for sender: " +
-                                    entry.getKey());
-                    continue;
-                }    
-
-                
-                // TODO perhaps we should not lock for every entry. Instead, lock it
-                // once (using a LOCK_ALL global key), and handle iterations in
-                // one go. We should first make sure that this doesn't lead to
-                // deadlocks though! The tryLock() mechanism could be used to first
-                // try one approach, but fall back on the other approach.
-                Lock lock = CacheFactory.getLock(entry.getKey(), directedPresencesCache);
-                try {
-                    lock.lock();
-                    directedPresencesCache.put(entry.getKey(), entry.getValue());
-                } finally {
-                    lock.unlock();
-                }
-            }
-        }
-    }
-
-    @Override
-    public void leftCluster(byte[] nodeID) {
-        // Do nothing
-    }
-
-    @Override
-    public void markedAsSeniorClusterMember() {
-        // Do nothing
     }
 }

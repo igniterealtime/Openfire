@@ -42,6 +42,18 @@
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterEventListener" %>
 <%@ page import="java.util.concurrent.Semaphore" %>
 <%@ page import="java.util.concurrent.TimeUnit" %>
+<%@ page import="org.jivesoftware.openfire.cluster.GetClusteredVersions" %>
+<%@ page import="org.jivesoftware.openfire.cluster.NodeID" %>
+<%@ page import="java.util.HashMap" %>
+<%@ page import="com.google.common.collect.Table" %>
+<%@ page import="com.google.common.collect.HashBasedTable" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="java.util.TreeSet" %>
+<%@ page import="java.util.Collections" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Comparator" %>
+<%@ page import="java.util.Objects" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -158,7 +170,9 @@
     int maxClusterNodes = ClusterManager.getMaxClusterNodes();
     clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 
-    Collection<ClusterNodeInfo> clusterNodesInfo = ClusterManager.getNodesInfo();
+    final List<ClusterNodeInfo> clusterNodesInfo = new ArrayList<>(ClusterManager.getNodesInfo());
+    // Sort them so they are always consistent in order
+    clusterNodesInfo.sort((o1, o2) -> o1.getHostName().compareTo(o2.getHostName()));
     // Get some basic statistics from the cluster nodes
     // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
     Collection<Map<String, Object>> statistics =
@@ -189,6 +203,28 @@
         percentage = outgoing == 0 ? 0 : current * 100 / outgoing;
         statsMap.put(GetBasicStatistics.OUTGOING, current + " (" + Math.round(percentage) + "%)");
     }
+    // Note; if any one node in the cluster does not have the GetClusterVersions task, running
+    // CacheFactory.doSynchronousClusterTask() on all nodes will return an empty collection. For
+    // that reason, run the task on each node individually.
+    final Table<NodeID, String, String> pluginVersions = HashBasedTable.create();
+    final Set<String> plugins = new TreeSet<>();
+    clusterNodesInfo.forEach(clusterNodeInfo -> {
+        final NodeID nodeID = clusterNodeInfo.getNodeID();
+        final GetClusteredVersions clusteredVersions = CacheFactory.doSynchronousClusterTask(
+            new GetClusteredVersions(), nodeID.toByteArray());
+        if (clusteredVersions != null) {
+            pluginVersions.put(nodeID, "Openfire", clusteredVersions.getOpenfireVersion());
+            clusteredVersions.getPluginVersions().forEach((pluginName, pluginVersion) -> {
+                plugins.add(pluginName);
+                pluginVersions.put(nodeID, pluginName, pluginVersion);
+            });
+        }
+    });
+    pageContext.setAttribute("localNodeID", XMPPServer.getInstance().getNodeID());
+    pageContext.setAttribute("pluginVersions", pluginVersions);
+    pageContext.setAttribute("plugins", plugins);
+    pageContext.setAttribute("clusteringStarted", CacheFactory.isClusteringStarted());
+    pageContext.setAttribute("clusterNodesInfo", clusterNodesInfo);
 %>
 
 <p>
@@ -449,6 +485,48 @@
         </table>
 </div>
 
-
+<c:if test="${clusteringStarted}">
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="system.clustering.versions.label"/>
+    </div>
+    <div class="jive-contentBox">
+        <table style="white-space: nowrap; padding: 3px; border-spacing: 2px; border-collapse: collapse">
+            <thead>
+            <tr>
+                <th style="width: 1%"></th>
+                <th style="width: 1%"><fmt:message key="short.title"/></th>
+                <c:forEach items="${plugins}" var="plugin">
+                    <th style="width: 1%"><c:out value="${plugin}"/></th>
+                </c:forEach>
+            </tr>
+            </thead>
+            <tbody>
+            <!--@elvariable id="clusterNodeInfo" type="org.jivesoftware.openfire.cluster.ClusterNodeInfo>"-->
+            <c:forEach items="${clusterNodesInfo}" var="clusterNodeInfo">
+                <tr <c:if test="${localNodeID == clusterNodeInfo.nodeID}">class="local"</c:if>
+                    style="vertical-align:middle">
+                    <th style="width: 1%">
+                        <c:out value="${clusterNodeInfo.hostName}"/>
+                    </th>
+                    <td class="jive-description" style="width: 1%">
+                        <c:out value="${pluginVersions.get(clusterNodeInfo.nodeID, 'Openfire')}"/>
+                        <c:if test="${pluginVersions.get(localNodeID, 'Openfire') != pluginVersions.get(clusterNodeInfo.nodeID, 'Openfire')}">
+                            <img src="images/warning-16x16.gif" width="16" height="16" alt="Warning">
+                        </c:if>
+                    </td>
+                    <c:forEach items="${plugins}" var="plugin">
+                        <td class="jive-description" style="width: 1%">
+                            <c:out value="${pluginVersions.get(clusterNodeInfo.nodeID, plugin)}"/>
+                            <c:if test="${pluginVersions.get(localNodeID, plugin) != pluginVersions.get(clusterNodeInfo.nodeID, plugin)}">
+                                <img src="images/warning-16x16.gif" width="16" height="16" alt="Warning">
+                            </c:if>
+                        </td>
+                    </c:forEach>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </div>
+</c:if>
 </body>
 </html>

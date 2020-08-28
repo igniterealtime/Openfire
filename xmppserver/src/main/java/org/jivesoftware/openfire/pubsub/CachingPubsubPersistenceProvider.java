@@ -648,11 +648,11 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         // try to fetch from cache first without locking
         PublishedItem result = itemCache.get(itemIdentifier);
         if (result == null) {
-            Lock itemLock = CacheFactory.getLock( ITEM_CACHE, itemCache);
+            Lock itemLock = itemCache.getLock( itemIdentifier );
+            itemLock.lock();
             try {
                 // Acquire lock, then re-check cache before reading from DB;
                 // allows clustered item cache to be primed by first request
-                itemLock.lock();
                 result = itemCache.get(itemIdentifier);
                 if (result == null) {
                     log.debug("No cached item found. Obtaining it from delegate.");

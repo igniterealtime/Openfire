@@ -505,9 +505,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Keep track of the nodeID hosting the incoming server session
         incomingServerSessionsCache.put(streamID, server.getNodeID());
         // Update list of sockets/sessions coming from the same remote hostname
-        Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
+        Lock lock = hostnameSessionsCache.getLock(hostname);
+        lock.lock();
         try {
-            lock.lock();
             ArrayList<StreamID> streamIDs = hostnameSessionsCache.get(hostname);
             if (streamIDs == null) {
                 streamIDs = new ArrayList<>();
@@ -519,9 +519,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             lock.unlock();
         }
         // Add to clustered cache
-        lock = CacheFactory.getLock(streamID, validatedDomainsCache);
+        lock = validatedDomainsCache.getLock(streamID);
+        lock.lock();
         try {
-            lock.lock();
             HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
             if (validatedDomains == null) {
                 validatedDomains = new HashSet<>();
@@ -594,9 +594,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @return domains, subdomains and virtual hosts that where validated.
      */
     public Collection<String> getValidatedDomains(StreamID streamID) {
-        Lock lock = CacheFactory.getLock(streamID, validatedDomainsCache);
+        Lock lock = validatedDomainsCache.getLock(streamID);
+        lock.lock();
         try {
-            lock.lock();
             Set<String> validatedDomains = validatedDomainsCache.get(streamID);
             if (validatedDomains == null) {
                 return Collections.emptyList();
@@ -906,9 +906,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public List<IncomingServerSession> getIncomingServerSessions(String hostname) {
         List<StreamID> streamIDs;
         // Get list of sockets/sessions coming from the remote hostname
-        Lock lock = CacheFactory.getLock(hostname, hostnameSessionsCache);
+        Lock lock = hostnameSessionsCache.getLock(hostname);
+        lock.lock();
         try {
-            lock.lock();
             streamIDs = hostnameSessionsCache.get(hostname);
         }
         finally {

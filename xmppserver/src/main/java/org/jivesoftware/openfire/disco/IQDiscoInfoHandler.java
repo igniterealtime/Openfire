@@ -393,9 +393,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void addServerFeature(String namespace) {
         if (localServerFeatures.add(namespace)) {
-            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
+            Lock lock = serverFeatures.getLock(namespace);
+            lock.lock();
             try {
-                lock.lock();
                 HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs == null) {
                     nodeIDs = new HashSet<>();
@@ -417,9 +417,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void removeServerFeature(String namespace) {
         if (localServerFeatures.remove(namespace)) {
-            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
+            Lock lock = serverFeatures.getLock(namespace);
+            lock.lock();
             try {
-                lock.lock();
                 HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs != null) {
                     nodeIDs.remove(XMPPServer.getInstance().getNodeID());

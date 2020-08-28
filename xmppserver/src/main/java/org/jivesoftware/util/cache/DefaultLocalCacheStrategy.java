@@ -136,7 +136,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         return new LocalLock(lockKey);
     }
 
-    private void acquireLock(Object key) {
+    @SuppressWarnings( "LockAcquiredButNotSafelyReleased" )
+    private void acquireLock( Object key) {
         ReentrantLock lock = lookupLockForAcquire(key);
         lock.lock();
     }

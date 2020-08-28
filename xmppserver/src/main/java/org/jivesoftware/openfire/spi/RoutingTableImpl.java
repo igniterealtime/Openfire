@@ -144,8 +144,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addServerRoute(DomainPair address, LocalOutgoingServerSession destination) {
         localRoutingTable.addRoute(address, destination);
         Lock lock = serversCache.getLock(address);
+        lock.lock();
         try {
-            lock.lock();
             serversCache.put(address, server.getNodeID());
         }
         finally {
@@ -159,8 +159,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         String address = route.getDomain();
         localRoutingTable.addRoute(pair, destination);
         Lock lock = componentsCache.getLock(address);
+        lock.lock();
         try {
-            lock.lock();
             HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
                 nodes = new HashSet<>();
@@ -180,8 +180,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
         if (destination.getAuthToken().isAnonymous()) {
             Lock lockAn = anonymousUsersCache.getLock(route.toString());
+            lockAn.lock();
             try {
-                lockAn.lock();
                 added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) ==
                         null;
             }
@@ -191,8 +191,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
                 Lock lock = usersSessions.getLock(route.toBareJID());
+                lock.lock();
                 try {
-                    lock.lock();
                     usersSessions.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
                 }
                 finally {
@@ -202,8 +202,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         else {
             Lock lockU = usersCache.getLock(route.toString());
+            lockU.lock();
             try {
-                lockU.lock();
                 added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
             }
             finally {
@@ -212,8 +212,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
                 Lock lock = usersSessions.getLock(route.toBareJID());
+                lock.lock();
                 try {
-                    lock.lock();
                     HashSet<String> jids = usersSessions.get(route.toBareJID());
                     if (jids == null) {
                         jids = new HashSet<>();
@@ -901,8 +901,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
                 Lock lock = usersSessions.getLock(route.toBareJID());
+                lock.lock(); // temporarily block new sessions for this JID
                 try {
-                    lock.lock(); // temporarily block new sessions for this JID
                     Collection<String> sessions = usersSessions.get(route.toBareJID());
                     if (sessions != null) {
                         // Select only available sessions
@@ -942,8 +942,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         String address = route.toString();
         ClientRoute clientRoute;
         Lock lockU = usersCache.getLock(address);
+        lockU.lock();
         try {
-            lockU.lock();
             clientRoute = usersCache.remove(address);
         }
         finally {
@@ -951,8 +951,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         if (clientRoute == null) {
             Lock lockA = anonymousUsersCache.getLock(address);
+            lockA.lock();
             try {
-                lockA.lock();
                 clientRoute = anonymousUsersCache.remove(address);
                 anonymous = true;
             }
@@ -962,8 +962,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         if (clientRoute != null && route.getResource() != null) {
             Lock lock = usersSessions.getLock(route.toBareJID());
+            lock.lock();
             try {
-                lock.lock();
                 if (anonymous) {
                     usersSessions.remove(route.toBareJID());
                 }
@@ -993,8 +993,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeServerRoute(DomainPair route) {
         boolean removed;
         Lock lock = serversCache.getLock(route);
+        lock.lock();
         try {
-            lock.lock();
             removed = serversCache.remove(route) != null;
         }
         finally {
@@ -1019,8 +1019,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         String address = route.getDomain();
         boolean removed = false;
         Lock lock = componentsCache.getLock(address);
+        lock.lock();
         try {
-            lock.lock();
             HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes != null) {
                 removed = nodes.remove(nodeID);

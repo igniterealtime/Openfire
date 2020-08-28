@@ -363,9 +363,9 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param name the discovered name of the component.
      */
     public void addComponentItem(String jid, String node, String name) {
-        Lock lock = CacheFactory.getLock(jid, serverItems);
+        Lock lock = serverItems.getLock(jid);
+        lock.lock();
         try {
-            lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
             if (item == null) {
                 // First time a node registers a server item for this component
@@ -399,9 +399,9 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             // Safety check
             return;
         }
-        Lock lock = CacheFactory.getLock(jid, serverItems);
+        Lock lock = serverItems.getLock(jid);
+        lock.lock();
         try {
-            lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
             if (item != null && item.nodes.remove(XMPPServer.getInstance().getNodeID())) {
                 // Update the cache with latest info
@@ -502,9 +502,9 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             NodeID leftNode = NodeID.getInstance(nodeID);
             for (Map.Entry<String, ClusteredServerItem> entry : serverItems.entrySet()) {
                 String jid = entry.getKey();
-                Lock lock = CacheFactory.getLock(jid, serverItems);
+                Lock lock = serverItems.getLock(jid);
+                lock.lock();
                 try {
-                    lock.lock();
                     ClusteredServerItem item = entry.getValue();
                     if (item.nodes.remove(leftNode)) {
                         // Update the cache with latest info
@@ -541,8 +541,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             String jid = entry.getKey();
             Element element = entry.getValue();
             Lock lock = serverItems.getLock(jid);
+            lock.lock();
             try {
-                lock.lock();
                 ClusteredServerItem item = serverItems.get(jid);
                 if (item == null) {
                     // First time a node registers a server item for this component

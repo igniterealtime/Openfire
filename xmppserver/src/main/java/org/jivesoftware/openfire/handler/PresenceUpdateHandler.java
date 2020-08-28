@@ -380,9 +380,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             }
             if (keepTrack) {
                 String sender = update.getFrom().toString();
-                Lock lock = CacheFactory.getLock(sender, directedPresencesCache);
+                Lock lock = directedPresencesCache.getLock(sender);
+                lock.lock();
                 try {
-                    lock.lock();
                     ConcurrentLinkedQueue<DirectedPresence> directedPresences = directedPresencesCache.get(sender);
                     if (Presence.Type.unavailable.equals(update.getType())) {
                         if (directedPresences != null) {
@@ -473,9 +473,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             // Remove the registry of directed presences of this user
             Collection<DirectedPresence> directedPresences = null;
             
-            Lock lock = CacheFactory.getLock(from.toString(), directedPresencesCache);
+            Lock lock = directedPresencesCache.getLock(from.toString());
+            lock.lock();
             try {
-                lock.lock();
                 directedPresences = directedPresencesCache.remove(from.toString());
             } finally {
                 lock.unlock();
@@ -642,8 +642,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             // deadlocks though! The tryLock() mechanism could be used to first
             // try one approach, but fall back on the other approach.
             Lock lock = directedPresencesCache.getLock(entry.getKey());
+            lock.lock();
             try {
-                lock.lock();
                 directedPresencesCache.put(entry.getKey(), entry.getValue());
             } finally {
                 lock.unlock();

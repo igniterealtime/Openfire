@@ -7,10 +7,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -35,6 +32,7 @@ import static org.mockito.Mockito.doReturn;
  *
  * @author Marcel Heckel, 2019
  */
+@Ignore("See OF-2070: Tests in this class give inconsistent results.")
 @RunWith(MockitoJUnitRunner.class)
 public class FlattenNestedGroupsTest {
 

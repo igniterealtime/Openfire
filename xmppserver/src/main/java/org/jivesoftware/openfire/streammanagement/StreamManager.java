@@ -288,9 +288,9 @@ public class StreamManager {
         }
         final JID fullJid;
         if ( authToken.isAnonymous() ){
-            fullJid = new JID(resource, authToken.getDomain(), resource, true);
+            fullJid = new JID(resource, session.getServerName(), resource, true);
         } else {
-            fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+            fullJid = new JID(authToken.getUsername(), session.getServerName(), resource, true);
         }
         Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 

@@ -196,11 +196,13 @@ public class SASLAuthentication {
     {
         if ( session instanceof ClientSession )
         {
-            return getSASLMechanismsElement( (ClientSession) session ).asXML();
+            final Element result = getSASLMechanismsElement( (ClientSession) session );
+            return result == null ? "" : result.asXML();
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            return getSASLMechanismsElement( (LocalIncomingServerSession) session ).asXML();
+            final Element result = getSASLMechanismsElement( (LocalIncomingServerSession) session );
+            return result == null ? "" : result.asXML();
         }
         else
         {
@@ -233,6 +235,12 @@ public class SASLAuthentication {
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);
         }
+
+        // OF-2072: Return null instead of an empty element, if so configured.
+        if ( JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false) && result.elements().isEmpty() ) {
+            return null;
+        }
+
         return result;
     }
 
@@ -253,6 +261,11 @@ public class SASLAuthentication {
                 final Element mechanism = result.addElement("mechanism");
                 mechanism.setText("EXTERNAL");
             }
+        }
+
+        // OF-2072: Return null instead of an empty element, if so configured.
+        if ( JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false) && result.elements().isEmpty() ) {
+            return null;
         }
         return result;
     }

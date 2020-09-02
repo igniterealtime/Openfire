@@ -22,30 +22,28 @@ COPY plugins/openfire-plugin-assembly-descriptor/pom.xml ./plugins/openfire-plug
 COPY distribution/pom.xml ./distribution/
 
 # get all necessary plugins
-# official plugins
-# DB Access (Official Openfire plugin)
-RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_DBACCESS}/dbaccess.jar -O ./plugins/dbaccess.jar
-# Registration (Official Openfire plugin)
-RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_REGISTRATION}/registration.jar -O ./plugins/registration.jar
-# REST API (Official Openfire plugin)
-RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_RESTAPI}/restAPI.jar -O ./plugins/restAPI.jar
-# Subscription (Official Openfire plugin)
-RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_SUBSCRIPTION}/subscription.jar -O ./plugins/subscription.jar
 
-# use host machines SSH key
+# 1. official plugins
+# DB Access (Official Openfire plugin)
+RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_DBACCESS}/dbaccess.jar -O ./plugins/dbaccess.jar \
+# Registration (Official Openfire plugin)
+ && wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_REGISTRATION}/registration.jar -O ./plugins/registration.jar \
+# REST API (Official Openfire plugin)
+ && wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_RESTAPI}/restAPI.jar -O ./plugins/restAPI.jar \
+# Subscription (Official Openfire plugin)
+ && wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_SUBSCRIPTION}/subscription.jar -O ./plugins/subscription.jar
+
+# 2. our plugins: clone private repository and use host machines SSH key
 # Download public key for github.com
 RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-# Clone private repository
-# our plugins
 # [Avatar upload plugin](https://github.com/voiceup-chat/openfire-avatar-upload-plugin)
-RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-avatar-upload-plugin.git ./plugins/openfire-avatar-upload-plugin
-# [Voice Upload](https://github.com/voiceup-chat/openfire-voice-plugin)
-RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-voice-plugin.git ./plugins/openfire-voice-plugin
-# [Feinfone APNS](https://github.com/voiceup-chat/openfire-apns)
-RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-apns.git ./plugins/openfire-apns
+RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-avatar-upload-plugin.git ./plugins/openfire-avatar-upload-plugin \
 # [Hazelcast plugin](https://github.com/nsobadzhiev/openfire-hazelcast-plugin)
-RUN --mount=type=ssh git clone git@github.com:nsobadzhiev/openfire-hazelcast-plugin.git ./plugins/openfire-hazelcast-plugin
+ && git clone git@github.com:voiceup-chat/openfire-voice-plugin.git ./plugins/openfire-voice-plugin \
+# [Voice Upload](https://github.com/voiceup-chat/openfire-voice-plugin)
+ && git clone git@github.com:voiceup-chat/openfire-apns.git ./plugins/openfire-apns \
+# [Feinfone APNS](https://github.com/voiceup-chat/openfire-apns)
+ && git clone git@github.com:nsobadzhiev/openfire-hazelcast-plugin.git ./plugins/openfire-hazelcast-plugin
 
 RUN mvn dependency:go-offline
 

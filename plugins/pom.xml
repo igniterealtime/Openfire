@@ -93,6 +93,10 @@
 
     <modules>
         <module>openfire-plugin-assembly-descriptor</module>
+        <module>openfire-avatar-upload-plugin</module>
+        <module>openfire-voice-plugin</module>
+        <module>openfire-apns</module>
+        <module>openfire-hazelcast-plugin</module>
     </modules>
 
     <organization>

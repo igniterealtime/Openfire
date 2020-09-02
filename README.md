@@ -70,16 +70,28 @@ Other folders are:
 * `Openfire/plugins` - Maven configuration files to allow the various [plugins](https://www.igniterealtime.org/projects/openfire/plugins.jsp) available to be built
 * `Openfire/starter` - a small module that allows Openfire to start in a consistent manner on different platforms
 
-To build the complete project including plugins, run the command
+To build the complete project including plugins, run the command (only docker build supported).
 ```
-./mvnw verify
-```  
+DOCKER_BUILDKIT=1 docker build --ssh default --secret id=aws,src=$HOME/.aws/credentials .
+```
+Executing this command will forward your local SSH key (via SSH agent) to the docker build.
+To make this work an SSH key pair has to be generated (default file name) and added to your GitHub account.
+```
+ssh-keygen -t rsa -b 4096 -C "you@example.com"
+```
 
-However much of the time it is only necessary to make changes to the core XMPP server itself in which case the command
+Add some instructions to your ~/.ssh/config file which tells the SSH Agent to automatically load the keys and store the corresponding passphrases.
 ```
-./mvnw verify -pl distribution -am 
-```  
-will compile the core server and any dependencies, and then assemble it in to something that can be run. 
+Host *
+ UseKeychain yes
+ AddKeysToAgent yes
+ IdentityFile ~/.ssh/id_rsa
+```
+
+Add your private key to the SSH Agent:
+```
+ssh-add -K ~/.ssh/id_rsa
+```
 
 Testing your changes
 --------------------

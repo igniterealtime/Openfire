@@ -8,6 +8,7 @@ work/
 .idea
 atlassian-ide-plugin.xml
 out/
+.factorypath
 
 # Ignore Eclipse project files
 .settings

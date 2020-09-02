@@ -1,3 +1,7 @@
+# syntax=docker/dockerfile:1.0.0-experimental
+FROM amazon/aws-cli as aws
+RUN --mount=type=secret,id=aws,target=/root/.aws/credentials aws s3 cp s3://com.feinfone.build/apns/apns_key.p8 /usr/local/openfire/authKey.p8
+
 # TODO probably pass build arguments with docker-compose
 ARG VERSION_DBACCESS=1.2.2
 ARG VERSION_REGISTRATION=1.7.2
@@ -28,34 +32,32 @@ RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_REST
 # Subscription (Official Openfire plugin)
 RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_SUBSCRIPTION}/subscription.jar -O ./plugins/subscription.jar
 
+# use host machines SSH key
+# Download public key for github.com
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+# Clone private repository
 # our plugins
 # [Avatar upload plugin](https://github.com/voiceup-chat/openfire-avatar-upload-plugin)
-RUN git clone git@github.com:voiceup-chat/openfire-avatar-upload-plugin.git
+RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-avatar-upload-plugin.git ./plugins/openfire-avatar-upload-plugin
 # [Voice Upload](https://github.com/voiceup-chat/openfire-voice-plugin)
-RUN git clone git@github.com:voiceup-chat/openfire-voice-plugin.git
+RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-voice-plugin.git ./plugins/openfire-voice-plugin
 # [Feinfone APNS](https://github.com/voiceup-chat/openfire-apns)
-RUN git clone git@github.com:voiceup-chat/openfire-apns.git
+RUN --mount=type=ssh git clone git@github.com:voiceup-chat/openfire-apns.git ./plugins/openfire-apns
 # [Hazelcast plugin](https://github.com/nsobadzhiev/openfire-hazelcast-plugin)
-RUN git clone git@github.com:nsobadzhiev/openfire-hazelcast-plugin.git
-
-COPY ./openfire-avatar-upload-plugin/pom.xml ./openfire-avatar-upload-plugin/
-COPY ./openfire-voice-plugin/pom.xml ./openfire-voice-plugin/
-COPY ../openfire-apns/pom.xml ./openfire-apns/
-COPY ../openfire-hazelcast-plugin/pom.xml ./openfire-hazelcast-plugin/
+RUN --mount=type=ssh git clone git@github.com:nsobadzhiev/openfire-hazelcast-plugin.git ./plugins/openfire-hazelcast-plugin
 
 RUN mvn dependency:go-offline
 
-COPY starter .
+COPY . .
 RUN mvn package
-
-ENV OPENFIRE_USER=openfire \
-    OPENFIRE_DIR=/usr/local/openfire \
-    OPENFIRE_DATA_DIR=/var/lib/openfire \
-    OPENFIRE_LOG_DIR=/var/log/openfire \
 
 # build target
 FROM openjdk:11-jre-slim as build
-COPY --from=packager /usr/src/distribution/target/distribution-base ${OPENFIRE_DIR}
+
+WORKDIR /usr/local/openfire
+
+COPY --from=packager /usr/src/distribution/target/distribution-base .
 COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 
 COPY build/docker/inject_db_settings.sh ${OPENFIRE_DIR}/inject_db_settings.sh
@@ -63,30 +65,25 @@ COPY build/docker/inject_hazelcast_settings.sh ${OPENFIRE_DIR}/inject_hazelcast_
 COPY build/docker/template_openfire.xml ${OPENFIRE_DIR}/template_openfire.xml
 COPY build/docker/template_hazelcast.xml ${OPENFIRE_DIR}/template_hazelcast.xml
 COPY build/docker/template_security.xml ${OPENFIRE_DIR}/template_security.xml
-#COPY build/docker/apns_key.p8 ${OPENFIRE_DIR}/authKey.p8
+# Copy files from S3 inside docker
+COPY --from=aws /usr/local/openfire/authKey.p8 .
 
 # (move all plugin JARs to the plugin folder)
-WORKDIR ${OPENFIRE_DIR}/plugins
-COPY --from=packager /usr/src/openfire-avatar-upload-plugin/target/openfire-avatar-upload-plugin.jar .
-COPY --from=packager /usr/src/openfire-voice-plugin/target/openfire-voice-plugin.jar .
-COPY --from=packager /usr/src/openfire-apns/target/openfire-apns.jar .
-COPY --from=packager /usr/src/openfire-hazelcast-plugin/target/openfire-hazelcast-plugin.jar .
+COPY --from=packager /usr/src/plugins/openfire-avatar-upload-plugin/target/avatarupload-0.0.1-SNAPSHOT.jar .
+COPY --from=packager /usr/src/plugins/openfire-voice-plugin/target/voice-0.0.11-SNAPSHOT.jar .
+COPY --from=packager /usr/src/plugins/openfire-apns/target/openfire-apns.jar .
+COPY --from=packager /usr/src/plugins/openfire-hazelcast-plugin/target/hazelcast-2.4.2-SNAPSHOT.jar .
 
-# fill config
-
-# rewire openfire
-
-# initialize data directory
-
-# initialize log directory
-
-WORKDIR ${OPENFIRE_DIR}
+ENV OPENFIRE_USER=openfire \
+    OPENFIRE_DIR=/usr/local/openfire \
+    OPENFIRE_DATA_DIR=/var/lib/openfire \
+    OPENFIRE_LOG_DIR=/var/log/openfire
 
 RUN apt-get update -qq \
     && apt-get install -yqq sudo \
-    && adduser --disabled-password --quiet --system --home $OPENFIRE_DATA_DIR --gecos "Openfire XMPP server" --group ${OPENFIRE_USER} \
+    && adduser --disabled-password --quiet --system --home $OPENFIRE_DATA_DIR --gecos "Openfire XMPP server" --group openfire \
     && chmod 755 /sbin/entrypoint.sh \
-    && chown -R ${OPENFIRE_USER}:${OPENFIRE_USER} ${OPENFIRE_DIR} \
+    && chown -R openfire:openfire ${OPENFIRE_DIR} \
     && mv ${OPENFIRE_DIR}/conf ${OPENFIRE_DIR}/conf_org \
     && mv ${OPENFIRE_DIR}/plugins ${OPENFIRE_DIR}/plugins_org \
     && mv ${OPENFIRE_DIR}/resources/security ${OPENFIRE_DIR}/resources/security_org \
@@ -94,9 +91,6 @@ RUN apt-get update -qq \
 
 LABEL maintainer="florian.kinder@fankserver.com"
 
-# TODO maybe use docker-compose to set ports, volumes and build arguments
 EXPOSE 3478/tcp 3479/tcp 5222/tcp 5223/tcp 5229/tcp 5275/tcp 5276/tcp 5262/tcp 5263/tcp 5701/tcp 7070/tcp 7443/tcp 7777/tcp 9090/tcp 9091/tcp
 VOLUME ["${OPENFIRE_DATA_DIR}"]
-ENTRYPOINT ["/sbin/entrypoint.sh"]
-
-# TODO: introduce a release target that uses JRE instread of JDK
+CMD ["/sbin/entrypoint.sh"]

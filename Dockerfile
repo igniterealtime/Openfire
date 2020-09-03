@@ -71,7 +71,7 @@ COPY --from=packager /usr/src/plugins/openfire-avatar-upload-plugin/target/avata
      /usr/src/plugins/openfire-voice-plugin/target/voice-0.0.11-SNAPSHOT.jar \
      /usr/src/plugins/openfire-apns/target/openfire-apns.jar \
      /usr/src/plugins/openfire-hazelcast-plugin/target/hazelcast-2.4.2-SNAPSHOT.jar \
-     ./
+     ./plugins/
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \

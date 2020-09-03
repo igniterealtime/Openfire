@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.0.0-experimental
 FROM amazon/aws-cli as aws
+# download push notification credentials from S3
 RUN --mount=type=secret,id=aws,target=/root/.aws/credentials aws s3 cp s3://com.feinfone.build/apns/apns_key.p8 /usr/local/openfire/authKey.p8
 
 # TODO probably pass build arguments with docker-compose
@@ -52,25 +53,26 @@ RUN mvn package
 
 # build target
 FROM openjdk:11-jre-slim as build
-
+COPY --from=packager /usr/src/distribution/target/distribution-base /usr/local/openfire
+COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 WORKDIR /usr/local/openfire
 
-COPY --from=packager /usr/src/distribution/target/distribution-base .
-COPY --from=packager /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
+COPY build/docker/inject_db_settings.sh \
+     build/docker/inject_hazelcast_settings.sh \
+     build/docker/template_openfire.xml \
+     build/docker/template_hazelcast.xml \
+     build/docker/template_security.xml \
+     ./
 
-COPY build/docker/inject_db_settings.sh ${OPENFIRE_DIR}/inject_db_settings.sh
-COPY build/docker/inject_hazelcast_settings.sh ${OPENFIRE_DIR}/inject_hazelcast_settings.sh
-COPY build/docker/template_openfire.xml ${OPENFIRE_DIR}/template_openfire.xml
-COPY build/docker/template_hazelcast.xml ${OPENFIRE_DIR}/template_hazelcast.xml
-COPY build/docker/template_security.xml ${OPENFIRE_DIR}/template_security.xml
-# Copy files from S3 inside docker
+# copy push notification credentials
 COPY --from=aws /usr/local/openfire/authKey.p8 .
 
 # (move all plugin JARs to the plugin folder)
-COPY --from=packager /usr/src/plugins/openfire-avatar-upload-plugin/target/avatarupload-0.0.1-SNAPSHOT.jar .
-COPY --from=packager /usr/src/plugins/openfire-voice-plugin/target/voice-0.0.11-SNAPSHOT.jar .
-COPY --from=packager /usr/src/plugins/openfire-apns/target/openfire-apns.jar .
-COPY --from=packager /usr/src/plugins/openfire-hazelcast-plugin/target/hazelcast-2.4.2-SNAPSHOT.jar .
+COPY --from=packager /usr/src/plugins/openfire-avatar-upload-plugin/target/avatarupload-0.0.1-SNAPSHOT.jar \
+     /usr/src/plugins/openfire-voice-plugin/target/voice-0.0.11-SNAPSHOT.jar \
+     /usr/src/plugins/openfire-apns/target/openfire-apns.jar \
+     /usr/src/plugins/openfire-hazelcast-plugin/target/hazelcast-2.4.2-SNAPSHOT.jar \
+     ./
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \

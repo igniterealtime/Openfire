@@ -13,17 +13,16 @@ ARG VERSION_SUBSCRIPTION=1.4.0
 FROM maven:3.6.2-jdk-11 as packager
 WORKDIR /usr/src
 
-COPY pom.xml .
-COPY i18n/pom.xml ./i18n/
-COPY xmppserver/pom.xml ./xmppserver/
-COPY starter/pom.xml ./starter/
+COPY ./pom.xml .
+COPY ./i18n/pom.xml ./i18n/
+COPY ./xmppserver/pom.xml ./xmppserver/
+COPY ./starter/pom.xml ./starter/
 COPY ./starter/libs/* ./starter/libs/
-COPY plugins/pom.xml ./plugins/
-COPY plugins/openfire-plugin-assembly-descriptor/pom.xml ./plugins/openfire-plugin-assembly-descriptor/
-COPY distribution/pom.xml ./distribution/
+COPY ./plugins/pom.xml ./plugins/
+COPY ./plugins/openfire-plugin-assembly-descriptor/pom.xml ./plugins/openfire-plugin-assembly-descriptor/
+COPY ./distribution/pom.xml ./distribution/
 
 # get all necessary plugins
-
 # 1. official plugins
 # DB Access (Official Openfire plugin)
 RUN wget https://www.igniterealtime.org/projects/openfire/plugins/${VERSION_DBACCESS}/dbaccess.jar -O ./plugins/dbaccess.jar \

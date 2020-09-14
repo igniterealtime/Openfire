@@ -657,7 +657,12 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
                 if (result == null) {
                     log.debug("No cached item found. Obtaining it from delegate.");
                     result = delegate.getPublishedItem( node, itemIdentifier );
-                    itemCache.put(itemIdentifier, result);
+                    if (result != null) {
+                        log.debug("Caching item obtained from delegate.");
+                        itemCache.put(itemIdentifier, result);
+                    } else {
+                        log.debug("Delegate doesn't have an item. It does not appear to exist.");
+                    }
                 } else {
                     log.debug("Found cached item on second attempt (after acquiring lock)");
                 }

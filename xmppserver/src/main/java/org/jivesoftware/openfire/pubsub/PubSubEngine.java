@@ -806,7 +806,7 @@ public class PubSubEngine
         NodeSubscription subscription;
         JID owner = new JID(jidAttribute);
         
-        if (node.isMultipleSubscriptionsEnabled() && node.getSubscriptions(owner).size() > 1) {
+        if (node.isMultipleSubscriptionsEnabled()) {
             if (subID == null) {
                 // No subid was specified and the node supports multiple subscriptions
                 Element pubsubError = DocumentHelper.createElement(

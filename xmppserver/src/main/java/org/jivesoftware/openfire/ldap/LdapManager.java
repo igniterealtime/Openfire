@@ -48,6 +48,7 @@ import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.InvalidNameException;
 import javax.naming.Name;
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -1334,7 +1335,7 @@ public class LdapManager {
      * @return true if the given DN is matching the group filter. false oterwise.
      * @throws NamingException if the search for the dn fails.
      */
-    public boolean isGroupDN(LdapName dn) throws NamingException {
+    public boolean isGroupDN(LdapName dn) {
         Log.debug("LdapManager: Trying to check if DN is a group. DN: {}, Base DN: {} ...", dn, baseDN);
 
         // is it a sub DN of the base DN?
@@ -1369,9 +1370,13 @@ public class LdapManager {
             Log.debug("LdapManager: DN is group: {}? {}!", dn, result);
             return result;
         }
-        catch (final Exception e) {
-            Log.debug("LdapManager: Exception thrown when checking if DN is a group {}", dn, e);
-            throw e;
+        catch (final NameNotFoundException e) {
+            Log.info("LdapManager: Given DN not found (while checking if DN is a group)! {}", dn);
+            return false;
+        }
+        catch (final NamingException e) {
+            Log.error("LdapManager: Exception thrown while checking if DN is a group {}", dn, e);
+            return false;
         }
         finally {
             try {

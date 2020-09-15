@@ -560,9 +560,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Lock lock = CacheFactory.getLock(username, offlinePresenceCache);
+        Lock lock = offlinePresenceCache.getLock(username);
+        lock.lock();
         try {
-            lock.lock();
             if (!offlinePresenceCache.containsKey(username) || !lastActivityCache.containsKey(username)) {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_OFFLINE_PRESENCE);

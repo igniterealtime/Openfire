@@ -58,12 +58,12 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
 			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
 			"ofPubsubItem.serviceID = ? AND nodeID = ?";
-    
+
     private static final String PURGE_FOR_SIZE_ORACLE =
             "DELETE from ofPubsubItem where id in " +
             "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
-            "(SELECT * from (SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
-            "ORDER BY creationDate DESC) where rownum < ? order by rownum) noDelete " +
+            "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC FETCH FIRST ? ROWS ONLY) noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
             "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
 
@@ -1165,7 +1165,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     {
         log.trace( "Creating published item: {} (write to database)", item.getUniqueIdentifier() );
 
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1180,7 +1180,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         } catch (SQLException ex) {
             log.error("Published item could not be created in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1188,7 +1188,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     {
         log.trace( "Updating published item: {} (write to database)", item.getUniqueIdentifier() );
 
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1203,7 +1203,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         } catch (SQLException ex) {
             log.error("Published item could not be updated in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1243,7 +1243,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removePublishedItem(PublishedItem item) {
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
@@ -1255,7 +1255,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         } catch (SQLException ex) {
             log.error("Failed to delete published item from DB: {}", item.getUniqueIdentifier(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1349,7 +1349,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
         try
         {
-            log.debug( "Try to add the pending items as a dtabase batch." );
+            log.debug( "Try to add the pending items as a database batch." );
             removePublishedItems( con, delList, true ); // delete first (to remove possible duplicates), then add new items
             savePublishedItems( con, addList, true );
         }

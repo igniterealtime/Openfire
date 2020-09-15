@@ -648,26 +648,32 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         // try to fetch from cache first without locking
         PublishedItem result = itemCache.get(itemIdentifier);
         if (result == null) {
-            Lock itemLock = CacheFactory.getLock( ITEM_CACHE, itemCache);
+            Lock itemLock = itemCache.getLock( itemIdentifier );
+            itemLock.lock();
             try {
                 // Acquire lock, then re-check cache before reading from DB;
                 // allows clustered item cache to be primed by first request
-                itemLock.lock();
                 result = itemCache.get(itemIdentifier);
                 if (result == null) {
-                    log.debug("No cached item found. Obtaining it from delegate.");
+                    log.trace("No cached item found. Obtaining it from delegate. Item identifier: {}", itemIdentifier);
                     result = delegate.getPublishedItem( node, itemIdentifier );
-                    itemCache.put(itemIdentifier, result);
+                    if (result != null) {
+                        log.trace("Caching item obtained from delegate.");
+                        itemCache.put(itemIdentifier, result);
+                    } else {
+                        log.trace("Delegate doesn't have an item. It does not appear to exist.");
+                    }
                 } else {
-                    log.debug("Found cached item on second attempt (after acquiring lock)");
+                    log.trace("Found cached item on second attempt (after acquiring lock). Item identifier: {}", itemIdentifier);
                 }
 
             } finally {
                 itemLock.unlock();
             }
         } else {
-            log.debug("Found cached item on first attempt (no lock)");
+            log.trace("Found cached item on first attempt (no lock). Item identifier: {}", itemIdentifier);
         }
+        log.debug( "Item for item identifier {} was {} on node {}", itemIdentifier, result == null ? "not found" : "found", node.getUniqueIdentifier() );
         return result;
     }
 

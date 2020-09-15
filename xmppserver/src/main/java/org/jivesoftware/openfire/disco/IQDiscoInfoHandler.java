@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jivesoftware.admin.AdminConsole;
@@ -41,6 +42,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -391,9 +393,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void addServerFeature(String namespace) {
         if (localServerFeatures.add(namespace)) {
-            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
+            Lock lock = serverFeatures.getLock(namespace);
+            lock.lock();
             try {
-                lock.lock();
                 HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs == null) {
                     nodeIDs = new HashSet<>();
@@ -415,9 +417,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void removeServerFeature(String namespace) {
         if (localServerFeatures.remove(namespace)) {
-            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
+            Lock lock = serverFeatures.getLock(namespace);
+            lock.lock();
             try {
-                lock.lock();
                 HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs != null) {
                     nodeIDs.remove(XMPPServer.getInstance().getNodeID());
@@ -447,45 +449,64 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     @Override
     public void joinedCluster() {
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was gained by joining
+        // the cluster (eg: new server features provided by other cluster nodes now available to the local cluster node):
+        // the only cache that's being used in this implementation does not have an associated event listening mechanism
+        // when data is added to or removed from it.
     }
 
     @Override
     public void joinedCluster(byte[] nodeID) {
-        // Do nothing
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
     }
 
     @Override
     public void leftCluster() {
-        if (!XMPPServer.getInstance().isShuttingDown()) {
-            restoreCacheContent();
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
         }
+
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
+        // the cluster (eg: server features provided only by other cluster nodes, now unavailable to the local cluster
+        // node): the only cache that's being used in this implementation does not have an associated event listening
+        // mechanism when data is added to or removed from it.
     }
 
     @Override
     public void leftCluster(byte[] nodeID) {
+        // Another node left the cluster.
+        //
+        // If the cluster node leaves in an orderly fashion, it might have broadcasted
+        // the necessary events itself. This cannot be depended on, as the cluster node
+        // might have disconnected unexpectedly (as a result of a crash or network issue).
+        //
+        // Determine what data was available only on that node, and remove that.
+        //
+        // All remaining cluster nodes will be in a race to clean up the
+        // same data. The implementation below accounts for that, by only having the
+        // senior cluster node to perform the cleanup.
         if (ClusterManager.isSeniorClusterMember()) {
-            NodeID leftNode = NodeID.getInstance(nodeID);
             // Remove server features added by node that is gone
-            for (Map.Entry<String, HashSet<NodeID>> entry : serverFeatures.entrySet()) {
-                String namespace = entry.getKey();
-                Lock lock = CacheFactory.getLock(namespace, serverFeatures);
-                try {
-                    lock.lock();
-                    HashSet<NodeID> nodeIDs = entry.getValue();
-                    if (nodeIDs.remove(leftNode)) {
-                        if (nodeIDs.isEmpty()) {
-                            serverFeatures.remove(namespace);
-                        }
-                        else {
-                            serverFeatures.put(namespace, nodeIDs);
-                        }
-                    }
-                }
-                finally {
-                    lock.unlock();
-                }
-            }
+            final NodeID leftNode = NodeID.getInstance(nodeID);
+            CacheUtil.removeValueFromMultiValuedCache(serverFeatures, leftNode);
         }
     }
 
@@ -494,21 +515,17 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // Do nothing
     }
 
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
     private void restoreCacheContent() {
+        Log.trace( "Restoring cache content for cache '{}' by adding all server features that are provided by the local cluster node.", serverFeatures.getName() );
         for (String feature : localServerFeatures) {
-            Lock lock = CacheFactory.getLock(feature, serverFeatures);
-            try {
-                lock.lock();
-                HashSet<NodeID> nodeIDs = serverFeatures.get(feature);
-                if (nodeIDs == null) {
-                    nodeIDs = new HashSet<>();
-                }
-                nodeIDs.add(XMPPServer.getInstance().getNodeID());
-                serverFeatures.put(feature, nodeIDs);
-            }
-            finally {
-                lock.unlock();
-            }
+            CacheUtil.addValueToMultiValuedCache( serverFeatures, feature, XMPPServer.getInstance().getNodeID(), HashSet::new );
         }
     }
 
@@ -749,6 +766,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
                         final FormField fieldAdminAddresses = dataForm.addField();
                         fieldAdminAddresses.setVariable("admin-addresses");
+                        fieldAdminAddresses.setType(Type.list_multi);
 
                         final UserManager userManager = UserManager.getInstance();
                         for ( final JID admin : admins )

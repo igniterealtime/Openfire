@@ -924,9 +924,9 @@ public class ServerDialback {
      */
     private static String getSecretkey() {
         String key = "secretKey";
-        Lock lock = CacheFactory.getLock(key, secretKeyCache);
+        Lock lock = secretKeyCache.getLock(key);
+        lock.lock();
         try {
-            lock.lock();
             String secret = secretKeyCache.get(key);
             if (secret == null) {
                 secret = StringUtils.randomString(10);

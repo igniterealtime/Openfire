@@ -799,8 +799,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             // Get transient rooms and persistent rooms with occupants from senior
             // cluster member and merge with local ones. If room configuration was
             // changed in both places then latest configuration will be kept
-            @SuppressWarnings("unchecked")
-            List<ServiceInfo> result = (List<ServiceInfo>) CacheFactory.doSynchronousClusterTask(
+            List<ServiceInfo> result = CacheFactory.doSynchronousClusterTask(
                     new SeniorMemberServicesRequest(), ClusterManager.getSeniorClusterMember().toByteArray());
             if (result != null) {
                 for (ServiceInfo serviceInfo : result) {
@@ -841,10 +840,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     @Override
     @SuppressWarnings("unchecked")
     public void joinedCluster(byte[] nodeID) {
-        Object result = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
-        if (result instanceof List<?>) {
-            List<RoomInfo> rooms = (List<RoomInfo>) result;
-            for (RoomInfo roomInfo : rooms) {
+        List<RoomInfo> roomInfos = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
+        if ( roomInfos != null ) {
+            for (RoomInfo roomInfo : roomInfos) {
                 LocalMUCRoom remoteRoom = roomInfo.getRoom();
                 MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
                 LocalMUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
@@ -870,7 +868,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     @Override
     public void leftCluster(byte[] nodeID) {
         // Remove all room occupants linked to the defunct node as their sessions are cleaned out earlier
-        Log.debug("Removing orphaned occupants associated with defunct node: " +  new String(nodeID, StandardCharsets.UTF_8));
+        Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
 
         for (MultiUserChatService service : getMultiUserChatServices()) {
             for (MUCRoom mucRoom : service.getChatRooms()) {

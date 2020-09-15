@@ -62,6 +62,8 @@ import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.GuardedBy;
+
 /**
  * Manages plugins.
  *
@@ -93,11 +95,13 @@ public class PluginManager
     /**
      * Plugins that are loaded, mapped by their canonical name.
      */
+    @GuardedBy("this")
     private final Map<String, Plugin> pluginsLoaded = new TreeMap<>( String.CASE_INSENSITIVE_ORDER );
 
     /**
      * The plugin classloader for each loaded plugin.
      */
+    @GuardedBy("this")
     private final Map<Plugin, PluginClassLoader> classloaders = new HashMap<>();
 
     /**
@@ -107,18 +111,31 @@ public class PluginManager
      * Note that typically these directories are subdirectories of {@code plugins}, but a 'dev-plugin' could live
      * elsewhere.
      */
+    @GuardedBy("this")
     private final Map<String, Path> pluginDirs = new HashMap<>();
 
     /**
      * Plugin metadata for all extracted plugins, mapped by canonical name.
      */
+    @GuardedBy("this")
     private final Map<String, PluginMetadata> pluginMetadata = Collections.synchronizedMap(new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 
+    @GuardedBy("this")
     private final Map<Plugin, PluginDevEnvironment> pluginDevelopment = new HashMap<>();
+
+    @GuardedBy("this")
     private final Map<Plugin, List<String>> parentPluginMap = new HashMap<>();
+
+    @GuardedBy("this")
     private final Map<Plugin, String> childPluginMap = new HashMap<>();
+
+    // CopyOnWriteArraySet is thread safe
     private final Set<PluginListener> pluginListeners = new CopyOnWriteArraySet<>();
+
+    // CopyOnWriteArraySet is thread safe
     private final Set<PluginManagerListener> pluginManagerListeners = new CopyOnWriteArraySet<>();
+
+    @GuardedBy("this")
     private final Map<String, Integer> failureToLoadCount = new HashMap<>();
 
     private final PluginMonitor pluginMonitor;
@@ -283,7 +300,10 @@ public class PluginManager
             Log.error( "Unable to determine if plugin '{}' is installed.", canonicalName, e );
 
             // return the next best guess
-            return pluginsLoaded.containsKey( canonicalName );
+            synchronized ( this )
+            {
+                return pluginsLoaded.containsKey(canonicalName);
+            }
         }
     }
 
@@ -298,7 +318,7 @@ public class PluginManager
      * @param canonicalName the canonical filename of the plugin (cannot be null).
      * @return true if the plugin is extracted, otherwise false.
      */
-    public boolean isExtracted( final String canonicalName )
+    public synchronized boolean isExtracted( final String canonicalName )
     {
         return pluginMetadata.containsKey( canonicalName );
     }
@@ -314,7 +334,7 @@ public class PluginManager
      * @param canonicalName the canonical filename of the plugin (cannot be null).
      * @return true if the plugin is extracted, otherwise false.
      */
-    public boolean isLoaded( final String canonicalName )
+    public synchronized boolean isLoaded( final String canonicalName )
     {
         return pluginsLoaded.containsKey( canonicalName );
     }
@@ -330,14 +350,9 @@ public class PluginManager
      *
      * @return A collection of metadata (possibly empty, never null).
      */
-    public Map<String, PluginMetadata> getMetadataExtractedPlugins()
+    public synchronized Map<String, PluginMetadata> getMetadataExtractedPlugins()
     {
-        // Create a copy of the TreeMap to avoid ConcurrentModificationExceptions
-        // Note; needs to be synchronized as creating the copy iterates over the elements
-        // See https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html#synchronizedMap-java.util.Map-
-        synchronized (this.pluginMetadata) {
-            return Collections.unmodifiableMap(new TreeMap<>(this.pluginMetadata));
-        }
+        return Collections.unmodifiableMap(new TreeMap<>(this.pluginMetadata));
     }
 
     /**
@@ -350,7 +365,7 @@ public class PluginManager
      * @param canonicalName the canonical name (lower case JAR/WAR file without exception) of the plugin
      * @return A collection of metadata (possibly empty, never null).
      */
-    public PluginMetadata getMetadata( String canonicalName )
+    public synchronized PluginMetadata getMetadata( String canonicalName )
     {
         return this.pluginMetadata.get( canonicalName );
     }
@@ -364,7 +379,12 @@ public class PluginManager
      */
     public Collection<Plugin> getPlugins()
     {
-        return Collections.unmodifiableCollection( Arrays.asList( pluginsLoaded.values().toArray(new Plugin[0]) ) );
+        final List<Plugin> plugins;
+        synchronized ( this )
+        {
+            plugins = Arrays.asList(pluginsLoaded.values().toArray(new Plugin[0]));
+        }
+        return Collections.unmodifiableCollection( plugins );
     }
 
     /**
@@ -373,9 +393,8 @@ public class PluginManager
      * @param plugin A plugin (cannot be null).
      * @return The canonical name for the plugin (never null).
      */
-    public String getCanonicalName( Plugin plugin )
+    public synchronized String getCanonicalName( Plugin plugin )
     {
-        // TODO consider using a bimap for a more efficient lookup.
         for ( Map.Entry<String, Plugin> entry : pluginsLoaded.entrySet() )
         {
             if ( entry.getValue().equals( plugin ) )
@@ -396,7 +415,7 @@ public class PluginManager
      */
     // TODO: (2019-03-26) Remove with Openfire 5.0
     @Deprecated
-    public Plugin getPlugin( String canonicalName )
+    public synchronized Plugin getPlugin( String canonicalName )
     {
         return pluginsLoaded.get( canonicalName.toLowerCase() );
     }
@@ -409,7 +428,7 @@ public class PluginManager
      * @return the plugin, if found
      * @since Openfire 4.4
      */
-    public Optional<Plugin> getPluginByName(final String pluginName) {
+    public synchronized Optional<Plugin> getPluginByName(final String pluginName) {
         return pluginMetadata.values().stream()
             // Find the matching metadata
             .filter(pluginMetadata -> pluginName.equalsIgnoreCase(pluginMetadata.getName()))
@@ -438,7 +457,7 @@ public class PluginManager
      * @return the plugin's directory.
      * @since Openfire 4.1
      */
-    public Path getPluginPath( Plugin plugin )
+    public synchronized Path getPluginPath( Plugin plugin )
     {
         final String canonicalName = getCanonicalName( plugin );
         if ( canonicalName != null )
@@ -465,7 +484,7 @@ public class PluginManager
      *
      * @param pluginDir the plugin directory.
      */
-    boolean loadPlugin( String canonicalName, Path pluginDir )
+    synchronized boolean loadPlugin( String canonicalName, Path pluginDir )
     {
         final PluginMetadata metadata = PluginMetadata.getInstance( pluginDir );
         pluginMetadata.put( canonicalName, metadata );
@@ -884,7 +903,7 @@ public class PluginManager
      *
      * @param canonicalName the canonical name of the plugin to unload.
      */
-    void unloadPlugin( String canonicalName )
+    synchronized void unloadPlugin( String canonicalName )
     {
         Log.debug( "Unloading plugin '{}'...", canonicalName );
 
@@ -1033,7 +1052,10 @@ public class PluginManager
      * @throws ClassNotFoundException if the class was not found.
      */
     public Class loadClass( Plugin plugin, String className ) throws ClassNotFoundException {
-        PluginClassLoader loader = classloaders.get( plugin );
+        final PluginClassLoader loader;
+        synchronized ( this ) {
+            loader = classloaders.get( plugin );
+        }
         return loader.loadClass( className );
     }
 
@@ -1045,7 +1067,7 @@ public class PluginManager
      * @return the plugin dev environment, or {@code null} if development
      *         mode is not enabled for the plugin.
      */
-    public PluginDevEnvironment getDevEnvironment( Plugin plugin )
+    public synchronized PluginDevEnvironment getDevEnvironment( Plugin plugin )
     {
         return pluginDevelopment.get( plugin );
     }
@@ -1144,7 +1166,7 @@ public class PluginManager
      * @param plugin the plugin.
      * @return the classloader of the plugin.
      */
-    public PluginClassLoader getPluginClassloader( Plugin plugin )
+    public synchronized PluginClassLoader getPluginClassloader( Plugin plugin )
     {
         return classloaders.get( plugin );
     }
@@ -1326,7 +1348,6 @@ public class PluginManager
             {
                 Log.warn( "An exception was thrown when one of the pluginManagerListeners was notified of a 'destroyed' event for plugin '{}'!", name, ex );
             }
-
         }
     }
 

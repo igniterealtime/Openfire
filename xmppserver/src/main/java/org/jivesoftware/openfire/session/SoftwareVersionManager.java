@@ -18,11 +18,15 @@ package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.xmpp.packet.IQ;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * A SoftwareVersionManager is the main responsible for sending query to remote entity and 
@@ -31,6 +35,19 @@ import org.slf4j.LoggerFactory;
  */
 public class SoftwareVersionManager extends BasicModule implements SessionEventListener {
     private static final Logger Log = LoggerFactory.getLogger(SoftwareVersionManager.class);
+
+    public static final SystemProperty<Boolean> VERSION_QUERY_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("xmpp.client.version-query.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static final SystemProperty<Duration> VERSION_QUERY_DELAY = SystemProperty.Builder.ofType( Duration.class )
+        .setKey("xmpp.client.version-query.delay")
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofSeconds(5))
+        .setDynamic(true)
+        .build();
 
     public SoftwareVersionManager() {
         super("Software Version Manager");
@@ -70,13 +87,20 @@ public class SoftwareVersionManager extends BasicModule implements SessionEventL
 
     @Override
     public void resourceBound(Session session) {
-         // The server should not send requests to the client before the client session
+        if (!VERSION_QUERY_ENABLED.getValue()) {
+            return;
+        }
+        // The server should not send requests to the client before the client session
         // has been established (see IQSessionEstablishmentHandler). Sadly, Openfire
         // does not provide a hook for this. For now, the resource bound event is
         // used instead (which should be immediately followed by session establishment).
         TaskEngine.getInstance().submit( () -> {
             try {
-                Thread.sleep(5000); // Let time pass for the session establishment to have occurred.
+                Thread.sleep( VERSION_QUERY_DELAY.getValue().toMillis() ); // Let time pass for the session establishment to have occurred.
+
+                if (session.isClosed()){
+                    return;
+                }
 
                 IQ versionRequest = new IQ(IQ.Type.get);
                 versionRequest.setTo(session.getAddress());
@@ -84,11 +108,8 @@ public class SoftwareVersionManager extends BasicModule implements SessionEventL
                 versionRequest.setChildElement("query", "jabber:iq:version");
                 session.process(versionRequest);
             } catch (Exception e) {
-                Log.error("Exception while trying to query a client for its software version.", e);;
+                Log.error("Exception while trying to query a client ({}) for its software version.", session.getAddress(), e);
             }
         } );
-        
     }
-
-
 }

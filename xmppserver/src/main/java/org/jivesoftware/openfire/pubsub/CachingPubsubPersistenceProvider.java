@@ -125,6 +125,8 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void shutdown()
     {
+        // OF-2086: Persist cached pubsub data prior to shutdown
+        flushPendingChanges( false );
         TaskEngine.getInstance().cancelScheduledTask( flushTask );
         delegate.shutdown();
     }

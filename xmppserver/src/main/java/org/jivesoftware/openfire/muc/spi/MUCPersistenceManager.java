@@ -82,14 +82,14 @@ public class MUCPersistenceManager {
         "useReservedNick, canChangeNick, canRegister, allowpm " +
         "FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_AFFILIATIONS =
-        "SELECT ofMucAffiliation.roomID,ofMucAffiliation.jid,ofMucAffiliation.affiliation " +
+        "SELECT ofMucAffiliation.roomID AS roomID, ofMucAffiliation.jid AS jid, ofMucAffiliation.affiliation AS affiliation " +
         "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
     private static final String LOAD_ALL_MEMBERS =
-        "SELECT ofMucMember.roomID,ofMucMember.jid,ofMucMember.nickname FROM ofMucMember,ofMucRoom " +
+        "SELECT ofMucMember.roomID AS roomID, ofMucMember.jid AS jid, ofMucMember.nickname AS nickname FROM ofMucMember,ofMucRoom " +
         "WHERE ofMucMember.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
     private static final String LOAD_ALL_HISTORY =
-        "SELECT ofMucConversationLog.roomID, ofMucConversationLog.sender, ofMucConversationLog.nickname, " +
-        "ofMucConversationLog.logTime, ofMucConversationLog.subject, ofMucConversationLog.body, ofMucConversationLog.stanza FROM " +
+        "SELECT ofMucConversationLog.roomID AS roomID, ofMucConversationLog.sender AS sender, ofMucConversationLog.nickname AS nickname, " +
+        "ofMucConversationLog.logTime AS logTime, ofMucConversationLog.subject AS subject, ofMucConversationLog.body AS body, ofMucConversationLog.stanza AS stanza FROM " +
         "ofMucConversationLog, ofMucRoom WHERE ofMucConversationLog.roomID = ofMucRoom.roomID AND " +
         "ofMucRoom.serviceID=? AND ofMucConversationLog.logTime>? AND (ofMucConversationLog.nickname IS NOT NULL " +
         "OR ofMucConversationLog.subject IS NOT NULL) ORDER BY ofMucConversationLog.logTime";
@@ -157,7 +157,7 @@ public class MUCPersistenceManager {
             pstmt.setString(2, bareJID);
             rs = pstmt.executeQuery();
             if (rs.next()) {
-                answer = rs.getString(1);
+                answer = rs.getString("nickname");
             }
         }
         catch (SQLException sqle) {
@@ -188,30 +188,30 @@ public class MUCPersistenceManager {
             if (!rs.next()) {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");
             }
-            room.setID(rs.getLong(1));
-            room.setCreationDate(new Date(Long.parseLong(rs.getString(2).trim()))); // creation date
-            room.setModificationDate(new Date(Long.parseLong(rs.getString(3).trim()))); // modification date
-            room.setNaturalLanguageName(rs.getString(4));
-            room.setDescription(rs.getString(5));
-            room.setLockedDate(new Date(Long.parseLong(rs.getString(6).trim())));
-            if (rs.getString(7) != null) {
-                room.setEmptyDate(new Date(Long.parseLong(rs.getString(7).trim())));
+            room.setID(rs.getLong("roomID"));
+            room.setCreationDate(new Date(Long.parseLong(rs.getString("creationDate").trim())));
+            room.setModificationDate(new Date(Long.parseLong(rs.getString("modificationDate").trim())));
+            room.setNaturalLanguageName(rs.getString("naturalName"));
+            room.setDescription(rs.getString("description"));
+            room.setLockedDate(new Date(Long.parseLong(rs.getString("lockedDate").trim())));
+            if (rs.getString("emptyDate") != null) {
+                room.setEmptyDate(new Date(Long.parseLong(rs.getString("emptyDate").trim())));
             }
             else {
                 room.setEmptyDate(null);
             }
-            room.setCanOccupantsChangeSubject(rs.getInt(8) == 1);
-            room.setMaxUsers(rs.getInt(9));
-            room.setPublicRoom(rs.getInt(10) == 1);
-            room.setModerated(rs.getInt(11) == 1);
-            room.setMembersOnly(rs.getInt(12) == 1);
-            room.setCanOccupantsInvite(rs.getInt(13) == 1);
-            room.setPassword(rs.getString(14));
-            room.setCanAnyoneDiscoverJID(rs.getInt(15) == 1);
-            room.setLogEnabled(rs.getInt(16) == 1);
-            room.setSubject(rs.getString(17));
+            room.setCanOccupantsChangeSubject(rs.getInt("canChangeSubject") == 1);
+            room.setMaxUsers(rs.getInt("maxUsers"));
+            room.setPublicRoom(rs.getInt("publicRoom") == 1);
+            room.setModerated(rs.getInt("moderated") == 1);
+            room.setMembersOnly(rs.getInt("membersOnly") == 1);
+            room.setCanOccupantsInvite(rs.getInt("canInvite") == 1);
+            room.setPassword(rs.getString("roomPassword"));
+            room.setCanAnyoneDiscoverJID(rs.getInt("canDiscoverJID") == 1);
+            room.setLogEnabled(rs.getInt("logEnabled") == 1);
+            room.setSubject(rs.getString("subject"));
             List<String> rolesToBroadcast = new ArrayList<>();
-            String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt(18)), 3);
+            String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt("rolesToBroadcast")), 3);
             if (roles.charAt(0) == '1') {
                 rolesToBroadcast.add("moderator");
             }
@@ -222,10 +222,10 @@ public class MUCPersistenceManager {
                 rolesToBroadcast.add("visitor");
             }
             room.setRolesToBroadcastPresence(rolesToBroadcast);
-            room.setLoginRestrictedToNickname(rs.getInt(19) == 1);
-            room.setChangeNickname(rs.getInt(20) == 1);
-            room.setRegistrationEnabled(rs.getInt(21) == 1);
-            switch (rs.getInt(22)) // null returns 0.
+            room.setLoginRestrictedToNickname(rs.getInt("useReservedNick") == 1);
+            room.setChangeNickname(rs.getInt("canChangeNick") == 1);
+            room.setRegistrationEnabled(rs.getInt("canRegister") == 1);
+            switch (rs.getInt("allowpm")) // null returns 0.
             {
                 default:
                 case 0: room.setCanSendPrivateMessage( "anyone"       ); break;
@@ -247,12 +247,12 @@ public class MUCPersistenceManager {
                 pstmt.setLong(2, room.getID());
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    String senderJID = rs.getString(1);
-                    String nickname = rs.getString(2);
-                    Date sentDate = new Date(Long.parseLong(rs.getString(3).trim()));
-                    String subject = rs.getString(4);
-                    String body = rs.getString(5);
-                    String stanza = rs.getString(6);
+                    String senderJID = rs.getString("sender");
+                    String nickname = rs.getString("nickname");
+                    Date sentDate = new Date(Long.parseLong(rs.getString("logTime").trim()));
+                    String subject = rs.getString("subject");
+                    String body = rs.getString("body");
+                    String stanza = rs.getString("stanza");
                     room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
                             body, stanza);
                 }
@@ -272,8 +272,8 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 // might be a group JID
-                JID affiliationJID = GroupJID.fromString(rs.getString(1));
-                MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt(2));
+                JID affiliationJID = GroupJID.fromString(rs.getString("jid"));
+                MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt("affiliation"));
                 try {
                     switch (affiliation) {
                         case owner:
@@ -301,7 +301,7 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 try {
-                    room.addMember(new JID(rs.getString(1)), rs.getString(2), room.getRole());
+                    room.addMember(new JID(rs.getString("jid")), rs.getString("nickname"), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);
@@ -519,31 +519,31 @@ public class MUCPersistenceManager {
 
             while (resultSet.next()) {
                 try {
-                    LocalMUCRoom room = new LocalMUCRoom(chatserver, resultSet.getString(4), packetRouter);
-                    room.setID(resultSet.getLong(1));
-                    room.setCreationDate(new Date(Long.parseLong(resultSet.getString(2).trim()))); // creation date
-                    room.setModificationDate(new Date(Long.parseLong(resultSet.getString(3).trim()))); // modification date
-                    room.setNaturalLanguageName(resultSet.getString(5));
-                    room.setDescription(resultSet.getString(6));
-                    room.setLockedDate(new Date(Long.parseLong(resultSet.getString(7).trim())));
-                    if (resultSet.getString(8) != null) {
-                        room.setEmptyDate(new Date(Long.parseLong(resultSet.getString(8).trim())));
+                    LocalMUCRoom room = new LocalMUCRoom(chatserver, resultSet.getString("name"), packetRouter);
+                    room.setID(resultSet.getLong("roomID"));
+                    room.setCreationDate(new Date(Long.parseLong(resultSet.getString("creationDate").trim())));
+                    room.setModificationDate(new Date(Long.parseLong(resultSet.getString("modificationDate").trim())));
+                    room.setNaturalLanguageName(resultSet.getString("naturalName"));
+                    room.setDescription(resultSet.getString("description"));
+                    room.setLockedDate(new Date(Long.parseLong(resultSet.getString("lockedDate").trim())));
+                    if (resultSet.getString("emptyDate") != null) {
+                        room.setEmptyDate(new Date(Long.parseLong(resultSet.getString("emptyDate").trim())));
                     }
                     else {
                         room.setEmptyDate(null);
                     }
-                    room.setCanOccupantsChangeSubject(resultSet.getInt(9) == 1);
-                    room.setMaxUsers(resultSet.getInt(10));
-                    room.setPublicRoom(resultSet.getInt(11) == 1);
-                    room.setModerated(resultSet.getInt(12) == 1);
-                    room.setMembersOnly(resultSet.getInt(13) == 1);
-                    room.setCanOccupantsInvite(resultSet.getInt(14) == 1);
-                    room.setPassword(resultSet.getString(15));
-                    room.setCanAnyoneDiscoverJID(resultSet.getInt(16) == 1);
-                    room.setLogEnabled(resultSet.getInt(17) == 1);
-                    room.setSubject(resultSet.getString(18));
+                    room.setCanOccupantsChangeSubject(resultSet.getInt("canChangeSubject") == 1);
+                    room.setMaxUsers(resultSet.getInt("maxUsers"));
+                    room.setPublicRoom(resultSet.getInt("publicRoom") == 1);
+                    room.setModerated(resultSet.getInt("moderated") == 1);
+                    room.setMembersOnly(resultSet.getInt("membersOnly") == 1);
+                    room.setCanOccupantsInvite(resultSet.getInt("canInvite") == 1);
+                    room.setPassword(resultSet.getString("roomPassword"));
+                    room.setCanAnyoneDiscoverJID(resultSet.getInt("canDiscoverJID") == 1);
+                    room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
+                    room.setSubject(resultSet.getString("subject"));
                     List<String> rolesToBroadcast = new ArrayList<>();
-                    String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt(19)), 3);
+                    String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt("rolesToBroadcast")), 3);
                     if (roles.charAt(0) == '1') {
                         rolesToBroadcast.add("moderator");
                     }
@@ -554,10 +554,10 @@ public class MUCPersistenceManager {
                         rolesToBroadcast.add("visitor");
                     }
                     room.setRolesToBroadcastPresence(rolesToBroadcast);
-                    room.setLoginRestrictedToNickname(resultSet.getInt(20) == 1);
-                    room.setChangeNickname(resultSet.getInt(21) == 1);
-                    room.setRegistrationEnabled(resultSet.getInt(22) == 1);
-                    switch (resultSet.getInt(23)) // null returns 0.
+                    room.setLoginRestrictedToNickname(resultSet.getInt("useReservedNick") == 1);
+                    room.setChangeNickname(resultSet.getInt("canChangeNick") == 1);
+                    room.setRegistrationEnabled(resultSet.getInt("canRegister") == 1);
+                    switch (resultSet.getInt("allowpm")) // null returns 0.
                     {
                         default:
                         case 0: room.setCanSendPrivateMessage( "anyone"       ); break;
@@ -601,17 +601,17 @@ public class MUCPersistenceManager {
 
             while (resultSet.next()) {
                 try {
-                    LocalMUCRoom room = rooms.get(resultSet.getLong(1));
+                    LocalMUCRoom room = rooms.get(resultSet.getLong("roomID"));
                     // Skip to the next position if the room does not exist or if history is disabled
                     if (room == null || !room.isLogEnabled()) {
                         continue;
                     }
-                    String senderJID = resultSet.getString(2);
-                    String nickname  = resultSet.getString(3);
-                    Date sentDate    = new Date(Long.parseLong(resultSet.getString(4).trim()));
-                    String subject   = resultSet.getString(5);
-                    String body      = resultSet.getString(6);
-                    String stanza = resultSet.getString(7);
+                    String senderJID = resultSet.getString("sender");
+                    String nickname  = resultSet.getString("nickname");
+                    Date sentDate    = new Date(Long.parseLong(resultSet.getString("logTime").trim()));
+                    String subject   = resultSet.getString("subject");
+                    String body      = resultSet.getString("body");
+                    String stanza    = resultSet.getString("stanza");
                     room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
@@ -651,16 +651,16 @@ public class MUCPersistenceManager {
 
             while (resultSet.next()) {
                 try {
-                    long roomID = resultSet.getLong(1);
+                    long roomID = resultSet.getLong("roomID");
                     LocalMUCRoom room = rooms.get(roomID);
                     // Skip to the next position if the room does not exist
                     if (room == null) {
                         continue;
                     }
 
-                    final MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(resultSet.getInt(3));
+                    final MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(resultSet.getInt("affiliation"));
 
-                    final String jidValue = resultSet.getString(2);
+                    final String jidValue = resultSet.getString("jid");
                     final JID affiliationJID;
                     try {
                         // might be a group JID
@@ -713,15 +713,15 @@ public class MUCPersistenceManager {
 
             while (resultSet.next()) {
                 try {
-                    LocalMUCRoom room = rooms.get(resultSet.getLong(1));
+                    LocalMUCRoom room = rooms.get(resultSet.getLong("roomID"));
                     // Skip to the next position if the room does not exist
                     if (room == null) {
                         continue;
                     }
                     try {
                         // might be a group JID
-                        affiliationJID = GroupJID.fromString(resultSet.getString(2));
-                        room.addMember(affiliationJID, resultSet.getString(3), room.getRole());
+                        affiliationJID = GroupJID.fromString(resultSet.getString("jid"));
+                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getRole());
                     } catch (ForbiddenException | ConflictException e) {
                         Log.warn("Unable to add member to room.", e);
                     }

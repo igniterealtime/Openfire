@@ -735,7 +735,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             JID creator = new JID(rs.getString(22));
 
             String parent = decodeNodeID(rs.getString(5));
-            if (parent != null && !parent.isEmpty()) {
+            if (parent != null) { // beware: 'empty string' is a valid node ID! OF-2084
                 Node.UniqueIdentifier parentId = new Node.UniqueIdentifier( serviceId, parent );
                 parentMappings.put(nodeId, parentId);
             }

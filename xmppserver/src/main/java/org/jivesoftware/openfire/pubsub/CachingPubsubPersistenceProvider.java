@@ -90,7 +90,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
                 flushTask = new TimerTask()
                 {
                     @Override
-                    public void run() { flushPendingItems( false ); } // this member only
+                    public void run() { flushPendingChanges(false ); } // this member only
                 };
                 TaskEngine.getInstance().schedule(flushTask, Math.abs(prng.nextLong())%flushTimerDelay, flushTimerDelay);
             }
@@ -439,17 +439,17 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         if (itemsPending.size() > MAX_ITEMS_FLUSH) {
             TaskEngine.getInstance().submit(new Runnable() {
                 @Override
-                public void run() { flushPendingItems(false); }
+                public void run() { flushPendingChanges(false); }
             });
         }
     }
 
-    public void flushPendingItems( Node.UniqueIdentifier nodeUniqueId )
+    public void flushPendingChanges( Node.UniqueIdentifier nodeUniqueId )
     {
-        flushPendingItems(nodeUniqueId, ClusterManager.isClusteringEnabled());
+        flushPendingChanges(nodeUniqueId, ClusterManager.isClusteringEnabled());
     }
 
-    public void flushPendingItems(Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster)
+    public void flushPendingChanges( Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster )
     {
         // forward to other cluster members and wait for response
         if (sendToCluster) {
@@ -507,7 +507,16 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         delegate.bulkPublishedItems( addList, delList );
     }
 
-    public void flushPendingItems(boolean sendToCluster)
+    /**
+     * Persists any changes that have been applied to the caches by invoking the relevant methods of the delegate.
+     *
+     * A flush can be performed either local (typically used to periodically persist data) or cluster-wide (useful to
+     * ensure that a particular state is reached, cluster-wide).
+     *
+     * @param sendToCluster set to 'true' to trigger a flush on all cluster nodes. If false, a flush will occur only on
+     *                      the local node.
+     */
+    public void flushPendingChanges( boolean sendToCluster )
     {
         // forward to other cluster members and wait for response
         if (sendToCluster) {
@@ -552,7 +561,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         delegate.bulkPublishedItems( addList, delList );
-        flushPendingItems( sendToCluster );
+        flushPendingChanges( sendToCluster );
     }
 
     @Override
@@ -622,28 +631,28 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public List<PublishedItem> getPublishedItems( final LeafNode node )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
         return delegate.getPublishedItems( node );
     }
 
     @Override
     public List<PublishedItem> getPublishedItems( final LeafNode node, final int maxRows )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
         return delegate.getPublishedItems( node, maxRows );
     }
 
     @Override
     public PublishedItem getLastPublishedItem( final LeafNode node )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
         return delegate.getLastPublishedItem( node );
     }
 
     @Override
     public PublishedItem getPublishedItem( final LeafNode node, final PublishedItem.UniqueIdentifier itemIdentifier )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
 
         // try to fetch from cache first without locking
         PublishedItem result = itemCache.get(itemIdentifier);

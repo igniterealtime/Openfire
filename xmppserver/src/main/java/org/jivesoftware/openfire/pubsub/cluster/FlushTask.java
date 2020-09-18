@@ -33,9 +33,9 @@ public class FlushTask implements ClusterTask<Void>
 		if ( provider instanceof CachingPubsubPersistenceProvider )
 		{
 			if ( uniqueIdentifier != null ) {
-				((CachingPubsubPersistenceProvider) provider).flushPendingItems( uniqueIdentifier, false ); // just this member
+				((CachingPubsubPersistenceProvider) provider).flushPendingChanges(uniqueIdentifier, false ); // just this member
 			} else {
-				((CachingPubsubPersistenceProvider) provider).flushPendingItems( false ); // just this member
+				((CachingPubsubPersistenceProvider) provider).flushPendingChanges(false ); // just this member
 			}
         }
 	}

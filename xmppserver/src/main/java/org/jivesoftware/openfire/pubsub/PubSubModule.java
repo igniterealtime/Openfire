@@ -393,6 +393,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         if (serviceName == null) {
             serviceName = "pubsub";
         }
+        Log.debug( "Initializing using service name: '{}'", serviceName );
+
         multipleSubscriptionsEnabled = JiveGlobals.getBooleanProperty("xmpp.pubsub.multiple-subscriptions", true);
 
         routingTable = server.getRoutingTable();
@@ -403,7 +405,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Load default configuration for leaf nodes
         leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
-            // Create and save default configuration for leaf nodes;
+            Log.debug( "Create and save default configuration for leaf nodes" );
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
             leafDefaultConfiguration.setAccessModel(AccessModel.open);
             leafDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
@@ -425,7 +427,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         collectionDefaultConfiguration =
                 PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null ) {
-            // Create and save default configuration for collection nodes;
+            Log.debug( "Create and save default configuration for collection nodes" );
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
             collectionDefaultConfiguration.setAccessModel(AccessModel.open);
             collectionDefaultConfiguration.setPublisherModel(PublisherModel.publishers);
@@ -448,6 +450,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Ensure that we have a root collection node
         String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", "");
         if (nodes.isEmpty()) {
+            Log.debug( "Create a new root collection node" );
             // Create root collection node
             String creator = JiveGlobals.getProperty("xmpp.pubsub.root.creator");
 //            JID creatorJID = creator != null ? new JID(creator) : server.getAdmins().iterator().next();
@@ -459,6 +462,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             rootCollectionNode.saveToDB();
         }
         else {
+            Log.debug( "Load root collection node ('{}') from database.", rootNodeID );
             rootCollectionNode = (CollectionNode) getNode(rootNodeID);
         }
     }

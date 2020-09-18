@@ -514,7 +514,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
         }
 
-        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty() ) {
+        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty() && nodesToProcess.isEmpty() ) {
             return;	 // nothing to do for this cluster member
         }
 

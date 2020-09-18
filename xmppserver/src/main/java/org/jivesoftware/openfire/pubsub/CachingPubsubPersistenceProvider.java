@@ -460,7 +460,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         flushPendingNode(nodeUniqueId);
 
         if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty()) {
-            return;	 // nothing to do for this cluster member
+            return;	 // nothing left to do for this cluster member.
         }
 
         List<PublishedItem> addList;
@@ -523,12 +523,12 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
         }
 
-        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty() && nodesToProcess.isEmpty() ) {
-            return;	 // nothing to do for this cluster member
-        }
-
         // TODO: figure out if it's required to first flush pending nodes, cluster-wide, synchronously, before flushing items.
         flushPendingNodes();
+
+        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty()) {
+            return;	 // Nothing left to do for this cluster member.
+        }
 
         List<PublishedItem> addList;
         List<PublishedItem> delList;

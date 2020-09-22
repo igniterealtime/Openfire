@@ -292,6 +292,10 @@ public final class UserManager {
             throw new UserNotFoundException("user cannot be null");
         }
 
+        if (!xmppServer.isLocal(user)) {
+            throw new UserNotFoundException("Cannot get remote user");
+        }
+
         return getUser(user.getNode());
     }
 

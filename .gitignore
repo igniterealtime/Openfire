@@ -13,6 +13,7 @@ out/
 .settings
 .project
 .classpath
+.factorypath
 
 # Ignore MacOSX files
 .DS_Store

@@ -56,7 +56,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v1
         with:
-          name: distribution-java1.8
+          name: distribution-java11
           path: distribution
       - name: Setup environment for Openfire
         shell: bash
@@ -131,7 +131,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v1
         with:
-          name: distribution-java1.8
+          name: distribution-java11
           path: distribution
       - name: Setup environment for Openfire
         shell: bash

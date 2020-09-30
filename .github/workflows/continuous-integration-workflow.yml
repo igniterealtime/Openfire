@@ -257,3 +257,29 @@ jobs:
         shell: bash
         run: |
           pkill -f openfire.lib
+
+  publish:
+
+    name: Publish to Maven
+    runs-on: ubuntu-latest
+    needs: [aoixmpp, smack]
+    if: github.ref == ‘refs/heads/master’ && github.event_name == ‘push’
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Defend against another commit quickly following the first
+          # We want the one that's been tested, rather than the head of master
+          ref: ${github.event.head}
+      - name: Set up Java for publishing
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          server-id: igniterealtime
+          server-username: IGNITE_REALTIME_MAVEN_USERNAME
+          server-password: IGNITE_REALTIME_MAVEN_PASSWORD
+      - name: Publish
+        run: mvn -B deploy
+        env:
+          IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
+          IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}

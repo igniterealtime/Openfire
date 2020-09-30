@@ -57,6 +57,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: distribution-java1.8
+          path: distribution
       - name: Setup environment for Openfire
         shell: bash
         run: |
@@ -131,6 +132,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: distribution-java1.8
+          path: distribution
       - name: Setup environment for Openfire
         shell: bash
         run: |

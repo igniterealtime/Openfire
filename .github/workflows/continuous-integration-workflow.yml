@@ -268,13 +268,7 @@ jobs:
           chmod +x runSmackTests.sh
 
       - name: Run smack tests
-        uses: nick-invision/retry@v2
-        continue-on-error: false
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          retry_on: error
-          command: ./runSmackTests.sh
+        run: n=0; until [ "$n" -ge 3 ]; do ./runSmackTests.sh && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
 
       - name: Stop Openfire
         shell: bash

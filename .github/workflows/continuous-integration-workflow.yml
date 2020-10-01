@@ -65,76 +65,34 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: distribution-java1.8
-          path: distribution
-      - name: Setup environment for Openfire
-        shell: bash
-        run: |
-          echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
-      - name: Start Openfire
-        shell: bash
-        run: |
-          sh ./distribution/bin/openfire.sh -demoboot &
-      - name: Wait until Openfire is available
-        shell: bash
-        run: |
-          until printf "" 2>>/dev/null >>/dev/tcp/localhost/7070; do sleep 0.3; done
-      - name: Print success (replace this with running a test)
-        shell: bash
-        run: |
-          echo "Successfully started Openfire"
-
-      - name: Checkout aioxmpp
-        uses: actions/checkout@v2
+          path: distribution/target/distribution-base
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
         with:
-          repository: horazont/aioxmpp
-          path: aioxmpp
-          ref: devel
+          name: test-files
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: test-files
+          path: .
+      - name: Fix file permissions
+        run: |
+          chmod +x distribution/target/distribution-base/bin/openfire.sh
+          chmod +x ./runAioxmppIntegrationTests
+
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
           python-version: 3.6
-      - name: Install aioxmpp dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install nose
-          python -m pip install -e aioxmpp
-      - name: Generate Openfire test config
-        run: |
-          cat >"aioxmpp/openfire-config.ini" <<EOL
-          [global]
-          provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
-
-          [aioxmpp.e2etest.provision.AnonymousProvisioner]
-          domain=example.org
-          host=localhost
-          port=5222
-          no_verify=true
-          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
-          EOL
-      - name: Create aioxmpp test script
-        run: |
-          cat >"runAioxmppTests.sh" <<'EOL'
-          pushd aioxmpp
-          mkdir output
-          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only -e 'test_set_topic' -e 'test_publish_and_purge' -e 'test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
-          popd
-          EOL
-
-          chmod +x runAioxmppTests.sh
+     
       - name: Run aioxmpp tests
-        run: n=0; until [ "$n" -ge 3 ]; do ./runAioxmppTests.sh && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
+        run: n=0; until [ "$n" -ge 3 ]; do ./runAioxmppIntegrationTests -d -l -i 127.0.0.1 && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
             
       - name: Expose test output
         uses: actions/upload-artifact@v2
         with:
           name: aioxmpp test output
           path: aioxmpp/output
-
-      - name: Stop Openfire
-        shell: bash
-        run: |
-          pkill -f openfire.lib
 
   smack:
 

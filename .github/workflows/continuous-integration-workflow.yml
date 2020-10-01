@@ -162,13 +162,13 @@ jobs:
       - name: Create smack test script
         shell: bash
         run: |
-          cat >"runSmackTests.sh" <<ENDOFFILE
+          cat >"runSmackTests.sh" <<'ENDOFFILE'
           #!/usr/bin/env bash
           set -euo pipefail
 
           SMACK_VERSION="4.4.0-beta2"
 
-          cat >"test.gradle" <<EOL
+          cat >"test.gradle" <<'EOL'
           apply plugin: 'application'
 
           mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'

@@ -289,7 +289,7 @@ jobs:
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of master
-          ref: ${github.event.push.after}
+          ref: ${{ github.event.push.after }}
       - name: Set up Java for publishing
         uses: actions/setup-java@v1
         with:

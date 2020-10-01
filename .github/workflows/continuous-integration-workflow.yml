@@ -14,28 +14,33 @@ jobs:
 
     name: Build Openfire from source
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 1.8, 11 ]
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: ${{ matrix.java }}
       - name: Cache Maven repository
         uses: actions/cache@v1
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-java${{ matrix.java }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-java${{ matrix.java }}-maven-
+            ${{ runner.os }}-
       - name: Build with Maven
         run: mvn -B package -Pcoverage --file pom.xml
       - name: Upload distribution
         uses: actions/upload-artifact@v1
         with:
-          name: distribution
+          name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base
       - name: Upload coverage report for 'xmppserver' module
+        if: ${{ matrix.java == 1.8 }}
         uses: actions/upload-artifact@v1
         with:
           name: Coverage Report for 'xmppserver' module
@@ -51,7 +56,8 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v1
         with:
-          name: distribution
+          name: distribution-java1.8
+          path: distribution
       - name: Setup environment for Openfire
         shell: bash
         run: |
@@ -97,13 +103,20 @@ jobs:
           no_verify=true
           quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
           EOL
-      - name: Run aioxmpp tests
+      - name: Create aioxmpp test script
         run: |
+          cat >"runAioxmppTests.sh" <<'EOL'
           pushd aioxmpp
           mkdir output
           python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only -e 'test_set_topic' -e 'test_publish_and_purge' -e 'test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
           if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
           popd
+          EOL
+
+          chmod +x runAioxmppTests.sh
+      - name: Run aioxmpp tests
+        run: n=0; until [ "$n" -ge 3 ]; do ./runAioxmppTests.sh && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
+            
       - name: Expose test output
         uses: actions/upload-artifact@v1
         with:
@@ -125,7 +138,8 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v1
         with:
-          name: distribution
+          name: distribution-java1.8
+          path: distribution
       - name: Setup environment for Openfire
         shell: bash
         run: |
@@ -147,11 +161,16 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
-      - name: Run smack tests
-        continue-on-error: false
+      - name: Create smack test script
         shell: bash
         run: |
-          cat >"test.gradle" <<EOL
+          cat >"runSmackTests.sh" <<'ENDOFFILE'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          SMACK_VERSION="4.4.0-beta2"
+
+          cat >"test.gradle" <<'EOL'
           apply plugin: 'application'
 
           mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
@@ -236,7 +255,7 @@ jobs:
             --stacktrace \
             run \
             -b test.gradle \
-            -PsmackVersion="4.4.0-beta2" \
+            -PsmackVersion="${SMACK_VERSION}" \
             -Dsinttest.service="example.org" \
             -Dsinttest.securityMode=disabled \
             -Dsinttest.replyTimeout=60000 \
@@ -246,7 +265,40 @@ jobs:
             -Dsinttest.dnsResolver=javax \
             ${SINTTEST_DISABLED_TESTS_ARGUMENT}
 
+          ENDOFFILE
+
+          chmod +x runSmackTests.sh
+
+      - name: Run smack tests
+        run: n=0; until [ "$n" -ge 3 ]; do ./runSmackTests.sh && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
+
       - name: Stop Openfire
         shell: bash
         run: |
           pkill -f openfire.lib
+
+  publish:
+
+    name: Publish to Maven
+    runs-on: ubuntu-latest
+    needs: [aioxmpp, smack]
+    if: ${{github.ref == 'refs/heads/master' && github.event_name == 'push'}}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Defend against another commit quickly following the first
+          # We want the one that's been tested, rather than the head of master
+          ref: ${github.event.head}
+      - name: Set up Java for publishing
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          server-id: igniterealtime
+          server-username: IGNITE_REALTIME_MAVEN_USERNAME
+          server-password: IGNITE_REALTIME_MAVEN_PASSWORD
+      - name: Publish
+        run: mvn -B deploy
+        env:
+          IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
+          IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}

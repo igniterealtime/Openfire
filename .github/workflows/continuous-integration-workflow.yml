@@ -290,6 +290,14 @@ jobs:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of master
           ref: ${{ github.event.push.after }}
+      - name: Cache Maven repository
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-java11-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-java11-maven-
+            ${{ runner.os }}-
       - name: Set up Java for publishing
         uses: actions/setup-java@v1
         with:

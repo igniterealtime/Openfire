@@ -85,8 +85,9 @@ function setUpAioxmppEnvironment {
     git clone -b devel https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     pushd "${AIOXMPPDIR}"
     which pip3
-    sudo pip3 install nose
-    sudo pip3 install -e .
+	pip3 install setuptools
+    pip3 install nose
+    pip3 install -e .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]
 provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner

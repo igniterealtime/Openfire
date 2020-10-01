@@ -117,7 +117,7 @@ function launchOpenfire {
 	fi
 
 	rm -f distribution/target/distribution-base/conf/openfire.xml
-	cp distribution/src/conf/openfire-demoboot.xml \
+	cp distribution/target/distribution-base/conf/openfire-demoboot.xml \
 		distribution/target/distribution-base/conf/openfire.xml
 
 	echo "Starting Openfire…"

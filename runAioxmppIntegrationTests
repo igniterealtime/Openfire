@@ -9,15 +9,16 @@ HOST='localhost'
 
 usage()
 {
-	echo "Usage: $0 [-d] [-l] [-h HOST] [-s DOMAIN]"
+	echo "Usage: $0 [-d] [-l] [-i IPADDRESS] [-h HOST] [-s DOMAIN]"
 	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
 	echo "    -l: Launch a local Openfire. (default: off)"
+	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
 	echo "    -h: The hostname for the Openfire under test (default: localhost)"
 	echo "    -s: The XMPP domain name for the Openfire under test (default: example.org)"
 	exit 2
 }
 
-while getopts dlh:s: OPTION "$@"; do
+while getopts dlh:i:s: OPTION "$@"; do
 	case $OPTION in
 		d)
 			DEBUG=true
@@ -28,6 +29,9 @@ while getopts dlh:s: OPTION "$@"; do
 			;;
 		h)
 			HOST="${OPTARG}"
+			;;
+		i)
+			IPADDRESS="${OPTARG}"
 			;;
 		s)
 			DOMAIN="${OPTARG}"
@@ -97,6 +101,13 @@ EOL
     popd
 }
 
+function setHostsFile {
+	if [[ -n "${IPADDRESS-}" ]]; then
+		echo "Setting hosts file for local running. This may prompt for sudo."
+		sudo /bin/sh -c "echo \"$IPADDRESS $HOST\" >> /etc/hosts"
+	fi
+}
+
 function launchOpenfire {
 	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
 
@@ -130,6 +141,9 @@ function runTests {
 setBaseDirectory
 trap cleanup EXIT
 setUpAioxmppEnvironment
+if [[ -n "${IPADDRESS-}" ]]; then
+	setHostsFile
+fi
 if [[ $LOCAL_RUN == true ]]; then
 	launchOpenfire
 fi

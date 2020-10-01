@@ -35,12 +35,12 @@ jobs:
       - name: Build with Maven
         run: mvn -B package -Pcoverage --file pom.xml
       - name: Upload distribution
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base
       - name: Upload test files
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: test-files
           path: |
@@ -49,7 +49,7 @@ jobs:
             test.gradle
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.java == 1.8 }}
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
@@ -62,7 +62,7 @@ jobs:
 
     steps:
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: distribution-java1.8
           path: distribution
@@ -126,7 +126,7 @@ jobs:
         run: n=0; until [ "$n" -ge 3 ]; do ./runAioxmppTests.sh && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
             
       - name: Expose test output
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: aioxmpp test output
           path: aioxmpp/output
@@ -144,12 +144,12 @@ jobs:
 
     steps:
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: distribution-java1.8
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: test-files
       - name: Set up Java

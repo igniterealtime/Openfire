@@ -960,12 +960,7 @@ public class FMUCHandler
 
             // The 'stripped' stanza is going to be distributed locally. Act as if it originates from a local user, instead of the remote FMUC one.
             final JID from;
-            if ( author != null ) {
-                from = senderRole.getRoleAddress();
-            } else {
-                Log.trace("(room: '{}'): FMUC stanza did not have 'from' value. Using room JID instead.", room.getJID() );
-                from = room.getJID();
-            }
+            from = senderRole.getRoleAddress();
             stripped.setFrom( from );
             stripped.setTo( room.getJID() );
 

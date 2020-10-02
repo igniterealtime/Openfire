@@ -289,6 +289,42 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     private boolean registrationEnabled;
 
     /**
+     * Enables the FMUC functionality.
+     */
+    private boolean fmucEnabled;
+
+    /**
+     * The address of the MUC room (typically on a remote XMPP domain) to which this room should initiate
+     * FMUC federation. In this federation, the local node takes the role of the 'joining' node, while the remote node
+     * takes the role of the 'joined' node.
+     *
+     * When this room is not expected to initiate federation (note that it can still accept inbound federation attempts)
+     * then this is null.
+     *
+     * Although a room can accept multiple inbound joins (where it acts as a 'parent' node), it can initiate only one
+     * outbound join at a time (where it acts as a 'child' node).
+     */
+    private JID fmucOutboundNode;
+
+    /**
+     * The 'mode' that describes the FMUC configuration is captured in the supplied object, which is
+     * either master-master or master-slave.
+     *
+     * This should be null only when no outbound federation should be attempted (when {@link #fmucEnabled} is false).
+     */
+    private FMUCMode fmucOutboundMode;
+
+    /**
+     * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
+     * permitted to to federate with the local room.
+     *
+     * A null value is to be interpreted as allowing all rooms to be permitted.
+     *
+     * An empty set of addresses is to be interpreted as disallowing all rooms to be permitted.
+     */
+    private Set<JID> fmucInboundNodes;
+
+    /**
      * Internal component that handles IQ packets sent by the room owners.
      */
     private IQOwnerHandler iqOwnerHandler;
@@ -1251,6 +1287,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         Collection<MUCRole> removedRoles = new CopyOnWriteArrayList<>();
         lock.writeLock().lock();
         try {
+            fmucHandler.stop();
+
             boolean hasRemoteOccupants = false;
             // Remove each occupant
             for (MUCRole leaveRole : occupantsByFullJID.values()) {
@@ -2864,12 +2902,42 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public void setFmucEnabled(boolean fmucEnabled) {
-        this.fmucHandler.setFmucEnabled(fmucEnabled);
+        this.fmucEnabled = fmucEnabled;
     }
 
     @Override
     public boolean isFmucEnabled() {
-        return this.fmucHandler.isFmucEnabled();
+        return fmucEnabled;
+    }
+
+    @Override
+    public void setFmucOutboundNode( JID fmucOutboundNode ) {
+        this.fmucOutboundNode = fmucOutboundNode;
+    }
+
+    @Override
+    public JID getFmucOutboundNode() {
+        return fmucOutboundNode;
+    }
+
+    @Override
+    public void setFmucOutboundMode( FMUCMode fmucOutboundMode ) {
+        this.fmucOutboundMode = fmucOutboundMode;
+    }
+
+    @Override
+    public FMUCMode getFmucOutboundMode() {
+        return fmucOutboundMode;
+    }
+
+    @Override
+    public void setFmucInboundNodes( Set<JID> fmucInboundNodes ) {
+        this.fmucInboundNodes = fmucInboundNodes;
+    }
+
+    @Override
+    public Set<JID> getFmucInboundNodes() {
+        return fmucInboundNodes;
     }
 
     @Override
@@ -3117,7 +3185,19 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         ExternalizableUtil.getInstance().writeBoolean(out, loginRestrictedToNickname);
         ExternalizableUtil.getInstance().writeBoolean(out, canChangeNickname);
         ExternalizableUtil.getInstance().writeBoolean(out, registrationEnabled);
-        // FIXME: serialize (the state of) fmucHandler! ExternalizableUtil.getInstance().writeBoolean(out, fmucHandler);
+        ExternalizableUtil.getInstance().writeBoolean(out, fmucEnabled);
+        ExternalizableUtil.getInstance().writeBoolean(out, fmucOutboundNode != null);
+        if (fmucOutboundNode != null) {
+            ExternalizableUtil.getInstance().writeSerializable(out, fmucOutboundNode);
+        }
+        ExternalizableUtil.getInstance().writeBoolean(out, fmucOutboundMode != null);
+        if (fmucOutboundMode != null) {
+            ExternalizableUtil.getInstance().writeInt(out, fmucOutboundMode.ordinal());
+        }
+        ExternalizableUtil.getInstance().writeBoolean(out, fmucInboundNodes != null);
+        if (fmucInboundNodes != null) {
+            ExternalizableUtil.getInstance().writeSerializableCollection(out, fmucInboundNodes);
+        }
         ExternalizableUtil.getInstance().writeSafeUTF(out, subject);
         ExternalizableUtil.getInstance().writeLong(out, roomID);
         ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
@@ -3158,7 +3238,24 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         loginRestrictedToNickname = ExternalizableUtil.getInstance().readBoolean(in);
         canChangeNickname = ExternalizableUtil.getInstance().readBoolean(in);
         registrationEnabled = ExternalizableUtil.getInstance().readBoolean(in);
-        // FIXME fmucHandler = ExternalizableUtil.getInstance().readSerializable(in);
+        fmucEnabled = ExternalizableUtil.getInstance().readBoolean(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            fmucOutboundNode = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        } else {
+            fmucOutboundNode = null;
+        }
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            final int i = ExternalizableUtil.getInstance().readInt(in);
+            fmucOutboundMode = FMUCMode.values()[i];
+        } else {
+            fmucOutboundMode = null;
+        }
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            fmucInboundNodes = new HashSet<>();
+            ExternalizableUtil.getInstance().readSerializableCollection(in, fmucInboundNodes, getClass().getClassLoader());
+        } else {
+            fmucInboundNodes = null;
+        }
         subject = ExternalizableUtil.getInstance().readSafeUTF(in);
         roomID = ExternalizableUtil.getInstance().readLong(in);
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));

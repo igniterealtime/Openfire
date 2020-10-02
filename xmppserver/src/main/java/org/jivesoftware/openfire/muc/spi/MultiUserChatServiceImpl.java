@@ -787,6 +787,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             MUCEventDispatcher.roomCreated(room.getRole().getRoleAddress());
         }
         if (loaded || created) {
+            // Initiate FMUC, when enabled.
+            room.getFmucHandler().applyConfigurationChanges();
+
             // Notify other cluster nodes that a new room is available
             CacheFactory.doClusterTask(new RoomAvailableEvent(room));
             for (final MUCRole role : room.getOccupants()) {
@@ -825,6 +828,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         if (loaded) {
+            // Initiate FMUC, when enabled.
+            room.getFmucHandler().applyConfigurationChanges();
+
             // Notify other cluster nodes that a new room is available
             CacheFactory.doClusterTask(new RoomAvailableEvent(room));
         }
@@ -1478,6 +1484,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Load all the persistent rooms to memory
         for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
+
+            // Start FMUC, if desired.
+            room.getFmucHandler().applyConfigurationChanges();
         }
     }
 

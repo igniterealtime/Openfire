@@ -572,15 +572,18 @@ pre, tt {
 }
 
 /* Messages - errors, success and info */
-.jive-error table, .jive-info table, .jive-success table {
+.jive-error table, .jive-warning table, .jive-info table, .jive-success table {
     border:1px solid #CCCCCC;
 }
-.jive-error td, .jive-info td, .jive-success td {
+.jive-error td, .jive-warning td, .jive-info td, .jive-success td {
     padding:3px;
     vertical-align:top;
 }
 .jive-error-text, .jive-error .jive-icon-label, .jive-error-text a, .jive-error .jive-icon-label a {
     color:#FF0000;
+}
+.jive-warning-text, .jive-warning .jive-icon-label, .jive-warning-text a, .jive-warning-text .jive-icon-label a {
+    color: #FF6C0D;
 }
 .jive-success-text, .jive-success .jive-icon-label, .jive-success-text a, .jive-success .jive-icon-label a {
     color:#009900;

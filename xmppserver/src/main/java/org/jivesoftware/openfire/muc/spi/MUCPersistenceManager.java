@@ -17,12 +17,12 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import java.math.BigInteger;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
@@ -36,6 +36,8 @@ import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import static org.jivesoftware.openfire.muc.spi.FMUCMode.MasterMaster;
 
 /**
  * A manager responsible for ensuring room persistence. There are different ways to make a room
@@ -61,7 +63,9 @@ public class MUCPersistenceManager {
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
         "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
-        "canChangeNick, canRegister, allowpm FROM ofMucRoom WHERE serviceID=? AND name=?";
+        "canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, fmucOutboundMode, " +
+        "fmucInboundNodes " +
+        " FROM ofMucRoom WHERE serviceID=? AND name=?";
     private static final String LOAD_AFFILIATIONS =
         "SELECT jid, affiliation FROM ofMucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
@@ -73,13 +77,15 @@ public class MUCPersistenceManager {
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
-        "useReservedNick, canChangeNick, canRegister, allowpm " +
+        "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
+        "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
         "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
-        "useReservedNick, canChangeNick, canRegister, allowpm " +
+        "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
+        "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID AS roomID, ofMucAffiliation.jid AS jid, ofMucAffiliation.affiliation AS affiliation " +
@@ -97,13 +103,15 @@ public class MUCPersistenceManager {
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
-        "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=? WHERE roomID=?";
+        "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=? fmucEnabled=?, " +
+        "fmucOutboundNode=?, fmucOutboundMode=?, fmucInboundNodes=? " +
+        "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO ofMucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
         "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
-        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm) VALUES (?,?,?,?,?,?,?,?,?," +
-            "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
+        "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -233,6 +241,35 @@ public class MUCPersistenceManager {
                 case 2: room.setCanSendPrivateMessage( "moderators"   ); break;
                 case 3: room.setCanSendPrivateMessage( "none"         ); break;
             }
+            room.setFmucEnabled(rs.getInt("fmucEnabled") == 1);
+
+            if ( rs.getString("fmucOutboundNode") != null ) {
+                final JID fmucOutboundNode = new JID(rs.getString("fmucOutboundNode"));
+                final FMUCMode fmucOutboundJoinMode;
+                switch (rs.getInt("fmucOutboundMode")) // null returns 0.
+                {
+                    default:
+                    case 0: fmucOutboundJoinMode = MasterMaster; break;
+                    case 1: fmucOutboundJoinMode = FMUCMode.MasterSlave; break;
+                }
+                room.setFmucOutboundNode( fmucOutboundNode );
+                room.setFmucOutboundMode( fmucOutboundJoinMode );
+            } else {
+                room.setFmucOutboundNode( null );
+                room.setFmucOutboundMode( null );
+            }
+            if ( rs.getString("fmucInboundNodes") != null ) {
+                final Set<JID> fmucInboundNodes = Stream.of(rs.getString("fmucInboundNodes").split("\n"))
+                                                        .map(String::trim)
+                                                        .map(JID::new)
+                                                        .collect(Collectors.toSet());
+                // A list, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all).
+                room.setFmucInboundNodes(fmucInboundNodes);
+            } else {
+                // Null: this is an 'allow all' configuration.
+                room.setFmucInboundNodes(null);
+            }
+
             room.setPersistent(true);
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -363,6 +400,25 @@ public class MUCPersistenceManager {
                     case "none":         pstmt.setInt(17, 3); break;
                 }
                 pstmt.setLong(18, room.getID());
+                pstmt.setInt(19, (room.isFmucEnabled() ? 1 : 0 ));
+                if ( room.getFmucOutboundNode() == null ) {
+                    pstmt.setNull(20, Types.VARCHAR);
+                } else {
+                    pstmt.setString(20, room.getFmucOutboundNode().toString());
+                }
+                if ( room.getFmucOutboundMode() == null ) {
+                    pstmt.setNull(21, Types.INTEGER);
+                } else {
+                    pstmt.setInt(21, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                }
+
+                // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
+                if (room.getFmucInboundNodes() == null) {
+                    pstmt.setNull(22, Types.VARCHAR); // Null: allow all.
+                } else {
+                    final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
+                    pstmt.setString(22, content);
+                }
                 pstmt.executeUpdate();
             }
             else {
@@ -403,6 +459,25 @@ public class MUCPersistenceManager {
                     case "participants": pstmt.setInt(24, 1); break;
                     case "moderators":   pstmt.setInt(24, 2); break;
                     case "none":         pstmt.setInt(24, 3); break;
+                }
+                pstmt.setInt(25, (room.isFmucEnabled() ? 1 : 0 ));
+                if ( room.getFmucOutboundNode() == null ) {
+                    pstmt.setNull(26, Types.VARCHAR);
+                } else {
+                    pstmt.setString(26, room.getFmucOutboundNode().toString());
+                }
+                if ( room.getFmucOutboundMode() == null ) {
+                    pstmt.setNull(27, Types.INTEGER);
+                } else {
+                    pstmt.setInt(27, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                }
+
+                // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
+                if (room.getFmucInboundNodes() == null) {
+                    pstmt.setNull(28, Types.VARCHAR); // Null: allow all.
+                } else {
+                    final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
+                    pstmt.setString(28, content);
                 }
                 pstmt.executeUpdate();
             }
@@ -466,6 +541,7 @@ public class MUCPersistenceManager {
      * @return a collection with all the persistent rooms.
      */
     public static Collection<LocalMUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate, PacketRouter packetRouter) {
+        Log.debug( "Loading rooms for chat service {}", chatserver.getServiceName() );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Map<Long, LocalMUCRoom> rooms;
@@ -492,7 +568,7 @@ public class MUCPersistenceManager {
                 room.setEmptyDate(new Date());
             }
         }
-
+        Log.debug( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
         return rooms.values();
     }
 
@@ -565,6 +641,35 @@ public class MUCPersistenceManager {
                         case 2: room.setCanSendPrivateMessage( "moderators"   ); break;
                         case 3: room.setCanSendPrivateMessage( "none"         ); break;
                     }
+
+                    room.setFmucEnabled(resultSet.getInt("fmucEnabled") == 1);
+                    if ( resultSet.getString("fmucOutboundNode") != null ) {
+                        final JID fmucOutboundNode = new JID(resultSet.getString("fmucOutboundNode"));
+                        final FMUCMode fmucOutboundJoinMode;
+                        switch (resultSet.getInt("fmucOutboundMode")) // null returns 0.
+                        {
+                            default:
+                            case 0: fmucOutboundJoinMode = MasterMaster; break;
+                            case 1: fmucOutboundJoinMode = FMUCMode.MasterSlave; break;
+                        }
+                        room.setFmucOutboundNode( fmucOutboundNode );
+                        room.setFmucOutboundMode( fmucOutboundJoinMode );
+                    } else {
+                        room.setFmucOutboundNode( null );
+                        room.setFmucOutboundMode( null );
+                    }
+                    if ( resultSet.getString("fmucInboundNodes") != null ) {
+                        final Set<JID> fmucInboundNodes = Stream.of(resultSet.getString("fmucInboundNodes").split("\n"))
+                            .map(String::trim)
+                            .map(JID::new)
+                            .collect(Collectors.toSet());
+                        // A list, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all).
+                        room.setFmucInboundNodes(fmucInboundNodes);
+                    } else {
+                        // Null: this is an 'allow all' configuration.
+                        room.setFmucInboundNodes(null);
+                    }
+
                     room.setPersistent(true);
                     rooms.put(room.getID(), room);
                 } catch (SQLException e) {

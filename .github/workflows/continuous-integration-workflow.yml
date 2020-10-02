@@ -70,11 +70,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: test-files
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v2
-        with:
-          name: test-files
-          path: .
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
@@ -86,9 +81,10 @@ jobs:
           python-version: 3.6
      
       - name: Run aioxmpp tests
-        run: n=0; until [ "$n" -ge 3 ]; do ./runAioxmppIntegrationTests -d -l -i 127.0.0.1 && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
+        run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
             
       - name: Expose test output
+        if: always()
         uses: actions/upload-artifact@v2
         with:
           name: aioxmpp test output
@@ -119,7 +115,7 @@ jobs:
           chmod +x distribution/target/distribution-base/bin/openfire.sh
           chmod +x ./runIntegrationTests
       - name: Run smack tests
-        run: n=0; until [ "$n" -ge 3 ]; do ./runIntegrationTests -d -l -i 127.0.0.1 && break; n=$((n+1)); done # Try tests a few times, in case of flakiness
+        run: ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 # Try tests a few times, in case of flakiness
 
   publish:
 

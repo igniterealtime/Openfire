@@ -823,6 +823,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     catch (final IllegalArgumentException e) {
                         // The room does not exist so do nothing
                         room = null;
+                        loaded = false;
                     }
                 }
             }

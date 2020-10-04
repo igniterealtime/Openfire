@@ -71,6 +71,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import static javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD;
+import static javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA;
+
 /**
  * Graphical launcher for Openfire.
  *
@@ -575,6 +578,8 @@ public class Launcher {
             // Note, we use standard DOM to read in the XML. This is necessary so that
             // Launcher has fewer dependencies.
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setAttribute(ACCESS_EXTERNAL_DTD, "");
+            factory.setAttribute(ACCESS_EXTERNAL_SCHEMA, "");
             Document document = factory.newDocumentBuilder().parse(configFile);
             Element rootElement = document.getDocumentElement();
             Element adminElement = (Element)rootElement.getElementsByTagName("adminConsole").item(0);

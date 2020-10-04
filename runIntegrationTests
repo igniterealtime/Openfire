@@ -159,21 +159,12 @@ function runTestsInGradle {
 	# MultiUserChatIntegrationTest.mucDestroyTest suffers from a race condition, making this test flap. See https://github.com/igniterealtime/Smack/pull/437
 	DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
 
-	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-
-	# Does sometimes not succeed in Travis (stress test is too much?)
+    # Occasionally fails, disabled until cause can be found.
 	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
-
-	#FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
-	DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
-	#OX tests use a removed dependency, and so don't compile on 4.4.0a2
-	DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
-	DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
 	DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
 	DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
-
-    # Occasionally fails, disabled until cause can be found.
     DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)

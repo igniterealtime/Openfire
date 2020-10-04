@@ -155,9 +155,11 @@ function runTestsInGradle {
 	echo "Starting Integration Tests (using Smack ${SMACK_VERSION})…"
 
 	DISABLED_INTEGRATION_TESTS=()
-	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+
+	# MultiUserChatIntegrationTest.mucDestroyTest suffers from a race condition, making this test flap. See https://github.com/igniterealtime/Smack/pull/437
+	DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+
 	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
 
 	# Does sometimes not succeed in Travis (stress test is too much?)
 	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)

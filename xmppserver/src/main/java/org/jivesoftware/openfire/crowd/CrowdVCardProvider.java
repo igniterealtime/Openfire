@@ -15,9 +15,11 @@
  */
 package org.jivesoftware.openfire.crowd;
 
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -29,6 +31,7 @@ import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * VCard provider for Crowd.
@@ -71,21 +74,16 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
                             .replace("@firstname@", user.firstName)
                             .replace("@email@", user.email)
                             .replace("@nickname@", username);
-                    
-                    SAXReader xmlReader = new SAXReader();
-                    xmlReader.setEncoding("UTF-8");
-                    
-                    vcard = xmlReader.read(new StringReader(str)).getRootElement();
+                    vcard = readDocument(new StringReader(str)).getRootElement();
                     
                 } catch (UserNotFoundException unfe) {
                     LOG.error("Unable to find user:" + String.valueOf(username) + " for loading its vcard", unfe);
                     return null;
-                } catch (DocumentException de) {
-                    LOG.error("vcard parsing error", de);
+                } catch (DocumentException | SAXException e) {
+                    LOG.error("vcard parsing error", e);
                     return null;
                 }
 
-                
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(vcard != null ? vcard.asXML() : "vcard is null");
                 }
@@ -157,5 +155,12 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
 
         return super.updateVCard(username, vCard);
     }
-    
+
+    private Document readDocument(Reader in) throws SAXException, DocumentException {
+        SAXReader reader = new SAXReader();
+        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        return reader.read(in);
+    }
 }

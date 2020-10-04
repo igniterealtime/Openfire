@@ -23,6 +23,7 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -64,9 +65,7 @@ public class AdminConsole {
      * @throws Exception if an error occurs when parsing the XML or adding it to the model.
      */
     public static void addModel(String name, InputStream in) throws Exception {
-        SAXReader saxReader = new SAXReader();
-        saxReader.setIgnoreComments(true);
-        Document doc = saxReader.read(in);
+        Document doc = getDocument(in);
         addModel(name, (Element)doc.selectSingleNode("/adminconsole"));
     }
 
@@ -214,9 +213,7 @@ public class AdminConsole {
             return;
         }
         try {
-            SAXReader saxReader = new SAXReader();
-            saxReader.setIgnoreComments(true);
-            Document doc = saxReader.read(in);
+            Document doc = getDocument(in);
             coreModel = (Element)doc.selectSingleNode("/adminconsole");
         }
         catch (Exception e) {
@@ -467,5 +464,14 @@ public class AdminConsole {
                 return 0;
             }
         }
+    }
+
+    private static Document getDocument(InputStream in) throws SAXException, DocumentException {
+        SAXReader saxReader = new SAXReader();
+        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        saxReader.setIgnoreComments(true);
+        return saxReader.read(in);
     }
 }

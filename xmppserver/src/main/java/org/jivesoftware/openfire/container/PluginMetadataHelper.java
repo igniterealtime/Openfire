@@ -552,14 +552,7 @@ public class PluginMetadataHelper
             final Path pluginConfig = pluginDir.resolve( "plugin.xml" );
             if ( Files.exists( pluginConfig ) )
             {
-                final SAXReader saxReader = new SAXReader();
-                saxReader.setEntityResolver(new EntityResolver() {
-                    @Override
-                    public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-                        throw new IOException("External entity denied: " + publicId + " // " + systemId);
-                    }
-                });
-                saxReader.setEncoding( "UTF-8" );
+                final SAXReader saxReader = setupSAXReader();
                 final Document pluginXML = saxReader.read( pluginConfig.toFile() );
                 final Element element = (Element) pluginXML.selectSingleNode( xpath );
                 if ( element != null )
@@ -573,5 +566,17 @@ public class PluginMetadataHelper
             Log.error( "Unable to get element value '{}' from plugin.xml of plugin in '{}':", xpath, pluginDir, e );
         }
         return null;
+    }
+
+    private static SAXReader setupSAXReader() throws SAXException {
+        final SAXReader saxReader = new SAXReader();
+        saxReader.setEntityResolver((publicId, systemId) -> {
+            throw new IOException("External entity denied: " + publicId + " // " + systemId);
+        });
+        saxReader.setEncoding( "UTF-8" );
+        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        return saxReader;
     }
 }

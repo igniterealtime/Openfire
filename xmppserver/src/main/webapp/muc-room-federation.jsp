@@ -127,6 +127,7 @@
                 room.setFmucOutboundNode(outboundJoinPeer);
                 room.setFmucOutboundMode(FMUCMode.MasterMaster); // We currently do not support another mode than master-master.
                 room.getFmucHandler().applyConfigurationChanges();
+                room.saveToDB();
             } catch ( Exception e ) {
                 LoggerFactory.getLogger("muc-room-federation.jsp").warn("An exception occurred while trying to apply an FMUC config change to room {}", roomJID, e );
                 errors.put( "fmuchandler", e.getMessage() );

@@ -399,26 +399,26 @@ public class MUCPersistenceManager {
                     case "moderators":   pstmt.setInt(17, 2); break;
                     case "none":         pstmt.setInt(17, 3); break;
                 }
-                pstmt.setLong(18, room.getID());
-                pstmt.setInt(19, (room.isFmucEnabled() ? 1 : 0 ));
+                pstmt.setInt(18, (room.isFmucEnabled() ? 1 : 0 ));
                 if ( room.getFmucOutboundNode() == null ) {
-                    pstmt.setNull(20, Types.VARCHAR);
+                    pstmt.setNull(19, Types.VARCHAR);
                 } else {
-                    pstmt.setString(20, room.getFmucOutboundNode().toString());
+                    pstmt.setString(19, room.getFmucOutboundNode().toString());
                 }
                 if ( room.getFmucOutboundMode() == null ) {
-                    pstmt.setNull(21, Types.INTEGER);
+                    pstmt.setNull(20, Types.INTEGER);
                 } else {
-                    pstmt.setInt(21, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                    pstmt.setInt(20, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
                 }
 
                 // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
                 if (room.getFmucInboundNodes() == null) {
-                    pstmt.setNull(22, Types.VARCHAR); // Null: allow all.
+                    pstmt.setNull(21, Types.VARCHAR); // Null: allow all.
                 } else {
                     final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
-                    pstmt.setString(22, content);
+                    pstmt.setString(21, content);
                 }
+                pstmt.setLong(22, room.getID());
                 pstmt.executeUpdate();
             }
             else {

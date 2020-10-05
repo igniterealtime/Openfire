@@ -103,7 +103,7 @@ public class MUCPersistenceManager {
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
-        "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=? fmucEnabled=?, " +
+        "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
         "fmucOutboundNode=?, fmucOutboundMode=?, fmucInboundNodes=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 

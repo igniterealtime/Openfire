@@ -127,6 +127,18 @@
     </properties>
 
     <profiles>
+
+        <!-- OF-2093: Ensure proper cross-compilation, using a compiler flag that's introduced in Java 9. -->
+        <profile>
+            <id>jdk9+</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+
         <profile>
             <id>release</id>
             <build>

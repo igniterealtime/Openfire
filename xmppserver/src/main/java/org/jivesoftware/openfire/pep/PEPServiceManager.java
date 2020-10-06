@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.pep;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.CacheableOptional;
@@ -241,7 +242,6 @@ public class PEPServiceManager {
         final Lock lock = pepServices.getLock(owner.asBareJID());
         lock.lock();
         try {
-
             // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
             // after all nodes are deleted.
             final CacheableOptional<PEPService> optional = pepServices.get(owner.asBareJID());
@@ -251,6 +251,8 @@ public class PEPServiceManager {
 
             if ( optional.isPresent() )
             {
+                unload( optional.get() );
+
                 // Delete the user's PEP nodes from memory and the database.
                 CollectionNode rootNode = optional.get().getRootCollectionNode();
                 for ( final Node node : optional.get().getNodes() )

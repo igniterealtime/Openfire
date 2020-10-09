@@ -318,6 +318,11 @@
                           url="pubsub-node-subscribers.jsp"
                           description="${sidebar.pubsub-node-subscribers.descr}"/>
 
+                    <!-- Node Configuration -->
+                    <item id="pubsub-node-configuration" name="${sidebar.pubsub-node-configuration}"
+                          url="pubsub-node-configuration.jsp"
+                          description="${sidebar.pubsub-node-configuration.descr}"/>
+
                     <!-- Edit Node -->
                     <item id="pubsub-node-edit" name="${sidebar.pubsub-node-edit}"
                           url="pubsub-node-edit.jsp"

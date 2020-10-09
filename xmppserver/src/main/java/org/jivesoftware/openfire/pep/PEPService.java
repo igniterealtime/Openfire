@@ -344,6 +344,8 @@ public class PEPService implements PubSubService, Cacheable {
         message.setFrom(getAddress());
         message.setID(StringUtils.randomString(8));
 
+        final boolean recipientIsOwner = serviceOwner.asBareJID().equals(recipientJID.asBareJID());
+
         // If the recipient subscribed with a bare JID and this PEPService can retrieve
         // presence information for the recipient, collect all of their full JIDs and
         // send the notification to each below.
@@ -353,6 +355,8 @@ public class PEPService implements PubSubService, Cacheable {
                 for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
                     recipientFullJIDs.add(clientSession.getAddress());
                 }
+            } else {
+                recipientFullJIDs.add(recipientJID);
             }
         }
         else {
@@ -433,7 +437,9 @@ public class PEPService implements PubSubService, Cacheable {
                 }
 
                 // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
-                if (canProbePresence(publisher, recipientFullJID)) {
+                if (publisher == null) {
+                    Log.warn( "Item {} on node {} has no known publisher.", itemID, node.getUniqueIdentifier());
+                } else if (recipientIsOwner || canProbePresence(publisher, recipientFullJID)) {
                     Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
                     Element address = addresses.addElement("address");
                     address.addAttribute("type", "replyto");
@@ -460,7 +466,7 @@ public class PEPService implements PubSubService, Cacheable {
             }
             catch (NullPointerException e) {
                 try {
-                    if (canProbePresence(getAddress(), recipientFullJID)) {
+                    if (recipientIsOwner || canProbePresence(getAddress(), recipientFullJID)) {
                         message.setTo(recipientFullJID);
                     }
                 }

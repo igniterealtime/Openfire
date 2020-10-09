@@ -337,49 +337,56 @@ public class PEPService implements PubSubService, Cacheable {
     }
 
     @Override
-    public void sendNotification(Node node, Message message, JID recipientJID) {
-        Log.trace( "Service '{}' attempts to send a notification on node '{}' to recipient: {} (processing)", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), recipientJID );
+    public void sendNotification(Node node, Message orig, JID recipientJID) {
+        Log.trace( "Recipient '{}' is an intended recipient of service '{}' sending a notification for node '{}': {}", recipientJID, this.getServiceID(), node.getUniqueIdentifier().getNodeId(), orig.toXML() );
 
+        final boolean recipientIsOwner = serviceOwner.asBareJID().equals(recipientJID.asBareJID());
+
+        final Set<JID> deliveryAddresses = new HashSet<>();
+
+        if (XMPPServer.getInstance().isLocal(recipientJID)) {
+            // When the recipient is a local entity, then we can be sure that we have appropriate presence information
+            // to determine all desirable delivery addresses.
+            if (recipientJID.getResource() == null) {
+                // If the recipient subscribed with a bare JID collect all of their full JIDs based on active sessions
+                // and send the notification to each below.
+                Log.trace("Recipient '{}' is a local user using a bare JID. Notifications will be sent to all its active sessions.", recipientJID);
+                for (final ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
+                    if (!clientSession.isClosed()) {
+                        deliveryAddresses.add(clientSession.getAddress());
+                    }
+                }
+            } else {
+                // If the recipient subscribed with a full JID, only send a notification if their session is online.
+                final ClientSession session = SessionManager.getInstance().getSession(recipientJID);
+                final boolean doDeliver = session != null && !session.isClosed();
+                Log.trace("Recipient '{}' is a local user using a full JID. Notifications will be sent only if there's an active session (which there {})", recipientJID, doDeliver ? "is" : "is not");
+                if (doDeliver) {
+                    deliveryAddresses.add(recipientJID);
+                }
+            }
+        } else {
+            // When the recipient is not a local entity, this service does not have appropriate presence information
+            // and can only use the provided recipient address.
+            Log.trace("Recipient '{}' is a remote user. Notifications will be sent to to the address as-is.", recipientJID);
+            deliveryAddresses.add(recipientJID);
+        }
+
+        if (deliveryAddresses.isEmpty()) {
+            Log.trace("Recipient '{}': Done processing, recipient has no delivery addresses", recipientJID);
+            return;
+        }
+
+        if ( Log.isTraceEnabled() ) {
+            Log.trace("Recipient '{}' has these delivery address(es): {}", recipientJID, deliveryAddresses.stream().map(JID::toString).collect(Collectors.joining(", ")));
+        }
+
+        final Message message = orig.createCopy(); // Defensive copy: Do not let data from one iteration leak into the next.
         message.setTo(recipientJID);
         message.setFrom(getAddress());
         message.setID(StringUtils.randomString(8));
 
-        final boolean recipientIsOwner = serviceOwner.asBareJID().equals(recipientJID.asBareJID());
-
-        // If the recipient subscribed with a bare JID and this PEPService can retrieve
-        // presence information for the recipient, collect all of their full JIDs and
-        // send the notification to each below.
-        Set<JID> recipientFullJIDs = new HashSet<>();
-        if (XMPPServer.getInstance().isLocal(recipientJID)) {
-            if (recipientJID.getResource() == null) {
-                for (ClientSession clientSession : SessionManager.getInstance().getSessions(recipientJID.getNode())) {
-                    recipientFullJIDs.add(clientSession.getAddress());
-                }
-            } else {
-                recipientFullJIDs.add(recipientJID);
-            }
-        }
-        else {
-            // Since recipientJID is not local, try to get presence info from cached known remote
-            // presences.
-
-            // TODO: OF-605 the old code depends on a cache that would contain presence state on all (?!) JIDS on all (?!)
-            // remote domains. As we cannot depend on this information to be correct (even if we could ensure that this
-            // potentially unlimited amount of data would indeed be manageable in the first place), this code was removed.
-
-            recipientFullJIDs.add(recipientJID);
-        }
-        if ( Log.isTraceEnabled() ) {
-            Log.trace("For recipient '{}' these JIDs are found: {}", recipientJID, recipientFullJIDs.stream().map(JID::toString).collect(Collectors.joining(", ")));
-        }
-
-        if (recipientFullJIDs.isEmpty()) {
-            Log.trace( "Sending notification to recipient address: '{}' (no full JIDs found for recipient '{}').", message.getTo(), recipientJID );
-            router.route(message);
-            return;
-        }
-
-        for (JID recipientFullJID : recipientFullJIDs) {
+        for (final JID deliveryAddress : deliveryAddresses) {
             // Include an Extended Stanza Addressing "replyto" extension specifying the publishing
             // resource. However, only include the extension if the receiver has a presence subscription
             // to the service owner.
@@ -406,10 +413,10 @@ public class PEPService implements PubSubService, Cacheable {
                 // Check if the recipientFullJID is interested in notifications for this node.
                 // If the recipient has not yet requested any notification filtering, continue and send
                 // the notification.
-                EntityCapabilities entityCaps = entityCapsManager.getEntityCapabilities(recipientFullJID);
+                EntityCapabilities entityCaps = entityCapsManager.getEntityCapabilities(deliveryAddress);
                 if (entityCaps != null) {
                     if (!entityCaps.containsFeature(nodeID + "+notify")) {
-                        Log.trace( "Not sending notification to full JID '{}' of recipient '{}': CAPS does not have {}+notify", recipientFullJID, recipientJID, nodeID );
+                        Log.trace( "Recipient '{}': Not sending notification to address '{}' that does not have CAPS {}+notify", recipientJID, deliveryAddress, nodeID );
                         continue;
                     }
                 }
@@ -423,8 +430,8 @@ public class PEPService implements PubSubService, Cacheable {
 
                             // Ensure the recipientJID has access to receive notifications for items published to the leaf node.
                             AccessModel accessModel = leafNode.getAccessModel();
-                            if (!accessModel.canAccessItems(leafNode, recipientFullJID, publisher)) {
-                                Log.trace( "Not sending notification to full JID '{}' of recipient '{}': This full JID is not allowed to access items on node {}", recipientFullJID, recipientJID, nodeID );
+                            if (!accessModel.canAccessItems(leafNode, deliveryAddress, publisher)) {
+                                Log.trace( "Recipient '{}': Not sending notification to address '{}': This JID is not allowed to access items on node {}", recipientJID, deliveryAddress, nodeID );
                                 continue;
                             }
 
@@ -439,7 +446,7 @@ public class PEPService implements PubSubService, Cacheable {
                 // Ensure the recipient is subscribed to the service owner's (publisher's) presence.
                 if (publisher == null) {
                     Log.warn( "Item {} on node {} has no known publisher.", itemID, node.getUniqueIdentifier());
-                } else if (recipientIsOwner || canProbePresence(publisher, recipientFullJID)) {
+                } else if (recipientIsOwner || canProbePresence(publisher, deliveryAddress)) {
                     Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
                     Element address = addresses.addElement("address");
                     address.addAttribute("type", "replyto");
@@ -448,11 +455,11 @@ public class PEPService implements PubSubService, Cacheable {
                     Message extendedMessage = message.createCopy();
                     extendedMessage.addExtension(new PacketExtension(addresses));
 
-                    extendedMessage.setTo(recipientFullJID);
-                    Log.trace( "Sending notification to recipient address: '{}'", extendedMessage.getTo() );
+                    extendedMessage.setTo(deliveryAddress);
+                    Log.trace( "Recipient '{}': Sending notification to recipient address: '{}'", recipientJID, extendedMessage.getTo() );
                     router.route(extendedMessage);
                 } else {
-                    Log.trace( "Not sending notification to full JID '{}' of recipient '{}': This full JID is not allowed probe presence of publisher '{}'", recipientFullJID, recipientJID, publisher );
+                    Log.trace( "Recipient '{}': Not sending notification to address '{}': This address is not allowed to probe presence of publisher '{}'", recipientJID, deliveryAddress, publisher );
                 }
             }
             catch (IndexOutOfBoundsException e) {
@@ -461,22 +468,23 @@ public class PEPService implements PubSubService, Cacheable {
             }
             catch (UserNotFoundException e) {
                 // Do not add addressing extension to message.
-                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
+                Log.trace( "Recipient '{}': Service '{}' is sending a notification for node '{}' to address: {}", recipientJID, this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
                 router.route(message);
             }
             catch (NullPointerException e) {
                 try {
-                    if (recipientIsOwner || canProbePresence(getAddress(), recipientFullJID)) {
-                        message.setTo(recipientFullJID);
+                    if (recipientIsOwner || canProbePresence(getAddress(), deliveryAddress)) {
+                        message.setTo(deliveryAddress);
                     }
                 }
                 catch (UserNotFoundException e1) {
                     // Do nothing
                 }
-                Log.trace( "Service '{}' is sending a notification on node '{}' to recipient: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
+                Log.trace( "Recipient '{}': Service '{}' is sending a notification on node '{}' to address: {}", recipientJID, this.getServiceID(), node.getUniqueIdentifier().getNodeId(), message.getTo(), e );
                 router.route(message);
             }
         }
+        Log.trace( "Recipient '{}': Done processing notification for service '{}' on node '{}'", recipientJID, this.getServiceID(), node.getUniqueIdentifier().getNodeId() );
     }
 
     /**

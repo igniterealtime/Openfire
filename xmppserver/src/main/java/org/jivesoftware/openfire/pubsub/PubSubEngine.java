@@ -1947,7 +1947,6 @@ public class PubSubEngine
     }
 
     public void shutdown(PubSubService service) {
-        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().shutdown(); // FIXME this does not seem right. We shouldn't be shutting down persistency (that's shared for all services) if just one service shuts down!
         if (service != null) {
             Log.debug( "Shutting down pubsub service '{}'", service.getUniqueIdentifier() );
 

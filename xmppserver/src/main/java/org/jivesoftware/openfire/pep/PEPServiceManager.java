@@ -132,7 +132,7 @@ public class PEPServiceManager {
                 }
             } else {
                 // lookup in database.
-                pepService = PubSubPersistenceProviderManager.getInstance().getProvider().loadPEPServiceFromDB(jid);
+                pepService = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadPEPServiceFromDB(jid);
                 pepServices.put(jid, CacheableOptional.of(pepService));
                 if ( pepService != null ) {
                     pepService.initialize();

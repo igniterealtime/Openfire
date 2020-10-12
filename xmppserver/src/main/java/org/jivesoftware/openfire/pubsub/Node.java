@@ -359,10 +359,11 @@ public abstract class Node implements Cacheable, Externalizable {
 
         if (savedToDB) {
             // Add or update the affiliate in the database
+            final PubSubPersistenceProvider persistenceProvider = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider();
             if ( created ) {
-                PubSubPersistenceProviderManager.getInstance().getProvider().createAffiliation(this, affiliate);
+                persistenceProvider.createAffiliation(this, affiliate);
             } else {
-                PubSubPersistenceProviderManager.getInstance().getProvider().updateAffiliation(this, affiliate);
+                persistenceProvider.updateAffiliation(this, affiliate);
             }
         }
         
@@ -386,7 +387,7 @@ public abstract class Node implements Cacheable, Externalizable {
         affiliates.remove(affiliate);
         if (savedToDB) {
             // Remove the affiliate from the database
-            PubSubPersistenceProviderManager.getInstance().getProvider().removeAffiliation(this, affiliate);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removeAffiliation(this, affiliate);
         }
     }
 
@@ -1803,17 +1804,18 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public void saveToDB() {
         // Make the node persistent
+        final PubSubPersistenceProvider persistenceProvider = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider();
         if (!savedToDB) {
-            PubSubPersistenceProviderManager.getInstance().getProvider().createNode(this);
+            persistenceProvider.createNode(this);
             // Set that the node is now in the DB
             setSavedToDB(true);
             // Save the existing node affiliates to the DB
             for (NodeAffiliate affiliate : affiliates) {
-                PubSubPersistenceProviderManager.getInstance().getProvider().createAffiliation(this, affiliate);
+                persistenceProvider.createAffiliation(this, affiliate);
             }
             // Add new subscriptions to the database
             for (NodeSubscription subscription : subscriptionsByID.values()) {
-                PubSubPersistenceProviderManager.getInstance().getProvider().createSubscription(this, subscription);
+                persistenceProvider.createSubscription(this, subscription);
             }
             // Add the new node to the list of available nodes
             getService().addNode(this);
@@ -1823,7 +1825,7 @@ public abstract class Node implements Cacheable, Externalizable {
             }
         }
         else {
-            PubSubPersistenceProviderManager.getInstance().getProvider().updateNode(this);
+            persistenceProvider.updateNode(this);
         }
     }
 
@@ -1881,7 +1883,7 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public void delete() {
         // Delete node from the database
-        PubSubPersistenceProviderManager.getInstance().getProvider().removeNode(this);
+        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removeNode(this);
         // Remove this node from the parent node (if any)
         if (parentIdentifier != null) {
             final CollectionNode parent = getParent();
@@ -1945,7 +1947,7 @@ public abstract class Node implements Cacheable, Externalizable {
             parent.addChildNode(this);
         }
         if (savedToDB) {
-            PubSubPersistenceProviderManager.getInstance().getProvider().updateNode(this);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateNode(this);
         }
     }
 
@@ -2160,7 +2162,7 @@ public abstract class Node implements Cacheable, Externalizable {
 
         if (savedToDB) {
             // Add the new subscription to the database
-            PubSubPersistenceProviderManager.getInstance().getProvider().createSubscription(this, subscription);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().createSubscription(this, subscription);
         }
 
         if (originalIQ != null) {
@@ -2218,7 +2220,7 @@ public abstract class Node implements Cacheable, Externalizable {
         }
         if (savedToDB) {
             // Remove the subscription from the database
-            PubSubPersistenceProviderManager.getInstance().getProvider().removeSubscription(subscription);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removeSubscription(subscription);
         }
         if (sendToCluster) {
             CacheFactory.doClusterTask(new CancelSubscriptionTask(subscription));

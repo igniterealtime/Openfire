@@ -23,6 +23,7 @@ import java.util.*;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
@@ -254,7 +255,7 @@ public class LeafNode extends Node {
                 // Add the new published item to the queue of items to add to the database. The
                 // queue is going to be processed by another thread
                 if (isPersistPublishedItems()) {
-                    PubSubPersistenceProviderManager.getInstance().getProvider().savePublishedItem(newItem);
+                    XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().savePublishedItem(newItem);
                 }
             }
         }
@@ -297,7 +298,7 @@ public class LeafNode extends Node {
     public void deleteItems(List<PublishedItem> toDelete) {
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
-            PubSubPersistenceProviderManager.getInstance().getProvider().removePublishedItem(item);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removePublishedItem(item);
             if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
                 lastPublished = null;
             }
@@ -390,7 +391,7 @@ public class LeafNode extends Node {
                 return lastPublished;
             }
         }
-        return PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItem(this, itemIdentifier);
+        return XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().getPublishedItem(this, itemIdentifier);
     }
 
     @Override
@@ -400,7 +401,7 @@ public class LeafNode extends Node {
 
     @Override
     public synchronized List<PublishedItem> getPublishedItems(int recentItems) {
-        List<PublishedItem> publishedItems = PubSubPersistenceProviderManager.getInstance().getProvider().getPublishedItems(this, recentItems);
+        List<PublishedItem> publishedItems = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().getPublishedItems(this, recentItems);
         if (lastPublished != null) {
             // The persistent items may not contain the last item, if it wasn't persisted anymore (e.g. if node configuration changed).
             // Therefore check, if the last item has been persisted.
@@ -427,7 +428,7 @@ public class LeafNode extends Node {
     @Override
     public synchronized PublishedItem getLastPublishedItem() {
         if (lastPublished == null){
-    		lastPublished = PubSubPersistenceProviderManager.getInstance().getProvider().getLastPublishedItem(this);
+            lastPublished = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().getLastPublishedItem(this);
         }
         return lastPublished;
     }
@@ -464,7 +465,7 @@ public class LeafNode extends Node {
      * published items will be deleted with the exception of the last published item.
      */
     public void purge() {
-        PubSubPersistenceProviderManager.getInstance().getProvider().purgeNode(this);
+        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().purgeNode(this);
         // Broadcast purge notification to subscribers
         // Build packet to broadcast to subscribers
         Message message = new Message();

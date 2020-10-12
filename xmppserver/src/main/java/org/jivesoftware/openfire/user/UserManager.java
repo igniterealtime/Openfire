@@ -281,6 +281,25 @@ public final class UserManager {
     }
 
     /**
+     * Returns the User specified by jid node.
+     *
+     * @param user the username of the user.
+     * @return the User that matches {@code username}.
+     * @throws UserNotFoundException if the user does not exist.
+     */
+    public User getUser(final JID user) throws UserNotFoundException {
+        if (user == null) {
+            throw new UserNotFoundException("user cannot be null");
+        }
+
+        if (!xmppServer.isLocal(user)) {
+            throw new UserNotFoundException("Cannot get remote user");
+        }
+
+        return getUser(user.getNode());
+    }
+
+    /**
      * Returns the total number of users in the system.
      *
      * @return the total number of users.

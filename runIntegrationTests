@@ -158,6 +158,11 @@ function runTestsInGradle {
 
 	# MultiUserChatIntegrationTest.mucDestroyTest suffers from a race condition, making this test flap. See https://github.com/igniterealtime/Smack/pull/437
 	DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+    
+    # The three tests below suffer from a race conditaion, making them flap. See https://github.com/igniterealtime/Smack/pull/440
+    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
+    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
 
     # Occasionally fails, disabled until cause can be found.
 	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
@@ -165,10 +170,7 @@ function runTestsInGradle {
 	DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
 	DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
-    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
 
 	SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
 	for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do

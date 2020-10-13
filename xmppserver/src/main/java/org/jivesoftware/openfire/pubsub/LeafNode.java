@@ -264,6 +264,20 @@ public class LeafNode extends Node {
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         // Broadcast event notification to subscribers and parent node subscribers
+        Set<NodeAffiliate> affiliatesToNotify = getAffiliatesToNotify();
+
+        // TODO Use another thread for this (if # of subscribers is > X)????
+        for (NodeAffiliate affiliate : affiliatesToNotify) {
+            affiliate.sendPublishedNotifications(message, event, this, newPublishedItems);
+        }
+    }
+
+    /**
+     * Retrieves the collection of affiliates that should be sent notifications upon changes to this node.
+     *
+     * @return A list of node affiliates. Possibly empty.
+     */
+    public Set<NodeAffiliate> getAffiliatesToNotify() {
         Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
         // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
         for (CollectionNode parentNode : getParents()) {
@@ -278,11 +292,7 @@ public class LeafNode extends Node {
             final NodeAffiliate owner = getService().getRootCollectionNode().getAffiliate( getService().getAddress() );
             affiliatesToNotify.add(owner);
         }
-
-        // TODO Use another thread for this (if # of subscribers is > X)????
-        for (NodeAffiliate affiliate : affiliatesToNotify) {
-            affiliate.sendPublishedNotifications(message, event, this, newPublishedItems);
-        }
+        return affiliatesToNotify;
     }
 
     /**
@@ -311,13 +321,8 @@ public class LeafNode extends Node {
                     message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
             // Send notification that items have been deleted to subscribers and parent node
             // subscribers
-            Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
-            // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
-            for (CollectionNode parentNode : getParents()) {
-                for (NodeSubscription subscription : parentNode.getSubscriptions()) {
-                    affiliatesToNotify.add(subscription.getAffiliate());
-                }
-            }
+            Set<NodeAffiliate> affiliatesToNotify = getAffiliatesToNotify();
+
             // TODO Use another thread for this (if # of subscribers is > X)????
             for (NodeAffiliate affiliate : affiliatesToNotify) {
                 affiliate.sendDeletionNotifications(message, event, this, toDelete);

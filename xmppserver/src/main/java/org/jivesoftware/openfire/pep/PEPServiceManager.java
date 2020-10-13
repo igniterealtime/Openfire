@@ -335,37 +335,74 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
         }
         Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
 
-        // Find all the services that the entity is subscribed to, including its own.
-        final Set<PEPService> services = new HashSet<>();
-        services.addAll(findSubscribedServices(entity));
+        // Find all the nodes that the entity is subscribed to, including its own.
+        final Set<Node> nodesToBeProcessed = new HashSet<>();
+        for ( final String nodeID : nodeIDs ) {
+            nodesToBeProcessed.addAll(findSubscribedNodes(entity, nodeID));
+        }
         if (XMPPServer.getInstance().isLocal( entity ) && UserManager.getInstance().isRegisteredUser( entity.getNode() ) ) {
-            services.add( getPEPService( entity ) );
+            final PEPService service = getPEPService( entity );
+            for ( final String nodeID : nodeIDs ) {
+                final Node node = service.getNode( nodeID );
+                if ( node != null ) {
+                    nodesToBeProcessed.add(node);
+                }
+            }
         }
 
-        if ( services.isEmpty() )
+        Log.debug( "Entity '{}' has {} applicable nodes (through ownership and subscription).", entity, nodesToBeProcessed.size() );
+        if ( nodesToBeProcessed.isEmpty() )
         {
             return;
         }
 
-        Log.trace( "Entity '{}' is eligible to receive notifications of services '{}'. Sending last published items for each of these nodes for all of those services: '{}'", entity, String.join( ", ", services.stream().map(PEPService::getServiceID).collect(Collectors.toSet()) ), String.join( ", ", nodeIDs ) );
-        for ( final PEPService service : services )
+        Log.trace( "Entity '{}' is eligible to receive notifications of nodes '{}'. Sending last published items for each of these nodes.", entity, String.join( ", ", nodesToBeProcessed.stream().map(Node::getUniqueIdentifier).map(Node.UniqueIdentifier::toString).collect(Collectors.toSet()) ) );
+        for ( final Node node : nodesToBeProcessed )
         {
-            service.sendLastPublishedItems(entity, nodeIDs);
+            ((PEPService)node.getService()).sendLastPublishedItems(entity, nodeIDs);
         }
     }
 
     /**
-     * Returns all PEP services that the provided entity is a subscriber to.
+     * Returns all PEP nodes with a specific ID that the provided entity is a subscriber to. This would typically
+     * return a similar node for many different services (eg: the 'user-tune' node of the PEP services of all of
+     * entity's contacts.
      *
      * @param entity The entity address.
-     * @return A collection of services (possibly empty).
+     * @param nodeId The NodeID of the nodes to return
+     * @return A collection of nodes (possibly empty).
      */
     @Nonnull
-    public Set<PEPService> findSubscribedServices(@Nonnull final JID entity)
+    public Set<Node> findSubscribedNodes(@Nonnull final JID entity, @Nonnull final String nodeId)
     {
-        final Set<PEPService> result = new HashSet<>();
-        // FIXME OF-2103: This should include all services that the entity is a subscriber to!
+        final Set<Node> result = new HashSet<>();
 
+        // Find all nodes that the entity has a direct subscription to. Most of these will be root nodes (representing a service)
+        // for which subscriptions apply to all child nodes. The resulting nodes could also be intermediate collection nodes
+        // (that might similarly have subscriptions bubbling up), or specific leaf nodes.
+        final Set<Node.UniqueIdentifier> directlySubscribedNodes = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().findDirectlySubscribedNodes(entity);
+
+        // For all of the services and collection nodes, see if any of their children match the nodeIdFilter. The implementation here
+        // checks if the corresponding service has a node with a matching nodeID at all. If it does, it explicitly checks if the
+        // entity has a subscription to that node (which recursively looks at its parents).
+        final Set<PubSubService.UniqueIdentifier> relatedServiceUIDs = directlySubscribedNodes.stream().map(Node.UniqueIdentifier::getServiceIdentifier).collect(Collectors.toSet());
+        for( final PubSubService.UniqueIdentifier relatedServiceUID : relatedServiceUIDs ) {
+            // Here, we're only interested in PEP services, not generic Pubsub services.
+            final PEPService service = getPEPService( relatedServiceUID, false );
+            if ( service != null ) {
+                final Node node = service.getNode( nodeId );
+                if (node != null) {
+                    // TODO should we consider other nodes than LeafNode?
+                    if ( node instanceof LeafNode && ((LeafNode) node).getAffiliatesToNotify().stream().anyMatch(
+                        nodeAffiliate -> nodeAffiliate.getJID().equals(entity) || nodeAffiliate.getJID().equals(entity.asBareJID())) )
+                    {
+                        result.add( node );
+                    }
+                }
+            }
+        }
+
+        Log.trace( "Entity '{}' is subscribed to {} nodes that have NodeID {}", entity, result.size(), nodeId);
         return result;
     }
 }

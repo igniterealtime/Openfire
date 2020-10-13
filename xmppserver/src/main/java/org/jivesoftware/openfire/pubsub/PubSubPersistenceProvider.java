@@ -18,7 +18,10 @@ package org.jivesoftware.openfire.pubsub;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Defines an implementation responsible for persisting pubsub-related data
@@ -75,6 +78,22 @@ public interface PubSubPersistenceProvider
     }
 
     void loadSubscription(Node node, String subId);
+
+    /**
+     * Returns identifiers for all pubsub nodes to which the provided address is a direct subscriber.
+     *
+     * Note that the results do not include nodes to which the provided address is a subscriber through inheritance!
+     *
+     * The result can include root nodes, (other) collection nodes as well as leaf nodes.
+     *
+     * When a node is subscribed to using a full JID, that node will be returned only if the address used as an
+     * argument in this method matches that full JID. If the node was subscribed to using a bare JID, it will be
+     * returned when the provided argument's bare JID representation matches the JID used for the subscription.
+     *
+     * @param address The address (bare of full JID) for which to return nodes.
+     * @return A collection of node identifiers, possibly empty.
+     */
+    @Nonnull Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address);
 
     /**
      * Creates a new affiliation of the user in the node.

@@ -8,6 +8,8 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.filter.executor.OrderedThreadPoolExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Queue;
@@ -36,6 +38,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author The Apache Directory Project (mina-dev@directory.apache.org)
  */
 public class MINAStatCollector {
+
+    private static final Logger Log = LoggerFactory.getLogger(MINAStatCollector.class);
+
     /**
      * The session attribute key for {@link IoSessionStat}.
      */
@@ -287,14 +292,15 @@ public class MINAStatCollector {
                 }
                 catch ( InterruptedException e )
                 {
+                    Log.trace("Sleep interrupted");
                 }
 
-                long tmpMsgWritten = 0l;
-                long tmpMsgRead = 0l;
-                long tmpBytesWritten = 0l;
-                long tmpBytesRead = 0l;
-                long tmpScheduledWrites = 0l;
-                long tmpQueuevedEvents = 0l;
+                long tmpMsgWritten = 0L;
+                long tmpMsgRead = 0L;
+                long tmpBytesWritten = 0L;
+                long tmpBytesRead = 0L;
+                long tmpScheduledWrites = 0L;
+                long tmpQueuevedEvents = 0L;
 
                 for (IoSession session : polledSessions)
                 {

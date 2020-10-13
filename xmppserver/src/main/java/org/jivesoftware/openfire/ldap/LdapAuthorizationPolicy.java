@@ -18,12 +18,14 @@ package org.jivesoftware.openfire.ldap;
 
 import org.jivesoftware.openfire.auth.AuthorizationPolicy;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-
+import javax.naming.ldap.Rdn;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -43,6 +45,8 @@ import java.util.Enumeration;
  * @author Jay Kline
  */
 public class LdapAuthorizationPolicy implements AuthorizationPolicy {
+
+    private static final Logger Log = LoggerFactory.getLogger(LdapAuthorizationPolicy.class) ;
 
     private LdapManager manager;
     private String usernameField;
@@ -83,14 +87,14 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
         Collection<String> authorized = new ArrayList<>();
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            Rdn[] userRDN = manager.findUserRDN(username);
             // Load record.
             String[] attributes = new String[]{
                     usernameField,
                     authorizeField
             };
             ctx = manager.getContext();
-            Attributes attrs = ctx.getAttributes(userDN, attributes);
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), attributes);
             Attribute authorizeField_a = attrs.get(authorizeField);
             if (authorizeField_a != null) {
                 for (Enumeration e = authorizeField_a.getAll(); e.hasMoreElements();) {
@@ -109,8 +113,8 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve authorized principals for user {}.", username, ex);
             }
         }
         return authorized;

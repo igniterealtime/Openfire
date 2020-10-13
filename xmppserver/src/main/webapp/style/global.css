@@ -2,10 +2,56 @@
 /*  Global                                       */
 /* --------------------------------------------- */
 
-body {
-    margin:0;
-    padding:0;
-}
+/* 
+---------------------------------------------
+font & reset css
+--------------------------------------------- 
+*/
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, div
+pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q,
+s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li,
+figure, header, nav, section, article, aside, footer, figcaption {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0; }
+
+.clearfix:after {
+  content: ".";
+  display: block;
+  clear: both;
+  visibility: hidden;
+  line-height: 0;
+  height: 0; }
+
+.clearfix {
+  display: inline-block; }
+
+html[xmlns] .clearfix {
+  display: block; }
+
+* html .clearfix {
+  height: 1%; }
+
+ul, li {
+  padding: 0;
+  margin: 0;
+  list-style: none; }
+
+header, nav, section, article, aside, footer, hgroup {
+  display: block; }
+
+* {
+  box-sizing: border-box; }
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0px;
+  margin-bottom: 0px; }
+
+ul {
+  margin-bottom: 0px; }
+
+
 #jive-main {
     padding-bottom:20px;
 }
@@ -18,9 +64,14 @@ body {
     color:#333333;
     margin:0;
     padding:0;
+    font-weight: 400;
+    -ms-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale; 
 }
 a {
     color:#D76C0D;
+    text-decoration: none !important; 
 }
 a:hover {
     text-decoration:underline;
@@ -231,7 +282,7 @@ iframe {
     float:left;
     font-size:11pt;
     margin:0;
-    padding:4px 2px 5px 0;
+    padding:2px 2px 0 0;
 }
 #jive-header #jive-nav ul li a, #jive-header #jive-nav ul li a:visited {
     color:#333333;
@@ -272,7 +323,7 @@ iframe {
     color:#FFFFFF;
     float:left;
     font-size:11pt;
-    margin:9px 0 0 0;
+    margin:4px 0 0 0;
     padding:0 1px 2px 0;
 }
 #jive-subnav ul li a, #jive-subnav ul li a:visited {
@@ -286,8 +337,6 @@ iframe {
 #jive-subnav ul li a:hover, #jive-subnav ul li a:active {
     background-color:#E3E3E3;
     text-decoration:underline;
-}
-#jive-subnav ul li.current {
 }
 #jive-subnav ul li.current a, #jive-subnav ul li.current a:visited {
     background-color:#F9F9F9;
@@ -523,15 +572,18 @@ pre, tt {
 }
 
 /* Messages - errors, success and info */
-.jive-error table, .jive-info table, .jive-success table {
+.jive-error table, .jive-warning table, .jive-info table, .jive-success table {
     border:1px solid #CCCCCC;
 }
-.jive-error td, .jive-info td, .jive-success td {
+.jive-error td, .jive-warning td, .jive-info td, .jive-success td {
     padding:3px;
     vertical-align:top;
 }
 .jive-error-text, .jive-error .jive-icon-label, .jive-error-text a, .jive-error .jive-icon-label a {
     color:#FF0000;
+}
+.jive-warning-text, .jive-warning .jive-icon-label, .jive-warning-text a, .jive-warning-text .jive-icon-label a {
+    color: #FF6C0D;
 }
 .jive-success-text, .jive-success .jive-icon-label, .jive-success-text a, .jive-success .jive-icon-label a {
     color:#009900;

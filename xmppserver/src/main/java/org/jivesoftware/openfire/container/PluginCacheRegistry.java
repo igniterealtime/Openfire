@@ -107,7 +107,7 @@ public class PluginCacheRegistry {
         String sizeProp = cacheInfo.getParams().get("back-size-high");
         if (sizeProp != null) {
             if ("0".equals(sizeProp)) {
-                return -1l;
+                return -1L;
             }
             try {
                 return Integer.parseInt(sizeProp);
@@ -124,7 +124,7 @@ public class PluginCacheRegistry {
         String lifetimeProp = cacheInfo.getParams().get("back-expiry");
         if (lifetimeProp != null) {
             if ("0".equals(lifetimeProp)) {
-                return -1l;
+                return -1L;
             }
             long factor = 1;
             if (lifetimeProp.endsWith("m")) {
@@ -151,7 +151,7 @@ public class PluginCacheRegistry {
         String sizeProp = cacheInfo.getParams().get("back-size-low");
         if (sizeProp != null) {
             if ("0".equals(sizeProp)) {
-                return -1l;
+                return -1L;
             }
             try {
                 return Integer.parseInt(sizeProp);

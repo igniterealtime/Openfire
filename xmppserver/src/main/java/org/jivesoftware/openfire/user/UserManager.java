@@ -26,6 +26,8 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -54,6 +56,8 @@ import gnu.inet.encoding.StringprepException;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class UserManager {
+
+    private static final Interner<String> userBaseMutex = Interners.newWeakInterner();
 
     public static final SystemProperty<Class> USER_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.user.className")
@@ -265,7 +269,7 @@ public final class UserManager {
         username = username.trim().toLowerCase();
         User user = userCache.get(username);
         if (user == null) {
-            synchronized ((username + MUTEX_SUFFIX).intern()) {
+            synchronized (userBaseMutex.intern(username)) {
                 user = userCache.get(username);
                 if (user == null) {
                     user = provider.loadUser(username);
@@ -274,6 +278,25 @@ public final class UserManager {
             }
         }
         return user;
+    }
+
+    /**
+     * Returns the User specified by jid node.
+     *
+     * @param user the username of the user.
+     * @return the User that matches {@code username}.
+     * @throws UserNotFoundException if the user does not exist.
+     */
+    public User getUser(final JID user) throws UserNotFoundException {
+        if (user == null) {
+            throw new UserNotFoundException("user cannot be null");
+        }
+
+        if (!xmppServer.isLocal(user)) {
+            throw new UserNotFoundException("Cannot get remote user");
+        }
+
+        return getUser(user.getNode());
     }
 
     /**
@@ -517,5 +540,18 @@ public final class UserManager {
                 propertyProvider = new DefaultUserPropertyProvider();
             }
         }
+    }
+
+    /** Exposed for test use only */
+    public static void setProvider(UserProvider provider) {
+        USER_PROVIDER.setValue(provider.getClass());
+        UserManager.provider = provider;
+    }
+
+    /** Exposed for test use only */
+    public void clearCaches()
+    {
+        userCache.clear();
+        remoteUsersCache.clear();
     }
 }

@@ -252,7 +252,7 @@ public class MessageRouter extends BasicModule {
             for (JID address : routingTable.getRoutes(recipient.asBareJID(), packet.getFrom())) {
                 ClientSession session = routingTable.getClientRoute(address);
                 if (session != null && session.isInitialized()) {
-                    if (session.getPresence().getPriority() >= 1) {
+                    if (session.getPresence().getPriority() >= 0) {
                         // If message was sent to an unavailable full JID of a user then retry using the bare JID.
                         routingTable.routePacket( recipient.asBareJID(), packet, false );
                         return;

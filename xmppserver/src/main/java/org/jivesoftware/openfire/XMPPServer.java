@@ -50,6 +50,7 @@ import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JNDIDataSourceProvider;
@@ -106,6 +107,9 @@ import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pep.IQPEPOwnerHandler;
 import org.jivesoftware.openfire.pubsub.PubSubModule;
+import org.jivesoftware.openfire.roster.DefaultRosterItemProvider;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterItemProvider;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
@@ -136,6 +140,7 @@ import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -570,6 +575,39 @@ public class XMPPServer {
             logger.warn("There was an unexpected error encountered when "
                 + "setting the new admin information. Please check your error "
                 + "logs and try to remedy the problem.");
+        }
+
+        // Import any provisioned users.
+        try {
+            RosterItemProvider rosterItemProvider = null;
+            for (int userId = 1; userId < Integer.MAX_VALUE; userId++ ) {
+                final String username = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".username" );
+                final String password = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".password" );
+                if (username == null || password == null) {
+                    break;
+                }
+                final String name = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".name" );
+                final String email = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".email" );
+
+                final User user = UserManager.getInstance().createUser(username, password, name, email );
+                for (int itemId = 1; itemId < Integer.MAX_VALUE; itemId++) {
+                    final String jid = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".roster.item" + itemId + ".jid" );
+                    if (jid == null) {
+                        break;
+                    }
+                    final String nickname = JiveGlobals.getXMLProperty( "autosetup.users.user" + userId + ".roster.item" + itemId + ".nickname" );
+                    final RosterItem rosterItem = new RosterItem(new JID(jid), RosterItem.SubType.BOTH, RosterItem.AskType.NONE, RosterItem.RecvType.NONE, nickname, null);
+
+                    if (rosterItemProvider == null) {
+                        // Modules have not started at this point, so we can't go through the roster. Use the default provider instead.
+                        rosterItemProvider = new DefaultRosterItemProvider();
+                    }
+                    rosterItemProvider.createItem(user.getUsername(), rosterItem);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.warn("There was an unexpected error encountered when provisioning auto-setup provided users.", e);
         }
 
         // finish setup
@@ -1106,8 +1144,7 @@ public class XMPPServer {
         if (openfireHome == null) {
             try (InputStream in = getClass().getResourceAsStream("/openfire_init.xml")) {
                 if (in != null) {
-                    SAXReader reader = new SAXReader();
-                    Document doc = reader.read(in);
+                    Document doc = readDocument(in);
                     String path = doc.getRootElement().getText();
                     try {
                         if (path != null) {
@@ -1135,6 +1172,14 @@ public class XMPPServer {
             // Set the name of the config file
             JiveGlobals.setConfigName(jiveConfigName);
         }
+    }
+
+    private Document readDocument(InputStream in) throws SAXException, DocumentException {
+        SAXReader reader = new SAXReader();
+        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        return reader.read(in);
     }
 
     /**
@@ -1224,38 +1269,6 @@ public class XMPPServer {
         if (modules.isEmpty()) {
             return;
         }
-        logger.info("Shutting down " + modules.size() + " modules ...");
-
-        final SimpleTimeLimiter timeLimiter = SimpleTimeLimiter.create( Executors.newSingleThreadExecutor(
-            new ThreadFactoryBuilder()
-                .setDaemon( true )
-                .setNameFormat( "shutdown-thread-%d" )
-                .build() ) );
-
-        modules.values().stream()
-            // OF-1609: Ensure that the first module to be shut down is the ConnectionManager.
-            .sorted( ( o1, o2 ) -> {
-                if ( o1 == o2 ) return 0;
-                final boolean isCM1 = o1 instanceof ConnectionManager;
-                final boolean isCM2 = o2 instanceof ConnectionManager;
-                if ( isCM1 && isCM2 ) return 0;
-                if ( isCM1 ) return -1;
-                if ( isCM2 ) return 1;
-                return 0;
-            } )
-
-            // Get all modules and stop and destroy them.
-            .forEachOrdered( module -> {
-                try {
-                    // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
-                    timeLimiter.runWithTimeout( () -> {
-                        stopAndDestroyModule( module );
-                    }, JiveGlobals.getLongProperty( "shutdown.modules.timeout-millis", Long.MAX_VALUE ), TimeUnit.MILLISECONDS );
-                } catch ( Exception e ) {
-                    logger.warn( "An exception occurred while stopping / destroying module '{}'.", module.getName(), e );
-                    System.err.println( e );
-                }
-            } );
 
         // Stop all plugins
         logger.info("Shutting down plugins ...");
@@ -1266,6 +1279,35 @@ public class XMPPServer {
                 logger.error("Exception during plugin shutdown", ex);
             }
         }
+
+        logger.info("Shutting down " + modules.size() + " modules ...");
+
+        final SimpleTimeLimiter timeLimiter = SimpleTimeLimiter.create( Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder()
+                .setDaemon( true )
+                .setNameFormat( "shutdown-thread-%d" )
+                .build() ) );
+
+        // OF-1996" Get all modules and stop and destroy them. Do this in the reverse order in which the were created.
+        // This ensures that the 'most important' / core modules are shut down last, giving other modules the
+        // opportunity to make use of their functionality during their shutdown (eg: MUC wants to send messages during
+        // shutdown).
+        final List<Class> reverseInsertionOrder = new ArrayList<>( modules.keySet() );
+        Collections.reverse( reverseInsertionOrder );
+
+        for( final Class moduleClass : reverseInsertionOrder ) {
+            final Module module = modules.get( moduleClass );
+            try {
+                // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
+                timeLimiter.runWithTimeout(() -> {
+                    stopAndDestroyModule(module);
+                }, JiveGlobals.getLongProperty("shutdown.modules.timeout-millis", Long.MAX_VALUE), TimeUnit.MILLISECONDS);
+            } catch ( Exception e ) {
+                logger.warn("An exception occurred while stopping / destroying module '{}'.", module.getName(), e);
+                System.err.println(e);
+            }
+        }
+
         modules.clear();
         // Stop the Db connection manager.
         try {	

@@ -397,6 +397,9 @@ public class IQOwnerHandler {
             room.saveToDB();
         }
 
+        // Apply any configuration changes to the FMUC state.
+        room.getFmucHandler().applyConfigurationChanges();
+
         // Set the new owners and admins of the room
         presences.addAll(room.addOwners(owners, senderRole));
         presences.addAll(room.addAdmins(admins, senderRole));
@@ -437,7 +440,7 @@ public class IQOwnerHandler {
 
         // Send the updated presences to the room occupants
         for (Object presence : presences) {
-            room.send((Presence) presence);
+            room.send((Presence) presence, room.getRole());
         }
     }
 

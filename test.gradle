@@ -1,0 +1,41 @@
+apply plugin: 'application'
+
+mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
+applicationDefaultJvmArgs = ["-enableassertions"]
+
+repositories {
+	mavenCentral()
+	maven {
+		url 'https://oss.sonatype.org/content/repositories/snapshots'
+	}
+	maven {
+		url 'https://www.igniterealtime.org/archiva/repository/maven/'
+	}
+}
+
+dependencies {
+	compile group: 'org.igniterealtime.smack', name: 'smack-integration-test', version: smackVersion
+
+	// Workaround for https://discuss.gradle.org/t/unique-snapshot-dependencies-for-projects-own-subproject-in-pom-not-declared/35692?u=flow
+	// see https://discuss.gradle.org/t/how-to-force-a-dependency-version-while-also-substituting-a-transitive-dependency/26759/4?u=flow
+	components.all {
+		allVariants {
+			withDependencies { deps ->
+				deps.each { dep ->
+					if (dep.group == 'org.igniterealtime.smack') {
+						dep.version {
+							strictly smackVersion
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+println "Sinttest with ${smackVersion}"
+
+run {
+	// Pass all system properties down to the "application" run
+	systemProperties System.getProperties()
+}

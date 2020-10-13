@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.dom4j.Element;
@@ -31,6 +32,7 @@ public class UserManagerTest {
 
     private static final String REMOTE_XMPP_DOMAIN = "remote.xmpp.domain";
     private static final String USER_ID = "test-user-id";
+    private static final String USER_ID_2 = "test-user-id-2";
     private static final JID REMOTE_USER_JID = new JID(USER_ID, REMOTE_XMPP_DOMAIN, null);
 
     private static final String USER_FOUND_RESULT = "<iq type='result' from='" + REMOTE_USER_JID + "' to='"  + Fixtures.XMPP_DOMAIN + "' id='info1'>\n" +
@@ -67,7 +69,63 @@ public class UserManagerTest {
 
         userManager = new UserManager(xmppServer);
         userManager.createUser(USER_ID, "change me", "Test User Name", "test-email@example.com");
+        userManager.createUser(USER_ID_2, "change me", "Test User Name 2", "test-email-2@example.com");
+        
     }
+    
+    @Test
+    public void canGetUserByUserNameForExistingUsers()  throws Exception{
+    	final User result = userManager.getUser(USER_ID);
+    	assertThat(result.getUsername(), is(USER_ID));
+        assertThat(result.getEmail(), is("test-email@example.com"));
+        assertThat(result.getName(), is("Test User Name"));
+    }
+    
+    @Test
+    public void getUserNamesWillGetAListOfUserNames()  throws Exception{
+    	final Collection<String> result = userManager.getUsernames();
+    	assertThat(result.contains(USER_ID), is(true));
+        assertThat(result.contains(USER_ID_2), is(true));
+        assertThat(result.contains("not exists name"), is(false));
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void deleteInvalidUserWillGetError()  throws Exception{
+    	User user = new User("!@#ED",null,null,null,null);	
+    	userManager.deleteUser(user);
+    }
+    
+    @Test(expected=UserAlreadyExistsException.class)
+    public void createExistingUserWillGetError()  throws Exception{
+    	userManager.createUser(USER_ID, "change me", "Test User Name", "test-email@example.com");
+    	
+    }
+    
+    @Test
+    public void createThenDeleteUserAndVerifyDeletionResults()  throws Exception{
+    	userManager.createUser("toBeDeleted", "change me", "toBeDeleted User Name", "toBeDeleted@example.com");
+    	int count = userManager.getUserCount();
+    	assertThat(count, is(3));
+    	Collection<String> usernames = userManager.getUsernames();
+    	assertThat(usernames.contains("tobedeleted"), is(true));
+    	User user = userManager.getUser("tobedeleted");
+    	userManager.deleteUser(user);
+    	count = userManager.getUserCount();
+    	assertThat(count, is(2));
+    	usernames = userManager.getUsernames();
+    	assertThat(usernames.contains("tobedeleted"), is(false));
+    }
+    
+    
+    
+    @Test
+    public void verifyUserCountIsTwo()  throws Exception{
+    	final int result = userManager.getUserCount();
+        assertThat(result, is(2));
+    }
+    
+    
+    
 
     @Test
     public void isRegisteredUserWillReturnTrueForLocalUsers() {

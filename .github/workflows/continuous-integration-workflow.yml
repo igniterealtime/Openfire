@@ -1,0 +1,152 @@
+name: Openfire CI
+
+env:
+  CI: true
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    name: Build Openfire from source
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 1.8, 11 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache Maven repository
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-java${{ matrix.java }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-java${{ matrix.java }}-maven-
+            ${{ runner.os }}-
+      - name: Build with Maven
+        run: mvn -B package -Pcoverage --file pom.xml
+      - name: Upload distribution
+        uses: actions/upload-artifact@v2
+        with:
+          name: distribution-java${{ matrix.java }}
+          path: distribution/target/distribution-base
+      - name: Upload test files
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-files
+          path: |
+            runIntegrationTests
+            runAioxmppIntegrationTests
+            test.gradle
+      - name: Upload coverage report for 'xmppserver' module
+        if: ${{ matrix.java == 1.8 }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Coverage Report for 'xmppserver' module
+          path: xmppserver/target/site/jacoco/
+
+  aioxmpp:
+
+    name: Execute aioxmpp-based CI tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: distribution-java1.8
+          path: distribution/target/distribution-base
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: test-files
+      - name: Fix file permissions
+        run: |
+          chmod +x distribution/target/distribution-base/bin/openfire.sh
+          chmod +x ./runAioxmppIntegrationTests
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.6
+     
+      - name: Run aioxmpp tests
+        run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
+            
+      - name: Expose test output
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: aioxmpp test output
+          path: aioxmpp/output
+
+  smack:
+
+    name: Execute Smack-based CI tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: distribution-java1.8
+          path: distribution/target/distribution-base
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: test-files
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Fix file permissions
+        run: |
+          chmod +x distribution/target/distribution-base/bin/openfire.sh
+          chmod +x ./runIntegrationTests
+      - name: Run smack tests
+        run: ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 # Try tests a few times, in case of flakiness
+
+  publish:
+
+    name: Publish to Maven
+    runs-on: ubuntu-latest
+    needs: [aioxmpp, smack]
+    if: ${{github.ref == 'refs/heads/master' && github.event_name == 'push'}}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Defend against another commit quickly following the first
+          # We want the one that's been tested, rather than the head of master
+          ref: ${{ github.event.push.after }}
+      - name: Cache Maven repository
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-java11-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-java11-maven-
+            ${{ runner.os }}-
+      - name: Set up Java for publishing
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          server-id: igniterealtime
+          server-username: IGNITE_REALTIME_MAVEN_USERNAME
+          server-password: IGNITE_REALTIME_MAVEN_PASSWORD
+      - name: Publish
+        run: mvn -B deploy
+        env:
+          IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
+          IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}

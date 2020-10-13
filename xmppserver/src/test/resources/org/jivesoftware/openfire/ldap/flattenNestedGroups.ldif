@@ -1,0 +1,276 @@
+version: 1
+
+dn: dc=mobikat,dc=net
+objectClass: organization
+objectClass: dcObject
+objectClass: top
+dc: mobikat
+o: Mobikat
+
+dn: ou=users,dc=mobikat,dc=net
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=mobikat,dc=net
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+
+dn: ou=possixGroups,dc=mobikat,dc=net
+objectClass: organizationalUnit
+objectClass: top
+ou: possixGroups
+
+dn: cn=Cool Man,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Cool Man
+sn: Man
+uid: c.man
+userPassword: {CRYPT}$6$rounds=5000$q4CyfzUPkz5jxyLb$h7lnGkEO4RzZOFy.cUPVgXj
+ 9w39G75scyO7jo9aWvr70AoO/Coh3ElfaeC59/rsJWQZNBlrLscRWEqa/3xdTX.
+
+dn: cn=Hans Wurst,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Hans Wurst
+sn: Wurst
+uid: h.wurst
+userPassword: {CRYPT}$6$rounds=5000$Dz/z6Y/woSbUomSK$ZkvdfXqi1.9eNzPnLCWYycq
+ NlBfZGoGIsfTDUra2p9jPM1tCY4mgoZYQ7mp4Tf1BT2t/c59.6pynYpR86.xN41
+
+dn: cn=James Bond,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: James Bond
+sn: Bond
+uid: j.bond
+userPassword: {CRYPT}$6$rounds=5000$q4CyfzUPkz5jxyLb$h7lnGkEO4RzZOFy.cUPVgXj
+ 9w39G75scyO7jo9aWvr70AoO/Coh3ElfaeC59/rsJWQZNBlrLscRWEqa/3xdTX.
+
+dn: cn=Peter Silie,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Peter Silie
+sn: Silie
+uid: p.silie
+userPassword: {CRYPT}$6$rounds=5000$hqg7CcrAvPWuCo0b$uf7.1tSBeLCGRhTysjUqeO2
+ /AOCUB90doRpHB3c//S/hxakOd4BjIZ48vWE0qkhm6YtLyYwHJcOnIaTavIbSA.
+
+dn: cn=Axel Schweis,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Axel Schweis
+sn: Schweis
+uid: a.schweis
+userPassword: {CRYPT}$6$rounds=5000$q4CyfzUPkz5jxyLb$h7lnGkEO4RzZOFy.cUPVgXj
+ 9w39G75scyO7jo9aWvr70AoO/Coh3ElfaeC59/rsJWQZNBlrLscRWEqa/3xdTX.
+
+dn: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Jennifer Lopez
+sn: Lopez
+uid: j.lopez
+userPassword: {CRYPT}$6$rounds=5000$q4CyfzUPkz5jxyLb$h7lnGkEO4RzZOFy.cUPVgXj
+ 9w39G75scyO7jo9aWvr70AoO/Coh3ElfaeC59/rsJWQZNBlrLscRWEqa/3xdTX.
+
+dn: cn=Lasmiranda Densivillja,ou=users,dc=mobikat,dc=net
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: Lasmiranda Densivillja
+sn: Densivillja
+uid: l.densivillja
+userPassword: {CRYPT}$6$rounds=5000$q4CyfzUPkz5jxyLb$h7lnGkEO4RzZOFy.cUPVgXj
+ 9w39G75scyO7jo9aWvr70AoO/Coh3ElfaeC59/rsJWQZNBlrLscRWEqa/3xdTX.
+
+dn: cn=admins,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: admins
+uniqueMember: cn=James Bond,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=GibtEsNicht
+uniqueMember: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=cycle1,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: cycle1
+uniqueMember: cn=Lasmiranda Densivillja,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Peter Silie,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=cycle2,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=cycle2,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: cycle2
+uniqueMember: cn=Cool Man,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Hans Wurst,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=cycle3,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=cycle3,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: cycle3
+uniqueMember: cn=cycle1,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Axel Schweis,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=group1,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: group1
+uniqueMember: cn=Cool Man,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Hans Wurst,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: dc=mobikat,dc=net
+uniqueMember: cn=group2,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=group2,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: group2
+uniqueMember: cn=Lasmiranda Densivillja,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Peter Silie,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=group3,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=group4,ou=groups,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=group3,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: group3
+uniqueMember: dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Axel Schweis,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=group4,ou=groups,dc=mobikat,dc=net
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: group4
+uniqueMember: dc=mobikat,dc=net
+uniqueMember: cn=Not Existing User,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=Jennifer Lopez,ou=users,dc=mobikat,dc=net
+uniqueMember: cn=notExistingGroup,ou=groups,dc=mobikat,dc=net
+
+dn: cn=admins,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: admins
+gidNumber: 0
+uid: admins
+memberUid: j.bond
+memberUid: gibtEsNicht
+memberUid: j.lopez
+memberUid: notExisting
+
+dn: cn=cycle1,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: cycle1
+gidNumber: 0
+uid: cycle1
+memberUid: cycle2
+memberUid: p.silie
+memberUid: l.densivillja
+memberUid: notExisting
+
+dn: cn=cycle2,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: cycle2
+gidNumber: 0
+uid: cycle2
+memberUid: h.wurst
+memberUid: c.man
+memberUid: cycle3
+memberUid: notExisting
+
+dn: cn=cycle3,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: cycle3
+gidNumber: 0
+uid: cycle3
+memberUid: cycle1
+memberUid: a.schweis
+memberUid: j.lopez
+memberUid: notExisting
+
+dn: cn=group1,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: group1
+gidNumber: 0
+uid: group1
+memberUid: c.man
+memberUid: notExisting
+memberUid: h.wurst
+memberUid: group2
+
+dn: cn=group2,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: group2
+gidNumber: 0
+uid: group2
+memberUid: p.silie
+memberUid: notExisting
+memberUid: l.densivillja
+memberUid: group3
+memberUid: group4
+
+dn: cn=group3,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: group3
+gidNumber: 0
+uid: group3
+memberUid: a.schweis
+memberUid: mobi
+memberUid: notExisting
+
+dn: cn=group4,ou=possixGroups,dc=mobikat,dc=net
+objectClass: uidObject
+objectClass: top
+objectClass: posixGroup
+cn: group4
+gidNumber: 0
+uid: group4
+memberUid: mobi
+memberUid: notExisting
+memberUid: j.lopez
+

@@ -163,6 +163,462 @@ hr {
     <div id="pageBody">
 
 
+<h2>4.6.0-beta -- <span style="font-weight: normal;">June 7, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-872'>OF-872</a>] -         Openfire violates RFC 6120 § 10.3.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1696'>OF-1696</a>] -         Personal Eventing menu shows exception on a first try
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1888'>OF-1888</a>] -         Faulty assumption in RoutingTableImpl leads to NPE
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1975'>OF-1975</a>] -         Do not trigger offlinemessagelisteners when no message is stored
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1992'>OF-1992</a>] -         IQPEPHandler does not consistently identify &quot;addressed to server&quot; stanzas
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1993'>OF-1993</a>] -         Prepared Statement should always close on method exit
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1995'>OF-1995</a>] -         It should be possible to query anonymous users for service discovery
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1998'>OF-1998</a>] -         HTTP Bind session listeners are never invoked
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2012'>OF-2012</a>] -         Should not add client route when client becomes unavailable.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2016'>OF-2016</a>] -         Do not depend on existing PEP service when creating PEP service
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2038'>OF-2038</a>] -         Shared groups should not be looked up in LDAP
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1968'>OF-1968</a>] -         Avatar support for MUC rooms.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1978'>OF-1978</a>] -         MUC: add configuration that allows join presence to be suppressed
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1989'>OF-1989</a>] -         Introduce in-memory only pubsub persistence provider
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2030'>OF-2030</a>] -         Add support for XEP-0289: Federated MUC for Constrained Environments
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2031'>OF-2031</a>] -         CVE-2020-10683 Update dom4j to 2.1.3 or later
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1837'>OF-1837</a>] -         JDBC providers should have an option to escape data
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1869'>OF-1869</a>] -         Announce PEP feature support for &#39;auto-subscribe&#39; and &#39;filtered notifications&#39;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1981'>OF-1981</a>] -         Allow roster item &#39;ask&#39; to be modified.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1982'>OF-1982</a>] -         Add -Djdk.tls.ephemeralDHKeySize=matched  and/or Djsse.SSLEngine.acceptLargeFragments=true to startup parameters
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1983'>OF-1983</a>] -         Provide start argument to run dev mode
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1984'>OF-1984</a>] -         Replace DummyExternalizableUtil
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1985'>OF-1985</a>] -         Decouple Pubsub implementation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1986'>OF-1986</a>] -         Don&#39;t unconditionally auto-create PEPService.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1987'>OF-1987</a>] -         Improve PubSub Caching
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1988'>OF-1988</a>] -         Introduce pluggable provider mechanism for PubSub persistency
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1990'>OF-1990</a>] -         pubsub: split cache from persistence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1994'>OF-1994</a>] -         Properly deny anonymous users access to Private Storage
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1996'>OF-1996</a>] -         Improve shutdown sequence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2000'>OF-2000</a>] -         Don&#39;t use intern&#39;ed strings to synchronize on
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2001'>OF-2001</a>] -         IQ Bind results should not have a &#39;from&#39; value.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2002'>OF-2002</a>] -         Do not offer private blocking to anonymous users.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2003'>OF-2003</a>] -         Bump slf4j to version 1.7.30
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2004'>OF-2004</a>] -         Have an ad-hoc command accessible to everyone
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2008'>OF-2008</a>] -         Autosetup should allow for users to be provisioned
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2025'>OF-2025</a>] -         PEP publishing should evaluate all recipient JIDs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2032'>OF-2032</a>] -         Make connection type fallback for WEBADMIN c2s
+</li>
+</ul>
+
+
+<h2>4.5.2 -- <span style="font-weight: normal;">May 18, 2020</span></h2>
+	    <h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-963'>OF-963</a>] -         WebSocket keep-alive is not working as expected
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1963'>OF-1963</a>] -         Cross Site Scripting (XSS) issues - CSW Document No: C1055
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1964'>OF-1964</a>] -         SystemProperty should load classes with Thread.getContextClassloader as fallback
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1970'>OF-1970</a>] -         Undeliverable messages routed to unavailable full jid should be routed to other resources with prio 0 (not 1) or higher.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1977'>OF-1977</a>] -         Pubsub notifications should be sent to subscribers of parent nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1999'>OF-1999</a>] -         Prevent potential arithmetic overflow
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2013'>OF-2013</a>] -         Fix detection of &#39;detached&#39; state of a connection
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2014'>OF-2014</a>] -         Reset ConnectionListener callback object on re-init
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2015'>OF-2015</a>] -         Remove the session that was used for resumption immediately
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2017'>OF-2017</a>] -         Update Jetty to 9.4.28.v20200408
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2026'>OF-2026</a>] -         Stable and Unique Stanza Identifier need not be UUID
+</li>
+</ul>
+
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-158'>OF-158</a>] -         Set through the admin console the MUC room configuration form&#39;s default values
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1966'>OF-1966</a>] -         Add Japanese translation
+</li>
+</ul>
+
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1969'>OF-1969</a>] -         Log username when auth fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1974'>OF-1974</a>] -         Openfire should not disclose Jetty version within HTTP header for websocket connections
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1976'>OF-1976</a>] -         Allow any number of maximum MUC occupants to be configured.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1979'>OF-1979</a>] -         Guard against invalid SASL responses
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1997'>OF-1997</a>] -         Bump Bouncy Castle version to v1.65
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2019'>OF-2019</a>] -         Allow Archiver to start polling only after work is produced.
+</li>
+</ul>
+
+
+<h2>4.5.1 -- <span style="font-weight: normal;">January 31, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1946'>OF-1946</a>] -         Cache &quot;Percent Used&quot; values are incorrect
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1959'>OF-1959</a>] -         Can not connect to LDAP/AD on new installations
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1961'>OF-1961</a>] -         Potential ClassCastException with LDAP setup
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1962'>OF-1962</a>] -         MySQL serverTimezone not set
+</li>
+</ul>
+
+
+<h2>4.5.0 -- <span style="font-weight: normal;">January 10, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-353'>OF-353</a>] -         LDAP InvalidNameException related to quotes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1779'>OF-1779</a>] -         Incorrect SQL DELETE statement in PubSub causes exception
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1826'>OF-1826</a>] -         NullPointerException in new Dataforms implementation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1830'>OF-1830</a>] -         Failing to establish TLS when using Java 11
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1858'>OF-1858</a>] -         MUC services are not added/removed from other cluster nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1892'>OF-1892</a>] -         Group sorting shouldn&#39;t be case sensitive
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1895'>OF-1895</a>] -         SystemProperty should work with plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1898'>OF-1898</a>] -         max cache size should be consistent to long
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1902'>OF-1902</a>] -         Further limit HTTP fetching security from Openfire
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1923'>OF-1923</a>] -         Steam Management should not close reconnected session
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1928'>OF-1928</a>] -         Reflected XSS in MUC Room affiliation page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1932'>OF-1932</a>] -         &quot;Test Settings&quot; of LDAP User Mapping always fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1936'>OF-1936</a>] -         OOM when browsing audit log
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1937'>OF-1937</a>] -         Performance problems when first LDAP server cannot be reached
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1938'>OF-1938</a>] -         Bump Bouncy Castle version to v1.64
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1947'>OF-1947</a>] -         LDAP VCard template should not replace non-placeholders
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1949'>OF-1949</a>] -         LDAP name parts should combine in user&#39;s Name attribute.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1951'>OF-1951</a>] -         SystemProperty Description fails to work with plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1953'>OF-1953</a>] -         NPE in admin console session page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1954'>OF-1954</a>] -         Creating new MUC conference leads to NPE in admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1955'>OF-1955</a>] -         XSS flaws identified by Cyber Security Works Document No: C1059
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1956'>OF-1956</a>] -         Restarting s2s may fail with Error starting: 5269 Address already in use (Bind failed)
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1958'>OF-1958</a>] -         PSI XMPP Client fails to connect
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1806'>OF-1806</a>] -         Add support for XEP-0232: Software Information
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1935'>OF-1935</a>] -         Allow cleanup of MUC rooms to be skipped
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1943'>OF-1943</a>] -         Allow LDAP group to provide Openfire admins
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1219'>OF-1219</a>] -         ClassCastException on setup-ldap-user.jsp DefaultUserProvider cannot be cast to LdapUserProvider
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1106'>OF-1106</a>] -         Ability to set ldap.nameField to a multiple of AD values
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1809'>OF-1809</a>] -         DiscoInfoProvider should allow for more than one &quot;Extended Info&quot; form.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1821'>OF-1821</a>] -         Set ldap.pagedResultsSize to 1000 by default when AD integration is used
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1839'>OF-1839</a>] -         XEP-0411: Add or improve support for Bookmarks Conversion
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1841'>OF-1841</a>] -         Add better toString implementations to Session classes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1855'>OF-1855</a>] -         S2S: Allow Mutual Authentication by default when using signed certificate
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1865'>OF-1865</a>] -         Add an AdminProvider that identifies administrators by the group they are in
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1866'>OF-1866</a>] -         Filtering users by group in LDAP
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1868'>OF-1868</a>] -         Session message carbons, requested blocklist not clustered
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1882'>OF-1882</a>] -         Don&#39;t retrieve all offline messages only to count them.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1883'>OF-1883</a>] -         Client session list should include detached sessions
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1884'>OF-1884</a>] -         StreamManagement failing when debug logging enabled
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1887'>OF-1887</a>] -         Update bundled postgresql driver to 42.2.8
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1889'>OF-1889</a>] -         Standardised CSRF protection for plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1890'>OF-1890</a>] -         Support for flattening LDAP nested groups
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1903'>OF-1903</a>] -         Support for @WebServlet annotation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1924'>OF-1924</a>] -         Make SM DetachedCleanupTask scheduling related to max detach time
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1925'>OF-1925</a>] -         Hint on what server a stream should be resumed.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1926'>OF-1926</a>] -         Steam Management should tell clients how long they can be detached.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1929'>OF-1929</a>] -         LDAPS should not be an advanced setting
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1930'>OF-1930</a>] -         Make LocalMUCRoom more thread safe
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1944'>OF-1944</a>] -         Clear caches after changing LDAP profile settings
+</li>
+</ul>
+
+
+<h2>4.4.4 -- <span style="font-weight: normal;">November 12, 2019</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1916'>OF-1916</a>] -         HTTP 404 “security-audit-viewer.jsp”
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1917'>OF-1917</a>] -         Cyclic shared group names cause overflow.
+</li>
+</ul>
+                    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1912'>OF-1912</a>] -         Stop using proprietary sun.security.x509.GeneralNameInterface
+</li>
+</ul>
+
+
+<h2>4.4.3 -- <span style="font-weight: normal;">November 1, 2019</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1885'>OF-1885</a>] -         SSRF vulnerability in favicon servlet
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1886'>OF-1886</a>] -         Plugin servlet should not provide access to all files on the host
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1897'>OF-1897</a>] -         maxLifetime settings of a cache take effect on runtime
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1899'>OF-1899</a>] -         Pubsub subscribing while subscription pending should cause error.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1900'>OF-1900</a>] -         Should not advertise pubsub#multi-subscribe when disabled
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1901'>OF-1901</a>] -         Pubsub node unsubscription permission model failing
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1904'>OF-1904</a>] -         Roster Group Sharing Degraded
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1910'>OF-1910</a>] -         Potential NPE in AuditorImpl
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1909'>OF-1909</a>] -         Make Certificate Store Watching optional
+</li>
+</ul>
+            
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1894'>OF-1894</a>] -         Allow caches to have keys/values not display on admin UI
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1905'>OF-1905</a>] -         Apply pagination to Security Audit Log Viewer
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1906'>OF-1906</a>] -         Shutdown ConnectionManagerImpl module first
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1907'>OF-1907</a>] -         Limit max duration of Module shutdown
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1908'>OF-1908</a>] -         Add JiveGlobals getDoubleProperty
+</li>
+</ul>
+
+
+<h2>4.4.2 -- <span style="font-weight: normal;">September 25, 2019</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-793'>OF-793</a>] -         javax.net.ssl.SSLException: Unsupported record version Unknown-47.115
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1433'>OF-1433</a>] -         OpenFire doesn&#39;t ACK the sent presence stanza to the user
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1829'>OF-1829</a>] -         NPE while destroying MUCService
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1835'>OF-1835</a>] -         SM resumption of a session that had an SM error causes NPE
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1845'>OF-1845</a>] -         NPE in S2S tester
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1848'>OF-1848</a>] -         S2S should not be established twice.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1853'>OF-1853</a>] -         Upon joining a chatroom, a subject MUST be sent, even when empty
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1856'>OF-1856</a>] -         Anonymous users should not be able to send S2S subscription requests
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1858'>OF-1858</a>] -         MUC services are not added/removed from other cluster nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1860'>OF-1860</a>] -         Admin Console - Plugin Upload vulnerable to ZipSlip
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1873'>OF-1873</a>] -         LDAP password disclosed on admin page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1874'>OF-1874</a>] -         XSS on LDAP Server Settings page
+</li>
+</ul>
+                
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1876'>OF-1876</a>] -         Update MySQL Connector/J to version 8.0.17
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1877'>OF-1877</a>] -         Upgrade BouncyCastle from 1.61 to 1.63
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1833'>OF-1833</a>] -         Add more data to dns-check.jsp
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1842'>OF-1842</a>] -         Add information about other options to SSL Guide
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1849'>OF-1849</a>] -         S2S: Allow for StartTLS on DirectTLS port
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1851'>OF-1851</a>] -         Use more applicable error when anonymous user tries to obtain a roster
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1852'>OF-1852</a>] -         Bounce undeliverable message and presence stanzas
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1854'>OF-1854</a>] -         Allow trust and identitystores to be of different type
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1857'>OF-1857</a>] -         Improve logging around shutdown
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1859'>OF-1859</a>] -         LocalSession#sessionData should return previous values on update/remove
+</li>
+</ul>
+
+
+<h2>4.4.1 -- <span style="font-weight: normal;">August 12, 2019</span></h2>
+
+<h2>        Sub-task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1021'>OF-1021</a>] -         Admin Console Arbitrary File Upload Vulnerability
+</li>
+</ul>
+                
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1192'>OF-1192</a>] -         Reflective Cross-Site Scripting vulnerability on setup test page
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1804'>OF-1804</a>] -         ConversationLogEntry stored stanza has mangled formatting
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1808'>OF-1808</a>] -         ClassCastException - user-summary.jsp
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1811'>OF-1811</a>] -         NPE in RosterManager.getSharedGroups
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1814'>OF-1814</a>] -         Unable to remove a conference service
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1816'>OF-1816</a>] -         Log files aren&#39;t loaded properly
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1817'>OF-1817</a>] -         Potential ClassCastException in MUC with Clustering
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1818'>OF-1818</a>] -         In Sybase every column should be defined NONNULL/NULL constraint
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1820'>OF-1820</a>] -         Groups not sorted alphabetically in Sharing dialog
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1825'>OF-1825</a>] -         documentation folder redundantly included in RPM distribution
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1828'>OF-1828</a>] -         Oracle database does not permit empty string insertion into ofGroupProp
+</li>
+</ul>
+                    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1819'>OF-1819</a>] -         Update German translation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1827'>OF-1827</a>] -         Stop using a specific, hardcoded SSL Context.
+</li>
+</ul>
+
+
 <h2>4.4.0 -- <span style="font-weight: normal;">Jun 28, 2019</span></h2>
 
 <h2>        Bug
@@ -370,6 +826,8 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1784'>OF-1784</a>] -         Don&#39;t write to connection if connection cannot be written to.
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1786'>OF-1786</a>] -         Update MINA to 2.1.3 to avoid high CPU usage on Linux
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1788'>OF-1788</a>] -         MUC messages should be written to database immediately
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1790'>OF-1790</a>] -         Improve concurrency and performance of conversation log history.
 </li>

@@ -68,8 +68,7 @@ public class PresenceAccess extends AccessModel {
             }
             else {
                 // Owner of the node is a remote user. This should never happen.
-                Log.warn("Node with access model Presence has a remote user as owner: " +
-                        node.getNodeID());
+                Log.warn("Node with access model Presence has a remote user as owner: {}",node.getUniqueIdentifier());
             }
         }
         return false;

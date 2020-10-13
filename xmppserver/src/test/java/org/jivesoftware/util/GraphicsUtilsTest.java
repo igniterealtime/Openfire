@@ -46,6 +46,22 @@ public class GraphicsUtilsTest
     }
 
     /**
+     * Verifies that {@link GraphicsUtils#isImage(InputStream)} correctly identifies a favicon.
+     */
+    @Test
+    public void testIsImageWithFavicon() throws Exception
+    {
+        // Setup test fixture.
+        final InputStream input = getClass().getResourceAsStream( "/favicon.ico" );
+
+        // Execute system under test.
+        final boolean result = GraphicsUtils.isImage( input );
+
+        // Verify result.
+        assertTrue( result );
+    }
+
+    /**
      * Verifies that {@link GraphicsUtils#isImage(InputStream)} rejects data that's not an image.
      */
     @Test

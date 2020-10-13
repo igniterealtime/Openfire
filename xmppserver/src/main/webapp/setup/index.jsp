@@ -283,6 +283,11 @@
                                 <b>Fran&ccedil;ais</b> (fr)
                             </label><br>
 
+                            <label for="locJa">
+                                <input type="radio" name="localeCode" value="ja_JP" ${locale eq 'ja_JP' ? 'checked' : ''} id="locJa" />
+                                <b>日本語</b> (ja_JP)
+                            </label><br>
+
                             <label for="loc06">
                                 <input type="radio" name="localeCode" value="nl" ${locale eq 'nl' ? 'checked' : ''} id="loc06" />
                                 <b>Nederlands</b> (nl)

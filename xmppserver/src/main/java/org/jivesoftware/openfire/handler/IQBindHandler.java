@@ -75,6 +75,7 @@ public class IQBindHandler extends IQHandler {
         }
 
         IQ reply = IQ.createResultIQ(packet);
+        reply.setFrom((String)null); // OF-2001: IQ bind requests are made from entities that have no resource yet. Responding with a 'from' value confuses many clients.
         Element child = reply.setChildElement("bind", "urn:ietf:params:xml:ns:xmpp-bind");
         // Check if the client specified a desired resource
         String resource = packet.getChildElement().elementTextTrim("resource");
@@ -131,6 +132,14 @@ public class IQBindHandler extends IQHandler {
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         oldSession.deliverRawText(error.toXML());
                         oldSession.close();
+
+                        // OF-1923: As the session is now replaced, the old session will never be resumed.
+                        // TODO remove detached session if it lives on a remote cluster node. Not doing this should not have functional consequences (but could lead to these warnings in the logs: "Not removing detached session 'foo@example.org/bar' that appears to have been replaced by another session.")
+                        if ( oldSession instanceof LocalClientSession ) {
+                            // As the new session has already replaced the old session, we're not explicitly closing
+                            // the old session again, as that would cause the state of the new session to be affected.
+                            sessionManager.removeDetached((LocalClientSession) oldSession);
+                        }
                     }
                     else {
                         reply.setChildElement(packet.getChildElement().createCopy());

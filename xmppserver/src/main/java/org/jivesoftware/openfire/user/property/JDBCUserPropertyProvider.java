@@ -19,6 +19,7 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -98,6 +99,20 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         loadPropertiesSQL = JiveGlobals.getProperty( "jdbcUserPropertyProvider.loadPropertiesSQL" );
     }
 
+    /**
+     * XMPP disallows some characters in identifiers, requiring them to be escaped.
+     *
+     * This implementation assumes that the database returns properly escaped identifiers,
+     * but can apply escaping by setting the value of the 'jdbcUserPropertyProvider.isEscaped'
+     * property to 'false'.
+     *
+     * @return 'false' if this implementation needs to escape database content before processing.
+     */
+    protected boolean assumePersistedDataIsEscaped()
+    {
+        return JiveGlobals.getBooleanProperty( "jdbcUserPropertyProvider.isEscaped", true );
+    }
+
     private Connection getConnection() throws SQLException
     {
         if ( useConnectionProvider )
@@ -116,11 +131,15 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+
+        // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+        final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+
         try
         {
             con = getConnection();
             pstmt = con.prepareStatement( loadPropertiesSQL );
-            pstmt.setString( 1, username );
+            pstmt.setString( 1, queryValue );
             rs = pstmt.executeQuery();
 
             final Map<String, String> result = new HashMap<>();
@@ -148,15 +167,18 @@ public class JDBCUserPropertyProvider implements UserPropertyProvider
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+
+        // OF-1837: When the database does not hold escaped data, our query should use unescaped values in the 'where' clause.
+        final String queryValue = assumePersistedDataIsEscaped() ? username : JID.unescapeNode( username );
+
         try
         {
             con = getConnection();
             pstmt = con.prepareStatement( loadPropertySQL );
-            pstmt.setString( 1, username );
+            pstmt.setString( 1, queryValue );
             pstmt.setString( 2, propName );
             rs = pstmt.executeQuery();
 
-            final Map<String, String> result = new HashMap<>();
             if ( rs.next() )
             {
                 return rs.getString( 1 );

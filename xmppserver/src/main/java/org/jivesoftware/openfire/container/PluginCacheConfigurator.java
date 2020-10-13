@@ -27,6 +27,7 @@ import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * A helper class to read cache configuration data for a plugin and register the defined caches with
@@ -68,15 +69,13 @@ public class PluginCacheConfigurator {
 
     public void configure(String pluginName) {
         try {
-            SAXReader saxReader = new SAXReader();
-            saxReader.setEncoding("UTF-8");
-            Document cacheXml = saxReader.read(configDataStream);
+            Document cacheXml = readDocument(configDataStream);
             List<Node> mappings = cacheXml.selectNodes("/cache-config/cache-mapping");
             for (Node mapping: mappings) {
                 registerCache(pluginName, mapping);
             }
         }
-        catch (DocumentException e) {
+        catch (DocumentException | SAXException e) {
             Log.error(e.getMessage(), e);
         }
     }
@@ -106,4 +105,11 @@ public class PluginCacheConfigurator {
         return paramMap;
     }
 
+    private Document readDocument(InputStream in) throws SAXException, DocumentException {
+        SAXReader reader = new SAXReader();
+        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        return reader.read(in);
+    }
 }

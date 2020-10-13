@@ -23,7 +23,9 @@ import java.util.*;
  * strategy.
  *
  * @author Gaston Dombiak
+ * @deprecated Use {@link DefaultExternalizableUtil} which, unlike this implementation, provides actual serialization functionality.
  */
+@Deprecated
 public class DummyExternalizableUtil implements ExternalizableUtilStrategy {
     /**
      * Writes a Map of String key and value pairs. This method handles the

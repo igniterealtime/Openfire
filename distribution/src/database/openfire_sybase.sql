@@ -213,6 +213,10 @@ CREATE TABLE ofMucRoom (
   canChangeNick       INT           NOT NULL,
   canRegister         INT           NOT NULL,
   allowpm             INT           NULL,
+  fmucEnabled         INT           NULL,
+  fmucOutboundNode    NVARCHAR(255) NULL,
+  fmucOutboundMode    INT           NULL,
+  fmucInboundNodes    NVARCHAR(2000) NULL,
   CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 )
 CREATE INDEX ofMucRoom_roomid_idx on ofMucRoom(roomID)
@@ -375,7 +379,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1)
 INSERT INTO ofID (idType, id) VALUES (26, 2)
 INSERT INTO ofID (idType, id) VALUES (27, 1)
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 30)
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 32)
 
 /* Entry for admin user */
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

@@ -49,11 +49,10 @@ public class CacheUtil
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void addValueToMultiValuedCache( Cache<K, C> cache, K key, V element, Supplier<C> supplier )
     {
-        final Lock lock = CacheFactory.getLock( key, cache );
+        final Lock lock = cache.getLock(key);
+        lock.lock();
         try
         {
-            lock.lock();
-
             final C elements = cache.getOrDefault( key, supplier.get() );
             elements.add( element );
             cache.put( key, elements ); // Explicitly adding the value is required for the change to propagate through Hazelcast.
@@ -91,11 +90,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 if ( entry.getValue().equals( element ) )
                 {
                     cache.remove( entry.getKey() );
@@ -126,11 +124,10 @@ public class CacheUtil
      */
     public static <K extends Serializable, V, C extends Collection<V> & Serializable> void removeValueFromMultiValuedCache( Cache<K, C> cache, K key, V element )
     {
-        final Lock lock = CacheFactory.getLock( key, cache );
+        final Lock lock = cache.getLock( key );
+        lock.lock();
         try
         {
-            lock.lock();
-
             final C elements = cache.get( key );
 
             if ( elements == null ) {
@@ -201,11 +198,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 final C elements = entry.getValue();
 
                 // Remove all instances of the element from the entry value.
@@ -276,11 +272,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 final C elements = entry.getValue();
 
                 // Remove all instances of the element from the entry value.
@@ -341,11 +336,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 if ( !entry.getValue().equals( element ) )
                 {
                     cache.remove( entry.getKey() );
@@ -391,11 +385,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 if ( entry.getValue().equals( oldValue ) )
                 {
                     // The cluster-based cache needs an explicit 'put' to cause the change to propagate.
@@ -435,11 +428,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 final V modifiedValue = mapper.apply( entry.getValue() );
                 if ( !modifiedValue.equals( entry.getValue() ) )
                 {
@@ -489,11 +481,10 @@ public class CacheUtil
         {
             final K key = entry.getKey();
 
-            final Lock lock = CacheFactory.getLock( key, cache );
+            final Lock lock = cache.getLock( key );
+            lock.lock();
             try
             {
-                lock.lock();
-
                 final C elements = entry.getValue();
 
                 // Replace all instances of the element from the entry value.

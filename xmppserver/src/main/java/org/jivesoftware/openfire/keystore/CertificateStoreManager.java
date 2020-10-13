@@ -16,10 +16,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.jivesoftware.openfire.spi.ConnectionType.SOCKET_C2S;
 
@@ -169,7 +166,7 @@ public class CertificateStoreManager extends BasicModule
 
         // Always store the new configuration in properties, to make sure that we override a potential fallback.
         JiveGlobals.setProperty( type.getPrefix() + "keystore", configuration.getFile().getPath() ); // FIXME ensure that this is relative to Openfire home!
-        JiveGlobals.setProperty( type.getPrefix() + "keypass", new String( configuration.getPassword() ) );
+        JiveGlobals.setProperty( type.getPrefix() + "keypass", new String( configuration.getPassword() ), true );
     }
 
     public void replaceTrustStore( ConnectionType type, CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
@@ -223,7 +220,7 @@ public class CertificateStoreManager extends BasicModule
 
         // Always store the new configuration in properties, to make sure that we override a potential fallback.
         JiveGlobals.setProperty( type.getPrefix() + "truststore", configuration.getFile().getPath() ); // FIXME ensure that this is relative to Openfire home!
-        JiveGlobals.setProperty( type.getPrefix() + "trustpass", new String( configuration.getPassword() )  );
+        JiveGlobals.setProperty( type.getPrefix() + "trustpass", new String( configuration.getPassword() ), true  );
     }
 
     public CertificateStoreConfiguration getIdentityStoreConfiguration( ConnectionType type ) throws IOException

@@ -20,6 +20,7 @@
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.AlreadyExistsException,
+                 org.jivesoftware.openfire.muc.spi.MUCPersistenceManager,                 
                  java.util.*"
     errorPage="error.jsp"
 %>
@@ -86,20 +87,13 @@
             }
         }
         if (errors.size() == 0) {
+            // Create or update the service.
             if (!create) {
                 webManager.getMultiUserChatManager().updateMultiUserChatService(mucname, mucname, mucdesc);
-                // Log the event
-                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
-                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                return;
             }
             else {
                 try {
                     webManager.getMultiUserChatManager().createMultiUserChatService(mucname, mucdesc, false);
-                    // Log the event
-                    webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
-                    response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                    return;
                 }
                 catch (IllegalArgumentException e) {
                     errors.put("mucname","mucname");
@@ -108,7 +102,43 @@
                     errors.put("already_exists","already_exists");
                 }
             }
+
+            // Update settings only after the service has been created.
+            // TODO move the parsing and validation of these parameters to the section above, that does that for all other parameters.
+            String muccleanupdays = ParamUtils.getParameter(request, "muccleanupdays");
+            if (muccleanupdays != null) {
+                MUCPersistenceManager.setProperty(mucname, "unload.empty_days", muccleanupdays);
+            }
+
+            if (ParamUtils.getParameter(request, "muckeep") != null) {
+                if (ParamUtils.getParameter(request, "muckeep").equalsIgnoreCase("on")) {
+                    MUCPersistenceManager.setProperty(mucname, "unload.empty_days", "0");
+                }
+            }
+
+            // Log the event
+            if (!create) {
+                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
+                return;
+            } else {
+                webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
+                return;
+            }
         }
+    }    
+   
+    boolean muckeep = false;
+    String muccleanupdays = "30"; // default
+
+    // When creating a new service (as opposed to editing an existing one), mucName will be initially empty (OF-1954)
+	if (mucname != null) {
+        muccleanupdays = MUCPersistenceManager.getProperty(mucname, "unload.empty_days", muccleanupdays);
+    }
+
+	if (Integer.parseInt(muccleanupdays)<=0) {
+        muckeep = true;
     }
 %>
 
@@ -121,7 +151,20 @@
 <meta name="subPageID" content="muc-service-edit-form"/>
 <meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
 <% } %>
-<meta name="helpPage" content="edit_group_chat_service_properties.html"/>
+<meta name="helpPage" content="edit_group_chat_service_properties.html"/>    
+<script>
+	function checkMUCKeep() {
+		var checkedValue = null;
+		var inputKeeps = document.getElementsByName('muckeep');
+		var inputCleanups = document.getElementsByName('muccleanupdays');
+
+		if (inputKeeps[0].checked) {			
+			inputCleanups[0].disabled = true;			
+		} else {
+			inputCleanups[0].disabled = false;
+		}
+	}
+</script>
 </head>
 <body>
 
@@ -203,6 +246,22 @@
                 </td>
                 <td>
                     <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
+                </td>
+            </tr>
+            <tr>
+                <td class="c1">
+                   <fmt:message key="groupchat.service.properties.label_service_muckeep" />
+                </td>
+                <td>
+                    <input type="checkbox" name="muckeep" <%= muckeep ? "checked" : "" %> onClick="checkMUCKeep();">
+                </td>
+            </tr>
+            <tr>
+                <td class="c1">
+                   <fmt:message key="groupchat.service.properties.label_service_cleanupdays" />
+                </td>
+                <td>
+                    <input type="number" size="4" maxlength="3" name="muccleanupdays" <%= muckeep ? "disabled" : "" %> value="<%= (muccleanupdays != null ? StringUtils.escapeForXML(muccleanupdays) : "") %>">
                 </td>
             </tr>
         </table>

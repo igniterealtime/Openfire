@@ -125,7 +125,7 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     }
 
     /**
-     * Sets the maximum size of the cache in bytes. If the cache grows larger
+     * Sets the maximum size of the cache in bytes limited to integer size. If the cache grows larger
      * than the max size, the least frequently used items will be removed. If
      * the max cache size is set to -1, there is no size limit.
      *
@@ -136,6 +136,22 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
      */
     @Override
     public void setMaxCacheSize( final int maxSize )
+    {
+        setMaxCacheSize((long) maxSize);
+    }
+
+    /**
+     * Sets the maximum size of the cache in bytes. If the cache grows larger
+     * than the max size, the least frequently used items will be removed. If
+     * the max cache size is set to -1, there is no size limit.
+     *
+     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
+     * effect until the next time the cache is created</p>
+     *
+     * @param maxSize the maximum size of the cache in bytes.
+     */
+    @Override
+    public void setMaxCacheSize( final long maxSize )
     {
         cache.policy().eviction().ifPresent( eviction -> eviction.setMaximum(maxSize) );
     }
@@ -173,7 +189,7 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     }
 
     /**
-     * Returns the size of the cache contents in bytes. This value is only a
+     * Returns the size of the cache contents in bytes limited to integer size. This value is only a
      * rough approximation, so cache users should expect that actual VM
      * memory used by the cache could be significantly higher than the value
      * reported by this method.
@@ -183,9 +199,20 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     @Override
     public int getCacheSize()
     {
+        return (int) Math.min( Integer.MAX_VALUE, getLongCacheSize() );
+    }
+
+    /**
+     * Returns the size of the cache contents in bytes. This value is only a
+     * rough approximation, so cache users should expect that actual VM
+     * memory used by the cache could be significantly higher than the value
+     * reported by this method.
+     *
+     * @return the size of the cache contents in bytes.
+     */
+    public long getLongCacheSize(){
         // The constructor asserts that the eviction policy and weightedSize are present.
-        final long result = cache.policy().eviction().get().weightedSize().getAsLong();
-        return (int) Math.min( Integer.MAX_VALUE, result );
+        return cache.policy().eviction().get().weightedSize().getAsLong();
     }
 
     /**

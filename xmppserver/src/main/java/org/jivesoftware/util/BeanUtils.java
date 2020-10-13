@@ -232,8 +232,8 @@ public class BeanUtils {
             try {
                 return dateFormatter.format((Date)value);
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying format value {} as a date.", value, ex);
             }
         }
         if (value instanceof Color) {
@@ -253,7 +253,7 @@ public class BeanUtils {
      * @param type the type of the property.
      * @param value the encode String value to decode.
      * @return the String value decoded into the specified type.
-     * @throws Exception
+     * @throws Exception An any problem during decoding, most likely classloading errors.
      */
     private static Object decode(Class type, String value) throws Exception {
         if (type.getName().equals("java.lang.String")) {
@@ -278,8 +278,8 @@ public class BeanUtils {
             try {
                 return dateFormatter.parse(value);
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception exception) {
+                Log.debug( "An exception is ignored that occurred while attempting to parse this value with a date formatter: {}", value, exception);
             }
         }
         if (type.getName().equals("java.awt.Color")) {

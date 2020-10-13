@@ -56,7 +56,6 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * A session represents a series of interactions with an XMPP client sending packets using the HTTP
@@ -101,7 +100,6 @@ public class HttpSession extends LocalClientSession {
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private Set<SessionListener> listeners = new CopyOnWriteArraySet<>();
     private volatile boolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
@@ -342,26 +340,6 @@ public class HttpSession extends LocalClientSession {
      */
     public boolean isPollingSession() {
         return (this.wait == 0 || this.hold == 0);
-    }
-
-    /**
-     * Adds a {@link org.jivesoftware.openfire.http.SessionListener} to this session. The listener
-     * will be notified of changes to the session.
-     *
-     * @param listener the listener which is being added to the session.
-     */
-    public void addSessionCloseListener(SessionListener listener) {
-        listeners.add(listener);
-    }
-
-    /**
-     * Removes a {@link org.jivesoftware.openfire.http.SessionListener} from this session. The
-     * listener will no longer be updated when an event occurs on the session.
-     *
-     * @param listener the session listener that is to be removed.
-     */
-    public void removeSessionCloseListener(SessionListener listener) {
-        listeners.remove(listener);
     }
 
     /**

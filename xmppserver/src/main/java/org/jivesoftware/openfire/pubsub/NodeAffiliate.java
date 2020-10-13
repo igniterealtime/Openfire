@@ -23,6 +23,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.pep.PEPService;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -33,8 +39,8 @@ import org.xmpp.packet.Message;
  *
  * @author Matt Tucker
  */
-public class NodeAffiliate {
-
+public class NodeAffiliate implements Cacheable
+{
     private JID jid;
     private Node node;
 
@@ -77,6 +83,9 @@ public class NodeAffiliate {
      * many items were published then the affiliate will get a notification for each set
      * of items that affected the same subscriptions.
      *
+     * If the affiliate is an owner of the node, and the node is in a PEP service, then
+     * all connected resources of the affiliated user will be sent an event notification.
+     *
      * @param notification the message to sent to the subscribers. The message will be completed
      *        with the items to include in each notification.
      * @param event the event Element included in the notification message. Passed as an
@@ -95,13 +104,13 @@ public class NodeAffiliate {
             for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
                 // Add items information
                 Element items = event.addElement("items");
-                items.addAttribute("node", getNode().getNodeID());
+                items.addAttribute("node", getNode().getUniqueIdentifier().getNodeId());
                 for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
                     // FIXME: This was added for compatibility with PEP supporting clients.
                     //        Alternate solution needed when XEP-0163 version > 1.0 is released.
                     //
                     // If the node ID looks like a JID, replace it with the published item's node ID.
-                    if (getNode().getNodeID().contains("@")) {
+                    if (getNode().getUniqueIdentifier().getNodeId().contains("@")) {
                         items.addAttribute("node", publishedItem.getNodeID());                        
                     }
 
@@ -116,7 +125,7 @@ public class NodeAffiliate {
                     // Add leaf leafNode information if affiliated leafNode and node
                     // where the item was published are different
                     if (leafNode != getNode()) {
-                        item.addAttribute("node", leafNode.getNodeID());
+                        item.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
                     }
                 }
                 // Send the event notification
@@ -135,11 +144,52 @@ public class NodeAffiliate {
             }
             // Add item information to the event notification
             Element items = event.addElement("items");
-            items.addAttribute("node", leafNode.getNodeID());
+            items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
             // Send the event notification
             sendEventNotification(notification, affectedSubscriptions);
             // Remove the added items information
             event.remove(items);
+        }
+
+        // TODO this horribly duplicates part of the functionality above. Code-clutter should be reduced.
+        // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification.
+        if ( leafNode.getService() instanceof PEPService ) {
+            final PEPService service = (PEPService) leafNode.getService();
+            final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(service.getAddress().getNode());
+            for( final ClientSession session : sessions ) {
+                // Add item information to the event notification
+                Element items = event.addElement("items");
+                items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
+
+                for (PublishedItem publishedItem : publishedItems) {
+                    // FIXME: This was added for compatibility with PEP supporting clients.
+                    //        Alternate solution needed when XEP-0163 version > 1.0 is released.
+                    //
+                    // If the node ID looks like a JID, replace it with the published item's node ID.
+                    if (getNode().getUniqueIdentifier().getNodeId().contains("@")) {
+                        items.addAttribute("node", publishedItem.getNodeID());
+                    }
+
+                    // Add item information to the event notification
+                    Element item = items.addElement("item");
+                    if (leafNode.isItemRequired()) {
+                        item.addAttribute("id", publishedItem.getID());
+                    }
+                    if (leafNode.isPayloadDelivered()) {
+                        item.add(publishedItem.getPayload().createCopy());
+                    }
+                    // Add leaf leafNode information if affiliated leafNode and node
+                    // where the item was published are different
+                    if (leafNode != getNode()) {
+                        item.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
+                    }
+                }
+
+                // Send the event notification
+                service.sendNotification(leafNode, notification, session.getAddress());
+                // Remove the added items information
+                event.remove(items);
+            }
         }
     }
 
@@ -168,7 +218,7 @@ public class NodeAffiliate {
             for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
                 // Add items information
                 Element items = event.addElement("items");
-                items.addAttribute("node", leafNode.getNodeID());
+                items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
                 for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
                     // Add retract information to the event notification
                     Element item = items.addElement("retract");
@@ -279,6 +329,23 @@ public class NodeAffiliate {
     public String toString() {
         return super.toString() + " - JID: " + getJID() + " - Affiliation: " +
                 getAffiliation().name();
+    }
+
+    /**
+     * Returns the approximate size of the Object in bytes. The size should be
+     * considered to be a best estimate of how much memory the Object occupies
+     * and may be based on empirical trials or dynamic calculations.<p>
+     *
+     * @return the size of the Object in bytes.
+     */
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException
+    {
+        int size = CacheSizes.sizeOfObject();
+        size += CacheSizes.sizeOfAnything( jid );
+        size += CacheSizes.sizeOfInt(); // affiliation
+        size += CacheSizes.sizeOfInt(); // reference to node
+        return size;
     }
 
     /**

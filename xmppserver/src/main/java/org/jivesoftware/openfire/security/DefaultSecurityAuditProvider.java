@@ -146,7 +146,7 @@ public class DefaultSecurityAuditProvider implements SecurityAuditProvider {
             }
             
             int count = 0;
-            while (rs.next() && count < numEvents) {
+            while (rs.next() && (numEvents == null || count < numEvents)) {
                 SecurityAuditEvent event = new SecurityAuditEvent();
                 event.setMsgID(rs.getLong(1));
                 event.setUsername(rs.getString(2));

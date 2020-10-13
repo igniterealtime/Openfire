@@ -124,8 +124,31 @@ public class StanzaIDUtil
      * @param packet The stanza (cannot be null).
      * @param by The 'by' value for which to return the ID (cannot be null or an empty string).
      * @return The unique and stable ID, or null if no such ID is found.
+     * @deprecated This implementation only works with IDs that are UUIDs, which they need not be. Use {@link #findFirstUniqueAndStableStanzaID(Packet, String)} instead. OF-2026
      */
+    @Deprecated
     public static UUID parseUniqueAndStableStanzaID( final Packet packet, final String by )
+    {
+        final String result = findFirstUniqueAndStableStanzaID( packet, by );
+        if ( result == null ) {
+            return null;
+        }
+
+        // Note that this is not compliant with XEP-0359, which specifies that ID values SHOULD (but need not be) UUIDs. This method is retained for backward compatibility with Openfire versions older than 4.5.2.
+        return UUID.fromString( result );
+    }
+
+    /**
+     * Returns the first stable and unique stanza-id value from the packet, that is defined
+     * for a particular 'by' value.
+     *
+     * This method does not evaluate 'origin-id' elements in the packet.
+     *
+     * @param packet The stanza (cannot be null).
+     * @param by The 'by' value for which to return the ID (cannot be null or an empty string).
+     * @return The unique and stable ID, or null if no such ID is found.
+     */
+    public static String findFirstUniqueAndStableStanzaID( final Packet packet, final String by )
     {
         if ( packet == null )
         {
@@ -149,7 +172,7 @@ public class StanzaIDUtil
                 final String result = sid.attributeValue( "id" );
                 if ( result != null && !result.isEmpty() )
                 {
-                    return UUID.fromString( result );
+                    return result;
                 }
             }
         }

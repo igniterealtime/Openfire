@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.ServerSessionEventListener;
-import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.xmpp.packet.IQ;
 import org.slf4j.Logger;

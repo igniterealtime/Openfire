@@ -71,45 +71,61 @@
         <td width="10%"><fmt:message key="server.session.connection.both" /></td>
     <% } %>
 
-    <% Date creationDate = null;
+    <%
+        Date creationDate = null;
         Date lastActiveDate = null;
         for (IncomingServerSession inSession : inSessions) {
-            if (creationDate == null || creationDate.after(inSession.getCreationDate())) {
+        	Date tmpCreationDate=inSession.getCreationDate();
+            if (creationDate == null || (tmpCreationDate!=null && creationDate.after(tmpCreationDate))) {
                 // Use the creation date of the oldest incoming session
-                creationDate = inSession.getCreationDate();
+                creationDate = tmpCreationDate;
             }
-            if (lastActiveDate == null || lastActiveDate.before(inSession.getLastActiveDate())) {
+            Date tmpLastActiveDate=inSession.getLastActiveDate();
+            if (lastActiveDate == null || (tmpLastActiveDate!=null && lastActiveDate.before(tmpLastActiveDate))){
                 // Use the last active date of the newest incoming session
-                lastActiveDate = inSession.getLastActiveDate();
+                lastActiveDate = tmpLastActiveDate;
             }
         }
         for (OutgoingServerSession outSession : outSessions) {
-            if (creationDate == null || creationDate.after(outSession.getCreationDate())) {
+        	Date tmpCreationDate=outSession.getCreationDate();
+            if (creationDate == null || (tmpCreationDate!=null && creationDate.after(tmpCreationDate))) {
                 // Use the creation date of the oldest outgoing session
-                creationDate = outSession.getCreationDate();
+                creationDate = tmpCreationDate;
             }
-            if (lastActiveDate == null || lastActiveDate.before(outSession.getLastActiveDate())) {
+            Date tmpLastActiveDate=outSession.getLastActiveDate();
+            if (lastActiveDate == null || (tmpLastActiveDate!=null && lastActiveDate.before(tmpLastActiveDate))) {
                 // Use the last active date of the newest outgoing session
-                lastActiveDate = outSession.getLastActiveDate();
+                lastActiveDate = tmpLastActiveDate;
             }
         }
-        Calendar creationCal = Calendar.getInstance();
-        creationCal.setTime(creationDate);
-
-        Calendar lastActiveCal = Calendar.getInstance();
-        lastActiveCal.setTime(lastActiveDate);
 
         Calendar nowCal = Calendar.getInstance();
 
-        boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
-        boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+        String creationDateString = "";
+        if (creationDate!=null)
+        {
+            Calendar creationCal = Calendar.getInstance();
+            creationCal.setTime(creationDate);
+            boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
+            creationDateString = sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate);
+        }
+
+        String lastActivityString = "";
+        if(lastActiveDate!=null){
+            Calendar lastActiveCal = Calendar.getInstance();
+            lastActiveCal.setTime(lastActiveDate);
+            boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
+            lastActivityString = sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate);
+        }
+
+
     %>
 
     <td align="center" width="20%" nowrap>
-        <%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
+        <%= creationDateString %>
     </td>
     <td align="center" width="20%" nowrap>
-        <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
+        <%= lastActivityString %>
     </td>
 
     <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">

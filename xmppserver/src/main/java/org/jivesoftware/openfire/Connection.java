@@ -21,7 +21,6 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;

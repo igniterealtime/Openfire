@@ -78,7 +78,7 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)roomsCount/(double)range);
     int curPage = (start/range) + 1;
-    int maxRoomIndex = (start+range <= roomsCount ? start+range : roomsCount);
+    int maxRoomIndex = Math.min(start + range, roomsCount);
 %>
 <html>
     <head>
@@ -217,7 +217,10 @@
                 <% } %>
         </td>
         <td width="1%" align="center">
-            <nobr><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></nobr>
+            <nobr><%= room.getOccupantsCount() %>
+            <% if (room.getMaxUsers() > 0 ) { %>
+                / <%= room.getMaxUsers() %>
+            <% } %></nobr>
         </td>
         <td width="1%" align="center">
             <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"

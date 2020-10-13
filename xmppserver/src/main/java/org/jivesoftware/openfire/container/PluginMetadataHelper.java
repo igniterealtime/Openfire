@@ -16,6 +16,12 @@
 
 package org.jivesoftware.openfire.container;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -28,12 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Various helper methods to retrieve plugin metadat from plugin.xml files.
@@ -353,6 +353,14 @@ public class PluginMetadataHelper
         return new JavaSpecVersion( value );
     }
 
+    public static boolean isCsrfProtectionEnabled(final Plugin plugin) {
+        return isCsrfProtectionEnabled(XMPPServer.getInstance().getPluginManager().getPluginPath(plugin));
+    }
+
+    public static boolean isCsrfProtectionEnabled(final Path pluginDir) {
+        return Boolean.parseBoolean(getElementValue(pluginDir, "/plugin/csrfProtectionEnabled"));
+    }
+
     /**
      * Returns the database schema key of a plugin, if it exists. The value is retrieved from the plugin.xml file of the
      * plugin. If the value could not be found, {@code null} will be returned.
@@ -544,14 +552,7 @@ public class PluginMetadataHelper
             final Path pluginConfig = pluginDir.resolve( "plugin.xml" );
             if ( Files.exists( pluginConfig ) )
             {
-                final SAXReader saxReader = new SAXReader();
-                saxReader.setEntityResolver(new EntityResolver() {
-                    @Override
-                    public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-                        throw new IOException("External entity denied: " + publicId + " // " + systemId);
-                    }
-                });
-                saxReader.setEncoding( "UTF-8" );
+                final SAXReader saxReader = setupSAXReader();
                 final Document pluginXML = saxReader.read( pluginConfig.toFile() );
                 final Element element = (Element) pluginXML.selectSingleNode( xpath );
                 if ( element != null )
@@ -565,5 +566,17 @@ public class PluginMetadataHelper
             Log.error( "Unable to get element value '{}' from plugin.xml of plugin in '{}':", xpath, pluginDir, e );
         }
         return null;
+    }
+
+    private static SAXReader setupSAXReader() throws SAXException {
+        final SAXReader saxReader = new SAXReader();
+        saxReader.setEntityResolver((publicId, systemId) -> {
+            throw new IOException("External entity denied: " + publicId + " // " + systemId);
+        });
+        saxReader.setEncoding( "UTF-8" );
+        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        return saxReader;
     }
 }

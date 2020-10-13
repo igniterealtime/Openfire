@@ -54,7 +54,9 @@ class LocalRoutingTable {
      * @return true if the element was added or false if was already present.
      */
     boolean addRoute(DomainPair pair, RoutableChannelHandler route) {
-        return routes.put(pair, route) != route;
+        final boolean result = routes.put(pair, route) != route;
+        Log.trace( "Route '{}' (for pair: '{}') {}", route.getAddress(), pair, result ? "added" : "not added (was already present)." );
+        return result;
     }
 
     /**
@@ -121,7 +123,8 @@ class LocalRoutingTable {
      * @param pair DomainPair associated to the route.
      */
     void removeRoute(DomainPair pair) {
-        routes.remove(pair);
+        final RoutableChannelHandler removed = routes.remove(pair);
+        Log.trace( "Route '{}' (for pair: '{}') {}", removed == null ? "(null)" : removed.getAddress(), pair, removed != null ? "removed" : "not removed (was not present)." );
     }
 
     public void start() {

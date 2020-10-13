@@ -83,6 +83,16 @@ public class EntityCapabilities implements Cacheable, Externalizable {
     }
 
     /**
+     * Returns the identities of the entity capabilities.
+     *
+     * @return all identities.
+     */
+    public Set<String> getIdentities()
+    {
+        return identities;
+    }
+
+    /**
      * Determines whether or not a given identity is included in these entity
      * capabilities.
      * 
@@ -92,6 +102,16 @@ public class EntityCapabilities implements Cacheable, Externalizable {
      */
     public boolean containsIdentity(String category, String type) {
         return identities.contains(category + "/" + type);
+    }
+
+    /**
+     * Returns the features of the entity capabilities.
+     *
+     * @return all features.
+     */
+    public Set<String> getFeatures()
+    {
+        return features;
     }
 
     /**

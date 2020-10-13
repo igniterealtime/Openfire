@@ -16,10 +16,21 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+
+import javax.annotation.Nonnull;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Defines the permissions and actions that a MUCUser may use in
@@ -31,6 +42,8 @@ import org.xmpp.packet.Presence;
  * @author Gaston Dombiak
  */
 public interface MUCRole {
+
+    Logger Log = LoggerFactory.getLogger( MUCRole.class );
 
     /**
      * Obtain the current presence status of a user in a chatroom.
@@ -146,6 +159,33 @@ public interface MUCRole {
     JID getUserAddress();
 
     /**
+     * Obtain the XMPPAddress representing this role in a room in context of FMUC. This typically represents the
+     * XMPPAddress as it is known locally at the joining FMUC node.
+     *
+     * For users that are joined through FMUC from a remote node, this method will return the value as reported by the
+     * joining FMUC node.
+     *
+     * For users that are in the room, but connected directly to this instance of Openfire, this method returns null,
+     * even if the room is part of an FMUC node.
+     *
+     * Users that joined through server-to-server federation (as opposed to FMUC), will not have a FMUC address. Null is
+     * returned by this method for these users.
+     *
+     * @return The address of the user that joined the room through FMUC from a remote domain, or null.
+     */
+    JID getReportedFmucAddress();
+
+    /**
+     * Returns true if the user is one that is in the room as a result of that user being in another room that is
+     * federated with this room, through the FMUC protocol
+     *
+     * @return true if this user is a user on a remote MUC room that is federated with this chatroom.
+     */
+    default boolean isRemoteFmuc() {
+        return getReportedFmucAddress() != null;
+    };
+
+    /**
      * Returns true if this room occupant is hosted by this JVM.
      *
      * @return true if this room occupant is hosted by this JVM
@@ -165,6 +205,108 @@ public interface MUCRole {
      * @param packet The packet to send
      */
     void send( Packet packet );
+
+    /**
+     * When sending data to a user that joined the room through FMUC (when the user is a user that is local to a remote
+     * chatroom that joined our room as a 'joining FMUC node'), then we'll need to add an 'fmuc' element to all data
+     * that we send it.
+     *
+     * The data that is to be added must include the 'from' address representing the FMUC role for the occupant that
+     * sent the stanza. We either use the reported FMUC address as passed down from other FMUC nodes, or we use the
+     * address of users connected locally to our server.
+     *
+     * This method will add an 'fmuc' child element to the stanza when the user is a user that joined through FMUC (is
+     * a member of a room that federates with the MUC room local to our server).
+     *
+     * If the provided stanza already contains an FMUC element with relevant data, this data is left unchanged.
+     *
+     * @param packet The stanza to augment
+     */
+    default void augmentOutboundStanzaWithFMUCData( @Nonnull Packet packet )
+    {
+        if ( !isRemoteFmuc() ) {
+            Log.trace( "Recipient '{}' is not in a remote FMUC room. No need to augment stanza with FMUC data.", this.getUserAddress() );
+            return;
+        }
+        Log.trace( "Sending data to recipient '{}' that has joined local room '{}' through a federated remote room (FMUC). Outbound stanza is required to include FMUC data: {}", this.getUserAddress(), this.getChatRoom().getJID(), packet );
+
+        // Data that was sent to us from a(nother) FMUC node might already have this value. If not, we need to ensure that this is added.
+        Element fmuc = packet.getElement().element(QName.get("fmuc", "http://isode.com/protocol/fmuc"));
+        if ( fmuc == null )
+        {
+            fmuc = packet.getElement().addElement(QName.get("fmuc", "http://isode.com/protocol/fmuc"));
+        }
+
+        if ( fmuc.attributeValue( "from" ) != null && !fmuc.attributeValue( "from" ).trim().isEmpty() )
+        {
+            Log.trace( "Outbound stanza already includes FMUC data. No need to include further data." );
+            return;
+        }
+
+        final JID reportingFmucAddress;
+        if (packet.getFrom().getResource() == null) {
+            Log.trace( "Sender is the room itself: '{}'", packet.getFrom() );
+            reportingFmucAddress = this.getChatRoom().getRole().getRoleAddress();
+        } else {
+            Log.trace( "Sender is an occupant of the room: '{}'", packet.getFrom() );
+
+            // Determine the role of the entity that sent the message.
+            final Set<MUCRole> sender = new HashSet<>();
+            try
+            {
+                sender.addAll( this.getChatRoom().getOccupantsByNickname(packet.getFrom().getResource()) );
+            }
+            catch ( UserNotFoundException e )
+            {
+                Log.trace( "Unable to identify occupant '{}'", packet.getFrom() );
+            }
+
+            // If this users is user joined through FMUC, use the FMUC-reported address, otherwise, use the local address.
+            switch ( sender.size() )
+            {
+                case 0:
+                    Log.warn("Cannot add required FMUC data to outbound stanza. Unable to determine the role of the sender of stanza sent over FMUC: {}", packet);
+                    return;
+
+                case 1:
+                    final MUCRole role = sender.iterator().next();
+                    if ( role.isRemoteFmuc() ) {
+                        reportingFmucAddress = role.getReportedFmucAddress();
+                    } else {
+                        reportingFmucAddress = role.getUserAddress();
+                    }
+                    break;
+
+                default:
+                    // The user has more than one role, which probably means it joined the room from more than one device.
+                    // At this point in the code flow, we can't determine anymore which full JID caused the stanza to be sent.
+                    // As a fallback, send the _bare_ JID of the user (which should be equal for all its resources).
+                    // TODO verify if the compromise is acceptable in the XEP.
+                    final Set<JID> bareJids = sender.stream()
+                        .map(r -> {
+                            if ( r.isRemoteFmuc() ) {
+                                return r.getReportedFmucAddress().asBareJID();
+                            } else {
+                                return r.getUserAddress().asBareJID();
+                            }
+                        })
+                        .collect(Collectors.toSet());
+
+                    if ( bareJids.size() == 1 ) {
+                        Log.warn("Sender '{}' has more than one role in room '{}', indicating that the user joined the room from more than one device. Using its bare instead of full JID for FMUC reporting.",
+                                 packet.getFrom(),
+                                 this.getChatRoom().getJID());
+                        reportingFmucAddress = bareJids.iterator().next().asBareJID();
+                    } else {
+                        throw new IllegalStateException("Unable to deduce one FMUC address for occupant address '" + packet.getFrom() + "'.");
+                    }
+                    break;
+            }
+        }
+
+        Log.trace( "Adding 'from' FMUC data to outbound stanza, using FMUC address of sender of data, that has been determined to be '{}'.", reportingFmucAddress );
+        fmuc.addAttribute("from", reportingFmucAddress.toString() );
+    }
 
     enum Role {
 

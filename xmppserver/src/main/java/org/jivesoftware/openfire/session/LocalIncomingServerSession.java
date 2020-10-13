@@ -16,7 +16,6 @@
 package org.jivesoftware.openfire.session;
 
 import java.io.IOException;
-import java.security.KeyStoreException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
@@ -35,7 +34,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
-import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;

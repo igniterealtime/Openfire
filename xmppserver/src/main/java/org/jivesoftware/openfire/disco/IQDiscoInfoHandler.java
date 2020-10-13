@@ -19,8 +19,12 @@ package org.jivesoftware.openfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.handler.IQBlockingHandler;
+import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -29,13 +33,16 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -81,6 +88,12 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
     private List<UserFeaturesProvider> anonymousUserFeatureProviders = new ArrayList<>();
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
+
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.iqdiscoinfo.xformsoftwareversion")
+        .setDefaultValue(Boolean.TRUE)
+        .setDynamic(Boolean.TRUE)
+        .build();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -380,9 +393,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void addServerFeature(String namespace) {
         if (localServerFeatures.add(namespace)) {
-            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
+            Lock lock = serverFeatures.getLock(namespace);
+            lock.lock();
             try {
-                lock.lock();
                 HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs == null) {
                     nodeIDs = new HashSet<>();
@@ -404,9 +417,9 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      */
     public void removeServerFeature(String namespace) {
         if (localServerFeatures.remove(namespace)) {
-            Lock lock = CacheFactory.getLock(namespace, serverFeatures);
+            Lock lock = serverFeatures.getLock(namespace);
+            lock.lock();
             try {
-                lock.lock();
                 HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
                 if (nodeIDs != null) {
                     nodeIDs.remove(XMPPServer.getInstance().getNodeID());
@@ -436,45 +449,64 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     @Override
     public void joinedCluster() {
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was gained by joining
+        // the cluster (eg: new server features provided by other cluster nodes now available to the local cluster node):
+        // the only cache that's being used in this implementation does not have an associated event listening mechanism
+        // when data is added to or removed from it.
     }
 
     @Override
     public void joinedCluster(byte[] nodeID) {
-        // Do nothing
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
     }
 
     @Override
     public void leftCluster() {
-        if (!XMPPServer.getInstance().isShuttingDown()) {
-            restoreCacheContent();
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
         }
+
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
+        // the cluster (eg: server features provided only by other cluster nodes, now unavailable to the local cluster
+        // node): the only cache that's being used in this implementation does not have an associated event listening
+        // mechanism when data is added to or removed from it.
     }
 
     @Override
     public void leftCluster(byte[] nodeID) {
+        // Another node left the cluster.
+        //
+        // If the cluster node leaves in an orderly fashion, it might have broadcasted
+        // the necessary events itself. This cannot be depended on, as the cluster node
+        // might have disconnected unexpectedly (as a result of a crash or network issue).
+        //
+        // Determine what data was available only on that node, and remove that.
+        //
+        // All remaining cluster nodes will be in a race to clean up the
+        // same data. The implementation below accounts for that, by only having the
+        // senior cluster node to perform the cleanup.
         if (ClusterManager.isSeniorClusterMember()) {
-            NodeID leftNode = NodeID.getInstance(nodeID);
             // Remove server features added by node that is gone
-            for (Map.Entry<String, HashSet<NodeID>> entry : serverFeatures.entrySet()) {
-                String namespace = entry.getKey();
-                Lock lock = CacheFactory.getLock(namespace, serverFeatures);
-                try {
-                    lock.lock();
-                    HashSet<NodeID> nodeIDs = entry.getValue();
-                    if (nodeIDs.remove(leftNode)) {
-                        if (nodeIDs.isEmpty()) {
-                            serverFeatures.remove(namespace);
-                        }
-                        else {
-                            serverFeatures.put(namespace, nodeIDs);
-                        }
-                    }
-                }
-                finally {
-                    lock.unlock();
-                }
-            }
+            final NodeID leftNode = NodeID.getInstance(nodeID);
+            CacheUtil.removeValueFromMultiValuedCache(serverFeatures, leftNode);
         }
     }
 
@@ -483,21 +515,17 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // Do nothing
     }
 
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
     private void restoreCacheContent() {
+        Log.trace( "Restoring cache content for cache '{}' by adding all server features that are provided by the local cluster node.", serverFeatures.getName() );
         for (String feature : localServerFeatures) {
-            Lock lock = CacheFactory.getLock(feature, serverFeatures);
-            try {
-                lock.lock();
-                HashSet<NodeID> nodeIDs = serverFeatures.get(feature);
-                if (nodeIDs == null) {
-                    nodeIDs = new HashSet<>();
-                }
-                nodeIDs.add(XMPPServer.getInstance().getNodeID());
-                serverFeatures.put(feature, nodeIDs);
-            }
-            finally {
-                lock.unlock();
-            }
+            CacheUtil.addValueToMultiValuedCache( serverFeatures, feature, XMPPServer.getInstance().getNodeID(), HashSet::new );
         }
     }
 
@@ -516,6 +544,47 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             "Only the first one of the DataForms will be returned.");
         }
         return  dataForms.stream().filter(Objects::nonNull).findAny().orElse(null);
+    }
+
+    /**
+     * Set all Software Version data  
+     * responsed by the peer for the Software information request Service Discovery (XEP-0232)
+     * @param query represented on the response of the peer
+     * @param session represented the LocalSession with peer
+     */
+    public static void setSoftwareVersionDataFormFromDiscoInfo(Element query ,LocalSession session){
+        boolean containDisco = false;
+        boolean typeformDataSoftwareInfo = false;
+        if (query != null && session != null){
+            for (Element element : query.elements()){
+                if ("feature".equals(element.getName()) 
+                    && NAMESPACE_DISCO_INFO.equals(element.attributeValue("var")) ){
+                    containDisco = true;
+                }
+                if (containDisco && "x".equals(element.getName()) 
+                    && "jabber:x:data".equals(element.getNamespaceURI())
+                    && "result".equals(element.attributeValue("type"))){
+                    for (Element field : element.elements()){
+                        if (field == null) {
+                            continue;
+                        }
+                        if (field.attributeValue("var").equals("FORM_TYPE")
+                            && field.element("value")!= null
+                            && field.element("value").getText().equals("urn:xmpp:dataforms:softwareinfo")) { 
+                            typeformDataSoftwareInfo = true;     
+                        }
+                        if (typeformDataSoftwareInfo) {
+                            if (field.element("value") != null && !"urn:xmpp:dataforms:softwareinfo".equals(field.element("value").getText())) {
+                                session.setSoftwareVersionData(field.attributeValue("var"), field.element("value").getText());
+                            }
+                            else if (field.element("media") != null && field.element("media").element("uri") != null) {
+                                session.setSoftwareVersionData("image", field.element("media").element("uri").getText());
+                            }
+                        }
+                    }    
+                }
+            }
+        }
     }
 
     /**
@@ -593,7 +662,15 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
                 if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
                     // Answer features of the server itself.
-                    return new HashSet<>(serverFeatures.keySet()).iterator();
+                    final Set<String> result = new HashSet<>(serverFeatures.keySet());
+
+                    if ( !XMPPServer.getInstance().isLocal( senderJID ) || !UserManager.getInstance().isRegisteredUser( senderJID ) ) {
+                        // Remove features not available to users from other servers or anonymous users.
+                        // TODO this should be determined dynamically.
+                        result.remove(IQPrivateHandler.NAMESPACE);
+                        result.remove(IQBlockingHandler.NAMESPACE);
+                    }
+                    return result.iterator();
                 }
                 else if (node != null) {
                     return XMPPServer.getInstance().getIQPEPHandler().getFeatures(name, node, senderJID);
@@ -638,22 +715,23 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Unknown node
                     return false;
                 }
+
+                // True if it is an info request of the server, a registered user or an
+                // anonymous user. We now support disco of user's bare JIDs
+                if (name == null) {
+                    return true;
+                }
+                if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                    return true;
+                }
                 try {
-                    // True if it is an info request of the server, a registered user or an
-                    // anonymous user. We now support disco of user's bare JIDs
-                    if (name == null) return true;
-                    if (UserManager.getInstance().getUser(name) != null ||
-                            SessionManager.getInstance().isAnonymousRoute(name)) {
-                        if (node == null) {
-                            return true;
-                        }
-                        return XMPPServer.getInstance().getIQPEPHandler().hasInfo(name, node, senderJID);
+                    if ( UserManager.getInstance().getUser(name) != null ) {
+                        return true;
                     }
+                } catch (UserNotFoundException e) {
                     return false;
                 }
-                catch (UserNotFoundException e) {
-                    return false;
-                }
+                return false;
             }
 
             @Override
@@ -688,6 +766,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
                         final FormField fieldAdminAddresses = dataForm.addField();
                         fieldAdminAddresses.setVariable("admin-addresses");
+                        fieldAdminAddresses.setType(Type.list_multi);
 
                         final UserManager userManager = UserManager.getInstance();
                         for ( final JID admin : admins )
@@ -707,7 +786,35 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                                 continue;
                             }
                         }
+
+                        //XEP-0232 includes extended information about Software Version in a data form
+                        final DataForm dataFormSoftwareVersion = new DataForm(DataForm.Type.result);
+
+                        final FormField fieldTypeSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldTypeSoftwareVersion.setVariable("FORM_TYPE");
+                        fieldTypeSoftwareVersion.setType(FormField.Type.hidden);
+                        fieldTypeSoftwareVersion.addValue("urn:xmpp:dataforms:softwareinfo");
+
+                        final FormField fieldOs = dataFormSoftwareVersion.addField();
+                        fieldOs.setVariable("os");
+                        fieldOs.addValue( System.getProperty("os.name"));
+
+                        final FormField fieldOsVersion = dataFormSoftwareVersion.addField();
+                        fieldOsVersion.setVariable("os_version");
+                        fieldOsVersion .addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
+
+                        final FormField fieldSoftware = dataFormSoftwareVersion.addField();
+                        fieldSoftware.setVariable("software");
+                        fieldSoftware.addValue(AdminConsole.getAppName());
+
+                        final FormField fieldSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldSoftwareVersion.setVariable("software_version");
+                        fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
+
                         final Set<DataForm> dataForms = new HashSet<>();
+                        if (ENABLED.getValue()){
+                            dataForms.add(dataFormSoftwareVersion);
+                        }
                         dataForms.add(dataForm);
                         return dataForms;
                     }

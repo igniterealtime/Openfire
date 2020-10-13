@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.ldap;
 
+import org.jivesoftware.admin.LdapUserTester;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
@@ -25,16 +26,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.ldap.Rdn;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
 
 /**
  * LDAP implementation of the UserProvider interface. All data in the directory is
@@ -66,7 +68,11 @@ public class LdapUserProvider implements UserProvider {
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());
-            searchFields.put("Name", manager.getNameField());
+            int i = 0;
+            for ( final String nameField : manager.getNameField().getFields() ) {
+                searchFields.put((i == 0 ? "Name" : "Name (" + i + ")"), nameField);
+                i++;
+            }
             searchFields.put("Email", manager.getEmailField());
         }
         else {
@@ -94,19 +100,18 @@ public class LdapUserProvider implements UserProvider {
         username = JID.unescapeNode(username);
         DirContext ctx = null;
         try {
-            String userDN = manager.findUserDN(username);
+            Rdn[] userRDN = manager.findUserRDN(username);
             // Load record.
-            String[] attributes = new String[]{
-                manager.getUsernameField(), manager.getNameField(),
-                manager.getEmailField(), "createTimestamp", "modifyTimestamp"
-            };
+            final List<String> attributes = new ArrayList<>();
+            attributes.add( manager.getUsernameField() );
+            attributes.addAll( manager.getNameField().getFields() );
+            attributes.add( manager.getEmailField() );
+            attributes.add( "createTimestamp" );
+            attributes.add( "modifyTimestamp" );
+
             ctx = manager.getContext(manager.getUsersBaseDN(username));
-            Attributes attrs = ctx.getAttributes(userDN, attributes);
-            String name = null;
-            Attribute nameField = attrs.get(manager.getNameField());
-            if (nameField != null) {
-                name = (String)nameField.get();
-            }
+            Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), attributes.toArray(new String[0]));
+            String name = LdapUserTester.getPropertyValue(manager.getNameField(), attrs);
             String email = null;
             Attribute emailField = attrs.get(manager.getEmailField());
             if (emailField != null) {
@@ -170,8 +175,8 @@ public class LdapUserProvider implements UserProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug( "An exception occurred while closing the LDAP context after attempting to load user {}", username, ex);
             }
         }
     }
@@ -277,7 +282,11 @@ public class LdapUserProvider implements UserProvider {
         // If the value isn't present, default to to username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());
-            searchFields.put("Name", manager.getNameField());
+            int i = 0;
+            for ( final String nameField : manager.getNameField().getFields() ) {
+                searchFields.put((i == 0 ? "Name" : "Name (" + i + ")"), nameField);
+                i++;
+            }
             searchFields.put("Email", manager.getEmailField());
         }
         else {

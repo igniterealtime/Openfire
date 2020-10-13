@@ -150,8 +150,8 @@ public class SequenceManager {
         managers.put(seqType, this);
         this.type = seqType;
         this.blockSize = size;
-        currentID = 0l;
-        maxID = 0l;
+        currentID = 0L;
+        maxID = 0L;
     }
 
     /**

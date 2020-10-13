@@ -19,9 +19,7 @@ package org.jivesoftware.openfire.muc;
 import org.dom4j.Element;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
-import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
-import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
+import org.jivesoftware.openfire.muc.spi.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -32,10 +30,13 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.Result;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Externalizable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -246,8 +247,12 @@ public interface MUCRoom extends Externalizable, Result {
      * @throws NotAcceptableException       If the registered user is trying to join with a
      *                                      nickname different than the reserved nickname.
      */
-    MUCRole joinRoom(String nickname, String password, HistoryRequest historyRequest, LocalMUCUser user,
-            Presence presence) throws UnauthorizedException, UserAlreadyExistsException,
+    MUCRole joinRoom( @Nonnull String nickname,
+                      @Nullable String password,
+                      @Nullable HistoryRequest historyRequest,
+                      @Nonnull LocalMUCUser user,
+                      @Nonnull Presence presence)
+        throws UnauthorizedException, UserAlreadyExistsException,
             RoomLockedException, ForbiddenException, RegistrationRequiredException,
             ConflictException, ServiceUnavailableException, NotAcceptableException;
 
@@ -542,6 +547,8 @@ public interface MUCRoom extends Externalizable, Result {
 
     IQAdminHandler getIQAdminHandler();
 
+    FMUCHandler getFmucHandler();
+
     /**
      * Returns the history of the room which includes chat transcripts.
      *
@@ -800,6 +807,90 @@ public interface MUCRoom extends Externalizable, Result {
     void setRegistrationEnabled( boolean registrationEnabled );
 
     /**
+     * Returns true if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
+     * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
+     */
+    boolean isFmucEnabled();
+
+    /**
+     * Sets if this room accepts FMUC joins. By default, FMUC functionality is not enabled.
+     * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
+     */
+    void setFmucEnabled( boolean fmucEnabled );
+
+    /**
+     * Returns the address of the MUC room (typically on a remote XMPP domain) to which this room should initiate
+     * FMUC federation. In this federation, the local node takes the role of the 'joining' node, while the remote node
+     * takes the role of the 'joined' node.
+     *
+     * When this room is not expected to initiate federation (note that it can still accept inbound federation attempts)
+     * then this method returns null.
+     *
+     * Although a room can accept multiple inbound joins (where it acts as a 'parent' node), it can initiate only one
+     * outbound join at a time (where it acts as a 'child' node).
+     *
+     * @return Address of peer for to-be-initiated outbound FMUC federation, possibly null.
+     */
+    JID getFmucOutboundNode();
+
+    /**
+     * Sets the address of the MUC room (typically on a remote XMPP domain) to which this room should initiate
+     * FMUC federation. In this federation, the local node takes the role of the 'joining' node, while the remote node
+     * takes the role of the 'joined' node.
+     *
+     * When this room is not expected to initiate federation (note that it can still accept inbound federation attempts)
+     * then this method returns null.
+     *
+     * Although a room can accept multiple inbound joins (where it acts as a 'parent' node), it can initiate only one
+     * outbound join at a time (where it acts as a 'child' node).
+     *
+     * @param fmucOutboundNode Address of peer for to-be-initiated outbound FMUC federation, possibly null.
+     */
+    void setFmucOutboundNode( JID fmucOutboundNode );
+
+    /**
+     * Returns the 'mode' that describes the FMUC configuration is captured in the supplied object, which is
+     * either master-master or master-slave.
+     *
+     * This method should return null only when no outbound federation should be attempted.
+     *
+     * @return FMUC mode applied to outbound FMUC federation attempts.
+     */
+    FMUCMode getFmucOutboundMode();
+
+    /**
+     * Sets the 'mode' that describes the FMUC configuration is captured in the supplied object, which is
+     * either master-master or master-slave.
+     *
+     * @param fmucOutboundMode FMUC mode applied to outbound FMUC federation attempts.
+     */
+    void setFmucOutboundMode( FMUCMode fmucOutboundMode );
+
+    /**
+     * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
+     * permitted to to federate with the local room.
+     *
+     * A null value is to be interpreted as allowing all rooms to be permitted.
+     *
+     * An empty set of addresses is to be interpreted as disallowing all rooms to be permitted.
+     *
+     * @return A list of rooms allowed to join, possibly empty, possibly null
+     */
+    Set<JID> getFmucInboundNodes();
+
+    /**
+     * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
+     * permitted to to federate with the local room.
+     *
+     * A null value is to be interpreted as allowing all rooms to be permitted.
+     *
+     * An empty set of addresses is to be interpreted as disallowing all rooms to be permitted.
+     *
+     * @param fmucInboundNodes A list of rooms allowed to join, possibly empty, possibly null
+     */
+    void setFmucInboundNodes( Set<JID> fmucInboundNodes );
+
+    /**
      * Returns the maximum number of occupants that can be simultaneously in the room. If the number
      * is zero then there is no limit.
      *
@@ -985,6 +1076,7 @@ public interface MUCRoom extends Externalizable, Result {
      * Sends a packet to the user.
      *
      * @param packet The packet to send
+     * @param sender Representation of the entity that sent the stanza.
      */
-    void send( Packet packet );
+    void send( @Nonnull Packet packet, @Nonnull MUCRole sender );
 }

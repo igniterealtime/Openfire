@@ -9,7 +9,8 @@
 <jsp:useBean scope="request" id="search" type="org.jivesoftware.admin.servlet.SystemCacheDetailsServlet.Search"/>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
-    <title><fmt:message key="system.cache-details.title"><fmt:param value="${cacheName}"/></fmt:message></title>
+    <fmt:message key="system.cache-details.title" var="title"><fmt:param value="${cacheName}"/></fmt:message>
+    <title><c:out value="${title}"/></title>
     <meta name="pageID" content="system-cache"/>
     <style type="text/css">
         img.clickable {

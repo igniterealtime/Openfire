@@ -16,19 +16,13 @@
 
 package org.jivesoftware.openfire.ldap;
 
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-
 import org.jivesoftware.openfire.auth.AuthorizationMapping;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.*;
 
 /**
  * Provider for authorization mapping using LDAP. If the authenticated
@@ -125,8 +119,8 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to map authorization for principal {}.", principal, ex);
             }
         }
         return username;

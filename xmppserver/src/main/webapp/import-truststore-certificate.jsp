@@ -150,7 +150,7 @@
                         <label for="alias"><fmt:message key="ssl.signing-request.alias"/></label>
                     </td>
                     <td width="99%">
-                        <input type="text" size="30" maxlength="100" name="alias" id="alias" value="${param.alias}">
+                        <input type="text" size="30" maxlength="100" name="alias" id="alias" value="<c:out value='${param.alias}'/>"">
                     </td>
                 </tr>
                 <tr valign="top">

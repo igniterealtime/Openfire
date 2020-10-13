@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -30,6 +31,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -49,6 +51,12 @@ import java.util.List;
 public abstract class StanzaHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(StanzaHandler.class);
+
+    public static final SystemProperty<Boolean> PROPERTY_OVERWRITE_EMPTY_TO = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey( "xmpp.server.rewrite.replace-missing-to" )
+        .setDefaultValue( true )
+        .setDynamic( true )
+        .build();
 
     /**
      * A factory that generates random stream IDs
@@ -337,6 +345,10 @@ public abstract class StanzaHandler {
                 Log.error(e.getMessage(), e);
             }
             return new IQ(doc, !validateJIDs());
+        }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
+            //XEP-0232 if responses service discovery can include detailed information about the software application
+            IQDiscoInfoHandler.setSoftwareVersionDataFormFromDiscoInfo(query, session);
+            return new IQ(doc, !validateJIDs());
         }
         else {
             return new IQ(doc, !validateJIDs());
@@ -356,7 +368,15 @@ public abstract class StanzaHandler {
      * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          if service is not available to sender.
      */
-    protected void processIQ(IQ packet) throws UnauthorizedException {
+    protected void processIQ(IQ packet) throws UnauthorizedException
+    {
+        // If the 'to' attribute is null, treat the IQ on behalf of the entity from which the IQ stanza originated
+        // in accordance with RFC 6120 § 10.3.3. See https://tools.ietf.org/html/rfc6120#section-10.3.3:
+        // > […] responding as if the server were the bare JID of the sending entity.
+        if ( packet.getTo() == null && PROPERTY_OVERWRITE_EMPTY_TO.getValue() ) {
+            packet.setTo( packet.getFrom().asBareJID() );
+        }
+
         router.route(packet);
         session.incrementClientPacketCount();
     }
@@ -393,6 +413,12 @@ public abstract class StanzaHandler {
      *          if service is not available to sender.
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
+        // If the 'to' attribute is null, treat the IQ on behalf of the entity from which the IQ stanza originated
+        // in accordance with RFC 6120 § 10.3.1. See https://tools.ietf.org/html/rfc6120#section-10.3.1:
+        // > […] treat the message as if the 'to' address were the bare JID <localpart@domainpart> of the sending entity.
+        if ( packet.getTo() == null && PROPERTY_OVERWRITE_EMPTY_TO.getValue() ) {
+            packet.setTo( packet.getFrom().asBareJID() );
+        }
         router.route(packet);
         session.incrementClientPacketCount();
     }
@@ -755,7 +781,7 @@ public abstract class StanzaHandler {
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
      * @return the created session or null.
-     * @throws org.xmlpull.v1.XmlPullParserException
+     * @throws org.xmlpull.v1.XmlPullParserException when XML parsing causes an error.
      *
      */
     abstract boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)

@@ -27,6 +27,7 @@ import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 
@@ -243,6 +244,7 @@ public interface MultiUserChatService extends Component {
      * @return the time to elapse between logging the room conversations.
      * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
      */
+    @Deprecated
     default int getLogConversationsTimeout() { return 300000; }
 
     /**
@@ -267,12 +269,61 @@ public interface MultiUserChatService extends Component {
 
     Archiver<?> getArchiver();
 
+
+    /**
+     * Returns the maximum number of messages to save to the database on each run of the archiving process.
+     * @return the maximum number of messages to save to the database on each run of the archiving process.
+     */
+    default int getLogMaxConversationBatchSize() { return 50; }
+
+    /**
+     * Sets the maximum number of messages to save to the database on each run of the archiving process.
+     * Even though the saving of queued conversations takes place in another thread it is not
+     * recommended specifying a big number.
+     *
+     * @param size the maximum number of messages to save to the database on each run of the archiving process.
+     */
+    default void setLogMaxConversationBatchSize(int size) {}
+
+    /**
+     * Returns the maximum time allowed to elapse between writing archive entries to the database.
+     * @return the maximum time allowed to elapse between writing archive entries to the database.
+     */
+    default Duration getLogMaxBatchInterval() { return Duration.ofSeconds(10L); }
+
+    /**
+     * Sets the maximum time allowed to elapse between writing archive batches to the database.
+     * @param interval the maximum time allowed to elapse between writing archive batches to the database.
+     */
+    default void setLogMaxBatchInterval(Duration interval) {}
+
+    /**
+     * Returns the maximum time to wait for a next incoming entry before writing the batch to the database.
+     * @return the maximum time to wait for a next incoming entry before writing the batch to the database.
+     */
+    default Duration getLogBatchGracePeriod() { return Duration.ofSeconds(1L); }
+
+    /**
+     * Sets the maximum time to wait for a next incoming entry before writing the batch to the database.
+     * @param interval the maximum time to wait for a next incoming entry before writing the batch to the database.
+     */
+    default void setLogBatchGracePeriod(Duration interval) {}
+
     /**
      * Obtain the server-wide default message history settings.
      * 
      * @return The message history strategy defaults for the server.
      */
     HistoryStrategy getHistoryStrategy();
+
+    /**
+     * Checks if the a particular entity is allowed to discover the room's existence.
+     *
+     * @param room The room to be discovered (cannot be null).
+     * @param entity The JID of the entity (cannot be null).
+     * @return true if the entity can discover the room, otherwise false.
+     */
+    boolean canDiscoverRoom(final MUCRoom room, final JID entity);
 
     /**
      * Obtains a chatroom by name. A chatroom is created for that name if none exists and the user

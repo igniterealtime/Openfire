@@ -33,7 +33,7 @@ public enum ConnectionType
     /**
      * Openfire web-admin console.
      */
-    WEBADMIN( "admin.web.ssl.", SOCKET_S2S ),
+    WEBADMIN( "admin.web.ssl.", SOCKET_C2S ),
 
     /**
      * Openfire External Component connectivity.

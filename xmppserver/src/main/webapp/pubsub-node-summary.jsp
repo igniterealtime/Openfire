@@ -47,7 +47,7 @@
     {
         pubSubServiceInfo = webManager.getPubSubInfo();
     }
-    else if ( new PEPServiceManager().getPEPService( owner.toBareJID() ) != null )
+    else if ( XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( owner.asBareJID(), true ) != null )
     {
         PEPMode = true;
         pubSubServiceInfo = new PEPServiceInfo( owner );
@@ -61,7 +61,7 @@
     if ( pubSubServiceInfo != null )
     {
         nodes = pubSubServiceInfo.getLeafNodes();
-        nodes.sort(Comparator.comparing(node -> node.getNodeID().toLowerCase()));
+        nodes.sort(Comparator.comparing(node -> node.getUniqueIdentifier().getNodeId().toLowerCase()));
     }
     else
     {
@@ -73,7 +73,7 @@
     final String searchNodeId = ParamUtils.getStringParameter(request, "searchNodeId", "");
     if(!searchNodeId.trim().isEmpty()) {
         final String searchCriteria = searchNodeId.trim().toLowerCase();
-        filter = filter.and(node -> node.getNodeID().toLowerCase().contains(searchCriteria));
+        filter = filter.and(node -> node.getUniqueIdentifier().getNodeId().toLowerCase().contains(searchCriteria));
     }
     final String searchNodeName = ParamUtils.getStringParameter(request, "searchNodeName", "");
     if(!searchNodeName.trim().isEmpty()) {
@@ -150,6 +150,7 @@
         <c:if test="${not PEPMode}" >
             <th nowrap><fmt:message key="global.edit" /></th>
         </c:if>
+        <th nowrap><fmt:message key="pubsub.node.summary.configuration" /></th>
         <th nowrap><fmt:message key="global.delete" /></th>
     </tr>
     <tr>
@@ -196,6 +197,7 @@
         <c:if test="${not PEPMode}">
             <td></td>
         </c:if>
+        <td></td>
         <td></td>
     </tr>
 </thead>
@@ -265,6 +267,15 @@
                 </a>
             </td>
         </c:if>
+        <td width="1%" align="center">
+            <c:url value="pubsub-node-configuration.jsp" var="url">
+                <c:param name="nodeID" value="${node.nodeID}" />
+                <c:param name="owner" value="${owner}" />
+            </c:url>
+            <a href="${url}" title="<fmt:message key="pubsub.node.summary.click_config" />">
+                <img src="images/info-16x16.gif" width="16" height="16" border="0" alt="">
+            </a>
+        </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <c:url value="pubsub-node-delete.jsp" var="url">
                 <c:param name="nodeID" value="${node.nodeID}" />

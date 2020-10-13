@@ -1,11 +1,5 @@
 package org.jivesoftware.openfire.streammanagement;
 
-import java.math.BigInteger;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.dom4j.dom.DOMElement;
@@ -20,10 +14,20 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
+
+import java.math.BigInteger;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * XEP-0198 Stream Manager.
@@ -33,21 +37,39 @@ import org.xmpp.packet.*;
  */
 public class StreamManager {
 
+    public static SystemProperty<Boolean> LOCATION_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.location.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static SystemProperty<Boolean> MAX_SERVER_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.max-server.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static SystemProperty<Boolean> ACTIVE = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.active")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
     private final Logger Log;
     private boolean resume = false;
     public static class UnackedPacket {
         public final long x;
         public final Date timestamp = new Date();
         public final Packet packet;
-        
+
         public UnackedPacket(long x, Packet p) {
             this.x = x;
             packet = p;
         }
     }
-    
+
     public static boolean isStreamManagementActive() {
-        return JiveGlobals.getBooleanProperty("stream.management.active", true);
+        return ACTIVE.getValue();
     }
 
     /**
@@ -155,6 +177,11 @@ public class StreamManager {
         boolean allow = false;
         // Ensure that resource binding has occurred.
         if (session instanceof ClientSession) {
+            Object ws = session.getSessionData("ws");
+            if (ws != null && (Boolean) ws) {
+                Log.debug( "Websockets resume is not yet implemented: {}", session );
+                return false;
+            }
             AuthToken authToken = ((LocalClientSession)session).getAuthToken();
             if (authToken != null) {
                 if (!authToken.isAnonymous()) {
@@ -206,7 +233,19 @@ public class StreamManager {
         Element enabled = new DOMElement(QName.get("enabled", namespace));
         if (this.resume) {
             enabled.addAttribute("resume", "true");
-            enabled.addAttribute( "id", smId);
+            enabled.addAttribute("id", smId);
+            if ( !namespace.equals(NAMESPACE_V2) && LOCATION_ENABLED.getValue() ) {
+                // OF-1925: Hint clients to do resumes at the same cluster node.
+                enabled.addAttribute("location", XMPPServer.getInstance().getServerInfo().getHostname());
+            }
+
+            // OF-1926: Tell clients how long they can be detached.
+            if ( MAX_SERVER_ENABLED.getValue() ) {
+                final int sessionDetachTime = XMPPServer.getInstance().getSessionManager().getSessionDetachTime();
+                if ( sessionDetachTime > 0 ) {
+                    enabled.addAttribute("max", String.valueOf(sessionDetachTime/1000));
+                }
+            }
         }
         session.deliverRawText(enabled.asXML());
     }
@@ -249,9 +288,9 @@ public class StreamManager {
         }
         final JID fullJid;
         if ( authToken.isAnonymous() ){
-            fullJid = new JID(resource, authToken.getDomain(), resource, true);
+            fullJid = new JID(resource, session.getServerName(), resource, true);
         } else {
-            fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+            fullJid = new JID(authToken.getUsername(), session.getServerName(), resource, true);
         }
         Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 
@@ -294,13 +333,9 @@ public class StreamManager {
             oldConnection.close();
         }
         Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
-        // If we're all happy, disconnect this session.
-        Connection conn = session.getConnection();
-        session.setDetached();
-        // Connect new session.
-        otherSession.reattach(conn, h);
-        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession.getStreamID(), fullJid, session.getStreamID() );
-        session.close();
+        // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
+        otherSession.reattach(session, h);
+        Log.debug("Perform resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
     }
 
     /**
@@ -423,15 +458,17 @@ public class StreamManager {
 
                 Log.debug( "Received acknowledgement from client: h={}", h );
 
-                if (!validateClientAcknowledgement(h)) {
-                    Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
-                    return;
-                }
+                synchronized ( this ) {
+                    if (!validateClientAcknowledgement(h)) {
+                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                        session.deliverRawText( error.toXML() );
+                        session.close();
+                        return;
+                    }
 
-                processClientAcknowledgement(h);
+                    processClientAcknowledgement(h);
+                }
             }
         }
     }

@@ -50,8 +50,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
-import javax.annotation.Nonnull;
-
 /**
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
  * Pubsub" Version 1.0
@@ -582,26 +580,5 @@ public class PEPService implements PubSubService, Cacheable {
     public int getCachedSize() {
         // Rather arbitrary. Don't use this for size-based eviction policies!
         return 600;
-    }
-
-    @Override
-    public void entityCapabilitiesChanged( @Nonnull final JID entity,
-                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
-                                           @Nonnull final Set<String> featuresAdded,
-                                           @Nonnull final Set<String> featuresRemoved,
-                                           @Nonnull final Set<String> identitiesAdded,
-                                           @Nonnull final Set<String> identitiesRemoved )
-    {
-        // Look for new +notify features. Those are the nodes that the entity is now interested in.
-        final Set<String> nodeIDs = featuresAdded.stream()
-            .filter(feature -> feature.endsWith("+notify"))
-            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
-            .collect(Collectors.toSet());
-
-        if ( !nodeIDs.isEmpty() )
-        {
-            Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
-            sendLastPublishedItems(entity, nodeIDs);
-        }
     }
 }

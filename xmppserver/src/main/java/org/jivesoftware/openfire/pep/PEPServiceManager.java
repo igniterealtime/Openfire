@@ -16,7 +16,8 @@
 package org.jivesoftware.openfire.pep;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.CacheableOptional;
@@ -27,7 +28,11 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Manages the creation, persistence and removal of {@link PEPService}
@@ -36,7 +41,7 @@ import java.util.concurrent.locks.Lock;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  *
  */
-public class PEPServiceManager {
+public class PEPServiceManager implements EntityCapabilitiesListener {
 
     public static final Logger Log = LoggerFactory
             .getLogger(PEPServiceManager.class);
@@ -48,6 +53,14 @@ public class PEPServiceManager {
         .createLocalCache("PEPServiceManager");
 
     private PubSubEngine pubSubEngine = null;
+
+    public void initialize() {
+        XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(this);
+    }
+
+    public void destroy() {
+        XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(this);
+    }
 
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the
@@ -242,6 +255,7 @@ public class PEPServiceManager {
         final Lock lock = pepServices.getLock(owner.asBareJID());
         lock.lock();
         try {
+
             // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
             // after all nodes are deleted.
             final CacheableOptional<PEPService> optional = pepServices.get(owner.asBareJID());
@@ -249,13 +263,15 @@ public class PEPServiceManager {
                 return;
             }
 
+            // FIXME PEPService should also be removed (from database) if it's currently not loaded in cache!
             if ( optional.isPresent() )
             {
-                unload( optional.get() );
+                final PEPService service = optional.get();
+                pubSubEngine.shutdown(service);
 
                 // Delete the user's PEP nodes from memory and the database.
-                CollectionNode rootNode = optional.get().getRootCollectionNode();
-                for ( final Node node : optional.get().getNodes() )
+                CollectionNode rootNode = service.getRootCollectionNode();
+                for ( final Node node : service.getNodes() )
                 {
                     if ( rootNode.isChildNode(node) )
                     {
@@ -300,8 +316,56 @@ public class PEPServiceManager {
         return pepServices.get(owner.asBareJID()) != null;
     }
 
-    // mimics Shutdown, without killing the timer.
-    public void unload(PEPService service) {
-        pubSubEngine.shutdown(service);
+    @Override
+    public void entityCapabilitiesChanged( @Nonnull final JID entity,
+                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
+                                           @Nonnull final Set<String> featuresAdded,
+                                           @Nonnull final Set<String> featuresRemoved,
+                                           @Nonnull final Set<String> identitiesAdded,
+                                           @Nonnull final Set<String> identitiesRemoved )
+    {
+        // Look for new +notify features. Those are the nodes that the entity is now interested in.
+        final Set<String> nodeIDs = featuresAdded.stream()
+            .filter(feature -> feature.endsWith("+notify"))
+            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
+            .collect(Collectors.toSet());
+
+        if ( nodeIDs.isEmpty() ) {
+            return;
+        }
+        Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
+
+        // Find all the services that the entity is subscribed to, including its own.
+        final Set<PEPService> services = new HashSet<>();
+        services.addAll(findSubscribedServices(entity));
+        if (XMPPServer.getInstance().isLocal( entity ) && UserManager.getInstance().isRegisteredUser( entity.getNode() ) ) {
+            services.add( getPEPService( entity ) );
+        }
+
+        if ( services.isEmpty() )
+        {
+            return;
+        }
+
+        Log.trace( "Entity '{}' is eligible to receive notifications of services '{}'. Sending last published items for each of these nodes for all of those services: '{}'", entity, String.join( ", ", services.stream().map(PEPService::getServiceID).collect(Collectors.toSet()) ), String.join( ", ", nodeIDs ) );
+        for ( final PEPService service : services )
+        {
+            service.sendLastPublishedItems(entity, nodeIDs);
+        }
+    }
+
+    /**
+     * Returns all PEP services that the provided entity is a subscriber to.
+     *
+     * @param entity The entity address.
+     * @return A collection of services (possibly empty).
+     */
+    @Nonnull
+    public Set<PEPService> findSubscribedServices(@Nonnull final JID entity)
+    {
+        final Set<PEPService> result = new HashSet<>();
+        // FIXME OF-2103: This should include all services that the entity is a subscriber to!
+
+        return result;
     }
 }

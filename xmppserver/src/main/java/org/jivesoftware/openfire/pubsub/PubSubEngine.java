@@ -1914,14 +1914,12 @@ public class PubSubEngine
         // has started)
         
         if (XMPPServer.getInstance().isStarted()) {
-            XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
             probePresences(service);
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                 @Override
                 public void serverStarted() {
-                    XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
                     probePresences(service);
                 }
 
@@ -1949,9 +1947,6 @@ public class PubSubEngine
     public void shutdown(PubSubService service) {
         if (service != null) {
             Log.debug( "Shutting down pubsub service '{}'", service.getUniqueIdentifier() );
-
-            XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(service);
-
             if (service.getManager() != null) {
                 // Stop executing ad-hoc commands
                 service.getManager().stop();

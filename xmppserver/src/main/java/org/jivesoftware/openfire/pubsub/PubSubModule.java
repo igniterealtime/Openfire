@@ -43,6 +43,7 @@ import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.*;
@@ -59,13 +60,13 @@ import org.xmpp.packet.Presence;
 import javax.annotation.Nonnull;
 
 /**
- * Module that implements JEP-60: Publish-Subscribe. By default node collections and
+ * Module that implements XEP-60: Publish-Subscribe. By default node collections and
  * instant nodes are supported.
  *
  * @author Matt Tucker
  */
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
-        DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
+        DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener, EntityCapabilitiesListener {
 
     private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
 
@@ -474,6 +475,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             Log.debug( "Load root collection node ('{}') from database.", rootNodeID );
             rootCollectionNode = (CollectionNode) getNode(rootNodeID);
         }
+
+        XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(this);
     }
 
     @Override
@@ -504,6 +507,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public void destroy() {
+        XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(this);
+
         super.destroy();
         if (persistenceProviderManager!= null) {
             persistenceProviderManager.shutdown();

@@ -367,6 +367,11 @@
                           url="pubsub-node-summary.jsp"
                           description="${sidebar.user-pep-node-summary.descr}"/>
 
+                    <!-- Privacy Lists -->
+                    <item id="user-privacylists" name="${sidebar.user-privacylists}"
+                          url="user-privacylists.jsp"
+                          description="${sidebar.user-privacylists.descr}"/>
+
                     <!-- Password -->
                     <item id="user-password" name="${sidebar.user-password}"
                           url="user-password.jsp"

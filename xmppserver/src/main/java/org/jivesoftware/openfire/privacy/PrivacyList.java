@@ -197,6 +197,16 @@ public class PrivacyList implements Cacheable, Externalizable {
     }
 
     /**
+     * Returns the 'raw' items on the privacy list.
+     *
+     * @return privacy list items.
+     */
+    public List<PrivacyItem> getItems()
+    {
+        return items;
+    }
+
+    /**
      * Returns an Element with the privacy list XML representation.
      *
      * @return an Element with the privacy list XML representation.

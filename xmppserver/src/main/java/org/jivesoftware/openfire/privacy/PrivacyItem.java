@@ -32,23 +32,24 @@ import java.util.Collections;
  *
  * @author Gaston Dombiak
  */
-class PrivacyItem implements Cacheable, Comparable {
+public class PrivacyItem implements Cacheable, Comparable<PrivacyItem> {
 
-    private int order;
-    private boolean allow;
-    private Type type;
-    private JID jidValue;
-    private RosterItem.SubType subscriptionValue;
-    private String groupValue;
-    private boolean filterEverything;
-    private boolean filterIQ;
-    private boolean filterMessage;
-    private boolean filterPresence_in;
-    private boolean filterPresence_out;
+    private final int order;
+    private final boolean allow;
+    private final Type type;
+    private final JID jidValue;
+    private final RosterItem.SubType subscriptionValue;
+    private final String groupValue;
+    private final boolean filterEverything;
+    private final boolean filterIQ;
+    private final boolean filterMessage;
+    private final boolean filterPresence_in;
+    private final boolean filterPresence_out;
+
     /**
      * Copy of the element that defined this item.
      */
-    private Element itemElement;
+    private final Element itemElement;
 
     PrivacyItem(Element itemElement) {
         this.allow = "allow".equals(itemElement.attributeValue("action"));
@@ -61,6 +62,8 @@ class PrivacyItem implements Cacheable, Comparable {
             if (type == Type.jid) {
                 // Decode the specified JID
                 this.jidValue = new JID(value);
+                this.subscriptionValue = null;
+                this.groupValue = null;
             }
             else if (type == Type.subscription) {
                 // Decode the specified subscription type
@@ -76,21 +79,30 @@ class PrivacyItem implements Cacheable, Comparable {
                 else {
                     this.subscriptionValue = RosterItem.SUB_NONE;
                 }
+                this.jidValue = null;
+                this.groupValue = null;
             }
             else {
                 // Decode the specified group name
+                this.jidValue = null;
+                this.subscriptionValue = null;
                 this.groupValue = value;
             }
+        } else {
+            this.type = null;
+            this.jidValue = null;
+            this.subscriptionValue = null;
+            this.groupValue = null;
         }
         // Set what type of stanzas should be filters (i.e. blocked or allowed)
         this.filterIQ = itemElement.element("iq") != null;
         this.filterMessage = itemElement.element("message") != null;
         this.filterPresence_in = itemElement.element("presence-in") != null;
         this.filterPresence_out = itemElement.element("presence-out") != null;
-        if (!filterIQ && !filterMessage && !filterPresence_in && !filterPresence_out) {
-            // If none was defined then block all stanzas
-            filterEverything = true;
-        }
+
+        // If none was defined then block all stanzas
+        filterEverything = (!filterIQ && !filterMessage && !filterPresence_in && !filterPresence_out);
+
         // Keep a copy of the item element that defines this item
         this.itemElement = itemElement.createCopy();
     }
@@ -111,11 +123,8 @@ class PrivacyItem implements Cacheable, Comparable {
     }
 
     @Override
-    public int compareTo(Object object) {
-        if (object instanceof PrivacyItem) {
-            return this.order - ((PrivacyItem) object).order;
-        }
-        return getClass().getName().compareTo(object.getClass().getName());
+    public int compareTo(PrivacyItem other) {
+        return this.order - other.order;
     }
 
     /**
@@ -129,23 +138,37 @@ class PrivacyItem implements Cacheable, Comparable {
      * @param userJID the JID of the owner of the privacy list.
      * @return true if the packet to analyze matches the condition defined by this rule.
      */
-    boolean matchesCondition(Packet packet, Roster roster, JID userJID) {
+    public boolean matchesCondition(Packet packet, Roster roster, JID userJID) {
         return matchesPacketSenderCondition(packet, roster, userJID) &&
                 matchesPacketTypeCondition(packet, userJID);
     }
 
-    boolean isAllow() {
+    public int getOrder() {
+        return order;
+    }
+
+    public boolean isAllow() {
         return allow;
     }
 
-    boolean isType( Type type )
-    {
+    public boolean isType(Type type) {
         return this.type == type;
     }
 
-    JID getJID()
-    {
+    public Type getType() {
+        return type;
+    }
+
+    public JID getJID() {
         return this.jidValue;
+    }
+
+    public String getGroup() {
+        return this.groupValue;
+    }
+
+    public RosterItem.SubType getSubscription() {
+        return this.subscriptionValue;
     }
 
     private boolean matchesPacketSenderCondition(Packet packet, Roster roster, JID userJID) {
@@ -224,7 +247,7 @@ class PrivacyItem implements Cacheable, Comparable {
             // This includes all type of packets (including subscription-related presences)
             return true;
         }
-        Class packetClass = packet.getClass();
+        Class<? extends Packet> packetClass = packet.getClass();
         if (Message.class.equals(packetClass)) {
             return filterMessage;
         }
@@ -277,7 +300,7 @@ class PrivacyItem implements Cacheable, Comparable {
     /**
      * Type defines if the rule is based on JIDs, roster groups or presence subscription types.
      */
-    enum Type {
+    public enum Type {
         /**
          * JID being analyzed should belong to a roster group of the list's owner.
          */

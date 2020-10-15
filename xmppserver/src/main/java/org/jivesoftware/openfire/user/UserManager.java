@@ -441,8 +441,28 @@ public final class UserManager {
      *
      * @param user to JID of the user to check it it's a registered user.
      * @return true if the specified JID belongs to a local or remote registered user.
+     * @deprecated Replaced by {@link #isRegisteredUser(JID, boolean)}, of which the signature is clear on performing potentially costly remote lookups.
      */
+    @Deprecated
     public boolean isRegisteredUser(final JID user) {
+        return isRegisteredUser(user, true);
+    }
+
+    /**
+     * Returns true if the specified JID belongs to a local or remote registered user. If allowed by the 'checkRemoteDomains',
+     * argument, for remote users (i.e. domain does not match local domain) a disco#info request is going to be sent to
+     * the bare JID of the user. If 'checkRemoteDomains' is false, this method will return 'false' for all JIDs of which the
+     * domain-part does not match the local domain.
+     *
+     * <p>WARNING: If the supplied JID could be a remote user and the disco#info result packet comes back on the same
+     * thread as the one the calls this method then it will not be processed, and this method will block for 60 seconds
+     * by default. To change the timeout, update the system property <code>usermanager.remote-disco-info-timeout-seconds</code>
+     *
+     * @param user to JID of the user to check it it's a registered user.
+     * @param checkRemoteDomains false the lookup is allowed to include calls to remote XMPP domains.
+     * @return true if the specified JID belongs to a registered user.
+     */
+    public boolean isRegisteredUser(final JID user, final boolean checkRemoteDomains) {
         if (xmppServer.isLocal(user)) {
             try {
                 getUser(user.getNode());
@@ -452,7 +472,9 @@ public final class UserManager {
                 return false;
             }
         }
-        else {
+        else if (!checkRemoteDomains) {
+            return false;
+        } else {
             // Look up in the cache using the full JID
             Boolean isRegistered = remoteUsersCache.get(user.toString());
             if (isRegistered == null) {

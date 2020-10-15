@@ -732,8 +732,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // Verify the policy that allows all local, registered users to create rooms.
-        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID);
-
+        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID, false);
     }
 
     @Override

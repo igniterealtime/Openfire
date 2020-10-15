@@ -483,8 +483,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     public void start() {
         // Check that the service is enabled
         if (!isServiceEnabled()) {
+            Log.info( "Not starting service with name '{}', as pubsub is disabled by configuration.", serviceName );
             return;
         }
+        Log.debug( "Starting service with name '{}'.", serviceName );
         super.start();
         // Add the route to this service
         routingTable.addComponentRoute(getAddress(), this);
@@ -497,6 +499,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public void stop() {
+        Log.debug( "Stopping service with name '{}'.", serviceName );
         super.stop();
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
@@ -507,6 +510,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public void destroy() {
+        Log.debug( "Destroying service with name '{}'.", serviceName );
         XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(this);
 
         super.destroy();

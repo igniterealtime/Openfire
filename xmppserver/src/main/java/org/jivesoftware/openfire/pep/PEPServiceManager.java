@@ -233,9 +233,7 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
                 pepServices.put(bareJID, CacheableOptional.of(pepService));
                 pepService.initialize();
 
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEPService created for : " + bareJID);
-                }
+                Log.debug("PEPService created for: '{}'", bareJID);
             }
         } finally {
             lock.unlock();
@@ -283,6 +281,7 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
 
             // All nodes are now deleted. The service itself can now be deleted.
             pepServices.remove(owner.asBareJID()).get();
+            Log.debug("PEPService destroyed for: '{}'", owner);
         } finally {
             lock.unlock();
         }
@@ -293,12 +292,12 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
     }
 
     public void start() {
-        pubSubEngine = new PubSubEngine(XMPPServer.getInstance()
-                .getPacketRouter());
+        Log.debug("Starting...");
+        pubSubEngine = new PubSubEngine(XMPPServer.getInstance().getPacketRouter());
     }
 
     public void stop() {
-
+        Log.debug("Stopping...");
         for (final CacheableOptional<PEPService> service : pepServices.values()) {
             if (service.isPresent()) {
                 pubSubEngine.shutdown(service.get());

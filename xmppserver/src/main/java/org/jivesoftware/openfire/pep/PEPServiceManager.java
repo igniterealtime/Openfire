@@ -248,40 +248,38 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
      * @param owner
      *            The JID of the owner of the service to be deleted.
      */
-    public void remove(JID owner) {
-
-        final Lock lock = pepServices.getLock(owner.asBareJID());
+    public void remove(JID owner)
+    {
+        final JID address = owner.asBareJID();
+        final Lock lock = pepServices.getLock(address);
         lock.lock();
         try {
-
-            // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
-            // after all nodes are deleted.
-            final CacheableOptional<PEPService> optional = pepServices.get(owner.asBareJID());
-            if ( optional == null ) {
+            final PEPService pepService = getPEPService(address, false);
+            if ( pepService == null ) {
                 return;
             }
 
-            // FIXME PEPService should also be removed (from database) if it's currently not loaded in cache!
-            if ( optional.isPresent() )
-            {
-                final PEPService service = optional.get();
-                pubSubEngine.shutdown(service);
+            // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
+            // after all nodes are deleted (OF-2020)
+            pubSubEngine.shutdown(pepService); // TODO would shutting down first, and deleting after unrighteously withhold notifications reflecting the deletion of nodes?
 
-                // Delete the user's PEP nodes from memory and the database.
-                CollectionNode rootNode = service.getRootCollectionNode();
-                for ( final Node node : service.getNodes() )
+            // Delete the user's PEP nodes from memory and the database.
+            // FIXME OF-2104: this implementation does not appear to remove all data.
+            CollectionNode rootNode = pepService.getRootCollectionNode();
+            for ( final Node node : pepService.getNodes() )
+            {
+                if ( rootNode.isChildNode(node) )
                 {
-                    if ( rootNode.isChildNode(node) )
-                    {
-                        node.delete();
-                    }
+                    node.delete();
                 }
-                rootNode.delete();
             }
+            rootNode.delete();
 
             // All nodes are now deleted. The service itself can now be deleted.
-            pepServices.remove(owner.asBareJID()).get();
-            Log.debug("PEPService destroyed for: '{}'", owner);
+
+            // Remove from cache if it was in.
+            pepServices.remove(address).get();
+            Log.debug("PEPService destroyed for: '{}'", address);
         } finally {
             lock.unlock();
         }

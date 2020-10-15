@@ -117,7 +117,7 @@ public class PubSubServiceInfo {
             try {
                 if (username.contains("@")) {
                     JID jid = new JID(username);
-                    if (userManager.isRegisteredUser(jid)) {
+                    if (userManager.isRegisteredUser(jid, true)) {
                         return jid;
                     }
                 } else if (userManager.isRegisteredUser(username)) {

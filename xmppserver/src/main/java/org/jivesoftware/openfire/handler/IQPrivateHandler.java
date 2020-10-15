@@ -75,7 +75,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         Element child = packet.getChildElement();
         Element dataElement = child.elementIterator().next();
 
-        if ( !XMPPServer.getInstance().isLocal( packet.getFrom()) || !UserManager.getInstance().isRegisteredUser( packet.getFrom()) ) {
+        if ( !UserManager.getInstance().isRegisteredUser( packet.getFrom(), false ) ) {
             replyPacket.setChildElement(packet.getChildElement().createCopy());
             replyPacket.setError(PacketError.Condition.service_unavailable);
             replyPacket.getError().setText( "Service available only to locally registered users." );

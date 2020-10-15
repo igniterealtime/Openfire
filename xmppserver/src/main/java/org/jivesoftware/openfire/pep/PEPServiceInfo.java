@@ -17,6 +17,7 @@
 
 package org.jivesoftware.openfire.pep;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.PubSubServiceInfo;
 import org.xmpp.packet.JID;
 
@@ -29,6 +30,6 @@ public class PEPServiceInfo extends PubSubServiceInfo
 {
     public PEPServiceInfo( JID owner )
     {
-        super( new PEPServiceManager().getPEPService( owner.asBareJID() ) );
+        super( XMPPServer.getInstance().getIQPEPHandler().getServiceManager().getPEPService( owner.asBareJID() ) );
     }
 }

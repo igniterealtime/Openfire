@@ -16,6 +16,8 @@
 package org.jivesoftware.openfire.pep;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.CacheableOptional;
@@ -26,7 +28,11 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Manages the creation, persistence and removal of {@link PEPService}
@@ -35,7 +41,7 @@ import java.util.concurrent.locks.Lock;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  *
  */
-public class PEPServiceManager {
+public class PEPServiceManager implements EntityCapabilitiesListener {
 
     public static final Logger Log = LoggerFactory
             .getLogger(PEPServiceManager.class);
@@ -47,6 +53,14 @@ public class PEPServiceManager {
         .createLocalCache("PEPServiceManager");
 
     private PubSubEngine pubSubEngine = null;
+
+    public void initialize() {
+        XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(this);
+    }
+
+    public void destroy() {
+        XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(this);
+    }
 
     /**
      * Retrieves a PEP service -- attempting first from memory, then from the
@@ -131,7 +145,7 @@ public class PEPServiceManager {
                 }
             } else {
                 // lookup in database.
-                pepService = PubSubPersistenceProviderManager.getInstance().getProvider().loadPEPServiceFromDB(jid);
+                pepService = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadPEPServiceFromDB(jid);
                 pepServices.put(jid, CacheableOptional.of(pepService));
                 if ( pepService != null ) {
                     pepService.initialize();
@@ -219,9 +233,7 @@ public class PEPServiceManager {
                 pepServices.put(bareJID, CacheableOptional.of(pepService));
                 pepService.initialize();
 
-                if (Log.isDebugEnabled()) {
-                    Log.debug("PEPService created for : " + bareJID);
-                }
+                Log.debug("PEPService created for: '{}'", bareJID);
             }
         } finally {
             lock.unlock();
@@ -236,35 +248,38 @@ public class PEPServiceManager {
      * @param owner
      *            The JID of the owner of the service to be deleted.
      */
-    public void remove(JID owner) {
-
-        final Lock lock = pepServices.getLock(owner.asBareJID());
+    public void remove(JID owner)
+    {
+        final JID address = owner.asBareJID();
+        final Lock lock = pepServices.getLock(address);
         lock.lock();
         try {
-
-            // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
-            // after all nodes are deleted.
-            final CacheableOptional<PEPService> optional = pepServices.get(owner.asBareJID());
-            if ( optional == null ) {
+            final PEPService pepService = getPEPService(address, false);
+            if ( pepService == null ) {
                 return;
             }
 
-            if ( optional.isPresent() )
+            // To remove individual nodes, the PEPService must still be registered. Do not remove the service until
+            // after all nodes are deleted (OF-2020)
+            pubSubEngine.shutdown(pepService); // TODO would shutting down first, and deleting after unrighteously withhold notifications reflecting the deletion of nodes?
+
+            // Delete the user's PEP nodes from memory and the database.
+            // FIXME OF-2104: this implementation does not appear to remove all data.
+            CollectionNode rootNode = pepService.getRootCollectionNode();
+            for ( final Node node : pepService.getNodes() )
             {
-                // Delete the user's PEP nodes from memory and the database.
-                CollectionNode rootNode = optional.get().getRootCollectionNode();
-                for ( final Node node : optional.get().getNodes() )
+                if ( rootNode.isChildNode(node) )
                 {
-                    if ( rootNode.isChildNode(node) )
-                    {
-                        node.delete();
-                    }
+                    node.delete();
                 }
-                rootNode.delete();
             }
+            rootNode.delete();
 
             // All nodes are now deleted. The service itself can now be deleted.
-            pepServices.remove(owner.asBareJID()).get();
+
+            // Remove from cache if it was in.
+            pepServices.remove(address).get();
+            Log.debug("PEPService destroyed for: '{}'", address);
         } finally {
             lock.unlock();
         }
@@ -275,12 +290,12 @@ public class PEPServiceManager {
     }
 
     public void start() {
-        pubSubEngine = new PubSubEngine(XMPPServer.getInstance()
-                .getPacketRouter());
+        Log.debug("Starting...");
+        pubSubEngine = new PubSubEngine(XMPPServer.getInstance().getPacketRouter());
     }
 
     public void stop() {
-
+        Log.debug("Stopping...");
         for (final CacheableOptional<PEPService> service : pepServices.values()) {
             if (service.isPresent()) {
                 pubSubEngine.shutdown(service.get());
@@ -298,8 +313,93 @@ public class PEPServiceManager {
         return pepServices.get(owner.asBareJID()) != null;
     }
 
-    // mimics Shutdown, without killing the timer.
-    public void unload(PEPService service) {
-        pubSubEngine.shutdown(service);
+    @Override
+    public void entityCapabilitiesChanged( @Nonnull final JID entity,
+                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
+                                           @Nonnull final Set<String> featuresAdded,
+                                           @Nonnull final Set<String> featuresRemoved,
+                                           @Nonnull final Set<String> identitiesAdded,
+                                           @Nonnull final Set<String> identitiesRemoved )
+    {
+        // Look for new +notify features. Those are the nodes that the entity is now interested in.
+        final Set<String> nodeIDs = featuresAdded.stream()
+            .filter(feature -> feature.endsWith("+notify"))
+            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
+            .collect(Collectors.toSet());
+
+        if ( nodeIDs.isEmpty() ) {
+            return;
+        }
+        Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
+
+        // Find all the nodes that the entity is subscribed to, including its own.
+        final Set<Node> nodesToBeProcessed = new HashSet<>();
+        for ( final String nodeID : nodeIDs ) {
+            nodesToBeProcessed.addAll(findSubscribedNodes(entity, nodeID));
+        }
+        if (XMPPServer.getInstance().isLocal( entity ) && UserManager.getInstance().isRegisteredUser( entity.getNode() ) ) {
+            final PEPService service = getPEPService( entity );
+            for ( final String nodeID : nodeIDs ) {
+                final Node node = service.getNode( nodeID );
+                if ( node != null ) {
+                    nodesToBeProcessed.add(node);
+                }
+            }
+        }
+
+        Log.debug( "Entity '{}' has {} applicable nodes (through ownership and subscription).", entity, nodesToBeProcessed.size() );
+        if ( nodesToBeProcessed.isEmpty() )
+        {
+            return;
+        }
+
+        Log.trace( "Entity '{}' is eligible to receive notifications of nodes '{}'. Sending last published items for each of these nodes.", entity, String.join( ", ", nodesToBeProcessed.stream().map(Node::getUniqueIdentifier).map(Node.UniqueIdentifier::toString).collect(Collectors.toSet()) ) );
+        for ( final Node node : nodesToBeProcessed )
+        {
+            ((PEPService)node.getService()).sendLastPublishedItems(entity, nodeIDs);
+        }
+    }
+
+    /**
+     * Returns all PEP nodes with a specific ID that the provided entity is a subscriber to. This would typically
+     * return a similar node for many different services (eg: the 'user-tune' node of the PEP services of all of
+     * entity's contacts.
+     *
+     * @param entity The entity address.
+     * @param nodeId The NodeID of the nodes to return
+     * @return A collection of nodes (possibly empty).
+     */
+    @Nonnull
+    public Set<Node> findSubscribedNodes(@Nonnull final JID entity, @Nonnull final String nodeId)
+    {
+        final Set<Node> result = new HashSet<>();
+
+        // Find all nodes that the entity has a direct subscription to. Most of these will be root nodes (representing a service)
+        // for which subscriptions apply to all child nodes. The resulting nodes could also be intermediate collection nodes
+        // (that might similarly have subscriptions bubbling up), or specific leaf nodes.
+        final Set<Node.UniqueIdentifier> directlySubscribedNodes = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().findDirectlySubscribedNodes(entity);
+
+        // For all of the services and collection nodes, see if any of their children match the nodeIdFilter. The implementation here
+        // checks if the corresponding service has a node with a matching nodeID at all. If it does, it explicitly checks if the
+        // entity has a subscription to that node (which recursively looks at its parents).
+        final Set<PubSubService.UniqueIdentifier> relatedServiceUIDs = directlySubscribedNodes.stream().map(Node.UniqueIdentifier::getServiceIdentifier).collect(Collectors.toSet());
+        for( final PubSubService.UniqueIdentifier relatedServiceUID : relatedServiceUIDs ) {
+            // Here, we're only interested in PEP services, not generic Pubsub services.
+            final PEPService service = getPEPService( relatedServiceUID, false );
+            if ( service != null ) {
+                final Node node = service.getNode( nodeId );
+                if (node != null) {
+                    // TODO should we consider other nodes than LeafNode?
+                    if ( node instanceof LeafNode && ((LeafNode) node).getAffiliatesToNotify().stream().anyMatch(
+                        nodeAffiliate -> nodeAffiliate.getJID().equals(entity) || nodeAffiliate.getJID().equals(entity.asBareJID())) )
+                    {
+                        result.add( node );
+                    }
+                }
+            }
+        }
+
+        Log.trace( "Entity '{}' is subscribed to {} nodes that have NodeID {}", entity, result.size(), nodeId);
+        return result;
     }
 }

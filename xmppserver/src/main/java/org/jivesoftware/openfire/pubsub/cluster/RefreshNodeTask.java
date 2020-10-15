@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.pubsub.cluster;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceProviderManager;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ public class RefreshNodeTask extends NodeTask
     public void run()
     {
         log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());
-		PubSubPersistenceProviderManager.getInstance().getProvider().loadNode(getService(), getUniqueNodeIdentifier());
+        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadNode(getService(), getUniqueNodeIdentifier());
     }
 
 }

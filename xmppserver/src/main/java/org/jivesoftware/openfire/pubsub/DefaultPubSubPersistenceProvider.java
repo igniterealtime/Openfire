@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -156,6 +158,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 	private static final String LOAD_NODE_SUBSCRIPTION = LOAD_SUBSCRIPTIONS_BASE + "AND nodeID=? AND id=?";
 	private static final String LOAD_NODE_SUBSCRIPTIONS = LOAD_SUBSCRIPTIONS_BASE + "AND nodeID=?";
 	private static final String LOAD_SUBSCRIPTIONS = LOAD_SUBSCRIPTIONS_BASE + "ORDER BY nodeID";
+
+    private static final String FIND_SUBCRIBED_NODES = "SELECT serviceID, nodeID, jid FROM ofPubsubSubscription WHERE jid LIKE ? AND state LIKE ?";
 
     private static final String ADD_SUBSCRIPTION =
             "INSERT INTO ofPubsubSubscription (serviceID, nodeID, id, jid, owner, state, " +
@@ -894,6 +898,58 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			DbConnectionManager.closeConnection(rs, pstmt, con);
 		}
 	}
+
+    @Override
+    @Nonnull
+    public Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address)
+    {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Set<Node.UniqueIdentifier> result = new HashSet<>();
+
+        try
+        {
+            con = DbConnectionManager.getConnection();
+
+            // Get subscriptions to all nodes
+            pstmt = con.prepareStatement(FIND_SUBCRIBED_NODES);
+            // Match subscriptions that use a bare JID, or full JIDs matching the bare JID search argument.
+            pstmt.setString( 1, address.toBareJID() + '%'); // note that the '%' operator matches zero or more characters. Exact matches included.
+            pstmt.setString( 2, NodeSubscription.State.subscribed.name() );
+            rs = pstmt.executeQuery();
+            while (rs.next())
+            {
+                final String serviceID = rs.getString("serviceID");
+                final String nodeID = rs.getString("nodeID");
+                try
+                {
+                    final JID jid = new JID(rs.getString("jid"));
+                    if ( jid.getResource() != null && !jid.equals(address))
+                    {
+                        // The subscription is explicit to a _different_ full JID. Do not return this one.
+                        continue;
+                    }
+                }
+                catch ( IllegalArgumentException e )
+                {
+                    log.warn( "Unable to parse value as a JID, for serviceID {}, nodeID {}", serviceID, nodeID);
+                    continue;
+                }
+                final Node.UniqueIdentifier identifier = new Node.UniqueIdentifier(serviceID, nodeID);
+                result.add(identifier);
+            }
+        }
+        catch (SQLException sqle)
+        {
+            log.error("An exception occurred while finding subscribed nodes for {}.", address, sqle);
+        }
+        finally
+        {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return result;
+    }
 
     private void loadSubscriptions(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {

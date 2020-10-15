@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -251,6 +252,13 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         flushPendingNode( node.getUniqueIdentifier() );
 
         delegate.loadSubscription(node, subId);
+    }
+
+    @Override
+    @Nonnull
+    public Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address) {
+        flushPendingNodes();
+        return delegate.findDirectlySubscribedNodes(address);
     }
 
     @Override

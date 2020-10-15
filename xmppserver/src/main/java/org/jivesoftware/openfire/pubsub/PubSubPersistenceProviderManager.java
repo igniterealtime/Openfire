@@ -35,20 +35,17 @@ public class PubSubPersistenceProviderManager
 
     private static final Logger Log = LoggerFactory.getLogger( PubSubPersistenceProviderManager.class );
 
-    private static PubSubPersistenceProviderManager instance;
-
     private PubSubPersistenceProvider provider;
 
-    public synchronized static PubSubPersistenceProviderManager getInstance()
-    {
-        if ( instance == null ) {
-            instance = new PubSubPersistenceProviderManager();
-        }
+    /**
+     * Instantiates a new instance.
+     *
+     * It is not expected that there ever is more than one instance of the manager, as it's closely coupled to
+     * {@link PubSubModule}. This constructor has 'package' access restrictions to reflect this.
+     */
+    PubSubPersistenceProviderManager() {}
 
-        return instance;
-    }
-
-    private PubSubPersistenceProviderManager() {
+    public void initialize() {
         initProvider();
     }
 

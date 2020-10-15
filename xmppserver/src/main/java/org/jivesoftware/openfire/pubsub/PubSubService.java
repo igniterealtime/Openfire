@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  *
  * @author Matt Tucker
  */
-public interface PubSubService extends EntityCapabilitiesListener
+public interface PubSubService
 {
     /**
      * Returns the XMPP address of the service.

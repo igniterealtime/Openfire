@@ -43,6 +43,7 @@ import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
 import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.*;
@@ -59,13 +60,13 @@ import org.xmpp.packet.Presence;
 import javax.annotation.Nonnull;
 
 /**
- * Module that implements JEP-60: Publish-Subscribe. By default node collections and
+ * Module that implements XEP-60: Publish-Subscribe. By default node collections and
  * instant nodes are supported.
  *
  * @author Matt Tucker
  */
 public class PubSubModule extends BasicModule implements ServerItemsProvider, DiscoInfoProvider,
-        DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener {
+        DiscoItemsProvider, RoutableChannelHandler, PubSubService, PropertyEventListener, EntityCapabilitiesListener {
 
     private static final Logger Log = LoggerFactory.getLogger(PubSubModule.class);
 
@@ -171,9 +172,14 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      */
     private boolean serviceEnabled = true;
 
+    /**
+     * Manager of entities that interact with persistent storage of data (eg: the database).
+     */
+    private PubSubPersistenceProviderManager persistenceProviderManager;
+
     public PubSubModule() {
         super("Publish Subscribe Service");
-        
+
         // Initialize the ad-hoc commands manager to use for this pubsub service
         manager = new AdHocCommandManager();
         manager.addCommand(new PendingSubscriptionsCommand(this));
@@ -383,6 +389,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         JiveGlobals.migrateProperty("xmpp.pubsub.root.creator");
         JiveGlobals.migrateProperty("xmpp.pubsub.multiple-subscriptions");
 
+        // Initializing persistence
+        persistenceProviderManager = new PubSubPersistenceProviderManager();
+        persistenceProviderManager.initialize();
+
         // Listen to property events so that the template is always up to date
         PropertyEventDispatcher.addListener(this);
 
@@ -403,7 +413,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         engine = new PubSubEngine(router);
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
+        leafDefaultConfiguration = getPersistenceProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
             Log.debug( "Create and save default configuration for leaf nodes" );
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -421,11 +431,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
+            getPersistenceProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
-        collectionDefaultConfiguration =
-                PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
+        collectionDefaultConfiguration = getPersistenceProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null ) {
             Log.debug( "Create and save default configuration for collection nodes" );
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -442,11 +451,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             collectionDefaultConfiguration
                     .setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
+            getPersistenceProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
 
         // Load nodes to memory
-        PubSubPersistenceProviderManager.getInstance().getProvider().loadNodes(this);
+        getPersistenceProvider().loadNodes(this);
+
         // Ensure that we have a root collection node
         String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", "");
         if (nodes.isEmpty()) {
@@ -465,14 +475,18 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             Log.debug( "Load root collection node ('{}') from database.", rootNodeID );
             rootCollectionNode = (CollectionNode) getNode(rootNodeID);
         }
+
+        XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(this);
     }
 
     @Override
     public void start() {
         // Check that the service is enabled
         if (!isServiceEnabled()) {
+            Log.info( "Not starting service with name '{}', as pubsub is disabled by configuration.", serviceName );
             return;
         }
+        Log.debug( "Starting service with name '{}'.", serviceName );
         super.start();
         // Add the route to this service
         routingTable.addComponentRoute(getAddress(), this);
@@ -485,12 +499,24 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
 
     @Override
     public void stop() {
+        Log.debug( "Stopping service with name '{}'.", serviceName );
         super.stop();
         // Remove the route to this service
         routingTable.removeComponentRoute(getAddress());
         // Stop the pubsub engine. This will gives us the chance to
         // save queued items to the database.
         engine.shutdown(this);
+    }
+
+    @Override
+    public void destroy() {
+        Log.debug( "Destroying service with name '{}'.", serviceName );
+        XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(this);
+
+        super.destroy();
+        if (persistenceProviderManager!= null) {
+            persistenceProviderManager.shutdown();
+        }
     }
 
     public void setIQDiscoItemsHandler(IQDiscoItemsHandler iqDiscoItemsHandler) {
@@ -856,6 +882,19 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
     @Override
     public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         // Do nothing
+    }
+
+    /**
+     * Returns a data access object that can be used to interact with backend storage that holds pubsub data.
+     *
+     * This method returns null only when the this instance of PubSubModule has not been initialized yet, or has been
+     * destroyed.
+     *
+     * @return The configured and initialized persistence provider
+     */
+    public PubSubPersistenceProvider getPersistenceProvider()
+    {
+        return persistenceProviderManager.getProvider();
     }
 
     @Override

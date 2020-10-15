@@ -1914,14 +1914,12 @@ public class PubSubEngine
         // has started)
         
         if (XMPPServer.getInstance().isStarted()) {
-            XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
             probePresences(service);
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                 @Override
                 public void serverStarted() {
-                    XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
                     probePresences(service);
                 }
 
@@ -1947,12 +1945,8 @@ public class PubSubEngine
     }
 
     public void shutdown(PubSubService service) {
-    	PubSubPersistenceProviderManager.getInstance().shutdown(); // FIXME this does not seem right. We shouldn't be shutting down persistency (that's shared for all services) if just one service shuts down!
         if (service != null) {
             Log.debug( "Shutting down pubsub service '{}'", service.getUniqueIdentifier() );
-
-            XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(service);
-
             if (service.getManager() != null) {
                 // Stop executing ad-hoc commands
                 service.getManager().stop();

@@ -50,8 +50,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
-import javax.annotation.Nonnull;
-
 /**
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
  * Pubsub" Version 1.0
@@ -143,7 +141,8 @@ public class PEPService implements PubSubService, Cacheable {
         adHocCommandManager.addCommand(new PendingSubscriptionsCommand(this));
 
         // Load default configuration for leaf nodes
-        leafDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), true);
+        final PubSubPersistenceProvider persistenceProvider = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider();
+        leafDefaultConfiguration = persistenceProvider.loadDefaultConfiguration(this.getUniqueIdentifier(), true);
         if (leafDefaultConfiguration == null) {
             // Create and save default configuration for leaf nodes;
             leafDefaultConfiguration = new DefaultNodeConfiguration(true);
@@ -161,10 +160,10 @@ public class PEPService implements PubSubService, Cacheable {
             leafDefaultConfiguration.setSendItemSubscribe(true);
             leafDefaultConfiguration.setSubscriptionEnabled(true);
             leafDefaultConfiguration.setReplyPolicy(null);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
+            persistenceProvider.createDefaultConfiguration(this.getUniqueIdentifier(), leafDefaultConfiguration);
         }
         // Load default configuration for collection nodes
-        collectionDefaultConfiguration = PubSubPersistenceProviderManager.getInstance().getProvider().loadDefaultConfiguration(this.getUniqueIdentifier(), false);
+        collectionDefaultConfiguration = persistenceProvider.loadDefaultConfiguration(this.getUniqueIdentifier(), false);
         if (collectionDefaultConfiguration == null) {
             // Create and save default configuration for collection nodes;
             collectionDefaultConfiguration = new DefaultNodeConfiguration(false);
@@ -180,13 +179,13 @@ public class PEPService implements PubSubService, Cacheable {
             collectionDefaultConfiguration.setReplyPolicy(null);
             collectionDefaultConfiguration.setAssociationPolicy(CollectionNode.LeafNodeAssociationPolicy.all);
             collectionDefaultConfiguration.setMaxLeafNodes(-1);
-            PubSubPersistenceProviderManager.getInstance().getProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
+            persistenceProvider.createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
     }
 
     public void initialize() {
         // Load nodes to memory
-        PubSubPersistenceProviderManager.getInstance().getProvider().loadNodes(this);
+        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadNodes(this);
         // Ensure that we have a root collection node
         if (nodes.isEmpty()) {
             // Create root collection node
@@ -581,26 +580,5 @@ public class PEPService implements PubSubService, Cacheable {
     public int getCachedSize() {
         // Rather arbitrary. Don't use this for size-based eviction policies!
         return 600;
-    }
-
-    @Override
-    public void entityCapabilitiesChanged( @Nonnull final JID entity,
-                                           @Nonnull final EntityCapabilities updatedEntityCapabilities,
-                                           @Nonnull final Set<String> featuresAdded,
-                                           @Nonnull final Set<String> featuresRemoved,
-                                           @Nonnull final Set<String> identitiesAdded,
-                                           @Nonnull final Set<String> identitiesRemoved )
-    {
-        // Look for new +notify features. Those are the nodes that the entity is now interested in.
-        final Set<String> nodeIDs = featuresAdded.stream()
-            .filter(feature -> feature.endsWith("+notify"))
-            .map(feature -> feature.substring(0, feature.length() - "+notify".length()))
-            .collect(Collectors.toSet());
-
-        if ( !nodeIDs.isEmpty() )
-        {
-            Log.debug( "Entity '{}' expressed new interest in receiving notifications for nodes '{}'", entity, String.join( ", ", nodeIDs ) );
-            sendLastPublishedItems(entity, nodeIDs);
-        }
     }
 }

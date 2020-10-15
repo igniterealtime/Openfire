@@ -129,17 +129,37 @@ public class UserManagerTest {
 
     @Test
     public void isRegisteredUserWillReturnTrueForLocalUsers() {
-
         final boolean result = userManager.isRegisteredUser(new JID(USER_ID, Fixtures.XMPP_DOMAIN, null));
+        assertThat(result, is(true));
+    }
 
+    @Test
+    public void isRegisteredUserFalseWillReturnTrueForLocalUsers() {
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, Fixtures.XMPP_DOMAIN, null), false);
+        assertThat(result, is(true));
+    }
+
+    @Test
+    public void isRegisteredUserTrueWillReturnTrueForLocalUsers() {
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, Fixtures.XMPP_DOMAIN, null), true);
         assertThat(result, is(true));
     }
 
     @Test
     public void isRegisteredUserWillReturnFalseForLocalNonUsers() {
-
         final boolean result = userManager.isRegisteredUser(new JID("unknown-user", Fixtures.XMPP_DOMAIN, null));
+        assertThat(result, is(false));
+    }
 
+    @Test
+    public void isRegisteredUserFalseWillReturnFalseForLocalNonUsers() {
+        final boolean result = userManager.isRegisteredUser(new JID("unknown-user", Fixtures.XMPP_DOMAIN, null), false);
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void isRegisteredUserTrueWillReturnFalseForLocalNonUsers() {
+        final boolean result = userManager.isRegisteredUser(new JID("unknown-user", Fixtures.XMPP_DOMAIN, null), true);
         assertThat(result, is(false));
     }
 
@@ -159,6 +179,47 @@ public class UserManagerTest {
         }).when(iqRouter).route(any());
 
         final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null));
+
+        assertThat(result, is(true));
+        verify(iqRouter).route(any());
+    }
+
+    @Test
+    public void isRegisteredUserFalseWillReturnFalseForRemoteUsers() {
+
+        final AtomicReference<IQResultListener> iqListener = new AtomicReference<>();
+        doAnswer(invocationOnMock -> {
+            final IQResultListener listener = invocationOnMock.getArgument(1);
+            iqListener.set(listener);
+            return null;
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
+
+        doAnswer(invocationOnMock -> {
+            iqListener.get().receivedAnswer(Fixtures.iqFrom(USER_FOUND_RESULT));
+            return null;
+        }).when(iqRouter).route(any());
+
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null), false);
+
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void isRegisteredUserTrueWillReturnTrueForRemoteUsers() {
+
+        final AtomicReference<IQResultListener> iqListener = new AtomicReference<>();
+        doAnswer(invocationOnMock -> {
+            final IQResultListener listener = invocationOnMock.getArgument(1);
+            iqListener.set(listener);
+            return null;
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
+
+        doAnswer(invocationOnMock -> {
+            iqListener.get().receivedAnswer(Fixtures.iqFrom(USER_FOUND_RESULT));
+            return null;
+        }).when(iqRouter).route(any());
+
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null), true);
 
         assertThat(result, is(true));
         verify(iqRouter).route(any());
@@ -191,6 +252,57 @@ public class UserManagerTest {
     }
 
     @Test
+    public void isRegisteredUserFalseWillReturnFalseForUnknownRemoteUsers() {
+
+        final AtomicReference<IQResultListener> iqListener = new AtomicReference<>();
+        doAnswer(invocationOnMock -> {
+            final IQResultListener listener = invocationOnMock.getArgument(1);
+            iqListener.set(listener);
+            return null;
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
+
+        doAnswer(invocationOnMock -> {
+            final IQ iq = invocationOnMock.getArgument(0);
+            final Element childElement = iq.getChildElement();
+            final IQ response = IQ.createResultIQ(iq);
+            response.setChildElement(childElement.createCopy());
+            response.setError(new PacketError(PacketError.Condition.item_not_found, PacketError.Condition.item_not_found.getDefaultType()));
+            iqListener.get().receivedAnswer(response);
+            return null;
+        }).when(iqRouter).route(any());
+
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null), false);
+
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void isRegisteredUserTrueWillReturnFalseForUnknownRemoteUsers() {
+
+        final AtomicReference<IQResultListener> iqListener = new AtomicReference<>();
+        doAnswer(invocationOnMock -> {
+            final IQResultListener listener = invocationOnMock.getArgument(1);
+            iqListener.set(listener);
+            return null;
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
+
+        doAnswer(invocationOnMock -> {
+            final IQ iq = invocationOnMock.getArgument(0);
+            final Element childElement = iq.getChildElement();
+            final IQ response = IQ.createResultIQ(iq);
+            response.setChildElement(childElement.createCopy());
+            response.setError(new PacketError(PacketError.Condition.item_not_found, PacketError.Condition.item_not_found.getDefaultType()));
+            iqListener.get().receivedAnswer(response);
+            return null;
+        }).when(iqRouter).route(any());
+
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null), true);
+
+        assertThat(result, is(false));
+        verify(iqRouter).route(any());
+    }
+
+    @Test
     public void isRegisteredUserWillReturnFalseForATimeout() {
 
         final AtomicReference<IQResultListener> iqListener = new AtomicReference<>();
@@ -213,6 +325,28 @@ public class UserManagerTest {
     }
 
     @Test
+    public void isRegisteredUserTrueWillReturnFalseForATimeout() {
+
+        final AtomicReference<IQResultListener> iqListener = new AtomicReference<>();
+        doAnswer(invocationOnMock -> {
+            final IQResultListener listener = invocationOnMock.getArgument(1);
+            iqListener.set(listener);
+            return null;
+        }).when(iqRouter).addIQResultListener(any(), any(), anyLong());
+
+        doAnswer(invocationOnMock -> {
+            final IQ iq = invocationOnMock.getArgument(0);
+            iqListener.get().answerTimeout(iq.getID());
+            return null;
+        }).when(iqRouter).route(any());
+
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null), true);
+
+        assertThat(result, is(false));
+        verify(iqRouter).route(any());
+    }
+
+    @Test
     public void isRegisteredUserWillReturnFalseNoAnswer() {
 
         final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null));
@@ -221,4 +355,12 @@ public class UserManagerTest {
         verify(iqRouter).route(any());
     }
 
+    @Test
+    public void isRegisteredUserTrueWillReturnFalseNoAnswer() {
+
+        final boolean result = userManager.isRegisteredUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null), true);
+
+        assertThat(result, is(false));
+        verify(iqRouter).route(any());
+    }
 }

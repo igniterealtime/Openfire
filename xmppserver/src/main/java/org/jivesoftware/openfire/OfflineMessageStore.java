@@ -135,14 +135,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
-        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient)) {
-            Log.trace( "Not storing message for which the recipient ({}) is not a registered user.", recipient );
-            return false;
-        }
-        else
-        if (!XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals(recipient.getDomain())) {
-            Log.trace( "Not storing message for which the recipient ({}) is not a local user.", recipient );
-            // Do not store messages sent to users of remote servers
+        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient, false)) {
+            Log.trace( "Not storing message for which the recipient ({}) is not a registered local user.", recipient );
             return false;
         }
 

@@ -669,7 +669,7 @@
                         <c:choose>
                             <c:when test="${webManager.XMPPServer.isLocal(member)}">
                                 <c:choose>
-                                    <c:when test="${webManager.userManager.isRegisteredUser(member) and webManager.presenceManager.isAvailable(webManager.userManager.getUser(member))}">
+                                    <c:when test="${webManager.userManager.isRegisteredUser(member, false) and webManager.presenceManager.isAvailable(webManager.userManager.getUser(member))}">
                                         <c:choose>
                                             <c:when test="${empty webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show}">
                                                 <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
@@ -701,7 +701,7 @@
                     </td>
                     <td>
                         <c:choose>
-                            <c:when test="${webManager.userManager.isRegisteredUser(member)}">
+                            <c:when test="${webManager.userManager.isRegisteredUser(member, false)}">
                                 <a href="user-properties.jsp?username=${fn:escapeXml(webManager.userManager.getUser(member).username)}">
                                     <c:out value="${webManager.userManager.getUser(member).username}"/>
                                 </a>

@@ -16,8 +16,11 @@
 package org.jivesoftware.openfire.spi;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-import static org.junit.Assert.assertFalse;
+import java.util.Arrays;
+
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -25,101 +28,43 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
+@RunWith(Parameterized.class)
 public class ConnectionTypeTest
 {
+
     /**
-     * Verifies that ConnectionType.SOCKET_S2S is not determined to be 'client orientated'.
+     * Define the expected outputs of ConnectionType.isClientOriented() for the given ConnectionType
      */
-    @Test
-    public void testSocketS2SIsClientOrientated() throws Exception
-    {
-        // Setup test fixture.
-        final ConnectionType input = ConnectionType.SOCKET_S2S;
+    @Parameterized.Parameters(name = "Verify that when ConnnectionType is \"{0}\" then isClientOriented returns \"{1}\"")
+	public static Iterable<Object[]> data() {
+		return Arrays.asList(new Object[][] {
+            {ConnectionType.SOCKET_S2S, false},
+            {ConnectionType.SOCKET_C2S, true},
+            {ConnectionType.BOSH_C2S, true},
+            {ConnectionType.WEBADMIN, true},
+            {ConnectionType.COMPONENT, false},
+            {ConnectionType.CONNECTION_MANAGER, false}
+		});
+	}
 
-        // Execute system under test.
-        final boolean result = input.isClientOriented();
+	private final ConnectionType connType;
+    private final boolean expected;
 
-        // Verify result.
-        assertFalse(result);
+	public ConnectionTypeTest(ConnectionType connType, boolean expected){
+        this.connType = connType;
+        this.expected = expected;
     }
 
     /**
-     * Verifies that ConnectionType.SOCKET_C2S is determined to be 'client orientated'.
+     * Verifies that a given ConnectionType returns the appropriate 'client orientated' value.
      */
     @Test
-    public void testSocketc2SIsClientOrientated() throws Exception
+    public void testConnectionTypeHasCorrectIsClientOriented() throws Exception
     {
-        // Setup test fixture.
-        final ConnectionType input = ConnectionType.SOCKET_C2S;
-
         // Execute system under test.
-        final boolean result = input.isClientOriented();
+        final boolean result = connType.isClientOriented();
 
         // Verify result.
-        assertTrue(result);
-    }
-
-    /**
-     * Verifies that ConnectionType.BOSH_C2S is not determined to be 'client orientated'.
-     */
-    @Test
-    public void testBoshC2SIsClientOrientated() throws Exception
-    {
-        // Setup test fixture.
-        final ConnectionType input = ConnectionType.BOSH_C2S;
-
-        // Execute system under test.
-        final boolean result = input.isClientOriented();
-
-        // Verify result.
-        assertTrue(result);
-    }
-
-    /**
-     * Verifies that ConnectionType.WEBADMIN is not determined to be 'client orientated'.
-     */
-    @Test
-    public void testWebadminIsClientOrientated() throws Exception
-    {
-        // Setup test fixture.
-        final ConnectionType input = ConnectionType.WEBADMIN;
-
-        // Execute system under test.
-        final boolean result = input.isClientOriented();
-
-        // Verify result.
-        assertTrue(result);
-    }
-
-    /**
-     * Verifies that ConnectionType.COMPONENT is not determined to be 'client orientated'.
-     */
-    @Test
-    public void testComponentIsClientOrientated() throws Exception
-    {
-        // Setup test fixture.
-        final ConnectionType input = ConnectionType.COMPONENT;
-
-        // Execute system under test.
-        final boolean result = input.isClientOriented();
-
-        // Verify result.
-        assertFalse(result);
-    }
-
-    /**
-     * Verifies that ConnectionType.CONNECTION_MANAGER is not determined to be 'client orientated'.
-     */
-    @Test
-    public void testConnectionManagerIsClientOrientated() throws Exception
-    {
-        // Setup test fixture.
-        final ConnectionType input = ConnectionType.CONNECTION_MANAGER;
-
-        // Execute system under test.
-        final boolean result = input.isClientOriented();
-
-        // Verify result.
-        assertFalse(result);
+        assertTrue(result == expected);
     }
 }

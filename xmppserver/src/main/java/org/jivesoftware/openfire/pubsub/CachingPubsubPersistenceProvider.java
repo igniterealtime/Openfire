@@ -264,6 +264,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void createAffiliation(Node node, NodeAffiliate affiliate)
     {
+        log.debug( "Creating node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
         final NodeOperation operation = NodeOperation.createAffiliation( node, affiliate );
         operations.add( operation );
@@ -272,6 +273,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void updateAffiliation(Node node, NodeAffiliate affiliate)
     {
+        log.debug( "Updating node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
         // This affiliation update can replace any pending updates of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
         final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
@@ -292,6 +294,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removeAffiliation(Node node, NodeAffiliate affiliate) {
+        log.debug( "Removing node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
 
         // This affiliation removal can replace any pending creation, update or delete of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
@@ -311,7 +314,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void createSubscription(Node node, NodeSubscription subscription) {
-        log.debug( "Creating node subscription: {} {}", node.getUniqueIdentifier(), subscription.getID() );
+        log.debug( "Creating node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), node.getUniqueIdentifier(), subscription.getID() );
 
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
         final NodeOperation operation = NodeOperation.createSubscription( node, subscription );
@@ -320,7 +323,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void updateSubscription(Node node, NodeSubscription subscription) {
-        log.debug( "Updating node subscription: {} {}", node.getUniqueIdentifier(), subscription.getID() );
+        log.debug( "Updating node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), node.getUniqueIdentifier(), subscription.getID() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
 
         // This subscription update can replace any pending updates of the same subscription (since the last create/delete of the node or subscription change of this affiliate to the node).
@@ -342,7 +345,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removeSubscription(NodeSubscription subscription) {
-        log.debug( "Removing node subscription: {} {}", subscription.getNode().getUniqueIdentifier(), subscription.getID() );
+        log.debug( "Removing node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), subscription.getNode().getUniqueIdentifier(), subscription.getID() );
 
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( subscription.getNode().getUniqueIdentifier(), id -> new ArrayList<>() );
 

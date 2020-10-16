@@ -706,18 +706,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             String creationDatePast = String.format ("%015d", pastTime);
 
             pstmt.setString(1,creationDatePast);
-
-            if (pstmt.execute())
-            {
-                Log.info("Offline message cleaning - Cleaning successful");
-            }
-            else
-            {
-                Log.info("Offline message cleaning - Error while execute the cleaining sql script!");
-            }
-
-            pstmt.close();
-
+            final int updateCount = pstmt.executeUpdate();
+            Log.info("Offline message cleaning - Cleaning successful. Removed {} message(s)", updateCount);
             return true;
         } catch (SQLException sqle) {
             Log.warn("Offline message cleaning - ", sqle);

@@ -59,7 +59,15 @@ public enum ConnectionType
      */
     public boolean isClientOriented()
     {
-        return SOCKET_C2S == this || SOCKET_C2S == this.getFallback();
+        ConnectionType pointer = this;
+        while (pointer != null) {
+            if (SOCKET_C2S == pointer) {
+                return true;
+            }
+
+            pointer = pointer.getFallback();
+        }
+        return false;
     }
 
     /**

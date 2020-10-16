@@ -48,6 +48,8 @@ import org.xmpp.packet.JID;
 import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
 
+import javax.annotation.Nonnull;
+
 /**
  * Manages users, including loading, creating and deleting.
  *
@@ -464,7 +466,7 @@ public final class UserManager {
      * @param checkRemoteDomains false the lookup is allowed to include calls to remote XMPP domains.
      * @return true if the specified JID belongs to a registered user.
      */
-    public boolean isRegisteredUser(final JID user, final boolean checkRemoteDomains) {
+    public boolean isRegisteredUser(@Nonnull final JID user, final boolean checkRemoteDomains) {
         if (xmppServer.isLocal(user)) {
             try {
                 getUser(user.getNode());

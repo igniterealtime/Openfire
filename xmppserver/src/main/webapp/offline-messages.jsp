@@ -23,6 +23,7 @@
                  java.text.DecimalFormat"
     errorPage="error.jsp"
 %>
+<%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -127,9 +128,12 @@
                 }
             }
 
-            manager.setAutoCleanOfflineMessages(offlinecleaner!=null&&offlinecleaner.equalsIgnoreCase("on") ? true : false);
-            manager.setAutoCleanOfflineMessagesTimer(offlinechecktimer!=null&&offlinechecktimer.trim().length()>0?Integer.parseInt(offlinechecktimer):30);
-            manager.setAutoCleanOfflineDaysToLive(daystolive!=null&&daystolive.trim().length()>0?Integer.parseInt(daystolive):14);
+            final boolean enable = offlinecleaner!=null&&offlinecleaner.equalsIgnoreCase("on");
+            final Duration checkInterval = Duration.ofMinutes( offlinechecktimer!=null&&!offlinechecktimer.trim().isEmpty() ? Integer.parseInt(offlinechecktimer) : OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.getDefaultValue().toMinutes() );
+            final Duration daysToLive = Duration.ofDays( daystolive!=null&&!daystolive.trim().isEmpty() ? Integer.parseInt(daystolive) : OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.getDefaultValue().toDays() );
+            OfflineMessageStore.OFFLINE_AUTOCLEAN_ENABLE.setValue(enable);
+            OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.setValue(checkInterval);
+            OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.setValue(daysToLive);
 
             manager.setQuota((int)(quota*1024));
 
@@ -174,13 +178,9 @@
             quota = 0;
         }
 
-        offlinecleaner=manager.getAutoCleanOfflineMessages()?"true":"";
-        offlinechecktimer=String.valueOf(manager.getAutoCleanOfflineMessagesTimer());
-        daystolive=String.valueOf(manager.getAutoCleanOfflineDaysToLive());
-
-        pageContext.setAttribute( "offlinecleaner", offlinecleaner );
-        pageContext.setAttribute( "offlinechecktimer", offlinechecktimer );
-        pageContext.setAttribute( "daystolive", daystolive );
+        pageContext.setAttribute( "offlinechecktimer", OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue() );
+        pageContext.setAttribute( "daystolive", OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue() );
+        pageContext.setAttribute( "offlinecleaner", OfflineMessageStore.OFFLINE_AUTOCLEAN_ENABLE.getValue()?"true":"" );
     }
 %>
 
@@ -324,7 +324,7 @@
         <table cellpadding="3" cellspacing="0" border="0">
             <tbody>
                 <tr valign="top">
-                    <td colspan="2" style="padding-top: 2em;">
+                    <td colspan="2">
                         <fmt:message key="offline.messages.clean.description" />
                     </td>
                 </tr>
@@ -341,7 +341,7 @@
                     </td>
                 </tr>
                 <tr valign="top">
-                    <td colspan="2" style="padding-top: 2em;">
+                    <td colspan="2">
                         <fmt:message key="offline.messages.clean.timer.description" />
                     </td>
                 </tr>
@@ -354,11 +354,11 @@
                         </b>
                     </td>
                     <td width="99%">
-                        <input type="text" name="offlinechecktimer" id="offlinechecktimer" size="5" value="${offlinechecktimer}">
+                        <input type="number" min="1" name="offlinechecktimer" id="offlinechecktimer" size="5" value="${offlinechecktimer.toMinutes()}">
                     </td>
                 </tr>
                 <tr valign="top">
-                    <td colspan="2" style="padding-top: 2em;">
+                    <td colspan="2">
                         <fmt:message key="offline.messages.clean.daystolive.description" />
                     </td>
                 </tr>
@@ -371,7 +371,7 @@
                         </b>
                     </td>
                     <td width="99%">
-                        <input type="text" name="daystolive" id="daystolive" size="5" value="${daystolive}">
+                        <input type="number" min="1" name="daystolive" id="daystolive" size="5" value="${daystolive.toDays()}">
                     </td>
                 </tr>
             </tbody>

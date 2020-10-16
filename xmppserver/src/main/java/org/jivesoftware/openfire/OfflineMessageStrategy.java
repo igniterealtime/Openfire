@@ -293,34 +293,4 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
          */
         store_and_drop
     }
-
-    public void setAutoCleanOfflineMessages(boolean val)
-    {
-        messageStore.setAutoCleanOfflineMessages(val);
-    }
-
-    public void setAutoCleanOfflineMessagesTimer(int val)
-    {
-        messageStore.setAutoCleanOfflineMessagesTimer(val);
-    }
-
-    public void setAutoCleanOfflineDaysToLive(int val)
-    {
-        messageStore.setAutoCleanOfflineDaysToLive(val);
-    }
-
-    public boolean getAutoCleanOfflineMessages()
-    {
-        return messageStore.getAutoCleanOfflineMessages();
-    }
-
-    public long getAutoCleanOfflineMessagesTimer()
-    {
-        return messageStore.getAutoCleanOfflineMessagesTimer();
-    }
-
-    public long getAutoCleanOfflineDaysToLive()
-    {
-        return messageStore.getAutoCleanOfflineDaysToLive();
-    }
 }

@@ -46,6 +46,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -92,7 +93,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
     private static final int POOL_SIZE = 10;
 
-    private Cache<String, Integer> sizeCache;
+    private final Cache<String, Integer> sizeCache;
 
     /**
      * Members for automatic offline message cleaning
@@ -118,9 +119,6 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     .setDynamic(false)
     .build();
 
-    private long daystolive = 365; //days
-    private long checkinterval = 30; //minutes
-    private boolean enableAutoClean = false;
     private Timer timer = null;
 
     /**
@@ -149,16 +147,18 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     public OfflineMessageStore() {
         super("Offline Message Store");
         sizeCache = CacheFactory.createCache("Offline Message Size");
-        try
-        {
-            this.daystolive = OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue().toDays();
-            this.checkinterval = OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue().toMinutes();
-            this.enableAutoClean = OFFLINE_AUTOCLEAN_ENABLE.getValue();
-        }
-        catch (Exception e)
-        {
-            Log.error("OfflineMessageStore - Error reading preferences!",e);
-        }
+        OFFLINE_AUTOCLEAN_ENABLE.addListener( enabled -> {
+                                                if (enabled) {
+                                                    setTimer();
+                                                } else {
+                                                    cancelTimer();
+                                                } } );
+        OFFLINE_AUTOCLEAN_CHECKINTERVAL.addListener( duration -> {
+                                                    // Restart timer if it's running to apply new configuration.
+                                                    if ( OFFLINE_AUTOCLEAN_ENABLE.getValue()) {
+                                                        cancelTimer();
+                                                        setTimer();
+                                                    } } );
     }
 
     /**
@@ -538,7 +538,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         // all offline messages when a user is deleted
         UserEventDispatcher.addListener(this);
         //start timer if enabled
-        if (this.enableAutoClean)
+        if (OFFLINE_AUTOCLEAN_ENABLE.getValue())
         {
             setTimer();
         }
@@ -617,6 +617,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     private void setTimer() {
         cancelTimer();
 
+        Log.info("Offline message cleaning - Start timer");
         timer = new Timer(true);
         timer.schedule(new TimerTask() {
             @Override
@@ -643,12 +644,12 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     Log.error("Offline message cleaning - Could not set timer for check interval!", e);
                 }
             }
-        }, 10 * 1000, checkinterval * 60 * 1000); //starts after 10 seconds and repeat...
+        }, Duration.ofSeconds(10).toMillis(), OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue().toMillis()); // starts after 10 seconds and repeat...
     }
 
     private void cancelTimer() {
+        Log.info("Offline message cleaning - Stop old timer if started");
         if (timer != null) {
-            Log.info("Offline message cleaning - Stop old timer if started");
             try {
                 timer.cancel();
                 timer.purge();
@@ -690,7 +691,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
     private boolean deleteOldOfflineMessagesFromDB() {
 
-        Log.info("Offline message cleaning - Deleting offline messages older than {} days.",daystolive);
+        Log.info("Offline message cleaning - Deleting offline messages older than {} days.", OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue().toDays());
 
         Connection con = null;
 
@@ -700,10 +701,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE_BEFORE);
 
-            long now = System.currentTimeMillis();
-            long delta = daystolive*24*60*60*1000;
-            long pastTime = now - delta;
-            String creationDatePast = String.format ("%015d", pastTime);
+            final Instant pastTime = Instant.now().minus(OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue());
+            final String creationDatePast = StringUtils.zeroPadString(String.valueOf(pastTime.toEpochMilli()), 15);
 
             pstmt.setString(1,creationDatePast);
             final int updateCount = pstmt.executeUpdate();
@@ -713,48 +712,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             Log.warn("Offline message cleaning - ", sqle);
             return false;
         } finally {
-            DbConnectionManager.closeConnection(con);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
-    }
-
-    public void setAutoCleanOfflineMessages(boolean val)
-    {
-        this.enableAutoClean=val;
-        OFFLINE_AUTOCLEAN_ENABLE.setValue(val);
-        if (val)
-        {
-            setTimer();
-        }
-        else
-        {
-            cancelTimer();
-        }
-    }
-
-    public void setAutoCleanOfflineMessagesTimer(long val)
-    {
-        this.checkinterval=val;
-        OFFLINE_AUTOCLEAN_CHECKINTERVAL.setValue(Duration.ofMinutes(val));
-    }
-
-    public void setAutoCleanOfflineDaysToLive(long val)
-    {
-        this.daystolive=val;
-        OFFLINE_AUTOCLEAN_DAYSTOLIVE.setValue(Duration.ofDays(val));
-    }
-
-    public boolean getAutoCleanOfflineMessages()
-    {
-        return this.enableAutoClean;
-    }
-
-    public long getAutoCleanOfflineMessagesTimer()
-    {
-        return this.checkinterval;
-    }
-
-    public long getAutoCleanOfflineDaysToLive()
-    {
-        return this.daystolive;
     }
 }

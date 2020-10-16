@@ -416,7 +416,9 @@ public final class UserManager {
      *
      * @param username to username of the user to check it it's a registered user.
      * @return true if the specified JID belongs to a local registered user.
+     * @deprecated Replaced by {@link #isRegisteredUser(JID, boolean)}, which prevents assumptions about the domain of the user. (OF-2106)
      */
+    @Deprecated
     public boolean isRegisteredUser(final String username) {
         if (username == null || "".equals(username)) {
             return false;
@@ -441,7 +443,7 @@ public final class UserManager {
      *
      * @param user to JID of the user to check it it's a registered user.
      * @return true if the specified JID belongs to a local or remote registered user.
-     * @deprecated Replaced by {@link #isRegisteredUser(JID, boolean)}, of which the signature is clear on performing potentially costly remote lookups.
+     * @deprecated Replaced by {@link #isRegisteredUser(JID, boolean)}, of which the signature is clear on performing potentially costly remote lookups. (OF-2106)
      */
     @Deprecated
     public boolean isRegisteredUser(final JID user) {

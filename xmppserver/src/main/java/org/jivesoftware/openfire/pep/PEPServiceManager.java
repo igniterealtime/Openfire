@@ -211,8 +211,7 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
     public PEPService create(JID owner) {
         // Return an error if the packet is from an anonymous, unregistered user
         // or remote user
-        if (!XMPPServer.getInstance().isLocal(owner)
-                || !UserManager.getInstance().isRegisteredUser(owner.getNode())) {
+        if (!UserManager.getInstance().isRegisteredUser(owner, false)) {
             throw new IllegalArgumentException(
                     "Request must be initiated by a local, registered user, but is not: "
                             + owner);

@@ -363,7 +363,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         packet.setTo(bareJidFrom);
 
         // Only service local, registered users.
-        if (!XMPPServer.getInstance().isLocal(senderJID) || !UserManager.getInstance().isRegisteredUser( senderJID.getNode()))
+        if ( !UserManager.getInstance().isRegisteredUser( senderJID, false ))
         {
             final IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());

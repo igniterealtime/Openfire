@@ -21,7 +21,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Unit test that verify the implementation of {@link ConnectionType}
@@ -65,6 +65,6 @@ public class ConnectionTypeTest
         final boolean result = connType.isClientOriented();
 
         // Verify result.
-        assertTrue(result == expected);
+        assertEquals(result, expected);
     }
 }

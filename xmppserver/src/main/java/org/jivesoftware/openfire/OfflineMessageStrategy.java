@@ -84,7 +84,7 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
                     recipientJID.getNode() == null ||
                     message.getExtension("received", "urn:xmpp:carbons:2") != null ||
-                    !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
+                    !UserManager.getInstance().isRegisteredUser(recipientJID, false)) {
                 return;
             }
 

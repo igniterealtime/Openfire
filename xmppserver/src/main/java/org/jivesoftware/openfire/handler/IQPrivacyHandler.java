@@ -58,7 +58,7 @@ public class IQPrivacyHandler extends IQHandler
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
         IQ.Type type = packet.getType();
         JID from = packet.getFrom();
-        if (from.getNode() == null || !UserManager.getInstance().isRegisteredUser(from.getNode())) {
+        if (from.getNode() == null || !UserManager.getInstance().isRegisteredUser(from, false)) {
             // Service is unavailable for anonymous users
             IQ result = IQ.createResultIQ(packet);
             result.setChildElement(packet.getChildElement().createCopy());

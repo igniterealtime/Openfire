@@ -96,7 +96,7 @@ public interface DiscoInfoProvider {
 
     /**
      * Returns true if we can provide information related to the requested name and node. For
-     * example, if the requested name refers to a non-existant MUC room then the answer will be
+     * example, if the requested name refers to a non-existent MUC room then the answer will be
      * false. In case that the sender of the disco request is not authorized to discover this
      * information an UnauthorizedException will be thrown.
      *

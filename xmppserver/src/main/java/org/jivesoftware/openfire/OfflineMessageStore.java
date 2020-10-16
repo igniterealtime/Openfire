@@ -86,9 +86,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     private static final String DELETE_OFFLINE_MESSAGE =
         "DELETE FROM ofOffline WHERE username=? AND creationDate=?";
     private static final String DELETE_OFFLINE_MESSAGE_BEFORE =
-            "DELETE FROM ofOffline creationDate < ?";
+        "DELETE FROM ofOffline WHERE creationDate < ?";
     private static final String SELECT_SIZE_OFFLINE_ALL_USERS =
-            "SELECT SUM(messageSize),username FROM ofOffline group by username";
+        "SELECT SUM(messageSize),username FROM ofOffline GROUP BY username";
 
     private static final int POOL_SIZE = 10;
 

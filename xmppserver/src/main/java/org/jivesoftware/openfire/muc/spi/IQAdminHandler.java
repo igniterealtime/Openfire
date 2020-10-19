@@ -98,6 +98,8 @@ public class IQAdminHandler {
         
         if (!itemsList.isEmpty()) {
             handleItemsElement(role, itemsList, reply);
+        } else if (!itemsList.isEmpty() && !itemsList.toString().contains(packet.getFrom().toBareJID())) {
+            handleItemsElement(role, itemsList, reply);
         }
         else {
             // An unknown and possibly incorrect element was included in the query

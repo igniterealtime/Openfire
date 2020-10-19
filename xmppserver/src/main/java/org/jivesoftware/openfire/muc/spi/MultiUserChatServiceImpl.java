@@ -1286,7 +1286,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error("Wrong number format of property tasks.user.idle for service "+chatServiceName, e);
             }
         }
-        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.tasks.log.maxbatchsize");
+        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.maxbatchsize");
         logMaxConversationBatchSize = 500;
         if (value != null) {
             try {

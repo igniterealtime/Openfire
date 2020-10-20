@@ -1,3 +1,16 @@
+# Root level stuff
 .git
 .gitignore
 Dockerfile
+.github
+.vscode
+
+# Deeper stuff
+**/.DS_Store
+**/.classpath
+**/.factorypath
+**/.idea
+**/.project
+**/.settings
+**/*.iml
+**/target

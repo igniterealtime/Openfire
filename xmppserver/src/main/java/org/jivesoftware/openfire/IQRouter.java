@@ -330,8 +330,11 @@ public class IQRouter extends BasicModule {
         }
         try {
             // Check for registered components, services or remote servers
+            // It is generally permissible to route stanzas that have no 'from' attribute. However,
+            // they are not allowed in s2s traffic.
             if (recipientJID != null &&
-                    (routingTable.hasComponentRoute(recipientJID) || routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), recipientJID.getDomain())))) {
+                (routingTable.hasComponentRoute(recipientJID) ||
+                    (packet.getFrom() != null && routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), recipientJID.getDomain()))))) {
                 // A component/service/remote server was found that can handle the Packet
                 routingTable.routePacket(recipientJID, packet, false);
                 return;

@@ -973,7 +973,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * allow the packet to flow.
      *
      * @param packet the packet to analyze if it must be blocked.
-     * @return true if the specified packet must be blocked.
+     * @return true if the specified packet must *not* be blocked.
      */
     @Override
     public boolean canProcess(Packet packet) {

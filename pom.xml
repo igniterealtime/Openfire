@@ -36,7 +36,7 @@
 
     <issueManagement>
         <system>jira</system>
-        <url>https://issues.igniterealtime.org/browse/OF</url>
+        <url>https://igniterealtime.atlassian.net/browse/OF</url>
     </issueManagement>
 
     <scm>

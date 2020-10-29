@@ -299,7 +299,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             try {
                 Roster recipientRoster = userManager.getUser(recipient.getNode()).getRoster();
                 // Instead of deleting the sender in the recipient's roster, update it.
-                // http://issues.igniterealtime.org/browse/OF-720
+                // https://igniterealtime.atlassian.net/browse/OF-720
                 RosterItem rosterItem = recipientRoster.getRosterItem(sender);
                 // If the receiver doesn't have subscribed yet, delete the sender from the receiver's roster, too.
                 if (rosterItem.getRecvStatus().equals(RosterItem.RECV_SUBSCRIBE)) {

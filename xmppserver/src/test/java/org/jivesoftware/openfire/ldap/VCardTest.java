@@ -126,7 +126,7 @@ public class VCardTest
      * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
      * to be replaced with the first non-empty matching attribute value, get correctly replaced.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testReplacePrioritizedPlaceholders() throws Exception
@@ -152,7 +152,7 @@ public class VCardTest
      * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
      * to be replaced with the first non-empty matching attribute value, get correctly replaced.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testReplacePrioritizedPlaceholdersVariantA() throws Exception
@@ -178,7 +178,7 @@ public class VCardTest
      * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
      * to be replaced with the first non-empty matching attribute value, get correctly replaced.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testReplacePrioritizedPlaceholdersVariantB() throws Exception
@@ -204,7 +204,7 @@ public class VCardTest
      * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
      * to be replaced with the first non-empty matching attribute value, get correctly replaced.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testReplacePrioritizedPlaceholdersVariantC() throws Exception
@@ -230,7 +230,7 @@ public class VCardTest
      * Verifies that, using a simplified template, all placeholder in a template defined in the format that is intended
      * to be replaced with the first non-empty matching attribute value, get correctly replaced.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testReplacePrioritizedPlaceholdersVariantD() throws Exception
@@ -301,7 +301,7 @@ public class VCardTest
      * if the elemnent value contains a separator character used in the implementation to distinguish individual
      * placeholders.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1947">OF-1947</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1947">OF-1947</a>
      */
     @Test
     public void testIdentifyNonPlaceholderWithSeparatorChar() throws Exception

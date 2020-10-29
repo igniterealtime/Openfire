@@ -93,7 +93,7 @@ public class CacheUtilTest
      * Verifies that {@link CacheUtil#removeValueFromMultiValuedCache(Cache, Serializable, Object)} does not change the cache or
      * throw an exception, while an element is being removed from a collection that's not in the cache.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1829">OF-1829</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1829">OF-1829</a>
      */
     @Test
     public void testRemoveElementFromNonExistentCollection() throws Exception

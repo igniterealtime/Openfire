@@ -225,7 +225,7 @@ public class AdminConsolePlugin implements Plugin {
 
     private void deleteLegacyWebInfLibFolder() {
         /*
-        See https://issues.igniterealtime.org/projects/OF/issues/OF-1647 - with the migration from Ant to Maven, Openfire
+        See https://igniterealtime.atlassian.net/projects/OF/issues/OF-1647 - with the migration from Ant to Maven, Openfire
         needs less JAR files scattered around the file system. When upgrading from before 4.3.0, the old file are not
         removed by the installer, so this method attempts to remove them.
          */

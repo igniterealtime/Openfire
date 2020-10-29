@@ -330,8 +330,19 @@ public class IQRouter extends BasicModule {
         }
         try {
             // Check for registered components, services or remote servers
-            // It is generally permissible to route stanzas that have no 'from' attribute. However,
+
+            // OF-2112: It is generally permissible to route stanzas that have no 'from' attribute. However,
             // they are not allowed in s2s traffic.
+            if (packet.getFrom() == null && !XMPPServer.getInstance().isLocal(recipientJID)) {
+                // Stanzas that originate from clients _always_ have a 'from' attribute (as that attribute value is set/
+                // overwritten by Openfire upon receiving the stanza, to prevent abuse where a user tries to impersonate
+                // someone else). That means that, if we're processing a stanza without a 'from' attribute, that the
+                // stanza is very likely to originate from Openfire's code. If we have code that generates a stanza
+                // without a 'from' address but addressed to a remote domain, this simply is a bug that we should very
+                // verbosely warn about.
+                Log.error("Unable to process a stanza that has no 'from' attribute, addressed to a remote entity. Stanza is being dropped: {}", packet.toXML());
+                return;
+            }
             if (recipientJID != null &&
                 (routingTable.hasComponentRoute(recipientJID) ||
                     (packet.getFrom() != null && routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), recipientJID.getDomain()))))) {

@@ -28,7 +28,7 @@ Resources
 
 - Documentation: http://www.igniterealtime.org/projects/openfire/documentation.jsp
 - Community: https://discourse.igniterealtime.org/c/openfire
-- Bug Tracker: http://issues.igniterealtime.org/browse/OF
+- Bug Tracker: https://igniterealtime.atlassian.net/browse/OF
 - Nightly Builds: http://www.igniterealtime.org/downloads/nightly_openfire.jsp
 
 Ignite Realtime

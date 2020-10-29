@@ -140,7 +140,7 @@ public class VCardTemplateTest
      * Verifies that, using a simplified template, all placeholders get correctly identified in a VCardTemplate, when
      * they're defined in the format that uses the first non-empty placeholder that's available.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testIdentifyPrioritizedPlaceholders() throws Exception
@@ -181,7 +181,7 @@ public class VCardTemplateTest
      * Verifies that, using a simplified template, attribute values do not get wrongly identified as a placeholder, even
      * when the value contains a separator character used in the implementation to distinguish individual placeholders.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1947">OF-1947</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1947">OF-1947</a>
      */
     @Test
     public void testIdentifyNonPlaceholderWithSeparatorChar() throws Exception
@@ -280,7 +280,7 @@ public class VCardTemplateTest
      * modified to have one element that uses a combination of more than one placeholder in the format that uses the
      * first non-empty placeholder that's available.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1106">OF-1106</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1106">OF-1106</a>
      */
     @Test
     public void testPrioritizedTemplate() throws Exception

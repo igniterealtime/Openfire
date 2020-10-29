@@ -14,7 +14,7 @@
         </description>
 
         <homepage rdf:resource="https://www.igniterealtime.org/projects/openfire/"/>
-        <bug-database rdf:resource="https://issues.igniterealtime.org/projects/OF/issues"/>
+        <bug-database rdf:resource="https://igniterealtime.atlassian.net/projects/OF/issues"/>
         <category rdf:resource="https://linkmauve.fr/ns/xmpp-doap#category-server"/>
         <license rdf:resource="http://usefulinc.com/doap/licenses/asl20"/>
 

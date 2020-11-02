@@ -14,29 +14,42 @@ jobs:
 
     name: Build Openfire from source
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 1.8, 11 ]
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 1.8
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: ${{ matrix.java }}
       - name: Cache Maven repository
         uses: actions/cache@v1
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-java${{ matrix.java }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-java${{ matrix.java }}-maven-
+            ${{ runner.os }}-
       - name: Build with Maven
         run: mvn -B package -Pcoverage --file pom.xml
       - name: Upload distribution
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
-          name: distribution
+          name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base
+      - name: Upload test files
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-files
+          path: |
+            runIntegrationTests
+            runAioxmppIntegrationTests
+            test.gradle
       - name: Upload coverage report for 'xmppserver' module
-        uses: actions/upload-artifact@v1
+        if: ${{ matrix.java == 1.8 }}
+        uses: actions/upload-artifact@v2
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
@@ -49,71 +62,33 @@ jobs:
 
     steps:
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
-          name: distribution
-      - name: Setup environment for Openfire
-        shell: bash
+          name: distribution-java1.8
+          path: distribution/target/distribution-base
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: test-files
+      - name: Fix file permissions
         run: |
-          echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
-      - name: Start Openfire
-        shell: bash
-        run: |
-          sh ./distribution/bin/openfire.sh -demoboot &
-      - name: Wait until Openfire is available
-        shell: bash
-        run: |
-          until printf "" 2>>/dev/null >>/dev/tcp/localhost/7070; do sleep 0.3; done
-      - name: Print success (replace this with running a test)
-        shell: bash
-        run: |
-          echo "Successfully started Openfire"
+          chmod +x distribution/target/distribution-base/bin/openfire.sh
+          chmod +x ./runAioxmppIntegrationTests
 
-      - name: Checkout aioxmpp
-        uses: actions/checkout@v2
-        with:
-          repository: horazont/aioxmpp
-          path: aioxmpp
-          ref: devel
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
           python-version: 3.6
-      - name: Install aioxmpp dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install nose
-          python -m pip install -e aioxmpp
-      - name: Generate Openfire test config
-        run: |
-          cat >"aioxmpp/openfire-config.ini" <<EOL
-          [global]
-          provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
-
-          [aioxmpp.e2etest.provision.AnonymousProvisioner]
-          domain=example.org
-          host=localhost
-          port=5222
-          no_verify=true
-          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
-          EOL
+     
       - name: Run aioxmpp tests
-        run: |
-          pushd aioxmpp
-          mkdir output
-          python -m aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only -e 'test_set_topic' -e 'test_publish_and_purge' -e 'test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
-          popd
+        run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
+            
       - name: Expose test output
-        uses: actions/upload-artifact@v1
+        if: always()
+        uses: actions/upload-artifact@v2
         with:
           name: aioxmpp test output
           path: aioxmpp/output
-
-      - name: Stop Openfire
-        shell: bash
-        run: |
-          pkill -f openfire.lib
 
   smack:
 
@@ -123,130 +98,55 @@ jobs:
 
     steps:
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
-          name: distribution
-      - name: Setup environment for Openfire
-        shell: bash
-        run: |
-          echo "127.0.0.1 example.org" | sudo tee -a /etc/hosts
-      - name: Start Openfire
-        shell: bash
-        run: |
-          sh ./distribution/bin/openfire.sh -demoboot &
-      - name: Wait until Openfire is available
-        shell: bash
-        run: |
-          until printf "" 2>>/dev/null >>/dev/tcp/localhost/7070; do sleep 0.3; done
-      - name: Print success (replace this with running a test)
-        shell: bash
-        run: |
-          echo "Successfully started Openfire"
-
+          name: distribution-java1.8
+          path: distribution/target/distribution-base
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: test-files
       - name: Set up Java
         uses: actions/setup-java@v1
         with:
           java-version: 11
+      - name: Fix file permissions
+        run: |
+          chmod +x distribution/target/distribution-base/bin/openfire.sh
+          chmod +x ./runIntegrationTests
       - name: Run smack tests
-        continue-on-error: false
-        shell: bash
-        run: |
-          cat >"test.gradle" <<EOL
-          apply plugin: 'application'
+        run: ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 # Try tests a few times, in case of flakiness
 
-          mainClassName = 'org.igniterealtime.smack.inttest.SmackIntegrationTestFramework'
-          applicationDefaultJvmArgs = ["-enableassertions"]
+  publish:
 
-          repositories {
-            mavenCentral()
-            maven {
-                url 'https://oss.sonatype.org/content/repositories/snapshots'
-            }
-            maven {
-                url 'https://www.igniterealtime.org/archiva/repository/maven/'
-            }
-          }
+    name: Publish to Maven
+    runs-on: ubuntu-latest
+    needs: [aioxmpp, smack]
+    if: ${{github.repository == 'igniterealtime/Openfire' && github.ref == 'refs/heads/master' && github.event_name == 'push'}}
 
-          dependencies {
-              compile group: 'org.igniterealtime.smack', name: 'smack-integration-test', version: smackVersion
-
-              // Workaround for https://discuss.gradle.org/t/unique-snapshot-dependencies-for-projects-own-subproject-in-pom-not-declared/35692?u=flow
-              // see https://discuss.gradle.org/t/how-to-force-a-dependency-version-while-also-substituting-a-transitive-dependency/26759/4?u=flow
-              components.all {
-                  allVariants {
-                      withDependencies { deps ->
-                          deps.each { dep ->
-                              if (dep.group == 'org.igniterealtime.smack') {
-                                  dep.version {
-                                      strictly smackVersion
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-
-          println "Sinttest with ${smackVersion}"
-
-          run {
-            // Pass all system properties down to the "application" run
-            systemProperties System.getProperties()
-          }
-          EOL
-
-          DISABLED_INTEGRATION_TESTS=()
-          #DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-          #DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
-
-          # Does sometimes not succeed in Travis (stress test is too much?)
-          DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
-
-          #FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
-          DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
-          #OX tests use a removed dependency, and so don't compile on 4.4.0a2
-          DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
-          DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
-
-          # Occasionally fails, disabled until cause can be found.
-          DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
-          DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
-          DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
-
-          SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
-          for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do
-            SINTTEST_DISABLED_TESTS_ARGUMENT+="${disabledTest},"
-          done
-
-          # Remove last ',' from the argument. Can't use ${SINTTEST_DISABLED_TESTS_ARGUMENT::-1} because bash on MacOS is infuriatingly incompatible.
-          SINTTEST_DISABLED_TESTS_ARGUMENT="${SINTTEST_DISABLED_TESTS_ARGUMENT:0:$((${#SINTTEST_DISABLED_TESTS_ARGUMENT}-1))}"
-
-
-          gradle --console=plain \
-            --build-file test.gradle \
-            -PsmackVersion="${SMACK_VERSION}" \
-            -q dependencies
-
-          gradle --console=plain \
-            --stacktrace \
-            run \
-            -b test.gradle \
-            -PsmackVersion="4.4.0-alpha3-20200513.010448-11" \
-            -Dsinttest.service="example.org" \
-            -Dsinttest.securityMode=disabled \
-            -Dsinttest.replyTimeout=60000 \
-            -Dsinttest.adminAccountUsername="admin" \
-            -Dsinttest.adminAccountPassword="admin" \
-            -Dsinttest.enabledConnections=tcp \
-            -Dsinttest.dnsResolver=javax \
-            ${SINTTEST_DISABLED_TESTS_ARGUMENT}
-
-      - name: Stop Openfire
-        shell: bash
-        run: |
-          pkill -f openfire.lib
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Defend against another commit quickly following the first
+          # We want the one that's been tested, rather than the head of master
+          ref: ${{ github.event.push.after }}
+      - name: Cache Maven repository
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-java11-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-java11-maven-
+            ${{ runner.os }}-
+      - name: Set up Java for publishing
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+          server-id: igniterealtime
+          server-username: IGNITE_REALTIME_MAVEN_USERNAME
+          server-password: IGNITE_REALTIME_MAVEN_PASSWORD
+      - name: Publish
+        run: mvn -B deploy
+        env:
+          IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
+          IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}

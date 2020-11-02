@@ -172,7 +172,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
         try {
             if ((sender.getNode() == null || !RosterManager.isRosterServiceEnabled() ||
-                    !userManager.isRegisteredUser(sender.getNode())) &&
+                    !userManager.isRegisteredUser(sender, false)) &&
                     IQ.Type.get == type) {
                 // If anonymous user asks for his roster or roster service is disabled then
                 // return an empty roster

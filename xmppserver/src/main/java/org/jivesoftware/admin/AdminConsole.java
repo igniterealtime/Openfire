@@ -23,6 +23,7 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -64,9 +65,7 @@ public class AdminConsole {
      * @throws Exception if an error occurs when parsing the XML or adding it to the model.
      */
     public static void addModel(String name, InputStream in) throws Exception {
-        SAXReader saxReader = new SAXReader();
-        saxReader.setIgnoreComments(true);
-        Document doc = saxReader.read(in);
+        Document doc = getDocument(in);
         addModel(name, (Element)doc.selectSingleNode("/adminconsole"));
     }
 
@@ -214,9 +213,7 @@ public class AdminConsole {
             return;
         }
         try {
-            SAXReader saxReader = new SAXReader();
-            saxReader.setIgnoreComments(true);
-            Document doc = saxReader.read(in);
+            Document doc = getDocument(in);
             coreModel = (Element)doc.selectSingleNode("/adminconsole");
         }
         catch (Exception e) {
@@ -341,7 +338,7 @@ public class AdminConsole {
                 // In this case, we have to overrite only the difference between
                 // the two elements.
                 else {
-                    overrideTab(existingTab, tab);
+                    overrideEntry(existingTab, tab);
                 }
             }
         }
@@ -371,52 +368,9 @@ public class AdminConsole {
         generatedModel.accept( visitor );
     }
 
-    private static void overrideTab(Element tab, Element overrideTab) {
-        // Override name, url, description.
-        if (overrideTab.attributeValue("name") != null) {
-            tab.addAttribute("name", overrideTab.attributeValue("name"));
-        }
-        if (overrideTab.attributeValue("url") != null) {
-            tab.addAttribute("url", overrideTab.attributeValue("url"));
-        }
-        if (overrideTab.attributeValue("description") != null) {
-            tab.addAttribute("description", overrideTab.attributeValue("description"));
-        }
-        if (overrideTab.attributeValue("plugin") != null) {
-            tab.addAttribute("plugin", overrideTab.attributeValue("plugin"));
-        }
-        if (overrideTab.attributeValue("order") != null) {
-            tab.addAttribute("order", overrideTab.attributeValue("order"));
-        }
-        // Override sidebar items.
-        for (Iterator i=overrideTab.elementIterator(); i.hasNext(); ) {
-            Element sidebar = (Element)i.next();
-            String id = sidebar.attributeValue("id");
-            Element existingSidebar = getElemnetByID(id);
-            // Simple case, there is no existing sidebar with the same id.
-            if (existingSidebar == null) {
-                tab.add(sidebar.createCopy());
-            }
-            // More complex case -- a sidebar with the same id already exists.
-            // In this case, we have to overrite only the difference between
-            // the two elements.
-            else {
-                overrideSidebar(existingSidebar, sidebar);
-            }
-        }
-    }
-
     private static void overrideSidebar(Element sidebar, Element overrideSidebar) {
         // Override name.
-        if (overrideSidebar.attributeValue("name") != null) {
-            sidebar.addAttribute("name", overrideSidebar.attributeValue("name"));
-        }
-        if (overrideSidebar.attributeValue("plugin") != null) {
-            sidebar.addAttribute("plugin", overrideSidebar.attributeValue("plugin"));
-        }
-        if (overrideSidebar.attributeValue("order") != null) {
-            sidebar.addAttribute("order", overrideSidebar.attributeValue("order"));
-        }
+        overrideCommonAttributes(sidebar, overrideSidebar);
         // Override entries.
         for (Iterator i=overrideSidebar.elementIterator(); i.hasNext(); ) {
             Element entry = (Element)i.next();
@@ -437,20 +391,12 @@ public class AdminConsole {
 
     private static void overrideEntry(Element entry, Element overrideEntry) {
         // Override name.
-        if (overrideEntry.attributeValue("name") != null) {
-            entry.addAttribute("name", overrideEntry.attributeValue("name"));
-        }
+        overrideCommonAttributes(entry, overrideEntry);
         if (overrideEntry.attributeValue("url") != null) {
             entry.addAttribute("url", overrideEntry.attributeValue("url"));
         }
         if (overrideEntry.attributeValue("description") != null) {
             entry.addAttribute("description", overrideEntry.attributeValue("description"));
-        }
-        if (overrideEntry.attributeValue("plugin") != null) {
-            entry.addAttribute("plugin", overrideEntry.attributeValue("plugin"));
-        }
-        if (overrideEntry.attributeValue("order") != null) {
-            entry.addAttribute("order", overrideEntry.attributeValue("order"));
         }
         // Override any sidebars contained in the entry.
         for (Iterator i=overrideEntry.elementIterator(); i.hasNext(); ) {
@@ -467,6 +413,18 @@ public class AdminConsole {
             else {
                 overrideSidebar(existingSidebar, sidebar);
             }
+        }
+    }
+
+    private static void overrideCommonAttributes(Element entry, Element overrideEntry) {
+        if (overrideEntry.attributeValue("name") != null) {
+            entry.addAttribute("name", overrideEntry.attributeValue("name"));
+        }
+        if (overrideEntry.attributeValue("plugin") != null) {
+            entry.addAttribute("plugin", overrideEntry.attributeValue("plugin"));
+        }
+        if (overrideEntry.attributeValue("order") != null) {
+            entry.addAttribute("order", overrideEntry.attributeValue("order"));
         }
     }
 
@@ -506,5 +464,14 @@ public class AdminConsole {
                 return 0;
             }
         }
+    }
+
+    private static Document getDocument(InputStream in) throws SAXException, DocumentException {
+        SAXReader saxReader = new SAXReader();
+        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        saxReader.setIgnoreComments(true);
+        return saxReader.read(in);
     }
 }

@@ -29,7 +29,6 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -42,6 +41,7 @@
     final JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     final String roomName = roomJID.getNode();
     final String outboundJoinPeerString = ParamUtils.getParameter(request, "roomconfig_fmuc_outbound_jid", true);
+    final boolean fmucEnabled = ParamUtils.getBooleanParameter(request, "fmuc-enabled");
     String stopSessionString = ParamUtils.getParameter(request,"stopSession", true);
     JID stopSession = stopSessionString != null && !stopSessionString.isEmpty() ? new JID(stopSessionString) : null;
 
@@ -122,30 +122,29 @@
 
         // Apply changes (if there are no errors)
         if ( errors.isEmpty() ) {
-            final FMUCHandler.OutboundJoinConfiguration outboundJoinConfiguration;
-            if ( outboundJoinPeer == null ) {
-                outboundJoinConfiguration = null;
-            } else {
-                outboundJoinConfiguration = new FMUCHandler.OutboundJoinConfiguration(outboundJoinPeer, FMUCMode.MasterMaster ); // We currently do not support another mode than master-master.
-            }
             try {
-                fmucHandler.setOutboundJoinConfiguration(outboundJoinConfiguration);
+                room.setFmucEnabled(fmucEnabled);
+                room.setFmucOutboundNode(outboundJoinPeer);
+                room.setFmucOutboundMode(FMUCMode.MasterMaster); // We currently do not support another mode than master-master.
+                room.getFmucHandler().applyConfigurationChanges();
+                room.saveToDB();
             } catch ( Exception e ) {
                 LoggerFactory.getLogger("muc-room-federation.jsp").warn("An exception occurred while trying to apply an FMUC config change to room {}", roomJID, e );
                 errors.put( "fmuchandler", e.getMessage() );
             }
 
             // Log the event
-            webManager.logEvent("updated FMUC settings for MUC room "+roomName, "outbound peer = "+(outboundJoinConfiguration == null ? "(none)" :outboundJoinConfiguration.getPeer())+"\n outbound mode = "+(outboundJoinConfiguration == null ? "(none)" :outboundJoinConfiguration.getMode()));
+            webManager.logEvent("Updated FMUC settings for MUC room "+roomName, "FMUC enabled = " + room.isFmucEnabled() + ",\noutbound peer = "+(room.getFmucOutboundNode() == null ? "(none)" :room.getFmucOutboundNode())+",\noutbound mode = "+(room.getFmucOutboundMode() == null ? "(none)" :room.getFmucOutboundMode()));
             response.sendRedirect("muc-room-federation.jsp?success=true&roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
             return;
         }
     }
 
+    pageContext.setAttribute( "killSwitchEnabled", !FMUCHandler.FMUC_ENABLED.getValue() );
     pageContext.setAttribute( "errors", errors );
     pageContext.setAttribute( "room", room );
     pageContext.setAttribute( "roomJIDBare", roomJID.toBareJID() );
-    pageContext.setAttribute("fmucOutboundJID", fmucHandler.getOutboundJoinConfiguration() == null ? "" : fmucHandler.getOutboundJoinConfiguration().getPeer().toString());
+    pageContext.setAttribute( "fmucOutboundJID", room.getFmucOutboundNode() == null ? "" : room.getFmucOutboundNode().toString());
 %>
 
 <html>
@@ -172,9 +171,9 @@
     </admin:infoBox>
 </c:if>
 
-<c:if test="${not room.fmucEnabled}">
+<c:if test="${killSwitchEnabled}">
     <admin:infoBox type="warning">
-        Federation (FMUC) functionality is disabled by configuration! Please use the system property <code>xmpp.muc.room.fmuc.enabled</code> to enable it!
+        <fmt:message key="muc.room.federation.experimental_warning" />
     </admin:infoBox>
 </c:if>
 
@@ -250,29 +249,32 @@
 
 <br>
 
-<p><fmt:message key="muc.room.federation.form.descr" /></p>
-<br>
-
 <form action="muc-room-federation.jsp">
     <input type="hidden" name="roomJID" value="${fn:escapeXml(roomJIDBare)}">
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="save" value="true">
 
-    <table width="100%" border="0">
-        <tbody>
-            <tr>
-                <td><label for="roomconfig_fmuc_outbound_jid"><fmt:message key="muc.room.federation.form.outbound_jid" /></label>:</td>
-                <td><input name="roomconfig_fmuc_outbound_jid" id="roomconfig_fmuc_outbound_jid" value="${empty fmucOutboundJID ? "" : fn:escapeXml(fmucOutboundJID)}" type="text" size="40"></td>
-            </tr>
-            <tr align="center">
-                <td colspan="2">
-                    <input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />">
-                </td>
-            </tr>
-        </tbody>
+<fmt:message key="muc.room.federation.form.boxtitle" var="formboxtitle"/>
+<admin:contentBox title="${formboxtitle}">
+
+    <p><fmt:message key="muc.room.federation.form.descr" /></p>
+
+    <table cellpadding="3" cellspacing="0" border="0">
+        <tr valign="middle">
+            <td colspan="2"><input type="checkbox" name="fmuc-enabled" id="fmuc-enabled" ${room.fmucEnabled ? 'checked' : ''}/> <label for="fmuc-enabled"><fmt:message key="muc.room.federation.form.enabled"/></label></td>
+        </tr>
+        <tr valign="middle">
+            <td><label for="roomconfig_fmuc_outbound_jid"><fmt:message key="muc.room.federation.form.outbound_jid" /></label>:</td>
+            <td><input name="roomconfig_fmuc_outbound_jid" id="roomconfig_fmuc_outbound_jid" value="${empty fmucOutboundJID ? "" : fn:escapeXml(fmucOutboundJID)}" type="text" size="40"></td>
+        </tr>
     </table>
 
+</admin:contentBox>
+
+<input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />">
+
 </form>
+
 <br>
 
 <p>

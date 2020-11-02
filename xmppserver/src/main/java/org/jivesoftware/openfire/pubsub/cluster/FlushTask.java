@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.CachingPubsubPersistenceProvider;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.PubSubPersistenceProvider;
@@ -29,13 +30,13 @@ public class FlushTask implements ClusterTask<Void>
     @Override
     public void run()
     {
-		final PubSubPersistenceProvider provider = PubSubPersistenceProviderManager.getInstance().getProvider();
+		final PubSubPersistenceProvider provider = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider();
 		if ( provider instanceof CachingPubsubPersistenceProvider )
 		{
 			if ( uniqueIdentifier != null ) {
-				((CachingPubsubPersistenceProvider) provider).flushPendingItems( uniqueIdentifier, false ); // just this member
+				((CachingPubsubPersistenceProvider) provider).flushPendingChanges(uniqueIdentifier, false ); // just this member
 			} else {
-				((CachingPubsubPersistenceProvider) provider).flushPendingItems( false ); // just this member
+				((CachingPubsubPersistenceProvider) provider).flushPendingChanges(false ); // just this member
 			}
         }
 	}

@@ -23,6 +23,7 @@
                  java.text.DecimalFormat"
     errorPage="error.jsp"
 %>
+<%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -58,6 +59,14 @@
     int storeStrategy = ParamUtils.getIntParameter(request,"storeStrategy",-1);
     double quota = ParamUtils.getDoubleParameter(request,"quota", manager.getQuota()/1024);
     DecimalFormat format = new DecimalFormat("#0.00");
+
+    String offlinecleaner = ParamUtils.getParameter( request, "offlinecleaner" );
+    String offlinechecktimer = ParamUtils.getParameter( request, "offlinechecktimer" );
+    String daystolive = ParamUtils.getParameter( request, "daystolive" );
+
+    pageContext.setAttribute( "offlinecleaner", offlinecleaner );
+    pageContext.setAttribute( "offlinechecktimer", offlinechecktimer );
+    pageContext.setAttribute( "daystolive", daystolive );
 
     // Update the session kick policy if requested
     Map<String, String> errors = new HashMap<String, String>();
@@ -119,6 +128,13 @@
                 }
             }
 
+            final boolean enable = offlinecleaner!=null&&offlinecleaner.equalsIgnoreCase("on");
+            final Duration checkInterval = Duration.ofMinutes( offlinechecktimer!=null&&!offlinechecktimer.trim().isEmpty() ? Integer.parseInt(offlinechecktimer) : OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.getDefaultValue().toMinutes() );
+            final Duration daysToLive = Duration.ofDays( daystolive!=null&&!daystolive.trim().isEmpty() ? Integer.parseInt(daystolive) : OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.getDefaultValue().toDays() );
+            OfflineMessageStore.OFFLINE_AUTOCLEAN_ENABLE.setValue(enable);
+            OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.setValue(checkInterval);
+            OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.setValue(daysToLive);
+
             manager.setQuota((int)(quota*1024));
 
             // Log the event
@@ -161,6 +177,10 @@
         if (quota < 0) {
             quota = 0;
         }
+
+        pageContext.setAttribute( "offlinechecktimer", OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue() );
+        pageContext.setAttribute( "daystolive", OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue() );
+        pageContext.setAttribute( "offlinecleaner", OfflineMessageStore.OFFLINE_AUTOCLEAN_ENABLE.getValue()?"true":"" );
     }
 %>
 
@@ -294,6 +314,67 @@
                 </td>
             </tr>
         </tbody>
+        </table>
+    </div>
+    <br/>
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="offline.messages.clean.title" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tbody>
+                <tr valign="top">
+                    <td colspan="2">
+                        <fmt:message key="offline.messages.clean.description" />
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <b>
+                            <label for="offlinecleaner">
+                                <fmt:message key="offline.messages.clean.label" />
+                            </label>
+                        </b>
+                    </td>
+                    <td width="99%">
+                        <input type="checkbox" name="offlinecleaner" id="offlinecleaner" size="5" ${offlinecleaner ? "checked" : ""} >
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td colspan="2">
+                        <fmt:message key="offline.messages.clean.timer.description" />
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <b>
+                            <label for="offlinechecktimer">
+                                <fmt:message key="offline.messages.clean.timer.label" />
+                            </label>
+                        </b>
+                    </td>
+                    <td width="99%">
+                        <input type="number" min="1" name="offlinechecktimer" id="offlinechecktimer" size="5" value="${offlinechecktimer.toMinutes()}">
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td colspan="2">
+                        <fmt:message key="offline.messages.clean.daystolive.description" />
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td width="1%" nowrap>
+                        <b>
+                            <label for="daystolive">
+                                <fmt:message key="offline.messages.clean.daystolive.label" />
+                            </label>
+                        </b>
+                    </td>
+                    <td width="99%">
+                        <input type="number" min="1" name="daystolive" id="daystolive" size="5" value="${daystolive.toDays()}">
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">

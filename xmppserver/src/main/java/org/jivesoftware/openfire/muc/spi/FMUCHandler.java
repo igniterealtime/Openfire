@@ -20,7 +20,6 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
@@ -35,7 +34,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 // TODO: monitor health of s2s connection, somehow?
-// FIXME: persist state (so that configuration survives a restart!)
 public class FMUCHandler
 {
     private static final Logger Log = LoggerFactory.getLogger( FMUCHandler.class );
@@ -47,7 +45,7 @@ public class FMUCHandler
         .addListener( isEnabled -> {
             XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
                 service -> service.getChatRooms().forEach(
-                    mucRoom -> mucRoom.getFmucHandler().setFmucEnabled(isEnabled)
+                    mucRoom -> mucRoom.getFmucHandler().applyConfigurationChanges()
                 )
             );
         })
@@ -69,12 +67,12 @@ public class FMUCHandler
     private final PacketRouter router;
 
     /**
-     * Indicates if FMUC functionality is available for the room.
+     * Indicates if FMUC functionality has been started.
      */
-    private boolean fmucEnabled;
+    private boolean isStarted;
 
     /**
-     * Configuration that dictates if the local room should actively start joining remote rooms.
+     * State that indicates if the local room has been configured to actively start joining a remote room.
      */
     private OutboundJoinConfiguration outboundJoinConfiguration;
 
@@ -98,10 +96,6 @@ public class FMUCHandler
     public FMUCHandler( @Nonnull LocalMUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
-        this.fmucEnabled = FMUC_ENABLED.getValue();
-        if ( fmucEnabled ) {
-            startOutbound();
-        }
     }
 
     /**
@@ -147,6 +141,7 @@ public class FMUCHandler
         Log.trace( "(room: '{}'): Done disconnecting inbound and outbound nodes from the node set. Now removing all their ({}) occupants from the room.", room.getJID(), removedRemoteOccupants.size() );
         makeRemoteOccupantLeaveRoom( removedRemoteOccupants );
 
+        isStarted = false;
         Log.debug( "(room: '{}'): Finished stopping FMUC federation.", room.getJID() );
     }
 
@@ -363,31 +358,34 @@ public class FMUCHandler
         return result;
     }
 
-    public void setFmucEnabled(boolean fmucEnabled) {
-        if ( this.fmucEnabled != fmucEnabled ) {
-            this.fmucEnabled = fmucEnabled;
-            Log.debug( "(room: '{}'): Changing availability of FMUC to {}.", room.getJID(), fmucEnabled );
-            if (fmucEnabled) {
+    /**
+     * Reads configuration from the room instance that is being services by this handler, and applies relevant changes.
+     */
+    public synchronized void applyConfigurationChanges()
+    {
+        if ( isStarted != (room.isFmucEnabled() && FMUC_ENABLED.getValue()) ) {
+            Log.debug( "(room: '{}'): Changing availability of FMUC functionality to {}.", room.getJID(), (room.isFmucEnabled() && FMUC_ENABLED.getValue()) );
+            if ((room.isFmucEnabled() && FMUC_ENABLED.getValue())) {
                 startOutbound();
             } else {
                 stop();
+                return;
             }
         }
-    }
 
-    public boolean isFmucEnabled() {
-        return fmucEnabled;
-    }
-
-    public synchronized void setOutboundJoinConfiguration( @Nullable final OutboundJoinConfiguration config )
-    {
-        Log.debug( "(room: '{}'): Changing outbound join configuration. Existing: {}, New: {}", room.getJID(), this.outboundJoinConfiguration, config );
+        final OutboundJoinConfiguration desiredConfig;
+        if ( room.getFmucOutboundNode() != null ) {
+            desiredConfig = new OutboundJoinConfiguration( room.getFmucOutboundNode(), room.getFmucOutboundMode() );
+        } else {
+            desiredConfig = null;
+        }
+        Log.debug("(room: '{}'): Changing outbound join configuration. Existing: {}, New: {}", room.getJID(), this.outboundJoinConfiguration, desiredConfig );
 
         if ( this.outboundJoinProgress != null ) {
-            if (config == null) {
+            if (desiredConfig == null) {
                 Log.trace( "(room: '{}'): Had, but now no longer has, outbound join configuration. Aborting ongoing federation attempt...", room.getJID() );
                 abortOutboundJoinProgress();
-            } else if ( this.outboundJoinProgress.getPeer().equals( config.getPeer() ) ) {
+            } else if ( this.outboundJoinProgress.getPeer().equals( desiredConfig.getPeer() ) ) {
                 Log.trace( "(room: '{}'): New configuration matches peer that ongoing federation attempt is made with. Allowing attempt to continue.", room.getJID() );
             } else {
                 Log.trace( "(room: '{}'): New configuration targets a different peer that ongoing federation attempt is made with. Aborting attempt.", room.getJID() );
@@ -395,38 +393,35 @@ public class FMUCHandler
             }
         }
 
-        if ( this.outboundJoinConfiguration == null && config != null ) {
+        if ( this.outboundJoinConfiguration == null && desiredConfig != null ) {
             Log.trace( "(room: '{}'): Did not, but now has, outbound join configuration. Starting federation...", room.getJID() );
-            this.outboundJoinConfiguration = config;
+            this.outboundJoinConfiguration = desiredConfig;
             startOutbound();
-        } else if ( this.outboundJoinConfiguration != null && config == null ) {
+        } else if ( this.outboundJoinConfiguration != null && desiredConfig == null ) {
             Log.trace( "(room: '{}'): Had, but now no longer has, outbound join configuration. Stopping federation...", room.getJID() );
-            this.outboundJoinConfiguration = config;
+            this.outboundJoinConfiguration = desiredConfig;
             stopOutbound();
-        } else if ( this.outboundJoinConfiguration != null && config != null ) {
+        } else if ( this.outboundJoinConfiguration != null && desiredConfig != null ) {
             if ( outboundJoin == null ) {
-                if ( this.outboundJoinConfiguration.equals( config ) ) {
+                if ( this.outboundJoinConfiguration.equals(desiredConfig ) ) {
                     // no change
                 } else {
                     Log.trace( "(room: '{}'): Applying new configuration.", room.getJID() );
-                    this.outboundJoinConfiguration = config;
+                    this.outboundJoinConfiguration = desiredConfig;
                     startOutbound();
                 }
             } else {
-                if ( outboundJoin.getConfiguration().equals( config ) ) {
+                if ( outboundJoin.getConfiguration().equals( desiredConfig ) ) {
                     Log.trace( "(room: '{}'): New configuration matches configuration of established federation. Not applying any change.", room.getJID() );
                 } else {
                     Log.trace( "(room: '{}'): Already had outbound join configuration, now got a different config. Restarting federation...", room.getJID() );
                     stopOutbound();
-                    this.outboundJoinConfiguration = config;
+                    this.outboundJoinConfiguration = desiredConfig;
                     startOutbound();
                 }
             }
         }
-    }
-
-    public synchronized OutboundJoinConfiguration getOutboundJoinConfiguration() {
-        return outboundJoinConfiguration;
+        isStarted = true;
     }
 
     /**
@@ -445,7 +440,7 @@ public class FMUCHandler
      */
     public synchronized CompletableFuture<?> propagate( @Nonnull Packet stanza, @Nonnull MUCRole sender )
     {
-        if ( !fmucEnabled ) {
+        if ( !(room.isFmucEnabled() && FMUC_ENABLED.getValue()) ) {
             Log.debug( "(room: '{}'): FMUC disabled, skipping FMUC propagation.", room.getJID() );
             return CompletableFuture.completedFuture(null);
         }
@@ -494,7 +489,7 @@ public class FMUCHandler
 
     protected synchronized Future<?> join( @Nonnull MUCRole mucRole, final boolean includeInbound, final boolean includeOutbound )
     {
-        if ( !fmucEnabled ) {
+        if ( !(room.isFmucEnabled() && FMUC_ENABLED.getValue()) ) {
             Log.debug( "(room: '{}'): FMUC disabled, skipping FMUC join.", room.getJID() );
             return CompletableFuture.completedFuture(null);
         }
@@ -793,7 +788,7 @@ public class FMUCHandler
 
     public synchronized void process( @Nonnull final Packet stanza )
     {
-        if ( !fmucEnabled ) {
+        if ( !(room.isFmucEnabled() && FMUC_ENABLED.getValue()) ) {
             Log.debug( "(room: '{}'): FMUC disabled, skipping processing of stanza: {}", room.getJID(), stanza.toXML() );
             if ( stanza instanceof IQ && ((IQ) stanza).isRequest() ) {
                 final IQ errorResult = IQ.createResultIQ( (IQ) stanza);
@@ -960,12 +955,7 @@ public class FMUCHandler
 
             // The 'stripped' stanza is going to be distributed locally. Act as if it originates from a local user, instead of the remote FMUC one.
             final JID from;
-            if ( author != null ) {
-                from = senderRole.getRoleAddress();
-            } else {
-                Log.trace("(room: '{}'): FMUC stanza did not have 'from' value. Using room JID instead.", room.getJID() );
-                from = room.getJID();
-            }
+            from = senderRole.getRoleAddress();
             stripped.setFrom( from );
             stripped.setTo( room.getJID() );
 
@@ -994,7 +984,7 @@ public class FMUCHandler
         else
         {
             Log.trace("(room: '{}'): Synchronizing state of local room with joined FMUC node '{}'.", room.getJID(), outboundJoinProgress.getPeer() );
-            outboundJoin = new OutboundJoin( outboundJoinConfiguration );
+            outboundJoin = new OutboundJoin(outboundJoinConfiguration);
 
             // Before processing the data in context of the local FMUC room, ensure that the FMUC metadata state is up-to-date.
             for ( final Packet response : outboundJoinProgress.getResponses() ) {
@@ -1274,14 +1264,13 @@ public class FMUCHandler
             throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
         }
 
-        // TODO replace this with a per-room configurable options (similar to other options that are configurable).
-        if ( !FMUC_ENABLED.getValue() )
+        if ( !(room.isFmucEnabled() && FMUC_ENABLED.getValue()) )
         {
             Log.info( "(room: '{}'): Rejecting join request of remote joining peer '{}': FMUC functionality is not enabled.", room.getJID(), joiningPeer );
             throw new FMUCException( "FMUC functionality is not enabled." );
         }
 
-        if ( this.outboundJoinConfiguration != null && joiningPeer.equals( this.outboundJoinConfiguration.getPeer()) ) {
+        if ( this.outboundJoinConfiguration != null && joiningPeer.equals(this.outboundJoinConfiguration.getPeer()) ) {
             Log.info( "(room: '{}'): Rejecting join request of remote joining peer '{}': The local, joined node is set up to federate with the joining node (cannot have circular federation).", room.getJID(), joiningPeer );
             throw new FMUCException( "The joined node is set up to federate with the joining node (cannot have circular federation)." );
         }
@@ -1608,7 +1597,7 @@ public class FMUCHandler
         }
 
         public OutboundJoinConfiguration getConfiguration() {
-            return new OutboundJoinConfiguration( getPeer(), getMode() );
+            return new OutboundJoinConfiguration(getPeer(), getMode() );
         }
 
         @Override

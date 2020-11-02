@@ -19,10 +19,7 @@ package org.jivesoftware.openfire.muc;
 import org.dom4j.Element;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.muc.spi.FMUCHandler;
-import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
-import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
-import org.jivesoftware.openfire.muc.spi.LocalMUCUser;
+import org.jivesoftware.openfire.muc.spi.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveConstants;
@@ -39,6 +36,7 @@ import java.io.Externalizable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -819,6 +817,78 @@ public interface MUCRoom extends Externalizable, Result {
      * When joining nodes are attempting a join, a rejection will be returned when this feature is disabled.
      */
     void setFmucEnabled( boolean fmucEnabled );
+
+    /**
+     * Returns the address of the MUC room (typically on a remote XMPP domain) to which this room should initiate
+     * FMUC federation. In this federation, the local node takes the role of the 'joining' node, while the remote node
+     * takes the role of the 'joined' node.
+     *
+     * When this room is not expected to initiate federation (note that it can still accept inbound federation attempts)
+     * then this method returns null.
+     *
+     * Although a room can accept multiple inbound joins (where it acts as a 'parent' node), it can initiate only one
+     * outbound join at a time (where it acts as a 'child' node).
+     *
+     * @return Address of peer for to-be-initiated outbound FMUC federation, possibly null.
+     */
+    JID getFmucOutboundNode();
+
+    /**
+     * Sets the address of the MUC room (typically on a remote XMPP domain) to which this room should initiate
+     * FMUC federation. In this federation, the local node takes the role of the 'joining' node, while the remote node
+     * takes the role of the 'joined' node.
+     *
+     * When this room is not expected to initiate federation (note that it can still accept inbound federation attempts)
+     * then this method returns null.
+     *
+     * Although a room can accept multiple inbound joins (where it acts as a 'parent' node), it can initiate only one
+     * outbound join at a time (where it acts as a 'child' node).
+     *
+     * @param fmucOutboundNode Address of peer for to-be-initiated outbound FMUC federation, possibly null.
+     */
+    void setFmucOutboundNode( JID fmucOutboundNode );
+
+    /**
+     * Returns the 'mode' that describes the FMUC configuration is captured in the supplied object, which is
+     * either master-master or master-slave.
+     *
+     * This method should return null only when no outbound federation should be attempted.
+     *
+     * @return FMUC mode applied to outbound FMUC federation attempts.
+     */
+    FMUCMode getFmucOutboundMode();
+
+    /**
+     * Sets the 'mode' that describes the FMUC configuration is captured in the supplied object, which is
+     * either master-master or master-slave.
+     *
+     * @param fmucOutboundMode FMUC mode applied to outbound FMUC federation attempts.
+     */
+    void setFmucOutboundMode( FMUCMode fmucOutboundMode );
+
+    /**
+     * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
+     * permitted to to federate with the local room.
+     *
+     * A null value is to be interpreted as allowing all rooms to be permitted.
+     *
+     * An empty set of addresses is to be interpreted as disallowing all rooms to be permitted.
+     *
+     * @return A list of rooms allowed to join, possibly empty, possibly null
+     */
+    Set<JID> getFmucInboundNodes();
+
+    /**
+     * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
+     * permitted to to federate with the local room.
+     *
+     * A null value is to be interpreted as allowing all rooms to be permitted.
+     *
+     * An empty set of addresses is to be interpreted as disallowing all rooms to be permitted.
+     *
+     * @param fmucInboundNodes A list of rooms allowed to join, possibly empty, possibly null
+     */
+    void setFmucInboundNodes( Set<JID> fmucInboundNodes );
 
     /**
      * Returns the maximum number of occupants that can be simultaneously in the room. If the number

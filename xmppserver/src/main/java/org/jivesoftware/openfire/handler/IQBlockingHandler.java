@@ -82,7 +82,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
 
         final JID requester = iq.getFrom();
 
-        if ( !XMPPServer.getInstance().getUserManager().isRegisteredUser( requester ) )
+        if ( !XMPPServer.getInstance().getUserManager().isRegisteredUser( requester, false ) )
         {
             final IQ error = IQ.createResultIQ( iq );
             error.setError( PacketError.Condition.not_authorized );

@@ -732,8 +732,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // Verify the policy that allows all local, registered users to create rooms.
-        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID);
-
+        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID, false);
     }
 
     @Override
@@ -787,6 +786,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             MUCEventDispatcher.roomCreated(room.getRole().getRoleAddress());
         }
         if (loaded || created) {
+            // Initiate FMUC, when enabled.
+            room.getFmucHandler().applyConfigurationChanges();
+
             // Notify other cluster nodes that a new room is available
             CacheFactory.doClusterTask(new RoomAvailableEvent(room));
             for (final MUCRole role : room.getOccupants()) {
@@ -820,11 +822,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     catch (final IllegalArgumentException e) {
                         // The room does not exist so do nothing
                         room = null;
+                        loaded = false;
                     }
                 }
             }
         }
         if (loaded) {
+            // Initiate FMUC, when enabled.
+            room.getFmucHandler().applyConfigurationChanges();
+
             // Notify other cluster nodes that a new room is available
             CacheFactory.doClusterTask(new RoomAvailableEvent(room));
         }
@@ -1280,7 +1286,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error("Wrong number format of property tasks.user.idle for service "+chatServiceName, e);
             }
         }
-        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.tasks.log.maxbatchsize");
+        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.maxbatchsize");
         logMaxConversationBatchSize = 500;
         if (value != null) {
             try {
@@ -1478,6 +1484,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Load all the persistent rooms to memory
         for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
+
+            // Start FMUC, if desired.
+            room.getFmucHandler().applyConfigurationChanges();
         }
     }
 

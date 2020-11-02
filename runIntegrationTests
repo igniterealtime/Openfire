@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.0-alpha3-20200513.010448-11"
+SMACK_VERSION="4.4.0-beta2"
 GRADLE_VERSION="6.3"
 FORCE_CUSTOM_GRADLE=false
 CURL_ARGS="--location --silent"
@@ -138,7 +138,7 @@ function launchOpenfire {
 	fi
 
 	rm -f distribution/target/distribution-base/conf/openfire.xml
-	cp distribution/src/conf/openfire-demoboot.xml \
+	cp distribution/target/distribution-base/conf/openfire-demoboot.xml \
 		distribution/target/distribution-base/conf/openfire.xml
 
 	echo "Starting Openfire…"
@@ -155,27 +155,22 @@ function runTestsInGradle {
 	echo "Starting Integration Tests (using Smack ${SMACK_VERSION})…"
 
 	DISABLED_INTEGRATION_TESTS=()
-	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
-	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
 
-	# Does sometimes not succeed in Travis (stress test is too much?)
+	# MultiUserChatIntegrationTest.mucDestroyTest suffers from a race condition, making this test flap. See https://github.com/igniterealtime/Smack/pull/437
+	DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
+    
+    # The three tests below suffer from a race conditaion, making them flap. See https://github.com/igniterealtime/Smack/pull/440
+    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
+    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
+
+    # Occasionally fails, disabled until cause can be found.
 	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
-
-	#FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
-	DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
-	#OX tests use a removed dependency, and so don't compile on 4.4.0a2
-	DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
-	DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
 	DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
 	DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
-
-    # Occasionally fails, disabled until cause can be found.
-    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
-    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
 
 	SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
 	for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do

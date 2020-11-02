@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.XMPPDateTimeFormat;
@@ -488,7 +489,7 @@ public class NodeSubscription {
         }
         if (savedToDB) {
             // Update the subscription in the backend store
-            PubSubPersistenceProviderManager.getInstance().getProvider().updateSubscription(node, this);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateSubscription(node, this);
         }
         // Check if the service needs to subscribe or unsubscribe from the owner presence
         if (!node.isPresenceBasedDelivery() && wasUsingPresence != !presenceStates.isEmpty()) {
@@ -861,7 +862,7 @@ public class NodeSubscription {
 
         if (savedToDB) {
             // Update the subscription in the backend store
-            PubSubPersistenceProviderManager.getInstance().getProvider().updateSubscription(node, this);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateSubscription(node, this);
         }
 
         // Send last published item (if node is leaf node and subscription status is ok)

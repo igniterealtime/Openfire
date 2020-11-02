@@ -68,6 +68,7 @@ import org.jivesoftware.util.Version;
 import org.jivesoftware.util.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
@@ -562,11 +563,10 @@ public class UpdateManager extends BasicModule {
     }
 
     private void processServerUpdateResponse(String response, boolean notificationsEnabled)
-            throws DocumentException {
+        throws DocumentException, SAXException {
         // Reset last known update information
         serverUpdate = null;
-        SAXReader xmlReader = new SAXReader();
-        xmlReader.setEncoding("UTF-8");
+        SAXReader xmlReader = setupSAXReader();
         Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
         // Parse response and keep info as Update objects
         Element openfire = xmlResponse.element("openfire");
@@ -608,13 +608,12 @@ public class UpdateManager extends BasicModule {
     }
 
     private void processAvailablePluginsResponse(String response, boolean notificationsEnabled)
-            throws DocumentException {
+        throws DocumentException, SAXException {
         // Reset last known list of available plugins
         availablePlugins = new HashMap<>();
 
         // Parse response and keep info as AvailablePlugin objects
-        SAXReader xmlReader = new SAXReader();
-        xmlReader.setEncoding("UTF-8");
+        SAXReader xmlReader = setupSAXReader();
         Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
         Iterator plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
@@ -802,8 +801,7 @@ public class UpdateManager extends BasicModule {
             return;
         }
         try (FileReader reader = new FileReader(file)){
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
+            SAXReader xmlReader = setupSAXReader();
             xmlResponse = xmlReader.read(reader);
         } catch (Exception e) {
             Log.error("Error reading server-update.xml", e);
@@ -854,8 +852,7 @@ public class UpdateManager extends BasicModule {
             return;
         }
         try (FileReader reader = new FileReader(file)) {
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
+            SAXReader xmlReader = setupSAXReader();
             xmlResponse = xmlReader.read(reader);
         } catch (Exception e) {
             Log.error("Error reading available-plugins.xml", e);
@@ -879,5 +876,14 @@ public class UpdateManager extends BasicModule {
      */
     public Collection<Update> getPluginUpdates() {
         return pluginUpdates;
+    }
+
+    private SAXReader setupSAXReader() throws SAXException {
+        SAXReader xmlReader = new SAXReader();
+        xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        xmlReader.setEncoding("UTF-8");
+        return xmlReader;
     }
 }

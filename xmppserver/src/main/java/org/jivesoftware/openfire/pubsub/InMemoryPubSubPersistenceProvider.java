@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -178,6 +180,24 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         // Affiliate change should already be stored in the node.
         log.debug( "Loading subscription {} for node: {} (NOP)", subId, node.getUniqueIdentifier() );
+    }
+
+    @Override
+    @Nonnull
+    public Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address) {
+        log.debug( "Finding all nodes to which {} is subscribed", address );
+        final Set<Node.UniqueIdentifier> result = new HashSet<>();
+        for ( final List<Node> nodes : serviceIdToNodesCache.values() ) {
+            for ( final Node node : nodes ) {
+                if ( node.getSubscriptions().stream().anyMatch( s ->
+                        s.isActive() &&
+                        (s.getJID().equals(address) || s.getJID().equals(address.asBareJID()) )
+                )) {
+                    result.add(node.getUniqueIdentifier());
+                }
+            }
+        }
+        return result;
     }
 
     @Override

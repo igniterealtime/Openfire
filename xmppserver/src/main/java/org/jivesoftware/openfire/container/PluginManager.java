@@ -61,6 +61,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import javax.annotation.concurrent.GuardedBy;
 
@@ -616,8 +617,7 @@ public class PluginManager
             }
 
             // Instantiate the plugin!
-            final SAXReader saxReader = new SAXReader();
-            saxReader.setEncoding( "UTF-8" );
+            final SAXReader saxReader = setupSAXReader();
             final Document pluginXML = saxReader.read( pluginConfig.toFile() );
 
             final String className = pluginXML.selectSingleNode( "/plugin/class" ).getText().trim();
@@ -750,6 +750,15 @@ public class PluginManager
             failureToLoadCount.put( canonicalName, ++count );
             return false;
         }
+    }
+
+    private SAXReader setupSAXReader() throws SAXException {
+        final SAXReader saxReader = new SAXReader();
+        saxReader.setEncoding( "UTF-8" );
+        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        return saxReader;
     }
 
     private PluginDevEnvironment configurePluginDevEnvironment( final Path pluginDir, String classesDir, String webRoot ) throws IOException

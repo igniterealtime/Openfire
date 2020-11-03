@@ -1083,6 +1083,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * @param leaveRole the role of the occupant that is leaving.
      */
     CompletableFuture<Void> sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
+        // Do not send the presence for occupants on other nodes
+        if (!leaveRole.isLocal() || leaveRole.isRemoteFmuc()) {
+            return CompletableFuture.completedFuture(null);
+        }
+		
         // Send the presence of this new occupant to existing occupants
         Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), leaveRole.getChatRoom().getJID() );
         try {

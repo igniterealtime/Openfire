@@ -58,7 +58,7 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
         roleAddress = occupant.getRoleAddress();
         userAddress = occupant.getUserAddress();
         reportedFmucAddress = occupant.getReportedFmucAddress();
-        nodeID = XMPPServer.getInstance().getNodeID();
+        nodeID = occupant.getNodeID();
     }
 
 

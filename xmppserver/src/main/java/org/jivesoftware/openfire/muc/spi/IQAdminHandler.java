@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jivesoftware.openfire.muc.spi;
 
 import java.util.ArrayList;
@@ -40,15 +39,16 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 /**
- * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#admin. This kind of 
- * packets are usually sent by room admins. So this handler provides the necessary functionality
- * to support administrator requirements such as: managing room members/outcasts/etc., kicking 
- * occupants and banning users.
+ * A handler for the IQ packet with namespace
+ * http://jabber.org/protocol/muc#admin. This kind of packets are usually sent
+ * by room admins. So this handler provides the necessary functionality to
+ * support administrator requirements such as: managing room
+ * members/outcasts/etc., kicking occupants and banning users.
  *
  * @author Gaston Dombiak
  */
 public class IQAdminHandler {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(IQAdminHandler.class);
 
     private final LocalMUCRoom room;
@@ -64,7 +64,8 @@ public class IQAdminHandler {
     }
 
     /**
-     * Handles the IQ packet sent by an owner or admin of the room. Possible actions are:
+     * Handles the IQ packet sent by an owner or admin of the room. Possible
+     * actions are:
      * <ul>
      * <li>Return the list of participants</li>
      * <li>Return the list of moderators</li>
@@ -81,11 +82,14 @@ public class IQAdminHandler {
      *
      * @param packet the IQ packet sent by an owner or admin of the room.
      * @param role the role of the user that sent the request packet.
-     * @throws ForbiddenException If the user is not allowed to perform his request.
-     * @throws ConflictException If the desired room nickname is already reserved for the room or
-     *                           if the room was going to lose all of its owners.
-     * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
-     * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
+     * @throws ForbiddenException If the user is not allowed to perform his
+     * request.
+     * @throws ConflictException If the desired room nickname is already
+     * reserved for the room or if the room was going to lose all of its owners.
+     * @throws NotAllowedException Thrown if trying to ban an owner or an
+     * administrator.
+     * @throws CannotBeInvitedException If the user being invited as a result of
+     * being added to a members-only room still does not have permission
      */
     public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException,
             NotAllowedException, CannotBeInvitedException {
@@ -95,13 +99,12 @@ public class IQAdminHandler {
         // Analyze the action to perform based on the included element
         @SuppressWarnings("unchecked")
         List<Element> itemsList = element.elements("item");
-        
-        if (!itemsList.isEmpty()) {
+
+        if (!itemsList.isEmpty() && packet.getFrom() == null) {
             handleItemsElement(role, itemsList, reply);
         } else if (!itemsList.isEmpty() && !itemsList.toString().contains(packet.getFrom().toBareJID())) {
             handleItemsElement(role, itemsList, reply);
-        }
-        else {
+        } else {
             // An unknown and possibly incorrect element was included in the query
             // element so answer a BAD_REQUEST error
             reply.setChildElement(packet.getChildElement().createCopy());
@@ -115,20 +118,25 @@ public class IQAdminHandler {
     }
 
     /**
-     * Handles packets that includes item elements. Depending on the item's attributes the
-     * interpretation of the request may differ. For example, an item that only contains the
-     * "affiliation" attribute is requesting the list of participants or members. Whilst if the item
-     * contains the affiliation together with a jid means that the client is changing the
+     * Handles packets that includes item elements. Depending on the item's
+     * attributes the interpretation of the request may differ. For example, an
+     * item that only contains the "affiliation" attribute is requesting the
+     * list of participants or members. Whilst if the item contains the
+     * affiliation together with a jid means that the client is changing the
      * affiliation of the requested jid.
      *
      * @param senderRole the role of the user that sent the request packet.
-     * @param itemsList  the list of items sent by the client.
-     * @param reply      the iq packet that will be sent back as a reply to the client's request.
-     * @throws ForbiddenException If the user is not allowed to perform his request.
-     * @throws ConflictException If the desired room nickname is already reserved for the room or
-     *                           if the room was going to lose all of its owners.
-     * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
-     * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
+     * @param itemsList the list of items sent by the client.
+     * @param reply the iq packet that will be sent back as a reply to the
+     * client's request.
+     * @throws ForbiddenException If the user is not allowed to perform his
+     * request.
+     * @throws ConflictException If the desired room nickname is already
+     * reserved for the room or if the room was going to lose all of its owners.
+     * @throws NotAllowedException Thrown if trying to ban an owner or an
+     * administrator.
+     * @throws CannotBeInvitedException If the user being invited as a result of
+     * being added to a members-only room still does not have permission
      */
     private void handleItemsElement(MUCRole senderRole, List<Element> itemsList, IQ reply)
             throws ForbiddenException, ConflictException, NotAllowedException, CannotBeInvitedException {
@@ -259,8 +267,7 @@ public class IQAdminHandler {
                     reply.setError(PacketError.Condition.bad_request);
                 }
             }
-        }
-        else {
+        } else {
             // The client is modifying the list of moderators/members/participants/outcasts
             String nick;
             String target;
@@ -352,8 +359,7 @@ public class IQAdminHandler {
                             reply.setError(PacketError.Condition.bad_request);
                         }
                     }
-                }
-                catch (UserNotFoundException e) {
+                } catch (UserNotFoundException e) {
                     // Do nothing
                 }
             }
@@ -374,8 +380,7 @@ public class IQAdminHandler {
             MUCRole role = roles.get(0);
             result.addAttribute("role", role.getRole().toString());
             result.addAttribute("nick", role.getNickname());
-        }
-        catch (UserNotFoundException e) {
+        } catch (UserNotFoundException e) {
             // the JID is not currently an occupant
         }
         return result;

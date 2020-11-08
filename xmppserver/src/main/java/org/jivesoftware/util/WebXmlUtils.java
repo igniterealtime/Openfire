@@ -20,18 +20,15 @@ public class WebXmlUtils
 {
     private final static Logger Log = LoggerFactory.getLogger( WebXmlUtils.class );
 
-    public static Document asDocument( File webXML ) throws DocumentException
-    {
+    public static Document asDocument( File webXML ) throws DocumentException, SAXException {
         // Make the reader non-validating so that it doesn't try to resolve external DTD's. Trying to resolve
         // external DTD's can break on some firewall configurations.
         SAXReader saxReader = new SAXReader( false);
-        try {
-            saxReader.setFeature( "http://apache.org/xml/features/nonvalidating/load-external-dtd", false );
-        }
-        catch (SAXException e)
-        {
-            Log.warn("Error setting SAXReader feature", e);
-        }
+        saxReader.setFeature( "http://apache.org/xml/features/nonvalidating/load-external-dtd", false );
+        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+
         return saxReader.read( webXML );
     }
 

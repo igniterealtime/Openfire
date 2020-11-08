@@ -35,6 +35,8 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -48,6 +50,7 @@ import java.io.ObjectOutput;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * IQDiscoItemsHandler is responsible for handling disco#items requests. This class holds a map with
@@ -74,6 +77,8 @@ import java.util.concurrent.locks.Lock;
  */
 public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider, ClusterEventListener,
         UserItemsProvider {
+
+    private static final Logger Log = LoggerFactory.getLogger(IQDiscoItemsHandler.class);
 
     public static final String NAMESPACE_DISCO_ITEMS = "http://jabber.org/protocol/disco#items";
     private Map<String,DiscoItemsProvider> entities = new HashMap<>();
@@ -358,9 +363,9 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param name the discovered name of the component.
      */
     public void addComponentItem(String jid, String node, String name) {
-        Lock lock = CacheFactory.getLock(jid, serverItems);
+        Lock lock = serverItems.getLock(jid);
+        lock.lock();
         try {
-            lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
             if (item == null) {
                 // First time a node registers a server item for this component
@@ -394,9 +399,9 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             // Safety check
             return;
         }
-        Lock lock = CacheFactory.getLock(jid, serverItems);
+        Lock lock = serverItems.getLock(jid);
+        lock.lock();
         try {
-            lock.lock();
             ClusteredServerItem item = serverItems.get(jid);
             if (item != null && item.nodes.remove(XMPPServer.getInstance().getNodeID())) {
                 // Update the cache with latest info
@@ -439,30 +444,67 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
 
     @Override
     public void joinedCluster() {
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was gained by joining
+        // the cluster (eg: new server items provided by other cluster nodes now available to the local cluster node):
+        // the only cache that's being used in this implementation does not have an associated event listening mechanism
+        // when data is added to or removed from it.
     }
 
     @Override
     public void joinedCluster(byte[] nodeID) {
-        // Do nothing
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
     }
 
     @Override
     public void leftCluster() {
-        if (!XMPPServer.getInstance().isShuttingDown()) {
-            restoreCacheContent();
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
         }
+
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
+        // the cluster (eg: server items provided only by other cluster nodes, now unavailable to the local cluster
+        // node): the only cache that's being used in this implementation does not have an associated event listening
+        // mechanism when data is added to or removed from it.
     }
 
     @Override
     public void leftCluster(byte[] nodeID) {
+        // Another node left the cluster.
+        //
+        // If the cluster node leaves in an orderly fashion, it might have broadcasted
+        // the necessary events itself. This cannot be depended on, as the cluster node
+        // might have disconnected unexpectedly (as a result of a crash or network issue).
+        //
+        // Determine what data was available only on that node, and remove that.
+        //
+        // All remaining cluster nodes will be in a race to clean up the
+        // same data. The implementation below accounts for that, by only having the
+        // senior cluster node to perform the cleanup.
         if (ClusterManager.isSeniorClusterMember()) {
             NodeID leftNode = NodeID.getInstance(nodeID);
             for (Map.Entry<String, ClusteredServerItem> entry : serverItems.entrySet()) {
                 String jid = entry.getKey();
-                Lock lock = CacheFactory.getLock(jid, serverItems);
+                Lock lock = serverItems.getLock(jid);
+                lock.lock();
                 try {
-                    lock.lock();
                     ClusteredServerItem item = entry.getValue();
                     if (item.nodes.remove(leftNode)) {
                         // Update the cache with latest info
@@ -485,13 +527,22 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     public void markedAsSeniorClusterMember() {
         // Do nothing
     }
+
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
     private void restoreCacheContent() {
+        Log.trace( "Restoring cache content for cache '{}' by adding all server items that are provided by the local cluster node.", serverItems.getName() );
         for (Map.Entry<String, Element> entry : localServerItems.entrySet()) {
             String jid = entry.getKey();
             Element element = entry.getValue();
-            Lock lock = CacheFactory.getLock(jid, serverItems);
+            Lock lock = serverItems.getLock(jid);
+            lock.lock();
             try {
-                lock.lock();
                 ClusteredServerItem item = serverItems.get(jid);
                 if (item == null) {
                     // First time a node registers a server item for this component
@@ -570,6 +621,14 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             element = (Element) ExternalizableUtil.getInstance().readSerializable(in);
             ExternalizableUtil.getInstance().readExternalizableCollection(in, nodes, getClass().getClassLoader());
+        }
+
+        @Override
+        public String toString()
+        {
+            return "ClusteredServerItem{" +
+                "nodes=" + nodes.stream().map(NodeID::toString).collect(Collectors.joining(", ")) +
+                '}';
         }
     }
 

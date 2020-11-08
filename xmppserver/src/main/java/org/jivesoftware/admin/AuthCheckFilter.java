@@ -201,7 +201,7 @@ public class AuthCheckFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest)req;
         HttpServletResponse response = (HttpServletResponse)res;
         // Do not allow framing; OF-997
-        response.addHeader("X-Frame-Options", JiveGlobals.getProperty("adminConsole.frame-options", "same"));
+        response.setHeader("X-Frame-Options", JiveGlobals.getProperty("adminConsole.frame-options", "same"));
         // Reset the defaultLoginPage variable
         String loginPage = defaultLoginPage;
         if (loginPage == null) {

@@ -163,6 +163,319 @@ hr {
     <div id="pageBody">
 
 
+<h2>4.6.0 -- <span style="font-weight: normal;">October 16, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-872'>OF-872</a>] -         Openfire violates RFC 6120 § 10.3.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1696'>OF-1696</a>] -         Personal Eventing menu shows exception on a first try
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1789'>OF-1789</a>] -         HTTP-Bind failure
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1836'>OF-1836</a>] -         Properly handle s2s timeouts
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1888'>OF-1888</a>] -         Faulty assumption in RoutingTableImpl leads to NPE
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1975'>OF-1975</a>] -         Do not trigger offlinemessagelisteners when no message is stored
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1992'>OF-1992</a>] -         IQPEPHandler does not consistently identify &quot;addressed to server&quot; stanzas
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1993'>OF-1993</a>] -         Prepared Statement should always close on method exit
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1995'>OF-1995</a>] -         It should be possible to query anonymous users for service discovery
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1998'>OF-1998</a>] -         HTTP Bind session listeners are never invoked
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2012'>OF-2012</a>] -         Should not add client route when client becomes unavailable.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2016'>OF-2016</a>] -         Do not depend on existing PEP service when creating PEP service
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2038'>OF-2038</a>] -         Shared groups should not be looked up in LDAP
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2042'>OF-2042</a>] -         MUC does not adhere to XEP-0045 Order of Events
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2046'>OF-2046</a>] -         Comments in sidebar-admin.xml
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2049'>OF-2049</a>] -         Ensure room isn&#39;t deleted before leave presences are sent
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2050'>OF-2050</a>] -         Stream management concurrency
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2054'>OF-2054</a>] -         Dataforms of type result should include form field types
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2057'>OF-2057</a>] -         All resources PEP service owner should receive notification
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2058'>OF-2058</a>] -         LDAP group with non-existing user not loaded
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2060'>OF-2060</a>] -         Cluster nodes leaving break component routing
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2080'>OF-2080</a>] -         NPE when retrieving empty pubsub node
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2084'>OF-2084</a>] -         PubSubModule incorrectly disregards empty strings as parent IDs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2085'>OF-2085</a>] -         Pubsub: Do not require items to persist cache content
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2086'>OF-2086</a>] -         Persist cached pubsub data prior to shutdown
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2092'>OF-2092</a>] -         PEP service memory leak
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2093'>OF-2093</a>] -         JDK11: java.lang.NoSuchMethodError: java.nio.CharBuffer.flip()
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2100'>OF-2100</a>] -         Admin Console error when editing group with non-local members
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2102'>OF-2102</a>] -         Incorrect Pubsub Service shutdown logic
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2105'>OF-2105</a>] -         PEPService removal should occur when not loaded in memory.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2106'>OF-2106</a>] -         Incorrect usage of UserManager.isRegisteredUser()
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2107'>OF-2107</a>] -         Server message broadcast doesn&#39;t do as advertised
+</li>
+</ul>
+        
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1968'>OF-1968</a>] -         Avatar support for MUC rooms.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1978'>OF-1978</a>] -         MUC: add configuration that allows join presence to be suppressed
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1989'>OF-1989</a>] -         Introduce in-memory only pubsub persistence provider
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2030'>OF-2030</a>] -         Add support for XEP-0289: Federated MUC for Constrained Environments
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2033'>OF-2033</a>] -         Add automatic cleaning of outdated offline messages
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2108'>OF-2108</a>] -         Expose use privacy lists on admin console
+</li>
+</ul>
+        
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1880'>OF-1880</a>] -         Provide DOAP for Openfire
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2031'>OF-2031</a>] -         CVE-2020-10683 Update dom4j to 2.1.3 or later
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2088'>OF-2088</a>] -         Update MySQL Connector/J to version 8.0.21
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1837'>OF-1837</a>] -         JDBC providers should have an option to escape data
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1869'>OF-1869</a>] -         Announce PEP feature support for &#39;auto-subscribe&#39; and &#39;filtered notifications&#39;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1981'>OF-1981</a>] -         Allow roster item &#39;ask&#39; to be modified.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1982'>OF-1982</a>] -         Add -Djdk.tls.ephemeralDHKeySize=matched  and/or Djsse.SSLEngine.acceptLargeFragments=true to startup parameters
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1983'>OF-1983</a>] -         Provide start argument to run dev mode
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1984'>OF-1984</a>] -         Replace DummyExternalizableUtil
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1985'>OF-1985</a>] -         Decouple Pubsub implementation
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1986'>OF-1986</a>] -         Don&#39;t unconditionally auto-create PEPService.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1987'>OF-1987</a>] -         Improve PubSub Caching
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1988'>OF-1988</a>] -         Introduce pluggable provider mechanism for PubSub persistency
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1990'>OF-1990</a>] -         pubsub: split cache from persistence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1994'>OF-1994</a>] -         Properly deny anonymous users access to Private Storage
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1996'>OF-1996</a>] -         Improve shutdown sequence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2000'>OF-2000</a>] -         Don&#39;t use intern&#39;ed strings to synchronize on
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2001'>OF-2001</a>] -         IQ Bind results should not have a &#39;from&#39; value.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2002'>OF-2002</a>] -         Do not offer private blocking to anonymous users.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2003'>OF-2003</a>] -         Bump slf4j to version 1.7.30
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2004'>OF-2004</a>] -         Have an ad-hoc command accessible to everyone
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2008'>OF-2008</a>] -         Autosetup should allow for users to be provisioned
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2024'>OF-2024</a>] -         Fix favicons
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2025'>OF-2025</a>] -         PEP publishing should evaluate all recipient JIDs
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2032'>OF-2032</a>] -         Make connection type fallback for WEBADMIN c2s
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2039'>OF-2039</a>] -         Support on_sub_and_presence
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2047'>OF-2047</a>] -         When setting HTTP response headers, set instead of add them.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2048'>OF-2048</a>] -         Update log4j dependency
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2053'>OF-2053</a>] -         XEP-0013 Return an &lt;item-not-found/&gt; error while retrieving specific offline message
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2056'>OF-2056</a>] -         DefaultPubSubPersistenceProvider#savePublishedItems is leaking database connections
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2061'>OF-2061</a>] -         Default value for pubsub#persist_items (in PEP) should be &#39;true&#39;
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2062'>OF-2062</a>] -         Pubsub item payload should allow for (much) larger size
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2064'>OF-2064</a>] -         Invoke IQResultListeners on other cluster nodes for domain-addressed stanzas
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2071'>OF-2071</a>] -         &#39;Lock&#39; should be locked in front of a &#39;try&#39; block (instead of in to block).
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2072'>OF-2072</a>] -         Allow empty &#39;mechanisms&#39; SASL tag to be excluded
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2087'>OF-2087</a>] -         Update Jetty to 9.4.31.v20200723
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2089'>OF-2089</a>] -         XEP-0045 7.2.13 - ofrom adresses in message stanza
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2091'>OF-2091</a>] -         Decorate &#39;warning&#39; text
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2094'>OF-2094</a>] -         Mitigate XXE attacks
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2095'>OF-2095</a>] -         Account for a PEP notification recipient to be the service owner
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2096'>OF-2096</a>] -         Prevent bypassing PEP notification logic
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2097'>OF-2097</a>] -         Allow CAPS to be reviewed in admin console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2098'>OF-2098</a>] -         Show pubsub node configuration on Admin Console
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2110'>OF-2110</a>] -         Refactoring of fallback check inConnectionType
+</li>
+</ul>
+
+
+<h2>4.5.4 -- <span style="font-weight: normal;">September 30, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1972'>OF-1972</a>] -         ConcurrentModificationException while loading plugins
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2059'>OF-2059</a>] -         PubSub unsubscription could fail with “xmpp.pubsub.multiple-subscriptions=true
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2065'>OF-2065</a>] -         Component cache should not expire
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2073'>OF-2073</a>] -         PubSubPersistenceManager.purgeItems incompatibility with Oracle
+</li>
+</ul>
+
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1973'>OF-1973</a>] -         Handle future-timestamped plugin files
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2051'>OF-2051</a>] -         Do not query for version information when connection is closed
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2052'>OF-2052</a>] -         Make query for version configurable
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2055'>OF-2055</a>] -         Update PostgreSQL JDBC Driver
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2068'>OF-2068</a>] -         Display the versions of various nodes in the cluster
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2069'>OF-2069</a>] -         NullPointerException in Stream Management
+</li>
+</ul>
+
+
+<h2>4.5.3 -- <span style="font-weight: normal;">August 17, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2038'>OF-2038</a>] -         Shared groups should not be looked up in LDAP
+</li>
+</ul>
+
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2031'>OF-2031</a>] -         CVE-2020-10683 Update dom4j to 2.1.3 or later
+</li>
+</ul>
+
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2027'>OF-2027</a>] -         Enable PEP service for JIDs that are not backed by a User
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2032'>OF-2032</a>] -         Make connection type fallback for WEBADMIN c2s
+</li>
+</ul>
+
+
+<h2>4.5.2 -- <span style="font-weight: normal;">May 18, 2020</span></h2>
+	    <h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-963'>OF-963</a>] -         WebSocket keep-alive is not working as expected
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1963'>OF-1963</a>] -         Cross Site Scripting (XSS) issues - CSW Document No: C1055
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1964'>OF-1964</a>] -         SystemProperty should load classes with Thread.getContextClassloader as fallback
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1970'>OF-1970</a>] -         Undeliverable messages routed to unavailable full jid should be routed to other resources with prio 0 (not 1) or higher.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1977'>OF-1977</a>] -         Pubsub notifications should be sent to subscribers of parent nodes
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1999'>OF-1999</a>] -         Prevent potential arithmetic overflow
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2013'>OF-2013</a>] -         Fix detection of &#39;detached&#39; state of a connection
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2014'>OF-2014</a>] -         Reset ConnectionListener callback object on re-init
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2015'>OF-2015</a>] -         Remove the session that was used for resumption immediately
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2017'>OF-2017</a>] -         Update Jetty to 9.4.28.v20200408
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2026'>OF-2026</a>] -         Stable and Unique Stanza Identifier need not be UUID
+</li>
+</ul>
+
+<h2>        New Feature
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-158'>OF-158</a>] -         Set through the admin console the MUC room configuration form&#39;s default values
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1966'>OF-1966</a>] -         Add Japanese translation
+</li>
+</ul>
+
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1969'>OF-1969</a>] -         Log username when auth fails
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1974'>OF-1974</a>] -         Openfire should not disclose Jetty version within HTTP header for websocket connections
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1976'>OF-1976</a>] -         Allow any number of maximum MUC occupants to be configured.
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1979'>OF-1979</a>] -         Guard against invalid SASL responses
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1997'>OF-1997</a>] -         Bump Bouncy Castle version to v1.65
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-2019'>OF-2019</a>] -         Allow Archiver to start polling only after work is produced.
+</li>
+</ul>
+
+
+<h2>4.5.1 -- <span style="font-weight: normal;">January 31, 2020</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1946'>OF-1946</a>] -         Cache &quot;Percent Used&quot; values are incorrect
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1959'>OF-1959</a>] -         Can not connect to LDAP/AD on new installations
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1961'>OF-1961</a>] -         Potential ClassCastException with LDAP setup
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1962'>OF-1962</a>] -         MySQL serverTimezone not set
+</li>
+</ul>
+
+
 <h2>4.5.0 -- <span style="font-weight: normal;">January 10, 2020</span></h2>
 <h2>        Bug
 </h2>
@@ -660,6 +973,8 @@ hr {
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1784'>OF-1784</a>] -         Don&#39;t write to connection if connection cannot be written to.
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1786'>OF-1786</a>] -         Update MINA to 2.1.3 to avoid high CPU usage on Linux
+</li>
+<li>[<a href='https://issues.igniterealtime.org/browse/OF-1788'>OF-1788</a>] -         MUC messages should be written to database immediately
 </li>
 <li>[<a href='https://issues.igniterealtime.org/browse/OF-1790'>OF-1790</a>] -         Improve concurrency and performance of conversation log history.
 </li>

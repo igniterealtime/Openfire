@@ -101,8 +101,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
      *                        filled with visited DNs. If flatten of hierarchies of groups is active
      *                        ({@link LdapManager#isFlattenNestedGroups()}, this will prevent endless loops
      *                        for cyclic hierarchies.
-     * @return
-     * @throws NamingException
+     * @return A group (never null)
+     * @throws NamingException When a group can't be read from LDAP.
      */
     private Group getGroupByDN(LdapName groupDN, Set<String> membersToIgnore) throws NamingException {
         LdapContext ctx = null;
@@ -133,8 +133,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug( "An exception was ignored while trying to close the Ldap context after trying to get a group.", ex );
             }
         }
     }
@@ -247,6 +247,10 @@ public class LdapGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> search(String key, String value) {
+        if (key.equals("sharedRoster.displayName")){
+            return super.search(key,value);
+        }
+
         StringBuilder filter = new StringBuilder();
         filter.append("(&");
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
@@ -345,6 +349,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 LdapName userDN = null;
                 // If not posix mode, each group member is stored as a full DN.
                 if (!manager.isPosixMode()) {
+                    // Create an LDAP name with the full DN.
+                    userDN = new LdapName(username);
                     try {
                         // Try to find the username with a regex pattern match.
                         Matcher matcher = pattern.matcher(username);
@@ -357,8 +363,6 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         // example, Active Directory has a username field of
                         // sAMAccountName, but stores group members as "CN=...".
                         else {
-                            // Create an LDAP name with the full DN.
-                            userDN = new LdapName(username);
                             // Turn the LDAP name into something we can use in a
                             // search by stripping off the comma.
                             StringBuilder userFilter = new StringBuilder();
@@ -440,9 +444,6 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                                 true);
                             if (userDNStr != null)
                                 userDN = new LdapName(userDNStr);
-                        } else if (userDN == null) {
-                            // Create an LDAP name with the full DN.
-                            userDN = new LdapName(username);
                         }
                         if (userDN != null && manager.isGroupDN(userDN)) {
                             isGroup = true;

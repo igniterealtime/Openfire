@@ -25,7 +25,6 @@ import org.jivesoftware.openfire.PresenceRouter;
 import org.jivesoftware.openfire.RemotePacketRouter;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.carbons.Received;
@@ -65,7 +64,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Stream;
 
 /**
  * Routing table that stores routes to client sessions, outgoing server sessions
@@ -143,8 +144,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addServerRoute(DomainPair address, LocalOutgoingServerSession destination) {
         localRoutingTable.addRoute(address, destination);
         Lock lock = serversCache.getLock(address);
+        lock.lock();
         try {
-            lock.lock();
             serversCache.put(address, server.getNodeID());
         }
         finally {
@@ -158,8 +159,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         String address = route.getDomain();
         localRoutingTable.addRoute(pair, destination);
         Lock lock = componentsCache.getLock(address);
+        lock.lock();
         try {
-            lock.lock();
             HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
                 nodes = new HashSet<>();
@@ -179,8 +180,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
         if (destination.getAuthToken().isAnonymous()) {
             Lock lockAn = anonymousUsersCache.getLock(route.toString());
+            lockAn.lock();
             try {
-                lockAn.lock();
                 added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) ==
                         null;
             }
@@ -190,8 +191,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
                 Lock lock = usersSessions.getLock(route.toBareJID());
+                lock.lock();
                 try {
-                    lock.lock();
                     usersSessions.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
                 }
                 finally {
@@ -201,8 +202,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         else {
             Lock lockU = usersCache.getLock(route.toString());
+            lockU.lock();
             try {
-                lockU.lock();
                 added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
             }
             finally {
@@ -211,8 +212,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
                 Lock lock = usersSessions.getLock(route.toBareJID());
+                lock.lock();
                 try {
-                    lock.lock();
                     HashSet<String> jids = usersSessions.get(route.toBareJID());
                     if (jids == null) {
                         jids = new HashSet<>();
@@ -900,8 +901,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
                 Lock lock = usersSessions.getLock(route.toBareJID());
+                lock.lock(); // temporarily block new sessions for this JID
                 try {
-                    lock.lock(); // temporarily block new sessions for this JID
                     Collection<String> sessions = usersSessions.get(route.toBareJID());
                     if (sessions != null) {
                         // Select only available sessions
@@ -941,8 +942,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         String address = route.toString();
         ClientRoute clientRoute;
         Lock lockU = usersCache.getLock(address);
+        lockU.lock();
         try {
-            lockU.lock();
             clientRoute = usersCache.remove(address);
         }
         finally {
@@ -950,8 +951,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         if (clientRoute == null) {
             Lock lockA = anonymousUsersCache.getLock(address);
+            lockA.lock();
             try {
-                lockA.lock();
                 clientRoute = anonymousUsersCache.remove(address);
                 anonymous = true;
             }
@@ -961,8 +962,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         if (clientRoute != null && route.getResource() != null) {
             Lock lock = usersSessions.getLock(route.toBareJID());
+            lock.lock();
             try {
-                lock.lock();
                 if (anonymous) {
                     usersSessions.remove(route.toBareJID());
                 }
@@ -992,8 +993,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public boolean removeServerRoute(DomainPair route) {
         boolean removed;
         Lock lock = serversCache.getLock(route);
+        lock.lock();
         try {
-            lock.lock();
             removed = serversCache.remove(route) != null;
         }
         finally {
@@ -1018,8 +1019,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         String address = route.getDomain();
         boolean removed = false;
         Lock lock = componentsCache.getLock(address);
+        lock.lock();
         try {
-            lock.lock();
             HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes != null) {
                 removed = nodes.remove(nodeID);
@@ -1085,23 +1086,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void joinedCluster()
     {
-        // Upon joining a cluster, the server can get a new ID. Here, all old IDs are replaced with the new identity.
-        final NodeID defaultNodeID = server.getDefaultNodeID();
-        final NodeID nodeID = server.getNodeID();
-        if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
-        {
-            CacheUtil.replaceValueInCache( serversCache, defaultNodeID, nodeID );
-            CacheUtil.replaceValueInMultivaluedCache( componentsCache, defaultNodeID, nodeID );
-            CacheUtil.replaceValueInCacheByMapping( usersCache,
-                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
-            CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
-                                                    clientRoute -> { if ( clientRoute.getNodeID().equals( defaultNodeID ) ) { clientRoute.setNodeID( nodeID ); } return clientRoute; } );
-        }
-        // Broadcast presence of local sessions to remote sessions when subscribed to presence
-        // Probe presences of remote sessions when subscribed to presence of local session
-        // Send pending subscription requests to local sessions from remote sessions
-        // Deliver offline messages sent to local sessions that were unavailable in other nodes
-        // Send available presences of local sessions to other resources of the same user
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // Broadcast presence of local sessions to remote sessions when subscribed to presence.
+        // Probe presences of remote sessions when subscribed to presence of local session.
+        // Send pending subscription requests to local sessions from remote sessions.
+        // Deliver offline messages sent to local sessions that were unavailable in other nodes.
+        // Send available presences of local sessions to other resources of the same user.
         PresenceUpdateHandler presenceUpdateHandler = XMPPServer.getInstance().getPresenceUpdateHandler();
         for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
             // Simulate that the local session has just became available
@@ -1109,111 +1106,110 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Simulate that current session presence has just been received
             presenceUpdateHandler.process(session.getPresence());
         }
+        // TODO OF-2067: the above also (re)generates events on the local node, where these events had already occurred. Ideally, that should not happen.
+
+        // TODO OF-2066: shouldn't a similar action be done on the other nodes, so that the node that just joined gets informed about all sessions living on other cluster nodes?
     }
 
     @Override
     public void joinedCluster(byte[] nodeID) {
-        // Do nothing
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
     }
 
     @Override
     public void leftCluster() {
-        if (!XMPPServer.getInstance().isShuttingDown()) {
-            // Upon leaving a cluster, the server uses its non-clustered/default ID again. Here, all clustered IDs are replaced with the new identity.
-            final NodeID defaultNodeID = server.getDefaultNodeID();
-            final NodeID nodeID = server.getNodeID();
-            if ( !defaultNodeID.equals( nodeID ) ) // In more recent versions of Openfire, the ID does not change.
-            {
-                CacheUtil.replaceValueInCache( serversCache, nodeID, defaultNodeID );
-                CacheUtil.replaceValueInMultivaluedCache( componentsCache, nodeID, defaultNodeID );
-                CacheUtil.replaceValueInCacheByMapping( usersCache,
-                                                        clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
-                CacheUtil.replaceValueInCacheByMapping( anonymousUsersCache,
-                                                        clientRoute -> { if ( clientRoute.getNodeID().equals( nodeID ) ) { clientRoute.setNodeID( defaultNodeID ); } return clientRoute; } );
-            }
-            // The local cluster node left the cluster.
-            //
-            // Determine what routes were available only on other cluster nodes than the local one.
-            // These need to be cleaned up, as they're no longer available to the local cluster node.
-
-            // Drop outgoing server routes from all other nodes.
-            final Set<DomainPair> removedOutgoingServerSessions = CacheUtil.retainValueInCache( serversCache, defaultNodeID );
-            removedOutgoingServerSessions.forEach( removedOutgoingServerSession -> {
-                Log.debug( "The local cluster node left the cluster. The outoing server session for '{}' was living on another cluster nodes, and is no longer available.", removedOutgoingServerSession.getRemote() );
-                localRoutingTable.removeRoute( removedOutgoingServerSession );
-            } );
-
-            // Drop component routes from all other nodes.
-            final Map<Boolean, Map<String, HashSet<NodeID>>> modified = CacheUtil.retainValueInMultiValuedCache( componentsCache, defaultNodeID );
-            modified.get( false ).keySet().forEach( removedComponentDomain -> {
-                Log.debug( "The local cluster node left the cluster. The component session for '{}' was living on one (or more) other cluster nodes, and is no longer available.", removedComponentDomain );
-                localRoutingTable.removeRoute(new DomainPair("", removedComponentDomain ));
-            } );
-
-            // Drop routes for all client sessions connected via other cluster nodes.
-            final List<String> remoteClientRoutes = new ArrayList<>();
-            for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
-                if (!entry.getValue().getNodeID().equals(defaultNodeID)) {
-                    remoteClientRoutes.add(entry.getKey());
-                }
-            }
-            for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
-                if (!entry.getValue().getNodeID().equals(defaultNodeID)) {
-                    remoteClientRoutes.add(entry.getKey());
-                }
-            }
-            Log.debug( "The local cluster node left the cluster. A total of {} client sessions were living on one (or more) other cluster nodes, and are no longer available.", remoteClientRoutes.size() );
-            for (String route : remoteClientRoutes) {
-                // This call takes responsibility for cleaning up the state in RoutingTableImpl as well as SessionManager.
-                // The detour is needed, as SessionManager does not keep track what client is associated to what cluster node.
-                SessionManager.getInstance().removeRemoteClientSession( new JID(route) );
-            }
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
         }
+
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // TODO OF-2066: all clients on other nodes are now unavailable! Send out the appropriate presence updates/events
     }
 
     @Override
-    public void leftCluster(byte[] nodeID) {
-        
+    public void leftCluster(byte[] nodeID)
+    {
+        // Another node left the cluster.
+
         // When a peer server leaves the cluster, any remote routes that were
         // associated with the defunct node must be dropped from the routing 
         // caches that are shared by the remaining cluster member(s).
-        
-        // drop routes for all client sessions connected via the defunct cluster node
-            List<String> remoteClientRoutes = new ArrayList<>();
-            for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
-                if (entry.getValue().getNodeID().equals(nodeID)) {
-                    remoteClientRoutes.add(entry.getKey());
-                }
-            }
-            for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
-                if (entry.getValue().getNodeID().equals(nodeID)) {
-                    remoteClientRoutes.add(entry.getKey());
-                }
-            }
-            Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), remoteClientRoutes.size() );
-            for (String route : remoteClientRoutes) {
-                // This call takes responsibility for cleaning up the state in RoutingTableImpl as well as SessionManager.
-                // The detour is needed, as SessionManager does not keep track what client is associated to what cluster node.
-                SessionManager.getInstance().removeRemoteClientSession( new JID(route) );
-            }
 
-        // remove routes for server domains that were accessed through the defunct node
+        // Determine what components were available only on that node, and remove them.
+        // All remaining cluster nodes will be in a race to clean up the
+        // same data. The implementation below accounts for that, by only having the
+        // senior cluster node to perform the cleanup.
+        if (!ClusterManager.isSeniorClusterMember()) {
+            return;
+        }
+
+        // Drop routes for all client sessions connected via the defunct cluster node.
+        final AtomicLong removedSessionCount = new AtomicLong();
+        Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
+            .filter( entry -> entry.getValue().getNodeID().equals(nodeID))
+            .forEach( entry -> {
+                removedSessionCount.getAndIncrement();
+                final JID fullJID = new JID(entry.getKey());
+                removeClientRoute(fullJID);
+                if ( entry.getValue().isAvailable() )
+                {
+                    // Simulate that the session has just gone offline
+                    final Presence offline = new Presence();
+                    offline.setFrom(fullJID);
+                    offline.setTo(new JID(null, serverName, null, true));
+                    offline.setType(Presence.Type.unavailable);
+                    XMPPServer.getInstance().getPacketRouter().route(offline);
+                }
+            });
+        Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), removedSessionCount.get() );
+
+        // Remove routes for server domains that were accessed through the defunct node.
         final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache( serversCache, NodeID.getInstance( nodeID ) );
         removedServers.forEach( removedServer -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route will be removed.", NodeID.getInstance( nodeID ), removedServer.getRemote() );
-            localRoutingTable.removeRoute( removedServer );
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route was removed.", NodeID.getInstance( nodeID ), removedServer.getRemote() );
         } );
 
-        // remove component routes for the defunct node
+        // Remove component routes for the defunct node.
         final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache( componentsCache, NodeID.getInstance( nodeID ) );
         modifiedComponents.get( false ).keySet().forEach( removedComponentDomain -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route will be removed", NodeID.getInstance( nodeID ), removedComponentDomain );
-            localRoutingTable.removeRoute(new DomainPair("", removedComponentDomain ));
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route was removed", NodeID.getInstance( nodeID ), removedComponentDomain );
         } );
     }
 
     @Override
     public void markedAsSeniorClusterMember() {
         // Do nothing
+    }
+
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
+    private void restoreCacheContent()
+    {
+        Log.trace( "Restoring cache content for cache '{}' by adding all outgoing server routes that are connected to the local cluster node.", serversCache.getName() );
+        localRoutingTable.getServerRoutes().forEach( route -> route.getOutgoingDomainPairs().forEach( address -> serversCache.put( address, server.getNodeID()) ) );
+
+        Log.trace( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
+        localRoutingTable.getComponentRoute().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));
+
+        Log.trace( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessions.getName() );
+
+        // Add client sessions hosted locally to the cache (using new nodeID)
+        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+            addClientRoute(session.getAddress(), session);
+        }
     }
 }

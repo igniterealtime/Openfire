@@ -384,7 +384,7 @@ public final class GraphicUtils {
         int max = 0;
         for (int i = 0; i < comps.length; i++) {
             int w = comps[i].getPreferredSize().width;
-            max = w > max ? w : max;
+            max = Math.max(w, max);
         }
 
         Dimension dim = new Dimension(max, comps[0].getPreferredSize().height);

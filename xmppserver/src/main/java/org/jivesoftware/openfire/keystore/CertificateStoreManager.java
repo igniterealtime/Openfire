@@ -16,12 +16,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.jivesoftware.openfire.spi.ConnectionType.SOCKET_C2S;
 
 /**
  * A manager of certificate stores.
@@ -481,7 +476,7 @@ public class CertificateStoreManager extends BasicModule
         final String defaultValue;
 
         // OF-1191: For client-oriented connection types, Openfire traditionally uses a different truststore.
-        if ( Arrays.asList( SOCKET_C2S, ConnectionType.BOSH_C2S, ConnectionType.WEBADMIN ).contains( type ) )
+        if ( type.isClientOriented() )
         {
             defaultValue = "resources" + File.separator + "security" + File.separator + "client.truststore";
         }
@@ -588,7 +583,7 @@ public class CertificateStoreManager extends BasicModule
             }
 
             // Client-to-Server trust stores
-            if ( connectionType == SOCKET_C2S || (connectionType.getFallback() != null && connectionType.getFallback() == SOCKET_C2S) )
+            if ( connectionType.isClientOriented() )
             {
                 if ( c2sTrustStoreConfiguration == null )
                 {

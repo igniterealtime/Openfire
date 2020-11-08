@@ -31,6 +31,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+
 /**
  * Implementation of a local room occupant.
  * 
@@ -95,6 +97,11 @@ public class LocalMUCRole implements MUCRole {
     private Element extendedInformation;
 
     /**
+     * The address of the person on the joining FMUC node, if the person joined through FMUC (otherwise null).
+     */
+    private JID reportedFmucJID;
+
+    /**
      * Create a new role.
      * 
      * @param chatserver the server hosting the role.
@@ -123,12 +130,14 @@ public class LocalMUCRole implements MUCRole {
         calculateExtendedInformation();
         rJID = new JID(room.getName(), server.getServiceDomain(), nick);
         setPresence(presence);
+
         // Check if new occupant wants to be a deaf occupant
         Element element = presence.getElement()
                 .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
         if (element != null) {
             voiceOnly = element.element("deaf-occupant") != null;
         }
+
         // Add the new role to the list of roles
         user.addRole(room.getName(), this);
     }
@@ -146,6 +155,7 @@ public class LocalMUCRole implements MUCRole {
         if (element != null) {
             newPresence.getElement().remove(element);
         }
+
         this.presence = newPresence;
         this.presence.setFrom(getRoleAddress());
         updatePresence();
@@ -230,6 +240,15 @@ public class LocalMUCRole implements MUCRole {
     }
 
     @Override
+    public JID getReportedFmucAddress() {
+        return reportedFmucJID;
+    }
+
+    public void setReportedFmucAddress( @Nonnull final JID reportedFmucAddress ) {
+        this.reportedFmucJID = reportedFmucAddress;
+    }
+
+    @Override
     public boolean isLocal() {
         return true;
     }
@@ -255,7 +274,17 @@ public class LocalMUCRole implements MUCRole {
         if (packet == null) {
             return;
         }
+
+        if (this.isRemoteFmuc()) {
+            // Sending stanzas to individual occupants that are on remote FMUC nodes defeats the purpose of FMUC, which is to reduce message. This reduction is based on sending data just once, and have it 'fan out' on the remote node (as opposed to sending each occupant on that node a distinct stanza from this node).
+            Log.warn( "Sending data directly to an entity ({}) on a remote FMUC node. Instead of individual messages, we expect data to be sent just once (and be fanned out locally by the remote node).", this, new Throwable() );
+
+            // Check if stanza needs to be enriched with FMUC metadata.
+            augmentOutboundStanzaWithFMUCData(packet);
+        }
+
         packet.setTo(user.getAddress());
+
 
         router.route(packet);
     }
@@ -325,5 +354,20 @@ public class LocalMUCRole implements MUCRole {
         } else if (!user.equals(other.user))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "LocalMUCRole{" +
+            "room=" + room +
+            ", user=" + user +
+            ", nick='" + nick + '\'' +
+            ", role=" + role +
+            ", affiliation=" + affiliation +
+            ", voiceOnly=" + voiceOnly +
+            ", rJID=" + rJID +
+            ", reportedFmucJID=" + reportedFmucJID +
+            '}';
     }
 }

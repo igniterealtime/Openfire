@@ -108,8 +108,8 @@ public class PublishedItem implements Serializable {
      */
     PublishedItem(LeafNode node, JID publisher, String id, Date creationDate) {
         this.node = node;
-        this.nodeId = node.getNodeID();
-        this.serviceId = node.getService().getServiceID();
+        this.nodeId = node.getUniqueIdentifier().getNodeId();
+        this.serviceId = node.getUniqueIdentifier().getServiceIdentifier().getServiceId();
         this.publisher = publisher;
         this.id = id;
         this.creationDate = creationDate;
@@ -140,8 +140,8 @@ public class PublishedItem implements Serializable {
                     else
                     {
                         PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
-                        node = serviceMgr.hasCachedService(new JID(serviceId)) ? (LeafNode) serviceMgr.getPEPService(
-                                serviceId).getNode(nodeId) : null;
+                        JID service = new JID( serviceId );
+                        node = serviceMgr.hasCachedService(service) ? (LeafNode) serviceMgr.getPEPService(service).getNode(nodeId) : null;
                     }
                 }
             }
@@ -286,7 +286,7 @@ public class PublishedItem implements Serializable {
      */
     @Deprecated
     public String getItemKey() {
-        return getItemKey(serviceId, nodeId,id);
+        return getItemKey(serviceId, nodeId, id);
     }
 
     /**
@@ -303,7 +303,7 @@ public class PublishedItem implements Serializable {
      */
     @Deprecated
     public static String getItemKey(LeafNode node, String itemId) {
-        return getItemKey(node.getService().getServiceID(), node.getNodeID(), itemId);
+        return getItemKey(node.getUniqueIdentifier().getServiceIdentifier().getServiceId(), node.getUniqueIdentifier().getNodeId(), itemId);
     }
 
     /**
@@ -339,7 +339,7 @@ public class PublishedItem implements Serializable {
      */
     public static UniqueIdentifier getUniqueIdentifier(LeafNode node, String itemId)
     {
-        return getUniqueIdentifier( node.getService().getServiceID(), node.getNodeID(), itemId );
+        return getUniqueIdentifier( node.getUniqueIdentifier().getServiceIdentifier().getServiceId(), node.getUniqueIdentifier().getNodeId(), itemId );
     }
 
     /**

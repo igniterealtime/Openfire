@@ -90,7 +90,7 @@
 <%  if (numPages > 1) { %>
 
     <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > userCount ? userCount:start+range) %>,
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(Math.min(start + range, userCount)) %>,
 
 <%  } %>
 <fmt:message key="user.summary.sorted" />

@@ -3,6 +3,8 @@ package org.jivesoftware.util;
 import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.tree.NamespaceStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.*;
 import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.XMLFilterImpl;
@@ -17,6 +19,7 @@ import java.util.*;
  */
 public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
+    private static final Logger Log = LoggerFactory.getLogger(XMLWriter.class);
     private static final String PAD_TEXT = " ";
 
     protected static final String[] LEXICAL_HANDLER_NAMES = {
@@ -515,7 +518,9 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
         if ( autoFlush ) {
             try {
                 flush();
-            } catch ( IOException e) {}
+            } catch (IOException e) {
+                Log.trace("An exception occurred while trying to flush during ending of a document", e);
+            }
         }
     }
 

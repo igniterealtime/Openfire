@@ -78,7 +78,7 @@
     // paginator vars
     int numPages = (int)Math.ceil((double)roomsCount/(double)range);
     int curPage = (start/range) + 1;
-    int maxRoomIndex = (start+range <= roomsCount ? start+range : roomsCount);
+    int maxRoomIndex = Math.min(start + range, roomsCount);
 %>
 <html>
     <head>

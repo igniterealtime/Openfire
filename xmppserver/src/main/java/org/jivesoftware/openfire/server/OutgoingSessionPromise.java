@@ -28,7 +28,6 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -258,9 +257,9 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
             // TODO: Evaluate why removing the oss part causes nasty s2s and lockup issues.
-            Lock lock = CacheFactory.getLock(domain+"oss", serversCache);
+            Lock lock = serversCache.getLock(domain+"oss");
+            lock.lock();
             try {
-                lock.lock();
                 created = LocalOutgoingServerSession
                         .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
             } finally {
@@ -349,7 +348,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     }
                     catch ( PacketRejectedException ex )
                     {
-                        Log.debug( "Reply got rejected by an interceptor: ", reply, ex );
+                        Log.debug( "Reply got rejected by an interceptor: {}", reply, ex );
                     }
                 }
             }

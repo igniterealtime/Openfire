@@ -7,19 +7,20 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.ParamUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
 public class PubSubServiceInfo {
+
+    private static final Logger Log = LoggerFactory.getLogger(PubSubServiceInfo.class);
+
     private PubSubService pubSubService;
 
     private PubSubModule pubSubModule;
@@ -96,7 +97,7 @@ public class PubSubServiceInfo {
         formField.setVariable(variablePreFix + "allowedToCreate");
         formField.setType(FormField.Type.jid_multi);
         formField.setLabel(LocaleUtils.getLocalizedString(labelPreFix + "allowedToCreate"));
-        for (String jid : pubSubModule.getUsersAllowedToCreate()) {
+        for (JID jid : pubSubModule.getUsersAllowedToCreate()) {
             formField.addValue(jid);
         }
 
@@ -104,7 +105,7 @@ public class PubSubServiceInfo {
         formField.setVariable(variablePreFix + "sysadmins");
         formField.setType(FormField.Type.jid_multi);
         formField.setLabel(LocaleUtils.getLocalizedString(labelPreFix + "sysadmins"));
-        for (String jid : pubSubModule.getSysadmins()) {
+        for (JID jid : pubSubModule.getSysadmins()) {
             formField.addValue(jid);
         }
 
@@ -116,13 +117,18 @@ public class PubSubServiceInfo {
             try {
                 if (username.contains("@")) {
                     JID jid = new JID(username);
-                    if (userManager.isRegisteredUser(jid)) {
+                    if (userManager.isRegisteredUser(jid, true)) {
                         return jid;
                     }
-                } else if (userManager.isRegisteredUser(username)) {
-                    return xmppServer.createJID(username, null);
+                } else {
+                    // Assume that the value refers to a user on the local server.
+                    final JID jid = xmppServer.createJID(username, null);
+                    if (userManager.isRegisteredUser(jid, false)) {
+                        return jid;
+                    }
                 }
             } catch (IllegalArgumentException e) {
+                Log.debug("Unable to parse value '{}' as a JID.", username);
             }
         }
         // Return null if JID is invalid or user not registered
@@ -137,6 +143,7 @@ public class PubSubServiceInfo {
                     return true;
                 }
             } catch (GroupNotFoundException e) {
+                Log.debug("Group with name '{}' not found", groupName);
             }
         }
         return false;
@@ -200,10 +207,26 @@ public class PubSubServiceInfo {
                 }
                 break;
             case "allowedToCreate":
-                pubSubModule.setUserAllowedToCreate(field.getValues());
+                final Set<JID> allAllowed = new HashSet<>();
+                for ( final String value : field.getValues() ) {
+                    try {
+                        allAllowed.add( new JID(value.trim()) );
+                    } catch ( IllegalArgumentException e ) {
+                        Log.warn( "Unable to add to 'allowedToCreate'. Value is not a valid JID: {}", value, e);
+                    }
+                }
+                pubSubModule.setUserAllowedToCreate(allAllowed);
                 break;
             case "sysadmins":
-                pubSubModule.setSysadmins(field.getValues());
+                final Set<JID> sysadmins = new HashSet<>();
+                for ( final String value : field.getValues() ) {
+                    try {
+                        sysadmins.add( new JID(value.trim()) );
+                    } catch ( IllegalArgumentException e ) {
+                        Log.warn( "Unable to add to 'sysadmins'. Value is not a valid JID: {}", value, e);
+                    }
+                }
+                pubSubModule.setSysadmins(sysadmins);
                 break;
             default:
                 // Shouldn't end up here

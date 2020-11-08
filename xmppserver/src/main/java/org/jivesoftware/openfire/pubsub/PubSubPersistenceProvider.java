@@ -16,8 +16,12 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.jivesoftware.openfire.pep.PEPService;
+import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Defines an implementation responsible for persisting pubsub-related data
@@ -68,7 +72,28 @@ public interface PubSubPersistenceProvider
      */
     void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier);
 
-    void loadSubscription(PubSubService service, Node node, String subId);
+    @Deprecated
+    default void loadSubscription(PubSubService service, Node node, String subId) {
+        loadSubscription(node, subId);
+    }
+
+    void loadSubscription(Node node, String subId);
+
+    /**
+     * Returns identifiers for all pubsub nodes to which the provided address is a direct subscriber.
+     *
+     * Note that the results do not include nodes to which the provided address is a subscriber through inheritance!
+     *
+     * The result can include root nodes, (other) collection nodes as well as leaf nodes.
+     *
+     * When a node is subscribed to using a full JID, that node will be returned only if the address used as an
+     * argument in this method matches that full JID. If the node was subscribed to using a bare JID, it will be
+     * returned when the provided argument's bare JID representation matches the JID used for the subscription.
+     *
+     * @param address The address (bare of full JID) for which to return nodes.
+     * @return A collection of node identifiers, possibly empty.
+     */
+    @Nonnull Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address);
 
     /**
      * Creates a new affiliation of the user in the node.
@@ -118,14 +143,10 @@ public interface PubSubPersistenceProvider
     void removeSubscription(NodeSubscription subscription);
 
     /**
-     * Creates and stores the published item in the database. Note that the
-     * item will be cached temporarily before being flushed asynchronously
-     * to the database. The write cache can be tuned using the following
-     * two properties:
-     * <pre>
-     *   "xmpp.pubsub.flush.max" - maximum items in the cache (-1 to disable cache)
-     *   "xmpp.pubsub.flush.timer" - number of seconds between cache flushes
-     * </pre>
+     * Creates and stores the published item in the database.
+     *
+     * When an item with the same ID was previously saved, this item will be replaced by the new item.
+     *
      * @param item The published item to save.
      */
     void savePublishedItem(PublishedItem item);
@@ -145,24 +166,65 @@ public interface PubSubPersistenceProvider
      * @param isLeafType true if loading default configuration for leaf nodes.
      * @return the loaded default node configuration for the specified node type and service
      *         or <tt>null</tt> if none was found.
+     * @deprecated Replaced by {@link #loadDefaultConfiguration(PubSubService.UniqueIdentifier, boolean)}
      */
-    DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service, boolean isLeafType);
+    @Deprecated
+    default DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service, boolean isLeafType)
+    {
+        return loadDefaultConfiguration( service.getUniqueIdentifier(), isLeafType );
+    }
+
+    /**
+     * Loads from the database the default node configuration for the specified node type
+     * and pubsub service.
+     *
+     * @param serviceIdentifier Identifier of the service
+     * @param isLeafType true if loading default configuration for leaf nodes.
+     * @return the loaded default node configuration for the specified node type and service
+     *         or <tt>null</tt> if none was found.
+     */
+    DefaultNodeConfiguration loadDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, boolean isLeafType);
 
     /**
      * Creates a new default node configuration for the specified service.
      *
      * @param service the default node configuration used by this pubsub service.
      * @param config the default node configuration to create in the database.
+     * @deprecated Replaced by {@link #createDefaultConfiguration(PubSubService.UniqueIdentifier, DefaultNodeConfiguration)}
      */
-    void createDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config);
+    @Deprecated
+    default void createDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config)
+    {
+        createDefaultConfiguration(service.getUniqueIdentifier(), config);
+    }
+
+    /**
+     * Creates a new default node configuration for the specified service.
+     *
+     * @param serviceIdentifier Identifier of the service
+     * @param config the default node configuration to create in the database.
+     */
+    void createDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config);
 
     /**
      * Updates the default node configuration for the specified service.
      *
      * @param service the default node configuration used by this pubsub service.
      * @param config the default node configuration to update in the database.
+     * @deprecated Replaced by {@link #updateDefaultConfiguration(PubSubService.UniqueIdentifier, DefaultNodeConfiguration)}
      */
-    void updateDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config);
+    @Deprecated
+    default void updateDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config) {
+        updateDefaultConfiguration( service.getUniqueIdentifier(), config);
+    }
+
+    /**
+     * Updates the default node configuration for the specified service.
+     *
+     * @param serviceIdentifier Identifier of the service
+     * @param config the default node configuration to update in the database.
+     */
+    void updateDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config);
 
     /**
      * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
@@ -195,8 +257,22 @@ public interface PubSubPersistenceProvider
      * @param jid
      *            the JID of the owner of the PEP service.
      * @return the loaded PEP service, or null if not found.
+     * @deprecated Replaced by {@link #loadPEPServiceFromDB(JID)}
      */
-    PEPService loadPEPServiceFromDB(String jid);
+    default PEPService loadPEPServiceFromDB(String jid) {
+        return loadPEPServiceFromDB( new JID(jid));
+    }
+
+    /**
+     * Loads a PEP service from the database, if it exists.
+     *
+     * Note that the returned service is not yet initialized!
+     *
+     * @param jid
+     *            the JID of the owner of the PEP service.
+     * @return the loaded PEP service, or null if not found.
+     */
+    PEPService loadPEPServiceFromDB(JID jid);
 
     /**
      * Writes large changesets, using batches and transactions when available.

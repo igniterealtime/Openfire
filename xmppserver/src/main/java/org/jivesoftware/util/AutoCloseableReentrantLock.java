@@ -65,6 +65,7 @@ public class AutoCloseableReentrantLock {
      * @return An AutoCloseableLock
      * @throws IllegalStateException if this lock has already been released by the last thread to hold it
      */
+    @SuppressWarnings( "LockAcquiredButNotSafelyReleased" )
     public AutoCloseableLock lock() throws IllegalStateException {
         checkNotReleased();
         lock.lock();
@@ -93,6 +94,7 @@ public class AutoCloseableReentrantLock {
      * @throws InterruptedException  if the thread was interrupted before the lock could be acquired
      * @throws IllegalStateException if this lock has already been released by the last thread to hold it
      */
+    @SuppressWarnings( "LockAcquiredButNotSafelyReleased" )
     public AutoCloseableLock lockInterruptibly() throws InterruptedException, IllegalStateException {
         checkNotReleased();
         lock.lockInterruptibly();

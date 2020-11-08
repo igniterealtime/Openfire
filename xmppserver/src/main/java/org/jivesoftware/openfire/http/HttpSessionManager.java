@@ -30,8 +30,6 @@ import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.AsyncContext;
-import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Locale;

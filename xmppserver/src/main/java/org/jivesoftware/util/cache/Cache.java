@@ -47,6 +47,13 @@ import java.util.concurrent.locks.Lock;
  * Note that neither keys or values can be null; A {@link NullPointerException}
  * will be thrown attempting to place or retrieve null values in to the cache.
  *
+ * Caches can (but need not be) used as a mechanism that is used to share data
+ * in an Openfire cluster. When a cache is used for this purpose, it is important
+ * to realize that, when joining or leaving a cluster, the cache content will
+ * be cleared of all data that was added on the local cluster node. Typically,
+ * {@link org.jivesoftware.openfire.cluster.ClusterEventListener} is used to
+ * detect these events and restore the content of the cache.
+ *
  * @see Cacheable
  */
 public interface Cache<K extends Serializable, V extends Serializable> extends java.util.Map<K, V> {

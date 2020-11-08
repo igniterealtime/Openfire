@@ -27,8 +27,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
@@ -52,7 +55,8 @@ public class CollectionNode extends Node {
      * value is the child node. A map is used to ensure uniqueness and in particular
      * a ConcurrentHashMap for concurrency reasons.
      */
-    private Map<String, Node> nodes = new ConcurrentHashMap<>();
+    private final Map<UniqueIdentifier, Node> nodes = new ConcurrentHashMap<>();
+
     /**
      * Policy that defines who may associate leaf nodes with a collection.
      */
@@ -224,8 +228,8 @@ public class CollectionNode extends Node {
             formField.setType(FormField.Type.text_multi);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children"));
         }
-        for (String nodeId : nodes.keySet()) {
-            formField.addValue(nodeId);
+        for (Node.UniqueIdentifier nodeId : nodes.keySet()) {
+            formField.addValue(nodeId.getNodeId());
         }
     }
 
@@ -238,7 +242,7 @@ public class CollectionNode extends Node {
      * @param child the node to add to the list of child nodes.
      */
     void addChildNode(Node child) {
-        nodes.put(child.getNodeID(), child);
+        nodes.put(child.getUniqueIdentifier(), child);
     }
 
 
@@ -249,7 +253,7 @@ public class CollectionNode extends Node {
      * @param child the node to remove from the list of child nodes.
      */
     void removeChildNode(Node child) {
-        nodes.remove(child.getNodeID());
+        nodes.remove(child.getUniqueIdentifier());
     }
 
     /**
@@ -264,9 +268,9 @@ public class CollectionNode extends Node {
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         Element items = event.addElement("items");
-        items.addAttribute("node", getNodeID());
+        items.addAttribute("node", nodeID);
         Element item = items.addElement("item");
-        item.addAttribute("id", child.getNodeID());
+        item.addAttribute("id", child.getUniqueIdentifier().getNodeId());
         if (deliverPayloads) {
             item.add(child.getMetadataForm().getElement());
         }
@@ -298,7 +302,7 @@ public class CollectionNode extends Node {
         // Build packet to broadcast to subscribers
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-        event.addElement("delete").addAttribute("node", child.getNodeID());
+        event.addElement("delete").addAttribute("node", child.getUniqueIdentifier().getNodeId());
         // Broadcast event notification to subscribers
         broadcastCollectionNodeEvent(child, message);
     }
@@ -306,6 +310,7 @@ public class CollectionNode extends Node {
     @Override
     protected void deletingNode() {
         // Update child nodes to use the parent node of this node as the new parent node
+        final CollectionNode parent = getParent();
         for (Node node : getNodes()) {
             node.changeParent(parent);
         }
@@ -321,6 +326,17 @@ public class CollectionNode extends Node {
         // TODO Possibly use a thread pool for sending packets (based on the jids size)
         for (NodeSubscription subscription : subscriptions) {
             getService().sendNotification(subscription.getNode(), notification, subscription.getJID());
+        }
+
+        // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification
+        if ( getService() instanceof PEPService ) {
+            final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(getService().getAddress().getNode());
+            for( final ClientSession session : sessions ) {
+                getService().sendNotification(child, notification, session.getAddress());
+                for (CollectionNode parentNode : getParents()) {
+                    getService().sendNotification(parentNode, notification, session.getAddress());
+                }
+            }
         }
     }
 
@@ -357,7 +373,7 @@ public class CollectionNode extends Node {
      */
     @Override
     public boolean isChildNode(Node child) {
-        return nodes.containsKey(child.getNodeID());
+        return nodes.containsKey(child.getUniqueIdentifier());
     }
 
     /**
@@ -541,7 +557,7 @@ public class CollectionNode extends Node {
         super.writeExternal( out );
 
         final ExternalizableUtil util = ExternalizableUtil.getInstance();
-        util.writeExternalizableMap( out, nodes );
+        util.writeSerializableMap( out, nodes );
         util.writeSafeUTF( out, associationPolicy.name() );
         util.writeSerializableCollection( out, associationTrusted );
         util.writeInt( out, maxLeafNodes );
@@ -553,7 +569,7 @@ public class CollectionNode extends Node {
         super.readExternal( in );
 
         final ExternalizableUtil util = ExternalizableUtil.getInstance();
-        util.readExternalizableMap( in, nodes, getClass().getClassLoader() );
+        util.readSerializableMap( in, nodes, getClass().getClassLoader() );
         associationPolicy = LeafNodeAssociationPolicy.valueOf( util.readSafeUTF( in ) );
         util.readSerializableCollection( in, associationTrusted, getClass().getClassLoader() );
         maxLeafNodes = util.readInt( in );

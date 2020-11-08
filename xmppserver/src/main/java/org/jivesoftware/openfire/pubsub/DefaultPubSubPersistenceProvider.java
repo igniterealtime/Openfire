@@ -32,12 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * A manager responsible for ensuring node persistence.
@@ -57,12 +60,12 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			"ORDER BY creationDate DESC LIMIT ?) AS noDelete " +
 			"ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL AND " +
 			"ofPubsubItem.serviceID = ? AND nodeID = ?";
-    
+
     private static final String PURGE_FOR_SIZE_ORACLE =
             "DELETE from ofPubsubItem where id in " +
             "(select ofPubsubItem.id FROM ofPubsubItem LEFT JOIN " +
-            "(SELECT * from (SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
-            "ORDER BY creationDate DESC) where rownum < ? order by rownum) noDelete " +
+            "(SELECT id FROM ofPubsubItem WHERE serviceID=? AND nodeID=? " +
+            "ORDER BY creationDate DESC FETCH FIRST ? ROWS ONLY) noDelete " +
             "ON ofPubsubItem.id = noDelete.id WHERE noDelete.id IS NULL " +
             "AND ofPubsubItem.serviceID = ? AND nodeID = ?)";
 
@@ -156,6 +159,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 	private static final String LOAD_NODE_SUBSCRIPTIONS = LOAD_SUBSCRIPTIONS_BASE + "AND nodeID=?";
 	private static final String LOAD_SUBSCRIPTIONS = LOAD_SUBSCRIPTIONS_BASE + "ORDER BY nodeID";
 
+    private static final String FIND_SUBCRIBED_NODES = "SELECT serviceID, nodeID, jid FROM ofPubsubSubscription WHERE jid LIKE ? AND state LIKE ?";
+
     private static final String ADD_SUBSCRIPTION =
             "INSERT INTO ofPubsubSubscription (serviceID, nodeID, id, jid, owner, state, " +
             "deliver, digest, digest_frequency, expire, includeBody, showValues, " +
@@ -181,6 +186,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
             "VALUES (?,?,?,?,?,?)";
+    private static final String UPDATE_ITEM =
+            "UPDATE ofPubsubItem SET jid=?, creationDate=?, payload=? " +
+            "WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_ITEM =
             "DELETE FROM ofPubsubItem WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_ITEMS =
@@ -211,7 +219,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
      * Pseudo-random number generator is used to offset timing for scheduled tasks
      * within a cluster (so they don't run at the same time on all members).
      */
-    private Random prng = new Random();
+    private final Random prng = new Random();
 
     /**
      * Purge timer delay is configurable, but not less than 60 seconds (default: 5 mins)
@@ -264,7 +272,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(ADD_NODE);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
             pstmt.setString(4, StringUtils.dateToMillis(node.getCreationDate()));
@@ -379,21 +387,21 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setString(23, null);
                 pstmt.setInt(24, 0);
             }
-            pstmt.setString(25, node.getService().getServiceID());
+            pstmt.setString(25, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(26, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove existing JIDs associated with the the node
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster groups associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
 
@@ -417,21 +425,21 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         PreparedStatement pstmt = con.prepareStatement(ADD_NODE_JIDS);
         try {
             for (JID jid : node.getContacts()) {
-                pstmt.setString(1, node.getService().getServiceID());
+                pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, jid.toString());
                 pstmt.setString(4, "contacts");
                 pstmt.executeUpdate();
             }
             for (JID jid : node.getReplyRooms()) {
-                pstmt.setString(1, node.getService().getServiceID());
+                pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, jid.toString());
                 pstmt.setString(4, "replyRooms");
                 pstmt.executeUpdate();
             }
             for (JID jid : node.getReplyTo()) {
-                pstmt.setString(1, node.getService().getServiceID());
+                pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, jid.toString());
                 pstmt.setString(4, "replyTo");
@@ -439,7 +447,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             }
             if (node.isCollectionNode()) {
                 for (JID jid : ((CollectionNode) node).getAssociationTrusted()) {
-                    pstmt.setString(1, node.getService().getServiceID());
+                    pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                     pstmt.setString(2, encodeNodeID(node.getNodeID()));
                     pstmt.setString(3, jid.toString());
                     pstmt.setString(4, "associationTrusted");
@@ -450,7 +458,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             // Add new roster groups associated with the the node
             pstmt = con.prepareStatement(ADD_NODE_GROUPS);
             for (String groupName : node.getRosterGroupsAllowed()) {
-                pstmt.setString(1, node.getService().getServiceID());
+                pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(3, groupName);
                 pstmt.executeUpdate();
@@ -477,21 +485,21 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getTransactionConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_NODE);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove JIDs associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove roster groups associated with the the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
@@ -504,14 +512,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
             // Remove all affiliates from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
             // Remove users that were subscribed to the node
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTIONS);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
         }
@@ -532,7 +540,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Map<String, Node> nodes = new HashMap<>();
+        Map<Node.UniqueIdentifier, Node> nodes = new HashMap<>();
         try {
             con = DbConnectionManager.getConnection();
             // Get all non-leaf nodes (to ensure parent nodes are loaded before their children)
@@ -540,7 +548,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(1, service.getServiceID());
             rs = pstmt.executeQuery();
             
-            Map<String, String> parentMappings = new HashMap<>();
+            Map<Node.UniqueIdentifier, Node.UniqueIdentifier> parentMappings = new HashMap<>();
             
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
@@ -553,7 +561,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             	return;
             }
             
-            for (Map.Entry<String, String> entry : parentMappings.entrySet()) {
+            for (Map.Entry<Node.UniqueIdentifier, Node.UniqueIdentifier> entry : parentMappings.entrySet()) {
             	Node child = nodes.get(entry.getKey());
             	CollectionNode parent = (CollectionNode) nodes.get(entry.getValue());
             	
@@ -561,7 +569,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             		log.error("Could not find parent node " + entry.getValue() + " for node " + entry.getKey());
             	}
             	else {
-            		child.changeParent(parent);
+                    child.changeParent(parent);
             	}
             }
             // Get JIDs associated with all nodes
@@ -600,7 +608,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             rs = pstmt.executeQuery();
             // Add to each node the correspondiding subscriptions
             while(rs.next()) {
-                loadSubscriptions(service, nodes, rs);
+                loadSubscriptions(nodes, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
         }
@@ -629,40 +637,33 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		Map<String, Node> nodes = new HashMap<>();
+		Map<Node.UniqueIdentifier, Node> nodes = new HashMap<>();
 		try
 		{
 			con = DbConnectionManager.getConnection();
 			// Get all non-leaf nodes (to ensure parent nodes are loaded before
 			// their children)
 			pstmt = con.prepareStatement(LOAD_NODE);
-			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(1, nodeIdentifier.getServiceIdentifier().getServiceId());
 			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
-			Map<String, String> parentMapping = new HashMap<>();
+			Map<Node.UniqueIdentifier, Node.UniqueIdentifier> parentMapping = new HashMap<>();
 			
 			// Rebuild loaded non-leaf nodes
 			if (rs.next())
 			{
-				loadNode(service.getUniqueIdentifier(), nodes, parentMapping, rs);
+				loadNode(nodeIdentifier.getServiceIdentifier(), nodes, parentMapping, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
-			String parentId = parentMapping.get(nodeIdentifier.getNodeId());
+            Node.UniqueIdentifier parentId = parentMapping.get(nodeIdentifier);
 			
 			if (parentId != null) {
-				CollectionNode parent = (CollectionNode) service.getNode(parentId);
-				
-				if (parent == null) {
-            		log.error("Could not find parent node " + parentId + " for node " + nodeIdentifier);
-				}
-				else {
-					nodes.get(nodeIdentifier.getNodeId()).changeParent(parent);
-				}
+                nodes.get(nodeIdentifier).changeParent((CollectionNode)nodes.get(parentId));
 			}
 				
 			// Get JIDs associated with all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_JIDS);
-			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(1, nodeIdentifier.getServiceIdentifier().getServiceId());
 			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the associated JIDs
@@ -674,7 +675,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
 			// Get roster groups associated with all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_GROUPS);
-			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(1, nodeIdentifier.getServiceIdentifier().getServiceId());
 			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the associated Groups
@@ -686,7 +687,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
 			// Get affiliations of all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_AFFILIATIONS);
-			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(1, nodeIdentifier.getServiceIdentifier().getServiceId());
 			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the corresponding affiliates
@@ -698,19 +699,19 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
 			// Get subscriptions to all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_SUBSCRIPTIONS);
-			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(1, nodeIdentifier.getServiceIdentifier().getServiceId());
 			pstmt.setString(2, nodeIdentifier.getNodeId());
 			rs = pstmt.executeQuery();
 			// Add to each node the corresponding subscriptions
 			while (rs.next())
 			{
-				loadSubscriptions(service, nodes, rs);
+				loadSubscriptions(nodes, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 		}
 		catch (SQLException sqle)
 		{
-            log.error("An exception occurred while loading a node ({}) for a service ({}) from the database.", nodeIdentifier.getNodeId(), service.getUniqueIdentifier(), sqle);
+            log.error("An exception occurred while loading a node ({}) from the database.", nodeIdentifier, sqle);
 		}
 		finally
 		{
@@ -730,16 +731,17 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 	}
 
-    private void loadNode(PubSubService.UniqueIdentifier serviceId, Map<String, Node> loadedNodes, Map<String, String> parentMappings, ResultSet rs) {
+    private void loadNode(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> loadedNodes, Map<Node.UniqueIdentifier, Node.UniqueIdentifier> parentMappings, ResultSet rs) {
         Node node;
         try {
-            String nodeID = decodeNodeID(rs.getString(1));
+            Node.UniqueIdentifier nodeId = new Node.UniqueIdentifier( serviceId, decodeNodeID(rs.getString(1)) );
             boolean leaf = rs.getInt(2) == 1;
-            String parent = decodeNodeID(rs.getString(5));
             JID creator = new JID(rs.getString(22));
-            
-            if (parent != null) {
-            	parentMappings.put(nodeID, parent);
+
+            String parent = decodeNodeID(rs.getString(5));
+            if (parent != null) { // beware: 'empty string' is a valid node ID! OF-2084
+                Node.UniqueIdentifier parentId = new Node.UniqueIdentifier( serviceId, parent );
+                parentMappings.put(nodeId, parentId);
             }
 
             final boolean subscriptionEnabled = rs.getInt(16) == 1;
@@ -764,13 +766,13 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 final int maxPublishedItems = rs.getInt(9);
                 final int maxPayloadSize = rs.getInt(7);
                 final boolean sendItemSubscribe = rs.getInt(14) == 1;
-                node = new LeafNode(serviceId, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
+                node = new LeafNode(serviceId, null, nodeId.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, persistPublishedItems, maxPublishedItems, maxPayloadSize, sendItemSubscribe);
             }
             else {
                 // Retrieving a collection node
                 final CollectionNode.LeafNodeAssociationPolicy associationPolicy = CollectionNode.LeafNodeAssociationPolicy.valueOf(rs.getString(27));
                 final int maxLeafNodes = rs.getInt(28);
-                node = new CollectionNode(serviceId, null, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
+                node = new CollectionNode(serviceId, null, nodeId.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
             }
             node.setCreationDate(new Date(Long.parseLong(rs.getString(3).trim())));
             node.setModificationDate(new Date(Long.parseLong(rs.getString(4).trim())));
@@ -782,19 +784,31 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             node.setName(rs.getString(25));
 
             // Add the load to the list of loaded nodes
-            loadedNodes.put(node.getNodeID(), node);
+            loadedNodes.put(node.getUniqueIdentifier(), node);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while loading a node for a service ({}) from the database.", serviceId, sqle);
         }
     }
 
-    private void loadAssociatedJIDs(Map<String, Node> nodes, ResultSet rs) {
+    private static Node lookupNode(Map<Node.UniqueIdentifier, Node> nodes, String nodeID) {
+        Set<Node> matchingNodes = nodes.values().stream().filter(n -> n.getNodeID().equals(nodeID)).collect(Collectors.toSet());
+        if (matchingNodes.isEmpty()) {
+            return null;
+        }
+        if (matchingNodes.size() > 1) {
+            // This is a coding error.
+            throw new IllegalStateException( "Identifier does not uniquely identify node in provided map: " + nodeID );
+        }
+        return matchingNodes.iterator().next();
+    }
+
+    private void loadAssociatedJIDs(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = nodes.get(nodeID);
+            Node node = lookupNode(nodes, nodeID);
             if (node == null) {
-                log.warn("JID associated to a non-existent node: " + nodeID);
+                log.warn("JID associated to a non-existent node: {}", nodeID);
                 return;
             }
             JID jid = new JID(rs.getString(2));
@@ -817,10 +831,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private void loadAssociatedGroups(Map<String, Node> nodes, ResultSet rs) {
+    private void loadAssociatedGroups(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = nodes.get(nodeID);
+            Node node = lookupNode(nodes, nodeID);
             if (node == null) {
                 log.warn("Roster Group associated to a non-existent node: " + nodeID);
                 return;
@@ -832,10 +846,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private void loadAffiliations(Map<String, Node> nodes, ResultSet rs) {
+    private void loadAffiliations(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = nodes.get(nodeID);
+            Node node = lookupNode(nodes, nodeID);
             if (node == null) {
                 log.warn("Affiliations found for a non-existent node: " + nodeID);
                 return;
@@ -850,13 +864,13 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-	public void loadSubscription(PubSubService service, Node node, String subId)
+	public void loadSubscription(Node node, String subId)
 	{
 	    Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		Map<String, Node> nodes = new HashMap<>();
-		nodes.put(node.getNodeID(), node);
+		Map<Node.UniqueIdentifier, Node> nodes = new HashMap<>();
+		nodes.put(node.getUniqueIdentifier(), node);
 
 		try
 		{
@@ -864,7 +878,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
 			// Get subscriptions to all nodes
 			pstmt = con.prepareStatement(LOAD_NODE_SUBSCRIPTION);
-			pstmt.setString(1, service.getServiceID());
+			pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
 			pstmt.setString(2, node.getNodeID());
 			pstmt.setString(3, subId);
 			rs = pstmt.executeQuery();
@@ -872,12 +886,12 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the corresponding subscription
 			if (rs.next())
 			{
-				loadSubscriptions(service, nodes, rs);
+				loadSubscriptions(nodes, rs);
 			}
 		}
 		catch (SQLException sqle)
 		{
-            log.error("An exception occurred while loading a subscription ({}) for a node ({}) of a service ({}) from the database.", subId, node.getUniqueIdentifier(), service.getUniqueIdentifier(), sqle);
+            log.error("An exception occurred while loading a subscription ({}) for a node ({}) from the database.", subId, node.getUniqueIdentifier(), sqle);
 		}
 		finally
 		{
@@ -885,10 +899,62 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 	}
 
-    private void loadSubscriptions(PubSubService service, Map<String, Node> nodes, ResultSet rs) {
+    @Override
+    @Nonnull
+    public Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address)
+    {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        Set<Node.UniqueIdentifier> result = new HashSet<>();
+
+        try
+        {
+            con = DbConnectionManager.getConnection();
+
+            // Get subscriptions to all nodes
+            pstmt = con.prepareStatement(FIND_SUBCRIBED_NODES);
+            // Match subscriptions that use a bare JID, or full JIDs matching the bare JID search argument.
+            pstmt.setString( 1, address.toBareJID() + '%'); // note that the '%' operator matches zero or more characters. Exact matches included.
+            pstmt.setString( 2, NodeSubscription.State.subscribed.name() );
+            rs = pstmt.executeQuery();
+            while (rs.next())
+            {
+                final String serviceID = rs.getString("serviceID");
+                final String nodeID = rs.getString("nodeID");
+                try
+                {
+                    final JID jid = new JID(rs.getString("jid"));
+                    if ( jid.getResource() != null && !jid.equals(address))
+                    {
+                        // The subscription is explicit to a _different_ full JID. Do not return this one.
+                        continue;
+                    }
+                }
+                catch ( IllegalArgumentException e )
+                {
+                    log.warn( "Unable to parse value as a JID, for serviceID {}, nodeID {}", serviceID, nodeID);
+                    continue;
+                }
+                final Node.UniqueIdentifier identifier = new Node.UniqueIdentifier(serviceID, nodeID);
+                result.add(identifier);
+            }
+        }
+        catch (SQLException sqle)
+        {
+            log.error("An exception occurred while finding subscribed nodes for {}.", address, sqle);
+        }
+        finally
+        {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return result;
+    }
+
+    private void loadSubscriptions(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = nodes.get(nodeID);
+            Node node = lookupNode(nodes, nodeID);
             if (node == null) {
                 log.warn("Subscription found for a non-existent node: " + nodeID);
                 return;
@@ -919,7 +985,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             node.addSubscription(subscription);
         }
         catch (SQLException sqle) {
-            log.error("An exception occurred while loading a subscriptions for nodes of a service ({}) from the database.", service.getUniqueIdentifier(), sqle);
+            log.error("An exception occurred while loading a subscriptions for nodes of a service from the database.", sqle);
         }
     }
 
@@ -948,7 +1014,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_AFFILIATION);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.setString(4, affiliate.getAffiliation().name());
@@ -971,7 +1037,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_AFFILIATION);
             pstmt.setString(1, affiliate.getAffiliation().name());
-            pstmt.setString(2, node.getService().getServiceID());
+            pstmt.setString(2, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(3, encodeNodeID(node.getNodeID()));
             pstmt.setString(4, affiliate.getJID().toString());
             pstmt.executeUpdate();
@@ -993,7 +1059,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_AFFILIATION);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.executeUpdate();
@@ -1033,7 +1099,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             // Add the subscription of the user to the database
             pstmt = con.prepareStatement(ADD_SUBSCRIPTION);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, subscription.getID());
             pstmt.setString(4, subscription.getJID().toString());
@@ -1077,7 +1143,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             if (NodeSubscription.State.none == subscription.getState()) {
                 // Remove the subscription of the user from the table
                 pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
-                pstmt.setString(1, node.getService().getServiceID());
+                pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
                 pstmt.setString(2, subscription.getID());
                 pstmt.executeUpdate();
@@ -1102,7 +1168,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setString(9, subscription.getType().name());
                 pstmt.setInt(10, subscription.getDepth());
                 pstmt.setString(11, subscription.getKeyword());
-                pstmt.setString(12, node.getService().getServiceID());
+                pstmt.setString(12, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(13, encodeNodeID(node.getNodeID()));
                 pstmt.setString(14, subscription.getID());
                 pstmt.executeUpdate();
@@ -1127,7 +1193,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             // Remove the affiliate from the table of node affiliates
             pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
-            pstmt.setString(1, subscription.getNode().getService().getServiceID());
+            pstmt.setString(1, subscription.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(subscription.getNode().getNodeID()));
             pstmt.setString(3, subscription.getID());
             pstmt.executeUpdate();
@@ -1141,14 +1207,26 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public void savePublishedItem(PublishedItem item)
+    public void savePublishedItem(PublishedItem item) {
+        // When an item with the given itemId exists, it must be overwritten (says the XEP)
+        final boolean create = getPublishedItem( item.getNode(), item.getUniqueIdentifier() ) == null;
+        if ( create ) {
+            createPublishedItem( item );
+        } else {
+            updatePublishedItem( item );
+        }
+    }
+
+    public void createPublishedItem(PublishedItem item)
     {
-        Connection con;
+        log.trace( "Creating published item: {} (write to database)", item.getUniqueIdentifier() );
+
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_ITEM);
-            pstmt.setString(1, item.getNode().getService().getServiceID());
+            pstmt.setString(1, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(item.getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.setString(4, item.getPublisher().toString());
@@ -1156,9 +1234,32 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(6, item.getPayloadXML());
             pstmt.execute();
         } catch (SQLException ex) {
-            log.error("Published item could not be written to database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
+            log.error("Published item could not be created in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    public void updatePublishedItem(PublishedItem item)
+    {
+        log.trace( "Updating published item: {} (write to database)", item.getUniqueIdentifier() );
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_ITEM);
+            pstmt.setString(1, item.getPublisher().toString());
+            pstmt.setString(2, StringUtils.dateToMillis( item.getCreationDate()));
+            pstmt.setString(3, item.getPayloadXML());
+            pstmt.setString(4, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
+            pstmt.setString(5, encodeNodeID(item.getNodeID()));
+            pstmt.setString(6, item.getID());
+            pstmt.execute();
+        } catch (SQLException ex) {
+            log.error("Published item could not be updated in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
+        } finally {
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1175,7 +1276,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             boolean hasBatchItems = false;
             for ( final PublishedItem item : addList)
             {
-                pstmt.setString(1, item.getNode().getService().getServiceID());
+                pstmt.setString(1, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(item.getNodeID()));
                 pstmt.setString(3, item.getID());
                 pstmt.setString(4, item.getPublisher().toString());
@@ -1198,19 +1299,19 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removePublishedItem(PublishedItem item) {
-        Connection con;
+        Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_ITEM);
-            pstmt.setString(1, item.getNode().getService().getServiceID());
+            pstmt.setString(1, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.execute();
         } catch (SQLException ex) {
             log.error("Failed to delete published item from DB: {}", item.getUniqueIdentifier(), ex);
         } finally {
-            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -1227,7 +1328,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             boolean hasBatchItems = false;
             for ( final PublishedItem item : delList )
             {
-                pstmt.setString(1, item.getNode().getService().getServiceID());
+                pstmt.setString(1, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
                 pstmt.setString(3, item.getID());
                 if ( batch ) {
@@ -1304,7 +1405,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
         try
         {
-            log.debug( "Try to add the pending items as a dtabase batch." );
+            log.debug( "Try to add the pending items as a database batch." );
             removePublishedItems( con, delList, true ); // delete first (to remove possible duplicates), then add new items
             savePublishedItems( con, addList, true );
         }
@@ -1330,23 +1431,22 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private static String getDefaultNodeConfigurationCacheKey( PubSubService service, boolean isLeafType )
+    private static String getDefaultNodeConfigurationCacheKey( PubSubService.UniqueIdentifier uniqueIdentifier, boolean isLeafType )
     {
-        return service.getServiceID() + "|" + isLeafType;
+        return uniqueIdentifier.getServiceId() + "|" + isLeafType;
     }
 
     @Override
-    public DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service,
-            boolean isLeafType) {
-
-        final String key = getDefaultNodeConfigurationCacheKey( service, isLeafType );
+    public DefaultNodeConfiguration loadDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, boolean isLeafType)
+    {
+        final String key = getDefaultNodeConfigurationCacheKey( serviceIdentifier, isLeafType );
         DefaultNodeConfiguration result = defaultNodeConfigurationCache.get( key );
         if ( result == null )
         {
-            final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+            final Lock lock = defaultNodeConfigurationCache.getLock( DEFAULT_CONF_CACHE );
+            lock.lock();
             try
             {
-                lock.lock();
                 result = defaultNodeConfigurationCache.get( key );
                 if ( result == null )
                 {
@@ -1358,7 +1458,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                         con = DbConnectionManager.getConnection();
                         // Get default node configuration for the specified service
                         pstmt = con.prepareStatement(LOAD_DEFAULT_CONF);
-                        pstmt.setString(1, service.getServiceID());
+                        pstmt.setString(1, serviceIdentifier.getServiceId());
                         pstmt.setInt(2, (isLeafType ? 1 : 0));
                         rs = pstmt.executeQuery();
                         if (rs.next()) {
@@ -1406,22 +1506,20 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public void createDefaultConfiguration(PubSubService service,
-            DefaultNodeConfiguration config) {
+    public void createDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config)
+    {
+        final String key = getDefaultNodeConfigurationCacheKey( serviceIdentifier, config.isLeaf() );
 
-        final String key = getDefaultNodeConfigurationCacheKey( service, config.isLeaf() );
-
-        final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+        final Lock lock = defaultNodeConfigurationCache.getLock( DEFAULT_CONF_CACHE );
+        lock.lock();
         try
         {
-            lock.lock();
-
             Connection con = null;
             PreparedStatement pstmt = null;
             try {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(ADD_DEFAULT_CONF);
-                pstmt.setString(1, service.getServiceID());
+                pstmt.setString(1, serviceIdentifier.getServiceId());
                 pstmt.setInt(2, (config.isLeaf() ? 1 : 0));
                 pstmt.setInt(3, (config.isDeliverPayloads() ? 1 : 0));
                 pstmt.setInt(4, config.getMaxPayloadSize());
@@ -1462,10 +1560,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    public void updateDefaultConfiguration(PubSubService service,
-            DefaultNodeConfiguration config) {
-
-        final Lock lock = CacheFactory.getLock( DEFAULT_CONF_CACHE, defaultNodeConfigurationCache );
+    public void updateDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config)
+    {
+        final Lock lock = defaultNodeConfigurationCache.getLock( DEFAULT_CONF_CACHE );
+        lock.lock();
         try {
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -1493,17 +1591,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 }
                 pstmt.setString(15, config.getAssociationPolicy().name());
                 pstmt.setInt(16, config.getMaxLeafNodes());
-                pstmt.setString(17, service.getServiceID());
+                pstmt.setString(17, serviceIdentifier.getServiceId());
                 pstmt.setInt(18, (config.isLeaf() ? 1 : 0));
                 pstmt.executeUpdate();
 
-
-                getDefaultNodeConfigurationCacheKey( service, false );
-
                 // Note that 'isLeaf' might have changed.
-                defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( service, true ) );
-                defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( service, false ) );
-                defaultNodeConfigurationCache.put( getDefaultNodeConfigurationCacheKey( service, config.isLeaf() ), config );
+                defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( serviceIdentifier, true ) );
+                defaultNodeConfigurationCache.remove( getDefaultNodeConfigurationCacheKey( serviceIdentifier, false ) );
+                defaultNodeConfigurationCache.put( getDefaultNodeConfigurationCacheKey( serviceIdentifier, config.isLeaf() ), config );
             }
             catch (SQLException sqle) {
                 log.error(sqle.getMessage(), sqle);
@@ -1546,7 +1641,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             // Get published items of the specified node
             pstmt = con.prepareStatement(LOAD_ITEMS);
             pstmt.setMaxRows(max);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             rs = pstmt.executeQuery();
             int counter = 0;
@@ -1593,7 +1688,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt = con.prepareStatement(LOAD_LAST_ITEM);
             pstmt.setFetchSize(1);
             pstmt.setMaxRows(1);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             rs = pstmt.executeQuery();
             // Rebuild loaded published items
@@ -1628,7 +1723,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ITEM);
-            pstmt.setString(1, node.getService().getServiceID());
+            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, node.getNodeID());
             pstmt.setString(3, itemIdentifier.getItemId());
             rs = pstmt.executeQuery();
@@ -1685,7 +1780,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		try
 		{
             pstmt = con.prepareStatement(DELETE_ITEMS);
-            pstmt.setString(1, leafNode.getService().getServiceID());
+            pstmt.setString(1, leafNode.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(leafNode.getNodeID()));
             pstmt.executeUpdate();
 		}
@@ -1696,7 +1791,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 	}
 
     @Override
-    public PEPService loadPEPServiceFromDB(String jid) {
+    public PEPService loadPEPServiceFromDB(JID jid) {
         PEPService pepService = null;
 
         Connection con = null;
@@ -1706,14 +1801,16 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             // Get all PEP services
             pstmt = con.prepareStatement(GET_PEP_SERVICE);
-            pstmt.setString(1, jid);
+            pstmt.setString(1, jid.toString());
             rs = pstmt.executeQuery();
             // Restore old PEPService
             while (rs.next()) {
                 String serviceID = rs.getString(1);
-
+                if ( !jid.toString().equals( serviceID )) {
+                    log.warn( "Loading a PEP service for {} that has a different name: {}", jid, serviceID );
+                }
                 // Create a new PEPService
-                pepService = new PEPService(XMPPServer.getInstance(), serviceID);
+                pepService = new PEPService(XMPPServer.getInstance(), jid);
             }
         } catch (SQLException sqle) {
             log.error(sqle.getMessage(), sqle);

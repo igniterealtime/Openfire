@@ -23,7 +23,6 @@ import org.xmpp.packet.*;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Date;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -62,13 +61,13 @@ public class StreamManager {
         public final long x;
         public final Date timestamp = new Date();
         public final Packet packet;
-        
+
         public UnackedPacket(long x, Packet p) {
             this.x = x;
             packet = p;
         }
     }
-    
+
     public static boolean isStreamManagementActive() {
         return ACTIVE.getValue();
     }
@@ -178,6 +177,11 @@ public class StreamManager {
         boolean allow = false;
         // Ensure that resource binding has occurred.
         if (session instanceof ClientSession) {
+            Object ws = session.getSessionData("ws");
+            if (ws != null && (Boolean) ws) {
+                Log.debug( "Websockets resume is not yet implemented: {}", session );
+                return false;
+            }
             AuthToken authToken = ((LocalClientSession)session).getAuthToken();
             if (authToken != null) {
                 if (!authToken.isAnonymous()) {
@@ -284,9 +288,9 @@ public class StreamManager {
         }
         final JID fullJid;
         if ( authToken.isAnonymous() ){
-            fullJid = new JID(resource, authToken.getDomain(), resource, true);
+            fullJid = new JID(resource, session.getServerName(), resource, true);
         } else {
-            fullJid = new JID(authToken.getUsername(), authToken.getDomain(), resource, true);
+            fullJid = new JID(authToken.getUsername(), session.getServerName(), resource, true);
         }
         Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 
@@ -329,13 +333,9 @@ public class StreamManager {
             oldConnection.close();
         }
         Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
-        // If we're all happy, disconnect this session.
-        Connection conn = session.getConnection();
-        session.setDetached();
-        // Connect new session.
-        otherSession.reattach(conn, h);
-        Log.debug( "Perform resumption on session {} for '{}'. Closing session {}", otherSession.getStreamID(), fullJid, session.getStreamID() );
-        session.close();
+        // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
+        otherSession.reattach(session, h);
+        Log.debug("Perform resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
     }
 
     /**
@@ -458,15 +458,17 @@ public class StreamManager {
 
                 Log.debug( "Received acknowledgement from client: h={}", h );
 
-                if (!validateClientAcknowledgement(h)) {
-                    Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
-                    return;
-                }
+                synchronized ( this ) {
+                    if (!validateClientAcknowledgement(h)) {
+                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                        session.deliverRawText( error.toXML() );
+                        session.close();
+                        return;
+                    }
 
-                processClientAcknowledgement(h);
+                    processClientAcknowledgement(h);
+                }
             }
         }
     }

@@ -318,6 +318,11 @@
                           url="pubsub-node-subscribers.jsp"
                           description="${sidebar.pubsub-node-subscribers.descr}"/>
 
+                    <!-- Node Configuration -->
+                    <item id="pubsub-node-configuration" name="${sidebar.pubsub-node-configuration}"
+                          url="pubsub-node-configuration.jsp"
+                          description="${sidebar.pubsub-node-configuration.descr}"/>
+
                     <!-- Edit Node -->
                     <item id="pubsub-node-edit" name="${sidebar.pubsub-node-edit}"
                           url="pubsub-node-edit.jsp"
@@ -366,6 +371,11 @@
                     <item id="user-pep-node-summary" name="${sidebar.user-pep-node-summary}"
                           url="pubsub-node-summary.jsp"
                           description="${sidebar.user-pep-node-summary.descr}"/>
+
+                    <!-- Privacy Lists -->
+                    <item id="user-privacylists" name="${sidebar.user-privacylists}"
+                          url="user-privacylists.jsp"
+                          description="${sidebar.user-privacylists.descr}"/>
 
                     <!-- Password -->
                     <item id="user-password" name="${sidebar.user-password}"
@@ -486,6 +496,11 @@
                     <item id="muc-room-affiliations" name="${sidebar.muc-room-affiliations}"
                           url="muc-room-affiliations.jsp"
                           description="${sidebar.muc-room-affiliations.descr}"/>
+
+                    <!-- Federation -->
+                    <item id="muc-room-federation" name="${sidebar.muc-room-federation}"
+                          url="muc-room-federation.jsp"
+                          description="${sidebar.muc-room-federation.descr}"/>
 
                     <!-- Delete Room -->
                     <item id="muc-room-delete" name="${sidebar.muc-room-delete}"

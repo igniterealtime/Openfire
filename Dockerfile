@@ -1,4 +1,4 @@
-FROM maven:3.6.2-jdk-8 as packager
+FROM maven:3.6.3-jdk-8 as packager
 WORKDIR /usr/src
 
 COPY ./pom.xml .

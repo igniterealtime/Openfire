@@ -24,8 +24,10 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -46,6 +48,10 @@
     String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
     String enableLog = ParamUtils.getParameter(request, "roomconfig_enablelogging");
     String maxUsers = ParamUtils.getParameter(request, "roomconfig_maxusers");
+    String broadcastModerator = ParamUtils.getParameter(request, "roomconfig_broadcastmoderator");
+    String broadcastParticipant = ParamUtils.getParameter(request, "roomconfig_broadcastparticipant");
+    String broadcastVisitor = ParamUtils.getParameter(request, "roomconfig_broadcastvisitor");
+    String allowpm = ParamUtils.getParameter(request, "roomconfig_allowpm");
 
     if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
         // The requested service name does not exist so return to the list of the existing rooms
@@ -77,6 +83,11 @@
         }
         catch (Exception e) {
             errors.put("max_users", "max_users");
+        }
+        if ( Arrays.asList("anyone", "moderators", "participants", "none").contains(allowpm)) {
+            MUCPersistenceManager.setProperty(mucname, "room.allowpm", allowpm);
+        } else {
+            errors.put("allowpm", "allowpm");
         }
         if (errors.size() == 0) {
             if (publicRoom != null && publicRoom.trim().length() > 0) {
@@ -145,181 +156,188 @@
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.logEnabled", "false");
             }
+            if (broadcastModerator != null && broadcastModerator.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "false");
+            }
+            if (broadcastParticipant != null && broadcastParticipant.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastParticipant", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastParticipant", "false");
+            }
+            if (broadcastVisitor != null && broadcastVisitor.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastVisitor", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.broadcastVisitor", "false");
+            }
         }
 
         response.sendRedirect("muc-default-settings.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
         return;
     }
+
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("success", success);
+    pageContext.setAttribute("mucname", mucname);
+    pageContext.setAttribute("publicRoom", MUCPersistenceManager.getBooleanProperty(mucname, "room.publicRoom", true));
+    pageContext.setAttribute("persistent", MUCPersistenceManager.getBooleanProperty(mucname, "room.persistent", false));
+    pageContext.setAttribute("moderated", MUCPersistenceManager.getBooleanProperty(mucname, "room.moderated", false));
+    pageContext.setAttribute("membersOnly", MUCPersistenceManager.getBooleanProperty(mucname, "room.membersOnly", false));
+    pageContext.setAttribute("canAnyoneDiscoverJID", MUCPersistenceManager.getBooleanProperty(mucname, "room.canAnyoneDiscoverJID", true));
+    pageContext.setAttribute("canOccupantsInvite", MUCPersistenceManager.getBooleanProperty(mucname, "room.canOccupantsInvite", false));
+    pageContext.setAttribute("canOccupantsChangeSubject", MUCPersistenceManager.getBooleanProperty(mucname, "room.canOccupantsChangeSubject", false));
+    pageContext.setAttribute("loginRestrictedToNickname", MUCPersistenceManager.getBooleanProperty(mucname, "room.loginRestrictedToNickname", false));
+    pageContext.setAttribute("canChangeNickname", MUCPersistenceManager.getBooleanProperty(mucname, "room.canChangeNickname", true));
+    pageContext.setAttribute("registrationEnabled", MUCPersistenceManager.getBooleanProperty(mucname, "room.registrationEnabled", true));
+    pageContext.setAttribute("logEnabled", MUCPersistenceManager.getBooleanProperty(mucname, "room.logEnabled", true));
+    pageContext.setAttribute("maxUsers", MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30));
+    pageContext.setAttribute("broadcastModerator", MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastModerator", true));
+    pageContext.setAttribute("broadcastParticipant", MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastParticipant", true));
+    pageContext.setAttribute("broadcastVisitor", MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastVisitor", true));
+    pageContext.setAttribute("allowpm", MUCPersistenceManager.getProperty(mucname, "room.allowpm", "anyone"));
+    pageContext.setAttribute("xxx", MUCPersistenceManager.getBooleanProperty(mucname, "room.xxx", true));
+    pageContext.setAttribute("xxx", MUCPersistenceManager.getBooleanProperty(mucname, "room.xxx", true));
+    pageContext.setAttribute("xxx", MUCPersistenceManager.getBooleanProperty(mucname, "room.xxx", true));
 %>
 
 <html>
-<head>
-<title><fmt:message key="muc.default.settings.title"/></title>
-<meta name="subPageID" content="muc-defaultsettings"/>
-<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
-<meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
-</head>
-<body>
+    <head>
+        <title><fmt:message key="muc.default.settings.title"/></title>
+        <meta name="subPageID" content="muc-defaultsettings"/>
+        <meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
+        <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
+    </head>
 
-<p>
-<fmt:message key="muc.default.settings.info" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
-</p>
+    <body>
 
-<%  if (errors.size() > 0) { %>
+    <p>
+        <c:url var="mucserviceeditformlink" value="muc-service-edit-form.jsp">
+            <c:param name="mucname" value="${mucname}"/>
+        </c:url>
+        <fmt:message key="muc.default.settings.info" />
+        <fmt:message key="groupchat.service.settings_affect" /><b><a href="${mucserviceeditformlink}"><c:out value="${mucname}"/></a></b>
+    </p>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="muc.default.settings.error" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    <c:choose>
+        <c:when test="${not empty errors}">
+            <c:forEach var="err" items="${errors}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                        <c:otherwise><fmt:message key="muc.default.settings.error" /></c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:forEach>
+        </c:when>
+        <c:when test="${success}">
+            <admin:infobox type="success">
+                <fmt:message key="muc.default.settings.update" />
+            </admin:infobox>
+        </c:when>
+    </c:choose>
 
-<%  } else if (success) { %>
+    <!-- BEGIN 'Default Room Settings' -->
+    <form action="muc-default-settings.jsp?save" method="post">
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-            <fmt:message key="muc.default.settings.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
-
-<!-- BEGIN 'Default Room Settings' -->
-<form action="muc-default-settings.jsp?save" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
-    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
-    <div class="jive-contentBoxHeader">
-        <fmt:message key="muc.default.settings.title" />
-    </div>
-    <div class="jive-contentBox">
+    <input type="hidden" name="mucname" value="${fn:escapeXml(mucname)}" />
+
+    <fmt:message key="muc.default.settings.title" var="settingsTitle"/>
+    <admin:contentBox title="${settingsTitle}">
         <table cellpadding="3" cellspacing="0" border="0">
+            <colgroup>
+                <col style="width: 1%"/>
+                <col style="width: 99%"/>
+            </colgroup>
         <tbody>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_publicroom" value="true" id="publicRoom" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.publicRoom", true)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="publicRoom"><fmt:message key="muc.default.settings.public_room" /></label>
-                </td>
+                <td><input name="roomconfig_publicroom" value="true" id="publicRoom" type="checkbox" ${publicRoom ? 'checked' : ''}></td>
+                <td><label for="publicRoom"><fmt:message key="muc.default.settings.public_room" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_persistentroom" value="true" id="persistentRoom" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.persistent", false)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="persistentRoom"><fmt:message key="muc.default.settings.persistent_room" /></label>
-                </td>
+                <td><input name="roomconfig_persistentroom" value="true" id="persistentRoom" type="checkbox" ${persistent ? 'checked' : ''}></td>
+                <td><label for="persistentRoom"><fmt:message key="muc.default.settings.persistent_room" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_moderatedroom" value="true" id="moderated" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.moderated", false)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="moderated"><fmt:message key="muc.default.settings.moderated" /></label>
-                </td>
+                <td><input name="roomconfig_moderatedroom" value="true" id="moderated" type="checkbox" ${moderated ? 'checked' : ''}></td>
+                <td><label for="moderated"><fmt:message key="muc.default.settings.moderated" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_membersonly" value="true" id="membersOnly" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.membersOnly", false)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="membersOnly"><fmt:message key="muc.default.settings.members_only" /></label>
-                </td>
+                <td><input name="roomconfig_membersonly" value="true" id="membersOnly" type="checkbox" ${membersOnly ? 'checked' : ''}></td>
+                <td><label for="membersOnly"><fmt:message key="muc.default.settings.members_only" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_nonanonymous" value="true" id="nonanonymous" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.canAnyoneDiscoverJID", true)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="nonanonymous"><fmt:message key="muc.default.settings.can_anyone_discover_jid" /></label>
-                </td>
+                <td><input name="roomconfig_nonanonymous" value="true" id="nonanonymous" type="checkbox" ${canAnyoneDiscoverJID ? 'checked' : ''}></td>
+                <td><label for="nonanonymous"><fmt:message key="muc.default.settings.can_anyone_discover_jid" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_allowinvites" value="true" id="allowInvites" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.canOccupantsInvite", false)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="allowInvites"><fmt:message key="muc.default.settings.allow_invites" /></label>
-                </td>
+                <td><input name="roomconfig_allowinvites" value="true" id="allowInvites" type="checkbox" ${canOccupantsInvite ? 'checked' : ''}></td>
+                <td><label for="allowInvites"><fmt:message key="muc.default.settings.allow_invites" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_changesubject" value="true" id="changeSubject" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.canOccupantsChangeSubject", false)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="changeSubject"><fmt:message key="muc.default.settings.change_subject" /></label>
-                </td>
+                <td><input name="roomconfig_changesubject" value="true" id="changeSubject" type="checkbox" ${canOccupantsChangeSubject ? 'checked' : ''}></td>
+                <td><label for="changeSubject"><fmt:message key="muc.default.settings.change_subject" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_reservednick" value="true" id="reservedNick" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.loginRestrictedToNickname", false)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="reservedNick"><fmt:message key="muc.default.settings.reserved_nick" /></label>
-                </td>
+                <td><input name="roomconfig_reservednick" value="true" id="reservedNick" type="checkbox" ${loginRestrictedToNickname ? 'checked' : ''}></td>
+                <td><label for="reservedNick"><fmt:message key="muc.default.settings.reserved_nick" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_canchangenick" value="true" id="canChangeNick" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.canChangeNickname", true)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="canChangeNick"><fmt:message key="muc.default.settings.can_change_nick" /></label>
-                </td>
+                <td><input name="roomconfig_canchangenick" value="true" id="canChangeNick" type="checkbox" ${canChangeNickname ? 'checked' : ''}></td>
+                <td><label for="canChangeNick"><fmt:message key="muc.default.settings.can_change_nick" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_registration" value="true" id="registration" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.registrationEnabled", true)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="registration"><fmt:message key="muc.default.settings.registration" /></label>
-                </td>
+                <td><input name="roomconfig_registration" value="true" id="registration" type="checkbox" ${registrationEnabled ? 'checked' : ''}></td>
+                <td><label for="registration"><fmt:message key="muc.default.settings.registration" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    <input name="roomconfig_enablelogging" value="true" id="enableLogging" type="checkbox"
-                    <%= ((MUCPersistenceManager.getBooleanProperty(mucname, "room.logEnabled", true)) ? "checked" : "") %>>
-                </td>
-                <td width="99%">
-                    <label for="enableLogging"><fmt:message key="muc.default.settings.enable_logging" /></label>
-                </td>
+                <td><input name="roomconfig_enablelogging" value="true" id="enableLogging" type="checkbox" ${logEnabled ? 'checked' : ''}></td>
+                <td><label for="enableLogging"><fmt:message key="muc.default.settings.enable_logging" /></label></td>
             </tr>
             <tr>
-                <td width="1%">
-                    &nbsp;
-                </td>
-                <td width="99%">
+                <td>&nbsp;</td>
+                <td>
                     <label for="roomconfig_maxusers"><fmt:message key="muc.default.settings.max_users" />:</label>
-                    &nbsp;
-                    <input type="number" name="roomconfig_maxusers" id="roomconfig_maxusers" min="1" value="<%= MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30) == 0  ? "" : MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30)%>" size="5">
+                    <input type="number" name="roomconfig_maxusers" id="roomconfig_maxusers" min="1" value="${maxUsers eq 0 ? '' : maxUsers}" size="5">
                     <fmt:message key="muc.room.edit.form.empty_nolimit" />
+                </td>
+            </tr>
+            <tr>
+                <td><input name="roomconfig_broadcastmoderator" value="true" id="broadcastModerator" type="checkbox" ${broadcastModerator ? 'checked' : ''}></td>
+                <td><label for="broadcastModerator"><fmt:message key="muc.default.settings.broadcast_presence_moderator" /></label></td>
+            </tr>
+            <tr>
+                <td><input name="roomconfig_broadcastparticipant" value="true" id="broadcastParticipant" type="checkbox" ${broadcastParticipant ? 'checked' : ''}></td>
+                <td><label for="broadcastParticipant"><fmt:message key="muc.default.settings.broadcast_presence_participant" /></label></td>
+            </tr>
+            <tr>
+                <td><input name="roomconfig_broadcastvisitor" value="true" id="broadcastVisitor" type="checkbox" ${broadcastVisitor ? 'checked' : ''}></td>
+                <td><label for="broadcastVisitor"><fmt:message key="muc.default.settings.broadcast_presence_visitor" /></label></td>
+            </tr>
+            <tr>
+                <td>
+
+                </td>
+                <td><label for="allowpm"><fmt:message key="muc.default.settings.allowpm" /></label>
+                    <select name="roomconfig_allowpm" id="allowpm">
+                        <option value="none" ${allowpm eq 'none' ? 'selected' : ''}><fmt:message key="muc.default.settings.none" /></option>
+                        <option value="moderators" ${allowpm eq 'moderators' ? 'selected' : ''}><fmt:message key="muc.default.settings.moderator" /></option>
+                        <option value="participants" ${allowpm eq 'participants' ? 'selected' : ''}><fmt:message key="muc.default.settings.participant" /></option>
+                        <option value="anyone" ${allowpm eq 'anyone' ? 'selected' : ''}><fmt:message key="muc.default.settings.anyone" /></option>
+                    </select>
                 </td>
             </tr>
         </tbody>
         </table>
-    </div>
+    </admin:contentBox>
     <input type="submit" value="<fmt:message key="global.save_settings" />">
-</form>
-<!-- END 'Default Room Settings' -->
+
+    </form>
+    <!-- END 'Default Room Settings' -->
 
 </body>
 </html>

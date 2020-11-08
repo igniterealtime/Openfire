@@ -119,8 +119,8 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
                     ctx.close();
                 }
             }
-            catch (Exception ignored) {
-                // Ignore.
+            catch (Exception ex) {
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to map authorization for principal {}.", principal, ex);
             }
         }
         return username;

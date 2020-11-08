@@ -33,7 +33,7 @@ public enum ConnectionType
     /**
      * Openfire web-admin console.
      */
-    WEBADMIN( "admin.web.ssl.", SOCKET_S2S ),
+    WEBADMIN( "admin.web.ssl.", SOCKET_C2S ),
 
     /**
      * Openfire External Component connectivity.
@@ -51,6 +51,23 @@ public enum ConnectionType
     {
         this.prefix = prefix;
         this.fallback = fallback;
+    }
+
+    /**
+     * Flag that indicates whether the connections of this type are client-oriented.
+     * @return true if it is SOCKET_C2S or its fallback is SOCKET_C2S.
+     */
+    public boolean isClientOriented()
+    {
+        ConnectionType pointer = this;
+        while (pointer != null) {
+            if (SOCKET_C2S == pointer) {
+                return true;
+            }
+
+            pointer = pointer.getFallback();
+        }
+        return false;
     }
 
     /**

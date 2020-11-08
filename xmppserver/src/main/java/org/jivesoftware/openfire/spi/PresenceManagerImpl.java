@@ -192,12 +192,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         // Delete the last unavailable presence of this user since the user is now
         // available. Only perform this operation if this is an available presence sent to
         // THE SERVER and the presence belongs to a local user.
-        if (presence.getTo() == null && server.isLocal(presence.getFrom())) {
+        if (presence.getTo() == null && userManager.isRegisteredUser(presence.getFrom(), false)) {
             String username = presence.getFrom().getNode();
-            if (username == null || !userManager.isRegisteredUser(username)) {
-                // Ignore anonymous users
-                return;
-            }
 
             // Optimization: only delete the unavailable presence information if this
             // is the first session created on the server.
@@ -235,12 +231,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         // Only save the last presence status and keep track of the time when the user went
         // offline if this is an unavailable presence sent to THE SERVER and the presence belongs
         // to a local user.
-        if (presence.getTo() == null && server.isLocal(presence.getFrom())) {
+        if (presence.getTo() == null && userManager.isRegisteredUser(presence.getFrom(), false)) {
             String username = presence.getFrom().getNode();
-            if (username == null || !userManager.isRegisteredUser(username)) {
-                // Ignore anonymous users
-                return;
-            }
 
             // If the user has any remaining sessions, don't record the offline info.
             if (sessionManager.getActiveSessionCount(username) > 0) {
@@ -461,7 +453,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
 
     @Override
     public void sendUnavailableFromSessions(JID recipientJID, JID userJID) {
-        if (XMPPServer.getInstance().isLocal(userJID) && userManager.isRegisteredUser(userJID.getNode())) {
+        if (userManager.isRegisteredUser(userJID, false)) {
             for (ClientSession session : sessionManager.getSessions(userJID.getNode())) {
                 // Do not send an unavailable presence if the user sent a direct available presence
                 if (presenceUpdateHandler.hasDirectPresence(session.getAddress(), recipientJID)) {
@@ -560,9 +552,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Lock lock = CacheFactory.getLock(username, offlinePresenceCache);
+        Lock lock = offlinePresenceCache.getLock(username);
+        lock.lock();
         try {
-            lock.lock();
             if (!offlinePresenceCache.containsKey(username) || !lastActivityCache.containsKey(username)) {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_OFFLINE_PRESENCE);

@@ -92,7 +92,7 @@ file might look like the following:
     &lt;author&gt;Jive Software&lt;/author&gt;
 
     &lt;version&gt;1.0&lt;/version&gt;
-    &lt;date&gt;07/01/2006&lt;/date&gt;
+    &lt;date&gt;07/21/2006&lt;/date&gt;
     &lt;url&gt;http://www.igniterealtime.org/projects/openfire/plugins.jsp&lt;/url&gt;
     &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
     &lt;licenseType&gt;gpl&lt;/licenseType&gt;
@@ -113,7 +113,7 @@ file might look like the following:
     <li>author -- the author of the plugin.</li>
     <li>version -- the version of the plugin.</li>
     <li>date -- the date the plugin was released. The date must be in the form MM/dd/yyyy, such
-          as 07/01/2006.</li>
+          as 07/21/2006.</li>
 
     <li>url -- a URL where additional information about the plugin is available.</li>
     <li>minServerVersion -- the minimum version of Openfire required
@@ -519,6 +519,11 @@ points that are the most common:
 <p>No, all plugins must be deployed as JAR or WAR files. When a JAR or WAR is not present for the plugin,
 Openfire assumes that the file has been deleted and that the users wants to destroy the plugin,
 so it also deletes the directory.</p>
+
+<b>I've made a change to an existing plugin but can't get it to install when I upload it. Why?</b>
+<p>Naming is important. The uploaded JAR must match name with the plugin (i.e. the POM artifactId). For example, the Monitoring 
+and Archiving Plugin must be uploaded as <code>monitoring.jar</code> rather than <code>my_better_monitoring.jar</code>. <br/>
+If you're compiling using the <code>maven-assembly-plugin</code>, be sure to look at the config in the <a href="https://github.com/igniterealtime/openfire-exampleplugin/blob/master/pom.xml">example plugin</a>.</p>
 
 <br>
 <br>

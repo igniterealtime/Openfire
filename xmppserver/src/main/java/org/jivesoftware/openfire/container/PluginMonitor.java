@@ -24,6 +24,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -466,6 +467,12 @@ public class PluginMonitor implements PropertyEventListener
                 }
 
                 Files.createDirectory( dir );
+                // OF-1973: Prevent future-timestamped jar files from restarting the installation process.
+                if ( Files.getLastModifiedTime( file ).toMillis() > System.currentTimeMillis() )
+                {
+                    final FileTime now = FileTime.fromMillis(System.currentTimeMillis());
+                    Files.setLastModifiedTime(file, now);
+                }
                 // Set the date of the JAR file to the newly created folder
                 Files.setLastModifiedTime( dir, Files.getLastModifiedTime( file ) );
                 Log.debug( "Extracting plugin '{}'...", pluginName );

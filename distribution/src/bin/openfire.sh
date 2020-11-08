@@ -132,7 +132,7 @@ esac
 done
 
 
-JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml"
+JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true"
 
 if [ -z "$LOCALCLASSPATH" ] ; then
 	LOCALCLASSPATH=$OPENFIRE_LIB/startup.jar

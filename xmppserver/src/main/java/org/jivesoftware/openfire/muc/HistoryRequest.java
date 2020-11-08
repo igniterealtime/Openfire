@@ -23,7 +23,6 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRole;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -26,7 +26,6 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.privacy.PrivacyList;
@@ -974,7 +973,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * allow the packet to flow.
      *
      * @param packet the packet to analyze if it must be blocked.
-     * @return true if the specified packet must be blocked.
+     * @return true if the specified packet must *not* be blocked.
      */
     @Override
     public boolean canProcess(Packet packet) {
@@ -994,10 +993,14 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
-        if (conn != null) {
-            conn.deliver(packet);
+        synchronized ( streamManager )
+        {
+            if ( conn != null )
+            {
+                conn.deliver(packet);
+            }
+            streamManager.sentStanza(packet);
         }
-        streamManager.sentStanza(packet);
     }
 
     @Override

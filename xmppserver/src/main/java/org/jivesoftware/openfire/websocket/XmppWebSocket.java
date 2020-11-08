@@ -258,7 +258,7 @@ public class XmppWebSocket {
      * Initiate the stream and corresponding XMPP session.
      */
     private void initiateSession(Element stanza) {
-        
+
         String host = stanza.attributeValue("to");
         StreamError streamError = null;
         Locale language = Locale.forLanguageTag(stanza.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI), "en"));
@@ -294,7 +294,7 @@ public class XmppWebSocket {
         if (JiveGlobals.getBooleanProperty("xmpp.client.validate.host", false)) {
             result = XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals(host);
         }
-        return result; 
+        return result;
     }
 
     /*

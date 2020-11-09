@@ -258,12 +258,7 @@ abstract class SocketReadingMode {
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
-        if (socketReader.connection.isFlashClient()) {
-            sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
-        } else {
-            sb.append("<stream:stream ");
-        }
-        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
+        sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(socketReader.getNamespace()).append('\"');
         if (socketReader.getExtraNamespaces() != null) {
             sb.append(' ');

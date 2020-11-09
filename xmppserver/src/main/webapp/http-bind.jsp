@@ -14,7 +14,6 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
 --%>
-<%@ page import="org.jivesoftware.openfire.http.FlashCrossDomainServlet" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.Log" %>
@@ -116,7 +115,6 @@
     pageContext.setAttribute( "csrf", csrfParam );
     pageContext.setAttribute( "errors", errorMap );
     pageContext.setAttribute( "serverManager", serverManager );
-    pageContext.setAttribute( "crossDomainContent", FlashCrossDomainServlet.getCrossDomainContent() );
     pageContext.setAttribute( "configuration", configuration );
 %>
 
@@ -142,7 +140,6 @@
             $("XFFServerHeader").disabled = !enabled;
             $("XFFHostHeader").disabled = !enabled;
             $("XFFHostName").disabled = !enabled;
-            $("crossdomain").disabled = !enabled;
         };
         window.onload = setTimeout("setEnabled()", 500);
     </script>
@@ -321,14 +318,6 @@
         </table>
     </admin:contentBox>
     <!-- XFF -->
-
-    <fmt:message key="httpbind.settings.crossdomain.group" var="crossdomain_boxtitle"/>
-    <admin:contentBox title="${crossdomain_boxtitle}">
-        <p><fmt:message key="httpbind.settings.crossdomain.info.general" /></p>
-        <p><fmt:message key="httpbind.settings.crossdomain.info.override"><fmt:param value="<tt>&lt;openfireHome&gt;/conf/crossdomain.xml</tt>" /></fmt:message></p>
-        <p><fmt:message key="httpbind.settings.crossdomain.info.policy" /></p>
-        <textarea id="crossdomain" cols="120" rows="10" wrap="virtual" readonly="readonly"><c:out value="${crossDomainContent}"/></textarea>
-    </admin:contentBox>
     
     <input type="submit" id="settingsUpdate" name="update" value="<fmt:message key="global.save_settings" />">
 </form>

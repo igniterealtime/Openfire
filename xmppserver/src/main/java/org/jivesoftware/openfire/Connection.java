@@ -229,26 +229,6 @@ public interface Connection extends Closeable {
     void deliverRawText( String text );
 
     /**
-     * Returns true if the connected client is a flash client. Flash clients need
-     * to receive a special character (i.e. \0) at the end of each xml packet. Flash
-     * clients may send the character \0 in incoming packets and may start a connection
-     * using another openning tag such as: "flash:client".
-     *
-     * @return true if the connected client is a flash client.
-     */
-    boolean isFlashClient();
-
-    /**
-     * Sets whether the connected client is a flash client. Flash clients need to
-     * receive a special character (i.e. \0) at the end of each xml packet. Flash
-     * clients may send the character \0 in incoming packets and may start a
-     * connection using another openning tag such as: "flash:client".
-     *
-     * @param flashClient true if the if the connection is a flash client.
-     */
-    void setFlashClient( boolean flashClient );
-
-    /**
      * Returns the major version of XMPP being used by this connection
      * (major_version.minor_version. In most cases, the version should be
      * "1.0". However, older clients using the "Jabber" protocol do not set a

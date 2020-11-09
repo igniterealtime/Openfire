@@ -108,17 +108,6 @@ public abstract class VirtualConnection implements Connection {
     }
 
     @Override
-    public boolean isFlashClient() {
-        // Return false since flash clients is not used for virtual connections
-        return false;
-    }
-
-    @Override
-    public void setFlashClient(boolean flashClient) {
-        //Ignore
-    }
-
-    @Override
     public void setXMPPVersion(int majorVersion, int minorVersion) {
         //Ignore
     }

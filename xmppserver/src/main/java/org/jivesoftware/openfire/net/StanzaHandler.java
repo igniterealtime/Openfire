@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.openfire.http.FlashCrossDomainServlet;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -118,21 +117,11 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-        boolean initialStream = stanza.startsWith("<stream:stream") || stanza.startsWith("<flash:stream");
+        boolean initialStream = stanza.startsWith("<stream:stream");
         if (!sessionCreated || initialStream) {
             if (!initialStream) {
-                // Allow requests for flash socket policy files directly on the client listener port
-                if (stanza.startsWith("<policy-file-request/>")) {
-                    String crossDomainText = FlashCrossDomainServlet.CROSS_DOMAIN_TEXT +
-                            XMPPServer.getInstance().getConnectionManager().getClientListenerPort() +
-                            FlashCrossDomainServlet.CROSS_DOMAIN_END_TEXT + '\0';
-                    connection.deliverRawText(crossDomainText);
-                    return;
-                }
-                else {
-                    // Ignore <?xml version="1.0"?>
-                    return;
-                }
+                // Ignore <?xml version="1.0"?>
+                return;
             }
             // Found an stream:stream tag...
             if (!sessionCreated) {
@@ -607,13 +596,7 @@ public abstract class StanzaHandler {
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
-        if (connection.isFlashClient()) {
-            sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
-        }
-        else {
-            sb.append("<stream:stream ");
-        }
-        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
+        sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace());
         sb.append("\" from=\"");
         sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
@@ -674,7 +657,7 @@ public abstract class StanzaHandler {
                     ". Connection: " + connection);
         }
         // Validate the stream namespace
-        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace()) && !"http://www.jabber.com/streams/flash".equals(xpp.getNamespace())) {
+        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
             // Include the invalid-namespace in the response
             streamError = new StreamError(StreamError.Condition.invalid_namespace);
             // Log a warning so that admins can track this cases from the server side

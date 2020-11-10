@@ -1428,6 +1428,7 @@ public class PubSubEngine
                         newNode.saveToDB();
                     }
 
+                    // TODO Replace with a cluster task that does not interact with the database (OF-2141).
                     CacheFactory.doClusterTask(new RefreshNodeTask(newNode));
                 }
                 else {
@@ -1515,7 +1516,9 @@ public class PubSubEngine
                 // (and update the backend store)
                 node.configure(completedForm);
 
+                // TODO Replace with a cluster task that does not interact with the database (OF-2141).
                 CacheFactory.doClusterTask(new RefreshNodeTask(node));
+
                 // Return that node configuration was successful
                 router.route(IQ.createResultIQ(iq));
             }

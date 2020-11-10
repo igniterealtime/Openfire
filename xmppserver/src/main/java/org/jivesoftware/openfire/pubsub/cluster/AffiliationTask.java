@@ -110,6 +110,14 @@ public class AffiliationTask extends NodeTask
 
         final Node node = getNode();
 
+        // This will only occur if a PEP service is not loaded on this particular cluster node. We can safely do nothing
+        // in this case since any changes that might have been applied here will also have been applied to the database
+        // by the cluster node where this task originated, meaning that those changes get loaded from the database when
+        // the pubsub node is retrieved from the database in the future (OF-2077)
+        if (node == null) {
+            return;
+        }
+
         // Create a new affiliate if the entity is not an affiliate yet.
         NodeAffiliate affiliate = node.getAffiliate(jid);
         if (affiliate == null) {

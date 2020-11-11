@@ -139,15 +139,29 @@ public abstract class SubscriptionTask extends NodeTask
      * @return a pubsub node subscription
      */
     @Nullable
-    public NodeSubscription getSubscription()
+    public NodeSubscription getSubscriptionIfLoaded()
     {
-        final Node node = getNode();
+        final Node node = getNodeIfLoaded();
         if (node == null) {
             // When this cluster node does not have the pubsub node loaded in memory, no updates are needed (OF-2077).
             return null;
         }
 
         return new NodeSubscription(node, owner, subJid, state, subId);
+    }
+
+    /**
+     * This method is replaced by {@link #getSubscriptionIfLoaded()} ()}, which performs the exact same operation, but is named
+     * differently to better express intent.
+     *
+     * @deprecated Renamed to {@link #getSubscriptionIfLoaded()}
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2077">Issue OF-2077: NullPointerException with Pubsub(PEP?) and clustering</a>
+     */
+    @Deprecated // TODO Remove this method in Openfire 4.8 or later.
+    @Nullable
+    public NodeSubscription getSubscription()
+    {
+        return getSubscriptionIfLoaded();
     }
 
     @Override

@@ -129,11 +129,25 @@ public abstract class NodeTask implements ClusterTask<Void>
      * @return A pubsub node
      */
     @Nullable
-    public Node getNode()
+    public Node getNodeIfLoaded()
     {
-        PubSubService svc = getService();
+        final PubSubService svc = getServiceIfLoaded();
 
         return svc != null ? svc.getNode(nodeId) : null;
+    }
+
+    /**
+     * This method is replaced by {@link #getNodeIfLoaded()}, which performs the exact same operation, but is named
+     * differently to better express intent.
+     *
+     * @deprecated Renamed to {@link #getNodeIfLoaded()}
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2077">Issue OF-2077: NullPointerException with Pubsub(PEP?) and clustering</a>
+     */
+    @Nullable
+    @Deprecated // TODO Remove this method in Openfire 4.8 or later.
+    public Node getNode()
+    {
+        return getNodeIfLoaded();
     }
 
     /**
@@ -148,7 +162,7 @@ public abstract class NodeTask implements ClusterTask<Void>
      * @return A pubsub service
      */
     @Nullable
-    public PubSubService getService()
+    public PubSubService getServiceIfLoaded()
     {
         if (XMPPServer.getInstance().getPubSubModule().getServiceID().equals(serviceId)) {
             return XMPPServer.getInstance().getPubSubModule();
@@ -159,6 +173,20 @@ public abstract class NodeTask implements ClusterTask<Void>
             JID service = new JID( serviceId );
             return serviceMgr.hasCachedService(service) ? serviceMgr.getPEPService(service) : null;
         }
+    }
+
+    /**
+     * This method is replaced by {@link #getServiceIfLoaded()}, which performs the exact same operation, but is named
+     * differently to better express intent.
+     *
+     * @deprecated Renamed to {@link #getServiceIfLoaded()}
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2077">Issue OF-2077: NullPointerException with Pubsub(PEP?) and clustering</a>
+     */
+    @Deprecated // TODO Remove this method in Openfire 4.8 or later.
+    @Nullable
+    public PubSubService getService()
+    {
+        return getServiceIfLoaded();
     }
 
     @Override

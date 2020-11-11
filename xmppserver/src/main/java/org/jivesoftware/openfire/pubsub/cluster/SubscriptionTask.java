@@ -20,12 +20,14 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.NodeSubscription.State;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A cluster task used work with a particular subscription (a relation between an entity an a pubsub node) of a pubsub node.
@@ -133,13 +135,26 @@ public abstract class SubscriptionTask extends NodeTask
     /**
      * Finds the pubsub node subscription that is the subject of this task.
      *
+     * Note that null, instead of a pubsub node subscription instance, might be returned when the pubsub service is not
+     * currently loaded in-memory on the cluster node that the task is executing on (although there is no guarantee that
+     * when this method returns a non-null node subscription, it was previously not loaded in-memory)! The rationale for
+     * this is that this cluster tasks does not need to operate on data that is not in memory, as such operations are the
+     * responsibility of the cluster node that initiates the cluster task.
+     *
      * @return a pubsub node subscription
      */
+    @Nullable
     public NodeSubscription getSubscription()
     {
+        final Node node = getNode();
+        if (node == null) {
+            // When this cluster node does not have the pubsub node loaded in memory, no updates are needed (OF-2077).
+            return null;
+        }
+
         if (subscription == null)
         {
-            subscription = new NodeSubscription(getNode(), owner, subJid, state, subId);
+            subscription = new NodeSubscription(node, owner, subJid, state, subId);
         }
         return subscription;
     }

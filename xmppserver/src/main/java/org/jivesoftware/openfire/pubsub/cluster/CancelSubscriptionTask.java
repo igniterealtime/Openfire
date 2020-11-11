@@ -60,8 +60,8 @@ public class CancelSubscriptionTask extends SubscriptionTask
         // Applying such changes in this task would, at best, needlessly require resources.
         log.debug("[TASK] Cancel Subscription : {}", toString());
 
-        final Node node = getNode();
-        final NodeSubscription subscription = getSubscription();
+        final Node node = getNodeIfLoaded();
+        final NodeSubscription subscription = getSubscriptionIfLoaded();
 
         // This will only occur if a PEP service is not loaded on this particular cluster node. We can safely do nothing
         // in this case since any changes that might have been applied here will also have been applied to the database

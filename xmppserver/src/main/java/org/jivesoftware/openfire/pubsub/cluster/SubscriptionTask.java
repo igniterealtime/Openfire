@@ -68,11 +68,6 @@ public abstract class SubscriptionTask extends NodeTask
     private NodeSubscription.State state;
 
     /**
-     * The node subscription that is the subject of this task.
-     */
-    transient private NodeSubscription subscription;
-
-    /**
      * This no-argument constructor is provided for serialization purposes. It should generally not be used otherwise.
      */
     public SubscriptionTask()
@@ -152,11 +147,7 @@ public abstract class SubscriptionTask extends NodeTask
             return null;
         }
 
-        if (subscription == null)
-        {
-            subscription = new NodeSubscription(node, owner, subJid, state, subId);
-        }
-        return subscription;
+        return new NodeSubscription(node, owner, subJid, state, subId);
     }
 
     @Override

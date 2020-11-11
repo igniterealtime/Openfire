@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.pubsub.cluster;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.Node;
+import org.jivesoftware.openfire.pubsub.PubSubService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,11 @@ import javax.annotation.Nonnull;
  * Forces the node to be refreshed from the database. This will load a node from
  * the database and then add it to the service. If the node already existed it
  * will be replaced, thereby refreshing it from persistence.
+ *
+ * Note that this task aims to update in-memory state only: it will not apply affiliation changes to persistent data
+ * storage (it is assumed that the cluster node where the task originated takes responsibility for that). As a result,
+ * this task might not apply changes if the node that is the subject of this task is currently not loaded in-memory of
+ * the cluster node on which this task operates.
  *
  * Unlike other cluster tasks, this task will forcefully (re)load the node from backend storage on every cluster node
  * where the task is executed. This can add significant overhead, and should be avoided if possible.
@@ -57,7 +63,21 @@ public class RefreshNodeTask extends NodeTask
     @Override
     public void run()
     {
+        // Note: this implementation should apply changes in-memory state only. It explicitly needs not update
+        // persisted data storage, as this can be expected to be done by the cluster node that issued this task.
+        // Applying such changes in this task would, at best, needlessly require resources.
         log.debug("[TASK] Refreshing node - nodeID: {}", getNodeId());
-        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadNode(getService(), getUniqueNodeIdentifier());
+
+        final PubSubService service = getService();
+
+        // This will only occur if a PEP service is not loaded on this particular cluster node. We can safely do nothing
+        // in this case since any changes that might have been applied here will also have been applied to the database
+        // by the cluster node where this task originated, meaning that those changes get loaded from the database when
+        // the pubsub node is retrieved from the database in the future (OF-2077)
+        if (service == null) {
+            return;
+        }
+
+        XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadNode(service, getUniqueNodeIdentifier());
     }
 }

@@ -98,7 +98,6 @@ public class SocketConnection implements Connection {
     private boolean secure;
     private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
-    private boolean flashClient = false;
     private int majorVersion = 1;
     private int minorVersion = 0;
     private String language = null;
@@ -429,24 +428,6 @@ public class SocketConnection implements Connection {
     }
 
     @Override
-    public boolean isFlashClient() {
-        return flashClient;
-    }
-
-    /**
-     * Sets whether the connected client is a flash client. Flash clients need to
-     * receive a special character (i.e. \0) at the end of each xml packet. Flash
-     * clients may send the character \0 in incoming packets and may start a
-     * connection using another openning tag such as: "flash:client".
-     *
-     * @param flashClient true if the if the connection is a flash client.
-     */
-    @Override
-    public void setFlashClient(boolean flashClient) {
-        this.flashClient = flashClient;
-    }
-
-    @Override
     public Certificate[] getLocalCertificates() {
         if (tlsStreamHandler != null) {
             return tlsStreamHandler.getSSLSession().getLocalCertificates();
@@ -518,9 +499,6 @@ public class SocketConnection implements Connection {
                     // Register that we started sending data on the connection
                     writeStarted();
                     writer.write("</stream:stream>");
-                    if (flashClient) {
-                        writer.write('\0');
-                    }
                     writer.flush();
                 }
                 catch (Exception e) {
@@ -629,9 +607,6 @@ public class SocketConnection implements Connection {
                 requestWriting();
                 allowedToWrite = true;
                 xmlSerializer.write(packet.getElement());
-                if (flashClient) {
-                    writer.write('\0');
-                }
                 xmlSerializer.flush();
             }
             catch (Exception e) {
@@ -666,9 +641,6 @@ public class SocketConnection implements Connection {
                 // Register that we started sending data on the connection
                 writeStarted();
                 writer.write(text);
-                if (flashClient) {
-                    writer.write('\0');
-                }
                 writer.flush();
             }
             catch (Exception e) {

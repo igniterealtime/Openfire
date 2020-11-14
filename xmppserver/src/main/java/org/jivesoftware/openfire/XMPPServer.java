@@ -843,7 +843,6 @@ public class XMPPServer {
         loadModule(IQDiscoInfoHandler.class.getName());
         loadModule(IQDiscoItemsHandler.class.getName());
         loadModule(UpdateManager.class.getName());
-        loadModule(FlashCrossDomainHandler.class.getName());
         loadModule(InternalComponentManager.class.getName());
         loadModule(MultiUserChatManager.class.getName());
         loadModule(IQMessageCarbonsHandler.class.getName());
@@ -1824,17 +1823,6 @@ public class XMPPServer {
      */
     public MediaProxyService getMediaProxyService() {
         return (MediaProxyService) modules.get(MediaProxyService.class);
-    }
-
-    /**
-     * Returns the <code>FlashCrossDomainHandler</code> registered with this server. The
-     * <code>FlashCrossDomainHandler</code> was registered with the server as a module while starting up
-     * the server.
-     *
-     * @return the <code>FlashCrossDomainHandler</code> registered with this server.
-     */
-    public FlashCrossDomainHandler getFlashCrossDomainHandler() {
-        return (FlashCrossDomainHandler) modules.get(FlashCrossDomainHandler.class);
     }
 
     /**

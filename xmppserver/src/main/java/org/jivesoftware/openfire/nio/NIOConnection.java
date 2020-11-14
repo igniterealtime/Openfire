@@ -78,7 +78,6 @@ public class NIOConnection implements Connection {
      * a packet.
      */
     private PacketDeliverer backupDeliverer;
-    private boolean flashClient = false;
     private int majorVersion = 1;
     private int minorVersion = 0;
     private String language = null;
@@ -222,7 +221,7 @@ public class NIOConnection implements Connection {
             }
 
             try {
-                deliverRawText0(flashClient ? "</flash:stream>" : "</stream:stream>");
+                deliverRawText0("</stream:stream>");
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
             }
@@ -308,9 +307,6 @@ public class NIOConnection implements Connection {
             buffer.setAutoExpand(true);
             try {
                 buffer.putString(packet.getElement().asXML(), encoder.get());
-                if (flashClient) {
-                    buffer.put((byte) '\0');
-                }
                 buffer.flip();
                 
                 ioSessionLock.lock();
@@ -351,9 +347,6 @@ public class NIOConnection implements Connection {
             //Charset charset = Charset.forName(CHARSET);
             //buffer.putString(text, charset.newEncoder());
             buffer.put(text.getBytes(StandardCharsets.UTF_8));
-            if (flashClient) {
-                buffer.put((byte) '\0');
-            }
             buffer.flip();
             ioSessionLock.lock();
             try {
@@ -420,15 +413,6 @@ public class NIOConnection implements Connection {
     public ConnectionConfiguration getConfiguration()
     {
         return configuration;
-    }
-
-    public boolean isFlashClient() {
-        return flashClient;
-    }
-
-    @Override
-    public void setFlashClient(boolean flashClient) {
-        this.flashClient = flashClient;
     }
 
     @Override

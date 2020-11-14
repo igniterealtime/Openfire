@@ -493,7 +493,7 @@ public class PluginServlet extends HttpServlet {
 
 
     /**
-     * Handles a request for other web items (images, flash, applets, etc.)
+     * Handles a request for other web items (images, etc.)
      *
      * @param pathInfo the extra path info.
      * @param response the response object.

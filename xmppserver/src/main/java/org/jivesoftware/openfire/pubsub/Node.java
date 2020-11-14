@@ -2077,7 +2077,7 @@ public abstract class Node implements Cacheable, Externalizable {
         // the bare JID if a session for the full JID is not available. The "isActiveRoute"
         // condition below will prevent inadvertent delivery of multiple copies of each
         // event notification to the user, possibly multiple times (e.g. route.all-resources). 
-        // (Refer to http://issues.igniterealtime.org/browse/OF-14 for more info.)
+        // (Refer to https://igniterealtime.atlassian.net/browse/OF-14 for more info.)
         //
         // This approach is informed by the following XEP-0060 implementation guidelines:
         //   12.2 "Intended Recipients for Notifications" - only deliver to subscriber JID

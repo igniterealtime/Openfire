@@ -155,7 +155,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
      * A task that, periodically, updates the 'last modified' date of all files in the Jetty 'tmp' directories. This
      * prevents operating systems from removing files that are deemed unused.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1534">OF-1534</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1534">OF-1534</a>
      */
     private TempFileToucherTask tempFileToucherTask;
 

@@ -22,7 +22,7 @@ import java.io.Serializable;
  * This specialized wrapper is used for the Components cache, which
  * should not be purged.
  * 
- * See <a href="http://issues.igniterealtime.org/browse/OF-114">OF-114</a> for more info.
+ * See <a href="https://igniterealtime.atlassian.net/browse/OF-114">OF-114</a> for more info.
  *
  */
 public class ComponentCacheWrapper<K extends Serializable, V extends Serializable> extends CacheWrapper<K, V> {

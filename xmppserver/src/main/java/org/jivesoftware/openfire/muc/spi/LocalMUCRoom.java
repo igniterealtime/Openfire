@@ -1523,9 +1523,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             try
             {
                 if (occupant.getPresence().getFrom().equals(to)) {
-                    // A race condition can occur where 'occupantsByFullJID' does not yet (or no longer, in case of a 'leave') contain
-                    // the originator of the presence stanza. To work around this, the "self-presence" is sent after all other occupants
-                    // have been processed.
+                    // Depending on the event for which the presence is broadcast, it's possible that the subject of
+                    // the stanza is not yet (or no longer, in case of a 'leave') in 'occupantsByFullJID'. This introduces
+                    // an issue where sometimes, the presence update is not delivered to this entity. To work around this
+                    // issue, we always send the presence update to the addressed entity, whether or not it's part of the
+                    // 'occupantsByFullJID' collection. To prevent duplicate stanzas, we'll skip the entity in case we
+                    // encounter it while iterating over this collection.
                     continue; // Skip for now.
                 }
 
@@ -1551,9 +1554,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
         }
 
-        // A race condition can occur where 'occupantsByFullJID' does not yet (or no longer, in case of a 'leave') contain
-        // the originator of the presence stanza. To work around this, the "self-presence" is sent after all other occupants
-        // have been processed.
+        // Send the stanza to the subject of the stanza. See comment in the iteration above.
         try
         {
             // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.

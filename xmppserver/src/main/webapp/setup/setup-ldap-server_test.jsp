@@ -2,6 +2,8 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager, javax.naming.*, javax.naming.ldap.LdapContext, java.net.UnknownHostException" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.io.PrintWriter" %>
+<%@ page import="java.io.StringWriter" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -43,6 +45,13 @@
             else {
                 errorDetail = e.getExplanation();
             }
+            // Store stacktrace as attribute.
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            pageContext.setAttribute( "stacktrace", sw.toString() );
+
+            // Print stacktrace to std-out.
             e.printStackTrace();
         }
         finally {
@@ -61,7 +70,7 @@
 %>
     <!-- BEGIN connection settings test panel -->
     <div class="jive-testPanel">
-        <div class="jive-testPanel-content">
+        <div class="jive-testPanel-content" style="min-width: 600px;">
         
             <div align="right" class="jive-testPanel-close">
                 <a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
@@ -77,6 +86,10 @@
                 <c:otherwise>
                     <h4 class="jive-testError"><fmt:message key="setup.ldap.server.test.status-error" /></h4>
                     <p><c:out value="${errorDetail}"/></p>
+                    <c:if test="${not empty stacktrace}">
+                        <h3 style="margin: 8px 0 3px;"><fmt:message key="setup.ldap.server.test.stacktrace" />:</h3>
+                        <p><textarea style="width: 100%; max-width: 100%; height: 160px; font-size: smaller"><c:out value="${stacktrace}"/></textarea></p>
+                    </c:if>
                 </c:otherwise>
             </c:choose>
 

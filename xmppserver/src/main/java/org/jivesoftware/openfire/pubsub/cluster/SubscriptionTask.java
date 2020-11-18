@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.pubsub.cluster;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Optional;
 
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
@@ -138,16 +139,13 @@ public abstract class SubscriptionTask extends NodeTask
      *
      * @return a pubsub node subscription
      */
-    @Nullable
-    public NodeSubscription getSubscriptionIfLoaded()
+    @Nonnull
+    public Optional<NodeSubscription> getSubscriptionIfLoaded()
     {
-        final Node node = getNodeIfLoaded();
-        if (node == null) {
-            // When this cluster node does not have the pubsub node loaded in memory, no updates are needed (OF-2077).
-            return null;
-        }
+        final Optional<Node> node = getNodeIfLoaded();
 
-        return new NodeSubscription(node, owner, subJid, state, subId);
+        // When this cluster node does not have the pubsub node loaded in memory, no updates are needed (OF-2077).
+        return node.map(value -> new NodeSubscription(value, owner, subJid, state, subId));
     }
 
     /**
@@ -161,7 +159,7 @@ public abstract class SubscriptionTask extends NodeTask
     @Nullable
     public NodeSubscription getSubscription()
     {
-        return getSubscriptionIfLoaded();
+        return getSubscriptionIfLoaded().orElse(null);
     }
 
     @Override

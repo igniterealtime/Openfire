@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.pubsub.cluster;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Optional;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pep.PEPServiceManager;
@@ -128,12 +129,12 @@ public abstract class NodeTask implements ClusterTask<Void>
      *
      * @return A pubsub node
      */
-    @Nullable
-    public Node getNodeIfLoaded()
+    @Nonnull
+    public Optional<Node> getNodeIfLoaded()
     {
-        final PubSubService svc = getServiceIfLoaded();
+        final Optional<PubSubService> svc = getServiceIfLoaded();
 
-        return svc != null ? svc.getNode(nodeId) : null;
+        return svc.map(pubSubService -> pubSubService.getNode(nodeId));
     }
 
     /**
@@ -147,7 +148,7 @@ public abstract class NodeTask implements ClusterTask<Void>
     @Deprecated // TODO Remove this method in Openfire 4.8 or later.
     public Node getNode()
     {
-        return getNodeIfLoaded();
+        return getNodeIfLoaded().orElse(null);
     }
 
     /**
@@ -161,17 +162,17 @@ public abstract class NodeTask implements ClusterTask<Void>
      *
      * @return A pubsub service
      */
-    @Nullable
-    public PubSubService getServiceIfLoaded()
+    @Nonnull
+    public Optional<PubSubService> getServiceIfLoaded()
     {
         if (XMPPServer.getInstance().getPubSubModule().getServiceID().equals(serviceId)) {
-            return XMPPServer.getInstance().getPubSubModule();
+            return Optional.of(XMPPServer.getInstance().getPubSubModule());
         }
         else
         {
             PEPServiceManager serviceMgr = XMPPServer.getInstance().getIQPEPHandler().getServiceManager();
             JID service = new JID( serviceId );
-            return serviceMgr.hasCachedService(service) ? serviceMgr.getPEPService(service) : null;
+            return serviceMgr.hasCachedService(service) ? Optional.of(serviceMgr.getPEPService(service)) : Optional.empty();
         }
     }
 
@@ -186,7 +187,7 @@ public abstract class NodeTask implements ClusterTask<Void>
     @Nullable
     public PubSubService getService()
     {
-        return getServiceIfLoaded();
+        return getServiceIfLoaded().orElse(null);
     }
 
     @Override

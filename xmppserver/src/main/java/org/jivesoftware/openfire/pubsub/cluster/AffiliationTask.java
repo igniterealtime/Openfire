@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.pubsub.cluster;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Optional;
 
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeAffiliate;
@@ -108,15 +109,17 @@ public class AffiliationTask extends NodeTask
         // Applying such changes in this task would, at best, needlessly require resources.
         log.debug("[TASK] New affiliation : {}", toString());
 
-        final Node node = getNodeIfLoaded();
+        final Optional<Node> optNode = getNodeIfLoaded();
 
         // This will only occur if a PEP service is not loaded on this particular cluster node. We can safely do nothing
         // in this case since any changes that might have been applied here will also have been applied to the database
         // by the cluster node where this task originated, meaning that those changes get loaded from the database when
         // the pubsub node is retrieved from the database in the future (OF-2077)
-        if (node == null) {
+        if (!optNode.isPresent()) {
             return;
         }
+
+        final Node node = optNode.get();
 
         // Create a new affiliate if the entity is not an affiliate yet.
         NodeAffiliate affiliate = node.getAffiliate(jid);

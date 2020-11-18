@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 /**
  * A cluster task used to cancel a pubsub node subscription (a relation between an entity an a pubsub node).
@@ -60,16 +61,19 @@ public class CancelSubscriptionTask extends SubscriptionTask
         // Applying such changes in this task would, at best, needlessly require resources.
         log.debug("[TASK] Cancel Subscription : {}", toString());
 
-        final Node node = getNodeIfLoaded();
-        final NodeSubscription subscription = getSubscriptionIfLoaded();
+        final Optional<Node> optNode = getNodeIfLoaded();
+        final Optional<NodeSubscription> optSubscription = getSubscriptionIfLoaded();
 
         // This will only occur if a PEP service is not loaded on this particular cluster node. We can safely do nothing
         // in this case since any changes that might have been applied here will also have been applied to the database
         // by the cluster node where this task originated, meaning that those changes get loaded from the database when
         // the pubsub node is retrieved from the database in the future (OF-2077)
-        if (node == null || subscription == null) {
+        if (!optNode.isPresent() || !optSubscription.isPresent()) {
             return;
         }
+
+        final Node node = optNode.get();
+        final NodeSubscription subscription = optSubscription.get();
 
         // This method will make a db call, but it will simply do nothing since
         // the record will already be deleted. // TODO OF-2139 prevent unnecessary database interaction.

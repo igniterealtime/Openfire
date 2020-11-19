@@ -1572,12 +1572,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     @Nonnull
     private Presence createAnonCopy(@Nonnull BroadcastPresenceRequest request)
     {
-        if (!request.getPresence().getFrom().asBareJID().equals(this.getJID()))
-        {
+        JID requestPresenceJID = request.getPresence().getFrom();
+        JID thisJID = this.getJID();
+        if (!requestPresenceJID.asBareJID().equals(thisJID)){
             // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
             // of the user, as set in org.jivesoftware.openfire.muc.spi.LocalMUCRole.setPresence. If that's not the case
             // then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Request Presence JID " + requestPresenceJID + " does not match " + thisJID);
         }
 
         final Presence result = request.getPresence().createCopy();

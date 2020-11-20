@@ -1480,6 +1480,14 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             return CompletableFuture.completedFuture(null);
         }
 
+        if (!presence.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
+        }
+
         // Some clients send a presence update to the room, rather than to their own nickname.
         if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && presence.getTo() != null && presence.getTo().getResource() == null && sender.getRoleAddress() != null) {
             presence.setTo( sender.getRoleAddress() );
@@ -1519,6 +1527,14 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         Log.debug("Broadcasting presence update in room {} for occupant {}", this.getName(), presenceRequest.getPresence().getFrom() );
 
         final Presence presence = presenceRequest.getPresence();
+
+        if (!presence.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
+        }
 
         // Three distinct flavors of the presence stanzas can be sent:
         // 1. The original stanza (that includes the real JID of the user), usable when the room is not semi-anon or when the occupant is a moderator.
@@ -1572,15 +1588,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     @Nonnull
     private Presence createAnonCopy(@Nonnull BroadcastPresenceRequest request)
     {
-        JID requestPresenceJID = request.getPresence().getFrom();
-        JID thisJID = this.getJID();
-        if (!requestPresenceJID.asBareJID().equals(thisJID)){
-            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
-            // of the user, as set in org.jivesoftware.openfire.muc.spi.LocalMUCRole.setPresence. If that's not the case
-            // then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
-            throw new IllegalArgumentException("Request Presence JID " + requestPresenceJID + " does not match " + thisJID);
-        }
-
         final Presence result = request.getPresence().createCopy();
         final Element frag = result.getChildElement("x", "http://jabber.org/protocol/muc#user");
         frag.element("item").addAttribute("jid", null);
@@ -1598,14 +1605,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     @Nonnull
     private Presence createSelfPresenceCopy(@Nonnull BroadcastPresenceRequest request)
     {
-        if (!request.getPresence().getFrom().asBareJID().equals(this.getJID()))
-        {
-            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
-            // of the user, as set in org.jivesoftware.openfire.muc.spi.LocalMUCRole.setPresence. If that's not the case
-            // then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
-            throw new IllegalArgumentException();
-        }
-
         final Presence result = request.getPresence().createCopy();
         Element fragSelfPresence = result.getChildElement("x", "http://jabber.org/protocol/muc#user");
         fragSelfPresence.addElement("status").addAttribute("code", "110");
@@ -1632,8 +1631,16 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         return result;
     }
 
-    private void broadcast(@Nonnull Message message, @Nonnull MUCRole sender)
+    private void broadcast(@Nonnull final Message message, @Nonnull final MUCRole sender)
     {
+        if (!message.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
+        }
+
         // If FMUC is active, propagate the message through FMUC first. Note that when a master-slave mode is active,
         // we need to wait for an echo back, before the message can be broadcasted locally. The 'propagate' method will
         // return a CompletableFuture object that is completed as soon as processing can continue.
@@ -1651,8 +1658,29 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         );
     }
 
-    public void broadcast(BroadcastMessageRequest messageRequest) {
-        Message message = messageRequest.getMessage();
+    /**
+     * Broadcasts the message stanza as captured by the argument to all occupants that are local to the JVM (in other
+     * words, it excludes occupants that are connected to other cluster nodes, as well as occupants connected via FMUC).
+     *
+     * This method also ensures that the broadcasted message is logged to persistent storage, if that feature is enabled
+     * for this room
+     *
+     * @param messageRequest The message stanza
+     */
+    public void broadcast(@Nonnull final BroadcastMessageRequest messageRequest)
+    {
+        Log.debug("Broadcasting message in room {} for occupant {}", this.getName(), messageRequest.getMessage().getFrom() );
+
+        final Message message = messageRequest.getMessage();
+
+        if (!message.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the sender, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
+        }
+
         // Add message to the room history
         roomHistory.addMessage(message);
         // Send message to occupants connected to this JVM

@@ -29,6 +29,8 @@
 <%@ page import="java.util.Calendar"%>
 <%@ page import="java.util.Collection"%>
 <%@ page import="java.util.Date"%>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -82,6 +84,8 @@
     int numPages = (int) Math.ceil((double) sessionCount / (double) range);
     int curPage = (start / range) + 1;
     int maxIndex = Math.min(start + range, sessionCount);
+
+    final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 %>
 
 <html>
@@ -157,6 +161,9 @@
         <th nowrap><fmt:message key="component.session.label.name" /></th>
         <th nowrap><fmt:message key="component.session.label.category" /></th>
         <th nowrap><fmt:message key="component.session.label.type" /></th>
+        <% if (clusteringEnabled) { %>
+        <th nowrap><fmt:message key="component.session.label.node" /></th>
+        <% } %>
         <th nowrap><fmt:message key="component.session.label.creation" /></th>
         <th nowrap><fmt:message key="component.session.label.last_active" /></th>
         <th nowrap><fmt:message key="component.session.label.close_connect" /></th>
@@ -227,6 +234,15 @@
             <td><%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getType()) %></td>
             </tr></table>
         </td>
+        <% if (clusteringEnabled) { %>
+        <td>
+            <% if (componentSession instanceof LocalSession) { %>
+            <fmt:message key="component.session.local" />
+            <% } else { %>
+            <fmt:message key="component.session.remote" />
+            <% } %>
+        </td>
+        <% } %>
         <%  Date creationDate = componentSession.getCreationDate();
             Calendar creationCal = Calendar.getInstance();
             creationCal.setTime(creationDate);

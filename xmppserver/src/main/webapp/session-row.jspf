@@ -40,6 +40,7 @@
     <td width="15%" nowrap>
         <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
     </td>
+    <% if (ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting()) { %>
     <td nowrap>
             <% if (sess instanceof LocalClientSession) { %>
              <fmt:message key="session.details.local" />
@@ -47,6 +48,7 @@
              <fmt:message key="session.details.remote" />
             <% } %>
     </td>
+    <% } %>
     <td>
         <%  int _status = sess.getStatus();
             boolean isDetached = sess instanceof LocalSession && ((LocalSession) sess).isDetached();

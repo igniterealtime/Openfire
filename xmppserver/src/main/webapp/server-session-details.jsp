@@ -28,7 +28,6 @@
 <%@ page import="java.util.Calendar" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.util.List" %>
-<%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.TreeMap" %>
 <%@ page import="org.slf4j.Logger" %>
@@ -163,21 +162,25 @@
     <%} %>
 <br>
 
-<%  // Show details of the incoming sessions
+
+<%  // Show details of the incoming sessions'
+    if (!inSessions.isEmpty()) {
+%>
+<b><fmt:message key="server.session.details.incoming_session" /></b>
+<div class="jive-table">
+    <table cellpadding="3" cellspacing="1" border="0" width="100%">
+        <tr>
+            <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
+            <th width="10%"><fmt:message key="server.session.details.authentication"/></th>
+            <th width="10%"><fmt:message key="server.session.details.cipher"/></th>
+            <th width="20%"><fmt:message key="server.session.label.creation" /></th>
+            <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
+            <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
+            <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
+        </tr>
+<%
     for (IncomingServerSession inSession : inSessions) {
 %>
-    <b><fmt:message key="server.session.details.incoming_session" /></b>
-    <div class="jive-table">
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
-    <tr>
-        <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
-        <th width="10%"><fmt:message key="server.session.details.authentication"/></th>
-        <th width="10%"><fmt:message key="server.session.details.cipher"/></th>
-        <th width="20%"><fmt:message key="server.session.label.creation" /></th>
-        <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
-        <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
-        <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
-    </tr>
     <tr>
         <%  if (inSession.isSecure()) { %>
             <td width="1%">
@@ -204,22 +207,23 @@
         <td><%= inSession.getStreamID()%></td>
         <td><% if (inSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
         <td><%= inSession.getCipherSuiteName() %></td>
-        <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
-        <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
+        <td><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
         <td align="center"><%= numFormatter.format(inSession.getNumServerPackets()) %></td>
     </tr>
+<%  } %>
     </table>
-    </div>
+</div>
 
-    <br>
+<br>
 <%  } %>
 
-<%  // Show details of the outgoing sessiona
-    for (OutgoingServerSession outSession : outSessions) {
+<%  // Show details of the outgoing sessions
+    if (!outSessions.isEmpty()) {
 %>
-    <b><fmt:message key="server.session.details.outgoing_session" /></b>
-    <div class="jive-table">
+<b><fmt:message key="server.session.details.outgoing_session" /></b>
+<div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
         <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
@@ -230,6 +234,9 @@
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
+<%
+    for (OutgoingServerSession outSession : outSessions) {
+%>
     <tr>
         <%  if (outSession.isSecure()) { %>
         <td width="1%">
@@ -256,11 +263,12 @@
         <td><%= outSession.getStreamID()%></td>
         <td><% if (outSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
         <td><%= outSession.getCipherSuiteName() %></td>
-        <td align="center"><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
-        <td align="center"><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
+        <td><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
         <td align="center"><%= numFormatter.format(outSession.getNumClientPackets()) %></td>
         <td align="center"><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
     </tr>
+<%  } %>
     </table>
     </div>
 

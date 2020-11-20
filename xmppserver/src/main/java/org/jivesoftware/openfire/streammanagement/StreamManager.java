@@ -295,11 +295,19 @@ public class StreamManager {
         Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 
         // Locate existing session.
-        LocalClientSession otherSession = (LocalClientSession)XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
-        if (otherSession == null) {
+        final ClientSession route = XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
+        if (route == null) {
             sendError(new PacketError(PacketError.Condition.item_not_found));
             return;
         }
+
+        if (!(route instanceof LocalClientSession)) {
+            Log.debug("Not allowing a client of '{}' to resume a session on this cluster node. The session can only be resumed on the Openfire cluster node where the original session was connected.", fullJid);
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
+        }
+
+        final LocalClientSession otherSession = (LocalClientSession) route;
         if (!otherSession.getStreamID().getID().equals(streamId)) {
             sendError(new PacketError(PacketError.Condition.item_not_found));
             return;

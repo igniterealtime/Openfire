@@ -24,12 +24,12 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.text.NumberFormat" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.TreeMap" %>
 <%@ page import="org.slf4j.Logger" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -55,6 +55,8 @@
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
     final Logger Log = LoggerFactory.getLogger("component-session-details.jsp");
+
+    pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
 %>
 
 <html>
@@ -129,6 +131,18 @@
             <c:out value="${componentSession.externalComponent.type}"/>
         </td>
     </tr>
+    <c:if test="${clusteringEnabled}">
+        <td class="c1">
+            <fmt:message key="component.session.label.node" />
+        </td>
+        <td>
+            <% if (componentSession instanceof LocalSession) { %>
+            <fmt:message key="component.session.local" />
+            <% } else { %>
+            <fmt:message key="component.session.remote" />
+            <% } %>
+        </td>
+    </c:if>
     <tr>
         <td class="c1">
             <fmt:message key="component.session.label.creation" />

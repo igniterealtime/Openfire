@@ -32,6 +32,7 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -193,6 +194,7 @@
     pageContext.setAttribute("searchPresence", searchPresence);
     pageContext.setAttribute("searchPriority", searchPriority);
     pageContext.setAttribute("searchHostAddress", searchHostAddress);
+    pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
 %>
 <html>
     <head>
@@ -286,7 +288,9 @@
         %>
         </th>
         <th nowrap><fmt:message key="session.details.resource" /></th>
+        <c:if test="${clusteringEnabled}">
         <th nowrap><fmt:message key="session.details.node" /></th>
+        </c:if>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
         <th nowrap><fmt:message key="session.details.priority" /></th>
@@ -319,6 +323,7 @@
                  onclick="submitForm();"
             >
         </td>
+        <c:if test="${clusteringEnabled}">
         <td nowrap>
             <select id="searchNode" onchange="submitForm();">
                 <option <c:if test='${searchNode eq ""}'>selected</c:if> value=""></option>
@@ -326,6 +331,7 @@
                 <option <c:if test='${searchNode eq "remote"}'>selected </c:if>value="remote"><fmt:message key="session.details.remote"/></option>
             </select>
         </td>
+        </c:if>
         <td nowrap colspan="2">
             <select id="searchStatus" onchange="submitForm();">
                 <option <c:if test='${searchStatus eq ""}'>selected</c:if> value=""></option>

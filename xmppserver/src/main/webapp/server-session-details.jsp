@@ -32,6 +32,8 @@
 <%@ page import="java.util.TreeMap" %>
 <%@ page import="org.slf4j.Logger" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -55,6 +57,7 @@
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
+    final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
     final Logger Log = LoggerFactory.getLogger("server-session-details.jsp");
 %>
 
@@ -170,13 +173,16 @@
 <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
         <tr>
-            <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
-            <th width="10%"><fmt:message key="server.session.details.authentication"/></th>
-            <th width="10%"><fmt:message key="server.session.details.cipher"/></th>
-            <th width="20%"><fmt:message key="server.session.label.creation" /></th>
-            <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
-            <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
-            <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
+            <th width="35%" colspan="2" nowrap><fmt:message key="server.session.details.streamid" /></th>
+            <% if (clusteringEnabled) { %>
+            <th width="1%" nowrap><fmt:message key="server.session.details.node"/></th>
+            <% } %>
+            <th width="10%" nowrap><fmt:message key="server.session.details.authentication"/></th>
+            <th width="10%" nowrap><fmt:message key="server.session.details.cipher"/></th>
+            <th width="1%" nowrap><fmt:message key="server.session.label.creation" /></th>
+            <th width="1%" nowrap><fmt:message key="server.session.label.last_active" /></th>
+            <th width="1%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
+            <th width="1%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
         </tr>
 <%
     for (IncomingServerSession inSession : inSessions) {
@@ -205,12 +211,15 @@
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
         <td><%= inSession.getStreamID()%></td>
-        <td><% if (inSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
+        <% if (clusteringEnabled) { %>
+        <td nowrap><% if (inSession instanceof LocalSession) { %><fmt:message key="server.session.details.local"/><% } else { %><fmt:message key="server.session.details.remote"/><% } %></td>
+        <% } %>
+        <td nowrap><% if (inSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
         <td><%= inSession.getCipherSuiteName() %></td>
-        <td><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
-        <td><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
-        <td align="center"><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
-        <td align="center"><%= numFormatter.format(inSession.getNumServerPackets()) %></td>
+        <td nowrap><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td nowrap><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
+        <td align="center" nowrap><%= numFormatter.format(inSession.getNumClientPackets()) %></td>
+        <td align="center" nowrap><%= numFormatter.format(inSession.getNumServerPackets()) %></td>
     </tr>
 <%  } %>
     </table>
@@ -226,13 +235,16 @@
 <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
-        <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
-        <th width="10%"><fmt:message key="server.session.details.authentication"/></th>
-        <th width="10%"><fmt:message key="server.session.details.cipher"/></th>
-        <th width="20%"><fmt:message key="server.session.label.creation" /></th>
-        <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
-        <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
-        <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
+        <th width="35%" colspan="2" nowrap><fmt:message key="server.session.details.streamid" /></th>
+        <% if (clusteringEnabled) { %>
+        <th width="1%" nowrap><fmt:message key="server.session.details.node"/></th>
+        <% } %>
+        <th width="10%" nowrap><fmt:message key="server.session.details.authentication"/></th>
+        <th width="10%" nowrap><fmt:message key="server.session.details.cipher"/></th>
+        <th width="1%" nowrap><fmt:message key="server.session.label.creation" /></th>
+        <th width="1%" nowrap><fmt:message key="server.session.label.last_active" /></th>
+        <th width="1%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
+        <th width="1%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
 <%
     for (OutgoingServerSession outSession : outSessions) {
@@ -261,12 +273,15 @@
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
         <td><%= outSession.getStreamID()%></td>
-        <td><% if (outSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
+        <% if (clusteringEnabled) { %>
+        <td nowrap><% if (outSession instanceof LocalSession) { %><fmt:message key="server.session.details.local"/><% } else { %><fmt:message key="server.session.details.remote"/><% } %></td>
+        <% } %>
+        <td nowrap><% if (outSession.isUsingServerDialback()) { %><fmt:message key="server.session.details.dialback"/><% } else { %><fmt:message key="server.session.details.tlsauth"/><% } %></td>
         <td><%= outSession.getCipherSuiteName() %></td>
-        <td><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
-        <td><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
-        <td align="center"><%= numFormatter.format(outSession.getNumClientPackets()) %></td>
-        <td align="center"><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
+        <td nowrap><%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %></td>
+        <td nowrap><%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %></td>
+        <td align="center" nowrap><%= numFormatter.format(outSession.getNumClientPackets()) %></td>
+        <td align="center" nowrap><%= numFormatter.format(outSession.getNumServerPackets()) %></td>
     </tr>
 <%  } %>
     </table>

@@ -54,7 +54,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     private static final Logger Log = LoggerFactory.getLogger(LocalClientSession.class);
 
     private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
-    private static final String FLASH_NAMESPACE = "http://www.jabber.com/streams/flash";
 
     /**
      * Keep the list of IP address that are allowed to connect to the server.
@@ -216,7 +215,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     /**
      * Returns a newly created session between the server and a client. The session will
-     * be created and returned only if correct name/prefix (i.e. 'stream' or 'flash')
+     * be created and returned only if correct name/prefix ('stream')
      * and namespace were provided by the client.
      *
      * @param serverName the name of the server where the session is connecting to.
@@ -227,18 +226,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     public static LocalClientSession createSession(String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
-        boolean isFlashClient = xpp.getPrefix().equals("flash");
-        connection.setFlashClient(isFlashClient);
 
         // Conduct error checking, the opening tag should be 'stream'
         // in the 'etherx' namespace
-        if (!xpp.getName().equals("stream") && !isFlashClient) {
+        if (!xpp.getName().equals("stream")) {
             throw new XmlPullParserException(
                     LocaleUtils.getLocalizedString("admin.error.bad-stream"));
         }
 
-        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE) &&
-                !(isFlashClient && xpp.getNamespace(xpp.getPrefix()).equals(FLASH_NAMESPACE)))
+        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE))
         {
             throw new XmlPullParserException(LocaleUtils.getLocalizedString(
                     "admin.error.bad-namespace"));
@@ -337,12 +333,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
-        if (isFlashClient) {
-            sb.append("<flash:stream xmlns:flash=\"http://www.jabber.com/streams/flash\" ");
-        }
-        else {
-            sb.append("<stream:stream ");
-        }
+        sb.append("<stream:stream ");
         sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\"");
         sb.append(serverName);
         sb.append("\" id=\"");

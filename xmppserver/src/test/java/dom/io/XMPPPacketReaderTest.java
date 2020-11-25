@@ -89,7 +89,7 @@ public class XMPPPacketReaderTest
      * Openfire strips this namespace (among others) to make the resulting XML 're-usable', in context of the
      * implementation note in RFC 6120, section 4.8.3.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1335">Issue OF-1335: Forwarded messages rewritten to default namespace over S2S</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1335">Issue OF-1335: Forwarded messages rewritten to default namespace over S2S</a>
      * @see <a href="https://xmpp.org/rfcs/rfc6120.html#streams-ns-xmpp">RFC 6120, 4.8.3. XMPP Content Namespaces</a>
      */
     @Test
@@ -119,7 +119,7 @@ public class XMPPPacketReaderTest
      * Openfire strips this namespace (among others) to make the resulting XML 're-usable', in context of the
      * implementation note in RFC 6120, section 4.8.3.
      *
-     * @see <a href="https://issues.igniterealtime.org/browse/OF-1335">Issue OF-1335: Forwarded messages rewritten to default namespace over S2S</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1335">Issue OF-1335: Forwarded messages rewritten to default namespace over S2S</a>
      * @see <a href="https://xmpp.org/rfcs/rfc6120.html#streams-ns-xmpp">RFC 6120, 4.8.3. XMPP Content Namespaces</a>
      */
     @Test

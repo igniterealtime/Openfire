@@ -38,6 +38,7 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.entitycaps.EntityCapabilities" %>
 <%@ page import="java.util.TreeSet" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -103,6 +104,8 @@
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
+
+    final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 
     pageContext.setAttribute("address", address);
 %>
@@ -170,6 +173,7 @@
             <% } %>
         </td>
     </tr>
+    <% if (clusteringEnabled) { %>
     <tr>
         <td class="c1">
             <fmt:message key="session.details.node" />
@@ -183,6 +187,7 @@
         </td>
     </tr>
     <%
+        }
         boolean detached = false;
         if (currentSess instanceof LocalClientSession) {
             LocalClientSession s = (LocalClientSession)currentSess;

@@ -35,7 +35,7 @@ public class ProfiledConnectionEntry {
     /**
      * The total time spent executing the query (in milliseconds).
      */
-    public int totalTime;
+    public long totalTime;
 
     public ProfiledConnectionEntry(String sql) {
         this.sql = sql;

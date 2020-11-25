@@ -1073,7 +1073,14 @@ public interface MUCRoom extends Externalizable, Result {
     void sendInvitationRejection( JID to, String reason, JID from );
 
     /**
-     * Sends a packet to the user.
+     * Sends a packet to the occupants of the room.
+     *
+     * The second argument defines the sender/originator of the stanza. Typically, this is the same entity that's also
+     * the 'subject' of the stanza (eg: someone that changed its presence or nickname). It is important to realize that
+     * this needs to be the case. When, for example, an occupant is made a moderator, the 'sender' typically is the
+     * entity that granted the role to another entity. It is also possible for the sender to be a reflection of the room
+     * itself. This scenario typically occurs when the sender can't be identified as an occupant of the room, such as,
+     * for example, changes applied through the Openfire admin console.
      *
      * @param packet The packet to send
      * @param sender Representation of the entity that sent the stanza.

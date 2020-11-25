@@ -32,7 +32,7 @@ import java.util.TimerTask;
  * A task that, periodically, updates the 'last modified' date of all files in the Jetty 'tmp' directories. This
  * prevents operating systems from removing files that it thinks are unused.
  *
- * @see <a href="https://issues.igniterealtime.org/browse/OF-1534">OF-1534</a>
+ * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1534">OF-1534</a>
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class TempFileToucherTask extends TimerTask

@@ -1480,6 +1480,14 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             return CompletableFuture.completedFuture(null);
         }
 
+        if (!presence.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
+        }
+
         // Some clients send a presence update to the room, rather than to their own nickname.
         if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && presence.getTo() != null && presence.getTo().getResource() == null && sender.getRoleAddress() != null) {
             presence.setTo( sender.getRoleAddress() );
@@ -1508,86 +1516,131 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             );
     }
 
-    public void broadcast(BroadcastPresenceRequest presenceRequest) {
-        String jid = null;
-        Presence presence = presenceRequest.getPresence();
-        JID to = presence.getTo();
-        Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-        // Don't include the occupant's JID if the room is semi-anon and the new occupant
-        // is not a moderator
-        if (!canAnyoneDiscoverJID()) {
-            jid = frag.element("item").attributeValue("jid");
+    /**
+     * Broadcasts the presence stanza as captured by the argument to all occupants that are local to the JVM (in other
+     * words, it excludes occupants that are connected to other cluster nodes, as well as occupants connected via FMUC).
+     *
+     * @param presenceRequest The presence stanza
+     */
+    public void broadcast(@Nonnull BroadcastPresenceRequest presenceRequest)
+    {
+        Log.debug("Broadcasting presence update in room {} for occupant {}", this.getName(), presenceRequest.getPresence().getFrom() );
+
+        final Presence presence = presenceRequest.getPresence();
+
+        if (!presence.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
         }
 
-        for (MUCRole occupant : occupantsByFullJID.values()) {
+        // Three distinct flavors of the presence stanzas can be sent:
+        // 1. The original stanza (that includes the real JID of the user), usable when the room is not semi-anon or when the occupant is a moderator.
+        // 2. One that does not include the real JID of the user (if the room is semi-anon and the occupant isn't a moderator)
+        // 3. One that is reflected to the joining user (this stanza has additional status codes, signalling 'self-presence')
+        final Presence nonAnonPresence = presence.createCopy(); // create a copy, as the 'to' will be overwritten when dispatched!
+        final Presence anonPresence = createAnonCopy(presenceRequest);
+        final Presence selfPresence = createSelfPresenceCopy(presenceRequest);
+
+        for (final MUCRole occupant : occupantsByFullJID.values())
+        {
             try
             {
-                if (occupant.getPresence().getFrom().equals(to)) {
-                    // A race condition can occur where 'occupantsByFullJID' does not yet (or no longer, in case of a 'leave') contain
-                    // the originator of the presence stanza. To work around this, the "self-presence" is sent after all other occupants
-                    // have been processed.
-                    continue; // Skip for now.
-                }
-
                 // Do not send broadcast presence to occupants hosted in other cluster nodes or other FMUC nodes.
                 if (!occupant.isLocal() || occupant.isRemoteFmuc()) {
+                    Log.trace( "Not sending presence update of '{}' to {}: This occupant is not local.", presence.getFrom(), occupant.getUserAddress() );
                     continue;
                 }
 
-                // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
-                if (!canAnyoneDiscoverJID()) {
-                    if (MUCRole.Role.moderator == occupant.getRole()) {
-                        frag.element("item").addAttribute("jid", jid);
-                    }
-                    else {
-                        frag.element("item").addAttribute("jid", null);
-                    }
+                // Determine what stanza flavor to send to this occupant.
+                final Presence toSend;
+                if (occupant.getPresence().getFrom().equals(presence.getTo())) {
+                    // This occupant is the subject of the stanza. Send the 'self-presence' stanza.
+                    Log.trace( "Sending self-presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
+                    toSend = selfPresence;
+                } else if ( !canAnyoneDiscoverJID && MUCRole.Role.moderator != occupant.getRole() ) {
+                    Log.trace( "Sending anonymized presence of '{}' to {}: The room is semi-anon, and this occupant is not a moderator.", presence.getFrom(), occupant.getUserAddress() );
+                    toSend = anonPresence;
+                } else {
+                    Log.trace( "Sending presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
+                    toSend = nonAnonPresence;
                 }
-                occupant.send(presence);
+
+                // Send stanza to this occupant.
+                occupant.send(toSend);
             }
             catch ( Exception e )
             {
                 Log.warn( "An unexpected exception prevented a presence update from {} to be broadcasted to {}.", presence.getFrom(), occupant.getUserAddress(), e );
             }
         }
-
-        // A race condition can occur where 'occupantsByFullJID' does not yet (or no longer, in case of a 'leave') contain
-        // the originator of the presence stanza. To work around this, the "self-presence" is sent after all other occupants
-        // have been processed.
-        try
-        {
-            // Some status codes should only be included in the "self-presence", which is only sent to the user, but not to other occupants.
-            Presence selfPresence = presence.createCopy();
-            Element fragSelfPresence = selfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-            fragSelfPresence.addElement("status").addAttribute("code", "110");
-
-            // Only in the context of entering the room status code 100, 201 and 210 should be sent.
-            // http://xmpp.org/registrar/mucstatus.html
-            if ( presenceRequest.isJoinPresence() )
-            {
-                boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
-                if ( canAnyoneDiscoverJID() )
-                {
-                    // // XEP-0045: Example 26.
-                    // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above), the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
-                    fragSelfPresence.addElement("status").addAttribute("code", "100");
-                }
-                if ( isRoomNew )
-                {
-                    fragSelfPresence.addElement("status").addAttribute("code", "201");
-                }
-            }
-
-            selfPresence.setTo( presenceRequest.getUserAddressSender() ); // Cannot depend on a occupant being present, due to race conditions!
-            router.route(selfPresence);
-        }
-        catch ( Exception e )
-        {
-            Log.warn( "An unexpected exception prevented a presence update to be echo'd back to the sender {}.", presenceRequest.getUserAddressSender(), e );
-        }
     }
 
-    private void broadcast(@Nonnull Message message, @Nonnull MUCRole sender) {
+    /**
+     * Creates a copy of the presence stanza encapsulated in the argument, that is suitable to be sent to entities that
+     * have no permission to view the real JID of the sender.
+     *
+     * @param request The object encapsulating the presence to be broadcast.
+     * @return A copy of the stanza to be broadcast.
+     */
+    @Nonnull
+    private Presence createAnonCopy(@Nonnull BroadcastPresenceRequest request)
+    {
+        final Presence result = request.getPresence().createCopy();
+        final Element frag = result.getChildElement("x", "http://jabber.org/protocol/muc#user");
+        frag.element("item").addAttribute("jid", null);
+        return result;
+    }
+
+    /**
+     * Creates a copy of the presence stanza encapsulated in the argument, that is suitable to be sent back to the
+     * entity that is the subject of the presence update (a 'self-presence'). The returned stanza contains several
+     * flags that indicate to the receiving client that the information relates to their user.
+     *
+     * @param request The object encapsulating the presence to be broadcast.
+     * @return A copy of the stanza to be broadcast.
+     */
+    @Nonnull
+    private Presence createSelfPresenceCopy(@Nonnull BroadcastPresenceRequest request)
+    {
+        final Presence result = request.getPresence().createCopy();
+        Element fragSelfPresence = result.getChildElement("x", "http://jabber.org/protocol/muc#user");
+        fragSelfPresence.addElement("status").addAttribute("code", "110");
+
+        // Only in the context of entering the room status code 100, 201 and 210 should be sent.
+        // http://xmpp.org/registrar/mucstatus.html
+        if ( request.isJoinPresence() )
+        {
+            boolean isRoomNew = isLocked() && creationDate.getTime() == lockedTime;
+            if ( canAnyoneDiscoverJID() )
+            {
+                // XEP-0045: Example 26.
+                // If the user is entering a room that is non-anonymous (i.e., which informs all occupants of each occupant's full JID as shown above),
+                // the service MUST warn the user by including a status code of "100" in the initial presence that the room sends to the new occupant
+                fragSelfPresence.addElement("status").addAttribute("code", "100");
+            }
+
+            if ( isRoomNew )
+            {
+                fragSelfPresence.addElement("status").addAttribute("code", "201");
+            }
+        }
+
+        return result;
+    }
+
+    private void broadcast(@Nonnull final Message message, @Nonnull final MUCRole sender)
+    {
+        if (!message.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
+        }
+
         // If FMUC is active, propagate the message through FMUC first. Note that when a master-slave mode is active,
         // we need to wait for an echo back, before the message can be broadcasted locally. The 'propagate' method will
         // return a CompletableFuture object that is completed as soon as processing can continue.
@@ -1605,8 +1658,29 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         );
     }
 
-    public void broadcast(BroadcastMessageRequest messageRequest) {
-        Message message = messageRequest.getMessage();
+    /**
+     * Broadcasts the message stanza as captured by the argument to all occupants that are local to the JVM (in other
+     * words, it excludes occupants that are connected to other cluster nodes, as well as occupants connected via FMUC).
+     *
+     * This method also ensures that the broadcasted message is logged to persistent storage, if that feature is enabled
+     * for this room
+     *
+     * @param messageRequest The message stanza
+     */
+    public void broadcast(@Nonnull final BroadcastMessageRequest messageRequest)
+    {
+        Log.debug("Broadcasting message in room {} for occupant {}", this.getName(), messageRequest.getMessage().getFrom() );
+
+        final Message message = messageRequest.getMessage();
+
+        if (!message.getFrom().asBareJID().equals(this.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the sender, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
+        }
+
         // Add message to the room history
         roomHistory.addMessage(message);
         // Send message to occupants connected to this JVM

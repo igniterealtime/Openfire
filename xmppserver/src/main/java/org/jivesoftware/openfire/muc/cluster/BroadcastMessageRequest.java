@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -43,10 +44,18 @@ public class BroadcastMessageRequest extends MUCRoomTask<Void> {
     public BroadcastMessageRequest() {
     }
 
-    public BroadcastMessageRequest(LocalMUCRoom room, Message message, int occupants) {
+    public BroadcastMessageRequest(@Nonnull final LocalMUCRoom room, @Nonnull final Message message, @Nonnull final int occupants) {
         super(room);
         this.message = message;
         this.occupants = occupants;
+
+        if (!message.getFrom().asBareJID().equals(room.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + room.getJID());
+        }
     }
 
     public Message getMessage() {

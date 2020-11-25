@@ -426,7 +426,6 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
     /**
      * Indicates how the password is stored.
      */
-    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     public enum PasswordType {
 
         /**

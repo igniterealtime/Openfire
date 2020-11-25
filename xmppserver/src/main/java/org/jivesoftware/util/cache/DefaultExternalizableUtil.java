@@ -40,7 +40,7 @@ import java.util.Set;
  */
 // Note that this implementation is heavily based on the implementation provided by the 'clustering' plugin in
 // org.jivesoftware.openfire.plugin.util.cache.ClusterExternalizableUtil - if changes are made to either implementation,
-// it's likely that the other implementation needs a similar change. See https://issues.igniterealtime.org/browse/OF-1984
+// it's likely that the other implementation needs a similar change. See https://igniterealtime.atlassian.net/browse/OF-1984
 public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**

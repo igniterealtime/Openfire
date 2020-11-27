@@ -16,14 +16,18 @@
 
 package org.jivesoftware.openfire.http;
 
+import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.servlet.AsyncContext;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
  * Represents one HTTP connection with a client using the HTTP Binding service. The client will wait
@@ -38,20 +42,40 @@ public class HttpConnection {
 
     private final long requestId;
 
+    private final boolean isRestart;
+
+    private final int pause;
+
+    private final boolean isTerminate;
+
+    private final boolean isPoll;
+
+    @Nullable
     private HttpSession session;
+
     private boolean isClosed;
 
+    @Nonnull
     private final AsyncContext context;
+
+    @Nonnull
+    private final List<Element> inboundDataQueue;
 
     /**
      * Constructs an HTTP Connection.
      *
-     * @param requestId the ID which uniquely identifies this request.
+     * @param body the BOSH data that is in this request.
      * @param context execution context of the servlet request that created this instance.
      */
-    public HttpConnection(long requestId, AsyncContext context) {
-        this.requestId = requestId;
+    public HttpConnection(@Nonnull final HttpBindBody body, @Nonnull final AsyncContext context)
+    {
+        this.requestId = body.getRid();
+        this.inboundDataQueue = body.getStanzaElements();
+        this.isRestart = body.isRestart();
+        this.pause = body.getPause();
+        this.isTerminate = "terminate".equals(body.getType());
         this.context = context;
+        this.isPoll = body.isPoll();
     }
 
     /**
@@ -103,7 +127,13 @@ public class HttpConnection {
      * a deliverable to forward to the client
      * @throws IOException if an input or output exception occurred
      */
-    public void deliverBody(String body, boolean async) throws HttpConnectionClosedException, IOException {
+    public void deliverBody(@Nullable final String body, final boolean async) throws HttpConnectionClosedException, IOException
+    {
+        if (session == null) {
+            // This indicates that there's an implementation error in Openfire.
+            throw new IllegalStateException("Cannot be used before bound to a session.");
+        }
+
         // We only want to use this function once so we will close it when the body is delivered.
         synchronized (this) {
             if (isClosed) {
@@ -113,10 +143,17 @@ public class HttpConnection {
             isClosed = true;
         }
 
-        if (body == null) {
-            body = getSession().createEmptyBody(false);
-        }
-        HttpBindServlet.respond(getSession(), this.context, body, async);
+        HttpBindServlet.respond(getSession(), this.context, body != null ? body : session.createEmptyBody(false), async);
+    }
+
+    /**
+     * The list of stanzas that was sent by the client to the server over this connection. Possibly empty.
+     *
+     * @return An ordered collection of stanzas (possibly empty).
+     */
+    @Nonnull
+    public List<Element> getInboundDataQueue() {
+        return inboundDataQueue;
     }
 
     /**
@@ -133,15 +170,19 @@ public class HttpConnection {
      *
      * @param session the session that this connection belongs to.
      */
-    void setSession(HttpSession session) {
+    void setSession(@Nonnull HttpSession session) {
         this.session = session;
     }
 
     /**
      * Returns the session that this connection belongs to.
      *
+     * Although technically, this method can return null, it is expected that a session is bound to this connection
+     * almost immediately after it is created.
+     *
      * @return the session that this connection belongs to.
      */
+    @Nullable
     public HttpSession getSession() {
         return session;
     }
@@ -153,9 +194,46 @@ public class HttpConnection {
      * @return IP address of the remote peer
      * @throws UnknownHostException if no IP address for the peer could be found,
      */
+    @Nonnull
     public InetAddress getRemoteAddr() throws UnknownHostException
     {
         return InetAddress.getByName(context.getRequest().getRemoteAddr());
+    }
+
+    /**
+     * Returns if the request that was sent is a 'restart request'.
+     *
+     * @return if the request that was sent is a 'restart request'.
+     */
+    public boolean isRestart() {
+        return isRestart;
+    }
+
+    /**
+     * Returns the number of seconds of pause that the client is requesting, or -1 if it's not requesting a pause.
+     *
+     * @return The amount of seconds of pause that is being requested, or -1.
+     */
+    public int getPause() {
+        return pause;
+    }
+
+    /**
+     * Returns if the request that was sent is a request to terminate the session.
+     *
+     * @return if the request that was sent is a request to terminate the session.
+     */
+    public boolean isTerminate() {
+        return isTerminate;
+    }
+
+    /**
+     * Returns if the request that was sent is a request is polling for data, without providing any data itself.
+     *
+     * @return if the request that was sent is a request is polling for data, without providing any data itself.
+     */
+    public boolean isPoll() {
+        return isPoll;
     }
 
     /**

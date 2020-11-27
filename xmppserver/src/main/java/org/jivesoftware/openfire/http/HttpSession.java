@@ -46,6 +46,9 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
@@ -56,6 +59,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A session represents a series of interactions with an XMPP client sending packets using the HTTP
@@ -70,7 +74,7 @@ public class HttpSession extends LocalClientSession {
     private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
 
     private static XmlPullParserFactory factory = null;
-    private static ThreadLocal<XMPPPacketReader> localParser = null;
+    private static final ThreadLocal<XMPPPacketReader> localParser;
     static {
         try {
             factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
@@ -80,23 +84,19 @@ public class HttpSession extends LocalClientSession {
             Log.error("Error creating a parser factory", e);
         }
         // Create xmpp parser to keep in each thread
-        localParser = new ThreadLocal<XMPPPacketReader>() {
-            @Override
-            protected XMPPPacketReader initialValue() {
-                XMPPPacketReader parser = new XMPPPacketReader();
-                factory.setNamespaceAware(true);
-                parser.setXPPFactory(factory);
-                return parser;
-            }
-        };
+        localParser = ThreadLocal.withInitial(() -> {
+            XMPPPacketReader parser = new XMPPPacketReader();
+            factory.setNamespaceAware(true);
+            parser.setXPPFactory(factory);
+            return parser;
+        });
     }
 
     private int wait;
     private int hold = 0;
-    private String language;
-    private final List<HttpConnection> connectionQueue = Collections.synchronizedList(new LinkedList<HttpConnection>());
-    private final List<Deliverable> pendingElements = Collections.synchronizedList(new ArrayList<Deliverable>());
-    private final List<Delivered> sentElements = Collections.synchronizedList(new ArrayList<Delivered>());
+    private final List<HttpConnection> connectionQueue = Collections.synchronizedList(new LinkedList<>());
+    private final List<Deliverable> pendingElements = Collections.synchronizedList(new ArrayList<>());
+    private final List<Delivered> sentElements = Collections.synchronizedList(new ArrayList<>());
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
@@ -104,26 +104,20 @@ public class HttpSession extends LocalClientSession {
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
     private long lastActivity;
-    private long lastRequestID;
+    private long lastSequentialRequestID; // received
+    private long lastAnsweredRequestID; // sent
     private boolean lastResponseEmpty;
     private int maxRequests;
     private int maxPause;
-    private PacketDeliverer backupDeliverer;
+    private final PacketDeliverer backupDeliverer;
     private int majorVersion = -1;
     private int minorVersion = -1;
-    private X509Certificate[] sslCertificates;
+    private final X509Certificate[] sslCertificates;
 
-    private final Queue<Collection<Element>> packetsToSend = new LinkedList<>();
     // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
-    private SessionPacketRouter router;
+    private final SessionPacketRouter router = new SessionPacketRouter(this);
 
-    private static final Comparator<HttpConnection> connectionComparator
-            = new Comparator<HttpConnection>() {
-        @Override
-        public int compare(HttpConnection o1, HttpConnection o2) {
-            return (int) (o1.getRequestId() - o2.getRequestId());
-        }
-    };
+    private static final Comparator<HttpConnection> connectionComparator = (o1, o2) -> (int) (o1.getRequestId() - o2.getRequestId());
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName,
                        StreamID streamID, HttpConnection connection, Locale language) throws UnknownHostException
@@ -131,12 +125,11 @@ public class HttpSession extends LocalClientSession {
         super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
         this.isClosed = false;
         this.lastActivity = System.currentTimeMillis();
-        this.lastRequestID = connection.getRequestId();
+        this.lastSequentialRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
         this.sslCertificates = connection.getPeerCertificates();
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            Log.info("Session " + getStreamID() + " being opened with initial connection " +
-                    connection.toString());
+        if (Log.isDebugEnabled()) {
+            Log.debug("Session {} being opened with initial connection {}", getStreamID(),connection.toString());
         }
     }
 
@@ -146,27 +139,26 @@ public class HttpSession extends LocalClientSession {
      * @return the stream features which are available for this session.
      */
     public Collection<Element> getAvailableStreamFeaturesElements() {
-        List<Element> elements = new ArrayList<>();
+        final List<Element> elements = new ArrayList<>();
 
+        // If authentication has not happened yet, include available authentication mechanisms.
         if (getAuthToken() == null) {
-            Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
+            final Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
             if (sasl != null) {
                 elements.add(sasl);
             }
         }
 
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
-            elements.add(DocumentHelper.createElement(new QName("register",
-                    new Namespace("", "http://jabber.org/features/iq-register"))));
+            elements.add(DocumentHelper.createElement(new QName("register",new Namespace("", "http://jabber.org/features/iq-register"))));
         }
-        Element bind = DocumentHelper.createElement(new QName("bind",
-                new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind")));
-        elements.add(bind);
 
-        Element session = DocumentHelper.createElement(new QName("session",
-                new Namespace("", "urn:ietf:params:xml:ns:xmpp-session")));
+        elements.add(DocumentHelper.createElement(new QName("bind", new Namespace("", "urn:ietf:params:xml:ns:xmpp-bind"))));
+
+        final Element session = DocumentHelper.createElement(new QName("session", new Namespace("", "urn:ietf:params:xml:ns:xmpp-session")));
         session.addElement("optional");
         elements.add(session);
+
         return elements;
     }
 
@@ -188,9 +180,7 @@ public class HttpSession extends LocalClientSession {
         if (isClosed) {
             return;
         }
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-            Log.info("Session " + getStreamID() + " being closed");
-        }
+        Log.debug("Session {} being closed", getStreamID());
         conn.close();
     }
 
@@ -402,7 +392,6 @@ public class HttpSession extends LocalClientSession {
             for (HttpConnection toClose : connectionQueue) {
                 if (!toClose.isClosed()) {
                     toClose.close();
-                    lastRequestID = toClose.getRequestId();
                 }
             }
         }
@@ -442,16 +431,7 @@ public class HttpSession extends LocalClientSession {
      * all requests with lower 'rid' values.
      */
     public long getLastAcknowledged() {
-        long ack = lastRequestID;
-        Collections.sort(connectionQueue, connectionComparator);
-        synchronized (connectionQueue) {
-            for (HttpConnection connection : connectionQueue) {
-                if (connection.getRequestId() == ack + 1) {
-                    ack++;
-                }
-            }
-        }
-        return ack;
+        return lastSequentialRequestID;
     }
 
     /**
@@ -496,7 +476,7 @@ public class HttpSession extends LocalClientSession {
         if(minorVersion <= 5) {
             this.minorVersion = 5;
         }
-        else if(minorVersion >= 6) {
+        else {
             this.minorVersion = 6;
         }
     }
@@ -555,35 +535,65 @@ public class HttpSession extends LocalClientSession {
     public void forwardRequest(HttpBindBody body, AsyncContext context)
             throws HttpBindException, HttpConnectionClosedException, IOException
     {
-        HttpConnection connection = this.createConnection(body.getRid(), body.isPoll(), context);
-        if (!body.isEmpty()) {
-            // creates the runnable to forward the packets
-            synchronized (packetsToSend) {
-                packetsToSend.add(body.getStanzaElements());
+        final HttpConnection connection = this.createConnection(body, context);
+        final long rid = body.getRid();
+        final StreamID streamid = getStreamID();
+
+        // Check if security restraints are observed.
+        if (isSecure && !connection.isSecure()) {
+            throw new HttpBindException("Session was started from secure connection, all " +
+                "connections on this session must be secured.", BoshBindingError.badRequest);
+        }
+
+        // Check if the provided RID is in the to-be-expected window.
+        if (rid > (lastSequentialRequestID + maxRequests)) {
+            Log.warn("Request {} > {}, ending session {}", body.getRid(), (lastSequentialRequestID + maxRequests), getStreamID());
+            throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
+        }
+
+        // Check for retransmission.
+        if (rid <= lastAnsweredRequestID) {
+            redeliver(connection);
+            return;
+        }
+
+        /*
+         * Search through the connection queue to see if this rid already exists on it. If it does then we
+         * will close and deliver the existing connection (if appropriate), and close and deliver the same
+         * deliverable on the new connection. This is under the assumption that a connection has been dropped,
+         * and re-requested before jetty has realised.
+         */
+        synchronized (connectionQueue) {
+            // TODO is there overlap with the retransmission logic above? Can this be simplified?
+            for (HttpConnection queuedConnection : connectionQueue) {
+                if (queuedConnection.getRequestId() == rid) {
+                    Log.debug("Found previous connection in queue with rid {}", rid);
+                    if(queuedConnection.isClosed()) {
+                        Log.debug("It's closed - copying deliverables");
+
+                        Delivered deliverable = retrieveDeliverable(rid);
+                        if (deliverable == null) {
+                            Log.warn("In session {} deliverable unavailable for {}", streamid, rid);
+                            throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
+                        }
+                        connection.deliverBody(asBodyText(deliverable.deliverables), true);
+                    } else {
+                        Log.debug("For session {} queued connection is still open - calling close() on the old connection (as the new connection will replace it).", streamid);
+
+                        // TODO implement section 14.3 of XEP 0124 instead of this!
+                        deliver(queuedConnection, Collections.singletonList(new Deliverable("")), true);
+                        connection.close();
+                    }
+                    break;
+                }
             }
-            new HttpPacketSender(this).init();
         }
 
-        final String type = body.getType();
+        checkOveractivity(connection);
 
-        if ("terminate".equals(type)) {
-            connection.deliverBody(createEmptyBody(true), true);
-            close();
-            lastRequestID = connection.getRequestId();
-        }
-        else if (body.isRestart() && body.isEmpty() ) {
-            connection.deliverBody(createSessionRestartResponse(), true);
-            lastRequestID = connection.getRequestId();
-        }
-        else if (body.getPause() > 0 && body.getPause() <= getMaxPause()) {
-            pause(body.getPause());
-            connection.deliverBody(createEmptyBody(false), true);
-            lastRequestID = connection.getRequestId();
-            setLastResponseEmpty(true);
-        }
-        else {
-            resetInactivityTimeout();
-        }
+        // Schedule the connection for consumption.
+        processConnection(connection, context);
+        resetInactivityTimeout();
     }
 
     /**
@@ -594,28 +604,22 @@ public class HttpSession extends LocalClientSession {
      * the pending packets to be sent, while the second one will simply return
      * (as there are no packets left to send).
      */
-    protected void sendPendingPackets() {
-        // access blocked only on send to prevent deadlocks
-        synchronized (packetsToSend) {
-            if (packetsToSend.isEmpty()) {
-                return;
-            }
+    protected void sendPendingPackets(final List<Element> packetsToSend) {
+        if (packetsToSend == null || packetsToSend.isEmpty()) {
+            return;
+        }
 
-            if (router == null) {
-                router = new SessionPacketRouter(this);
-            }
-
-            do {
-                Collection<Element> packets = packetsToSend.remove();
-                for (Element packet : packets) {
+        // Schedule in-order.
+        synchronized (router) {
+            HttpBindManager.getInstance().getSessionManager().execute(() -> {
+                for (Element packet : packetsToSend) {
                     try {
                         router.route(packet);
                     } catch (UnknownStanzaException e) {
-                        Log.error( "On session " + getStreamID() + " client provided unknown packet type", e);
+                        Log.error("On session " + getStreamID() + " client provided unknown packet type", e);
                     }
                 }
-            }
-            while( !packetsToSend.isEmpty() );
+            });
         }
     }
 
@@ -630,35 +634,29 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Creates a new connection on this session. If a response is currently available for this
-     * session the connection is responded to immediately, otherwise it is queued awaiting a
-     * response.
+     * Creates a new connection on this session.
      *
-     * @param rid the request id related to the connection.
+     * @param body the body element that was sent containing the request for a new session.
+     * @param context the context of the asynchronous servlet call leading up to this method call.
      * @return the created {@link org.jivesoftware.openfire.http.HttpConnection} which represents
      *         the connection.
-     *
-     * @throws HttpConnectionClosedException if the connection was closed before a response could be
-     * delivered.
-     * @throws HttpBindException if the connection has violated a facet of the HTTP binding
-     * protocol.
      */
-    synchronized HttpConnection createConnection(long rid, boolean isPoll, AsyncContext context)
-            throws HttpConnectionClosedException, HttpBindException, IOException
+    @Nonnull
+    synchronized HttpConnection createConnection(@Nonnull final HttpBindBody body, @Nonnull final AsyncContext context)
     {
-        final HttpConnection connection = new HttpConnection(rid, context);
+        final HttpConnection connection = new HttpConnection(body, context);
         final StreamID streamID = getStreamID();
-        boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
-        if (logHttpbindEnabled) {
-            Log.info( "Creating connection for rid: " + rid + " in session " + streamID );
+        final long rid = body.getRid();
+        if (Log.isDebugEnabled()) {
+            Log.debug( "Creating connection for rid: {} in session {}", rid, streamID );
         }
         connection.setSession(this);
         context.setTimeout(getWait() * JiveConstants.SECOND);
         context.addListener(new AsyncListener() {
             @Override
-            public void onComplete(AsyncEvent asyncEvent) throws IOException {
-                if (Log.isDebugEnabled()) {
-                    Log.debug("complete event " + asyncEvent + " for " + rid + " in session " + streamID);
+            public void onComplete(AsyncEvent asyncEvent) {
+                if (Log.isTraceEnabled()) {
+                    Log.trace("Session {} Request ID {}, event complete: {}", streamID, rid, asyncEvent);
                 }
                 connectionQueue.remove(connection);
                 lastActivity = System.currentTimeMillis();
@@ -667,23 +665,16 @@ public class HttpSession extends LocalClientSession {
 
             @Override
             public void onTimeout(AsyncEvent asyncEvent) throws IOException {
-                if( Log.isDebugEnabled()) {
-                    Log.debug("timeout event " + asyncEvent + " for " + rid + " in session " + streamID);
+                if (Log.isTraceEnabled()) {
+                    Log.trace("Session {} Request ID {}, event timeout: {}", streamID, rid, asyncEvent);
                 }
+                Log.warn("For session " + streamID + " an async timeout occurred. Returning an empty response.");
+
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
-                    deliverOnTimeout(connection);
+                    deliver(connection, Collections.singletonList(new Deliverable("")), false);
                     setLastResponseEmpty(true);
-
-                    // This connection timed out we need to increment the request count
-                    if (connection.getRequestId() != lastRequestID + 1) {
-                        if (logHttpbindEnabled) {
-                            Log.info( "Unexpected RID error " + rid + " for session " + streamID);
-                        }
-                        throw new IOException("Unexpected RID error.");
-                    }
-                    lastRequestID = connection.getRequestId();
                 } catch (HttpConnectionClosedException e) {
                     Log.warn("Unexpected exception while processing connection timeout.", e);
                 }
@@ -692,9 +683,9 @@ public class HttpSession extends LocalClientSession {
             }
 
             @Override
-            public void onError(AsyncEvent asyncEvent) throws IOException {
-                if (logHttpbindEnabled && Log.isDebugEnabled()) {
-                    Log.debug("error event " + asyncEvent + " for " + rid + " in session " + streamID);
+            public void onError(AsyncEvent asyncEvent) {
+                if (Log.isTraceEnabled()) {
+                    Log.trace("Session {} Request ID {}, event error: {}", streamID, rid, asyncEvent);
                 }
                 Log.warn("For session " + streamID + " unhandled AsyncListener error: " + asyncEvent.getThrowable());
                 connectionQueue.remove(connection);
@@ -702,31 +693,28 @@ public class HttpSession extends LocalClientSession {
             }
 
             @Override
-            public void onStartAsync(AsyncEvent asyncEvent) throws IOException {}
+            public void onStartAsync(AsyncEvent asyncEvent) {
+                if (Log.isTraceEnabled()) {
+                    Log.trace("Session {} Request ID {}, event start: {}", streamID, rid, asyncEvent);
+                }
+            }
         });
 
-        if (rid <= lastRequestID) {
-            Delivered deliverable = retrieveDeliverable(rid);
-            if (deliverable == null) {
-                Log.warn("Deliverable unavailable for " + rid + " in session " + streamID);
-                throw new HttpBindException("Unexpected RID error.",
-                        BoshBindingError.itemNotFound);
-            }
-            connection.deliverBody(createDeliverable(deliverable.deliverables), true);
-            addConnection(connection, context, isPoll);
-            return connection;
-        }
-        else if (rid > (lastRequestID + maxRequests)) {
-            Log.warn("Request " + rid + " > " + (lastRequestID + maxRequests) + ", ending session " + streamID);
-                throw new HttpBindException("Unexpected RID error.",
-                        BoshBindingError.itemNotFound);
-        }
-
-        addConnection(connection, context, isPoll);
         return connection;
     }
 
-    private Delivered retrieveDeliverable(long rid) {
+    /**
+     * Attempts to find data that was previously sent back to the client, using a particular request ID. This is
+     * expected to be used to process requests for retransmission.
+     *
+     * The implementation only holds a limited amount of data. It will return null when no data that matches the ID can
+     * be found.
+     *
+     * @param rid The request ID for which to find previously delivered data.
+     * @return previously delivered data when found.
+     */
+    @Nullable
+    private Delivered retrieveDeliverable(final long rid) {
         Delivered result = null;
         synchronized (sentElements) {
             for (Delivered delivered : sentElements) {
@@ -739,151 +727,140 @@ public class HttpSession extends LocalClientSession {
         return result;
     }
 
-    private void addConnection(HttpConnection connection, AsyncContext context, boolean isPoll) throws HttpBindException,
-            HttpConnectionClosedException, IOException {
-        if (connection == null) {
-            throw new IllegalArgumentException("Connection cannot be null.");
-        }
-
-        if (isSecure && !connection.isSecure()) {
-            throw new HttpBindException("Session was started from secure connection, all " +
-                    "connections on this session must be secured.", BoshBindingError.badRequest);
-        }
-
+    /**
+     * Schedules the connection for processing, ensuring that connections are processed in the order of their request ID
+     * values. Processing causes data delivered by the client to be routed in the server to their intended recipients,
+     * and allow the connection to be used to send back data to the client.
+     *
+     * @param connection The connection ready to be processed.
+     * @param context the context of the asynchronous servlet call leading up to this method call.
+     */
+    private void processConnection(@Nonnull final HttpConnection connection, @Nonnull final AsyncContext context) throws HttpConnectionClosedException, IOException
+    {
         final long rid = connection.getRequestId();
         final StreamID streamid = getStreamID();
-        boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
-        if (logHttpbindEnabled) {
-            Log.info( "Adding connection to stream " + streamid + " with rid " + rid );
+        if (Log.isDebugEnabled()) {
+            Log.debug( "Adding connection to stream {} with rid {}", streamid, rid );
         }
 
-        /*
-         * Search through the connection queue to see if this rid already exists on it. If it does then we
-         * will close and deliver the existing connection (if appropriate), and close and deliver the same
-         * deliverable on the new connection. This is under the assumption that a connection has been dropped,
-         * and re-requested before jetty has realised.
-         */
+        // Note that connections can be expected to arrive 'out of order'. The implementation should only use a connection
+        // that has a request ID value that's exactly one higher than the last request ID value in the 'gapless' sequence
+        // of request IDs. When a connection is being processed that has a higher value, it should go unused until another
+        // connection arrives that 'fills the gap' (and be used only _after_ that connection gets used).
+        boolean aConnectionAvailableForDelivery = false;
         synchronized (connectionQueue) {
-            for (HttpConnection queuedConnection : connectionQueue) {
-                if (queuedConnection.getRequestId() == rid) {
-                    if(logHttpbindEnabled && Log.isDebugEnabled()) {
-                        Log.debug("Found previous connection in queue with rid " + rid);
-                    }
-                    if(queuedConnection.isClosed()) {
-                        if(logHttpbindEnabled && Log.isDebugEnabled()) {
-                            Log.debug("It's closed - copying deliverables");
-                        }
+            connectionQueue.add(connection);
 
-                        Delivered deliverable = retrieveDeliverable(rid);
-                        if (deliverable == null) {
-                            if(logHttpbindEnabled) {
-                                Log.warn("In session " + streamid + " deliverable unavailable for " + rid);
-                            }
-                            throw new HttpBindException("Unexpected RID error.",
-                                    BoshBindingError.itemNotFound);
-                        }
-                        connection.deliverBody(createDeliverable(deliverable.deliverables), true);
+            // Order the connection queue, and determine if the sequence of consecutive request IDs can be updated.
+            connectionQueue.sort(connectionComparator);
+
+            for (final HttpConnection queuedConnection : connectionQueue) {
+                final long queuedRequestID = queuedConnection.getRequestId();
+                if (queuedRequestID <= lastSequentialRequestID) {
+                    continue;
+                }
+                if (queuedRequestID == lastSequentialRequestID + 1)
+                {
+                    // There is a new connection available for consumption.
+                    lastSequentialRequestID = queuedRequestID;
+                    if (queuedConnection.isClosed()) {
+                        continue; // Unsure if this can happen - perhaps at edge-cases involving time-outs?
+                    }
+
+                    // The data that was provided by the client can now be processed by the server.
+                    sendPendingPackets(queuedConnection.getInboundDataQueue());
+
+                    // Evaluate edge-cases.
+                    if (queuedConnection.isTerminate()) {
+                        queuedConnection.deliverBody(createEmptyBody(true), true);
+                        close();
+                    } else if (queuedConnection.isRestart()) {
+                        queuedConnection.deliverBody(createSessionRestartResponse(), true);
+                    } else if (queuedConnection.getPause() > 0 && queuedConnection.getPause() <= getMaxPause()) {
+                        pause(queuedConnection.getPause()); // TODO shouldn't we error when the requested pause is higher than the allowed maximum?
+                        connection.deliverBody(createEmptyBody(false), true);
+                        setLastResponseEmpty(true);
                     } else {
-                        if(logHttpbindEnabled && Log.isDebugEnabled()) {
-                            Log.debug("For session " + streamid + " queued connection is still open - calling close()");
-                        }
-                        deliver(queuedConnection, Collections.singleton(new Deliverable("")));
-                        connection.close();
-
-                        if(rid == (lastRequestID + 1)) {
-                            lastRequestID = rid;
-                            if( logHttpbindEnabled ) {
-                                Log.info( "Updated session " + streamid + " to rid = " + rid );
-                            }
-                        }
+                        // At least one new connection has become available, and can be used to return data to the client.
+                        aConnectionAvailableForDelivery = true;
                     }
+                    // Note that when this connection fills a gap in the sequence, other connections might already be
+                    // available that have the 'next' Request ID value. We need to keep iterating.
+                } else {
+                    // As we're iterating over the collection that is ordered by Request ID, the iteration can stop
+                    // when a gap is detected (subsequent connections will only have higher Request ID values).
                     break;
                 }
             }
         }
 
-        checkOveractivity(isPoll,streamid,rid,logHttpbindEnabled);
+        synchronized (pendingElements)
+        {
+            // If a connection became available for delivery and there's pending data to be delivered, deliver immediately.
+            // Request ID of the new connection 'fits in the window'
 
-        sslCertificates = connection.getPeerCertificates();
+            if (isPollingSession()) {
+                // Note that the code leading up to this checks if the Request ID of the new connection 'fits in the window',
+                // which means that for polling sessions, the request ID must have been a sequential one, which in turn should
+                // guarantee that 'a new connection is now available for delivery').
+                assert aConnectionAvailableForDelivery;
+            }
 
-        // We aren't supposed to hold connections open or we already have some packets waiting
-        // to be sent to the client.
-        if (isPollingSession() || (pendingElements.size() > 0 && connection.getRequestId() == lastRequestID + 1)) {
-            lastActivity = System.currentTimeMillis();
-            SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection, context );
-            synchronized(pendingElements) {
-                deliver(connection, pendingElements);
-                lastRequestID = connection.getRequestId();
+            if (isPollingSession() || (aConnectionAvailableForDelivery && !pendingElements.isEmpty())) {
+                lastActivity = System.currentTimeMillis();
+                SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection, context ); // TODO is this the right place to dispatch this event?
+                deliver(pendingElements);
                 pendingElements.clear();
             }
         }
-        else {
-            // With this connection we need to check if we will have too many connections open,
-            // closing any extras.
 
-            connectionQueue.add(connection);
-            Collections.sort(connectionQueue, connectionComparator);
+        // When a new connection has become available, older connections need to be released (allowing the client to
+        // send more data if it needs to).
+        synchronized (connectionQueue) {
+            final List<HttpConnection> openConnections = connectionQueue.stream()
+                .filter(c -> !c.isClosed())
+                .filter(c -> c.getRequestId() <= lastSequentialRequestID)
+                .sorted(connectionComparator)
+                .collect(Collectors.toList());
 
-            synchronized (connectionQueue) {
-                int connectionsToClose;
-                if(connectionQueue.get(connectionQueue.size() - 1) != connection) {
-                    // Current connection does not have the greatest rid. That means
-                    // requests were received out of order, respond to all.
-                    connectionsToClose = connectionQueue.size();
+            while( openConnections.size() > hold) {
+                if (Log.isTraceEnabled()) {
+                    Log.trace("Stream {}: releasing oldest connection (rid {}), as the amount of open connections ({}) is higher than the requested amount to hold ({}).", streamid, rid, openConnections.size(), hold);
                 }
-                else {
-                    // Everything's fine, number of current connections open tells us
-                    // how many that we need to close.
-                    connectionsToClose = getOpenConnectionCount() - hold;
-                }
-                int closed = 0;
-                for (int i = 0; i < connectionQueue.size() && closed < connectionsToClose; i++) {
-                    HttpConnection toClose = connectionQueue.get(i);
-                    if (!toClose.isClosed() && toClose.getRequestId() == lastRequestID + 1) {
-                        if(toClose == connection) {
-                            // Current connection has no continuation yet, just deliver.
-                            deliver("");
-                        }
-                        else {
-                            toClose.close();
-                        }
-                        lastRequestID = toClose.getRequestId();
-                        closed++;
-                    }
-                }
+                final HttpConnection openConnection = openConnections.remove(0);
+                openConnection.deliverBody(createEmptyBody(false), true);
             }
         }
     }
 
-    private int getOpenConnectionCount() {
-        int count = 0;
-        // NOTE: synchronized by caller
-        for (HttpConnection connection : connectionQueue) {
-            if (!connection.isClosed()) {
-                count++;
-            }
+    /**
+     * Attempts to processes a request for redelivery of data that was sent earlier.
+     *
+     * This method is expected to be called with a connection that has a request ID that was already processed before.
+     *
+     * If the data that was delivered in the earlier connection is still available, this will be delivered on this new
+     * connection again. When the data is no longer available, an item-not-found error is generated.
+     *
+     * @param connection The connection requesting a retransmission
+     * @throws HttpConnectionClosedException if the connection was closed before a response could be delivered.
+     * @throws HttpBindException if the connection has violated a facet of the HTTP binding protocol.
+     */
+    private void redeliver(@Nonnull final HttpConnection connection) throws HttpBindException, IOException, HttpConnectionClosedException
+    {
+        Log.debug("Session {} requesting a retransmission for rid {}", getStreamID(), connection.getRequestId());
+        final Delivered deliverable = retrieveDeliverable(connection.getRequestId());
+        if (deliverable == null) {
+            Log.warn("Deliverable unavailable for " + connection.getRequestId() + " in session " + getStreamID());
+            throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
         }
-        return count;
-    }
-
-    private void deliver(HttpConnection connection, Collection<Deliverable> deliverable)
-            throws HttpConnectionClosedException, IOException {
-        connection.deliverBody(createDeliverable(deliverable), true);
-
-        Delivered delivered = new Delivered(deliverable);
-        delivered.setRequestID(connection.getRequestId());
-        while (sentElements.size() > maxRequests) {
-            sentElements.remove(0);
-        }
-
-        sentElements.add(delivered);
+        connection.deliverBody(asBodyText(deliverable.deliverables), true);
     }
 
     private enum OveractivityType {
         NONE,
         TOO_MANY_SIM_REQS,
-        POLLING_TOO_QUICK;
-    };
+        POLLING_TOO_QUICK
+    }
 
     /**
      * Check that the client SHOULD NOT make more simultaneous requests than specified
@@ -891,14 +868,11 @@ public class HttpSession extends LocalClientSession {
      * However the client MAY make one additional request if it is to pause or terminate a session.
      *
      * @see <a href="http://www.xmpp.org/extensions/xep-0124.html#overactive">overactive</a>
-     * @param isPoll true if the session is using polling.
+     * @param connection the new connection.
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding
      *         protocol.
      */
-    private void checkOveractivity(boolean isPoll,
-            StreamID streamID,
-            long originRid,
-            boolean logHttpbindEnabled) throws HttpBindException {
+    private void checkOveractivity(HttpConnection connection) throws HttpBindException {
         int pendingConnections = 0;
         OveractivityType overactivity = OveractivityType.NONE;
 
@@ -906,9 +880,8 @@ public class HttpSession extends LocalClientSession {
             for (HttpConnection conn : connectionQueue) {
                 if (!conn.isClosed()) {
                     pendingConnections++;
-                    if (logHttpbindEnabled) {
-                        Log.info("For session " + streamID + " and origin rid " + originRid +
-                                " an open connection is pending with rid " + conn.getRequestId());
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("For session {} and origin rid {} an open connection is pending with rid {}", getStreamID(), connection.getRequestId(), conn.getRequestId());
                     }
                 }
             }
@@ -919,7 +892,7 @@ public class HttpSession extends LocalClientSession {
         if(pendingConnections >= maxRequests) {
             overactivity = OveractivityType.TOO_MANY_SIM_REQS;
         }
-        else if(isPoll) {
+        else if(connection.isPoll()) {
             boolean localIsPollingSession = isPollingSession();
             if (deltaFromLastPoll < maxPollingInterval * JiveConstants.SECOND) {
                 if (localIsPollingSession) {
@@ -929,10 +902,10 @@ public class HttpSession extends LocalClientSession {
                 }
             }
             lastPoll = time;
-            if (logHttpbindEnabled && Log.isDebugEnabled()) {
-                Log.debug("Updated session " + streamID +
+            if (Log.isDebugEnabled()) {
+                Log.debug("Updated session " + getStreamID() +
                         " lastPoll to " + lastPoll +
-                        " with rid " + originRid +
+                        " with rid " + connection.getRequestId() +
                         " lastResponseEmpty = " + lastResponseEmpty  +
                         " overactivity = " + overactivity +
                         " deltaFromlastPoll = " + deltaFromLastPoll +
@@ -963,8 +936,8 @@ public class HttpSession extends LocalClientSession {
                 }
             }
             String errorMessageStr = errorMessage.toString();
-            if (logHttpbindEnabled && Log.isInfoEnabled()) {
-                Log.info(errorMessageStr);
+            if (Log.isDebugEnabled()) {
+                Log.debug(errorMessageStr);
             }
             if (!JiveGlobals.getBooleanProperty("xmpp.httpbind.client.requests.ignoreOveractivity", false)) {
                 throw new HttpBindException(errorMessageStr, BoshBindingError.policyViolation);
@@ -972,51 +945,48 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private void deliver(String text) {
-        if (text == null) {
-            // Do nothing if someone asked to send nothing :)
-            return;
-        }
-        deliver(new Deliverable(text));
-    }
-
-    private void deliverOnTimeout(HttpConnection connection) throws HttpConnectionClosedException, IOException {
-        final Deliverable td = new Deliverable("");
-        final Collection<Deliverable> deliverable = Arrays.asList(td);
-
-        // Not async - we're closing it afterwards
-        connection.deliverBody(createDeliverable(deliverable), false);
-
-        final Delivered delivered = new Delivered(deliverable);
-        delivered.setRequestID(connection.getRequestId());
-        while (sentElements.size() > maxRequests) {
-            final Delivered d = sentElements.remove(0);
-        }
-        sentElements.add(delivered);
-    }
-
     @Override
-    public void deliver(Packet stanza) {
-        deliver(new Deliverable(Arrays.asList(stanza)));
+    public void deliver(@Nonnull final Packet stanza) {
+        deliver(new Deliverable(Collections.singletonList(stanza)));
     }
 
-    private void deliver(Deliverable stanza) {
-        Collection<Deliverable> deliverable = Arrays.asList(stanza);
+    /**
+     * Delivers the provided data to the client, using the first available
+     * connection, queuing the data of no connection is presently available.
+     *
+     * The data is expected to be XMPP-valid.
+     *
+     * @param stanza data to be delivered.
+     */
+    private void deliver(@Nonnull final Deliverable stanza) {
+        deliver(Collections.singletonList(stanza));
+    }
+
+    /**
+     * Delivers the provided data to the client, using the first available
+     * connection, queuing the data of no connection is presently available.
+     *
+     * The data is expected to be XMPP-valid.
+     *
+     * @param deliverable data to be delivered.
+     */
+    private void deliver(@Nonnull final List<Deliverable> deliverable) {
         boolean delivered = false;
-        int pendingConnections = 0;
         synchronized (connectionQueue) {
             for (HttpConnection connection : connectionQueue) {
+                // We can only use connections that have not been used yet.
                 if (connection.isClosed()) {
                     continue;
                 }
-                pendingConnections++;
                 try {
-                    if (connection.getRequestId() == lastRequestID + 1) {
-                        lastRequestID = connection.getRequestId();
-                        deliver(connection, deliverable);
+                    // We can only use connections that have a sequential request ID.
+                    if (connection.getRequestId() <= lastSequentialRequestID) {
+                        deliver(connection, deliverable, true);
                         delivered = true;
-                        break;
                     }
+
+                    // The connection queue is ordered. No need to iterate further;
+                    break;
                 }
                 catch (HttpConnectionClosedException e) {
                     /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
@@ -1032,30 +1002,33 @@ public class HttpSession extends LocalClientSession {
         }
 
         if (!delivered) {
-            if (pendingConnections > 0) {
-                StreamID streamID = getStreamID();
-                Log.warn("Unable to deliver a stanza on session " + streamID +
-                        "(it is being queued instead), although there are available connections! RID / Connection processing is out of sync!");
-            }
+            Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
             synchronized(pendingElements) {
-                pendingElements.add( stanza );
+                pendingElements.addAll( deliverable );
             }
         }
     }
 
-    private String createDeliverable(Collection<Deliverable> elements) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
-                .append(getLastAcknowledged()).append("'>");
+    /**
+     * Uses a connection to return data to the client.
+     *
+     * @param connection The connection to use return data.
+     * @param deliverable The data to be delivered.
+     * @param async should the invocation block until the data has been delivered?
+     */
+    private void deliver(@Nonnull final HttpConnection connection, @Nonnull final List<Deliverable> deliverable, final boolean async)
+        throws HttpConnectionClosedException, IOException
+    {
+        connection.deliverBody(asBodyText(deliverable), async);
+        lastAnsweredRequestID = connection.getRequestId();
 
-        setLastResponseEmpty(elements.size() == 0);
-        synchronized (elements) {
-            for (Deliverable child : elements) {
-                builder.append(child.getDeliverable());
-            }
+        // Keep track of data that has been delivered, for potential future retransmission.
+        final Delivered delivered = new Delivered(deliverable, connection.getRequestId());
+        while (sentElements.size() > maxRequests) {
+            sentElements.remove(0);
         }
-        builder.append("</body>");
-        return builder.toString();
+
+        sentElements.add(delivered);
     }
 
     private void closeSession() {
@@ -1063,23 +1036,21 @@ public class HttpSession extends LocalClientSession {
         isClosed = true;
 
         try {
-            // close connection(s) and deliver pending elements (if any)
+            // There generally should not be a scenario where there are pending connections, as well as pending elements
+            // to deliver, as when a new connection becomes available while there are pending elements, those will be
+            // delivered on that connection immediately. There's an edge-case where there are pending connections which
+            // do not have the correct, expected Request ID (+1 in the sequence). In that case, those connections are
+            // not eligible to receive data. These facts combines should rule out the need to flush pending elements to
+            // open connections in this method.
             synchronized (connectionQueue) {
                 for (HttpConnection toClose : connectionQueue) {
                     try {
                         if (!toClose.isClosed()) {
-                            if (!pendingElements.isEmpty() && toClose.getRequestId() == lastRequestID + 1) {
-                                synchronized(pendingElements) {
-                                    deliver(toClose, pendingElements);
-                                    lastRequestID = toClose.getRequestId();
-                                    pendingElements.clear();
-                                }
-                            } else {
-                                toClose.deliverBody(null, true);
-                            }
+                            toClose.deliverBody(null, true);
                         }
                     } catch (HttpConnectionClosedException e) {
-                        /* ignore ... already closed */
+                        // Probably benign.
+                        Log.debug("Closing an already closed connection.", e);
                     } catch (IOException e) {
                         // Likely caused by closing a stale session / connection.
                         Log.debug("An unexpected exception occurred while closing a session.", e);
@@ -1098,28 +1069,55 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private void failDelivery(final Collection<Packet> packets) {
+    private void failDelivery(final List<Packet> packets) {
         if (packets == null) {
             // Do nothing if someone asked to deliver nothing :)
             return;
         }
         // use a separate thread to schedule backup delivery
-        TaskEngine.getInstance().submit(new Runnable() {
-            @Override
-            public void run() {
-                for (Packet packet : packets) {
-                    try {
-                        backupDeliverer.deliver(packet);
-                    }
-                    catch (UnauthorizedException e) {
-                        Log.error("On session " + getStreamID() + " unable to deliver message to backup deliverer", e);
-                    }
+        TaskEngine.getInstance().submit(() -> {
+            for (final Packet packet : packets) {
+                try {
+                    backupDeliverer.deliver(packet);
+                }
+                catch (UnauthorizedException e) {
+                    Log.error("On session " + getStreamID() + " unable to deliver message to backup deliverer", e);
                 }
             }
         });
     }
 
-    protected String createEmptyBody(boolean terminate)
+    /**
+     * Returns the textual representation of the provided element, wrapped in a httpbind 'body' element. The intended
+     * usage of this method is to generate data that can be included in HTTP responses returned to the client.
+     *
+     * @param elements The data to be transformed (can be empty).
+     * @return The text representation (wrapped in a body element) of the the provided elements.
+     */
+    @Nonnull
+    private String asBodyText(@Nonnull final List<Deliverable> elements) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
+            .append(getLastAcknowledged()).append("'>");
+
+        setLastResponseEmpty(elements.size() == 0);
+        for (Deliverable child : elements) {
+            builder.append(child.getDeliverable());
+        }
+        builder.append("</body>");
+        return builder.toString();
+    }
+
+    /**
+     * Creates an empty BOSH 'body' element, optionally including a 'terminate' type attribute (that, in BOSH,
+     * signifies the end of a session). The element will include an 'ack' attribute, of which the value is the highest
+     * request ID (rid) the server has received where it has also received all requests with lower request ID values.
+     *
+     * @param terminate Whether to include a type attribute with value 'terminate'.
+     * @return The string representation of an empty BOSH 'body' element.
+     */
+    @Nonnull
+    protected String createEmptyBody(final boolean terminate)
     {
         final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
@@ -1127,6 +1125,14 @@ public class HttpSession extends LocalClientSession {
         return body.asXML();
     }
 
+    /**
+     * Creets a BOSH 'body' element that represents a 'session restart' event, including the stream features that are
+     * available to this session.
+     *
+     * @return The string representation of a BOSH 'body' element for a 'session restart'.
+     * @see <a href="https://xmpp.org/extensions/xep-0206.html#preconditions-sasl">XEP-0206, section 5</a>
+     */
+    @Nonnull
     private String createSessionRestartResponse()
     {
         final Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
@@ -1144,18 +1150,18 @@ public class HttpSession extends LocalClientSession {
      * A virtual server connection relates to a http session which its self can relate to many http
      * connections.
      */
-    public static class HttpVirtualConnection extends VirtualConnection {
-
-        private InetAddress address;
+    public static class HttpVirtualConnection extends VirtualConnection
+    {
+        private final InetAddress address;
         private ConnectionConfiguration configuration;
-        private ConnectionType connectionType;
+        private final ConnectionType connectionType;
 
-        public HttpVirtualConnection(InetAddress address) {
+        public HttpVirtualConnection(@Nonnull final InetAddress address) {
             this.address = address;
             this.connectionType = ConnectionType.SOCKET_C2S;
         }
 
-        public HttpVirtualConnection(InetAddress address, ConnectionType connectionType) {
+        public HttpVirtualConnection(@Nonnull final InetAddress address, @Nonnull final ConnectionType connectionType) {
             this.address = address;
             this.connectionType = connectionType;
         }
@@ -1166,17 +1172,17 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
-        public byte[] getAddress() throws UnknownHostException {
+        public byte[] getAddress() {
             return address.getAddress();
         }
 
         @Override
-        public String getHostAddress() throws UnknownHostException {
+        public String getHostAddress() {
             return address.getHostAddress();
         }
 
         @Override
-        public String getHostName() throws UnknownHostException {
+        public String getHostName() {
             return address.getHostName();
         }
 
@@ -1186,13 +1192,17 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
-        public void deliver(Packet packet) throws UnauthorizedException {
+        public void deliver(Packet packet) {
             ((HttpSession) session).deliver(packet);
         }
 
         @Override
-        public void deliverRawText(String text) {
-            ((HttpSession) session).deliver(text);
+        public void deliverRawText(@Nullable final String text) {
+            if (text == null) {
+                // Do nothing if someone asked to send nothing :)
+                return;
+            }
+            ((HttpSession) session).deliver(new Deliverable(text));
         }
 
         @Override
@@ -1210,19 +1220,27 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    static class Deliverable {
+    /**
+     * Representation of data to be delivered to a client.
+     */
+    @Immutable
+    static class Deliverable
+    {
+        @Nullable
         private final String text;
-        private final Collection<String> packets;
 
-        public Deliverable(String text) {
+        @Nullable
+        private final List<String> packets;
+
+        public Deliverable(@Nonnull final String text) {
             this.text = text;
             this.packets = null;
         }
 
-        public Deliverable(Collection<Packet> elements) {
+        public Deliverable(@Nonnull final List<Packet> elements) {
             this.text = null;
-            this.packets = new ArrayList<>();
-            for (Packet packet : elements) {
+            final List<String> stanzas = new ArrayList<>();
+            for (final Packet packet : elements) {
                 // Append packet namespace according XEP-0206 if needed
                 if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
                     // use string-based operation here to avoid cascading xmlns wonkery
@@ -1231,18 +1249,23 @@ public class HttpSession extends LocalClientSession {
                     final int slash = packetXml.indexOf( "/>" );
                     final int insertAt = ( noslash - 1 == slash ? slash : noslash );
                     packetXml.insert( insertAt, " xmlns=\"jabber:client\"");
-                    this.packets.add(packetXml.toString());
+                    stanzas.add(packetXml.toString());
                 } else {
-                    this.packets.add(packet.toXML());
+                    stanzas.add(packet.toXML());
                 }
             }
+
+            this.packets = Collections.unmodifiableList(stanzas);
         }
 
+        @Nonnull
         public String getDeliverable() {
             if (text == null) {
-                StringBuilder builder = new StringBuilder();
-                for (String packet : packets) {
-                    builder.append(packet);
+                final StringBuilder builder = new StringBuilder();
+                if (packets != null) {
+                    for (final String packet : packets) {
+                        builder.append(packet);
+                    }
                 }
                 return builder.toString();
             }
@@ -1251,14 +1274,15 @@ public class HttpSession extends LocalClientSession {
             }
         }
 
-        public Collection<Packet> getPackets() {
+        @Nullable
+        public List<Packet> getPackets() {
             // Check if the Deliverable is about Packets or raw XML
             if (packets == null) {
                 // No packets here (should be just raw XML like <stream> so return nothing
                 return null;
             }
-            List<Packet> answer = new ArrayList<>();
-            for (String packetXML : packets) {
+            final List<Packet> answer = new ArrayList<>();
+            for (final String packetXML : packets) {
                 try {
                     Packet packet = null;
                     // Parse the XML stanza
@@ -1284,15 +1308,19 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private class Delivered {
-        private long requestID;
-        private Collection<Deliverable> deliverables;
+    /**
+     * A representation of data that have previously been delivered back to the client.
+     */
+    @Immutable
+    static class Delivered
+    {
+        private final long requestID;
 
-        public Delivered(Collection<Deliverable> deliverables) {
-            this.deliverables = deliverables;
-        }
+        @Nonnull
+        private final List<Deliverable> deliverables;
 
-        public void setRequestID(long requestID) {
+        public Delivered(@Nonnull final List<Deliverable> deliverables, final long requestID) {
+            this.deliverables = Collections.unmodifiableList(deliverables);
             this.requestID = requestID;
         }
 
@@ -1300,37 +1328,17 @@ public class HttpSession extends LocalClientSession {
             return requestID;
         }
 
+        @Nonnull
         public Collection<Packet> getPackets() {
-            List<Packet> packets = new ArrayList<>();
-            synchronized (deliverables) {
-                for (Deliverable deliverable : deliverables) {
-                    if (deliverable.packets != null) {
-                        packets.addAll(deliverable.getPackets());
-                    }
+            final List<Packet> packets = new ArrayList<>();
+            for (final Deliverable deliverable : deliverables) {
+                // TODO this ignores the 'text' element in deliverable. Is that something that we need to worry about? It is generally used to transmit stream-level data, which might not be applicable here.
+                final List<Packet> toDeliver = deliverable.getPackets();
+                if (toDeliver != null) {
+                    packets.addAll(toDeliver);
                 }
             }
             return packets;
-        }
-    }
-
-    /**
-     * A runner that guarantees that the packets per a session will be sent and
-     * processed in the order in which they were received.
-     */
-    private class HttpPacketSender implements Runnable {
-        private HttpSession session;
-
-        HttpPacketSender(HttpSession session) {
-            this.session = session;
-        }
-
-        @Override
-        public void run() {
-            session.sendPendingPackets();
-        }
-
-        private void init() {
-            HttpBindManager.getInstance().getSessionManager().execute(this);
         }
     }
 
@@ -1366,7 +1374,6 @@ public class HttpSession extends LocalClientSession {
             ", lastActivity='" + getLastActivity() + '\'' +
             ", lastAcknowledged='" + getLastAcknowledged() + '\'' +
             ", inactivityTimeout='" + getInactivityTimeout() + '\'' +
-            ", openConnectionCount='" + getOpenConnectionCount() + '\'' +
             '}';
     }
 }

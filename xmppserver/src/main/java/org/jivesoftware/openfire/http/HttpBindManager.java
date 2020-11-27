@@ -52,13 +52,7 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
-import org.jivesoftware.util.CertificateEventListener;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +60,12 @@ import org.slf4j.LoggerFactory;
  * Responsible for making available BOSH (functionality to the outside world, using an embedded web server.
  */
 public final class HttpBindManager implements CertificateEventListener, PropertyEventListener {
+
+    public static final SystemProperty<Boolean> LOG_HTTPBIND_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("log.httpbind.enabled")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
 
     private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
 

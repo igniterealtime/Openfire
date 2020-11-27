@@ -322,12 +322,11 @@ public class HttpSessionManager {
 
         @Override
         public void run() {
-            boolean logHttpbindEnabled = JiveGlobals.getBooleanProperty("log.httpbind.enabled", false);
             long currentTime = System.currentTimeMillis();
             for (HttpSession session : sessionMap.values()) {
                 try {
                     long lastActive = currentTime - session.getLastActivity();
-                    if( lastActive >= 1 && logHttpbindEnabled && Log.isInfoEnabled()) {
+                    if( lastActive >= 1 && HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
                         Log.info("Session {} was last active {} ms ago: {} from IP {} " +
                                 " currently on rid {}",
                                 session.getStreamID(),

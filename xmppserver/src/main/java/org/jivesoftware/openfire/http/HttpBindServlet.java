@@ -68,8 +68,8 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     @Override
-    protected void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
         // add CORS headers for all HTTP responses (errors, etc.)
         if (boshManager.isCORSEnabled())
         {
@@ -92,8 +92,7 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         final AsyncContext context = request.startAsync();
 
@@ -119,8 +118,8 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
         final AsyncContext context = request.startAsync();
 
         // Asynchronously reads the POSTed input, then triggers #processContent.
@@ -132,8 +131,8 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    protected void processContent(AsyncContext context, String content)
-            throws IOException {
+    protected void processContent(AsyncContext context, String content) throws IOException
+    {
         final String remoteAddress = getRemoteAddress(context);
 
         final HttpBindBody body;
@@ -172,19 +171,18 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    protected void createNewSession(AsyncContext context, HttpBindBody body)
-            throws IOException
+    protected void createNewSession(AsyncContext context, HttpBindBody body) throws IOException
     {
-        final long rid = body.getRid();
-
         try {
-            final HttpConnection connection = new HttpConnection(rid, context);
+            final HttpConnection connection = new HttpConnection(body, context);
 
             SessionEventDispatcher.dispatchEvent( null, SessionEventDispatcher.EventType.pre_session_created, connection, context );
 
-            connection.setSession(sessionManager.createSession(body, connection));
-            if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-                Log.info("HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + body.asXML());
+            final HttpSession session = sessionManager.createSession(body, connection);
+            connection.setSession(session);
+
+            if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
+                Log.info("HTTP RECV(" + session.getStreamID().getID() + "): " + body.asXML());
             }
 
             SessionEventDispatcher.dispatchEvent( connection.getSession(), SessionEventDispatcher.EventType.post_session_created, connection, context );
@@ -199,7 +197,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         final String sid = body.getSid();
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+        if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
             Log.info("HTTP RECV(" + sid + "): " + body.asXML());
         }
 
@@ -246,7 +244,7 @@ public class HttpBindServlet extends HttpServlet {
             content = "_BOSH_(\"" + StringEscapeUtils.escapeEcmaScript(content) + "\")";
         }
         
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+        if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
             Log.info("HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
@@ -267,7 +265,7 @@ public class HttpBindServlet extends HttpServlet {
     private void sendError(HttpSession session, AsyncContext context, BoshBindingError bindingError)
             throws IOException
     {
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+        if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
             Log.info("HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
         }
         try {
@@ -345,7 +343,7 @@ public class HttpBindServlet extends HttpServlet {
 
             final ServletInputStream inputStream = context.getRequest().getInputStream();
 
-            byte b[] = new byte[1024];
+            byte[] b = new byte[1024];
             int length;
             while (inputStream.isReady() && (length = inputStream.read(b)) != -1) {
                 outStream.write(b, 0, length);

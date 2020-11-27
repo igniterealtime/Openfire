@@ -1,0 +1,299 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MAVEN_VERSION="3.6.3"
+FORCE_CUSTOM_MAVEN=false
+CURL_ARGS="--location --silent"
+DEBUG=false
+LOCAL_RUN=false
+
+DOMAIN='example.org'
+HOST='localhost'
+BOSHPORT=7070
+TCPPORT=5222
+
+usage()
+{
+	echo "Usage: $0 [-d] [-l] [-i IPADDRESS] [-h HOST] [-s DOMAIN]"
+	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
+	echo "    -l: Launch a local Openfire. (default: off)"
+	echo "    -m: Download and use a known-good Maven, rather than use the system in-built (default: off)"
+	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
+	echo "    -h: The hostname for the Openfire under test (default: localhost)"
+	echo "    -s: The XMPP domain name for the Openfire under test (default: example.org)"
+	exit 2
+}
+
+while getopts dlhm:i:s: OPTION "$@"; do
+	case $OPTION in
+		d)
+			DEBUG=true
+			set -x
+			;;
+		l)
+			LOCAL_RUN=true
+			;;
+		m)
+			FORCE_CUSTOM_MAVEN=true
+			;;
+        h)
+			HOST="${OPTARG}"
+			;;
+		i)
+			IPADDRESS="${OPTARG}"
+			;;
+		s)
+			DOMAIN="${OPTARG}"
+			;;
+		\? ) usage;;
+        :  ) usage;;
+        *  ) usage;;
+	esac
+done
+
+if [[ $LOCAL_RUN == true ]] && [[ $DOMAIN != "example.org" ]]; then
+	echo "Domain is fixed if launching a local instance. If you have an already-running instance to test against, omit the -l flag (and provide -h 127.0.0.1 if necessary)."
+	exit 1
+fi
+
+function setBaseDirectory {
+	# Pretty fancy method to get reliable the absolute path of a shell
+	# script, *even if it is sourced*. Credits go to GreenFox on
+	# stackoverflow: http://stackoverflow.com/a/12197518/194894
+	pushd . > /dev/null
+	SCRIPTDIR="${BASH_SOURCE[0]}";
+	while [ -h "${SCRIPTDIR}" ]; do
+		cd "$(dirname "${SCRIPTDIR}")"
+		SCRIPTDIR="$(readlink "$(basename "${SCRIPTDIR}")")";
+	done
+	cd "$(dirname "${SCRIPTDIR}")" > /dev/null
+	SCRIPTDIR="$(pwd)";
+	popd  > /dev/null
+	BASEDIR="${SCRIPTDIR}"
+	cd "${BASEDIR}"
+}
+
+function createTempDirectory {
+	OFTEMPDIR=$(mktemp -d)
+}
+
+function cleanup {
+	if [[ $DEBUG == false && -n "${OFTEMPDIR-}" ]]; then
+		echo "Removing temp directories"
+		rm -rf "${OFTEMPDIR}"
+	fi
+	if [[ $LOCAL_RUN == true ]]; then
+		echo "Stopping Openfire"
+		pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
+	fi
+}
+
+function compileTests {
+    createTempDirectory
+    TESTBASEDIR="${OFTEMPDIR}/connectivityTests"
+    TESTSRCDIR="${TESTBASEDIR}/src/test/java"
+    TESTPOM="${TESTBASEDIR}/pom.xml"
+    TESTCODE="${TESTSRCDIR}/ConnectivityTest.java"
+    mkdir -p "${TESTSRCDIR}"
+    cat >"${TESTPOM}" <<EOL
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.igniterealtime.tests</groupId>
+    <artifactId>smack-bosh-example</artifactId>
+    <version>1.0</version>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-java7</artifactId>
+            <version>4.3.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-tcp</artifactId>
+            <version>4.3.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.igniterealtime.smack</groupId>
+            <artifactId>smack-bosh</artifactId>
+            <version>4.3.4</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
+EOL
+    cat >"${TESTCODE}" <<EOL
+import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.bosh.BOSHConfiguration;
+import org.jivesoftware.smack.bosh.XMPPBOSHConnection;
+import org.jivesoftware.smack.tcp.XMPPTCPConnection;
+import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+import org.junit.Assert;
+import org.junit.Test;
+
+public class ConnectivityTest
+{
+    /**
+     * Verifies that a few connections can be established and used to authenticate over BOSH.
+     */
+    @Test
+    public void testBoshConnections() throws Exception
+    {
+        // Setup test fixture.
+        final BOSHConfiguration config = BOSHConfiguration.builder()
+                .setFile("/http-bind/")
+                .setXmppDomain("$DOMAIN")
+                .setHost("$HOST")
+                .setPort($BOSHPORT)
+                .setUseHttps(false)
+                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                .build();
+        final int iterations = 25;
+
+        // Execute system under test.
+        int result = 0;
+        for (int i=0; i<iterations; i++) {
+            final XMPPBOSHConnection con = new XMPPBOSHConnection(config);
+            con.connect();
+            try {
+                con.login("john", "secret");
+                Thread.sleep(200);
+                if (con.isAuthenticated()) {
+                    result++;
+                }
+            } catch (Throwable e) {
+                // This will prevent the result from being incremented, which will cause the test to fail.
+                e.printStackTrace();
+            } finally {
+                con.disconnect();
+            }
+        }
+
+        // Verify result.
+        Assert.assertEquals("Expected all BOSH connection attempts to result in an authenticated session, but not all did.", iterations, result);
+    }
+
+    /**
+     * Verifies that a few connections can be established and used to authenticate over TCP.
+     */
+    @Test
+    public void testTCPConnections() throws Exception
+    {
+        // Setup test fixture.
+        final XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                .setXmppDomain("$DOMAIN")
+                .setHost("$HOST")
+                .setPort($TCPPORT)
+                .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                .build();
+        final int iterations = 25;
+
+        // Execute system under test.
+        int result = 0;
+        for (int i=0; i<iterations; i++) {
+            final XMPPTCPConnection con = new XMPPTCPConnection(config);
+            con.connect();
+            try {
+                con.login("john", "secret");
+                Thread.sleep(200);
+                if (con.isAuthenticated()) {
+                    result++;
+                }
+            } catch (Throwable e) {
+                // This will prevent the result from being incremented, which will cause the test to fail.
+                e.printStackTrace();
+            } finally {
+                con.disconnect();
+            }
+        }
+
+        // Verify result.
+        Assert.assertEquals("Expected all TCP connection attempts to result in an authenticated session, but not all did.", iterations, result);
+    }
+}
+EOL
+}
+
+function setUpMavenEnvironment {
+
+	if command -v mvn &> /dev/null; then
+		MAVEN_IN_PATH=true
+	else
+		MAVEN_IN_PATH=false
+	fi
+
+	if [[ $MAVEN_IN_PATH == false ]] || $FORCE_CUSTOM_MAVEN; then
+		createTempDirectory
+		MAVENDIR="${OFTEMPDIR}/maven"
+		mkdir "${MAVENDIR}"
+		pushd "${MAVENDIR}"
+		declare -r MAVEN_ZIP="apache-maven-${MAVEN_VERSION}-bin.zip"
+		curl ${CURL_ARGS} --output ${MAVEN_ZIP} "https://downloads.apache.org/maven/maven-3/3.6.3/binaries/${MAVEN_ZIP}"
+		unzip "${MAVEN_ZIP}"
+		MAVEN="${MAVENDIR}/apache-maven-${MAVEN_VERSION}/bin/mvn"
+		popd
+	else
+		MAVEN="mvn"
+	fi
+}
+
+function setHostsFile {
+	if [[ -n "${IPADDRESS-}" ]]; then
+		echo "Setting hosts file for local running. This may prompt for sudo."
+		sudo /bin/sh -c "echo \"$IPADDRESS $HOST\" >> /etc/hosts"
+	fi
+}
+
+function launchOpenfire {
+	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
+
+	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
+		$MAVEN verify -P ci
+	fi
+
+	rm -f distribution/target/distribution-base/conf/openfire.xml
+	cp distribution/target/distribution-base/conf/openfire-demoboot.xml \
+		distribution/target/distribution-base/conf/openfire.xml
+
+	echo "Starting Openfire…"
+	"${OPENFIRE_SHELL_SCRIPT}" &
+
+	# Wait 120 seconds for Openfire to open up the web interface and
+	# assume Openfire is fully operational once that happens (not sure if
+	# this assumption is correct).
+	echo "Waiting for Openfire…"
+	timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
+}
+
+function runTests {
+	echo "Starting Integration Tests…"
+    pushd "${TESTBASEDIR}"
+    $MAVEN clean test
+    popd
+}
+
+setBaseDirectory
+trap cleanup EXIT
+setUpMavenEnvironment
+compileTests
+if [[ -n "${IPADDRESS-}" ]]; then
+	setHostsFile
+fi
+if [[ $LOCAL_RUN == true ]]; then
+	launchOpenfire
+fi
+runTests

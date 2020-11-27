@@ -46,6 +46,7 @@ jobs:
           path: |
             runIntegrationTests
             runAioxmppIntegrationTests
+            runConnectivityIntegrationTests
             test.gradle
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.java == 1.8 }}
@@ -90,6 +91,33 @@ jobs:
           name: aioxmpp test output
           path: aioxmpp/output
 
+  connectivity:
+
+    name: Execute Connectivity CI tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: distribution-java1.8
+          path: distribution/target/distribution-base
+      - name: Download test files from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: test-files
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: Fix file permissions
+        run: |
+          chmod +x distribution/target/distribution-base/bin/openfire.sh
+          chmod +x ./runConnectivityIntegrationTests
+      - name: Run connectivity tests
+        run: ./runConnectivityIntegrationTests -d -l -i 127.0.0.1
+
   smack:
 
     name: Execute Smack-based CI tests
@@ -121,7 +149,7 @@ jobs:
 
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, smack]
+    needs: [aioxmpp, connectivity, smack]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.ref == 'refs/heads/master' && github.event_name == 'push'}}
 
     steps:

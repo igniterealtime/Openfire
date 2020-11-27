@@ -162,7 +162,7 @@ public class ConnectivityTest
                 .setUseHttps(false)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .build();
-        final int iterations = 25;
+        final int iterations = 50;
 
         // Execute system under test.
         int result = 0;
@@ -171,7 +171,6 @@ public class ConnectivityTest
             con.connect();
             try {
                 con.login("john", "secret");
-                Thread.sleep(200);
                 if (con.isAuthenticated()) {
                     result++;
                 }
@@ -200,7 +199,7 @@ public class ConnectivityTest
                 .setPort($TCPPORT)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
                 .build();
-        final int iterations = 25;
+        final int iterations = 50;
 
         // Execute system under test.
         int result = 0;
@@ -209,7 +208,6 @@ public class ConnectivityTest
             con.connect();
             try {
                 con.login("john", "secret");
-                Thread.sleep(200);
                 if (con.isAuthenticated()) {
                     result++;
                 }

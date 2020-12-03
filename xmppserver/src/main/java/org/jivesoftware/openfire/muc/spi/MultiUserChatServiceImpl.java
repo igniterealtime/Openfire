@@ -1447,8 +1447,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return An Archiver instance, never null.
      */
     @Override
-    public Archiver getArchiver() {
-        Archiver result = this.archiver;
+    public Archiver<ConversationLogEntry> getArchiver() {
+        Archiver<ConversationLogEntry> result = this.archiver;
         if (result == null) {
             synchronized (this) {
                 result = this.archiver;

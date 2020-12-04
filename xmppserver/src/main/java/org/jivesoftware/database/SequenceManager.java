@@ -196,7 +196,7 @@ public class SequenceManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        boolean abortTransaction = false;
+        boolean abortTransaction = true;
 
         try {
             con = DbConnectionManager.getTransactionConnection();
@@ -230,6 +230,7 @@ public class SequenceManager {
             if (pstmt.executeUpdate() == 1) {
                 final Data result = new Data(currentID, newID);
                 sequenceBlocks.put(type, result);
+                abortTransaction = false;
                 return result;
             } else {
                 throw new IllegalStateException("Failed at attempt to obtain an ID, aborting...");
@@ -237,7 +238,6 @@ public class SequenceManager {
         }
         catch (SQLException e) {
             Log.error("An exception occurred while trying to obtain new sequence values from the database for type {}", type, e);
-            abortTransaction = true;
             throw new IllegalStateException("Failed at attempt to obtain an ID, aborting...", e);
         }
         finally {

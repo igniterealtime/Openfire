@@ -39,6 +39,15 @@ import java.util.stream.Collectors;
  * This implementation acts as a consumer (in context of the producer-consumer design pattern), where the queue that
  * is used to relay work from both processes is passed as an argument to the constructor of this class.
  *
+ * This mechanism should be used with care in a clustered setup: although the individual Archiver instances will
+ * guarantee that the database insertion order matches the order in which elements are provided to the instance (using
+ * the {@link #archive(Object)} method), this is not the case in a clustered environment. As each cluster node will
+ * manage its own batched queue of data, the insertion order of the elements in persistent storage might no longer
+ * reflect the order in which the data was made available somewhere in the cluster. If data order is important,
+ * the data to be archived should have a value that can be used to order on, which must already be present when the
+ * object is provided to the {@link #archive(Object)} method (as opposed to delaying setting this value to when the data
+ * is being persisted in the backend storage).
+ *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public abstract class Archiver<E> implements Runnable

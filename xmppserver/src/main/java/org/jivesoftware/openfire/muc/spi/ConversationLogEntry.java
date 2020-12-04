@@ -18,7 +18,9 @@ package org.jivesoftware.openfire.muc.spi;
 
 import java.util.Date;
 
+import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.util.JiveConstants;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
 
@@ -46,6 +48,8 @@ class ConversationLogEntry {
     
     private final long roomID;
 
+    private final long messageID;
+
     /**
      * Creates a new ConversationLogEntry that registers that a given message was sent to a given
      * room on a given date.
@@ -63,6 +67,14 @@ class ConversationLogEntry {
         this.sender = sender;
         this.roomID = room.getID();
         this.nickname = message.getFrom().getResource();
+
+        // OF-2157: It is important to assign a message ID, which is used for ordering messages in a conversation, soon
+        // after the message arrived, as opposed to just before the message gets written to the database. In the latter
+        // scenario, the message ID values might no longer reflect the order of the messages in a conversation, as
+        // database writes are batched up together for performance reasons. Using these batches won't affect the
+        // database-insertion order (as compared to the order of messages in the conversation) on a single Openfire
+        // server, but when running in a cluster, these batches do have a good chance to mess up the order of things.
+        this.messageID = SequenceManager.nextID(JiveConstants.MUC_MESSAGE_ID);
     }
 
     /**
@@ -125,4 +137,15 @@ class ConversationLogEntry {
      * @return string representation of the stanza.
      */
     public String getStanza() { return stanza; }
+
+    /**
+     * Returns the unique ID of the message in the conversation.
+     *
+     * This ID is used to order messages in a conversation.
+     *
+     * @return the unique ID of the message in the conversation
+     */
+    public long getMessageID() {
+        return messageID;
+    }
 }

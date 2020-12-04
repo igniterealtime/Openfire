@@ -1181,7 +1181,7 @@ public class MUCPersistenceManager {
 
             for(ConversationLogEntry entry : batch) {
                 pstmt.setLong(1, entry.getRoomID());
-                pstmt.setLong(2, SequenceManager.nextID(JiveConstants.MUC_MESSAGE_ID));
+                pstmt.setLong(2, entry.getMessageID());
                 pstmt.setString(3, entry.getSender().toString());
                 pstmt.setString(4, entry.getNickname());
                 pstmt.setString(5, StringUtils.dateToMillis(entry.getDate()));

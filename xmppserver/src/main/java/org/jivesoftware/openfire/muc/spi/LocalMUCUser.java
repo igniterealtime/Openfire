@@ -248,7 +248,7 @@ public class LocalMUCUser implements MUCUser
 
         lastPacketTime = System.currentTimeMillis();
 
-        StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo());
+        StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 
         // Determine if this user has a pre-existing role in the addressed room.
         final MUCRole preExistingRole = roles.get(roomName);

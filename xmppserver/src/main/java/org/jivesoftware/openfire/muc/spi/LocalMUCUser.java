@@ -224,9 +224,7 @@ public class LocalMUCUser implements MUCUser
      *   <li>Otherwise, rewrite the sender address and send to the room.</li>
      * </ul>
      *
-     * @param packet          The stanza to route
-     * @param roomName        The name of the room that the stanza was addressed to.
-     * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
+     * @param packet The stanza to route
      */
     @Override
     public void process( Packet packet ) throws UnauthorizedException, PacketException

@@ -373,10 +373,10 @@ public class LocalMUCUser implements MUCUser
             return;
         }
 
-        // An occupant is trying to send a private, send public message, invite someone to the room or reject an invitation.
+        // An occupant is trying to send a private message, send public message, invite someone to the room or reject an invitation.
         final Message.Type type = packet.getType();
-        String nickname = packet.getTo().getResource();
-        if ( nickname == null || nickname.trim().length() == 0 )
+            String nickname = packet.getTo().getResource();
+            if ( nickname == null || nickname.trim().length() == 0 )
         {
             nickname = null;
         }
@@ -388,7 +388,7 @@ public class LocalMUCUser implements MUCUser
             return;
         }
 
-        // Private message (not addressed to a specific occupant)
+        // Private message (addressed to a specific occupant)
         if ( nickname != null && (Message.Type.chat == type || Message.Type.normal == type) )
         {
             processPrivateMessage(packet, roomName, preExistingRole);

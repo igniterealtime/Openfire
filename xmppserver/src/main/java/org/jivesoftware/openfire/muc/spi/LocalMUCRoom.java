@@ -1418,6 +1418,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         if (occupants == null || occupants.size() == 0) {
             throw new NotFoundException();
         }
+        if (canAnyoneDiscoverJID && packet instanceof Message) {
+            addRealJidToMessage((Message)packet, senderRole);
+        }
         for (MUCRole occupant : occupants) {
             packet.setFrom(senderRole.getRoleAddress());
             occupant.send(packet);

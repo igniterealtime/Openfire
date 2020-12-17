@@ -229,6 +229,7 @@ public class IQMUCvCardHandler extends IQHandler
 
         for ( final MUCRole occupant : room.getOccupants() )
         {
+            // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
             occupant.send(notification);
         }
     }
@@ -245,6 +246,7 @@ public class IQMUCvCardHandler extends IQHandler
 
         for ( final MUCRole occupant : room.getOccupants() )
         {
+            // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
             occupant.send(notification);
         }
     }

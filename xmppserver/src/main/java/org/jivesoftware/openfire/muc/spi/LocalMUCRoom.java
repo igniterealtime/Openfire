@@ -698,6 +698,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             final Presence presenceItemNotFound = new Presence(Presence.Type.error);
             presenceItemNotFound.setError(PacketError.Condition.item_not_found);
             presenceItemNotFound.setFrom(role.getRoleAddress());
+
+            // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
             joinRole.send(presenceItemNotFound);
         }
 
@@ -722,7 +724,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             Log.trace( "Sending default room history to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
             final Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {
-                joinRole.send(history.next());
+                // OF-2163: Prevent modifying the original history stanza (that can be retrieved by others later) by making a defensive copy.
+                //          This prevents the stanzas in the room history to have a 'to' address for the last user that it was sent to.
+                final Message message = history.next().createCopy();
+                joinRole.send(message);
             }
         } else {
             Log.trace( "Sending user-requested room history to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
@@ -736,7 +741,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     private void sendRoomSubjectAfterJoin( @Nonnull final LocalMUCUser user, @Nonnull MUCRole joinRole )
     {
         Log.trace( "Sending room subject to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
-        Message roomSubject = roomHistory.getChangedSubject();
+
+        // OF-2163: Prevent modifying the original subject stanza (that can be retrieved by others later) by making a defensive copy.
+        //          This prevents the stanza kept in memory to have the 'to' address for the last user that it was sent to.
+        Message roomSubject = roomHistory.getChangedSubject().createCopy();
 
         // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
         if (roomSubject == null) {
@@ -1034,14 +1042,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 }
             }
 
-            final Presence occupantPresence;
+            final Presence occupantPresence = occupant.getPresence().createCopy(); // defensive copy to prevent modifying the original.
             if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
                 // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
-                occupantPresence = occupant.getPresence().createCopy(); // defensive copy to prevent modifying the original.
                 final Element frag = occupantPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 frag.element("item").addAttribute("jid", null);
-            } else {
-                occupantPresence = occupant.getPresence();
             }
             joinRole.send(occupantPresence);
         }
@@ -1086,8 +1091,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         // Send the presence of this new occupant to existing occupants
         Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), leaveRole.getChatRoom().getJID() );
         try {
-            Presence originalPresence = leaveRole.getPresence();
-            Presence presence = originalPresence.createCopy();
+            final Presence originalPresence = leaveRole.getPresence();
+            final Presence presence = originalPresence.createCopy(); // Defensive copy to not modify the original.
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
             // Change (or add) presence information about roles and affiliations
@@ -1326,13 +1331,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         for (MUCRole removedRole : removedRoles) {
             try {
                 // Send a presence stanza of type "unavailable" to the occupant
-                Presence presence = createPresence(Presence.Type.unavailable);
+                final Presence presence = createPresence(Presence.Type.unavailable);
                 presence.setFrom(removedRole.getRoleAddress());
 
                 // A fragment containing the x-extension for room destruction.
-                Element fragment = presence.addChildElement("x",
-                        "http://jabber.org/protocol/muc#user");
-                Element item = fragment.addElement("item");
+                final Element fragment = presence.addChildElement("x","http://jabber.org/protocol/muc#user");
+                final Element item = fragment.addElement("item");
                 item.addAttribute("affiliation", "none");
                 item.addAttribute("role", "none");
                 if (alternateJID != null) {
@@ -1345,6 +1349,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                     }
                     destroy.addElement("reason").setText(reason);
                 }
+
+                // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
                 removedRole.send(presence);
             }
             catch (Exception e) {
@@ -1418,16 +1424,24 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         if (occupants == null || occupants.size() == 0) {
             throw new NotFoundException();
         }
-        if (canAnyoneDiscoverJID && packet instanceof Message) {
-            addRealJidToMessage((Message)packet, senderRole);
+
+        // OF-2163: Prevent modifying the original stanza (that can be used by unrelated code, after this method returns) by making a defensive copy.
+        final Packet stanza = packet.createCopy();
+        if (canAnyoneDiscoverJID && stanza instanceof Message) {
+            addRealJidToMessage((Message)stanza, senderRole);
         }
-        for (MUCRole occupant : occupants) {
-            packet.setFrom(senderRole.getRoleAddress());
-            occupant.send(packet);
-            if(packet instanceof Message) {
-               Message message = (Message) packet;
-                 MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(),
-                         message);
+        stanza.setFrom(senderRole.getRoleAddress());
+
+        // Sending the stanza will modify it. Make sure that the event listeners that are triggered after sending
+        // the stanza don't get the 'real' address from the recipient.
+        final Packet immutable = stanza.createCopy();
+
+        // Forward it to each occupant.
+        for (final MUCRole occupant : occupants) {
+            occupant.send(stanza); // Use the stanza copy to send data. The 'to' address of this object will be changed by sending it.
+            if (stanza instanceof Message) {
+                // Use an unmodified copy of the stanza (with the original 'to' address) when invoking event listeners (OF-2163)
+                MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(), (Message) immutable);
             }
         }
     }
@@ -1491,28 +1505,31 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
         }
 
+        // Create a defensive copy, to prevent modifications to leak back to the invoker.
+        final Presence stanza = presence.createCopy();
+
         // Some clients send a presence update to the room, rather than to their own nickname.
-        if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && presence.getTo() != null && presence.getTo().getResource() == null && sender.getRoleAddress() != null) {
-            presence.setTo( sender.getRoleAddress() );
+        if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && stanza.getTo() != null && stanza.getTo().getResource() == null && sender.getRoleAddress() != null) {
+            stanza.setTo( sender.getRoleAddress() );
         }
 
-        if (!shouldBroadcastPresence(presence)) {
+        if (!shouldBroadcastPresence(stanza)) {
             // Just send the presence to the sender of the presence
-            sender.send(presence);
+            sender.send(stanza);
             return CompletableFuture.completedFuture(null);
         }
 
         // If FMUC is active, propagate the presence through FMUC first. Note that when a master-slave mode is active,
         // we need to wait for an echo back, before the message can be broadcasted locally. The 'propagate' method will
         // return a CompletableFuture object that is completed as soon as processing can continue.
-        return fmucHandler.propagate(presence, sender)
+        return fmucHandler.propagate(stanza, sender)
             .thenRunAsync(() -> {
                               // Broadcast presence to occupants hosted by other cluster nodes
-                              BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
+                              BroadcastPresenceRequest request = new BroadcastPresenceRequest(this, sender, stanza, isJoinPresence);
                               CacheFactory.doClusterTask(request);
 
                               // Broadcast presence to occupants connected to this JVM
-                              request = new BroadcastPresenceRequest(this, sender, presence, isJoinPresence);
+                              request = new BroadcastPresenceRequest(this, sender, stanza, isJoinPresence);
                               request.setOriginator(true);
                               request.run();
                           }
@@ -1687,14 +1704,18 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         // Add message to the room history
         roomHistory.addMessage(message);
         // Send message to occupants connected to this JVM
-        for (MUCRole occupant : occupantsByFullJID.values()) {
+
+        // Create a defensive copy of the message that will be broadcast, as the broadcast will modify it ('to' addresses
+        // will be changed), and it's undesirable to see these modifications in post-processing (OF-2163).
+        final Message mutatingCopy = message.createCopy();
+        for (final MUCRole occupant : occupantsByFullJID.values()) {
             try
             {
                 // Do not send broadcast messages to deaf occupants or occupants hosted in
                 // other cluster nodes or other FMUC nodes.
                 if ( occupant.isLocal() && !occupant.isVoiceOnly() && !occupant.isRemoteFmuc() )
                 {
-                    occupant.send( message );
+                    occupant.send( mutatingCopy );
                 }
             }
             catch ( Exception e )
@@ -2837,8 +2858,11 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                         actor.addAttribute("nick", nick);
                     }
                 }
-                // Send the unavailable presence to the banned user
-                kickedRole.send(kickPresence);
+
+                // Send a defensive copy (to not leak a change to the 'to' address - this is possibly overprotective here,
+                // but we're erring on the side of caution) of the unavailable presence to the banned user.
+                kickedRole.send(kickPresence.createCopy());
+
                 // Remove the occupant from the room's occupants lists
                 OccupantLeftEvent event = new OccupantLeftEvent(this, kickedRole);
                 event.setOriginator(true);

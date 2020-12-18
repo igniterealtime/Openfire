@@ -20,6 +20,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
@@ -575,6 +576,76 @@ public class LocalMUCUser implements MUCUser
     }
 
     /**
+     * This method will parse a packet and checks if it is a MEMBER! list retrieval packet or not. 
+     * @param packet IQ
+     * @return true, if it is or false if not
+     */
+    private boolean isListRetrieval(IQ packet)
+    {
+        Element query = packet.getChildElement();
+        if (query!=null&&query.getName().equalsIgnoreCase("query"))
+        {
+            if (query.getNamespace()!=null&&query.getNamespace().getURI().equals("http://jabber.org/protocol/muc#admin"))
+            {
+                Element item = query.element("item");
+                if (item!=null&&item.attributeValue("affiliation")!=null&&
+                    item.attributeValue("affiliation").equalsIgnoreCase("member"))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if packet sender (non-occupant) is allowed to retrieve a memberlist.
+     * Sender must have a member privileges at minimum to be allowed. 
+     * @param packet IQ
+     * @return true, if sender is allowed to retrieve or false if not
+     */
+    private boolean hasPermissionToRetrieveList(IQ packet)
+    {
+        JID from = packet.getFrom();
+        MUCRoom room = server.hasChatRoom(packet.getTo().getNode())?server.getChatRoom(packet.getTo().getNode()):null;
+        return  room!=null&&(room.getOwners().contains(from.asBareJID())||
+                room.getAdmins().contains(from.asBareJID())||
+                room.getMembers().contains(from.asBareJID()))||
+                server.getSysadmins().contains(from.asBareJID())||
+                XMPPServer.getInstance().getAdmins().contains(from.asBareJID());
+    }
+    
+    private void processMemberListQuery(IQ packet)
+    {
+        //OF-370: take the role of mucroom, because an occupant which is not in the room does not have a preexisting role
+        MUCRole roleToUseHere = server.getChatRoom(packet.getTo().getNode()).getRole();
+        try
+        {
+            roleToUseHere.getChatRoom().getIQAdminHandler().handleIQ(packet, roleToUseHere);
+        }
+        catch ( ForbiddenException e )
+        {
+            Log.debug("Unable to process IQ stanza: sender don't have authorization to perform the request.", e);
+            sendErrorPacket(packet, PacketError.Condition.forbidden, "You don't have authorization to perform this request.");
+        }
+        catch ( ConflictException e )
+        {
+            Log.debug("Unable to process IQ stanza: There was a conflict while handle the memberlist request.", e);
+            sendErrorPacket(packet, PacketError.Condition.conflict, "There was a conflict while handle the memberlist request.");
+        }
+        catch ( NotAllowedException e )
+        {
+            Log.debug("Unable to process IQ stanza: The user is not allowed to retrieve memberlist.", e);
+            sendErrorPacket(packet, PacketError.Condition.not_allowed, "The user is not allowed to retrieve memberlist.");
+        }
+        catch ( Exception e )
+        {
+            Log.error("An unexpected exception occurred while processing IQ stanza: {}", packet.toXML(), e);
+            sendErrorPacket(packet, PacketError.Condition.internal_server_error, "An unexpected exception occurred while processing your request.");
+        }
+    }
+
+    /**
      * Processes an IQ stanza.
      *
      * @param packet          The stanza to route
@@ -589,12 +660,22 @@ public class LocalMUCUser implements MUCUser
         // Packets to a specific node/group/room
         if ( preExistingRole == null )
         {
-            Log.debug("Ignoring stanza received from a non-occupant of '{}': {}", roomName, packet.toXML());
+            Log.debug("Stanza received from a non-occupant of '{}'", roomName);
             if ( packet.isRequest() )
             {
-                // If a non-occupant sends a disco to an address of the form <room@service/nick>, a MUC service MUST
-                // return a <bad-request/> error. http://xmpp.org/extensions/xep-0045.html#disco-occupant
-                sendErrorPacket(packet, PacketError.Condition.bad_request, "You are not an occupant of this room.");
+                //OF-370: check for memberlist retrieval and permission
+                if (isListRetrieval(packet)&&hasPermissionToRetrieveList(packet))
+                {
+                    Log.debug("Listretrieval received from a non-occupant (member or user with more privilegs) of '{}'", roomName);
+                    processMemberListQuery(packet);
+                }
+                else
+                {
+                    Log.debug("Ignoring stanza received from a non-occupant of '{}': {}", roomName, packet.toXML());
+                    // If a non-occupant sends a disco to an address of the form <room@service/nick>, a MUC service MUST
+                    // return a <bad-request/> error. http://xmpp.org/extensions/xep-0045.html#disco-occupant
+                    sendErrorPacket(packet, PacketError.Condition.bad_request, "You are not an occupant of this room.");
+                }
             }
             return;
         }

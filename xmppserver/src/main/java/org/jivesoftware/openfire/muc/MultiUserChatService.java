@@ -410,7 +410,7 @@ public interface MultiUserChatService extends Component {
     long getTotalChatTime();
 
     /**
-     * Retuns the number of existing rooms in the server (i.e. persistent or not,
+     * Returns the number of existing rooms in the server (i.e. persistent or not,
      * in memory or not).
      *
      * @return the number of existing rooms in the server.

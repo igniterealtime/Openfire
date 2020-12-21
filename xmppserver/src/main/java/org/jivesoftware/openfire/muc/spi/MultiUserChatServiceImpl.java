@@ -806,7 +806,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         boolean loaded = false;
         LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
-            // Check if the room exists in the databclase and was not present in memory
+            // Check if the room exists in the database and was not present in memory
             synchronized (roomBaseMutex.intern(roomName)) {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {

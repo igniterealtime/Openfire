@@ -998,29 +998,30 @@ public interface MUCRoom extends Externalizable, Result {
     void setPublicRoom( boolean publicRoom );
 
     /**
-     * Returns the list of roles of which presence will be broadcasted to the rest of the occupants.
+     * Returns the list of roles of which presence will be broadcast to the rest of the occupants.
      * This feature is useful for implementing "invisible" occupants.
      * 
-     * @return the list of roles of which presence will be broadcasted to the rest of the occupants.
+     * @return the list of roles of which presence will be broadcast to the rest of the occupants.
      */
-    List<String> getRolesToBroadcastPresence();
+    @Nonnull
+    List<MUCRole.Role> getRolesToBroadcastPresence();
 
     /**
-     * Sets the list of roles of which presence will be broadcasted to the rest of the occupants.
+     * Sets the list of roles of which presence will be broadcast to the rest of the occupants.
      * This feature is useful for implementing "invisible" occupants.
      * 
-     * @param rolesToBroadcastPresence the list of roles of which presence will be broadcasted to 
+     * @param rolesToBroadcastPresence the list of roles of which presence will be broadcast to
      * the rest of the occupants.
      */
-    void setRolesToBroadcastPresence( List<String> rolesToBroadcastPresence );
+    void setRolesToBroadcastPresence(@Nonnull final List<MUCRole.Role> rolesToBroadcastPresence );
 
     /**
-     * Returns true if the presences of the requested role will be broadcasted.
+     * Returns true if the presences of the requested role will be broadcast.
      * 
-     * @param roleToBroadcast the role to check if its presences will be broadcasted.
-     * @return true if the presences of the requested role will be broadcasted.
+     * @param roleToBroadcast the role to check if its presences will be broadcast.
+     * @return true if the presences of the requested role will be broadcast.
      */
-    boolean canBroadcastPresence( String roleToBroadcast );
+    boolean canBroadcastPresence( @Nonnull final MUCRole.Role roleToBroadcast );
 
     /**
      * Locks the room so that users cannot join the room. Only the owner of the room can lock/unlock

@@ -218,16 +218,16 @@ public class MUCPersistenceManager {
             room.setCanAnyoneDiscoverJID(rs.getInt("canDiscoverJID") == 1);
             room.setLogEnabled(rs.getInt("logEnabled") == 1);
             room.setSubject(rs.getString("subject"));
-            List<String> rolesToBroadcast = new ArrayList<>();
+            List<MUCRole.Role> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt("rolesToBroadcast")), 3);
             if (roles.charAt(0) == '1') {
-                rolesToBroadcast.add("moderator");
+                rolesToBroadcast.add(MUCRole.Role.moderator);
             }
             if (roles.charAt(1) == '1') {
-                rolesToBroadcast.add("participant");
+                rolesToBroadcast.add(MUCRole.Role.participant);
             }
             if (roles.charAt(2) == '1') {
-                rolesToBroadcast.add("visitor");
+                rolesToBroadcast.add(MUCRole.Role.visitor);
             }
             room.setRolesToBroadcastPresence(rolesToBroadcast);
             room.setLoginRestrictedToNickname(rs.getInt("useReservedNick") == 1);
@@ -618,16 +618,16 @@ public class MUCPersistenceManager {
                     room.setCanAnyoneDiscoverJID(resultSet.getInt("canDiscoverJID") == 1);
                     room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
                     room.setSubject(resultSet.getString("subject"));
-                    List<String> rolesToBroadcast = new ArrayList<>();
+                    List<MUCRole.Role> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt("rolesToBroadcast")), 3);
                     if (roles.charAt(0) == '1') {
-                        rolesToBroadcast.add("moderator");
+                        rolesToBroadcast.add(MUCRole.Role.moderator);
                     }
                     if (roles.charAt(1) == '1') {
-                        rolesToBroadcast.add("participant");
+                        rolesToBroadcast.add(MUCRole.Role.participant);
                     }
                     if (roles.charAt(2) == '1') {
-                        rolesToBroadcast.add("visitor");
+                        rolesToBroadcast.add(MUCRole.Role.visitor);
                     }
                     room.setRolesToBroadcastPresence(rolesToBroadcast);
                     room.setLoginRestrictedToNickname(resultSet.getInt("useReservedNick") == 1);
@@ -1216,11 +1216,11 @@ public class MUCPersistenceManager {
      * @return an integer based on the binary representation of the roles to broadcast.
      */
     private static int marshallRolesToBroadcast(MUCRoom room) {
-        StringBuilder buffer = new StringBuilder();
-        buffer.append((room.canBroadcastPresence("moderator") ? "1" : "0"));
-        buffer.append((room.canBroadcastPresence("participant") ? "1" : "0"));
-        buffer.append((room.canBroadcastPresence("visitor") ? "1" : "0"));
-        return Integer.parseInt(buffer.toString(), 2);
+        final String buffer =
+            (room.canBroadcastPresence(MUCRole.Role.moderator) ? "1" : "0") +
+            (room.canBroadcastPresence(MUCRole.Role.participant) ? "1" : "0") +
+            (room.canBroadcastPresence(MUCRole.Role.visitor) ? "1" : "0");
+        return Integer.parseInt(buffer, 2);
     }
 
     /**

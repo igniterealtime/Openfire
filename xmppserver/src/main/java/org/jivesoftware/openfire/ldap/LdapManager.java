@@ -1066,8 +1066,10 @@ public class LdapManager {
                     throw e;
                 }
             } catch ( UserNotFoundException ex ) {
-                // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
-                userDNCache.put(username, CacheableOptional.of(null));
+                if (userDNCache != null) {
+                    // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
+                    userDNCache.put(username, CacheableOptional.of(null));
+                }
                 throw ex;
             }
         }
@@ -1717,8 +1719,10 @@ public class LdapManager {
             catch ( UserNotFoundException ex ) {
                 Log.debug( "An exception occurred while tyring to get the user baseDn for {}", username, ex );
 
-                // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
-                userDNCache.put(username, CacheableOptional.of(null));
+                if (userDNCache != null) {
+                    // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
+                    userDNCache.put(username, CacheableOptional.of(null));
+                }
             }
             catch ( Exception ex )
             {

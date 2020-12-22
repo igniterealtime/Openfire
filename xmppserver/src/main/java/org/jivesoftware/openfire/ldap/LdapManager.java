@@ -19,56 +19,23 @@ package org.jivesoftware.openfire.ldap;
 import org.jivesoftware.admin.LdapUserTester;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveInitialLdapContext;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.naming.*;
+import javax.naming.directory.*;
+import javax.naming.ldap.*;
+import javax.net.ssl.SSLSession;
 import java.io.Serializable;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.StringTokenizer;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.naming.CompositeName;
-import javax.naming.Context;
-import javax.naming.InvalidNameException;
-import javax.naming.Name;
-import javax.naming.NameNotFoundException;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.Control;
-import javax.naming.ldap.LdapContext;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.PagedResultsControl;
-import javax.naming.ldap.PagedResultsResponseControl;
-import javax.naming.ldap.Rdn;
-import javax.naming.ldap.SortControl;
-import javax.naming.ldap.StartTlsRequest;
-import javax.naming.ldap.StartTlsResponse;
-import javax.net.ssl.SSLSession;
+import java.util.*;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
@@ -242,7 +209,7 @@ public class LdapManager {
 
     private final Map<String, String> properties;
 
-    private Cache<String, DNCacheEntry> userDNCache = null;
+    private Cache<String, CacheableOptional<DNCacheEntry>> userDNCache = null;
 
     /**
      * Provides singleton access to an instance of the LdapManager class.
@@ -1065,13 +1032,13 @@ public class LdapManager {
         if ( userDNCache != null )
         {
             // Return a cache entry if one exists.
-            final DNCacheEntry dnCacheEntry = userDNCache.get( username );
+            final CacheableOptional<DNCacheEntry> dnCacheEntry = userDNCache.get( username );
             if ( dnCacheEntry != null )
             {
                 if (dnCacheEntry.isAbsent()) {
                     throw new UserNotFoundException( "User '" + username + "' not found (negative lookup cache result)");
                 } else {
-                    return dnCacheEntry.getUserRDN();
+                    return dnCacheEntry.get().getUserRDN();
                 }
             }
         }
@@ -1082,7 +1049,7 @@ public class LdapManager {
             final Rdn[] userRDN = findUserRDN( username, baseDN );
             if ( userDNCache != null )
             {
-                userDNCache.put( username, new DNCacheEntry( userRDN, baseDN ) );
+                userDNCache.put( username, CacheableOptional.of(new DNCacheEntry( userRDN, baseDN )) );
             }
             return userRDN;
         }
@@ -1092,7 +1059,7 @@ public class LdapManager {
                 if (alternateBaseDN != null) {
                     final Rdn[] userRDN = findUserRDN(username, alternateBaseDN);
                     if (userDNCache != null) {
-                        userDNCache.put(username, new DNCacheEntry(userRDN, alternateBaseDN));
+                        userDNCache.put(username, CacheableOptional.of(new DNCacheEntry(userRDN, alternateBaseDN)));
                     }
                     return userRDN;
                 } else {
@@ -1100,7 +1067,7 @@ public class LdapManager {
                 }
             } catch ( UserNotFoundException ex ) {
                 // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
-                userDNCache.put(username, new DNCacheEntry());
+                userDNCache.put(username, CacheableOptional.of(null));
                 throw ex;
             }
         }
@@ -1711,14 +1678,14 @@ public class LdapManager {
         if ( userDNCache != null )
         {
             // Return a cache entry if one exists.
-            final DNCacheEntry dnCacheEntry = userDNCache.get( username );
+            final CacheableOptional<DNCacheEntry> dnCacheEntry = userDNCache.get( username );
             if ( dnCacheEntry != null )
             {
                 if (dnCacheEntry.isAbsent()) {
                     Log.debug( "An earlier UserNotFoundException occurred while tyring to get the user baseDn for {} (negative lookup cache result)", username );
                     return null;
                 } else {
-                    return dnCacheEntry.getBaseDN();
+                    return dnCacheEntry.get().getBaseDN();
                 }
             }
         }
@@ -1729,7 +1696,7 @@ public class LdapManager {
             final Rdn[] userRDN = findUserRDN( username, baseDN );
             if ( userDNCache != null )
             {
-                userDNCache.put( username, new DNCacheEntry( userRDN, baseDN ) );
+                userDNCache.put( username, CacheableOptional.of( new DNCacheEntry( userRDN, baseDN ) ) );
             }
             return baseDN;
         }
@@ -1742,7 +1709,7 @@ public class LdapManager {
                     final Rdn[] userRDN = findUserRDN( username, alternateBaseDN );
                     if ( userDNCache != null )
                     {
-                        userDNCache.put( username, new DNCacheEntry( userRDN, alternateBaseDN ) );
+                        userDNCache.put( username, CacheableOptional.of(new DNCacheEntry( userRDN, alternateBaseDN ) ) );
                     }
                     return alternateBaseDN;
                 }
@@ -1751,7 +1718,7 @@ public class LdapManager {
                 Log.debug( "An exception occurred while tyring to get the user baseDn for {}", username, ex );
 
                 // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
-                userDNCache.put(username, new DNCacheEntry());
+                userDNCache.put(username, CacheableOptional.of(null));
             }
             catch ( Exception ex )
             {
@@ -2692,14 +2659,6 @@ public class LdapManager {
         private final LdapName baseDN;
 
         /**
-         * Constructs an entry that represents a negative lookup ("user not found").
-         */
-        public DNCacheEntry() {
-            this.userRDN = null;
-            this.baseDN = null;
-        }
-
-        /**
          * Constructs an entry that represents a successful lookup.
          */
         public DNCacheEntry(@Nonnull final Rdn[] userRDN, @Nonnull final LdapName baseDN)
@@ -2709,20 +2668,11 @@ public class LdapManager {
         }
 
         /**
-         * Checks if the cache entry represents a negative lookup ("user not found").
-         *
-         * @return true if this instance represents a negative lookup, otherwise false.
-         */
-        public boolean isAbsent() {
-            return userRDN == null && baseDN == null;
-        }
-
-        /**
          * Returns the cached RDN values, or null if this is a negative lookup result.
          *
          * @return RDN values
          */
-        @Nullable
+        @Nonnull
         public Rdn[] getUserRDN()
         {
             return userRDN;
@@ -2733,7 +2683,7 @@ public class LdapManager {
          *
          * @return baseDN value
          */
-        @Nullable
+        @Nonnull
         public LdapName getBaseDN()
         {
             return baseDN;
@@ -2745,7 +2695,7 @@ public class LdapManager {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             DNCacheEntry that = (DNCacheEntry) o;
-            return Arrays.equals(userRDN, that.userRDN) && Objects.equals(baseDN, that.baseDN);
+            return Arrays.equals(userRDN, that.userRDN) && baseDN.equals(that.baseDN);
         }
 
         @Override
@@ -2758,14 +2708,10 @@ public class LdapManager {
 
         @Override
         public String toString() {
-            if ( isAbsent() ) {
-                return "DNCacheEntry{ (Negative Lookup Result) }";
-            } else {
-                return "DNCacheEntry{" +
-                    "userRDN=" + Arrays.toString(userRDN) +
-                    ", baseDN=" + baseDN +
-                    '}';
-            }
+            return "DNCacheEntry{" +
+                "userRDN=" + Arrays.toString(userRDN) +
+                ", baseDN=" + baseDN +
+                '}';
         }
     }
 }

@@ -44,6 +44,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.InvalidNameException;
@@ -1066,7 +1068,11 @@ public class LdapManager {
             final DNCacheEntry dnCacheEntry = userDNCache.get( username );
             if ( dnCacheEntry != null )
             {
-                return dnCacheEntry.getUserRDN();
+                if (dnCacheEntry.isAbsent()) {
+                    throw new UserNotFoundException( "User '" + username + "' not found (negative lookup cache result)");
+                } else {
+                    return dnCacheEntry.getUserRDN();
+                }
             }
         }
 
@@ -1082,18 +1088,20 @@ public class LdapManager {
         }
         catch ( Exception e )
         {
-            if ( alternateBaseDN != null )
-            {
-                final Rdn[] userRDN = findUserRDN( username, alternateBaseDN );
-                if ( userDNCache != null )
-                {
-                    userDNCache.put( username, new DNCacheEntry( userRDN, alternateBaseDN ) );
+            try {
+                if (alternateBaseDN != null) {
+                    final Rdn[] userRDN = findUserRDN(username, alternateBaseDN);
+                    if (userDNCache != null) {
+                        userDNCache.put(username, new DNCacheEntry(userRDN, alternateBaseDN));
+                    }
+                    return userRDN;
+                } else {
+                    throw e;
                 }
-                return userRDN;
-            }
-            else
-            {
-                throw e;
+            } catch ( UserNotFoundException ex ) {
+                // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
+                userDNCache.put(username, new DNCacheEntry());
+                throw ex;
             }
         }
     }
@@ -1706,7 +1714,12 @@ public class LdapManager {
             final DNCacheEntry dnCacheEntry = userDNCache.get( username );
             if ( dnCacheEntry != null )
             {
-                return dnCacheEntry.getBaseDN();
+                if (dnCacheEntry.isAbsent()) {
+                    Log.debug( "An earlier UserNotFoundException occurred while tyring to get the user baseDn for {} (negative lookup cache result)", username );
+                    return null;
+                } else {
+                    return dnCacheEntry.getBaseDN();
+                }
             }
         }
 
@@ -1733,6 +1746,12 @@ public class LdapManager {
                     }
                     return alternateBaseDN;
                 }
+            }
+            catch ( UserNotFoundException ex ) {
+                Log.debug( "An exception occurred while tyring to get the user baseDn for {}", username, ex );
+
+                // Cache the 'not found' event to prevent incurring costs for future lookups (that will be equally unsuccessful). OF-2170
+                userDNCache.put(username, new DNCacheEntry());
             }
             catch ( Exception ex )
             {
@@ -2672,24 +2691,49 @@ public class LdapManager {
         private final Rdn[] userRDN; // relative to baseDN!
         private final LdapName baseDN;
 
-        public DNCacheEntry( Rdn[] userRDN, LdapName baseDN )
-        {
-            if ( userRDN == null ) {
-                throw new IllegalArgumentException("Argument 'userRDN' cannot be null.");
-            }
+        /**
+         * Constructs an entry that represents a negative lookup ("user not found").
+         */
+        public DNCacheEntry() {
+            this.userRDN = null;
+            this.baseDN = null;
+        }
 
-            if ( baseDN == null ) {
-                throw new IllegalArgumentException("Argument 'baseDN' cannot be null.");
-            }
+        /**
+         * Constructs an entry that represents a successful lookup.
+         */
+        public DNCacheEntry(@Nonnull final Rdn[] userRDN, @Nonnull final LdapName baseDN)
+        {
             this.userRDN = userRDN;
             this.baseDN = baseDN;
         }
 
+        /**
+         * Checks if the cache entry represents a negative lookup ("user not found").
+         *
+         * @return true if this instance represents a negative lookup, otherwise false.
+         */
+        public boolean isAbsent() {
+            return userRDN == null && baseDN == null;
+        }
+
+        /**
+         * Returns the cached RDN values, or null if this is a negative lookup result.
+         *
+         * @return RDN values
+         */
+        @Nullable
         public Rdn[] getUserRDN()
         {
             return userRDN;
         }
 
+        /**
+         * Returns the cached BaseDN value, or null if this is a negative lookup result.
+         *
+         * @return baseDN value
+         */
+        @Nullable
         public LdapName getBaseDN()
         {
             return baseDN;
@@ -2698,11 +2742,10 @@ public class LdapManager {
         @Override
         public boolean equals( final Object o )
         {
-            if ( this == o ) { return true; }
-            if ( o == null || getClass() != o.getClass() ) { return false; }
-            final DNCacheEntry that = (DNCacheEntry) o;
-            return Arrays.equals(userRDN, that.userRDN) &&
-                baseDN.equals(that.baseDN);
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DNCacheEntry that = (DNCacheEntry) o;
+            return Arrays.equals(userRDN, that.userRDN) && Objects.equals(baseDN, that.baseDN);
         }
 
         @Override
@@ -2711,6 +2754,18 @@ public class LdapManager {
             int result = Objects.hash(baseDN);
             result = 31 * result + Arrays.hashCode(userRDN);
             return result;
+        }
+
+        @Override
+        public String toString() {
+            if ( isAbsent() ) {
+                return "DNCacheEntry{ (Negative Lookup Result) }";
+            } else {
+                return "DNCacheEntry{" +
+                    "userRDN=" + Arrays.toString(userRDN) +
+                    ", baseDN=" + baseDN +
+                    '}';
+            }
         }
     }
 }

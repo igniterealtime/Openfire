@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.muc.spi;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -276,7 +277,7 @@ public class IQOwnerHandler {
         field = completedForm.getField("muc#roomconfig_presencebroadcast");
         if (field != null) {
             values = new ArrayList<>(field.getValues());
-            room.setRolesToBroadcastPresence(values);
+            room.setRolesToBroadcastPresence(values.stream().map(MUCRole.Role::valueOf).collect(Collectors.toList()));
         }
 
         field = completedForm.getField("muc#roomconfig_publicroom");
@@ -465,8 +466,8 @@ public class IQOwnerHandler {
 
             field = configurationForm.getField("muc#roomconfig_presencebroadcast");
             field.clearValues();
-            for (String roleToBroadcast : room.getRolesToBroadcastPresence()) {
-                field.addValue(roleToBroadcast);
+            for (MUCRole.Role roleToBroadcast : room.getRolesToBroadcastPresence()) {
+                field.addValue(roleToBroadcast.toString());
             }
 
             field = configurationForm.getField("muc#roomconfig_publicroom");

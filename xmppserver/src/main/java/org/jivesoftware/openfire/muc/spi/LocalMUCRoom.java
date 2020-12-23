@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -71,7 +72,7 @@ import javax.annotation.Nullable;
 
 /**
  * Implementation of a chatroom that is being hosted by this JVM. A LocalMUCRoom could represent
- * a persistent room which means that its configuration will be maintained in synch with its
+ * a persistent room which means that its configuration will be maintained in sync with its
  * representation in the database.<p>
  *
  * When running in a cluster each cluster node will have its own copy of local rooms. Persistent
@@ -212,7 +213,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * List of roles of which presence will be broadcasted to the rest of the occupants. This
      * feature is useful for implementing "invisible" occupants.
      */
-    private List<String> rolesToBroadcastPresence = new ArrayList<>();
+    private List<MUCRole.Role> rolesToBroadcastPresence = new ArrayList<>();
 
     /**
      * A public room means that the room is searchable and visible. This means that the room can be
@@ -414,9 +415,9 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         // No one can join the room except the room's owner
         this.lockedTime = startTime;
         // Set the default roles for which presence is broadcast
-        rolesToBroadcastPresence.add("moderator");
-        rolesToBroadcastPresence.add("participant");
-        rolesToBroadcastPresence.add("visitor");
+        rolesToBroadcastPresence.add(MUCRole.Role.moderator);
+        rolesToBroadcastPresence.add(MUCRole.Role.participant);
+        rolesToBroadcastPresence.add(MUCRole.Role.visitor);
     }
 
     @Override
@@ -1034,12 +1035,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
 
             // Skip to the next occupant if we cannot send presence of this occupant
-            if (hasToCheckRoleToBroadcastPresence()) {
-                Element frag = occupant.getPresence().getChildElement("x", "http://jabber.org/protocol/muc#user");
-                // Check if we can broadcast the presence for this role
-                if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
-                    continue;
-                }
+            if (!canBroadcastPresence(occupant.getRole())) {
+                continue;
             }
 
             final Presence occupantPresence = occupant.getPresence().createCopy(); // defensive copy to prevent modifying the original.
@@ -1106,10 +1103,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
             item.addAttribute("role", "none");
 
-            // Check to see if the user's original presence is one we should broadcast
-            // a leave packet for. Need to check the original presence because we just
-            // set the role to "none" above, which is always broadcast.
-            if(!shouldBroadcastPresence(originalPresence)){
+            // Check to see if the user's original role is one we should broadcast a leave packet for.
+            if(!canBroadcastPresence(leaveRole.getRole())){
                 // Inform the leaving user that he/she has left the room
                 leaveRole.send(presence);
                 return CompletableFuture.completedFuture(null);
@@ -1463,26 +1458,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     /**
-     * Checks the role of the sender and returns true if the given presence should be broadcasted
-     *
-     * @param presence The presence to check
-     * @return true if the presence should be broadcast to the rest of the room
-     */
-    private boolean shouldBroadcastPresence(Presence presence){
-        if (presence == null) {
-            return false;
-        }
-        if (hasToCheckRoleToBroadcastPresence()) {
-            Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-            // Check if we can broadcast the presence for this role
-            if (!canBroadcastPresence(frag.element("item").attributeValue("role"))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Broadcasts the specified presence to all room occupants. If the presence belongs to a
      * user whose role cannot be broadcast then the presence will only be sent to the presence's
      * user. On the other hand, the JID of the user that sent the presence won't be included if the
@@ -1513,7 +1488,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             stanza.setTo( sender.getRoleAddress() );
         }
 
-        if (!shouldBroadcastPresence(stanza)) {
+        if (!canBroadcastPresence(sender.getRole())) {
             // Just send the presence to the sender of the presence
             sender.send(stanza);
             return CompletableFuture.completedFuture(null);
@@ -3121,30 +3096,21 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     @Override
-    public List<String> getRolesToBroadcastPresence() {
+    @Nonnull
+    public List<MUCRole.Role> getRolesToBroadcastPresence() {
         return Collections.unmodifiableList(rolesToBroadcastPresence);
     }
 
     @Override
-    public void setRolesToBroadcastPresence(List<String> rolesToBroadcastPresence) {
+    public void setRolesToBroadcastPresence(@Nonnull final List<MUCRole.Role> rolesToBroadcastPresence) {
         // TODO If the list changes while there are occupants in the room we must send available or
         // unavailable presences of the affected occupants to the rest of the occupants
         this.rolesToBroadcastPresence = rolesToBroadcastPresence;
     }
 
-    /**
-     * Returns true if we need to check whether a presence could be sent or not.
-     *
-     * @return true if we need to check whether a presence could be sent or not.
-     */
-    private boolean hasToCheckRoleToBroadcastPresence() {
-        // For performance reasons the check is done based on the size of the collection.
-        return rolesToBroadcastPresence.size() < 3;
-    }
-
     @Override
-    public boolean canBroadcastPresence(String roleToBroadcast) {
-        return "none".equals(roleToBroadcast) || rolesToBroadcastPresence.contains(roleToBroadcast);
+    public boolean canBroadcastPresence(@Nonnull final MUCRole.Role roleToBroadcast) {
+        return MUCRole.Role.none.equals(roleToBroadcast) || rolesToBroadcastPresence.contains(roleToBroadcast);
     }
 
     @Override
@@ -3288,7 +3254,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         ExternalizableUtil.getInstance().writeSafeUTF(out, description);
         ExternalizableUtil.getInstance().writeBoolean(out, canOccupantsChangeSubject);
         ExternalizableUtil.getInstance().writeInt(out, maxUsers);
-        ExternalizableUtil.getInstance().writeStringList(out, rolesToBroadcastPresence);
+        ExternalizableUtil.getInstance().writeStringList(out, rolesToBroadcastPresence.stream().map(Enum::name).collect(Collectors.toList())); // This uses stringlist for compatibility with Openfire 4.6.0. Can be replaced the next major release.
         ExternalizableUtil.getInstance().writeBoolean(out, publicRoom);
         ExternalizableUtil.getInstance().writeBoolean(out, persistent);
         ExternalizableUtil.getInstance().writeBoolean(out, moderated);
@@ -3341,7 +3307,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         description = ExternalizableUtil.getInstance().readSafeUTF(in);
         canOccupantsChangeSubject = ExternalizableUtil.getInstance().readBoolean(in);
         maxUsers = ExternalizableUtil.getInstance().readInt(in);
-        rolesToBroadcastPresence.addAll(ExternalizableUtil.getInstance().readStringList(in));
+        rolesToBroadcastPresence.addAll(ExternalizableUtil.getInstance().readStringList(in).stream().map(MUCRole.Role::valueOf).collect(Collectors.toSet())); // This uses stringlist for compatibility with Openfire 4.6.0. Can be replaced the next major release.
         publicRoom = ExternalizableUtil.getInstance().readBoolean(in);
         persistent = ExternalizableUtil.getInstance().readBoolean(in);
         moderated = ExternalizableUtil.getInstance().readBoolean(in);

@@ -21,6 +21,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -103,8 +104,7 @@ public class DNSUtil {
         }
 
         // Attempt the SRV lookup.
-        final List<WeightedHostAddress> srvLookups = new LinkedList<>();
-        srvLookups.addAll(srvLookup("xmpp-server", "tcp", domain ) );
+        final List<WeightedHostAddress> srvLookups = new LinkedList<>(srvLookup("xmpp-server", "tcp", domain));
 
         final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
         if (allowTLS) {
@@ -188,56 +188,60 @@ public class DNSUtil {
      * @param name the domain name for which this record is valid (cannot be null).
      * @return An ordered of results (possibly empty, never null).
      */
-    public static List<WeightedHostAddress> srvLookup(String service, String proto, String name) {
-        if (service == null || proto == null || name == null) {
-            throw new NullPointerException("DNS lookup can't be null");
-        }
+    public static List<WeightedHostAddress> srvLookup(@Nonnull final String service, @Nonnull final String proto, @Nonnull final String name) {
+        logger.trace("DNS SRV Lookup for service '{}', protocol '{}' and name '{}'", service, proto, name);
 
+        // _service._proto.name.
+        String lookup = "";
         if ( !service.startsWith( "_" ) )
         {
-            service = "_" + service;
+            lookup += "_";
         }
-        if ( !service.endsWith( "." ) )
+        lookup += service;
+
+        if ( !lookup.endsWith( "." ) )
         {
-            service = service + ".";
+            lookup += ".";
         }
 
         if ( !proto.startsWith( "_" ) )
         {
-            proto = "_" + proto;
+            lookup += "_";
         }
-        if ( !proto.endsWith( "." ) )
+        lookup += proto;
+
+        if ( !lookup.endsWith( "." ) )
         {
-            proto = proto+ ".";
+            lookup += ".";
         }
 
-        if ( !name.endsWith( "." ) ) {
-            name = name + ".";
+        lookup += name;
+        if ( !lookup.endsWith( "." ) ) {
+            lookup += ".";
         }
 
-        // _service._proto.name.
-        final String lookup = (service + proto + name).toLowerCase();
+        lookup = lookup.toLowerCase();
         try {
-            Attributes dnsLookup =
-                    context.getAttributes(lookup, new String[]{"SRV"});
-            Attribute srvRecords = dnsLookup.get("SRV");
+            final Attributes dnsLookup = context.getAttributes(lookup, new String[]{"SRV"});
+            final Attribute srvRecords = dnsLookup.get("SRV");
             if (srvRecords == null) {
-                logger.debug("No SRV record found for domain: " + lookup);
+                logger.debug("No SRV record found for '{}'", lookup);
                 return Collections.emptyList();
             }
-            WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
+            final WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
             final boolean directTLS = lookup.startsWith( "_xmpps-" ); // XEP-0368
             for (int i = 0; i < srvRecords.size(); i++) {
                 hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "), directTLS);
             }
 
+            logger.trace("{} SRV record(s) found for '{}'", hosts.length, lookup);
             return prioritize(hosts);
         }
         catch (NameNotFoundException e) {
-            logger.debug("No SRV record found for: " + lookup, e);
+            logger.debug("No SRV record found for '{}'", lookup, e);
         }
         catch (NamingException e) {
-            logger.error("Can't process DNS lookup!", e);
+            logger.error("DNS SRV lookup failed for '{}'", lookup, e);
         }
         return Collections.emptyList();
     }
@@ -280,7 +284,7 @@ public class DNSUtil {
 
         private final String host;
         private final int port;
-        private boolean directTLS;
+        private final boolean directTLS;
 
         private HostAddress(String host, int port, boolean directTLS) {
             // Host entries in DNS should end with a ".".
@@ -377,9 +381,7 @@ public class DNSUtil {
 
             // finally, append the hosts with zero priority (shuffled)
             Collections.shuffle(zeroWeights);
-            for(WeightedHostAddress zero : zeroWeights) {
-                result.add(zero);
-            }
+            result.addAll(zeroWeights);
         }
 
         return result;

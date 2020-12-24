@@ -1385,7 +1385,9 @@ public class FMUCHandler
         // TODO can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomSubjectAfterJoin be re-used?
         final MUCRoomHistory roomHistory = room.getRoomHistory();
         Message roomSubject = roomHistory.getChangedSubject();
-        if ( roomSubject == null ) {
+        if ( roomSubject != null ) {
+            roomSubject = roomSubject.createCopy(); // OF-2163: Prevent accidental modifications to the original.
+        } else {
             roomSubject = new Message();
             roomSubject.setFrom(this.room.getJID()); // This might break FMUC, as it does not include the nickname of the author of the subject.
             roomSubject.setTo(joiningPeer);

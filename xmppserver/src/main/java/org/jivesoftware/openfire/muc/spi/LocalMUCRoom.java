@@ -743,12 +743,13 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     {
         Log.trace( "Sending room subject to user '{}' that joined room '{}'.", user.getAddress(), this.getJID() );
 
-        // OF-2163: Prevent modifying the original subject stanza (that can be retrieved by others later) by making a defensive copy.
-        //          This prevents the stanza kept in memory to have the 'to' address for the last user that it was sent to.
-        Message roomSubject = roomHistory.getChangedSubject().createCopy();
-
-        // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
-        if (roomSubject == null) {
+        Message roomSubject = roomHistory.getChangedSubject();
+        if (roomSubject != null) {
+            // OF-2163: Prevent modifying the original subject stanza (that can be retrieved by others later) by making a defensive copy.
+            //          This prevents the stanza kept in memory to have the 'to' address for the last user that it was sent to.
+            roomSubject.createCopy();
+        } else {
+            // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
             roomSubject = new Message();
             roomSubject.setFrom( this.getJID() );
             roomSubject.setType( Message.Type.groupchat );

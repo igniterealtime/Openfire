@@ -322,8 +322,14 @@ public class ScramSha1SaslServer implements SaslServer {
                 salt = DatatypeConverter.parseBase64Binary(saltshaker);
             }
             return salt;
-        } catch (UserNotFoundException | UnsupportedOperationException | ConnectionException | InternalUnauthenticatedException e) {
-            Log.warn("Exception in SCRAM.getSalt():", e);
+        } catch (UserNotFoundException e) {
+            Log.debug("User '{}' not found. Cannot obtain its salt.", username, e);
+            // Return a random salt if the user doesn't exist to mimic an invalid password.
+            byte[] salt = new byte[24];
+            random.nextBytes(salt);
+            return salt;
+        } catch (UnsupportedOperationException | ConnectionException | InternalUnauthenticatedException e) {
+            Log.warn("Exception in SCRAM.getSalt() for user '{}':", username, e);
             byte[] salt = new byte[24];
             random.nextBytes(salt);
             return salt;

@@ -107,6 +107,7 @@ public class CacheFactory {
         clusteredCacheFactoryClass = JiveGlobals.getProperty(CLUSTERED_CACHE_PROPERTY_NAME,
                 "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
 
+        cacheNames.put("DNS Records", "dnsRecords");
         cacheNames.put("Favicon Hits", "faviconHits");
         cacheNames.put("Favicon Misses", "faviconMisses");
         cacheNames.put("Group", "group");
@@ -153,6 +154,8 @@ public class CacheFactory {
         cacheNames.put("JID Resource-parts", "jidResourceprep");
         cacheNames.put("Sequences", "sequences");
 
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "dnsRecords" + PROPERTY_SUFFIX_SIZE, 128 * 1024L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "dnsRecords" + PROPERTY_SUFFIX_MAX_LIFE_TIME, 1000 * 60L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "fileTransfer" + PROPERTY_SUFFIX_SIZE, 128 * 1024L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "fileTransfer" + PROPERTY_SUFFIX_MAX_LIFE_TIME, 1000 * 60 * 10L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "multicast" + PROPERTY_SUFFIX_SIZE, 128 * 1024L);

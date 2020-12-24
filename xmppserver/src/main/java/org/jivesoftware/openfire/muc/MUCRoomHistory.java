@@ -28,6 +28,7 @@ import org.xml.sax.SAXException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nullable;
 import java.io.StringReader;
 import java.util.Date;
 import java.util.Iterator;
@@ -238,6 +239,7 @@ public final class MUCRoomHistory {
      * 
      * @return the latest room subject change or null if none exists yet.
      */
+    @Nullable
     public Message getChangedSubject() {
         return historyStrategy.getChangedSubject();
     }

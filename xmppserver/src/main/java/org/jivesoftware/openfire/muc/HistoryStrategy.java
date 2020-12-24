@@ -31,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nullable;
+
 /**
  * <p>Multi-User Chat rooms may cache history of the conversations in the room in order to
  * play them back to newly arriving members.</p>
@@ -309,6 +311,7 @@ public class HistoryStrategy {
      * 
      * @return the latest room subject change or null if none exists yet.
      */
+    @Nullable
     public Message getChangedSubject() {
         return roomSubject;
     }

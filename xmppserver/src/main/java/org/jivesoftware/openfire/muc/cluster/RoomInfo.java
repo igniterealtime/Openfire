@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 

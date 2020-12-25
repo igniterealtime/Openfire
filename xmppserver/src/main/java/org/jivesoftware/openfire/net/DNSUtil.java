@@ -237,7 +237,7 @@ public class DNSUtil {
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(result));
             } catch (NameNotFoundException e) {
                 logger.debug("No SRV record found for '{}'", lookup, e);
-                LOOKUP_CACHE.put(lookup, CacheableOptional.of(null));  // Negative result cache (different from empty result!)
+                LOOKUP_CACHE.put(lookup, CacheableOptional.of(new WeightedHostAddress[0])); // Empty result (different from negative result!)
                 result = new WeightedHostAddress[0];
             } catch (NamingException e) {
                 logger.error("DNS SRV lookup failed for '{}'", lookup, e);

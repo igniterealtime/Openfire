@@ -31,7 +31,7 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -327,7 +327,7 @@ public class DNSUtil {
     /**
      * Encapsulates a hostname and port.
      */
-    public static class HostAddress {
+    public static class HostAddress implements Serializable {
 
         private final String host;
         private final int port;

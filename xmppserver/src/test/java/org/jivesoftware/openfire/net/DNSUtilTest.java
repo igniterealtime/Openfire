@@ -342,4 +342,22 @@ public class DNSUtilTest {
         // verify
         Assert.assertTrue( result );
     }
+
+    /**
+     * Verifies that {@link DNSUtil#constructLookup(String, String, String)} successfully constructs a query part.
+     */
+    @Test
+    public void testConstructLookup() throws Exception
+    {
+        // Setup test fixture.
+        final String service = "xmpp-client";
+        final String protocol = "tcp";
+        final String name = "igniterealtime.org";
+
+        // Execute system under test.
+        final String result = DNSUtil.constructLookup(service, protocol, name);
+
+        // Verify results.
+        Assert.assertEquals("_xmpp-client._tcp.igniterealtime.org.", result);
+    }
 }

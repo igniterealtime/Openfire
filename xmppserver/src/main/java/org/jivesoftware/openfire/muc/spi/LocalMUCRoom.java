@@ -661,8 +661,22 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
             } else {
                 // Grab the existing one.
-                Log.debug( "Skip adding user '{}' as an occupant of  room '{}' using nickname '{}', as it already is. Updating occupancy with its latest presence information.", user.getAddress(), this.getJID(), nickname );
+                Log.debug( "Skip adding user '{}' as an occupant of room '{}' using nickname '{}', as it already is. Updating occupancy with its latest presence information.", user.getAddress(), this.getJID(), nickname );
                 joinRole = occupantsByFullJID.get(user.getAddress());
+                if (joinRole instanceof RemoteMUCRole) {
+                    // OF-2179: Re-join from a different cluster node. Apparently, the user is local to this node now?
+                    Log.info("User '{}' is rejoining, but we already have it joined earlier from a different cluster node. Moving user to this node.", user.getAddress() );
+
+                    // Remove the occupant from all nodes (as even on those where the occupant will remain 'remote', its node-ID needs to be updated). This should not trigger presence broadcasts, so it'll be largely 'invisible' to users.
+                    final OccupantLeftEvent occupantLeftEvent = new OccupantLeftEvent(this, joinRole);
+                    CacheFactory.doClusterTask(occupantLeftEvent);
+                    occupantLeftEvent.run();
+
+                    // Re-add the occupant. This should not trigger presence broadcasts, so it'll be largely 'invisible' to users.
+                    joinRole = new LocalMUCRole(mucService, this, nickname, role, affiliation, user, presence, router);
+                    CacheFactory.doClusterTask(new OccupantAddedEvent(this, joinRole));
+                    addOccupantRole( joinRole );
+                }
                 joinRole.setPresence( presence ); // OF-1581: Use latest presence information.
             }
         }

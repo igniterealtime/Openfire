@@ -47,6 +47,8 @@ public interface MUCRole {
     /**
      * Obtain the current presence status of a user in a chatroom.
      *
+     * The 'from' address of the presence stanza is guaranteed to reflect the room role of this role.
+     *
      * @return The presence of the user in the room.
      */
     Presence getPresence();

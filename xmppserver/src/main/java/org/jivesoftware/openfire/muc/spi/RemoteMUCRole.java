@@ -82,6 +82,20 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
 
     @Override
     public void setPresence(Presence presence) {
+        // Only the cluster node where the user is local to should initiate presence updates (as the presence stanza that
+        // is being updated to is enriched in various ways, see LocalMUCRole.java). It is still 'correct' to have a
+        // functional 'setPresence' implementation on RemoteMUCRole, but it is expected to be used primarily (only?)
+        // via cluster events that are triggered by the cluster node to which the MUCRole is local to. See OF-2179.
+        if (presence.getFrom() == null || !presence.getFrom().equals(getRoleAddress()))
+        {
+            // If this triggers, then the presence update was not initiated by the cluster node to which
+            // the instance is local to, as that would have set the proper 'from' value. This is indicative of a bug in
+            // Openfire's clustering implementation.
+            throw new IllegalStateException("Presence is set with incorrect 'from' address (real jid, instead of room jid). Possible bug in Openfire clustering code. Expected value: " + getRoleAddress() + ", but got: " + presence.getFrom() );
+            // Note that we can't simply ignore this exception by setting the 'correct' from value, as the 'LocalMUCRole'
+            // implementation has other responsibilities that need to happen when a presence update occurs.
+        }
+
         this.presence = presence;
     }
 

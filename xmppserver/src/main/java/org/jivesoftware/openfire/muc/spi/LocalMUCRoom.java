@@ -1212,12 +1212,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     }
 
     public void leaveRoom(OccupantLeftEvent event) {
-        MUCRole leaveRole = event.getRole();
-        if (leaveRole == null) {
-            return;
-        }
         lock.writeLock().lock();
         try {
+            MUCRole leaveRole = event.getRole();
+            if (leaveRole == null) {
+                return;
+            }
             // Removes the role from the room
             removeOccupantRole(leaveRole);
 
@@ -1299,7 +1299,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 return occupants.isEmpty() ? null : occupants;
             });
 
-            occupantsByFullJID.remove(userAddress);
+            // Remove this MucRole only if it is the same MucRole as the leaveRole, because it is possible that
+            // a client on a cluster node rejoins and the OccupantAddedEvent arrives before the OccupantLeftEvent from
+            // the previous cluster node.
+            occupantsByFullJID.computeIfPresent(userAddress,(jid, mucRole) -> mucRole.equals(leaveRole) ? null : mucRole);
 
             Log.trace( "Finished removing occupant from room {}: {}", this.getJID(), leaveRole );
             debugLogOccupantFields();

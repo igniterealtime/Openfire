@@ -32,6 +32,7 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -909,7 +910,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             Log.warn("Unexpectedly received a 'null' result when querying senior cluster member for MUC Service information.");
             return;
         }
-
+        NodeID thisNodeID = XMPPServer.getInstance().getNodeID();
         for (final ServiceInfo serviceInfo : result) {
             MultiUserChatService service;
             service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceInfo.getSubdomain());
@@ -943,6 +944,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 // Add remote occupants to local room
                 // TODO Handle conflict of nicknames (OF-2165)
                 for (final OccupantAddedEvent event : roomInfo.getOccupants()) {
+                    if (thisNodeID.equals(event.getNodeID())){
+                        // Do not add occupants as RemoteMucRole who are already on this node as LocalMucRole
+                        continue;
+                    }
                     event.setSendPresence(true);
                     event.run();
                 }

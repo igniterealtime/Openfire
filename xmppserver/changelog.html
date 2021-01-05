@@ -163,6 +163,89 @@ hr {
     <div id="pageBody">
 
 
+<h2>4.6.1 -- <span style="font-weight: normal;">January 6, 2021</span></h2>
+<h2>        Bug
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-763'>OF-763</a>] -         Create property to control console session expiration
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2077'>OF-2077</a>] -         NullPointerException with Pubsub(PEP?) and clustering
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2112'>OF-2112</a>] -         IQRouter throws NPEs when routing stanzas without &#39;from&#39; attribute
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2113'>OF-2113</a>] -         Docker builds should not include locally built resources
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2131'>OF-2131</a>] -         NPE in MUC in clustering
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2146'>OF-2146</a>] -         MUC affiliation and role changes aren&#39;t always sent to the affected occupant
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2148'>OF-2148</a>] -         Implicit narrowing conversion in compound assignment
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2152'>OF-2152</a>] -         Stanzas dispatched from MUC room can have invalid &#39;from&#39; address
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2157'>OF-2157</a>] -         SequenceManager generated IDs are unreliable whilst clustering
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2159'>OF-2159</a>] -         Openfire re-uses the origin-id for stanza-id
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2161'>OF-2161</a>] -         Stable/Unique stanza ID for PMs should have a &#39;by&#39; that reflects the room
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2163'>OF-2163</a>] -         MUC Stanza post-processing might unintentionally expose real addresses
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2168'>OF-2168</a>] -         Unable to broadcast (some) presence stanzas in MUC.
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2169'>OF-2169</a>] -         LDAP VCard failure when user doesn&#39;t have attribute
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2173'>OF-2173</a>] -         NullPointerException when joining a room that has no subject
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2179'>OF-2179</a>] -         MUC, S2S and Clustering: IllegalStateException in MUC presence broadcast
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2180'>OF-2180</a>] -         User has nickname in room, but not a role
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2191'>OF-2191</a>] -         set server broadcast message to type headline
+</li>
+</ul>
+    
+<h2>        Improvement
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2114'>OF-2114</a>] -         Upgrade Bouncy Castle libs to 1.66
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2130'>OF-2130</a>] -         Improve usefulness of error messages when configuring LDAP/AD integration
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2151'>OF-2151</a>] -         Improve exposure of cluster location in admin console
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2153'>OF-2153</a>] -         Gracefully handle SM resumption requests on other cluster nodes.
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2162'>OF-2162</a>] -         Add &#39;ofrom&#39; to MUC private messages
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2170'>OF-2170</a>] -         LDAP UserDN cache should contain negative results
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2172'>OF-2172</a>] -         Include query details in DNS exceptions
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2174'>OF-2174</a>] -         Cache DNS SRV lookups
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2177'>OF-2177</a>] -         CacheableOptional should have a toString
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2182'>OF-2182</a>] -         Update Jetty to 9.4.35
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2183'>OF-2183</a>] -         Update ant to 1.10.9
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2184'>OF-2184</a>] -         Update bouncycastle to 1.68
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2185'>OF-2185</a>] -         Update guava to 30.1
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2186'>OF-2186</a>] -         Update apache httpclient to 4.5.13
+</li>
+</ul>
+    
+<h2>        Task
+</h2>
+<ul>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-2111'>OF-2111</a>] -         MUC Maximum batch size setting resets on reboot
+</li>
+</ul>
+
+
 <h2>4.6.0 -- <span style="font-weight: normal;">October 16, 2020</span></h2>
 <h2>        Bug
 </h2>

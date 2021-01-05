@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <suppress> <!-- Ignore Openfire for the search jar, else dependency-check picks up every Openfire CVE since Openfire v1.7.2-->
+      <notes><![CDATA[
+   file name: search.jar: search-1.7.2.jar
+   ]]>      </notes>
+      <packageUrl regex="true">^pkg:maven/org\.igniterealtime\.openfire\.plugins/search@.*$</packageUrl>
+      <cpe>cpe:/a:igniterealtime:openfire</cpe>
+   </suppress>
+   <suppress>
+      <notes><![CDATA[
+   file name: search.jar: search-1.7.2.jar
+   ]]>      </notes>
+      <packageUrl regex="true">^pkg:maven/org\.igniterealtime\.openfire\.plugins/search@.*$</packageUrl>
+      <cpe>cpe:/a:ignite_realtime:openfire</cpe>
+   </suppress>
+   <suppress> <!-- Ignore tag_project:tag - it's an MP3 tagging tool, and nothing to do with Apache Taglibs -->
+      <notes><![CDATA[
+   file name: taglibs-standard-impl-1.2.5.jar
+   ]]>      </notes>
+      <packageUrl regex="true">^pkg:maven/org\.apache\.taglibs/taglibs\-standard\-impl@.*$</packageUrl>
+      <cpe>cpe:/a:tag_project:tag</cpe>
+   </suppress>
+</suppressions>

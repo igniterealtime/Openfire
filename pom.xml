@@ -201,6 +201,31 @@
             </build>
         </profile>
 
+        <profile>
+            <id>deps</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>6.0.4</version>
+                        <configuration>
+                            <suppressionFiles>
+                                <suppressionFile>.dependency-check-suppressions.xml</suppressionFile>
+                            </suppressionFiles>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <build>
@@ -282,6 +307,12 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
                     <version>2.7</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>6.0.4</version>
                 </plugin>
 
             </plugins>

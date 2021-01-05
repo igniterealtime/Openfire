@@ -1075,8 +1075,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         lock.writeLock().lock();
         try
         {
-            debugLogOccupantFields();
-
             // Add the new user as an occupant of this room.
             occupantsByNickname.compute(role.getNickname().toLowerCase(), ( nick, occupants ) -> {
                 List<MUCRole> ret = occupants != null ? occupants : new CopyOnWriteArrayList<>();
@@ -1093,7 +1091,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             occupantsByFullJID.put(role.getUserAddress(), role);
 
             Log.trace( "Finished adding occupant to room {}: {}", this.getJID(), role );
-            debugLogOccupantFields();
         } finally {
             lock.writeLock().unlock();
         }
@@ -1153,7 +1150,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         String nickname = event.getNickname();
         lock.writeLock().lock();
         try {
-            debugLogOccupantFields();
             List<MUCRole> occupants = occupantsByNickname.computeIfAbsent(nickname.toLowerCase(), nick -> new CopyOnWriteArrayList<>());
             // Do not add new occupant with one with same nickname already exists
             // sanity check; make sure the nickname is owned by the same JID
@@ -1178,7 +1174,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
 
             Log.trace( "Finished processing occupant added event for room {}: user-address {}, nickname {}, from node {}", this.getJID(), event.getUserAddress(), event.getNickname(), event.getNodeID() );
-            debugLogOccupantFields();
         }
         finally {
             lock.writeLock().unlock();
@@ -1287,8 +1282,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         String nickname = leaveRole.getNickname();
         lock.writeLock().lock();
         try {
-            debugLogOccupantFields();
-
             occupantsByNickname.computeIfPresent(nickname.toLowerCase(), (n, occupants) -> {
                 occupants.remove(leaveRole);
                 return occupants.isEmpty() ? null : occupants;
@@ -1305,7 +1298,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             occupantsByFullJID.computeIfPresent(userAddress,(jid, mucRole) -> mucRole.equals(leaveRole) ? null : mucRole);
 
             Log.trace( "Finished removing occupant from room {}: {}", this.getJID(), leaveRole );
-            debugLogOccupantFields();
         }
         finally {
             lock.writeLock().unlock();
@@ -2559,7 +2551,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         Log.trace( "Changing nickname for room {}: from {} to {}", getJID(), changeNickname.getOldNick(), changeNickname.getNewNick() );
         lock.writeLock().lock();
         try {
-            debugLogOccupantFields();
             List<MUCRole> occupants = occupantsByNickname.get(changeNickname.getOldNick().toLowerCase());
             if (occupants != null && occupants.size() > 0) {
                 for (MUCRole occupant : occupants) {
@@ -2579,7 +2570,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             }
 
             Log.trace( "Finished changing nickname for room {}: from {} to {}", getJID(), changeNickname.getOldNick(), changeNickname.getNewNick() );
-            debugLogOccupantFields();
         } finally {
             lock.writeLock().unlock();
         }
@@ -3556,28 +3546,5 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     @Override
     public void groupCreated(Group group, Map params) {
         // ignore
-    }
-
-    /**
-     * Prints the content of field {@link #occupantsByFullJID}, {@link #occupantsByNickname} and {@link #occupantsByBareJID}
-     * to the log files - but only when debug logging is enabled.
-     */
-    public void debugLogOccupantFields() {
-        if (!Log.isDebugEnabled()) {
-            return;
-        }
-        lock.readLock().lock();
-        try {
-            Log.info("Occupants by full JID: {}", occupantsByFullJID.size());
-            occupantsByFullJID.forEach( (k,v) -> Log.info( "- Full JID: {} -> Role: {}", k, v));
-
-            Log.info("Occupants by nickname: {}", occupantsByNickname.size());
-            occupantsByNickname.forEach( (k,v) -> Log.info("- Nickname: {} -> Roles: {}", k, v));
-
-            Log.info("Occupants by bare JID: {}", occupantsByBareJID.size());
-            occupantsByBareJID.forEach( (k,v) -> Log.info("- bare JID: {} -> occupants: {}", k, v));
-        } finally {
-            lock.readLock().unlock();
-        }
     }
 }

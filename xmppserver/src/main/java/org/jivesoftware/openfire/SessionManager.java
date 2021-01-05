@@ -1436,6 +1436,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private Message createServerMessage(String subject, String body) {
         Message message = new Message();
         message.setFrom(serverAddress);
+        message.setType(Message.Type.headline);
         if (subject != null) {
             message.setSubject(subject);
         }

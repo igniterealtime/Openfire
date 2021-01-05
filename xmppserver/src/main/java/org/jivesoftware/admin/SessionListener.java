@@ -12,7 +12,6 @@ import javax.servlet.annotation.WebListener;
  * The session timeout is taken from the property {@code adminConsole.sessionTimeout}, the default is 30min.
  *
  * @author Guido Jaekel, guido.jaekel@gmx.de
- * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 
 @WebListener

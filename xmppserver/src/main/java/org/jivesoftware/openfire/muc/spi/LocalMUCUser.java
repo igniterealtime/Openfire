@@ -33,6 +33,7 @@ import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
+import org.xmpp.packet.IQ.Type;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -580,14 +581,28 @@ public class LocalMUCUser implements MUCUser
      * @param packet IQ
      * @return true, if it is or false if not
      */
-    private boolean isListRetrieval(IQ packet)
+    private boolean isListRetrieval(IQ packet) throws Exception
     {
+        if (!packet.isRequest())
+            return false;
+
         Element query = packet.getChildElement();
         if (query!=null&&query.getName().equalsIgnoreCase("query"))
         {
-            if (query.getNamespace()!=null&&query.getNamespace().getURI().equals("http://jabber.org/protocol/muc#admin"))
+            if (query.getNamespace()!=null&&query.getNamespace().getURI().equals("http://jabber.org/protocol/muc#admin") &&
+                query.attributeCount() == 1) // only Namespace, no further code (attributes) is allowed
             {
-                Element item = query.element("item");
+                List<Element> all = query.elements();
+                if (all!=null&&(all.size()>1 || !all.get(0).getName().equalsIgnoreCase("item"))) //check for not allowed tags
+                {
+                    throw new Exception("There are additional tags in this packet which is not allowed.");
+                }
+                else
+                if (all==null)
+                {
+                    return false;
+                }
+                Element item = all.get(0);
                 if (item!=null&&item.attributeValue("affiliation")!=null&&
                     item.attributeValue("affiliation").equalsIgnoreCase("member"))
                 {
@@ -604,17 +619,24 @@ public class LocalMUCUser implements MUCUser
      * @param packet IQ
      * @return true, if sender is allowed to retrieve or false if not
      */
-    private boolean hasPermissionToRetrieveList(IQ packet)
+    private boolean hasPermissionToRetrieveList(IQ packet) throws Exception
     {
         JID from = packet.getFrom();
         MUCRoom room = server.hasChatRoom(packet.getTo().getNode())?server.getChatRoom(packet.getTo().getNode()):null;
-        return  room!=null&&(room.getOwners().contains(from.asBareJID())||
+        if (room==null)
+        {
+            throw new Exception("");
+        }
+
+        return  room!=null&&(
+                !room.isMembersOnly()|| //room is not member only so everybody is able to retrieve list
+                room.getOwners().contains(from.asBareJID())||
                 room.getAdmins().contains(from.asBareJID())||
                 room.getMembers().contains(from.asBareJID()))||
                 server.getSysadmins().contains(from.asBareJID())||
                 XMPPServer.getInstance().getAdmins().contains(from.asBareJID());
     }
-    
+
     private void processMemberListQuery(IQ packet)
     {
         //OF-370: take the role of mucroom, because an occupant which is not in the room does not have a preexisting role
@@ -664,7 +686,28 @@ public class LocalMUCUser implements MUCUser
             if ( packet.isRequest() )
             {
                 //OF-370: check for memberlist retrieval and permission
-                if (isListRetrieval(packet)&&hasPermissionToRetrieveList(packet))
+                boolean hasPermission = false;
+                boolean isListRetrieval = false;
+                try
+                {
+                    isListRetrieval = isListRetrieval(packet);
+                }
+                catch (Exception e) {
+                    Log.error("There are additional tags in this packet which is not allowed: {}", packet.toXML(), e);
+                    sendErrorPacket(packet, PacketError.Condition.forbidden, "An unexpected exception occurred while checking permission to load memberlist.");
+                    return;
+                }
+                try
+                {
+                    hasPermission = hasPermissionToRetrieveList(packet);
+                }
+                catch (Exception e) {
+                    Log.error("An unexpected exception occurred while checking permission to load memberlist of mucroom: {}", packet.toXML(), e);
+                    sendErrorPacket(packet, PacketError.Condition.internal_server_error, "An unexpected exception occurred while checking permission to load memberlist.");
+                    return;
+                }
+
+                if (isListRetrieval&&hasPermission)
                 {
                     Log.debug("Listretrieval received from a non-occupant (member or user with more privilegs) of '{}'", roomName);
                     processMemberListQuery(packet);

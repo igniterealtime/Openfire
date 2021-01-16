@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
@@ -46,9 +47,11 @@ public class AdminConsole {
     private static Element coreModel;
     private static Map<String,Element> overrideModels;
     private static Element generatedModel;
+    private static Properties gitprops;
 
     static {
         overrideModels = new LinkedHashMap<>();
+        gitprops = new Properties();
         load();
     }
 
@@ -161,6 +164,20 @@ public class AdminConsole {
     }
 
     /**
+     * Returns the git SHA of the commit at which this version was built
+     *
+     * @return the git SHA.
+     */
+    public static synchronized String getGitSHAString() {
+
+        String shaString = gitprops.getProperty("git.commit.id.abbrev");
+        if (shaString == null){
+            shaString = "unknown";
+        }
+        return shaString;
+    }
+
+    /**
      * Returns the model. The model should be considered read-only.
      *
      * @return the model.
@@ -226,7 +243,7 @@ public class AdminConsole {
             Log.debug("An exception occurred while trying to close the input stream that was used to read admin-sidebar.xml", ex);
         }
 
-        // Load other admin-sidebar.xml files from the classpath
+        // Load other admin-sidebar.xml files from the classpath, and load git properties
         ClassLoader[] classLoaders = getClassLoaders();
         for (ClassLoader classLoader : classLoaders) {
             URL url = null;
@@ -257,6 +274,21 @@ public class AdminConsole {
                 if (url != null) {
                     msg += " from resource: " + url.toString();
                 }
+                Log.warn(msg, e);
+            }
+            try {
+                if(classLoader != null && gitprops.isEmpty()){
+                    InputStream inputStream = classLoader.getResourceAsStream("git.properties");
+                    if(inputStream != null){
+                        try {
+                            gitprops.load(inputStream);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (Exception e){
+                String msg = "Failed to load git properties";
                 Log.warn(msg, e);
             }
         }

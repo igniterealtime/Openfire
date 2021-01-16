@@ -625,14 +625,13 @@ public class LocalMUCUser implements MUCUser
         MUCRoom room = server.hasChatRoom(packet.getTo().getNode())?server.getChatRoom(packet.getTo().getNode()):null;
         if (room==null)
         {
-            throw new Exception("");
+            throw new Exception("MUC room not found on chatservice!");
         }
 
-        return  room!=null&&(
-                !room.isMembersOnly()|| //room is not member only so everybody is able to retrieve list
+        return  !room.isMembersOnly()|| //room is not member only so everybody is able to retrieve list
                 room.getOwners().contains(from.asBareJID())||
                 room.getAdmins().contains(from.asBareJID())||
-                room.getMembers().contains(from.asBareJID()))||
+                room.getMembers().contains(from.asBareJID())||
                 server.getSysadmins().contains(from.asBareJID())||
                 XMPPServer.getInstance().getAdmins().contains(from.asBareJID());
     }

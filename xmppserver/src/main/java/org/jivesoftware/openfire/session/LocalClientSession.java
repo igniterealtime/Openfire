@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.carbons.Received;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
@@ -872,6 +873,21 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     @Override
     public boolean canProcess(Packet packet) {
+
+        // If the packet is a forwarded stanza (eg: carbon copy), ensure that the forwarded message would have
+        // passed the privacy lists that are active for _this_ session. Note that the active list could differ
+        // for each session of a particular user! (OF-2189)
+        // Implementation note: it might be tempting to implement this in org.jivesoftware.openfire.spi.RoutingTableImpl.ccMessage
+        // There is, however, no way to check the active privacy list for sessions on remote cluster nodes there.
+        final Received received = (Received) packet.getExtension(Received.NAME, Received.NAMESPACE);
+        if (received != null) {
+            final Packet forwardedStanza = received.getForwardedStanza();
+            if (forwardedStanza != null) {
+                if (!canProcess(forwardedStanza)) {
+                    return false;
+                }
+            }
+        }
 
         PrivacyList list = getActiveList();
         if (list != null) {

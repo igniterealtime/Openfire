@@ -42,6 +42,13 @@ initialize_log_dir() {
   ln -sf ${OPENFIRE_LOG_DIR} ${OPENFIRE_DIR}/logs
 }
 
+copy_provided_plugins() {
+  if [ -d "/opt/plugins" ]; then
+    echo "Copying user-provided plugins"
+    cp -R /opt/plugins/* ${OPENFIRE_DIR}/plugins/
+  fi
+}
+
 # allow arguments to be passed to openfire launch
 if [[ ${1:0:1} = '-' ]]; then
   EXTRA_ARGS="$@"
@@ -51,6 +58,7 @@ fi
 rewire_openfire
 initialize_data_dir
 initialize_log_dir
+copy_provided_plugins
 
 JAVACMD=`which java 2> /dev/null `
 # default behaviour is to launch openfire

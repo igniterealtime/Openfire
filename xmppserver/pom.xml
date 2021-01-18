@@ -57,6 +57,42 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>git-info</id>
+            <activation>
+                <file>
+                    <exists>${maven.multiModuleProjectDirectory}/.git</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>pl.project13.maven</groupId>
+                        <artifactId>git-commit-id-plugin</artifactId>
+                        <version>4.0.3</version>
+                        <executions>
+                            <execution>
+                                <id>get-the-git-infos</id>
+                                <goals>
+                                    <goal>revision</goal>
+                                </goals>
+                                <phase>initialize</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <dotGitDirectory>${maven.multiModuleProjectDirectory}/.git</dotGitDirectory>
+                            <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                            <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                            <includeOnlyProperties>
+                                <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+                                <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
+                            </includeOnlyProperties>
+                            <commitIdGenerationMode>full</commitIdGenerationMode>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -129,7 +165,6 @@
                     <argLine>-Duser.language=us -Duser.country=US</argLine>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 

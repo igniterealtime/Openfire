@@ -45,7 +45,7 @@ initialize_log_dir() {
 copy_provided_plugins() {
   if [ -d "/opt/plugins" ]; then
     echo "Copying user-provided plugins"
-    cp -R /opt/plugins/* ${OPENFIRE_DIR}/plugins/
+    cp -nR /opt/plugins/* ${OPENFIRE_DIR}/plugins/
   fi
 }
 

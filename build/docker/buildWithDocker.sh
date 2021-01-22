@@ -2,6 +2,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 OFROOT=$(realpath "$SCRIPTPATH/../../")
 DOMAPMAVEN=true
 CREATEMAVEN=false
+SKIPTESTS=false
 
 usage()
 {
@@ -9,9 +10,10 @@ usage()
     echo ""
     echo "  -m: Don't attempt to map host maven cache to container"
     echo "  -c: Create a local maven cache if one doesn't exist"
+    echo "  -s: Skip building or running tests. Use with care."
 }
 
-while getopts cm OPTION "$@"; do
+while getopts cms OPTION "$@"; do
     case $OPTION in
         c)
             CREATEMAVEN=true
@@ -19,9 +21,12 @@ while getopts cm OPTION "$@"; do
         m)
             DOMAPMAVEN=false
             ;;
-        \? ) usage;;
-        :  ) usage;;
-        *  ) usage;;
+        s)
+            SKIPTESTS=true
+            ;;
+        \? ) usage && exit 0;;
+        :  ) usage && exit 1;;
+        *  ) usage && exit 1;;
     esac
 done
 
@@ -49,5 +54,10 @@ DOCKERCMD+=(
     maven:3.6.3-jdk-11 \
     mvn clean package
 )
+if [ $SKIPTESTS == true ]; then
+    DOCKERCMD+=(
+        -Dmaven.test.skip -DskipTests
+    )
+fi
 
 "${DOCKERCMD[@]}"

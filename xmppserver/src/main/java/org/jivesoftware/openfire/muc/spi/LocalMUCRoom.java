@@ -1277,12 +1277,12 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         lock.writeLock().lock();
         try {
             occupantsByNickname.computeIfPresent(nickname.toLowerCase(), (n, occupants) -> {
-                occupants.remove(leaveRole);
+                occupants.removeIf(role -> role.equals(leaveRole));
                 return occupants.isEmpty() ? null : occupants;
             });
 
             occupantsByBareJID.computeIfPresent(bareJID,(jid, occupants) -> {
-                occupants.remove(leaveRole);
+                occupants.removeIf(role -> role.equals(leaveRole));
                 return occupants.isEmpty() ? null : occupants;
             });
 

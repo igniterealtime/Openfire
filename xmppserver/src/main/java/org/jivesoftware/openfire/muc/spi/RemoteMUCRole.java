@@ -33,6 +33,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Objects;
 
 /**
  * Representation of a room occupant of a local room that is being hosted by
@@ -222,5 +223,28 @@ public class RemoteMUCRole implements MUCRole, Externalizable {
             reportedFmucAddress = null;
         }
         nodeID = NodeID.getInstance(ExternalizableUtil.getInstance().readByteArray(in));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this==o) return true;
+        if (o==null || getClass()!=o.getClass()) return false;
+
+        RemoteMUCRole that = (RemoteMUCRole) o;
+        if (!Objects.equals(nickname, that.nickname)) return false;
+        if (!Objects.equals(userAddress, that.userAddress)) return false;
+        if (!Objects.equals(roleAddress, that.roleAddress)) return false;
+        if (!Objects.equals(room, that.room)) return false;
+        return Objects.equals(nodeID, that.nodeID);
+    }
+
+    @Override
+    public int hashCode() {
+        int result =  (nickname!=null ? nickname.hashCode():0);
+        result = 31 * result + (userAddress!=null ? userAddress.hashCode():0);
+        result = 31 * result + (roleAddress!=null ? roleAddress.hashCode():0);
+        result = 31 * result + (room!=null ? room.hashCode():0);
+        result = 31 * result + (nodeID!=null ? nodeID.hashCode():0);
+        return result;
     }
 }

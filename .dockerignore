@@ -3,7 +3,20 @@
 .gitignore
 Dockerfile
 .github
+.idea
+.mvn
+.settings
 .vscode
+
+build
+!build/docker
+distribution
+!distribution/target/distribution-base
+documentation
+i18n
+plugins
+starter
+xmppserver
 
 # Deeper stuff
 **/.DS_Store
@@ -13,4 +26,3 @@ Dockerfile
 **/.project
 **/.settings
 **/*.iml
-**/target

@@ -5,9 +5,9 @@ env:
 
 on:
   push:
-    branches: [ master ]
+    branches: [ 4.6 ]
   pull_request:
-    branches: [ master ]
+    branches: [ 4.6 ]
 
 jobs:
   build:

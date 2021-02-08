@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.OfflineMessage;
 import org.jivesoftware.openfire.OfflineMessageStore;
@@ -44,6 +45,8 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.vcard.xep0398.PEPAvatar;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -301,6 +304,15 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             if (!RosterManager.isRosterServiceEnabled()) {
                 return;
             }
+
+            if (PEPAvatar.XMPP_AVATARCONVERSION_ENABLED.getValue())
+            {
+                if (update.isAvailable())
+                {
+                    update = mergeAvatarHashIntoPresence(update);
+                }
+            }
+
             // Local updates can simply run through the roster of the local user
             String name = update.getFrom().getNode();
             try {
@@ -323,6 +335,52 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     + localServer.getServerInfo().getXMPPDomain()
                     + " by unknown user: " + update.getFrom());
         }
+    }
+
+    private Presence mergeAvatarHashIntoPresence(Presence update)
+    {
+
+        PEPAvatar pavatar = PEPAvatar.load(update.getFrom().getNode());
+        if (pavatar!=null)
+        {
+            Element x = update.getChildElement("x", PEPAvatar.NAMESPACE_VCARDUPDATE);
+            if (x==null)
+            {
+                x=update.addChildElement("x", PEPAvatar.NAMESPACE_VCARDUPDATE);
+            }
+
+            Element photo = x.element("photo");
+            if (pavatar.getId()!=null)
+            {
+                if (photo==null)
+                {
+                    photo = x.addElement("photo");
+                }
+
+                if (PEPAvatar.XMPP_DELETEOTHERAVATAR_ENABLED.getValue())
+                {
+                    if (pavatar.getId()!=null)
+                        photo.setText(pavatar.getId());
+                }
+                else
+                {
+                    String hash = PEPAvatar.getSHA1FromShrinkedImage(pavatar.getMimetype(),pavatar.getImage());
+                    if (hash!=null)
+                        photo.setText(hash);
+                }
+            }
+            else
+            {
+                if (photo==null)
+                {
+                    photo = x.addElement("photo");
+                }
+
+                photo.setText("");
+            }
+        }
+
+        return update;
     }
 
     /**

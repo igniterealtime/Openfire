@@ -15,22 +15,34 @@
  */
 package org.jivesoftware.openfire.pep;
 
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilities;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pubsub.*;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.vcard.xep0398.PEPAvatar;
 import org.jivesoftware.util.CacheableOptional;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -304,8 +316,121 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
         pubSubEngine = null;
     }
 
-    public void process(PEPService service, IQ iq) {
+    public void process(PEPService service, IQ iq)
+    {
         pubSubEngine.process(service, iq);
+
+        if (PEPAvatar.XMPP_AVATARCONVERSION_ENABLED.getValue()&&iq!=null)
+        {
+            processXEP398(iq);
+        }
+    }
+
+    private void deleteVCardAvatar(JID from)
+    {
+        Element vcard = XMPPServer.getInstance().getVCardManager().getVCard(from.getNode());
+        Element vcardphoto = vcard.element("PHOTO");
+
+        if (vcardphoto!=null)
+        {
+            vcard.remove(vcardphoto);
+            try
+            {
+                XMPPServer.getInstance().getVCardManager().setVCard(from.getNode(), vcard);
+            }
+            catch (Exception e)
+            {
+                Log.error("Could not update vcard: "+e.getMessage());
+            }
+        }
+    }
+
+    //Send VCARD Presence
+    private void sendVCardPresence(JID from, String id)
+    {
+        User usr;
+        try
+        {
+            usr = XMPPServer.getInstance().getUserManager().getUser(from.getNode());
+            Presence presenceStanza = XMPPServer.getInstance().getPresenceManager().getPresence(usr);
+            presenceStanza.setID(UUID.randomUUID().toString());
+            if (presenceStanza.getFrom()==null)
+            {
+                presenceStanza.setFrom(from);
+            }
+
+            Element x = presenceStanza.addChildElement("x", PEPAvatar.NAMESPACE_VCARDUPDATE);
+            Element photo = x.addElement("photo");
+
+            if (id!=null)
+            {
+                photo.setText(id);
+            }
+
+            XMPPServer.getInstance().getPresenceRouter().route(presenceStanza);
+        }
+        catch (UserNotFoundException e)
+        {
+            Log.error("Could not send presence: "+e.getMessage());
+        }
+    }
+
+    private void processXEP398(IQ iq)
+    {
+
+        Element childElement = iq.getChildElement();
+        if (childElement!=null)
+        {
+            String childns = childElement.attributeValue("xmlns");
+
+            //Check if IQ stanza is a pep avatar metadata node
+            if (childns!=null)
+            {
+                //metadata node with new item
+                if (childns.equalsIgnoreCase("http://jabber.org/protocol/pubsub")&&
+                   (childElement.element("publish")!=null&&
+                    childElement.element("publish").attributeValue("xmlns").
+                    equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA)))
+                    {
+                        Element publish = childElement.element("publish");
+                        Element item = publish.element("item");
+                        if (item!=null)
+                        {
+                            Element metadata=item.element("metadata");
+                            if (metadata!=null&&metadata.element("info")!=null)
+                            {
+                                if (PEPAvatar.XMPP_DELETEOTHERAVATAR_ENABLED.getValue())
+                                {
+                                    sendVCardPresence(iq.getFrom(),metadata.element("info").attributeValue("id"));
+                                }
+                                else
+                                {
+                                    PEPAvatar pavatar = PEPAvatar.load(iq.getFrom().getNode());
+                                    sendVCardPresence(iq.getFrom(),PEPAvatar.getSHA1FromShrinkedImage(pavatar.getMimetype(),pavatar.getImage()));
+                                }
+                            }
+                        }
+                    }
+                    else 
+                    {//metadatanode which should be removed
+                        if (childns.equalsIgnoreCase("http://jabber.org/protocol/pubsub")&&
+                           ((childElement.element("retract")!=null&&
+                            childElement.element("retract").attributeValue("xmlns").
+                            equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA))||
+                            (childElement.element("delete")!=null&&
+                             childElement.element("delete").attributeValue("xmlns").
+                             equalsIgnoreCase(PEPAvatar.NAMESPACE_METADATA))))
+                            {
+                                if (PEPAvatar.XMPP_DELETEOTHERAVATAR_ENABLED.getValue())
+                                {
+                                    deleteVCardAvatar(iq.getFrom());
+                                }
+                                sendVCardPresence(iq.getFrom(),null);
+                            }
+                    }
+            }
+        }
+
     }
 
     public boolean hasCachedService(JID owner) {

@@ -4,13 +4,20 @@ env:
   CI: true
   STARTER_VERSION: 21 # The version of the initial DB being installed, as per the ofVersion table
 
-on: push
-# ^^ Switching to all, just while testing...
-#on:
-#  push:
-#    branches: [ master ]
-#  pull_request:
-#    branches: [ master ]
+on:
+  push:
+    branches: [ master ]
+    paths:
+    - 'distribution/src/database/**'
+    - 'build/ci/**'
+    - '.github/workflows/database-upgrades.yml'
+    - 'xmppserver/pom.xml'
+  pull_request:
+    paths:
+    - 'distribution/src/database/**'
+    - 'build/ci/**'
+    - '.github/workflows/database-upgrades.yml'
+    - 'xmppserver/pom.xml'
 
 
 

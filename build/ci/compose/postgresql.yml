@@ -10,4 +10,4 @@ services:
       - POSTGRES_USER=${CONNECTION_USERNAME}
       - POSTGRES_PASSWORD=${CONNECTION_PASSWORD}
     volumes:
-      - ./olddb:/docker-entrypoint-initdb.d
+      - ${GITHUB_WORKSPACE}/olddb:/docker-entrypoint-initdb.d

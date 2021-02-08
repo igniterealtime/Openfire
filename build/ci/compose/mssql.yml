@@ -9,6 +9,6 @@ services:
             - ACCEPT_EULA=Y
             - SA_PASSWORD=${CONNECTION_PASSWORD}
         volumes:
-            - ./olddb:/openfiredb:ro
+            - ${GITHUB_WORKSPACE}/olddb:/openfiredb:ro
             - ./scripts:/scripts:ro
         entrypoint: [ "/bin/bash", "-c", "/scripts/mssql.sh" ]

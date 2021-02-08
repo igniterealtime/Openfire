@@ -9,4 +9,4 @@ services:
       - MYSQL_ROOT_PASSWORD=${CONNECTION_PASSWORD}
       - MYSQL_DATABASE=openfire
     volumes:
-      - ./olddb:/docker-entrypoint-initdb.d
+      - ${GITHUB_WORKSPACE}/olddb:/docker-entrypoint-initdb.d

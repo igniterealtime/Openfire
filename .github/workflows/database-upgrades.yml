@@ -30,7 +30,9 @@ jobs:
         OPENFIREVSN=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
     - name: Download old Openfire database script
-      run: curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_sqlserver.sql > $GITHUB_WORKSPACE/distribution/src/database/openfire_sqlserver.sql
+      run: |
+        mkdir olddb
+        curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_sqlserver.sql > $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
     - name: Start database server and install database
       run: docker-compose -f ./build/ci/compose/mssql.yml up --detach
     - name: Cache local Maven repository
@@ -47,3 +49,39 @@ jobs:
         pushd ./build/ci/updater
         mvn package
         java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+
+
+  postgres:
+    name: Test Postgres Upgrades
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v2
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:postgresql://localhost:5432/openfire" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=org.postgresql.Driver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=openfire" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
+          OPENFIREVSN=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+      - name: Download old Openfire database script
+        run: |
+          mkdir olddb
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_postgresql.sql > $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
+      - name: Start database server and install database
+        run: docker-compose -f ./build/ci/compose/postgresql.yml up --detach
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Build openfire
+        run: mvn install
+      - name: Build & run update tester
+        run: |
+          pushd ./build/ci/updater
+          mvn package
+          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar

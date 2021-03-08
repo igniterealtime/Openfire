@@ -40,6 +40,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -91,8 +92,10 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * When we want to look up the entity capabilities for a user, we first
      * find their most recently advertised 'ver' hash using this map. Then we
      * use this 'ver' hash as a key into the {@link #entityCapabilitiesMap}.
-     * 
-     * Key:   The JID of the user.
+     *
+     * Operations on this map should be guarded by a lock using a bare JID.
+     *
+     * Key:   The full JID of the user.
      * Value: The 'ver' hash string that encapsulates identities+features.
      */
     private Cache<JID, String> entityCapabilitiesUserMap;
@@ -103,6 +106,9 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      *
      * The old value is kept to be able to provide a 'diff' between the old
      * and new capabilities, after the new 'ver' value has been looked up.
+     *
+     * Operations on this map should be guarded by a lock using a bare JID on
+     * {@link #entityCapabilitiesUserMap}
      */
     private Map<JID, String> capabilitiesBeingUpdated;
 
@@ -171,8 +177,17 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     public void process(Presence packet) {
         if (Presence.Type.unavailable == packet.getType()) {
             if (packet.getFrom() != null ) {
-                this.capabilitiesBeingUpdated.remove( packet.getFrom() );
-                final String oldVer = this.entityCapabilitiesUserMap.remove( packet.getFrom() );
+                final String oldVer;
+
+                final Lock lock = this.entityCapabilitiesUserMap.getLock(packet.getFrom().asBareJID());
+                lock.lock();
+                try {
+                    this.capabilitiesBeingUpdated.remove( packet.getFrom() );
+                    oldVer = this.entityCapabilitiesUserMap.remove( packet.getFrom() );
+                } finally {
+                    lock.unlock();
+                }
+
                 if ( oldVer != null ) {
                     checkObsolete( oldVer );
                 }
@@ -214,10 +229,16 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             registerCapabilities( packet.getFrom(), caps );
         }
         else {
-            // If this entity previously had another registration, that now no longer is valid.
-            final String ver = entityCapabilitiesUserMap.remove(packet.getFrom());
-            if ( ver != null ) {
-                capabilitiesBeingUpdated.put( packet.getFrom(), ver );
+            final Lock lock = this.entityCapabilitiesUserMap.getLock(packet.getFrom().asBareJID());
+            lock.lock();
+            try {
+                // If this entity previously had another registration, that now no longer is valid.
+                final String ver = entityCapabilitiesUserMap.remove(packet.getFrom());
+                if ( ver != null ) {
+                    capabilitiesBeingUpdated.put( packet.getFrom(), ver );
+                }
+            } finally {
+                lock.unlock();
             }
 
             // The 'ver' hash is not in the cache so send out a disco#info query
@@ -529,10 +550,18 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     protected void registerCapabilities( @Nonnull JID entity, @Nonnull EntityCapabilities newCapabilities )
     {
         entityCapabilitiesMap.put( newCapabilities.getVerAttribute(), newCapabilities );
-        String oldVerAttribute = entityCapabilitiesUserMap.put(entity, newCapabilities.getVerAttribute());
-        String updatedVerValue = capabilitiesBeingUpdated.remove( entity );
-        if (oldVerAttribute == null) {
-            oldVerAttribute = updatedVerValue;
+        String oldVerAttribute;
+
+        final Lock lock = entityCapabilitiesUserMap.getLock(entity.asBareJID());
+        lock.lock();
+        try {
+            oldVerAttribute = entityCapabilitiesUserMap.put(entity, newCapabilities.getVerAttribute());
+            String updatedVerValue = capabilitiesBeingUpdated.remove(entity);
+            if (oldVerAttribute == null) {
+                oldVerAttribute = updatedVerValue;
+            }
+        } finally {
+            lock.unlock();
         }
 
         // Invoke listeners when capabilities changed.
@@ -668,16 +697,27 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         // Delete this user's association in entityCapabilitiesUserMap.
         final JID bareJid = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
 
+        final Set<String> deletedUserVerHashes = new HashSet<>();
+
         // Remember: Cache's are not regular maps. The EntrySet is immutable.
         // We'll first find the keys, then remove them in a separate call.
-        final Set<JID> jidsToRemove = entityCapabilitiesUserMap.keySet().stream()
-            .filter( jid -> jid.asBareJID().equals( bareJid ) )
-            .collect( Collectors.toSet() );
+        final Lock lock = entityCapabilitiesUserMap.getLock(bareJid);
+        lock.lock();
+        try {
+            // Iterating over the entire set is not ideal from a performance perspective. Note that this is a
+            // local cache. Things would have been much worse if this would have been a clustered cache.
+            final Set<JID> jidsToRemove = entityCapabilitiesUserMap.keySet().stream()
+                .filter(jid -> jid.asBareJID().equals(bareJid))
+                .collect(Collectors.toSet());
 
-        final Set<String> deletedUserVerHashes = new HashSet<>();
-        for ( final JID jidToRemove : jidsToRemove )
-        {
-            deletedUserVerHashes.add( entityCapabilitiesUserMap.remove( jidToRemove ) );
+            for (final JID jidToRemove : jidsToRemove) {
+                final String removed = entityCapabilitiesUserMap.remove(jidToRemove);
+                if (removed != null) {
+                    deletedUserVerHashes.add(removed);
+                }
+            }
+        } finally {
+            lock.unlock();
         }
 
         // If there are no other references to the deleted user's 'ver' hash,

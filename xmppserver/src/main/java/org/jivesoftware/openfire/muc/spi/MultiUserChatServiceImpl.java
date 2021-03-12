@@ -790,8 +790,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Initiate FMUC, when enabled.
             room.getFmucHandler().applyConfigurationChanges();
 
-            // Notify other cluster nodes that a new room is available
-            CacheFactory.doClusterTask(new RoomAvailableEvent(room));
+            // Notify other cluster nodes that a new room is available.
+            // Ensure that the room exists on all nodes, before firing off other room events to avoid race conditions (OF-2207)
+            CacheFactory.doSynchronousClusterTask(new RoomAvailableEvent(room), false);
             for (final MUCRole role : room.getOccupants()) {
                 if (role instanceof LocalMUCRole) {
                     CacheFactory.doClusterTask(new OccupantAddedEvent(room, role));

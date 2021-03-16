@@ -1332,7 +1332,7 @@ public class XMPPServer {
      */
     private static void stopAndDestroyModule( final Module module ) {
         try {
-            logger.debug("Stopping and shutting down module '{}'" + module.getName() );
+            logger.debug("Stopping and shutting down module '{}'", module.getName() );
             module.stop();
             module.destroy();
         } catch (Exception ex) {

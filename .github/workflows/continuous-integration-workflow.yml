@@ -200,6 +200,9 @@ jobs:
           name: distribution-java11
           path: distribution/target/distribution-base
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 

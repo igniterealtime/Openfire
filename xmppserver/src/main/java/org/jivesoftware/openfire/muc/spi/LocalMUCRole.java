@@ -78,7 +78,7 @@ public class LocalMUCRole implements MUCRole {
     /**
      * The router used to send packets from this role.
      */
-    private PacketRouter router;
+    private final PacketRouter router = XMPPServer.getInstance().getPacketRouter();
 
     /**
      * The address of the person masquerading in this role.
@@ -104,16 +104,13 @@ public class LocalMUCRole implements MUCRole {
      * @param affiliation the affiliation of the user in the room.
      * @param chatuser the user on the chat server.
      * @param presence the presence sent by the user to join the room.
-     * @param packetRouter the packet router for sending messages from this role.
      */
     public LocalMUCRole(LocalMUCRoom chatroom, String nickname,
-            MUCRole.Role role, MUCRole.Affiliation affiliation, LocalMUCUser chatuser, Presence presence,
-            PacketRouter packetRouter)
+            MUCRole.Role role, MUCRole.Affiliation affiliation, LocalMUCUser chatuser, Presence presence)
     {
         this.roomJid = chatroom.getJID();
         this.nick = nickname;
         this.userJid = chatuser.getAddress();
-        this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;
 

@@ -58,15 +58,12 @@
                 <Pattern>%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %msg%n</Pattern>
             </PatternLayout>
             <Policies>
-                <SizeBasedTriggeringPolicy size="1 MB"/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
             </Policies>
         </RollingFile>
 
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="%msg%n%throwable{0}"/>
-            <Filters>
-                <ThresholdFilter level="INFO"/>
-            </Filters>
         </Console>
         
     </Appenders>
@@ -83,7 +80,7 @@
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
 
-        <Root level="info">
+        <Root level="all">
             <AppenderRef ref="all-out"/>
             <AppenderRef ref="debug-out"/>
             <AppenderRef ref="info-out"/>

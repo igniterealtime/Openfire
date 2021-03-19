@@ -20,6 +20,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
@@ -29,6 +30,7 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.cache.Cacheable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
@@ -44,10 +46,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * we are going to have an instance of this class for the user and several
  * MUCRoles for each joined room.
  *
- * This room occupant is being hosted by this JVM. When the room occupant
- * is hosted by another cluster node then an instance of {@link RemoteMUCRole}
- * will be used instead.
- *
  * @author Gaston Dombiak
  */
 public class LocalMUCUser implements MUCUser
@@ -55,9 +53,9 @@ public class LocalMUCUser implements MUCUser
     private static final Logger Log = LoggerFactory.getLogger(LocalMUCUser.class);
 
     /**
-     * The chat server this user belongs to.
+     * The name of the chat service that this user belongs to.
      */
-    private final MultiUserChatService server;
+    private final String serviceName;
 
     /**
      * Real system XMPPAddress for the user.
@@ -90,7 +88,7 @@ public class LocalMUCUser implements MUCUser
     {
         this.realjid = jid;
         this.router = packetRouter;
-        this.server = chatservice;
+        this.serviceName = chatservice.getServiceName();
     }
 
     /**
@@ -315,7 +313,12 @@ public class LocalMUCUser implements MUCUser
         @Nonnull final Message packet,
         @Nonnull final String roomName )
     {
-        if ( !server.hasChatRoom(roomName) )
+        final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+        if (service == null) {
+            throw new IllegalStateException("Unable to find MUC service '"+serviceName+"' to process packet in room '"+roomName+"': " + packet.toXML());
+        }
+
+        if ( !service.hasChatRoom(roomName) )
         {
             // The sender is not an occupant of a NON-EXISTENT room!!!
             Log.debug("Rejecting message stanza sent by '{}' to room '{}': Room does not exist.", packet.getFrom(), roomName);
@@ -341,7 +344,7 @@ public class LocalMUCUser implements MUCUser
         {
             Log.debug("Processing room invitation declination sent by '{}' to room '{}'.", packet.getFrom(), roomName);
             final Element info = userInfo.element("decline");
-            server.getChatRoom(roomName).sendInvitationRejection(
+            service.getChatRoom(roomName).sendInvitationRejection(
                 new JID(info.attributeValue("to")),
                 info.elementTextTrim("reason"),
                 packet.getFrom());
@@ -807,7 +810,11 @@ public class LocalMUCUser implements MUCUser
         try
         {
             // Get or create the room
-            room = server.getChatRoom(roomName, packet.getFrom());
+            final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+            if (service == null) {
+                throw new IllegalStateException("Unable to find MUC service '"+serviceName+"' to get or create room '"+roomName+"' for " + packet.getFrom());
+            }
+            room = service.getChatRoom(roomName, packet.getFrom());
         }
         catch ( NotAllowedException e )
         {

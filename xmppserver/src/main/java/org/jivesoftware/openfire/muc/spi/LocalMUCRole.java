@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.util.ElementUtil;
 import org.xmpp.packet.JID;
@@ -59,11 +58,6 @@ public class LocalMUCRole implements MUCRole {
      * The user's presence in the room.
      */
     private Presence presence;
-
-    /**
-     * The chatserver that hosts this role.
-     */
-    private MultiUserChatService server;
 
     /**
      * The role.
@@ -104,7 +98,6 @@ public class LocalMUCRole implements MUCRole {
     /**
      * Create a new role.
      * 
-     * @param chatserver the server hosting the role.
      * @param chatroom the room the role is valid in.
      * @param nickname the nickname of the user in the role.
      * @param role the role of the user in the room.
@@ -113,14 +106,13 @@ public class LocalMUCRole implements MUCRole {
      * @param presence the presence sent by the user to join the room.
      * @param packetRouter the packet router for sending messages from this role.
      */
-    public LocalMUCRole(MultiUserChatService chatserver, LocalMUCRoom chatroom, String nickname,
+    public LocalMUCRole(LocalMUCRoom chatroom, String nickname,
             MUCRole.Role role, MUCRole.Affiliation affiliation, LocalMUCUser chatuser, Presence presence,
             PacketRouter packetRouter)
     {
         this.roomJid = chatroom.getJID();
         this.nick = nickname;
         this.user = chatuser;
-        this.server = chatserver;
         this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;

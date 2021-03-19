@@ -997,7 +997,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param roomName name of the room to receive the packet.
      * @return The chatuser corresponding to that XMPPAddress.
      */
-    private MUCUser getChatUser(final JID userjid, final String roomName) {
+    MUCUser getChatUser(final JID userjid, final String roomName) {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }

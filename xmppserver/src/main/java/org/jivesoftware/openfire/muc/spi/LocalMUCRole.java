@@ -45,9 +45,9 @@ public class LocalMUCRole implements MUCRole {
     private final JID roomJid;
 
     /**
-     * The user of the role.
+     * The (bare) JID of the user of the role.
      */
-    private LocalMUCUser user;
+    private final JID userJid;
 
     /**
      * The user's nickname in the room.
@@ -112,7 +112,7 @@ public class LocalMUCRole implements MUCRole {
     {
         this.roomJid = chatroom.getJID();
         this.nick = nickname;
-        this.user = chatuser;
+        this.userJid = chatuser.getAddress();
         this.router = packetRouter;
         this.role = role;
         this.affiliation = affiliation;
@@ -131,7 +131,10 @@ public class LocalMUCRole implements MUCRole {
         }
 
         // Add the new role to the list of roles
-        user.addRole(roomJid.getNode(), this);
+        final MultiUserChatServiceImpl service =((MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid));
+        final LocalMUCUser mucUser = (LocalMUCUser) service.getChatUser(userJid, roomJid.getNode());
+        mucUser.addRole(roomJid.getNode(), this);
+        // TODO The casts in this implementation should be cleaned up.
     }
 
     @Override
@@ -213,7 +216,10 @@ public class LocalMUCRole implements MUCRole {
     @Override
     public void destroy() {
         // Notify the user that he/she is no longer in the room
-        user.removeRole(roomJid.getNode());
+        final MultiUserChatServiceImpl service =((MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid));
+        final LocalMUCUser mucUser = (LocalMUCUser) service.getChatUser(userJid, roomJid.getNode());
+        mucUser.removeRole(roomJid.getNode());
+        // TODO The casts in this implementation should be cleaned up.
     }
 
     @Override
@@ -228,7 +234,7 @@ public class LocalMUCRole implements MUCRole {
 
     @Override
     public JID getUserAddress() {
-        return user.getAddress();
+        return userJid;
     }
 
     @Override
@@ -275,7 +281,7 @@ public class LocalMUCRole implements MUCRole {
             augmentOutboundStanzaWithFMUCData(packet);
         }
 
-        packet.setTo(user.getAddress());
+        packet.setTo(userJid);
 
 
         router.route(packet);
@@ -286,7 +292,7 @@ public class LocalMUCRole implements MUCRole {
      * The information to add contains the user's jid, affiliation and role.
      */
     private void calculateExtendedInformation() {
-        ElementUtil.setProperty(extendedInformation, "x.item:jid", user.getAddress().toString());
+        ElementUtil.setProperty(extendedInformation, "x.item:jid", userJid.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:role", role.toString());
         updatePresence();
@@ -312,7 +318,7 @@ public class LocalMUCRole implements MUCRole {
         result = prime * result + ((nick == null) ? 0 : nick.hashCode());
         result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
         result = prime * result + ((roomJid == null) ? 0 : roomJid.hashCode());
-        result = prime * result + ((user == null) ? 0 : user.hashCode());
+        result = prime * result + ((userJid == null) ? 0 : userJid.hashCode());
         return result;
     }
 
@@ -340,10 +346,10 @@ public class LocalMUCRole implements MUCRole {
                 return false;
         } else if (!roomJid.equals(other.roomJid))
             return false;
-        if (user == null) {
-            if (other.user != null)
+        if (userJid == null) {
+            if (other.userJid != null)
                 return false;
-        } else if (!user.equals(other.user))
+        } else if (!userJid.equals(other.userJid))
             return false;
         return true;
     }
@@ -353,7 +359,7 @@ public class LocalMUCRole implements MUCRole {
     {
         return "LocalMUCRole{" +
             "roomJid=" + roomJid +
-            ", user=" + user +
+            ", userJid=" + userJid +
             ", nick='" + nick + '\'' +
             ", role=" + role +
             ", affiliation=" + affiliation +

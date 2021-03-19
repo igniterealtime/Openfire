@@ -70,7 +70,7 @@ public class LocalMUCUser implements MUCUser
     /**
      * Deliver packets to users.
      */
-    private final PacketRouter router;
+    private final PacketRouter router = XMPPServer.getInstance().getPacketRouter();
 
     /**
      * Time of last packet sent.
@@ -81,13 +81,11 @@ public class LocalMUCUser implements MUCUser
      * Create a new chat user.
      *
      * @param chatservice  the service the user belongs to.
-     * @param packetRouter the router for sending packets from this user.
      * @param jid          the real address of the user
      */
-    LocalMUCUser( MultiUserChatService chatservice, PacketRouter packetRouter, JID jid )
+    LocalMUCUser( MultiUserChatService chatservice, JID jid )
     {
         this.realjid = jid;
-        this.router = packetRouter;
         this.serviceName = chatservice.getServiceName();
     }
 

@@ -41,9 +41,9 @@ import javax.annotation.Nonnull;
 public class LocalMUCRole implements MUCRole {
 
     /**
-     * The room this role is valid in.
+     * The (bare) JID of the room this role is valid in.
      */
-    private LocalMUCRoom room;
+    private final JID roomJid;
 
     /**
      * The user of the role.
@@ -117,7 +117,7 @@ public class LocalMUCRole implements MUCRole {
             MUCRole.Role role, MUCRole.Affiliation affiliation, LocalMUCUser chatuser, Presence presence,
             PacketRouter packetRouter)
     {
-        this.room = chatroom;
+        this.roomJid = chatroom.getJID();
         this.nick = nickname;
         this.user = chatuser;
         this.server = chatserver;
@@ -128,7 +128,7 @@ public class LocalMUCRole implements MUCRole {
         extendedInformation =
                 DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
         calculateExtendedInformation();
-        rJID = new JID(room.getName(), server.getServiceDomain(), nick);
+        rJID = new JID(roomJid.getNode(), roomJid.getDomain(), nick);
         setPresence(presence);
 
         // Check if new occupant wants to be a deaf occupant
@@ -139,7 +139,7 @@ public class LocalMUCRole implements MUCRole {
         }
 
         // Add the new role to the list of roles
-        user.addRole(room.getName(), this);
+        user.addRole(roomJid.getNode(), this);
     }
 
     @Override
@@ -215,18 +215,18 @@ public class LocalMUCRole implements MUCRole {
     @Override
     public void changeNickname(String nickname) {
         this.nick = nickname;
-        setRoleAddress(new JID(room.getName(), server.getServiceDomain(), nick));
+        setRoleAddress(new JID(roomJid.getNode(), roomJid.getDomain(), nick));
     }
 
     @Override
     public void destroy() {
         // Notify the user that he/she is no longer in the room
-        user.removeRole(room.getName());
+        user.removeRole(roomJid.getNode());
     }
 
     @Override
     public MUCRoom getChatRoom() {
-        return room;
+        return XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid).getChatRoom(roomJid.getNode());
     }
 
     @Override
@@ -319,7 +319,7 @@ public class LocalMUCRole implements MUCRole {
         int result = 1;
         result = prime * result + ((nick == null) ? 0 : nick.hashCode());
         result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
-        result = prime * result + ((room == null) ? 0 : room.hashCode());
+        result = prime * result + ((roomJid == null) ? 0 : roomJid.hashCode());
         result = prime * result + ((user == null) ? 0 : user.hashCode());
         return result;
     }
@@ -343,10 +343,10 @@ public class LocalMUCRole implements MUCRole {
                 return false;
         } else if (!rJID.equals(other.rJID))
             return false;
-        if (room == null) {
-            if (other.room != null)
+        if (roomJid == null) {
+            if (other.roomJid != null)
                 return false;
-        } else if (!room.equals(other.room))
+        } else if (!roomJid.equals(other.roomJid))
             return false;
         if (user == null) {
             if (other.user != null)
@@ -360,7 +360,7 @@ public class LocalMUCRole implements MUCRole {
     public String toString()
     {
         return "LocalMUCRole{" +
-            "room=" + room +
+            "roomJid=" + roomJid +
             ", user=" + user +
             ", nick='" + nick + '\'' +
             ", role=" + role +

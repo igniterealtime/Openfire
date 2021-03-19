@@ -643,7 +643,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 Log.debug( "Adding user '{}' as an occupant of room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
 
                 // Create a new role for this user in this room.
-                joinRole = new LocalMUCRole(mucService, this, nickname, role, affiliation, user, presence, router);
+                joinRole = new LocalMUCRole(this, nickname, role, affiliation, user, presence, router);
 
                 // See if we need to join a federated room. Note that this can be blocking!
                 final Future<?> join = fmucHandler.join(joinRole);
@@ -673,7 +673,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                     occupantLeftEvent.run();
 
                     // Re-add the occupant. This should not trigger presence broadcasts, so it'll be largely 'invisible' to users.
-                    joinRole = new LocalMUCRole(mucService, this, nickname, role, affiliation, user, presence, router);
+                    joinRole = new LocalMUCRole(this, nickname, role, affiliation, user, presence, router);
                     CacheFactory.doClusterTask(new OccupantAddedEvent(this, joinRole));
                     addOccupantRole( joinRole );
                 }

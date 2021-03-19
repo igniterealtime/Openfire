@@ -1157,7 +1157,7 @@ public class FMUCHandler
 
         final LocalMUCUser user = new LocalMUCUser(room.getMUCService(), userJID );
 
-        final LocalMUCRole joinRole = new LocalMUCRole( room.getMUCService(), room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence), router);
+        final LocalMUCRole joinRole = new LocalMUCRole( room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence), router);
         joinRole.setReportedFmucAddress( userJID );
 
         final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( user, nickname );

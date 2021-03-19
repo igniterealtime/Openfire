@@ -1015,7 +1015,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         }
                     }
                 }
-                user = new LocalMUCUser(this, router, userjid);
+                user = new LocalMUCUser(this, userjid);
                 users.put(userjid, user);
             }
         }

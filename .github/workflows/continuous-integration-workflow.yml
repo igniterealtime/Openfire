@@ -175,12 +175,33 @@ jobs:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}
 
+  can-publish-docker:
+
+    # Based on https://github.com/GabLeRoux/github-actions-examples/blob/e0468ce2731b08bd8b1f7cd09d0b94c541310693/.github/workflows/secret_based_conditions.yml
+    name: Check if Docker Hub secrets exist
+    runs-on: ubuntu-latest
+    needs: [build, smack] # Add all tests when they're stable
+    outputs:
+      is_DOCKERHUB_SECRET_set: ${{ steps.checksecret_job.outputs.is_DOCKERHUB_SECRET_set }}
+    steps:
+      - name: Check whether unity activation requests should be done
+        id: checksecret_job
+        env:
+            DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_USERNAME }} # Could also test DOCKERHUB_TOKEN, but either is fine
+        run: |
+            echo "is_DOCKERHUB_SECRET_set: ${{ env.DOCKERHUB_SECRET != '' }}"
+            echo "::set-output name=is_DOCKERHUB_SECRET_set::${{ env.DOCKERHUB_SECRET != '' }}"
+
+
   publish-docker:
 
     name: Publish to Docker Hub
     runs-on: ubuntu-latest
-    needs: [build, smack] # Add all tests when they're stable
-    if: ${{github.repository == 'Fishbowler/Openfire' && github.event_name == 'push' && (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')}}
+    needs: [can-publish-docker]
+    if: |
+      needs.can-publish-docker.outputs.is_DOCKERHUB_SECRET_set == 'true' && 
+      github.event_name == 'push' && 
+      (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
 
     steps:
       - name: Set up variables if we're on master
@@ -229,7 +250,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: fishbowler/openfire:${{ env.SOURCE_TAG }}
+          tags: ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new

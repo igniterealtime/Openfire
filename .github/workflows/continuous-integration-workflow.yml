@@ -180,13 +180,16 @@ jobs:
     name: Publish to Docker Hub
     runs-on: ubuntu-latest
     needs: [build, smack] # Add all tests when they're stable
-    if: ${{github.repository == 'Fishbowler/Openfire' && github.event_name == 'push' && contains(github.ref, 'refs/tags/')}}
+    if: ${{github.repository == 'Fishbowler/Openfire' && github.event_name == 'push' && (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')}}
 
     steps:
-      - name: Set up variables
-        id: vars
-        run: |
-          echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+      - name: Set up variables if we're on master
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: echo "SOURCE_TAG=latest" >> $GITHUB_ENV
+
+      - name: Set up variables if we're on a tag
+        if: ${{ contains(github.ref, 'refs/tags/') }}
+        run: echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - uses: actions/checkout@v2
         with:
@@ -226,7 +229,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: fishbowler/openfire:${{ steps.vars.outputs.SOURCE_TAG }}
+          tags: fishbowler/openfire:${{ env.SOURCE_TAG }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new

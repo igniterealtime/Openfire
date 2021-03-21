@@ -184,7 +184,7 @@ jobs:
     outputs:
       is_DOCKERHUB_SECRET_set: ${{ steps.checksecret_job.outputs.is_DOCKERHUB_SECRET_set }}
     steps:
-      - name: Check whether unity activation requests should be done
+      - name: Check whether Docker Publish should be done
         id: checksecret_job
         env:
             DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_USERNAME }} # Could also test DOCKERHUB_TOKEN, but either is fine

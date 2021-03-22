@@ -567,6 +567,11 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             return false;
         }
 
+        // OF-2083: Prevent storing offline message that is already stored
+        if (message.getChildElement("offline", "http://jabber.org/protocol/offline") != null) {
+            return false;
+        }
+
         switch (message.getType()) {
             case chat:
                 // XEP-0160: Messages with a 'type' attribute whose value is "chat" SHOULD be stored offline, with the exception of messages that contain only Chat State Notifications (XEP-0085) [7] content

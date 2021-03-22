@@ -41,5 +41,5 @@ public interface OfflineMessageListener {
      *
      * @param message the message that was stored offline.
      */
-    void messageStored(Message message);
+    void messageStored(OfflineMessage message);
 }

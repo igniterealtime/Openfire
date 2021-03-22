@@ -23,6 +23,8 @@ import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.jivesoftware.openfire.vcard.PhotoResizer;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
+import org.jivesoftware.openfire.vcard.VCardTemplate;
+import org.jivesoftware.openfire.vcard.VCard;
 import org.jivesoftware.util.Base64;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
@@ -33,8 +35,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.ldap.Rdn;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:
@@ -123,11 +123,6 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
      * This is used/created only if we are storing avatars in the database.
      */
     private DefaultVCardProvider defaultProvider = null;
-
-    /**
-     * A regular expression that matches values enclosed in { and }, applying a group to the value that's surrounded.
-     */
-    public static final Pattern PATTERN = Pattern.compile("(\\{)([\\d\\D&&[^}]]+)(})");
 
     public LdapVCardProvider() {
         // Convert XML based provider setup to Database based
@@ -472,129 +467,5 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
     @Override
     public void xmlPropertyDeleted(String property, Map params) {
         //Ignore
-    }
-
-    /**
-     * Class to hold a <code>Document</code> representation of a vcard mapping
-     * and unique attribute placeholders. Used by <code>VCard</code> to apply
-     * a <code>Map</code> of ldap attributes to ldap values via
-     * <code>MessageFormat</code>
-     *
-     * @author rkelly
-     */
-    static class VCardTemplate {
-
-        private Document document;
-
-        private String[] attributes;
-
-        public VCardTemplate(Document document) {
-            Set<String> set = new HashSet<>();
-            this.document = document;
-            treeWalk(this.document.getRootElement(), set);
-            attributes = set.toArray(new String[0]);
-        }
-
-        public String[] getAttributes() {
-            return attributes;
-        }
-
-        public Document getDocument() {
-            return document;
-        }
-
-        private void treeWalk(Element rootElement, Set<String> set) {
-            for ( final Element element : rootElement.elements() ) {
-                final String value = element.getTextTrim();
-                if ( value != null && !value.isEmpty()) {
-                    final Matcher matcher = PATTERN.matcher(value);
-                    while (matcher.find()) {
-                        final String match = matcher.group(2);
-                        Log.trace("Found attribute '{}'", match);
-                        set.add(match);
-                    }
-                }
-                treeWalk(element, set);
-            }
-        }
-    }
-
-    /**
-     * vCard class that converts vcard data using a template.
-     */
-    static class VCard {
-
-        private VCardTemplate template;
-
-        public VCard(VCardTemplate template) {
-            this.template = template;
-        }
-
-        public Element getVCard(Map<String, String> map) {
-            Document document = (Document) template.getDocument().clone();
-            Element element = document.getRootElement();
-            return treeWalk(element, map);
-        }
-
-        private Element treeWalk(Element rootElement, Map<String, String> map) {
-            for ( final Element element : rootElement.elements() ) {
-                String elementText = element.getTextTrim();
-                if (elementText != null && !"".equals(elementText)) {
-                    String format = element.getStringValue();
-
-                    // A map that will hold all replacements for placeholders
-                    final Map<String,String> replacements = new HashMap<>();
-
-                    // find all placeholders, and look up what they should be replaced with.
-                    final Matcher matcher = PATTERN.matcher(format);
-                    while (matcher.find()) {
-                        final String group = matcher.group();
-                        final String attribute = matcher.group(2);
-                        final String value = map.get(attribute);
-                        replacements.put( group, value );
-                    }
-
-                    // perform the replacement.
-                    for ( Map.Entry<String, String> entry : replacements.entrySet() ) {
-                        final String placeholder = entry.getKey();
-                        final String replacement = entry.getValue() != null ? entry.getValue() : "";
-                        format = format.replace(placeholder, replacement);
-                        Log.trace("Replaced attribute '{}' with '{}'", placeholder, replacement);
-                    }
-
-                    // When 'prioritized' replacements are used, the resulting value now will have those filled out:
-                    // example:   (|()(valueB)(valueC))
-                    // From this format, only the first non-empty value enclosed in brackets needs to be used.
-                    final int start = format.indexOf("(|(");
-                    final int end = format.indexOf("))");
-                    if ( start > -1 && end > start ) {
-                        // Take the substring that is: (|()(valueB)(valueC))
-                        final String filter = format.substring(start, end + "))".length());
-
-                        // Take the substring that is: )(valueB)(valueC
-                        final String values = filter.substring("(|(".length(), filter.length() - "))".length() );
-
-                        // Split on ")(" to get the individual values.
-                        final String[] splitted = values.split("\\)\\(");
-
-                        // find the first non-empty string.
-                        String firstValue = "";
-                        for ( final String split : splitted ) {
-                            if ( split != null && !split.isEmpty() ) {
-                                firstValue = split;
-                                break;
-                            }
-                        }
-
-                        // Replace the original filter with just the first matching value.
-                        format = format.replace(filter, firstValue);
-                    }
-
-                    element.setText(format);
-                }
-                treeWalk(element, map);
-            }
-            return rootElement;
-        }
     }
 }

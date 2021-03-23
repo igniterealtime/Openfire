@@ -268,3 +268,23 @@ jobs:
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+
+  test-published-docker:
+    name: Test tagged images published to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [publish-docker]
+    if: contains(github.ref, 'refs/tags/')
+    
+    services:
+      openfire:
+        image: ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${GITHUB_REF#refs/tags/}
+        ports:
+          - 9090:9090
+    
+    steps:
+      - name: Wait for Openfire Admin to be ready
+        run: |
+          curl https://raw.githubusercontent.com/vishnubob/wait-for-it/81b1373f17855a4dc21156cfe1694c31d7d1792e/wait-for-it.sh --output ./wait-for-it.sh
+          chmod +x wait-for-it.sh
+          ./wait-for-it.sh --host openfire --port ${{ job.services.openfire.ports['9090'] }} --timeout 60 -- echo "Openfire is up!"
+    

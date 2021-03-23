@@ -224,6 +224,9 @@ jobs:
           name: distribution-java11
           path: distribution/target/distribution-base
 
+      - name: Fix file permissions
+        run: find . -type f -name '*.sh' -exec chmod +x {} \;
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       

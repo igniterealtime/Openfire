@@ -13,6 +13,7 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="java.util.*" %>
+<%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -86,6 +87,11 @@
             {
                 try
                 {
+                    // When updating certificates through the admin console, do not cause changes to restart the website, as
+                    // that is very likely to log out the administrator that is performing the changes. As the keystore change
+                    // event is async, this line disables restarting the plugin for a few minutes.
+                    ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+
                     identityStore.delete( alias );
 
                     // Log the event
@@ -106,6 +112,11 @@
 
     if (generate) {
         try {
+            // When updating certificates through the admin console, do not cause changes to restart the website, as
+            // that is very likely to log out the administrator that is performing the changes. As the keystore change
+            // event is async, this line disables restarting the plugin for a few minutes.
+            ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+
             if (!identityStore.containsAllIdentityCertificate()) {
                 identityStore.addSelfSignedDomainCertificate();
 
@@ -128,6 +139,11 @@
         String reply = ParamUtils.getParameter(request, "reply");
         if (alias != null && reply != null && reply.trim().length() > 0) {
             try {
+                // When updating certificates through the admin console, do not cause changes to restart the website, as
+                // that is very likely to log out the administrator that is performing the changes. As the keystore change
+                // event is async, this line disables restarting the plugin for a few minutes.
+                ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+
                 identityStore.installCSRReply(alias, reply);
                 identityStore.persist();
                 // Log the event

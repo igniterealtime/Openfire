@@ -204,7 +204,6 @@ jobs:
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
 
     outputs:
-      imagename: ${{ steps.dockerhub-imagename.outputs.DOCKERHUB_OPENFIREIMAGE }}
       imagedigest: ${{ steps.docker_build.outputs.digest }}
     
     steps:
@@ -221,20 +220,6 @@ jobs:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of master
           ref: ${{ github.event.push.after }}
-
-      - name: Set Docker Hub env vars from file
-        run: |
-          cat ".github/dockerhub.env" >>$GITHUB_ENV
-        
-      - name: Put Docker Hub repo name into outputs
-        id: dockerhub-imagename
-        run: |
-          echo "::set-output name=DOCKERHUB_OPENFIREIMAGE::${{ env.DOCKERHUB_OPENFIREIMAGE }}"
-
-      - name: Debug outputs
-        run: |
-          echo "Image: ${{ steps.dockerhub-imagename.outputs.DOCKERHUB_OPENFIREIMAGE }}"
-          echo "Outputs: ${{ toJson(steps.dockerhub-imagename.outputs) }}"
 
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v2
@@ -262,7 +247,7 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1 
         with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push to Docker Hub
@@ -271,7 +256,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.dockerhub-imagename.outputs.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
+          tags: ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
@@ -287,26 +272,31 @@ jobs:
       - name: Image digest
         run: |
           echo Images published:
-          echo ${{ steps.dockerhub-imagename.outputs.DOCKERHUB_OPENFIREIMAGE }}:${{ steps.docker_build.outputs.digest }}
-          echo ${{ steps.dockerhub-imagename.outputs.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
+          echo ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ steps.docker_build.outputs.digest }}
+          echo ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
 
   test-published-docker:
     name: Test tagged images published to Docker Hub
     runs-on: ubuntu-latest
     needs: [publish-docker]
     if: contains(github.ref, 'refs/tags/')
-    
-    services:
-      openfire:
-        image: ${{needs.publish-docker.outputs.imagename}}@${{needs.publish-docker.outputs.imagedigest}}
-        ports:
-          - 9090:9090
-    
+
     steps:
-      - name: Wait for Openfire Admin to be ready
-        uses: nev7n/wait_for_response@v1
-        with:
-          url: 'http://openfire:9090/'
-          responseCode: 200
-          interval: 300
+      - name: Launch & Check Openfire
+        run: |
+          docker run --name openfire -d -p 9090:9090 ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}@${{needs.publish-docker.outputs.imagedigest}}
           
+          attempt_counter=0
+          max_attempts=30
+          until $(curl --output /dev/null --silent --head --fail http://127.0.0.1:9090); do
+              if [ ${attempt_counter} -eq ${max_attempts} ];then
+                echo "Max attempts reached. Openfire failed to launch."
+                exit 1
+              fi
+
+              printf '.'
+              attempt_counter=$(($attempt_counter+1))
+              sleep 1
+          done
+          echo "Openfire Admin is reachable."
+          docker logs openfire

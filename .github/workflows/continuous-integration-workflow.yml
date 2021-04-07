@@ -3,11 +3,7 @@ name: Openfire CI
 env:
   CI: true
 
-on:
-  push:
-    branches: "**"
-  pull_request:
-    branches: "**"
+on: [push, pull_request]
 
 jobs:
   build:
@@ -145,7 +141,7 @@ jobs:
       - name: Run smack tests
         run: ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 # Try tests a few times, in case of flakiness
 
-  publish:
+  publish-maven:
 
     name: Publish to Maven
     runs-on: ubuntu-latest
@@ -178,3 +174,129 @@ jobs:
         env:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}
+
+  can-publish-docker:
+
+    # Based on https://github.com/GabLeRoux/github-actions-examples/blob/e0468ce2731b08bd8b1f7cd09d0b94c541310693/.github/workflows/secret_based_conditions.yml
+    name: Check if Docker Hub secrets exist
+    runs-on: ubuntu-latest
+    needs: [build, smack] # Add all tests when they're stable
+    outputs:
+      is_DOCKERHUB_SECRET_set: ${{ steps.checksecret_job.outputs.is_DOCKERHUB_SECRET_set }}
+    steps:
+      - name: Check whether Docker Publish should be done
+        id: checksecret_job
+        env:
+            DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+            echo "is_DOCKERHUB_SECRET_set: ${{ env.DOCKERHUB_SECRET != '' }}"
+            echo "::set-output name=is_DOCKERHUB_SECRET_set::${{ env.DOCKERHUB_SECRET != '' }}"
+
+
+  publish-docker:
+
+    name: Publish to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [can-publish-docker]
+    if: |
+      needs.can-publish-docker.outputs.is_DOCKERHUB_SECRET_set == 'true' && 
+      github.event_name == 'push' && 
+      (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
+
+    outputs:
+      imagedigest: ${{ steps.docker_build.outputs.digest }}
+    
+    steps:
+      - name: Set up variables if we're on master
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: echo "SOURCE_TAG=latest" >> $GITHUB_ENV
+
+      - name: Set up variables if we're on a tag
+        if: ${{ contains(github.ref, 'refs/tags/') }}
+        run: echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v2
+        with:
+          # Defend against another commit quickly following the first
+          # We want the one that's been tested, rather than the head of master
+          ref: ${{ github.event.push.after }}
+
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v2
+        with:
+          name: distribution-java11
+          path: distribution/target/distribution-base
+
+      - name: Fix file permissions
+        run: find . -type f -name '*.sh' -exec chmod +x {} \;
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers # TODO: Validate that caches are faster than no caches
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push to Docker Hub
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache
+        # Temp fix
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Image digest
+        run: |
+          echo Images published:
+          echo ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ steps.docker_build.outputs.digest }}
+          echo ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
+
+  test-published-docker:
+    name: Test tagged images published to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [publish-docker]
+    if: contains(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Launch & Check Openfire
+        run: |
+          docker run --name openfire -d -p 9090:9090 ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}@${{needs.publish-docker.outputs.imagedigest}}
+          
+          attempt_counter=0
+          max_attempts=30
+          until $(curl --output /dev/null --silent --head --fail http://127.0.0.1:9090); do
+              if [ ${attempt_counter} -eq ${max_attempts} ];then
+                echo "Max attempts reached. Openfire failed to launch."
+                exit 1
+              fi
+
+              printf '.'
+              attempt_counter=$(($attempt_counter+1))
+              sleep 1
+          done
+          echo "Openfire Admin is reachable."
+          docker logs openfire

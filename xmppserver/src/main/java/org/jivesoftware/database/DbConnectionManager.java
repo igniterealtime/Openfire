@@ -855,7 +855,7 @@ public class DbConnectionManager {
         if (dbName.contains("oracle")) {
             databaseType = DatabaseType.oracle;
             streamTextRequired = true;
-            scrollResultsSupported = false; /* TODO comment and test this, it should be supported since 10g */
+            // scrollResultsSupported = false; /* comment and test this, it should be supported since 10g */
             // The i-net AUGURO JDBC driver
             if (driverName.contains("auguro")) {
                 streamTextRequired = false;

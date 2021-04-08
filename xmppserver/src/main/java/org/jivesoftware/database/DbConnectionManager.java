@@ -886,7 +886,7 @@ public class DbConnectionManager {
             }
         }
         // MySQL properties
-        else if (dbName.contains("mysql")) {
+        else if (dbName.contains("mysql") || dbName.contains("maria")) {
             databaseType = DatabaseType.mysql;
             transactionsSupported = false; /* TODO comment and test this, it should be supported since 5.0 */
         }

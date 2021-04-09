@@ -1043,10 +1043,22 @@ public class HttpSession extends LocalClientSession {
             // not eligible to receive data. These facts combines should rule out the need to flush pending elements to
             // open connections in this method.
             synchronized (connectionQueue) {
+                boolean isFirst = true;
                 for (HttpConnection toClose : connectionQueue) {
                     try {
+                        // XEP-0124, section 13: "The connection manager SHOULD acknowledge the session termination on
+                        // the oldest connection with a HTTP 200 OK containing a <body/> element of the type
+                        // 'terminate'. On all other open connections, the connection manager SHOULD respond with an
+                        // HTTP 200 OK containing an empty <body/> element.
                         if (!toClose.isClosed()) {
-                            toClose.deliverBody(null, true);
+                            final String body;
+                            if (isFirst) {
+                                isFirst = false;
+                                body = this.createEmptyBody(true);
+                            } else {
+                                body = null;
+                            }
+                            toClose.deliverBody(body, true);
                         }
                     } catch (HttpConnectionClosedException e) {
                         // Probably benign.

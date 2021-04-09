@@ -75,7 +75,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
-          python-version: 3.6
+          python-version: 3.9
      
       - name: Run aioxmpp tests
         run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness

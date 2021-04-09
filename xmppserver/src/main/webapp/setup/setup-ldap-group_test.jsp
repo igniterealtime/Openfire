@@ -43,7 +43,7 @@
         }
     } else {
         // Information was not found in the HTTP Session. Internal error?
-        errorDetail = LocaleUtils.getLocalizedString("setup.ldap.test.internal-server-error");
+        errorDetail = LocaleUtils.getLocalizedString("setup.invalid_session");
     }
 
     pageContext.setAttribute( "errorDetail", errorDetail );

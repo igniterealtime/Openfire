@@ -54,7 +54,8 @@ jobs:
   aioxmpp:
 
     name: Execute aioxmpp-based CI tests
-    runs-on: ubuntu-latest
+    # ubuntu-latest may have issues with Epoll python events
+    runs-on: ubuntu-18.04
     needs: build
 
     steps:

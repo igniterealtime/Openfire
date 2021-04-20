@@ -87,35 +87,29 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
             /* handle results coming through BOSH Connections,
              * other results are processed in org.jivesoftware.openfire.net.SocketRead.java - getIQ()
              */
-            try {
-                LocalSession localSession = (LocalSession) XMPPServer.getInstance().getSessionManager().getSession(packet.getFrom());
+            LocalSession localSession = (LocalSession) XMPPServer.getInstance().getSessionManager().getSession(packet.getFrom());
 
-                Element query = packet.getChildElement();
-                List<Element> elements = query.elements();
-                if (elements.size() > 0) {
-                    for (Element element : elements) {
-                        if (element.getName() != null && element.getStringValue() != null) {
-                            if (localSession!=null)
-                            {
-                                localSession.setSoftwareVersionData(element.getName(), element.getStringValue());
-                            }
-                            else
-                            {
-                                /*
-                                  The result comes from a server 2 server connection, so we write the information
-                                  to the log, because we dont need it at this point.
-                                */
-                                Log.info(packet.getFrom()+" "+element.getName()+"="+element.getStringValue());
-                            }
-                        } else {
-                            Log.warn("No software version data found in packet: " + packet.toXML());
+            Element query = packet.getChildElement();
+            List<Element> elements = query.elements();
+            if (elements.size() > 0) {
+                for (Element element : elements) {
+                    if (element.getName() != null && element.getStringValue() != null) {
+                        if (localSession!=null)
+                        {
+                            localSession.setSoftwareVersionData(element.getName(), element.getStringValue());
+                        }
+                        else
+                        {
+                            /*
+                              The result comes from a server 2 server connection, so we write the information
+                              only to the debug log, because we dont need it at this point.
+                            */
+                            Log.debug(packet.getFrom()+" "+element.getName()+"="+element.getStringValue());
                         }
                     }
                 }
-
-            } catch (Exception e) {
-                Log.error(e.getMessage(), e);
             }
+
             return null;
         }
         // Ignore any other type of packet

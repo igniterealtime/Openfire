@@ -63,6 +63,8 @@
                 }
             }
         }
+    } else {
+        errorDetail = LocaleUtils.getLocalizedString("setup.invalid_session");
     }
 
     pageContext.setAttribute( "success", success );

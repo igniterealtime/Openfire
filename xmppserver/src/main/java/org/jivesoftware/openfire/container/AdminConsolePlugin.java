@@ -22,9 +22,11 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimerTask;
 
 import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
@@ -63,11 +65,7 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
-import org.jivesoftware.util.CertificateEventListener;
-import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +91,8 @@ public class AdminConsolePlugin implements Plugin {
     private ContextHandlerCollection contexts;
     private CertificateEventListener certificateListener;
     private boolean restartNeeded = false;
+    private boolean autoRestartEnabled = true;
+    private TimerTask reenableTask = null;
     private boolean sslEnabled = false;
 
     private File pluginDir;
@@ -494,6 +494,43 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     /**
+     * Temporarily disables auto-restarting of the plugin's webserver when certificate changes are detected.
+     *
+     * @param pause The duration for which certificate changes are ignored.
+     */
+    public synchronized void pauseAutoRestartEnabled(final Duration pause) {
+        setAutoRestartEnabled(false);
+
+        if (reenableTask != null) {
+            TaskEngine.getInstance().cancelScheduledTask(reenableTask);
+        }
+        reenableTask = new TimerTask() {
+            @Override
+            public void run() {
+                 setAutoRestartEnabled(true);
+            }
+        };
+
+        TaskEngine.getInstance().schedule(reenableTask, pause.toMillis());
+    }
+
+    /**
+     * Controls if the webserver is automatically reloaded when a certificate change is detected. It is useful to disable
+     * this when the certificates are being updated through the admin console, as that would cause the administrative
+     * user to be logged out while working on the certificate stores.
+     *
+     * @param autoRestartEnabled 'true' if the plugin's webserver should be automatically reloaded when certificate changes are detected.
+     */
+    private void setAutoRestartEnabled(final boolean autoRestartEnabled) {
+        Log.info("Setting auto-restart enabled to {}", autoRestartEnabled);
+        this.autoRestartEnabled = autoRestartEnabled;
+    }
+
+    private boolean isAutoRestartEnabled() {
+        return autoRestartEnabled;
+    }
+
+    /**
      * Listens for security certificates being created and destroyed so we can track when the
      * admin console needs to be restarted.
      */
@@ -502,7 +539,13 @@ public class AdminConsolePlugin implements Plugin {
         @Override
         public void storeContentChanged( CertificateStore store )
         {
-            restartNeeded = true;
+            if (autoRestartEnabled) {
+                Log.info("Automatically restarting plugin. Certificate changes detected.");
+                restart();
+            } else {
+                restartNeeded = true;
+                Log.info("Certificate changes detected. Plugin needs a restart for changed to be applied.");
+            }
         }
     }
 }

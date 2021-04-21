@@ -57,6 +57,42 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>git-info</id>
+            <activation>
+                <file>
+                    <exists>${maven.multiModuleProjectDirectory}/.git</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>pl.project13.maven</groupId>
+                        <artifactId>git-commit-id-plugin</artifactId>
+                        <version>4.0.3</version>
+                        <executions>
+                            <execution>
+                                <id>get-the-git-infos</id>
+                                <goals>
+                                    <goal>revision</goal>
+                                </goals>
+                                <phase>initialize</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <dotGitDirectory>${maven.multiModuleProjectDirectory}/.git</dotGitDirectory>
+                            <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                            <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                            <includeOnlyProperties>
+                                <includeOnlyProperty>^git.build.(time|version)$</includeOnlyProperty>
+                                <includeOnlyProperty>^git.commit.id.(abbrev|full)$</includeOnlyProperty>
+                            </includeOnlyProperties>
+                            <commitIdGenerationMode>full</commitIdGenerationMode>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -129,7 +165,6 @@
                     <argLine>-Duser.language=us -Duser.country=US</argLine>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 
@@ -284,7 +319,7 @@
         <dependency>
             <groupId>com.rometools</groupId>
             <artifactId>rome</artifactId>
-            <version>1.12.0</version>
+            <version>1.15.0</version>
         </dependency>
 
         <!-- Random stuff -->
@@ -312,7 +347,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
-            <version>2.6.2</version>
+            <version>2.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -332,7 +367,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.12</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>com.cenqua.shaj</groupId>
@@ -347,7 +382,7 @@
         <dependency>
             <groupId>org.jsmpp</groupId>
             <artifactId>jsmpp</artifactId>
-            <version>2.3.7</version>
+            <version>2.3.10</version>
         </dependency>
         <dependency>
             <groupId>opensymphony</groupId>
@@ -374,6 +409,11 @@
             <version>2.3.1</version>
         </dependency>
         <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.3</version>
+        </dependency>
+        <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-bmp</artifactId>
             <version>3.5</version>
@@ -393,7 +433,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.14</version>
+            <version>42.2.19</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.jtds</groupId>
@@ -403,7 +443,7 @@
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>7.2.2.jre8</version>
+            <version>7.4.1.jre8</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

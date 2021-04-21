@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.0-beta2"
+SMACK_VERSION="4.4.2"
 GRADLE_VERSION="6.3"
-FORCE_CUSTOM_GRADLE=false
+FORCE_CUSTOM_GRADLE=true
 CURL_ARGS="--location --silent"
 DEBUG=false
 LOCAL_RUN=false
@@ -18,7 +18,7 @@ usage()
 	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
 	echo "    -l: Launch a local Openfire. (default: off)"
 	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
-	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
+	echo "    -g: Use system Gradle, rather than use the known-good (default: off)"
 	echo "    -s: Set Smack to the given version (default: ${SMACK_VERSION})"
 	echo "    -h: The hostname for the Openfire under test (default: example.org)"
 	echo "    -u: Admin username for Openfire (default: admin)"
@@ -36,7 +36,7 @@ while getopts dlgs:h:i:u:p: OPTION "$@"; do
 			LOCAL_RUN=true
 			;;
 		g)
-			FORCE_CUSTOM_GRADLE=true
+			FORCE_CUSTOM_GRADLE=false
 			;;
 		s)
 			SMACK_VERSION="${OPTARG}"
@@ -156,10 +156,7 @@ function runTestsInGradle {
 
 	DISABLED_INTEGRATION_TESTS=()
 
-	# MultiUserChatIntegrationTest.mucDestroyTest suffers from a race condition, making this test flap. See https://github.com/igniterealtime/Smack/pull/437
-	DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
-    
-    # The three tests below suffer from a race conditaion, making them flap. See https://github.com/igniterealtime/Smack/pull/440
+	# The three tests below suffer from a race conditaion, making them flap. See https://github.com/igniterealtime/Smack/pull/440
     DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)

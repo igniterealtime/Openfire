@@ -134,7 +134,7 @@
                     <a href="/index.jsp"><img src="/images/login_logo.gif" alt="Openfire" width="179" height="53" /></a>
                 </div>
                 <div id="jive-userstatus">
-                    <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %><br/>
+                    <%= AdminConsole.getAppName() %> <%= AdminConsole.getVersionString() %>, build <%= AdminConsole.getGitSHAString() %><br/>
                 </div>
                 <div id="jive-nav">
                     <div id="jive-nav-left"></div>

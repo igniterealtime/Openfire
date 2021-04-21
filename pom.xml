@@ -118,7 +118,7 @@
 
         <!-- Versions -->
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
-        <jetty.version>9.4.35.v20201120</jetty.version>
+        <jetty.version>9.4.39.v20210325</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <mina.version>2.1.3</mina.version>
         <bouncycastle.version>1.68</bouncycastle.version>

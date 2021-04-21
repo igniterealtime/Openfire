@@ -104,7 +104,7 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
                               The result comes from a server 2 server connection, so we write the information
                               only to the debug log, because we dont need it at this point.
                             */
-                            Log.debug(packet.getFrom()+" "+element.getName()+"="+element.getStringValue());
+                            Log.debug("XEP-0092 Packet from={} {}={}",packet.getFrom(),element.getName(),element.getStringValue());
                         }
                     }
                 }

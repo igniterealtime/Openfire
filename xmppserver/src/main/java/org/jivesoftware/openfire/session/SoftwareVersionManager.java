@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.TimerTask;
 
 /**
  * A SoftwareVersionManager is the main responsible for sending query to remote entity and 
@@ -94,11 +95,10 @@ public class SoftwareVersionManager extends BasicModule implements SessionEventL
         // has been established (see IQSessionEstablishmentHandler). Sadly, Openfire
         // does not provide a hook for this. For now, the resource bound event is
         // used instead (which should be immediately followed by session establishment).
-        TaskEngine.getInstance().submit( () -> {
-            try {
-                Thread.sleep( VERSION_QUERY_DELAY.getValue().toMillis() ); // Let time pass for the session establishment to have occurred.
-
-                if (session.isClosed()){
+        TaskEngine.getInstance().schedule( new TimerTask() {
+            @Override
+            public void run() { try {
+                if (session.isClosed() || !VERSION_QUERY_ENABLED.getValue()){
                     return;
                 }
 
@@ -109,7 +109,7 @@ public class SoftwareVersionManager extends BasicModule implements SessionEventL
                 session.process(versionRequest);
             } catch (Exception e) {
                 Log.error("Exception while trying to query a client ({}) for its software version.", session.getAddress(), e);
-            }
-        } );
+            }}
+        }, VERSION_QUERY_DELAY.getValue().toMillis()); // Let time pass for the session establishment to have occurred.
     }
 }

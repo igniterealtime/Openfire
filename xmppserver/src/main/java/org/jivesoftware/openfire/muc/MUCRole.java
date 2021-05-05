@@ -378,6 +378,31 @@ public interface MUCRole {
                 default: return none;
             }
         }
+
+        /**
+         * Returns the affiliation associated with the specified value.
+         *
+         * @param value the value.
+         * @return the associated affiliation.
+         */
+        public static Role fromString(String value) {
+            switch (value) {
+                case "moderator": return moderator;
+                case "participant": return participant;
+                case "visitor": return visitor;
+                default: return none;
+            }
+        }
+
+        @Override
+        public String toString() {
+            switch (this.value) {
+                case 0: return "moderator";
+                case 1: return "participant";
+                case 2: return "visitor";
+                default: return "none";
+            }
+        }
     }
 
     /**

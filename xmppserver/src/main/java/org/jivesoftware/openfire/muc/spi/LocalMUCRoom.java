@@ -3283,7 +3283,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         ExternalizableUtil.getInstance().writeSafeUTF(out, description);
         ExternalizableUtil.getInstance().writeBoolean(out, canOccupantsChangeSubject);
         ExternalizableUtil.getInstance().writeInt(out, maxUsers);
-        ExternalizableUtil.getInstance().writeStringList(out, rolesToBroadcastPresence.stream().map(Enum::name).collect(Collectors.toList())); // This uses stringlist for compatibility with Openfire 4.6.0. Can be replaced the next major release.
+        ExternalizableUtil.getInstance().writeSerializableCollection(out, rolesToBroadcastPresence);
         ExternalizableUtil.getInstance().writeBoolean(out, publicRoom);
         ExternalizableUtil.getInstance().writeBoolean(out, persistent);
         ExternalizableUtil.getInstance().writeBoolean(out, moderated);
@@ -3336,7 +3336,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         description = ExternalizableUtil.getInstance().readSafeUTF(in);
         canOccupantsChangeSubject = ExternalizableUtil.getInstance().readBoolean(in);
         maxUsers = ExternalizableUtil.getInstance().readInt(in);
-        rolesToBroadcastPresence.addAll(ExternalizableUtil.getInstance().readStringList(in).stream().map(MUCRole.Role::valueOf).collect(Collectors.toSet())); // This uses stringlist for compatibility with Openfire 4.6.0. Can be replaced the next major release.
+        ExternalizableUtil.getInstance().readSerializableCollection(in, rolesToBroadcastPresence, getClass().getClassLoader());
         publicRoom = ExternalizableUtil.getInstance().readBoolean(in);
         persistent = ExternalizableUtil.getInstance().readBoolean(in);
         moderated = ExternalizableUtil.getInstance().readBoolean(in);

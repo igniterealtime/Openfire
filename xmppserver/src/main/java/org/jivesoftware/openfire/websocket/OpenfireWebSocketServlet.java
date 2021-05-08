@@ -15,7 +15,11 @@
  */
 package org.jivesoftware.openfire.websocket;
 
+import java.io.IOException;
 import java.text.MessageFormat;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.websocket.common.extensions.compress.PerMessageDeflateExtension;
 import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
@@ -23,6 +27,7 @@ import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
 import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.ClientSession;
@@ -44,6 +49,14 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
     private static final long serialVersionUID = 7281841492829464605L;
     private static final Logger Log = LoggerFactory.getLogger(OpenfireWebSocketServlet.class);
 
+    private HttpBindManager boshManager;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        boshManager = HttpBindManager.getInstance();
+    }
+
     @Override
     public void destroy()
     {
@@ -62,6 +75,29 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
         super.destroy();
     }
 
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
+        // add CORS headers for all HTTP responses (errors, etc.)
+        if (boshManager.isCORSEnabled())
+        {
+            if (boshManager.isAllOriginsAllowed()) {
+                // Set the Access-Control-Allow-Origin header to * to allow all Origin to do the CORS
+                response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
+            } else {
+                // Get the Origin header from the request and check if it is in the allowed Origin Map.
+                // If it is allowed write it back to the Access-Control-Allow-Origin header of the respond.
+                final String origin = request.getHeader("Origin");
+                if (boshManager.isThisOriginAllowed(origin)) {
+                    response.setHeader("Access-Control-Allow-Origin", origin);
+                }
+            }
+            response.setHeader("Access-Control-Allow-Methods", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT);
+            response.setHeader("Access-Control-Allow-Headers", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT);
+            response.setHeader("Access-Control-Max-Age", HttpBindManager.HTTP_BIND_CORS_MAX_AGE_DEFAULT);
+        }
+        super.service(request, response);
+    }
     @Override
     public void configure(WebSocketServletFactory factory)
     {

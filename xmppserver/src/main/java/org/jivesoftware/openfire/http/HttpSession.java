@@ -103,13 +103,11 @@ public class HttpSession extends LocalClientSession {
     @GuardedBy("connectionQueue")
     private final List<Deliverable> pendingElements = new ArrayList<>();
 
-    @GuardedBy("connectionQueue")
     private final List<Delivered> sentElements = new ArrayList<>();
 
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private final AtomicBoolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
 
@@ -139,7 +137,6 @@ public class HttpSession extends LocalClientSession {
                        StreamID streamID, HttpConnection connection, Locale language) throws UnknownHostException
     {
         super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
-        this.isClosed = new AtomicBoolean(false);
         this.lastActivity = System.currentTimeMillis();
         this.lastSequentialRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
@@ -193,9 +190,6 @@ public class HttpSession extends LocalClientSession {
      */
     @Override
     public void close() {
-        if (isClosed.get()) {
-            return;
-        }
         Log.debug("Session {} being closed", getStreamID());
         conn.close();
     }
@@ -207,7 +201,7 @@ public class HttpSession extends LocalClientSession {
      */
     @Override
     public boolean isClosed() {
-        return isClosed.get();
+        return conn.isClosed();
     }
 
     /**
@@ -1051,10 +1045,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void closeSession() {
-        if (!isClosed.compareAndSet(false, true)) {
-            return; // already closed.
-        }
-
         try {
             // There generally should not be a scenario where there are pending connections, as well as pending elements
             // to deliver, as when a new connection becomes available while there are pending elements, those will be

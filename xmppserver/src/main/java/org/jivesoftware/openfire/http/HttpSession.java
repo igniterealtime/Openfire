@@ -1315,7 +1315,7 @@ public class HttpSession extends LocalClientSession {
                     answer.add(packet);
                 }
                 catch (Exception e) {
-                    Log.error("Error while parsing Privacy Property", e);
+                    Log.error("Error while parsing text as stanza: {}", packetXML, e);
                 }
             }
             return answer;

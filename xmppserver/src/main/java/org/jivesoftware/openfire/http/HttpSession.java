@@ -59,6 +59,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -100,7 +101,7 @@ public class HttpSession extends LocalClientSession {
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
-    private volatile boolean isClosed;
+    private final AtomicBoolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
     private long lastActivity;
@@ -123,7 +124,7 @@ public class HttpSession extends LocalClientSession {
                        StreamID streamID, HttpConnection connection, Locale language) throws UnknownHostException
     {
         super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
-        this.isClosed = false;
+        this.isClosed = new AtomicBoolean(false);
         this.lastActivity = System.currentTimeMillis();
         this.lastSequentialRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
@@ -177,7 +178,7 @@ public class HttpSession extends LocalClientSession {
      */
     @Override
     public void close() {
-        if (isClosed) {
+        if (isClosed.get()) {
             return;
         }
         Log.debug("Session {} being closed", getStreamID());
@@ -191,7 +192,7 @@ public class HttpSession extends LocalClientSession {
      */
     @Override
     public boolean isClosed() {
-        return isClosed;
+        return isClosed.get();
     }
 
     /**
@@ -1032,8 +1033,9 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void closeSession() {
-        if (isClosed) { return; }
-        isClosed = true;
+        if (!isClosed.compareAndSet(false, true)) {
+            return; // already closed.
+        }
 
         try {
             // There generally should not be a scenario where there are pending connections, as well as pending elements

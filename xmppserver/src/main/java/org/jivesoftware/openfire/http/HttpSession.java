@@ -48,6 +48,7 @@ import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
@@ -95,18 +96,32 @@ public class HttpSession extends LocalClientSession {
 
     private int wait;
     private int hold = 0;
-    private final List<HttpConnection> connectionQueue = Collections.synchronizedList(new LinkedList<>());
-    private final List<Deliverable> pendingElements = Collections.synchronizedList(new ArrayList<>());
-    private final List<Delivered> sentElements = Collections.synchronizedList(new ArrayList<>());
+
+    @GuardedBy("itself")
+    private final List<HttpConnection> connectionQueue = new LinkedList<>();
+
+    @GuardedBy("connectionQueue")
+    private final List<Deliverable> pendingElements = new ArrayList<>();
+
+    @GuardedBy("connectionQueue")
+    private final List<Delivered> sentElements = new ArrayList<>();
+
     private boolean isSecure;
     private int maxPollingInterval;
     private long lastPoll = -1;
     private final AtomicBoolean isClosed;
     private int inactivityTimeout;
     private int defaultInactivityTimeout;
+
+    @GuardedBy("connectionQueue")
     private long lastActivity;
+
+    @GuardedBy("connectionQueue")
     private long lastSequentialRequestID; // received
+
+    @GuardedBy("connectionQueue")
     private long lastAnsweredRequestID; // sent
+
     private boolean lastResponseEmpty;
     private int maxRequests;
     private int maxPause;
@@ -407,8 +422,8 @@ public class HttpSession extends LocalClientSession {
      * @return the time in milliseconds since the epoch that this session was last active.
      */
     public long getLastActivity() {
-        if (!connectionQueue.isEmpty()) {
-            synchronized (connectionQueue) {
+        synchronized (connectionQueue) {
+            if (!connectionQueue.isEmpty()) {
                 for (HttpConnection connection : connectionQueue) {
                     // The session is currently active, set the last activity to the current time.
                     if (!(connection.isClosed())) {
@@ -417,8 +432,8 @@ public class HttpSession extends LocalClientSession {
                     }
                 }
             }
+            return lastActivity;
         }
-        return lastActivity;
     }
 
     /**
@@ -432,7 +447,9 @@ public class HttpSession extends LocalClientSession {
      * all requests with lower 'rid' values.
      */
     public long getLastAcknowledged() {
-        return lastSequentialRequestID;
+        synchronized (connectionQueue) {
+            return lastSequentialRequestID;
+        }
     }
 
     /**
@@ -546,25 +563,26 @@ public class HttpSession extends LocalClientSession {
                 "connections on this session must be secured.", BoshBindingError.badRequest);
         }
 
-        // Check if the provided RID is in the to-be-expected window.
-        if (rid > (lastSequentialRequestID + maxRequests)) {
-            Log.warn("Request {} > {}, ending session {}", body.getRid(), (lastSequentialRequestID + maxRequests), getStreamID());
-            throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
-        }
+        synchronized (connectionQueue)
+        {
+            // Check if the provided RID is in the to-be-expected window.
+            if (rid > (lastSequentialRequestID + maxRequests)) {
+                Log.warn("Request {} > {}, ending session {}", body.getRid(), (lastSequentialRequestID + maxRequests), getStreamID());
+                throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
+            }
 
-        // Check for retransmission.
-        if (rid <= lastAnsweredRequestID) {
-            redeliver(connection);
-            return;
-        }
+            // Check for retransmission.
+            if (rid <= lastAnsweredRequestID) {
+                redeliver(connection);
+                return;
+            }
 
-        /*
-         * Search through the connection queue to see if this rid already exists on it. If it does then we
-         * will close and deliver the existing connection (if appropriate), and close and deliver the same
-         * deliverable on the new connection. This is under the assumption that a connection has been dropped,
-         * and re-requested before jetty has realised.
-         */
-        synchronized (connectionQueue) {
+            /*
+             * Search through the connection queue to see if this rid already exists on it. If it does then we
+             * will close and deliver the existing connection (if appropriate), and close and deliver the same
+             * deliverable on the new connection. This is under the assumption that a connection has been dropped,
+             * and re-requested before jetty has realised.
+             */
             // TODO is there overlap with the retransmission logic above? Can this be simplified?
             for (HttpConnection queuedConnection : connectionQueue) {
                 if (queuedConnection.getRequestId() == rid) {
@@ -659,8 +677,10 @@ public class HttpSession extends LocalClientSession {
                 if (Log.isTraceEnabled()) {
                     Log.trace("Session {} Request ID {}, event complete: {}", streamID, rid, asyncEvent);
                 }
-                connectionQueue.remove(connection);
-                lastActivity = System.currentTimeMillis();
+                synchronized (connectionQueue) {
+                    connectionQueue.remove(connection);
+                    lastActivity = System.currentTimeMillis();
+                }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
@@ -674,8 +694,10 @@ public class HttpSession extends LocalClientSession {
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
-                    deliver(connection, Collections.singletonList(new Deliverable("")), false);
-                    setLastResponseEmpty(true);
+                    synchronized (connectionQueue) {
+                        deliver(connection, Collections.singletonList(new Deliverable("")), false);
+                        setLastResponseEmpty(true);
+                    }
                 } catch (HttpConnectionClosedException e) {
                     Log.warn("Unexpected exception while processing connection timeout.", e);
                 }
@@ -689,7 +711,9 @@ public class HttpSession extends LocalClientSession {
                     Log.trace("Session {} Request ID {}, event error: {}", streamID, rid, asyncEvent);
                 }
                 Log.warn("For session " + streamID + " unhandled AsyncListener error: " + asyncEvent.getThrowable());
-                connectionQueue.remove(connection);
+                synchronized (connectionQueue) {
+                    connectionQueue.remove(connection);
+                }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
@@ -715,14 +739,13 @@ public class HttpSession extends LocalClientSession {
      * @return previously delivered data when found.
      */
     @Nullable
+    @GuardedBy("connectionQueue")
     private Delivered retrieveDeliverable(final long rid) {
         Delivered result = null;
-        synchronized (sentElements) {
-            for (Delivered delivered : sentElements) {
-                if (delivered.getRequestID() == rid) {
-                    result = delivered;
-                    break;
-                }
+        for (Delivered delivered : sentElements) {
+            if (delivered.getRequestID() == rid) {
+                result = delivered;
+                break;
             }
         }
         return result;
@@ -793,10 +816,7 @@ public class HttpSession extends LocalClientSession {
                     break;
                 }
             }
-        }
 
-        synchronized (pendingElements)
-        {
             // If a connection became available for delivery and there's pending data to be delivered, deliver immediately.
             // Request ID of the new connection 'fits in the window'
 
@@ -813,11 +833,9 @@ public class HttpSession extends LocalClientSession {
                 deliver(pendingElements);
                 pendingElements.clear();
             }
-        }
 
-        // When a new connection has become available, older connections need to be released (allowing the client to
-        // send more data if it needs to).
-        synchronized (connectionQueue) {
+            // When a new connection has become available, older connections need to be released (allowing the client to
+            // send more data if it needs to).
             final List<HttpConnection> openConnections = connectionQueue.stream()
                 .filter(c -> !c.isClosed())
                 .filter(c -> c.getRequestId() <= lastSequentialRequestID)
@@ -846,6 +864,7 @@ public class HttpSession extends LocalClientSession {
      * @throws HttpConnectionClosedException if the connection was closed before a response could be delivered.
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding protocol.
      */
+    @GuardedBy("connectionQueue")
     private void redeliver(@Nonnull final HttpConnection connection) throws HttpBindException, IOException, HttpConnectionClosedException
     {
         Log.debug("Session {} requesting a retransmission for rid {}", getStreamID(), connection.getRequestId());
@@ -1000,11 +1019,9 @@ public class HttpSession extends LocalClientSession {
                             ". Openfire will attempt to recover by ignoring this connection.", e);
                 }
             }
-        }
 
-        if (!delivered) {
-            Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
-            synchronized(pendingElements) {
+            if (!delivered) {
+                Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
                 pendingElements.addAll( deliverable );
             }
         }
@@ -1017,6 +1034,7 @@ public class HttpSession extends LocalClientSession {
      * @param deliverable The data to be delivered.
      * @param async should the invocation block until the data has been delivered?
      */
+    @GuardedBy("connectionQueue")
     private void deliver(@Nonnull final HttpConnection connection, @Nonnull final List<Deliverable> deliverable, final boolean async)
         throws HttpConnectionClosedException, IOException
     {
@@ -1070,9 +1088,7 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("An unexpected exception occurred while closing a session.", e);
                     }
                 }
-            }
 
-            synchronized (pendingElements) {
                 for (Deliverable deliverable : pendingElements) {
                     failDelivery(deliverable.getPackets());
                 }

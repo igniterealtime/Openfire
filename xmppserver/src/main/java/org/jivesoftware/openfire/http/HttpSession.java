@@ -60,7 +60,6 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -182,26 +181,6 @@ public class HttpSession extends LocalClientSession {
             sb.append(element.asXML());
         }
         return sb.toString();
-    }
-
-    /**
-     * Closes the session. After a session has been closed it will no longer accept new connections
-     * on the session ID.
-     */
-    @Override
-    public void close() {
-        Log.debug("Session {} being closed", getStreamID());
-        conn.close();
-    }
-
-    /**
-     * Returns true if this session has been closed and no longer actively accepting connections.
-     *
-     * @return true if this session has been closed and no longer actively accepting connections.
-     */
-    @Override
-    public boolean isClosed() {
-        return conn.isClosed();
     }
 
     /**

@@ -403,18 +403,31 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param connection the connection to create the session from.
      * @param id the streamID to use for the new session.
      * @param language The language to use for the session
+     * @param wait The longest time it is permissible to wait for a response.
+     * @param hold The maximum number of simultaneous waiting requests.
+     * @param isSecure True if all connections on this session should be secured, and false if they should not.
+     * @param maxPollingInterval The max interval within which a client can send polling requests.
+     * @param maxRequests The max number of requests it is permissible for the session to have open at any one time.
+     * @param maxPause The maximum length of a temporary session pause (in seconds) that the client MAY request.
+     * @param defaultInactivityTimeout The default inactivity timeout of this session.
+     * @param majorVersion the major version of BOSH specification which this session utilizes.
+     * @param minorVersion the minor version of BOSH specification which this session utilizes.
      * @return a newly created session.
      * @throws UnauthorizedException if the server has not been initialised
      * @throws UnknownHostException if no IP address for the peer could be found,
      */
-    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language)
+    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language, int wait,
+                                               int hold, boolean isSecure, int maxPollingInterval,
+                                               int maxRequests, int maxPause, int defaultInactivityTimeout,
+                                               int majorVersion, int minorVersion)
         throws UnauthorizedException, UnknownHostException
     {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
         PacketDeliverer backupDeliverer = server.getPacketDeliverer();
-        HttpSession session = new HttpSession(backupDeliverer, serverName, id, connection, language);
+        HttpSession session = new HttpSession(backupDeliverer, serverName, id, connection, language, wait, hold, isSecure,
+                                              maxPollingInterval, maxRequests, maxPause, defaultInactivityTimeout, majorVersion, minorVersion);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);

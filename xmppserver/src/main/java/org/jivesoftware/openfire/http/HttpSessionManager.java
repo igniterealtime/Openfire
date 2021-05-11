@@ -155,24 +155,16 @@ public class HttpSessionManager {
         throws UnauthorizedException, HttpBindException, UnknownHostException
     {
         // TODO Check if IP address is allowed to connect to the server
-        HttpSession session = createSession(connection, Locale.forLanguageTag(body.getLanguage()));
-        session.setWait(Math.min(body.getWait(), getMaxWait()));
-        session.setHold(body.getHold());
-        session.setSecure(connection.isSecure());
-        session.setMaxPollingInterval(getPollingInterval());
-        session.setMaxRequests(getMaxRequests());
-        session.setMaxPause(getMaxPause());
-        
-        if(session.isPollingSession()) {
-            session.setDefaultInactivityTimeout(getPollingInactivityTimeout());
+        final int wait = Math.min(body.getWait(), getMaxWait());
+        final int defaultInactivityTimeout;
+        if(wait == 0 || body.getHold() == 0) {
+            // Session will be polling.
+            defaultInactivityTimeout = getPollingInactivityTimeout();
+        } else {
+            defaultInactivityTimeout = getInactivityTimeout();
         }
-        else {
-            session.setDefaultInactivityTimeout(getInactivityTimeout());
-        }
+        HttpSession session = createSession(connection, Locale.forLanguageTag(body.getLanguage()), wait, body.getHold(), connection.isSecure(), getPollingInterval(), getMaxRequests(), getMaxPause(), defaultInactivityTimeout, body.getMajorVersion(), body.getMinorVersion());
         session.resetInactivityTimeout();
-        
-        session.setMajorVersion(body.getMajorVersion());
-        session.setMinorVersion(body.getMinorVersion());
 
         connection.setSession(session);
         try {
@@ -266,12 +258,17 @@ public class HttpSessionManager {
         return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
     }
 
-    private HttpSession createSession(HttpConnection connection, Locale language) throws UnauthorizedException, UnknownHostException
+    private HttpSession createSession(HttpConnection connection, Locale language, int wait,
+                                      int hold, boolean isSecure, int maxPollingInterval,
+                                      int maxRequests, int maxPause, int defaultInactivityTimeout,
+                                      int majorVersion, int minorVersion) throws UnauthorizedException, UnknownHostException
     {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language);
+        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language, wait, hold, isSecure,
+                                                                     maxPollingInterval, maxRequests, maxPause,
+                                                                     defaultInactivityTimeout, majorVersion, minorVersion);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         SessionEventDispatcher.addListener( sessionListener );

@@ -93,8 +93,66 @@ public class HttpSession extends LocalClientSession {
         });
     }
 
-    private int wait;
-    private int hold = 0;
+    /**
+     * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
+     * responding to any request during the session. This enables the client to prevent its TCP
+     * connection from expiring due to inactivity, as well as to limit the delay before it discovers
+     * any network failure.
+     */
+    private final int wait;
+
+    /**
+     * Specifies the maximum number of requests the connection manager is allowed to keep waiting at
+     * any one time during the session. (For example, if a constrained client is unable to keep open
+     * more than two HTTP connections to the same HTTP server simultaneously, then it SHOULD specify
+     * a value of "1".)
+     */
+    private final int hold;
+
+    /**
+     * Sets whether the initial request on the session was secure.
+     */
+    private final boolean isSecure;
+
+    /**
+     * Sets the max interval within which a client can send polling requests. If more than one
+     * request occurs in the interval the session will be terminated.
+     */
+    private final int maxPollingInterval;
+
+    /**
+     * The max number of requests it is permissible for this session to have open at any one time.
+     */
+    private final int maxRequests;
+
+    /**
+     * Sets the maximum length of a temporary session pause (in seconds) that the client MAY request.
+     */
+    private final int maxPause;
+
+    /**
+     * Sets the default inactivity timeout of this session. A session's inactivity timeout can
+     * be temporarily changed using session pause requests.
+     */
+    private final int defaultInactivityTimeout;
+
+    /**
+     * Returns the major version of BOSH which this session utilizes. The version refers to the
+     * version of the XEP which the connecting client implements.
+     */
+    private final int majorVersion;
+
+    /**
+     * Sets the minor version of BOSH which the client implements.
+     */
+    private final int minorVersion;
+
+    /**
+     * The X509Certificates associated with this session.
+     */
+    private final X509Certificate[] sslCertificates;
+
+    private final PacketDeliverer backupDeliverer;
 
     @GuardedBy("itself")
     private final List<HttpConnection> connectionQueue = new LinkedList<>();
@@ -104,11 +162,8 @@ public class HttpSession extends LocalClientSession {
 
     private final List<Delivered> sentElements = new ArrayList<>();
 
-    private boolean isSecure;
-    private int maxPollingInterval;
     private long lastPoll = -1;
     private int inactivityTimeout;
-    private int defaultInactivityTimeout;
 
     @GuardedBy("connectionQueue")
     private long lastActivity;
@@ -120,26 +175,32 @@ public class HttpSession extends LocalClientSession {
     private long lastAnsweredRequestID; // sent
 
     private boolean lastResponseEmpty;
-    private int maxRequests;
-    private int maxPause;
-    private final PacketDeliverer backupDeliverer;
-    private int majorVersion = -1;
-    private int minorVersion = -1;
-    private final X509Certificate[] sslCertificates;
 
-    // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
     private final SessionPacketRouter router = new SessionPacketRouter(this);
 
     private static final Comparator<HttpConnection> connectionComparator = (o1, o2) -> (int) (o1.getRequestId() - o2.getRequestId());
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName,
-                       StreamID streamID, HttpConnection connection, Locale language) throws UnknownHostException
+                       StreamID streamID, HttpConnection connection, Locale language,
+                       int wait, int hold, boolean isSecure, int maxPollingInterval,
+                       int maxRequests, int maxPause, int defaultInactivityTimeout,
+                       int majorVersion, int minorVersion) throws UnknownHostException
     {
         super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
         this.lastActivity = System.currentTimeMillis();
         this.lastSequentialRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
         this.sslCertificates = connection.getPeerCertificates();
+        this.wait = wait;
+        this.hold = hold;
+        this.isSecure = isSecure;
+        this.maxPollingInterval = maxPollingInterval;
+        this.maxRequests = maxRequests;
+        this.maxPause = maxPause;
+        this.defaultInactivityTimeout = defaultInactivityTimeout;
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
+
         if (Log.isDebugEnabled()) {
             Log.debug("Session {} being opened with initial connection {}", getStreamID(),connection.toString());
         }
@@ -189,34 +250,10 @@ public class HttpSession extends LocalClientSession {
      * connection from expiring due to inactivity, as well as to limit the delay before it discovers
      * any network failure.
      *
-     * @param wait the longest time it is permissible to wait for a response.
-     */
-    public void setWait(int wait) {
-        this.wait = wait;
-    }
-
-    /**
-     * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
-     * responding to any request during the session. This enables the client to prevent its TCP
-     * connection from expiring due to inactivity, as well as to limit the delay before it discovers
-     * any network failure.
-     *
      * @return the longest time it is permissible to wait for a response.
      */
     public int getWait() {
         return wait;
-    }
-
-    /**
-     * Specifies the maximum number of requests the connection manager is allowed to keep waiting at
-     * any one time during the session. (For example, if a constrained client is unable to keep open
-     * more than two HTTP connections to the same HTTP server simultaneously, then it SHOULD specify
-     * a value of "1".)
-     *
-     * @param hold the maximum number of simultaneous waiting requests.
-     */
-    public void setHold(int hold) {
-        this.hold = hold;
     }
 
     /**
@@ -232,17 +269,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the max interval within which a client can send polling requests. If more than one
-     * request occurs in the interval the session will be terminated.
-     *
-     * @param maxPollingInterval time in seconds a client needs to wait before sending polls to the
-     * server, a negative <i>int</i> indicates that there is no limit.
-     */
-    public void setMaxPollingInterval(int maxPollingInterval) {
-        this.maxPollingInterval = maxPollingInterval;
-    }
-
-    /**
      * Returns the max interval within which a client can send polling requests. If more than one
      * request occurs in the interval the session will be terminated.
      *
@@ -254,16 +280,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * The max number of requests it is permissible for this session to have open at any one time.
-     *
-     * @param maxRequests The max number of requests it is permissible for this session to have open
-     * at any one time.
-     */
-    public void setMaxRequests(int maxRequests) {
-        this.maxRequests = maxRequests;
-    }
-
-    /**
      * Returns the max number of requests it is permissible for this session to have open at any one
      * time.
      *
@@ -272,17 +288,6 @@ public class HttpSession extends LocalClientSession {
      */
     public int getMaxRequests() {
         return this.maxRequests;
-    }
-
-    /**
-     * Sets the maximum length of a temporary session pause (in seconds) that the client MAY
-     * request.
-     *
-     * @param maxPause the maximum length of a temporary session pause (in seconds) that the client
-     * MAY request.
-     */
-    public void setMaxPause(int maxPause) {
-        this.maxPause = maxPause;
     }
 
     /**
@@ -319,18 +324,6 @@ public class HttpSession extends LocalClientSession {
      */
     public boolean isPollingSession() {
         return (this.wait == 0 || this.hold == 0);
-    }
-
-    /**
-     * Sets the default inactivity timeout of this session. A session's inactivity timeout can
-     * be temporarily changed using session pause requests.
-     *
-     * @see #pause(int)
-     *
-     * @param defaultInactivityTimeout the default inactivity timeout of this session.
-     */
-    public void setDefaultInactivityTimeout(int defaultInactivityTimeout) {
-        this.defaultInactivityTimeout = defaultInactivityTimeout;
     }
 
     /**
@@ -426,19 +419,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the major version of BOSH which the client implements. Currently, the only versions
-     * supported by Openfire are 1.5 and 1.6.
-     *
-     * @param majorVersion the major version of BOSH which the client implements.
-     */
-    public void setMajorVersion(int majorVersion) {
-        if(majorVersion != 1) {
-            return;
-        }
-        this.majorVersion = majorVersion;
-    }
-
-    /**
      * Returns the major version of BOSH which this session utilizes. The version refers to the
      * version of the XEP which the connecting client implements. If the client did not specify
      * a version 1 is returned as 1.5 is the last version of the <a
@@ -453,22 +433,6 @@ public class HttpSession extends LocalClientSession {
         }
         else {
             return 1;
-        }
-    }
-
-    /**
-     * Sets the minor version of BOSH which the client implements. Currently, the only versions
-     * supported by Openfire are 1.5 and 1.6. Any versions less than or equal to 5 will be
-     * interpreted as 5 and any values greater than or equal to 6 will be interpreted as 6.
-     *
-     * @param minorVersion the minor version of BOSH which the client implements.
-     */
-    public void setMinorVersion(int minorVersion) {
-        if(minorVersion <= 5) {
-            this.minorVersion = 5;
-        }
-        else {
-            this.minorVersion = 6;
         }
     }
 
@@ -498,15 +462,6 @@ public class HttpSession extends LocalClientSession {
      */
     public void setLastResponseEmpty(boolean lastResponseEmpty) {
         this.lastResponseEmpty = lastResponseEmpty;
-    }
-
-    /**
-     * Sets whether the initial request on the session was secure.
-     *
-     * @param isSecure true if the initial request was secure and false if it wasn't.
-     */
-    protected void setSecure(boolean isSecure) {
-        this.isSecure = isSecure;
     }
 
     /**

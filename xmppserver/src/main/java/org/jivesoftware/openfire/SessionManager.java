@@ -35,9 +35,12 @@ import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
+import org.jivesoftware.openfire.nio.ClientConnectionHandler;
+import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -425,8 +428,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        PacketDeliverer backupDeliverer = server.getPacketDeliverer();
-        HttpSession session = new HttpSession(backupDeliverer, serverName, id, connection, language, wait, hold, isSecure,
+
+        final PacketDeliverer backupDeliverer = ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
+        final HttpSession.HttpVirtualConnection vConnection = new HttpSession.HttpVirtualConnection(connection.getRemoteAddr(), backupDeliverer, ConnectionType.SOCKET_C2S);
+        HttpSession session = new HttpSession(vConnection, serverName, id, connection.getRequestId(), connection.getPeerCertificates(), language, wait, hold, isSecure,
                                               maxPollingInterval, maxRequests, maxPause, defaultInactivityTimeout, majorVersion, minorVersion);
         Connection conn = session.getConnection();
         conn.init(session);

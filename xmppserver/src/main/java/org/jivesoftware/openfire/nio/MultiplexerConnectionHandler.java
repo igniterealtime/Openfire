@@ -17,12 +17,14 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.core.session.IoSession;
+import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.MultiplexerStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.util.SystemProperty;
 
 /**
  * ConnectionHandler that knows which subclass of {@link org.jivesoftware.openfire.net.StanzaHandler} should
@@ -32,13 +34,25 @@ import org.jivesoftware.openfire.net.StanzaHandler;
  */
 public class MultiplexerConnectionHandler extends ConnectionHandler {
 
+    /**
+     * Enable / disable backup delivery of stanzas to other connections in the same connection manager when a stanza
+     * failed to be delivered on a multiplexer (connection manager) connection. When disabled, stanzas that can not
+     * be delivered on the connection are discarded.
+     */
+    public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.multiplex.backup-packet-delivery.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
     public MultiplexerConnectionHandler(ConnectionConfiguration configuration) {
         super(configuration);
     }
 
     @Override
     NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, new MultiplexerPacketDeliverer(), configuration );
+        final PacketDeliverer backupDeliverer = BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new MultiplexerPacketDeliverer() : null;
+        return new NIOConnection(session, backupDeliverer, configuration);
     }
 
     @Override

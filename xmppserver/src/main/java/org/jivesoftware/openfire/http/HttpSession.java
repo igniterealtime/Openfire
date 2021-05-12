@@ -56,7 +56,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
@@ -153,8 +152,6 @@ public class HttpSession extends LocalClientSession {
      */
     private final X509Certificate[] sslCertificates;
 
-    private final PacketDeliverer backupDeliverer;
-
     @GuardedBy("itself")
     private final List<HttpConnection> connectionQueue = new LinkedList<>();
 
@@ -181,17 +178,16 @@ public class HttpSession extends LocalClientSession {
 
     private static final Comparator<HttpConnection> connectionComparator = (o1, o2) -> (int) (o1.getRequestId() - o2.getRequestId());
 
-    public HttpSession(PacketDeliverer backupDeliverer, String serverName,
-                       StreamID streamID, HttpConnection connection, Locale language,
+    public HttpSession(HttpVirtualConnection vConnection, String serverName,
+                       StreamID streamID, long requestId, X509Certificate[] sslCertificates, Locale language,
                        Duration wait, int hold, boolean isSecure, Duration maxPollingInterval,
                        int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
                        int majorVersion, int minorVersion) throws UnknownHostException
     {
-        super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
+        super(serverName, vConnection, streamID, language);
         this.lastActivity = Instant.now();
-        this.lastSequentialRequestID = connection.getRequestId();
-        this.backupDeliverer = backupDeliverer;
-        this.sslCertificates = connection.getPeerCertificates();
+        this.lastSequentialRequestID = requestId;
+        this.sslCertificates = sslCertificates;
         this.wait = wait;
         this.hold = hold;
         this.isSecure = isSecure;
@@ -203,7 +199,7 @@ public class HttpSession extends LocalClientSession {
         this.minorVersion = minorVersion;
 
         if (Log.isDebugEnabled()) {
-            Log.debug("Session {} being opened with initial connection {}", getStreamID(),connection.toString());
+            Log.debug("Session {} being opened with initial connection {}", getStreamID(), vConnection.toString());
         }
     }
 
@@ -1027,11 +1023,17 @@ public class HttpSession extends LocalClientSession {
             // Do nothing if someone asked to deliver nothing :)
             return;
         }
+
+        if (conn.getPacketDeliverer() == null) {
+            Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+            return;
+        }
+
         // use a separate thread to schedule backup delivery
         TaskEngine.getInstance().submit(() -> {
             for (final Packet packet : packets) {
                 try {
-                    backupDeliverer.deliver(packet);
+                    conn.getPacketDeliverer().deliver(packet);
                 }
                 catch (UnauthorizedException e) {
                     Log.error("On session " + getStreamID() + " unable to deliver message to backup deliverer", e);
@@ -1108,14 +1110,11 @@ public class HttpSession extends LocalClientSession {
         private final InetAddress address;
         private ConnectionConfiguration configuration;
         private final ConnectionType connectionType;
+        private final PacketDeliverer backupDeliverer;
 
-        public HttpVirtualConnection(@Nonnull final InetAddress address) {
+        public HttpVirtualConnection(@Nonnull final InetAddress address, @Nullable final PacketDeliverer backupDeliverer, @Nonnull final ConnectionType connectionType) {
             this.address = address;
-            this.connectionType = ConnectionType.SOCKET_C2S;
-        }
-
-        public HttpVirtualConnection(@Nonnull final InetAddress address, @Nonnull final ConnectionType connectionType) {
-            this.address = address;
+            this.backupDeliverer = backupDeliverer;
             this.connectionType = connectionType;
         }
 
@@ -1168,8 +1167,14 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
-        public Certificate[] getPeerCertificates() {
+        public X509Certificate[] getPeerCertificates() {
             return ((HttpSession) session).getPeerCertificates();
+        }
+
+        @Override
+        @Nullable
+        public PacketDeliverer getPacketDeliverer() {
+            return backupDeliverer;
         }
     }
 

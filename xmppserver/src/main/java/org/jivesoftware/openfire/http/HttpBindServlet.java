@@ -71,11 +71,11 @@ public class HttpBindServlet extends HttpServlet {
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         // add CORS headers for all HTTP responses (errors, etc.)
-        if (boshManager.isCORSEnabled())
+        if (HttpBindManager.HTTP_BIND_CORS_ENABLED.getValue())
         {
             if (boshManager.isAllOriginsAllowed()) {
                 // Set the Access-Control-Allow-Origin header to * to allow all Origin to do the CORS
-                response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
+                response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
             } else {
                 // Get the Origin header from the request and check if it is in the allowed Origin Map.
                 // If it is allowed write it back to the Access-Control-Allow-Origin header of the respond.
@@ -84,9 +84,11 @@ public class HttpBindServlet extends HttpServlet {
                     response.setHeader("Access-Control-Allow-Origin", origin);
                 }
             }
-            response.setHeader("Access-Control-Allow-Methods", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT);
-            response.setHeader("Access-Control-Allow-Headers", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT);
-            response.setHeader("Access-Control-Max-Age", HttpBindManager.HTTP_BIND_CORS_MAX_AGE_DEFAULT);
+
+            // TODO shouldn't we check if the methods and headers that are used in the request match these?
+            response.setHeader("Access-Control-Allow-Methods", String.join(", ", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue()));
+            response.setHeader("Access-Control-Allow-Headers", String.join(", ", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue()));
+            response.setHeader("Access-Control-Max-Age", String.valueOf(HttpBindManager.HTTP_BIND_CORS_MAX_AGE.getDefaultValue().getSeconds())); // TODO: replace with 'toSeconds()' after dropping support for Java 8.
         }
         super.service(request, response);
     }

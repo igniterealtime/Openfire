@@ -85,9 +85,9 @@ public class HttpSessionManager {
      * (through property "xmpp.httpbind.worker.threads") amount of threads; also uses an unbounded task queue and
      * configurable ("xmpp.httpbind.worker.timeout") keep-alive.
      *
-     * Note: Apart from the processing threads configured in this class, the server also uses a threadpool to perform
-     * the network IO (as configured in ({@link HttpBindManager}). BOSH installations expecting heavy loads may want to
-     * allocate additional threads to this worker pool to ensure timely delivery of inbound packets
+     * Note: Apart from the processing threads configured in this class, the server also uses a thread pool to perform
+     * the network IO (as configured in ({@link HttpBindManager#HTTP_BIND_THREADS}). BOSH installations expecting heavy
+     * loads may want to allocate additional threads to this worker pool to ensure timely delivery of inbound packets
      */
     public void start() {
         Log.info( "Starting instance" );

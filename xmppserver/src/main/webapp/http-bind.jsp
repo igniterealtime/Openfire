@@ -46,9 +46,9 @@
 
         if ( isEnabled )
         {
-            final int requestedPort = ParamUtils.getIntParameter( request, "port", serverManager.getHttpBindUnsecurePort() );
-            final int requestedSecurePort = ParamUtils.getIntParameter( request, "securePort", serverManager.getHttpBindSecurePort() );
-            final boolean isCORSEnabled = ParamUtils.getBooleanParameter( request, "CORSEnabled", serverManager.isCORSEnabled() );
+            final int requestedPort = ParamUtils.getIntParameter( request, "port", HttpBindManager.HTTP_BIND_PORT.getValue() );
+            final int requestedSecurePort = ParamUtils.getIntParameter( request, "securePort", HttpBindManager.HTTP_BIND_SECURE_PORT.getValue() );
+            final boolean isCORSEnabled = ParamUtils.getBooleanParameter( request, "CORSEnabled", HttpBindManager.HTTP_BIND_CORS_ENABLED.getValue() );
             final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", serverManager.isXFFEnabled() );
             final String CORSDomains = ParamUtils.getParameter( request, "CORSDomains", true );
 
@@ -64,8 +64,9 @@
 
             try
             {
-                serverManager.setHttpBindPorts( requestedPort, requestedSecurePort );
-                serverManager.setCORSEnabled( isCORSEnabled );
+                HttpBindManager.HTTP_BIND_PORT.setValue(requestedPort);
+                HttpBindManager.HTTP_BIND_SECURE_PORT.setValue(requestedSecurePort);
+                HttpBindManager.HTTP_BIND_CORS_ENABLED.setValue(isCORSEnabled);
                 serverManager.setCORSAllowOrigin( CORSDomains );
                 serverManager.setXFFEnabled( isXFFEnabled );
                 serverManager.setXFFHeader( ParamUtils.getParameter( request, "XFFHeader" ) );
@@ -84,7 +85,7 @@
         }
         if ( errorMap.isEmpty() )
         {
-            serverManager.setHttpBindEnabled( isEnabled );
+            HttpBindManager.HTTP_BIND_ENABLED.setValue(isEnabled);
         }
         return errorMap;
     }

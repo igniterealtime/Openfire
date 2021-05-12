@@ -416,9 +416,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @throws UnauthorizedException if the server has not been initialised
      * @throws UnknownHostException if no IP address for the peer could be found,
      */
-    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language, int wait,
-                                               int hold, boolean isSecure, int maxPollingInterval,
-                                               int maxRequests, int maxPause, int defaultInactivityTimeout,
+    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language, Duration wait,
+                                               int hold, boolean isSecure, Duration maxPollingInterval,
+                                               int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
                                                int majorVersion, int minorVersion)
         throws UnauthorizedException, UnknownHostException
     {

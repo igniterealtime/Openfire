@@ -34,7 +34,6 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
@@ -59,6 +58,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,12 +95,12 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
+     * Specifies the longest time that the connection manager is allowed to wait before
      * responding to any request during the session. This enables the client to prevent its TCP
      * connection from expiring due to inactivity, as well as to limit the delay before it discovers
      * any network failure.
      */
-    private final int wait;
+    private final Duration wait;
 
     /**
      * Specifies the maximum number of requests the connection manager is allowed to keep waiting at
@@ -118,7 +119,7 @@ public class HttpSession extends LocalClientSession {
      * Sets the max interval within which a client can send polling requests. If more than one
      * request occurs in the interval the session will be terminated.
      */
-    private final int maxPollingInterval;
+    private final Duration maxPollingInterval;
 
     /**
      * The max number of requests it is permissible for this session to have open at any one time.
@@ -126,15 +127,15 @@ public class HttpSession extends LocalClientSession {
     private final int maxRequests;
 
     /**
-     * Sets the maximum length of a temporary session pause (in seconds) that the client MAY request.
+     * Sets the maximum length of a temporary session pause that the client MAY request.
      */
-    private final int maxPause;
+    private final Duration maxPause;
 
     /**
      * Sets the default inactivity timeout of this session. A session's inactivity timeout can
      * be temporarily changed using session pause requests.
      */
-    private final int defaultInactivityTimeout;
+    private final Duration defaultInactivityTimeout;
 
     /**
      * Returns the major version of BOSH which this session utilizes. The version refers to the
@@ -162,11 +163,11 @@ public class HttpSession extends LocalClientSession {
 
     private final List<Delivered> sentElements = new ArrayList<>();
 
-    private long lastPoll = -1;
-    private int inactivityTimeout;
+    private Instant lastPoll = Instant.EPOCH;
+    private Duration inactivityTimeout;
 
     @GuardedBy("connectionQueue")
-    private long lastActivity;
+    private Instant lastActivity;
 
     @GuardedBy("connectionQueue")
     private long lastSequentialRequestID; // received
@@ -182,12 +183,12 @@ public class HttpSession extends LocalClientSession {
 
     public HttpSession(PacketDeliverer backupDeliverer, String serverName,
                        StreamID streamID, HttpConnection connection, Locale language,
-                       int wait, int hold, boolean isSecure, int maxPollingInterval,
-                       int maxRequests, int maxPause, int defaultInactivityTimeout,
+                       Duration wait, int hold, boolean isSecure, Duration maxPollingInterval,
+                       int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
                        int majorVersion, int minorVersion) throws UnknownHostException
     {
         super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
-        this.lastActivity = System.currentTimeMillis();
+        this.lastActivity = Instant.now();
         this.lastSequentialRequestID = connection.getRequestId();
         this.backupDeliverer = backupDeliverer;
         this.sslCertificates = connection.getPeerCertificates();
@@ -252,7 +253,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the longest time it is permissible to wait for a response.
      */
-    public int getWait() {
+    public Duration getWait() {
         return wait;
     }
 
@@ -275,7 +276,7 @@ public class HttpSession extends LocalClientSession {
      * @return the max interval within which a client can send polling requests. If more than one
      *         request occurs in the interval the session will be terminated.
      */
-    public int getMaxPollingInterval() {
+    public Duration getMaxPollingInterval() {
         return this.maxPollingInterval;
     }
 
@@ -291,13 +292,11 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Returns the maximum length of a temporary session pause (in seconds) that the client MAY
-     * request.
+     * Returns the maximum length of a temporary session pause that the client MAY request.
      *
-     * @return the maximum length of a temporary session pause (in seconds) that the client MAY
-     *         request.
+     * @return the maximum length of a temporary session pause that the client MAY request.
      */
-    public int getMaxPause() {
+    public Duration getMaxPause() {
         return this.maxPause;
     }
 
@@ -323,7 +322,7 @@ public class HttpSession extends LocalClientSession {
      * @return true if this session is a polling session.
      */
     public boolean isPollingSession() {
-        return (this.wait == 0 || this.hold == 0);
+        return (this.wait.isZero() || this.hold == 0);
     }
 
     /**
@@ -333,7 +332,7 @@ public class HttpSession extends LocalClientSession {
      * @param inactivityTimeout the time, in seconds, after which this session will be considered
      * inactive and be terminated.
      */
-    public void setInactivityTimeout(int inactivityTimeout) {
+    public void setInactivityTimeout(Duration inactivityTimeout) {
         this.inactivityTimeout = inactivityTimeout;
     }
 
@@ -341,7 +340,7 @@ public class HttpSession extends LocalClientSession {
      * Resets the inactivity timeout of this session to default. A session's inactivity timeout can
      * be temporarily changed using session pause requests.
      *
-     * @see #pause(int)
+     * @see #pause(Duration)
      */
     public void resetInactivityTimeout() {
         this.inactivityTimeout = this.defaultInactivityTimeout;
@@ -354,7 +353,7 @@ public class HttpSession extends LocalClientSession {
      * @return the time, in seconds, after which this session will be considered inactive and
      *         terminated.
      */
-    public int getInactivityTimeout() {
+    public Duration getInactivityTimeout() {
         return inactivityTimeout;
     }
 
@@ -368,7 +367,7 @@ public class HttpSession extends LocalClientSession {
      * @param duration the time, in seconds, after which this session will be considered inactive
      *        and terminated.
      */
-    public void pause(int duration) {
+    public void pause(Duration duration) {
         // Respond immediately to all pending requests
         synchronized (connectionQueue) {
             for (HttpConnection toClose : connectionQueue) {
@@ -387,13 +386,13 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the time in milliseconds since the epoch that this session was last active.
      */
-    public long getLastActivity() {
+    public Instant getLastActivity() {
         synchronized (connectionQueue) {
             if (!connectionQueue.isEmpty()) {
                 for (HttpConnection connection : connectionQueue) {
                     // The session is currently active, set the last activity to the current time.
                     if (!(connection.isClosed())) {
-                        lastActivity = System.currentTimeMillis();
+                        lastActivity = Instant.now();
                         break;
                     }
                 }
@@ -598,7 +597,7 @@ public class HttpSession extends LocalClientSession {
             Log.debug( "Creating connection for rid: {} in session {}", rid, streamID );
         }
         connection.setSession(this);
-        context.setTimeout(getWait() * JiveConstants.SECOND);
+        context.setTimeout(getWait().toMillis());
         context.addListener(new AsyncListener() {
             @Override
             public void onComplete(AsyncEvent asyncEvent) {
@@ -607,7 +606,7 @@ public class HttpSession extends LocalClientSession {
                 }
                 synchronized (connectionQueue) {
                     connectionQueue.remove(connection);
-                    lastActivity = System.currentTimeMillis();
+                    lastActivity = Instant.now();
                 }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
@@ -728,7 +727,7 @@ public class HttpSession extends LocalClientSession {
                         close();
                     } else if (queuedConnection.isRestart()) {
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
-                    } else if (queuedConnection.getPause() > 0 && queuedConnection.getPause() <= getMaxPause()) {
+                    } else if (queuedConnection.getPause() != null && queuedConnection.getPause().compareTo(getMaxPause()) <= 0) {
                         pause(queuedConnection.getPause()); // TODO shouldn't we error when the requested pause is higher than the allowed maximum?
                         connection.deliverBody(createEmptyBody(false), true);
                         setLastResponseEmpty(true);
@@ -756,7 +755,7 @@ public class HttpSession extends LocalClientSession {
             }
 
             if (isPollingSession() || (aConnectionAvailableForDelivery && !pendingElements.isEmpty())) {
-                lastActivity = System.currentTimeMillis();
+                lastActivity = Instant.now();
                 SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection, context ); // TODO is this the right place to dispatch this event?
                 deliver(pendingElements);
                 pendingElements.clear();
@@ -835,14 +834,14 @@ public class HttpSession extends LocalClientSession {
             }
         }
 
-        long time = System.currentTimeMillis();
-        long deltaFromLastPoll = time - lastPoll;
+        Instant time = Instant.now();
+        Duration deltaFromLastPoll = Duration.between(lastPoll, time).abs();
         if(pendingConnections >= maxRequests) {
             overactivity = OveractivityType.TOO_MANY_SIM_REQS;
         }
         else if(connection.isPoll()) {
             boolean localIsPollingSession = isPollingSession();
-            if (deltaFromLastPoll < maxPollingInterval * JiveConstants.SECOND) {
+            if (deltaFromLastPoll.compareTo(maxPollingInterval) < 0) {
                 if (localIsPollingSession) {
                     overactivity = lastResponseEmpty ? OveractivityType.POLLING_TOO_QUICK : OveractivityType.NONE;
                 } else {
@@ -876,7 +875,7 @@ public class HttpSession extends LocalClientSession {
                     errorMessage.append(maxPollingInterval);
                     errorMessage.append(", current session ");
                     errorMessage.append(" interval ");
-                    errorMessage.append(deltaFromLastPoll / 1000);
+                    errorMessage.append(deltaFromLastPoll);
                     break;
                 }
                 default: {

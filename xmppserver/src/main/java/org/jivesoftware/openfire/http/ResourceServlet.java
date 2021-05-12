@@ -26,8 +26,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import java.io.*;
@@ -40,7 +43,7 @@ public class ResourceServlet extends HttpServlet {
     private static final Logger Log = LoggerFactory.getLogger(ResourceServlet.class);
 
     //    private static String suffix = "";    // Set to "_src" to use source version
-    private static long expiresOffset = 3600 * 24 * 10;	// 10 days util client cache expires
+    private static final Duration expiresOffset = Duration.ofDays(10);	// This long until client cache expires
     private boolean debug = false;
     private boolean disableCompression = false;
     private static Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
@@ -81,9 +84,8 @@ public class ResourceServlet extends HttpServlet {
         if (!debug) {
             DateFormat formatter = new SimpleDateFormat("d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
             formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
-            response.setHeader("Expires", formatter.format(new Date(System.currentTimeMillis()
-                    + expiresOffset)));
-            response.setHeader("Cache-Control", "max-age=" + expiresOffset);
+            response.setHeader("Expires", formatter.format(Instant.now().plus(expiresOffset)));
+            response.setHeader("Cache-Control", "max-age=" + expiresOffset.getSeconds()); // TODO: replace with 'toSeconds' after Openfire drops support for Java 8.
         }
         else {
             response.setHeader("Expires", "1");

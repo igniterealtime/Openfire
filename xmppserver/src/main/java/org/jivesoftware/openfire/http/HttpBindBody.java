@@ -55,7 +55,7 @@ public class HttpBindBody
         }
     }
 
-    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<>();
+    private final ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<>();
 
     private final Document document;
 
@@ -211,7 +211,7 @@ public class HttpBindBody
             return defaultValue;
         }
         try {
-            return Long.valueOf(value);
+            return Long.parseLong(value);
         }
         catch (Exception ex) {
             return defaultValue;
@@ -223,7 +223,7 @@ public class HttpBindBody
             return defaultValue;
         }
         try {
-            return Integer.valueOf(value);
+            return Integer.parseInt(value);
         }
         catch (Exception ex) {
             return defaultValue;

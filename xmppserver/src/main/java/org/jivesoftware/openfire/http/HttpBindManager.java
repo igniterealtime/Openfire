@@ -119,7 +119,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
     public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<>();
 
-    private static HttpBindManager instance = new HttpBindManager();
+    private static final HttpBindManager instance = new HttpBindManager();
 
     private Server httpBindServer;
 
@@ -844,7 +844,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
     @Override
     public void propertySet(String property, Map<String, Object> params) {
         if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
-            doEnableHttpBind(Boolean.valueOf(params.get("value").toString()));
+            doEnableHttpBind(Boolean.parseBoolean(params.get("value").toString()));
         }
         else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
             try {

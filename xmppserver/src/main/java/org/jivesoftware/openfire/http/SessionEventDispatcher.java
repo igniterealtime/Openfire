@@ -11,7 +11,7 @@ public class SessionEventDispatcher
 {
     private static final Logger Log = LoggerFactory.getLogger( SessionEventDispatcher.class );
 
-    private static Set<SessionListener> listeners = new CopyOnWriteArraySet<>();
+    private static final Set<SessionListener> listeners = new CopyOnWriteArraySet<>();
 
     private SessionEventDispatcher()
     {

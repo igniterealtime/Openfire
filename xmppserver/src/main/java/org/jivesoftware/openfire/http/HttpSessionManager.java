@@ -307,18 +307,6 @@ public class HttpSessionManager {
         return session;
     }
 
-    private static int getIntAttribute(String value, int defaultValue) {
-        if (value == null || "".equals(value.trim())) {
-            return defaultValue;
-        }
-        try {
-            return Integer.valueOf(value);
-        }
-        catch (Exception ex) {
-            return defaultValue;
-        }
-    }
-
     private static String createSessionCreationResponse(HttpSession session) throws DocumentException {
         Element response = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         response.addNamespace("stream", "http://etherx.jabber.org/streams");

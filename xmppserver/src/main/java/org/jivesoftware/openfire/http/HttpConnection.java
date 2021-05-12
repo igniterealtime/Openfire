@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import javax.servlet.AsyncContext;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -54,6 +55,7 @@ public class HttpConnection {
     @Nullable
     private HttpSession session;
 
+    @GuardedBy("this")
     private boolean isClosed;
 
     @Nonnull

@@ -101,7 +101,7 @@ public class IQBindHandler extends IQHandler {
         if (authToken == null) {
             // User must be authenticated before binding a resource
             reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.not_authorized);
+            reply.setError(PacketError.Condition.subscription_required);
             // Send the error directly since a route does not exist at this point.
             session.process(reply);
             return reply;

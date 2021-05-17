@@ -121,6 +121,21 @@ public final class HttpBindManager implements CertificateEventListener {
     public static final int HTTP_BIND_SECURE_PORT_DEFAULT = HTTP_BIND_SECURE_PORT.getDefaultValue();
 
     /**
+     * Minimum amount of threads in the thread pool to perform the network IO related to BOSH traffic.
+     *
+     * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
+     * processing the inbound data (as configured in ({@link HttpSessionManager#MAX_POOL_SIZE}). BOSH
+     * installations expecting heavy loads may want to allocate additional threads to this worker pool to ensure timely
+     * processing of data
+     */
+    public static final SystemProperty<Integer> HTTP_BIND_THREADS_MIN = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("httpbind.client.processing.threads-min")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(8)
+        .setMinValue(1)
+        .build();
+
+    /**
      * Maximum amount of threads in the thread pool to perform the network IO related to BOSH traffic.
      *
      * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
@@ -132,6 +147,24 @@ public final class HttpBindManager implements CertificateEventListener {
         .setKey("httpbind.client.processing.threads")
         .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
         .setDefaultValue(200)
+        .setMinValue(1)
+        .build();
+
+    /**
+     * Amount of time after which idle, surplus threads are removed from the thread pool to perform the network IO
+     * related to BOSH traffic.
+     *
+     * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
+     * processing the inbound data (as configured in ({@link HttpSessionManager#INACTIVITY_TIMEOUT}). BOSH
+     * installations expecting heavy loads may want to allocate additional threads to this worker pool to ensure timely
+     * processing of data
+     */
+    public static final SystemProperty<Duration> HTTP_BIND_THREADS_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("httpbind.client.processing.threads-timeout")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setMaxValue(Duration.ofMillis(Integer.MAX_VALUE)) // Jetty takes an int value, not a long.
         .build();
 
     /**
@@ -338,18 +371,6 @@ public final class HttpBindManager implements CertificateEventListener {
     }
 
     private HttpBindManager() {
-        JiveGlobals.migrateProperty(HTTP_BIND_ENABLED.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_PORT.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_SECURE_PORT.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_THREADS.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_FOR.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_SERVER.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST_NAME.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_CORS_ENABLED.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_ALLOWED_ORIGINS.getKey());
-        JiveGlobals.migrateProperty(HTTP_BIND_REQUEST_HEADER_SIZE.getKey());
 
         this.httpSessionManager = new HttpSessionManager();
 
@@ -375,10 +396,7 @@ public final class HttpBindManager implements CertificateEventListener {
             return;
         }
 
-        // this is the number of threads allocated to each connector/port
-        final int processingThreads = HTTP_BIND_THREADS.getValue();
-
-        final QueuedThreadPool tp = new QueuedThreadPool(processingThreads);
+        final QueuedThreadPool tp = new QueuedThreadPool(HTTP_BIND_THREADS.getValue(), HTTP_BIND_THREADS_MIN.getValue(), (int) HTTP_BIND_THREADS_TIMEOUT.getValue().toMillis());
         tp.setName("Jetty-QTP-BOSH");
 
         httpBindServer = new Server(tp);

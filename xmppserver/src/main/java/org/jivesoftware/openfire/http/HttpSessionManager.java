@@ -64,8 +64,6 @@ public class HttpSessionManager {
      * Creates a new HttpSessionManager instance.
      */
     public HttpSessionManager() {
-        JiveGlobals.migrateProperty("xmpp.httpbind.worker.threads");
-        JiveGlobals.migrateProperty("xmpp.httpbind.worker.timeout");
     }
 
     /**
@@ -73,10 +71,6 @@ public class HttpSessionManager {
      */
     @Deprecated
     public void init() {}
-
-    private int getCorePoolSize(int maxPoolSize) {
-        return (maxPoolSize/4)+1;
-    }
 
     /**
      * Starts the services used by the HttpSessionManager.
@@ -94,7 +88,7 @@ public class HttpSessionManager {
 
         this.sessionManager = SessionManager.getInstance();
 
-        sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(MAX_POOL_SIZE.getValue()), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
+        sendPacketPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(), // unbounded task queue
                 new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
         );
@@ -114,6 +108,16 @@ public class HttpSessionManager {
         .setKey("xmpp.httpbind.worker.threads")
         .setDefaultValue( JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS, 8) )
         .setDynamic(false)
+        .build();
+
+    /**
+     * Minimum amount of threads used to process incoming BOSH data.
+     */
+    public static final SystemProperty<Integer> MIN_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.httpbind.worker.threads-min")
+        .setDynamic(false)
+        .setDefaultValue((MAX_POOL_SIZE.getDefaultValue()/4)+1)
+        .setMinValue(1)
         .build();
 
     /**

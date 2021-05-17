@@ -27,8 +27,12 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
+
+import javax.annotation.Nullable;
 
 /**
  * Following the conventions of the BOSH implementation, this class extends {@link VirtualConnection}
@@ -36,14 +40,17 @@ import org.xmpp.packet.StreamError;
  */
 public class WebSocketConnection extends VirtualConnection
 {
+    private static final Logger Log = LoggerFactory.getLogger(WebSocketConnection.class);
+
     private InetSocketAddress remotePeer;
     private XmppWebSocket socket;
     private PacketDeliverer backupDeliverer;
     private ConnectionConfiguration configuration;
     private ConnectionType connectionType;
 
-    public WebSocketConnection(XmppWebSocket socket, InetSocketAddress remotePeer) {
+    public WebSocketConnection(XmppWebSocket socket, PacketDeliverer backupDeliverer, InetSocketAddress remotePeer) {
         this.socket = socket;
+        this.backupDeliverer = backupDeliverer;
         this.remotePeer = remotePeer;
         this.connectionType = ConnectionType.SOCKET_C2S;
     }
@@ -91,7 +98,11 @@ public class WebSocketConnection extends VirtualConnection
             deliverRawText(xml);
         } else {
             // use fallback delivery mechanism (offline)
-            getPacketDeliverer().deliver(packet);
+            if (backupDeliverer != null) {
+                backupDeliverer.deliver(packet);
+            } else {
+                Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+            }
         }
     }
 
@@ -112,10 +123,8 @@ public class WebSocketConnection extends VirtualConnection
     }
 
     @Override
+    @Nullable
     public PacketDeliverer getPacketDeliverer() {
-        if (backupDeliverer == null) {
-            backupDeliverer = new OfflinePacketDeliverer();
-        }
         return backupDeliverer;
     }
 

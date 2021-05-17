@@ -34,7 +34,6 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
@@ -48,6 +47,7 @@ import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
@@ -56,8 +56,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -92,44 +93,113 @@ public class HttpSession extends LocalClientSession {
         });
     }
 
-    private int wait;
-    private int hold = 0;
-    private final List<HttpConnection> connectionQueue = Collections.synchronizedList(new LinkedList<>());
-    private final List<Deliverable> pendingElements = Collections.synchronizedList(new ArrayList<>());
-    private final List<Delivered> sentElements = Collections.synchronizedList(new ArrayList<>());
-    private boolean isSecure;
-    private int maxPollingInterval;
-    private long lastPoll = -1;
-    private volatile boolean isClosed;
-    private int inactivityTimeout;
-    private int defaultInactivityTimeout;
-    private long lastActivity;
-    private long lastSequentialRequestID; // received
-    private long lastAnsweredRequestID; // sent
-    private boolean lastResponseEmpty;
-    private int maxRequests;
-    private int maxPause;
-    private final PacketDeliverer backupDeliverer;
-    private int majorVersion = -1;
-    private int minorVersion = -1;
+    /**
+     * Specifies the longest time that the connection manager is allowed to wait before
+     * responding to any request during the session. This enables the client to prevent its TCP
+     * connection from expiring due to inactivity, as well as to limit the delay before it discovers
+     * any network failure.
+     */
+    private final Duration wait;
+
+    /**
+     * Specifies the maximum number of requests the connection manager is allowed to keep waiting at
+     * any one time during the session. (For example, if a constrained client is unable to keep open
+     * more than two HTTP connections to the same HTTP server simultaneously, then it SHOULD specify
+     * a value of "1".)
+     */
+    private final int hold;
+
+    /**
+     * Sets whether the initial request on the session was secure.
+     */
+    private final boolean isSecure;
+
+    /**
+     * Sets the max interval within which a client can send polling requests. If more than one
+     * request occurs in the interval the session will be terminated.
+     */
+    private final Duration maxPollingInterval;
+
+    /**
+     * The max number of requests it is permissible for this session to have open at any one time.
+     */
+    private final int maxRequests;
+
+    /**
+     * Sets the maximum length of a temporary session pause that the client MAY request.
+     */
+    private final Duration maxPause;
+
+    /**
+     * Sets the default inactivity timeout of this session. A session's inactivity timeout can
+     * be temporarily changed using session pause requests.
+     */
+    private final Duration defaultInactivityTimeout;
+
+    /**
+     * Returns the major version of BOSH which this session utilizes. The version refers to the
+     * version of the XEP which the connecting client implements.
+     */
+    private final int majorVersion;
+
+    /**
+     * Sets the minor version of BOSH which the client implements.
+     */
+    private final int minorVersion;
+
+    /**
+     * The X509Certificates associated with this session.
+     */
     private final X509Certificate[] sslCertificates;
 
-    // Semaphore which protects the packets to send, so, there can only be one consumer at a time.
+    @GuardedBy("itself")
+    private final List<HttpConnection> connectionQueue = new LinkedList<>();
+
+    @GuardedBy("connectionQueue")
+    private final List<Deliverable> pendingElements = new ArrayList<>();
+
+    private final List<Delivered> sentElements = new ArrayList<>();
+
+    private Instant lastPoll = Instant.EPOCH;
+    private Duration inactivityTimeout;
+
+    @GuardedBy("connectionQueue")
+    private Instant lastActivity;
+
+    @GuardedBy("connectionQueue")
+    private long lastSequentialRequestID; // received
+
+    @GuardedBy("connectionQueue")
+    private long lastAnsweredRequestID; // sent
+
+    private boolean lastResponseEmpty;
+
     private final SessionPacketRouter router = new SessionPacketRouter(this);
 
     private static final Comparator<HttpConnection> connectionComparator = (o1, o2) -> (int) (o1.getRequestId() - o2.getRequestId());
 
-    public HttpSession(PacketDeliverer backupDeliverer, String serverName,
-                       StreamID streamID, HttpConnection connection, Locale language) throws UnknownHostException
+    public HttpSession(HttpVirtualConnection vConnection, String serverName,
+                       StreamID streamID, long requestId, X509Certificate[] sslCertificates, Locale language,
+                       Duration wait, int hold, boolean isSecure, Duration maxPollingInterval,
+                       int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
+                       int majorVersion, int minorVersion) throws UnknownHostException
     {
-        super(serverName, new HttpVirtualConnection(connection.getRemoteAddr(), ConnectionType.SOCKET_C2S), streamID, language);
-        this.isClosed = false;
-        this.lastActivity = System.currentTimeMillis();
-        this.lastSequentialRequestID = connection.getRequestId();
-        this.backupDeliverer = backupDeliverer;
-        this.sslCertificates = connection.getPeerCertificates();
+        super(serverName, vConnection, streamID, language);
+        this.lastActivity = Instant.now();
+        this.lastSequentialRequestID = requestId;
+        this.sslCertificates = sslCertificates;
+        this.wait = wait;
+        this.hold = hold;
+        this.isSecure = isSecure;
+        this.maxPollingInterval = maxPollingInterval;
+        this.maxRequests = maxRequests;
+        this.maxPause = maxPause;
+        this.defaultInactivityTimeout = defaultInactivityTimeout;
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
+
         if (Log.isDebugEnabled()) {
-            Log.debug("Session {} being opened with initial connection {}", getStreamID(),connection.toString());
+            Log.debug("Session {} being opened with initial connection {}", getStreamID(), vConnection.toString());
         }
     }
 
@@ -172,41 +242,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Closes the session. After a session has been closed it will no longer accept new connections
-     * on the session ID.
-     */
-    @Override
-    public void close() {
-        if (isClosed) {
-            return;
-        }
-        Log.debug("Session {} being closed", getStreamID());
-        conn.close();
-    }
-
-    /**
-     * Returns true if this session has been closed and no longer actively accepting connections.
-     *
-     * @return true if this session has been closed and no longer actively accepting connections.
-     */
-    @Override
-    public boolean isClosed() {
-        return isClosed;
-    }
-
-    /**
-     * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
-     * responding to any request during the session. This enables the client to prevent its TCP
-     * connection from expiring due to inactivity, as well as to limit the delay before it discovers
-     * any network failure.
-     *
-     * @param wait the longest time it is permissible to wait for a response.
-     */
-    public void setWait(int wait) {
-        this.wait = wait;
-    }
-
-    /**
      * Specifies the longest time (in seconds) that the connection manager is allowed to wait before
      * responding to any request during the session. This enables the client to prevent its TCP
      * connection from expiring due to inactivity, as well as to limit the delay before it discovers
@@ -214,20 +249,8 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the longest time it is permissible to wait for a response.
      */
-    public int getWait() {
+    public Duration getWait() {
         return wait;
-    }
-
-    /**
-     * Specifies the maximum number of requests the connection manager is allowed to keep waiting at
-     * any one time during the session. (For example, if a constrained client is unable to keep open
-     * more than two HTTP connections to the same HTTP server simultaneously, then it SHOULD specify
-     * a value of "1".)
-     *
-     * @param hold the maximum number of simultaneous waiting requests.
-     */
-    public void setHold(int hold) {
-        this.hold = hold;
     }
 
     /**
@@ -243,35 +266,14 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the max interval within which a client can send polling requests. If more than one
-     * request occurs in the interval the session will be terminated.
-     *
-     * @param maxPollingInterval time in seconds a client needs to wait before sending polls to the
-     * server, a negative <i>int</i> indicates that there is no limit.
-     */
-    public void setMaxPollingInterval(int maxPollingInterval) {
-        this.maxPollingInterval = maxPollingInterval;
-    }
-
-    /**
      * Returns the max interval within which a client can send polling requests. If more than one
      * request occurs in the interval the session will be terminated.
      *
      * @return the max interval within which a client can send polling requests. If more than one
      *         request occurs in the interval the session will be terminated.
      */
-    public int getMaxPollingInterval() {
+    public Duration getMaxPollingInterval() {
         return this.maxPollingInterval;
-    }
-
-    /**
-     * The max number of requests it is permissible for this session to have open at any one time.
-     *
-     * @param maxRequests The max number of requests it is permissible for this session to have open
-     * at any one time.
-     */
-    public void setMaxRequests(int maxRequests) {
-        this.maxRequests = maxRequests;
     }
 
     /**
@@ -286,24 +288,11 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the maximum length of a temporary session pause (in seconds) that the client MAY
-     * request.
+     * Returns the maximum length of a temporary session pause that the client MAY request.
      *
-     * @param maxPause the maximum length of a temporary session pause (in seconds) that the client
-     * MAY request.
+     * @return the maximum length of a temporary session pause that the client MAY request.
      */
-    public void setMaxPause(int maxPause) {
-        this.maxPause = maxPause;
-    }
-
-    /**
-     * Returns the maximum length of a temporary session pause (in seconds) that the client MAY
-     * request.
-     *
-     * @return the maximum length of a temporary session pause (in seconds) that the client MAY
-     *         request.
-     */
-    public int getMaxPause() {
+    public Duration getMaxPause() {
         return this.maxPause;
     }
 
@@ -329,19 +318,7 @@ public class HttpSession extends LocalClientSession {
      * @return true if this session is a polling session.
      */
     public boolean isPollingSession() {
-        return (this.wait == 0 || this.hold == 0);
-    }
-
-    /**
-     * Sets the default inactivity timeout of this session. A session's inactivity timeout can
-     * be temporarily changed using session pause requests.
-     *
-     * @see #pause(int)
-     *
-     * @param defaultInactivityTimeout the default inactivity timeout of this session.
-     */
-    public void setDefaultInactivityTimeout(int defaultInactivityTimeout) {
-        this.defaultInactivityTimeout = defaultInactivityTimeout;
+        return (this.wait.isZero() || this.hold == 0);
     }
 
     /**
@@ -351,7 +328,7 @@ public class HttpSession extends LocalClientSession {
      * @param inactivityTimeout the time, in seconds, after which this session will be considered
      * inactive and be terminated.
      */
-    public void setInactivityTimeout(int inactivityTimeout) {
+    public void setInactivityTimeout(Duration inactivityTimeout) {
         this.inactivityTimeout = inactivityTimeout;
     }
 
@@ -359,7 +336,7 @@ public class HttpSession extends LocalClientSession {
      * Resets the inactivity timeout of this session to default. A session's inactivity timeout can
      * be temporarily changed using session pause requests.
      *
-     * @see #pause(int)
+     * @see #pause(Duration)
      */
     public void resetInactivityTimeout() {
         this.inactivityTimeout = this.defaultInactivityTimeout;
@@ -372,7 +349,7 @@ public class HttpSession extends LocalClientSession {
      * @return the time, in seconds, after which this session will be considered inactive and
      *         terminated.
      */
-    public int getInactivityTimeout() {
+    public Duration getInactivityTimeout() {
         return inactivityTimeout;
     }
 
@@ -386,7 +363,7 @@ public class HttpSession extends LocalClientSession {
      * @param duration the time, in seconds, after which this session will be considered inactive
      *        and terminated.
      */
-    public void pause(int duration) {
+    public void pause(Duration duration) {
         // Respond immediately to all pending requests
         synchronized (connectionQueue) {
             for (HttpConnection toClose : connectionQueue) {
@@ -405,19 +382,19 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the time in milliseconds since the epoch that this session was last active.
      */
-    public long getLastActivity() {
-        if (!connectionQueue.isEmpty()) {
-            synchronized (connectionQueue) {
+    public Instant getLastActivity() {
+        synchronized (connectionQueue) {
+            if (!connectionQueue.isEmpty()) {
                 for (HttpConnection connection : connectionQueue) {
                     // The session is currently active, set the last activity to the current time.
                     if (!(connection.isClosed())) {
-                        lastActivity = System.currentTimeMillis();
+                        lastActivity = Instant.now();
                         break;
                     }
                 }
             }
+            return lastActivity;
         }
-        return lastActivity;
     }
 
     /**
@@ -431,20 +408,9 @@ public class HttpSession extends LocalClientSession {
      * all requests with lower 'rid' values.
      */
     public long getLastAcknowledged() {
-        return lastSequentialRequestID;
-    }
-
-    /**
-     * Sets the major version of BOSH which the client implements. Currently, the only versions
-     * supported by Openfire are 1.5 and 1.6.
-     *
-     * @param majorVersion the major version of BOSH which the client implements.
-     */
-    public void setMajorVersion(int majorVersion) {
-        if(majorVersion != 1) {
-            return;
+        synchronized (connectionQueue) {
+            return lastSequentialRequestID;
         }
-        this.majorVersion = majorVersion;
     }
 
     /**
@@ -462,22 +428,6 @@ public class HttpSession extends LocalClientSession {
         }
         else {
             return 1;
-        }
-    }
-
-    /**
-     * Sets the minor version of BOSH which the client implements. Currently, the only versions
-     * supported by Openfire are 1.5 and 1.6. Any versions less than or equal to 5 will be
-     * interpreted as 5 and any values greater than or equal to 6 will be interpreted as 6.
-     *
-     * @param minorVersion the minor version of BOSH which the client implements.
-     */
-    public void setMinorVersion(int minorVersion) {
-        if(minorVersion <= 5) {
-            this.minorVersion = 5;
-        }
-        else {
-            this.minorVersion = 6;
         }
     }
 
@@ -510,15 +460,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets whether the initial request on the session was secure.
-     *
-     * @param isSecure true if the initial request was secure and false if it wasn't.
-     */
-    protected void setSecure(boolean isSecure) {
-        this.isSecure = isSecure;
-    }
-
-    /**
      * Forwards a client request, which is related to a session, to the server. A connection is
      * created and queued up in the provided session. When a connection reaches the top of a queue
      * any pending packets bound for the client will be forwarded to the client through the
@@ -545,25 +486,26 @@ public class HttpSession extends LocalClientSession {
                 "connections on this session must be secured.", BoshBindingError.badRequest);
         }
 
-        // Check if the provided RID is in the to-be-expected window.
-        if (rid > (lastSequentialRequestID + maxRequests)) {
-            Log.warn("Request {} > {}, ending session {}", body.getRid(), (lastSequentialRequestID + maxRequests), getStreamID());
-            throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
-        }
+        synchronized (connectionQueue)
+        {
+            // Check if the provided RID is in the to-be-expected window.
+            if (rid > (lastSequentialRequestID + maxRequests)) {
+                Log.warn("Request {} > {}, ending session {}", body.getRid(), (lastSequentialRequestID + maxRequests), getStreamID());
+                throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
+            }
 
-        // Check for retransmission.
-        if (rid <= lastAnsweredRequestID) {
-            redeliver(connection);
-            return;
-        }
+            // Check for retransmission.
+            if (rid <= lastAnsweredRequestID) {
+                redeliver(connection);
+                return;
+            }
 
-        /*
-         * Search through the connection queue to see if this rid already exists on it. If it does then we
-         * will close and deliver the existing connection (if appropriate), and close and deliver the same
-         * deliverable on the new connection. This is under the assumption that a connection has been dropped,
-         * and re-requested before jetty has realised.
-         */
-        synchronized (connectionQueue) {
+            /*
+             * Search through the connection queue to see if this rid already exists on it. If it does then we
+             * will close and deliver the existing connection (if appropriate), and close and deliver the same
+             * deliverable on the new connection. This is under the assumption that a connection has been dropped,
+             * and re-requested before jetty has realised.
+             */
             // TODO is there overlap with the retransmission logic above? Can this be simplified?
             for (HttpConnection queuedConnection : connectionQueue) {
                 if (queuedConnection.getRequestId() == rid) {
@@ -651,15 +593,17 @@ public class HttpSession extends LocalClientSession {
             Log.debug( "Creating connection for rid: {} in session {}", rid, streamID );
         }
         connection.setSession(this);
-        context.setTimeout(getWait() * JiveConstants.SECOND);
+        context.setTimeout(getWait().toMillis());
         context.addListener(new AsyncListener() {
             @Override
             public void onComplete(AsyncEvent asyncEvent) {
                 if (Log.isTraceEnabled()) {
                     Log.trace("Session {} Request ID {}, event complete: {}", streamID, rid, asyncEvent);
                 }
-                connectionQueue.remove(connection);
-                lastActivity = System.currentTimeMillis();
+                synchronized (connectionQueue) {
+                    connectionQueue.remove(connection);
+                    lastActivity = Instant.now();
+                }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
@@ -673,8 +617,10 @@ public class HttpSession extends LocalClientSession {
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
-                    deliver(connection, Collections.singletonList(new Deliverable("")), false);
-                    setLastResponseEmpty(true);
+                    synchronized (connectionQueue) {
+                        deliver(connection, Collections.singletonList(new Deliverable("")), false);
+                        setLastResponseEmpty(true);
+                    }
                 } catch (HttpConnectionClosedException e) {
                     Log.warn("Unexpected exception while processing connection timeout.", e);
                 }
@@ -688,7 +634,9 @@ public class HttpSession extends LocalClientSession {
                     Log.trace("Session {} Request ID {}, event error: {}", streamID, rid, asyncEvent);
                 }
                 Log.warn("For session " + streamID + " unhandled AsyncListener error: " + asyncEvent.getThrowable());
-                connectionQueue.remove(connection);
+                synchronized (connectionQueue) {
+                    connectionQueue.remove(connection);
+                }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
@@ -714,14 +662,13 @@ public class HttpSession extends LocalClientSession {
      * @return previously delivered data when found.
      */
     @Nullable
+    @GuardedBy("connectionQueue")
     private Delivered retrieveDeliverable(final long rid) {
         Delivered result = null;
-        synchronized (sentElements) {
-            for (Delivered delivered : sentElements) {
-                if (delivered.getRequestID() == rid) {
-                    result = delivered;
-                    break;
-                }
+        for (Delivered delivered : sentElements) {
+            if (delivered.getRequestID() == rid) {
+                result = delivered;
+                break;
             }
         }
         return result;
@@ -776,7 +723,7 @@ public class HttpSession extends LocalClientSession {
                         close();
                     } else if (queuedConnection.isRestart()) {
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
-                    } else if (queuedConnection.getPause() > 0 && queuedConnection.getPause() <= getMaxPause()) {
+                    } else if (queuedConnection.getPause() != null && queuedConnection.getPause().compareTo(getMaxPause()) <= 0) {
                         pause(queuedConnection.getPause()); // TODO shouldn't we error when the requested pause is higher than the allowed maximum?
                         connection.deliverBody(createEmptyBody(false), true);
                         setLastResponseEmpty(true);
@@ -792,10 +739,7 @@ public class HttpSession extends LocalClientSession {
                     break;
                 }
             }
-        }
 
-        synchronized (pendingElements)
-        {
             // If a connection became available for delivery and there's pending data to be delivered, deliver immediately.
             // Request ID of the new connection 'fits in the window'
 
@@ -807,16 +751,14 @@ public class HttpSession extends LocalClientSession {
             }
 
             if (isPollingSession() || (aConnectionAvailableForDelivery && !pendingElements.isEmpty())) {
-                lastActivity = System.currentTimeMillis();
+                lastActivity = Instant.now();
                 SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection, context ); // TODO is this the right place to dispatch this event?
                 deliver(pendingElements);
                 pendingElements.clear();
             }
-        }
 
-        // When a new connection has become available, older connections need to be released (allowing the client to
-        // send more data if it needs to).
-        synchronized (connectionQueue) {
+            // When a new connection has become available, older connections need to be released (allowing the client to
+            // send more data if it needs to).
             final List<HttpConnection> openConnections = connectionQueue.stream()
                 .filter(c -> !c.isClosed())
                 .filter(c -> c.getRequestId() <= lastSequentialRequestID)
@@ -845,6 +787,7 @@ public class HttpSession extends LocalClientSession {
      * @throws HttpConnectionClosedException if the connection was closed before a response could be delivered.
      * @throws HttpBindException if the connection has violated a facet of the HTTP binding protocol.
      */
+    @GuardedBy("connectionQueue")
     private void redeliver(@Nonnull final HttpConnection connection) throws HttpBindException, IOException, HttpConnectionClosedException
     {
         Log.debug("Session {} requesting a retransmission for rid {}", getStreamID(), connection.getRequestId());
@@ -887,14 +830,14 @@ public class HttpSession extends LocalClientSession {
             }
         }
 
-        long time = System.currentTimeMillis();
-        long deltaFromLastPoll = time - lastPoll;
+        Instant time = Instant.now();
+        Duration deltaFromLastPoll = Duration.between(lastPoll, time).abs();
         if(pendingConnections >= maxRequests) {
             overactivity = OveractivityType.TOO_MANY_SIM_REQS;
         }
         else if(connection.isPoll()) {
             boolean localIsPollingSession = isPollingSession();
-            if (deltaFromLastPoll < maxPollingInterval * JiveConstants.SECOND) {
+            if (deltaFromLastPoll.compareTo(maxPollingInterval) < 0) {
                 if (localIsPollingSession) {
                     overactivity = lastResponseEmpty ? OveractivityType.POLLING_TOO_QUICK : OveractivityType.NONE;
                 } else {
@@ -928,7 +871,7 @@ public class HttpSession extends LocalClientSession {
                     errorMessage.append(maxPollingInterval);
                     errorMessage.append(", current session ");
                     errorMessage.append(" interval ");
-                    errorMessage.append(deltaFromLastPoll / 1000);
+                    errorMessage.append(deltaFromLastPoll);
                     break;
                 }
                 default: {
@@ -999,11 +942,9 @@ public class HttpSession extends LocalClientSession {
                             ". Openfire will attempt to recover by ignoring this connection.", e);
                 }
             }
-        }
 
-        if (!delivered) {
-            Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
-            synchronized(pendingElements) {
+            if (!delivered) {
+                Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
                 pendingElements.addAll( deliverable );
             }
         }
@@ -1016,6 +957,7 @@ public class HttpSession extends LocalClientSession {
      * @param deliverable The data to be delivered.
      * @param async should the invocation block until the data has been delivered?
      */
+    @GuardedBy("connectionQueue")
     private void deliver(@Nonnull final HttpConnection connection, @Nonnull final List<Deliverable> deliverable, final boolean async)
         throws HttpConnectionClosedException, IOException
     {
@@ -1032,9 +974,6 @@ public class HttpSession extends LocalClientSession {
     }
 
     private void closeSession() {
-        if (isClosed) { return; }
-        isClosed = true;
-
         try {
             // There generally should not be a scenario where there are pending connections, as well as pending elements
             // to deliver, as when a new connection becomes available while there are pending elements, those will be
@@ -1068,9 +1007,7 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("An unexpected exception occurred while closing a session.", e);
                     }
                 }
-            }
 
-            synchronized (pendingElements) {
                 for (Deliverable deliverable : pendingElements) {
                     failDelivery(deliverable.getPackets());
                 }
@@ -1086,11 +1023,17 @@ public class HttpSession extends LocalClientSession {
             // Do nothing if someone asked to deliver nothing :)
             return;
         }
+
+        if (conn.getPacketDeliverer() == null) {
+            Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+            return;
+        }
+
         // use a separate thread to schedule backup delivery
         TaskEngine.getInstance().submit(() -> {
             for (final Packet packet : packets) {
                 try {
-                    backupDeliverer.deliver(packet);
+                    conn.getPacketDeliverer().deliver(packet);
                 }
                 catch (UnauthorizedException e) {
                     Log.error("On session " + getStreamID() + " unable to deliver message to backup deliverer", e);
@@ -1167,14 +1110,11 @@ public class HttpSession extends LocalClientSession {
         private final InetAddress address;
         private ConnectionConfiguration configuration;
         private final ConnectionType connectionType;
+        private final PacketDeliverer backupDeliverer;
 
-        public HttpVirtualConnection(@Nonnull final InetAddress address) {
+        public HttpVirtualConnection(@Nonnull final InetAddress address, @Nullable final PacketDeliverer backupDeliverer, @Nonnull final ConnectionType connectionType) {
             this.address = address;
-            this.connectionType = ConnectionType.SOCKET_C2S;
-        }
-
-        public HttpVirtualConnection(@Nonnull final InetAddress address, @Nonnull final ConnectionType connectionType) {
-            this.address = address;
+            this.backupDeliverer = backupDeliverer;
             this.connectionType = connectionType;
         }
 
@@ -1227,8 +1167,14 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
-        public Certificate[] getPeerCertificates() {
+        public X509Certificate[] getPeerCertificates() {
             return ((HttpSession) session).getPeerCertificates();
+        }
+
+        @Override
+        @Nullable
+        public PacketDeliverer getPacketDeliverer() {
+            return backupDeliverer;
         }
     }
 
@@ -1313,7 +1259,7 @@ public class HttpSession extends LocalClientSession {
                     answer.add(packet);
                 }
                 catch (Exception e) {
-                    Log.error("Error while parsing Privacy Property", e);
+                    Log.error("Error while parsing text as stanza: {}", packetXML, e);
                 }
             }
             return answer;

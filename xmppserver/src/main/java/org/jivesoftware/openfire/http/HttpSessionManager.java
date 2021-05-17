@@ -23,15 +23,16 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.NamedThreadFactory;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
@@ -49,11 +50,10 @@ public class HttpSessionManager {
     private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
 
     private SessionManager sessionManager;
-    private Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>(
-            JiveGlobals.getIntProperty("xmpp.httpbind.session.initial.count", 16));
+    private final Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
     private TimerTask inactivityTask;
     private ThreadPoolExecutor sendPacketPool;
-    private SessionListener sessionListener = new SessionListener() {
+    private final SessionListener sessionListener = new SessionListener() {
         @Override
         public void sessionClosed(HttpSession session) {
             sessionMap.remove(session.getStreamID().getID());
@@ -64,9 +64,6 @@ public class HttpSessionManager {
      * Creates a new HttpSessionManager instance.
      */
     public HttpSessionManager() {
-        
-        JiveGlobals.migrateProperty("xmpp.httpbind.worker.threads");
-        JiveGlobals.migrateProperty("xmpp.httpbind.worker.timeout");
     }
 
     /**
@@ -75,10 +72,6 @@ public class HttpSessionManager {
     @Deprecated
     public void init() {}
 
-    private int getCorePoolSize(int maxPoolSize) {
-        return (maxPoolSize/4)+1;
-    }
-
     /**
      * Starts the services used by the HttpSessionManager.
      *
@@ -86,22 +79,17 @@ public class HttpSessionManager {
      * (through property "xmpp.httpbind.worker.threads") amount of threads; also uses an unbounded task queue and
      * configurable ("xmpp.httpbind.worker.timeout") keep-alive.
      *
-     * Note: Apart from the processing threads configured in this class, the server also uses a threadpool to perform
-     * the network IO (as configured in ({@link HttpBindManager}). BOSH installations expecting heavy loads may want to
-     * allocate additional threads to this worker pool to ensure timely delivery of inbound packets
+     * Note: Apart from the processing threads configured in this class, the server also uses a thread pool to perform
+     * the network IO (as configured in ({@link HttpBindManager#HTTP_BIND_THREADS}). BOSH installations expecting heavy
+     * loads may want to allocate additional threads to this worker pool to ensure timely delivery of inbound packets
      */
     public void start() {
         Log.info( "Starting instance" );
 
         this.sessionManager = SessionManager.getInstance();
 
-        final int maxClientPoolSize = JiveGlobals.getIntProperty( "xmpp.client.processing.threads", 8 );
-        final int maxPoolSize = JiveGlobals.getIntProperty("xmpp.httpbind.worker.threads", maxClientPoolSize );
-        final int keepAlive = JiveGlobals.getIntProperty( "xmpp.httpbind.worker.timeout", 60 );
-        final int sessionCleanupCheck = JiveGlobals.getIntProperty("xmpp.httpbind.worker.cleanupcheck", 30);
-
-        sendPacketPool = new ThreadPoolExecutor(getCorePoolSize(maxPoolSize), maxPoolSize, keepAlive, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(), // unbounded task queue
+        sendPacketPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(), // unbounded task queue
                 new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
         );
 
@@ -109,8 +97,49 @@ public class HttpSessionManager {
 
         // Periodically check for Sessions that need a cleanup.
         inactivityTask = new HttpSessionReaper();
-        TaskEngine.getInstance().schedule( inactivityTask, 30 * JiveConstants.SECOND, sessionCleanupCheck * JiveConstants.SECOND);
+        TaskEngine.getInstance().schedule( inactivityTask, Duration.ofSeconds(30).toMillis(), SESSION_CLEANUP_INTERVAL.getValue().toMillis() );
     }
+
+    /**`
+     * Maximum number of threads used to process incoming BOSH data. Defaults to the same amount of threads as what's
+     * used for non-BOSH/TCP-connected XMPP clients.
+     */
+    public static SystemProperty<Integer> MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.httpbind.worker.threads")
+        .setDefaultValue( JiveGlobals.getIntProperty(ConnectionSettings.Client.MAX_THREADS, 8) )
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Minimum amount of threads used to process incoming BOSH data.
+     */
+    public static final SystemProperty<Integer> MIN_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.httpbind.worker.threads-min")
+        .setDynamic(false)
+        .setDefaultValue((MAX_POOL_SIZE.getDefaultValue()/4)+1)
+        .setMinValue(1)
+        .build();
+
+    /**
+     * Duration that unused, surplus threads that once processed BOSH data are kept alive.
+     */
+    public static SystemProperty<Duration> POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.worker.timeout")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Interval in which a check is executed that will cleanup unused/inactive BOSH sessions.
+     */
+    public static SystemProperty<Duration> SESSION_CLEANUP_INTERVAL = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.worker.cleanupcheck")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setMinValue(Duration.ofSeconds(1))
+        .setDynamic(false)
+        .build();
 
     /**
      * Stops any services and cleans up any resources used by the HttpSessionManager.
@@ -155,24 +184,19 @@ public class HttpSessionManager {
         throws UnauthorizedException, HttpBindException, UnknownHostException
     {
         // TODO Check if IP address is allowed to connect to the server
-        HttpSession session = createSession(connection, Locale.forLanguageTag(body.getLanguage()));
-        session.setWait(Math.min(body.getWait(), getMaxWait()));
-        session.setHold(body.getHold());
-        session.setSecure(connection.isSecure());
-        session.setMaxPollingInterval(getPollingInterval());
-        session.setMaxRequests(getMaxRequests());
-        session.setMaxPause(getMaxPause());
-        
-        if(session.isPollingSession()) {
-            session.setDefaultInactivityTimeout(getPollingInactivityTimeout());
+        final Duration wait = body.getWait().compareTo(MAX_WAIT.getValue()) > 0 ? MAX_WAIT.getValue() : body.getWait();
+        final Duration defaultInactivityTimeout;
+        if (wait.isZero() || body.getHold() == 0) {
+            // Session will be polling.
+            defaultInactivityTimeout = POLLING_INACTIVITY_TIMEOUT.getValue();
+        } else {
+            defaultInactivityTimeout = INACTIVITY_TIMEOUT.getValue();
         }
-        else {
-            session.setDefaultInactivityTimeout(getInactivityTimeout());
-        }
+        HttpSession session = createSession(connection, Locale.forLanguageTag(body.getLanguage()), wait, body.getHold(),
+            connection.isSecure(), POLLING_INTERVAL.getValue(), MAX_REQUESTS.getValue(), MAX_PAUSE.getValue(),
+            defaultInactivityTimeout, body.getMajorVersion(), body.getMinorVersion());
+
         session.resetInactivityTimeout();
-        
-        session.setMajorVersion(body.getMajorVersion());
-        session.setMinorVersion(body.getMinorVersion());
 
         connection.setSession(session);
         try {
@@ -185,31 +209,30 @@ public class HttpSessionManager {
         return session;
     }
 
-
     /**
-     * Returns the maximum length of a temporary session pause (in seconds) that the client MAY 
-     * request.
-     *
-     * @return the maximum length of a temporary session pause (in seconds) that the client MAY 
-     *         request.
+     * The maximum length of a temporary session pause that a BOSH client MAY request.
      */
-    public int getMaxPause() {
-        return JiveGlobals.getIntProperty("xmpp.httpbind.client.maxpause", 300);
-    }
+    public static SystemProperty<Duration> MAX_PAUSE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.client.maxpause")
+        .setDefaultValue(Duration.ofSeconds(300))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
 
     /**
-     * Returns the longest time (in seconds) that Openfire is allowed to wait before responding to
+     * Returns the longest time that Openfire is allowed to wait before responding to
      * any request during the session. This enables the client to prevent its TCP connection from
      * expiring due to inactivity, as well as to limit the delay before it discovers any network
      * failure.
-     *
-     * @return the longest time (in seconds) that Openfire is allowed to wait before responding to
-     *         any request during the session.
      */
-    public int getMaxWait() {
-        return JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.wait",
-                Integer.MAX_VALUE);
-    }
+    public static SystemProperty<Duration> MAX_WAIT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.client.requests.wait")
+        .setDefaultValue(Duration.ofSeconds(Integer.MAX_VALUE))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
 
     /**
      * Openfire SHOULD include two additional attributes in the session creation response element,
@@ -217,13 +240,14 @@ public class HttpSessionManager {
      * period (both in seconds). Communication of these parameters enables the client to engage in
      * appropriate behavior (e.g., not sending empty request elements more often than desired, and
      * ensuring that the periods with no requests pending are never too long).
-     *
-     * @return the maximum allowable period over which a client can send empty requests to the
-     *         server.
      */
-    public int getPollingInterval() {
-        return JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.polling", 5);
-    }
+    public static SystemProperty<Duration> POLLING_INTERVAL = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.client.requests.polling")
+        .setDefaultValue(Duration.ofSeconds(5))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
 
     /**
      * Openfire MAY limit the number of simultaneous requests the client makes with the 'requests'
@@ -231,63 +255,60 @@ public class HttpSessionManager {
      * prevent clients from making simultaneous requests by setting the 'requests' attribute to a
      * value of "1" (however, polling is NOT RECOMMENDED). In any case, clients MUST NOT make more
      * simultaneous requests than specified by the Openfire.
-     *
-     * @return the number of simultaneous requests allowable.
      */
-    public int getMaxRequests() {
-        return JiveGlobals.getIntProperty("xmpp.httpbind.client.requests.max", 2);
-    }
+    public static SystemProperty<Integer> MAX_REQUESTS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.httpbind.client.requests.max")
+        .setDefaultValue(2)
+        .setDynamic(true)
+        .build();
 
     /**
-     * Seconds a session has to be idle to be closed. Default is 30. Sending stanzas to the
+     * Period of time a session has to be idle to be closed. Default is 30 seconds. Sending stanzas to the
      * client is not considered as activity. We are only considering the connection active when the
-     * client sends some data or hearbeats (i.e. whitespaces) to the server. The reason for this is
+     * client sends some data or heartbeats (i.e. whitespaces) to the server. The reason for this is
      * that sending data will fail if the connection is closed. And if the thread is blocked while
      * sending data (because the socket is closed) then the clean up thread will close the socket
      * anyway.
-     *
-     * @return Seconds a session has to be idle to be closed.
      */
-    public int getInactivityTimeout() {
-        return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle", 30);
-    }
+    public static SystemProperty<Duration> INACTIVITY_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.client.idle")
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
 
     /**
-     * Seconds a polling session has to be idle to be closed. Default is 60. Sending stanzas to the
+     * Period of time a polling session has to be idle to be closed. Default is 60 seconds. Sending stanzas to the
      * client is not considered as activity. We are only considering the connection active when the
-     * client sends some data or hearbeats (i.e. whitespaces) to the server. The reason for this is
+     * client sends some data or heartbeats (i.e. whitespaces) to the server. The reason for this is
      * that sending data will fail if the connection is closed. And if the thread is blocked while
      * sending data (because the socket is closed) then the clean up thread will close the socket
      * anyway.
-     *
-     * @return Seconds a polling session has to be idle to be closed.
      */
-    public int getPollingInactivityTimeout() {
-        return JiveGlobals.getIntProperty("xmpp.httpbind.client.idle.polling", 60);
-    }
+    public static SystemProperty<Duration> POLLING_INACTIVITY_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.httpbind.client.idle.polling")
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
 
-    private HttpSession createSession(HttpConnection connection, Locale language) throws UnauthorizedException, UnknownHostException
+    private HttpSession createSession(HttpConnection connection, Locale language, Duration wait,
+                                      int hold, boolean isSecure, Duration maxPollingInterval,
+                                      int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
+                                      int majorVersion, int minorVersion) throws UnauthorizedException, UnknownHostException
     {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language);
+        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language, wait, hold, isSecure,
+                                                                     maxPollingInterval, maxRequests, maxPause,
+                                                                     defaultInactivityTimeout, majorVersion, minorVersion);
         // Register that the new session is associated with the specified stream ID
         sessionMap.put(streamID.getID(), session);
         SessionEventDispatcher.addListener( sessionListener );
         return session;
-    }
-
-    private static int getIntAttribute(String value, int defaultValue) {
-        if (value == null || "".equals(value.trim())) {
-            return defaultValue;
-        }
-        try {
-            return Integer.valueOf(value);
-        }
-        catch (Exception ex) {
-            return defaultValue;
-        }
     }
 
     private static String createSessionCreationResponse(HttpSession session) throws DocumentException {
@@ -298,16 +319,15 @@ public class HttpSessionManager {
         response.addAttribute("sid", session.getStreamID().getID());
         response.addAttribute("secure", Boolean.TRUE.toString());
         response.addAttribute("requests", String.valueOf(session.getMaxRequests()));
-        response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout()));
-        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval()));
-        response.addAttribute("wait", String.valueOf(session.getWait()));
+        response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout().getSeconds()));  // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
+        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval().getSeconds())); // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
+        response.addAttribute("wait", String.valueOf(session.getWait().getSeconds())); // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
         if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
             session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));
             response.addAttribute("ack", String.valueOf(session.getLastAcknowledged()));
-            response.addAttribute("maxpause", String.valueOf(session.getMaxPause()));
-            response.addAttribute("ver", String.valueOf(session.getMajorVersion())
-                    + "." + String.valueOf(session.getMinorVersion()));
+            response.addAttribute("maxpause", String.valueOf(session.getMaxPause().getSeconds())); // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
+            response.addAttribute("ver", session.getMajorVersion() + "." + session.getMinorVersion());
         }
 
         Element features = response.addElement("stream:features");
@@ -322,12 +342,12 @@ public class HttpSessionManager {
 
         @Override
         public void run() {
-            long currentTime = System.currentTimeMillis();
+            Instant currentTime = Instant.now();
             for (HttpSession session : sessionMap.values()) {
                 try {
-                    long lastActive = currentTime - session.getLastActivity();
-                    if( lastActive >= 1 && HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
-                        Log.info("Session {} was last active {} ms ago: {} from IP {} " +
+                    Duration lastActive = Duration.between(session.getLastActivity(), currentTime);
+                    if( !lastActive.isNegative() && !lastActive.isZero() && HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
+                        Log.info("Session {} was last active {} ago: {} from IP {} " +
                                 " currently on rid {}",
                                 session.getStreamID(),
                                 lastActive,
@@ -335,7 +355,7 @@ public class HttpSessionManager {
                                 session.getConnection().getHostAddress(),
                                 session.getLastAcknowledged()); // RID
                     }
-                    if (lastActive > session.getInactivityTimeout() * JiveConstants.SECOND) {
+                    if (lastActive.compareTo(session.getInactivityTimeout()) > 0) {
                         Log.info("Closing idle session {}: {} from IP {}",
                                 session.getStreamID(),
                                 session.getAddress(),

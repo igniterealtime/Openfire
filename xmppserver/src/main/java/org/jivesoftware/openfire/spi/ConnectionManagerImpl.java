@@ -133,13 +133,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         // BOSH / HTTP-bind
         boshListener = new ConnectionListener(
                 ConnectionType.BOSH_C2S,
-                HttpBindManager.HTTP_BIND_PORT,
-                HttpBindManager.HTTP_BIND_PORT_DEFAULT,
-                HttpBindManager.HTTP_BIND_ENABLED, // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
-                HttpBindManager.HTTP_BIND_THREADS,
+                HttpBindManager.HTTP_BIND_PORT.getKey(),
+                HttpBindManager.HTTP_BIND_PORT.getDefaultValue(),
+                HttpBindManager.HTTP_BIND_ENABLED.getKey(), // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_THREADS.getKey(),
                 null,
                 Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use boshSslListener instead.
-                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
+                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.getKey(),
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
                 certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S ),
@@ -147,13 +147,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         );
         boshSslListener = new ConnectionListener(
                 ConnectionType.BOSH_C2S,
-                HttpBindManager.HTTP_BIND_SECURE_PORT,
-                HttpBindManager.HTTP_BIND_SECURE_PORT_DEFAULT,
-                HttpBindManager.HTTP_BIND_ENABLED, // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
-                HttpBindManager.HTTP_BIND_THREADS,
+                HttpBindManager.HTTP_BIND_SECURE_PORT.getKey(),
+                HttpBindManager.HTTP_BIND_SECURE_PORT.getDefaultValue(),
+                HttpBindManager.HTTP_BIND_ENABLED.getKey(), // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_THREADS.getKey(),
                 null,
                 Connection.TLSPolicy.legacyMode.name(),
-                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY,
+                HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.getKey(),
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
                 certificateStoreManager.getTrustStoreConfiguration( ConnectionType.BOSH_C2S ),

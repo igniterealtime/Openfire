@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -32,8 +33,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
- * Fallback method used by {@link org.jivesoftware.openfire.net.SocketConnection} when
- * connected to a connection manager. The fallback method will be used when a SocketConnection
+ * Fallback method used by {@link org.jivesoftware.openfire.nio.NIOConnection} when
+ * connected to a connection manager. The fallback method will be used when a connection
  * fails to send a {@link Packet} (probably because the socket was closed).<p>
  *
  * The first attempt will be to send the packet using another connection to the same connection
@@ -84,6 +85,10 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
     }
 
     private void handleUnprocessedPacket(Packet packet) {
+        if (!ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue()) {
+            Log.trace("Discarding packet that was due to be delivered on closed connection {}, for which no other multiplex connections are available, and no client backup deliverer was configured.", this);
+            return;
+        }
         if (packet instanceof Message) {
             messageStrategy.storeOffline((Message) packet);
         }

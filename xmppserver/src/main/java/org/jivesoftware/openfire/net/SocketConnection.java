@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
 import org.jivesoftware.openfire.*;
@@ -459,6 +460,7 @@ public class SocketConnection implements Connection {
     }
 
     @Override
+    @Nullable
     public PacketDeliverer getPacketDeliverer() {
         return backupDeliverer;
     }
@@ -598,7 +600,11 @@ public class SocketConnection implements Connection {
     @Override
     public void deliver(Packet packet) throws UnauthorizedException, PacketException {
         if (isClosed()) {
-            backupDeliverer.deliver(packet);
+            if (backupDeliverer != null) {
+                backupDeliverer.deliver(packet);
+            } else {
+                Log.trace("Discarding packet that was due to be delivered on closed connection {}, for which no backup deliverer was configured.", this);
+            }
         }
         else {
             boolean errorDelivering = false;
@@ -620,9 +626,12 @@ public class SocketConnection implements Connection {
             }
             if (errorDelivering) {
                 close();
-                // Retry sending the packet again. Most probably if the packet is a
-                // Message it will be stored offline
-                backupDeliverer.deliver(packet);
+                // Retry sending the packet again through the backup deliverer.
+                if (backupDeliverer != null) {
+                    backupDeliverer.deliver(packet);
+                } else {
+                    Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+                }
             }
             else {
                 session.incrementServerPacketCount();

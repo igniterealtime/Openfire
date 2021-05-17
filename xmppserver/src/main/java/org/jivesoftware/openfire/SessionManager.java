@@ -35,9 +35,12 @@ import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
+import org.jivesoftware.openfire.nio.ClientConnectionHandler;
+import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -403,18 +406,33 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param connection the connection to create the session from.
      * @param id the streamID to use for the new session.
      * @param language The language to use for the session
+     * @param wait The longest time it is permissible to wait for a response.
+     * @param hold The maximum number of simultaneous waiting requests.
+     * @param isSecure True if all connections on this session should be secured, and false if they should not.
+     * @param maxPollingInterval The max interval within which a client can send polling requests.
+     * @param maxRequests The max number of requests it is permissible for the session to have open at any one time.
+     * @param maxPause The maximum length of a temporary session pause (in seconds) that the client MAY request.
+     * @param defaultInactivityTimeout The default inactivity timeout of this session.
+     * @param majorVersion the major version of BOSH specification which this session utilizes.
+     * @param minorVersion the minor version of BOSH specification which this session utilizes.
      * @return a newly created session.
      * @throws UnauthorizedException if the server has not been initialised
      * @throws UnknownHostException if no IP address for the peer could be found,
      */
-    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language)
+    public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language, Duration wait,
+                                               int hold, boolean isSecure, Duration maxPollingInterval,
+                                               int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
+                                               int majorVersion, int minorVersion)
         throws UnauthorizedException, UnknownHostException
     {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        PacketDeliverer backupDeliverer = server.getPacketDeliverer();
-        HttpSession session = new HttpSession(backupDeliverer, serverName, id, connection, language);
+
+        final PacketDeliverer backupDeliverer = ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
+        final HttpSession.HttpVirtualConnection vConnection = new HttpSession.HttpVirtualConnection(connection.getRemoteAddr(), backupDeliverer, ConnectionType.SOCKET_C2S);
+        HttpSession session = new HttpSession(vConnection, serverName, id, connection.getRequestId(), connection.getPeerCertificates(), language, wait, hold, isSecure,
+                                              maxPollingInterval, maxRequests, maxPause, defaultInactivityTimeout, majorVersion, minorVersion);
         Connection conn = session.getConnection();
         conn.init(session);
         conn.registerCloseListener(clientSessionListener, session);

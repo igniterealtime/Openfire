@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.nio;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.handler.IQPingHandler;
@@ -27,6 +28,7 @@ import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -43,13 +45,25 @@ public class ClientConnectionHandler extends ConnectionHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(ClientConnectionHandler.class);
 
+    /**
+     * Enable / disable backup delivery of stanzas to the 'offline message store' of the corresponding user when a stanza
+     * failed to be delivered on a client connection. When disabled, stanzas that can not be delivered on the connection
+     * are discarded.
+     */
+    public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.client.backup-packet-delivery.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
     public ClientConnectionHandler(ConnectionConfiguration configuration) {
         super(configuration);
     }
 
     @Override
     NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, new OfflinePacketDeliverer(), configuration );
+        final PacketDeliverer backupDeliverer = BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
+        return new NIOConnection(session, backupDeliverer, configuration);
     }
 
     @Override

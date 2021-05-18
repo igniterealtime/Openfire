@@ -610,9 +610,8 @@ public class HttpSession extends LocalClientSession {
             @Override
             public void onTimeout(AsyncEvent asyncEvent) throws IOException {
                 if (Log.isTraceEnabled()) {
-                    Log.trace("Session {} Request ID {}, event timeout: {}", streamID, rid, asyncEvent);
+                    Log.trace("Session {} Request ID {}, event timeout: {}. Returning an empty response.", streamID, rid, asyncEvent);
                 }
-                Log.warn("For session " + streamID + " an async timeout occurred. Returning an empty response.");
 
                 try {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
@@ -633,7 +632,7 @@ public class HttpSession extends LocalClientSession {
                 if (Log.isTraceEnabled()) {
                     Log.trace("Session {} Request ID {}, event error: {}", streamID, rid, asyncEvent);
                 }
-                Log.warn("For session " + streamID + " unhandled AsyncListener error: " + asyncEvent.getThrowable());
+                Log.warn("For session {} an unhandled AsyncListener error occurred: ", streamID, asyncEvent.getThrowable());
                 synchronized (connectionQueue) {
                     connectionQueue.remove(connection);
                 }

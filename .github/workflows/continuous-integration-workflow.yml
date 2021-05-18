@@ -136,7 +136,7 @@ jobs:
 
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch]
+    needs: [aioxmpp, smack, check_branch]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:

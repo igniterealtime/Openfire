@@ -58,11 +58,11 @@ public class IQRouter extends BasicModule {
     private RoutingTable routingTable;
     private MulticastRouter multicastRouter;
     private String serverName;
-    private List<IQHandler> iqHandlers = new ArrayList<>();
-    private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<>();
-    private Map<String, IQResultListener> resultListeners = new ConcurrentHashMap<>();
-    private Map<String, Long> resultTimeout = new ConcurrentHashMap<>();
-    private Cache<String, NodeID> resultPending = CacheFactory.createCache("Routing Result Listeners");
+    private final List<IQHandler> iqHandlers = new ArrayList<>();
+    private final Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<>();
+    private final Map<String, IQResultListener> resultListeners = new ConcurrentHashMap<>();
+    private final Map<String, Long> resultTimeout = new ConcurrentHashMap<>();
+    private final Cache<String, NodeID> resultPending = CacheFactory.createCache("Routing Result Listeners");
     private SessionManager sessionManager;
     private UserManager userManager;
 
@@ -494,7 +494,7 @@ public class IQRouter extends BasicModule {
      */
     public void routingFailed( JID recipient, Packet packet )
     {
-        Log.debug( "IQ sent to unreachable address: " + packet.toXML() );
+        Log.debug( "IQ sent to unreachable address '{}': {}", recipient, packet.toXML() );
         final IQ iq = (IQ) packet;
         // If a route to the target address was not found then try to answer a service_unavailable error code to the sender of the IQ packet
         if ( iq.isRequest() )

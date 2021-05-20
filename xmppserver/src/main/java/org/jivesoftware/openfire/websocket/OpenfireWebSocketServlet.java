@@ -112,7 +112,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
                     }
                 }
             } catch (Exception e) {
-                Log.warn(MessageFormat.format("Unable to load websocket factory: {0} ({1})", e.getClass().getName(), e.getMessage()));
+                Log.warn("Unable to load websocket factory", e);
             }
             Log.warn("Failed to create websocket for {}:{} make a request at {}", req.getRemoteAddress(), req.getRemotePort(), req.getRequestPath() );
             return null;

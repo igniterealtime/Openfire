@@ -101,25 +101,21 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
         final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
         factory.getPolicy().setMaxTextMessageBufferSize(messageSize * 5);
         factory.getPolicy().setMaxTextMessageSize(messageSize);
-        factory.setCreator(new WebSocketCreator() {
-            @Override
-            public Object createWebSocket(ServletUpgradeRequest req, ServletUpgradeResponse resp)
-            {
-                try {
-                    for (String subprotocol : req.getSubProtocols())
+        factory.setCreator((req, resp) -> {
+            try {
+                for (String subprotocol : req.getSubProtocols())
+                {
+                    if ("xmpp".equals(subprotocol))
                     {
-                        if ("xmpp".equals(subprotocol))
-                        {
-                            resp.setAcceptedSubProtocol(subprotocol);
-                            return new XmppWebSocket();
-                        }
+                        resp.setAcceptedSubProtocol(subprotocol);
+                        return new XmppWebSocket();
                     }
-                } catch (Exception e) {
-                    Log.warn(MessageFormat.format("Unable to load websocket factory: {0} ({1})", e.getClass().getName(), e.getMessage()));
                 }
-                Log.warn("Failed to create websocket for {}:{} make a request at {}", req.getRemoteAddress(), req.getRemotePort(), req.getRequestPath() );
-                return null;
+            } catch (Exception e) {
+                Log.warn(MessageFormat.format("Unable to load websocket factory: {0} ({1})", e.getClass().getName(), e.getMessage()));
             }
+            Log.warn("Failed to create websocket for {}:{} make a request at {}", req.getRemoteAddress(), req.getRemotePort(), req.getRequestPath() );
+            return null;
         });
     }
 }

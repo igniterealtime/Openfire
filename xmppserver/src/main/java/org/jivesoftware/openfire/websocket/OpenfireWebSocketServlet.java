@@ -46,16 +46,8 @@ import org.slf4j.LoggerFactory;
  */
 public class OpenfireWebSocketServlet extends WebSocketServlet {
 
-    private static final long serialVersionUID = 7281841492829464605L;
+    private static final long serialVersionUID = 1074354600476010708L;
     private static final Logger Log = LoggerFactory.getLogger(OpenfireWebSocketServlet.class);
-
-    private HttpBindManager boshManager;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        boshManager = HttpBindManager.getInstance();
-    }
 
     @Override
     public void destroy()
@@ -81,6 +73,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
         // add CORS headers for all HTTP responses (errors, etc.)
         if (HttpBindManager.HTTP_BIND_CORS_ENABLED.getValue())
         {
+            final HttpBindManager boshManager = HttpBindManager.getInstance();
             if (boshManager.isAllOriginsAllowed()) {
                 // Set the Access-Control-Allow-Origin header to * to allow all Origin to do the CORS
                 response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);

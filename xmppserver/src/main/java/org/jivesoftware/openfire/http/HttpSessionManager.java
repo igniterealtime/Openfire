@@ -20,14 +20,18 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.time.Duration;
@@ -48,6 +52,11 @@ import java.util.concurrent.TimeUnit;
 public class HttpSessionManager {
     
     private static final Logger Log = LoggerFactory.getLogger(HttpSessionManager.class);
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the 'httpbind-worker' thread pool executor.
+     */
+    private ObjectName workerThreadPoolObjectName;
 
     private SessionManager sessionManager;
     private final Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
@@ -93,6 +102,10 @@ public class HttpSessionManager {
                 new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
         );
 
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(sendPacketPool);
+            workerThreadPoolObjectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "bosh");
+        }
         sendPacketPool.prestartCoreThread();
 
         // Periodically check for Sessions that need a cleanup.
@@ -146,6 +159,10 @@ public class HttpSessionManager {
      */
     public void stop() {
         Log.info( "Stopping instance" );
+        if (workerThreadPoolObjectName != null) {
+            JMXManager.getInstance().tryUnregister(workerThreadPoolObjectName);
+            workerThreadPoolObjectName = null;
+        }
         inactivityTask.cancel();
         for (HttpSession session : sessionMap.values()) {
             Log.debug( "Closing as session manager instance is being stopped: {}", session );

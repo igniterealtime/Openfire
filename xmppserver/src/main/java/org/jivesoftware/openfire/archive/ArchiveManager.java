@@ -15,16 +15,17 @@
  */
 package org.jivesoftware.openfire.archive;
 
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.util.NamedThreadFactory;
 
+import javax.management.ObjectName;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * A manager of tasks that write archives into storage.
@@ -36,7 +37,12 @@ public class ArchiveManager extends BasicModule
     /**
      * A thread pool that writes messages to the database.
      */
-    private ExecutorService executor;
+    private ThreadPoolExecutor executor;
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the thread pool executor.
+     */
+    private ObjectName objectName;
 
     /**
      * Currently running tasks.
@@ -58,7 +64,12 @@ public class ArchiveManager extends BasicModule
         {
             throw new IllegalStateException( "Already initialized." );
         }
-        executor = Executors.newCachedThreadPool( new NamedThreadFactory( "archive-service-worker-", null, null, null ) );
+        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool( new NamedThreadFactory( "archive-service-worker-", null, null, null ) );
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+            objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "archive-manager");
+        }
     }
 
     /**
@@ -70,6 +81,11 @@ public class ArchiveManager extends BasicModule
     @Override
     public void destroy()
     {
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
+
         if ( executor != null )
         {
             executor.shutdown();

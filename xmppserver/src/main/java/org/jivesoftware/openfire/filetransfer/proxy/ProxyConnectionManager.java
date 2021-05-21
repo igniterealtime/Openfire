@@ -23,24 +23,30 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferRejectedException;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.stats.i18nStatistic;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.management.ObjectName;
 
 /**
  * Manages the connections to the proxy server. The connections go through two stages before
@@ -60,7 +66,12 @@ public class ProxyConnectionManager {
 
     private final Object connectionLock = new Object();
 
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    private final ThreadPoolExecutor executor;
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the thread pool executor.
+     */
+    private ObjectName objectName;
 
     private Future<?> socketProcess;
 
@@ -73,6 +84,13 @@ public class ProxyConnectionManager {
     private String className;
 
     public ProxyConnectionManager(FileTransferManager manager) {
+        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool( new NamedThreadFactory( "proxy-connection-worker-", null, null, null ) );
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+            objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "proxy-connection");
+        }
+
         String cacheName = "File Transfer";
         connectionMap = CacheFactory.createCache(cacheName);
 
@@ -266,6 +284,10 @@ public class ProxyConnectionManager {
 
     synchronized void shutdown() {
         disable();
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
         executor.shutdown();
         StatisticsManager.getInstance().removeStatistic(proxyTransferRate);
     }

@@ -16,11 +16,10 @@
 
 package org.jivesoftware.openfire.pep;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -45,6 +44,7 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -111,6 +111,36 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     // depend on database access (ideally, these should get dedicated resource
     // pools too).
     private ThreadPoolExecutor executor = null;
+
+    /**
+     * The number of threads to keep in the thread pool used to send PEP notifications, even if they are idle.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.pep.threadpool.size.core")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool used to send PEP notifications.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.pep.threadpool.size.max")
+        .setMinValue(1)
+        .setDefaultValue(2) // Keep this low! See comment written above the 'executor' member/field.
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The number of threads in the thread pool used to send PEP notifications is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> EXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.pep.threadpool.keepalive")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
 
     /**
      * Object name used to register delegate MBean (JMX) for the thread pool executor.
@@ -208,6 +238,14 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             // keep the amount of workers low! See comment that goes with the
             // field named 'executor'.
             Log.debug("Starting executor service...");
+            executor = new ThreadPoolExecutor(
+                EXECUTOR_CORE_POOL_SIZE.getValue(),
+                EXECUTOR_MAX_POOL_SIZE.getValue(),
+                EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+                TimeUnit.SECONDS,
+                new SynchronousQueue<>(),
+                new NamedThreadFactory( "pep-worker-", null, null, null ) );
+
             executor = (ThreadPoolExecutor) Executors.newScheduledThreadPool(2, new NamedThreadFactory( "pep-worker-", null, null, null ) );
 
             if (JMXManager.isEnabled()) {

@@ -20,15 +20,15 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
+import org.jivesoftware.openfire.JMXManager;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.ObjectName;
 
 /**
  * Performs tasks using worker threads. It also allows tasks to be scheduled to be
@@ -46,6 +46,11 @@ public class TaskEngine {
     private static TaskEngine instance = new TaskEngine();
 
     /**
+     * Object name used to register delegate MBean (JMX) for the taskengine thread pool executor.
+     */
+    private ObjectName objectName;
+
+    /**
      * Returns a task engine instance (singleton).
      *
      * @return a task engine.
@@ -55,7 +60,7 @@ public class TaskEngine {
     }
 
     private Timer timer;
-    private ExecutorService executor;
+    private ThreadPoolExecutor executor;
     private Map<TimerTask, TimerTaskWrapper> wrappedTasks = new ConcurrentHashMap<>();
 
     /**
@@ -64,7 +69,12 @@ public class TaskEngine {
     private TaskEngine() {
         timer = new Timer("TaskEngine-timer", true);
         final ThreadFactory threadFactory = new NamedThreadFactory( "TaskEngine-pool-", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
-        executor = Executors.newCachedThreadPool( threadFactory );
+        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool( threadFactory );
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+            objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "taskEngine");
+        }
     }
 
     /**
@@ -275,6 +285,11 @@ public class TaskEngine {
      * Shuts down the task engine service.
      */
     public void shutdown() {
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
+
         if (executor != null) {
             executor.shutdown();
             executor = null;

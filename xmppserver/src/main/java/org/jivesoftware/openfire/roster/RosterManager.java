@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.roster;
 
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.XMPPServer;
@@ -27,13 +28,12 @@ import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
+import javax.management.ObjectName;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -65,7 +66,12 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     private XMPPServer server;
     private RoutingTable routingTable;
     private RosterItemProvider provider;
-    private ExecutorService executor;
+    private ThreadPoolExecutor executor;
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the thread pool executor.
+     */
+    private ObjectName objectName;
 
     /**
      * Returns true if the roster service is enabled. When disabled it is not possible to
@@ -1010,7 +1016,13 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         UserEventDispatcher.addListener(this);
         // Add the new instance as a listener of group events
         GroupEventDispatcher.addListener(this);
-        executor = Executors.newCachedThreadPool();
+
+        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool( new NamedThreadFactory( "roster-worker-", null, null, null ) );
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+            objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "roster");
+        }
     }
 
     @Override
@@ -1020,6 +1032,10 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         UserEventDispatcher.removeListener(this);
         // Remove this module as a listener of group events
         GroupEventDispatcher.removeListener(this);
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
         executor.shutdown();
     }
 

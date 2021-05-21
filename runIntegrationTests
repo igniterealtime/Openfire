@@ -156,7 +156,7 @@ function runTestsInGradle {
 
 	DISABLED_INTEGRATION_TESTS=()
 
-	# The three tests below suffer from a race conditaion, making them flap. See https://github.com/igniterealtime/Smack/pull/440
+	# The three tests below suffer from a race condition, making them flap. See https://github.com/igniterealtime/Smack/pull/440
     DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)

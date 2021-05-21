@@ -42,6 +42,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
 import javax.management.ObjectName;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -59,6 +61,36 @@ import java.util.concurrent.*;
 public class RosterManager extends BasicModule implements GroupEventListener, UserEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(RosterManager.class);
+
+    /**
+     * The number of threads to keep in the thread pool that is used to invoke roster event listeners, even if they are idle.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.client.roster.threadpool.size.core")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool that is used to invoke roster event listeners.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.client.roster.threadpool.size.max")
+        .setMinValue(1)
+        .setDefaultValue(Integer.MAX_VALUE)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The number of threads in the thread pool that is used to invoke roster event listeners is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> EXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.client.roster.threadpool.keepalive")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
 
     private static final String MUTEX_SUFFIX = " ro";
 
@@ -1017,7 +1049,13 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // Add the new instance as a listener of group events
         GroupEventDispatcher.addListener(this);
 
-        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool( new NamedThreadFactory( "roster-worker-", null, null, null ) );
+        executor = new ThreadPoolExecutor(
+            EXECUTOR_CORE_POOL_SIZE.getValue(),
+            EXECUTOR_MAX_POOL_SIZE.getValue(),
+            EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new NamedThreadFactory( "roster-worker-", null, null, null ) );
 
         if (JMXManager.isEnabled()) {
             final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);

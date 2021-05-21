@@ -23,9 +23,9 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.*;
 
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -36,10 +36,7 @@ import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.stats.i18nStatistic;
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.NamedThreadFactory;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -59,6 +56,36 @@ import javax.management.ObjectName;
 public class ProxyConnectionManager {
 
     private static final Logger Log = LoggerFactory.getLogger(ProxyConnectionManager.class);
+
+    /**
+     * The number of threads to keep in the thread pool that powers proxy (SOCKS5) connections, even if they are idle.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("provider.transfer.proxy.threadpool.size.core")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool that powers proxy (SOCKS5) connections.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("provider.transfer.proxy.threadpool.size.max")
+        .setMinValue(1)
+        .setDefaultValue(Integer.MAX_VALUE)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The number of threads in the thread pool that powers proxy (SOCKS5) connections is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> EXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("provider.transfer.proxy.threadpool.keepalive")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
 
     private static final String proxyTransferRate = "proxyTransferRate";
 
@@ -84,7 +111,13 @@ public class ProxyConnectionManager {
     private String className;
 
     public ProxyConnectionManager(FileTransferManager manager) {
-        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool( new NamedThreadFactory( "proxy-connection-worker-", null, null, null ) );
+        executor = new ThreadPoolExecutor(
+            EXECUTOR_CORE_POOL_SIZE.getValue(),
+            EXECUTOR_MAX_POOL_SIZE.getValue(),
+            EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new NamedThreadFactory( "proxy-connection-worker-", null, null, null ) );
 
         if (JMXManager.isEnabled()) {
             final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);

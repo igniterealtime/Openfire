@@ -29,18 +29,7 @@ import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -186,6 +175,7 @@ public class XMPPServer {
     private NodeID nodeID;
     private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance( UUID.randomUUID().toString().getBytes() );
 
+    private Timer terminatorTimer;
     public static final String EXIT = "exit";
     private final static Set<String> XML_ONLY_PROPERTIES;
     static {
@@ -422,7 +412,8 @@ public class XMPPServer {
         if (isStandAlone()) {
             logger.info("Registering shutdown hook (standalone mode)");
             Runtime.getRuntime().addShutdownHook(new ShutdownHookThread());
-            TaskEngine.getInstance().schedule(new Terminator(), 1000, 1000);
+            terminatorTimer = new Timer(); // Not using TaskEngine here, as that requires configuration to be available, which it is not yet.
+            terminatorTimer.schedule(new Terminator(), 1000, 1000);
         }
 
         loader = Thread.currentThread().getContextClassLoader();
@@ -1255,6 +1246,11 @@ public class XMPPServer {
      */
     private void shutdownServer() {
         shuttingDown = true;
+
+        if (terminatorTimer != null) {
+            terminatorTimer.cancel();
+        }
+
         ClusterManager.shutdown();
         // Notify server listeners that the server is about to be stopped
         for (XMPPServerListener listener : listeners) {

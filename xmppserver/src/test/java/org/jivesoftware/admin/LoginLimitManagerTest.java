@@ -1,15 +1,17 @@
 package org.jivesoftware.admin;
 
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import org.jivesoftware.openfire.security.SecurityAuditManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoginLimitManagerTest {
@@ -17,11 +19,10 @@ public class LoginLimitManagerTest {
     private LoginLimitManager loginLimitManager;
 
     @Mock private SecurityAuditManager securityAuditManager;
-    @Mock private TaskEngine taskEngine;
 
     @Before
     public void setUp() {
-        loginLimitManager = new LoginLimitManager(securityAuditManager, taskEngine);
+        loginLimitManager = new LoginLimitManager(securityAuditManager, TaskEngine.getInstance());
     }
 
     @Test

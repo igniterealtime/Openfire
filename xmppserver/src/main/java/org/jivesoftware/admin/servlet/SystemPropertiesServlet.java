@@ -30,7 +30,7 @@ import javax.servlet.http.HttpSession;
 @WebServlet(value = "/server-properties.jsp")
 public class SystemPropertiesServlet extends HttpServlet {
 
-    private static final String[] SEARCH_FIELDS = {"searchName", "searchValue", "searchDefaultValue", "searchPlugin", "searchDescription", "searchDynamic"};
+    private static final String[] SEARCH_FIELDS = {"searchName", "searchValue", "searchDefaultValue", "searchPlugin", "searchDescription", "searchDynamic", "searchSetByUser"};
 
     private static void addSessionFlashes(final HttpServletRequest request, final String... flashes) {
         final HttpSession session = request.getSession();
@@ -189,6 +189,19 @@ public class SystemPropertiesServlet extends HttpServlet {
                 // Do nothing
         }
 
+        switch (search.setByUser) {
+            case "true":
+                predicate = predicate.and(compoundProperty -> !compoundProperty.hidden && compoundProperty.setByUser);
+                break;
+
+            case "false":
+                predicate = predicate.and(compoundProperty -> !compoundProperty.hidden && !compoundProperty.setByUser);
+                break;
+
+            default:
+                // Do nothing
+        }
+
         switch (search.plugin) {
             case "":
                 // All plugins, no filter required
@@ -239,6 +252,7 @@ public class SystemPropertiesServlet extends HttpServlet {
         private final String description;
         private final String plugin;
         private final boolean dynamic;
+        private final boolean setByUser;
         private final boolean restartRequired;
         private final boolean encrypted;
         private final boolean hidden;
@@ -254,6 +268,7 @@ public class SystemPropertiesServlet extends HttpServlet {
             this.description = "";
             this.plugin = "";
             this.dynamic = false;
+            this.setByUser = JiveGlobals.getProperty(key) != null; // Properties can't be set to 'null' - that's equivalent to removing them.
             this.restartRequired = false;
             this.encrypted = JiveGlobals.isPropertyEncrypted(key);
             this.hidden = encrypted || JiveGlobals.isPropertySensitive(key);
@@ -270,6 +285,7 @@ public class SystemPropertiesServlet extends HttpServlet {
             this.description = systemProperty.getDescription();
             this.plugin = systemProperty.getPlugin();
             this.dynamic = systemProperty.isDynamic();
+            this.setByUser = JiveGlobals.getProperty(key) != null; // Properties can't be set to 'null' - that's equivalent to removing them.
             this.restartRequired = systemProperty.isRestartRequired();
             this.encrypted = systemProperty.isEncrypted();
             this.hidden = encrypted || JiveGlobals.isPropertySensitive(key);
@@ -307,6 +323,10 @@ public class SystemPropertiesServlet extends HttpServlet {
             return dynamic;
         }
 
+        public boolean isSetByUser() {
+            return setByUser;
+        }
+
         public boolean isRestartRequired() {
             return restartRequired;
         }
@@ -331,6 +351,7 @@ public class SystemPropertiesServlet extends HttpServlet {
         private final String plugin;
         private final String description;
         private final String dynamic;
+        private final String setByUser;
 
         public Search(final HttpServletRequest request) {
             this.name = ParamUtils.getStringParameter(request, "searchName", "").trim();
@@ -339,6 +360,7 @@ public class SystemPropertiesServlet extends HttpServlet {
             this.plugin = ParamUtils.getStringParameter(request, "searchPlugin", "").trim();
             this.description = ParamUtils.getStringParameter(request, "searchDescription", "").trim();
             this.dynamic = ParamUtils.getStringParameter(request, "searchDynamic", "").trim();
+            this.setByUser = ParamUtils.getStringParameter(request, "searchSetByUser", "").trim();
         }
 
         public String getName() {
@@ -365,5 +387,8 @@ public class SystemPropertiesServlet extends HttpServlet {
             return dynamic;
         }
 
+        public String getSetByUser() {
+            return setByUser;
+        }
     }
 }

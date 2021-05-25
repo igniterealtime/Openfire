@@ -82,6 +82,7 @@
             <th nowrap><label for="searchPlugin"><fmt:message key="server.properties.plugin"/></label></th>
             <th nowrap><label for="searchDescription"><fmt:message key="server.properties.description"/></label></th>
             <th nowrap><label for="searchDynamic"><fmt:message key="server.properties.dynamic"/></label></th>
+            <th nowrap><label for="searchSetByUser"><fmt:message key="server.properties.setbyuser"/></label></th>
             <th style="text-align:center;"><fmt:message key="server.properties.edit"/></th>
             <th style="text-align:center;"><fmt:message key="server.properties.encrypt"/></th>
             <th style="text-align:center;"><fmt:message key="global.delete"/></th>
@@ -152,6 +153,14 @@
                     <option value="unknown" <c:if test="${search.dynamic == 'unknown'}">selected</c:if>><fmt:message key="server.properties.default.unknown"/></option>
                 </select>
             </td>
+            <td nowrap style="text-align: center">
+                <select id="searchSetByUser" onchange="submitForm();">
+                    <option value="" <c:if test="${search.setByUser == ''}">selected</c:if>><fmt:message key="server.properties.search_all"/></option>
+                    <option value="true" <c:if test="${search.setByUser == 'true'}">selected</c:if>><fmt:message key="server.properties.setbyuser.search.true"/></option>
+                    <option value="false" <c:if test="${search.setByUser == 'false'}">selected</c:if>><fmt:message key="server.properties.setbyuser.search.false"/></option>
+                </select>
+            </td>
+
             <td nowrap>
 
             </td>
@@ -217,13 +226,23 @@
                                 <img src="images/check-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_dynamic"/>">
                             </c:when>
                             <c:when test="${!property.dynamic}">
-                                <img src="images/delete-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_static"/>">
+                                <img src="images/orange-dash_16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_static"/>">
                                 <c:if test="${property.restartRequired}">
                                     <img src="images/icon_warning-small.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_restart-required"/>">
                                 </c:if>
                             </c:when>
                         </c:choose>
                     </c:if>
+                </td>
+                <td style="text-align:center">
+                    <c:choose>
+                        <c:when test="${property.setByUser}">
+                            <img src="images/check-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_setbyuser"/>">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="images/orange-dash_16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_default"/>">
+                        </c:otherwise>
+                    </c:choose>
                 </td>
                 <td style="text-align:center">
                     <img class="clickable"

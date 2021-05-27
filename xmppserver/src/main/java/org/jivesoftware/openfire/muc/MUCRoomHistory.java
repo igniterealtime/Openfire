@@ -156,12 +156,33 @@ public final class MUCRoomHistory {
     public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
             String body, String stanza)
     {
+        try {
+            addOldMessage(senderJID, nickname, sentDate, subject, body, stanza, setupSAXReader());
+        } catch (Exception ex) {
+            Log.error("Failed to parse payload XML", ex);
+        }
+    }
+
+    /**
+     * Creates a new message and adds it to the history. The new message will be created based on
+     * the provided information. This information will likely come from the database when loading
+     * the room history from the database.
+     *
+     * @param senderJID the sender's JID of the message to add to the history.
+     * @param nickname the sender's nickname of the message to add to the history.
+     * @param sentDate the date when the message was sent to the room.
+     * @param subject the subject included in the message.
+     * @param body the body of the message.
+     * @param stanza the stanza to add
+     */
+    public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
+                              String body, String stanza, SAXReader xmlReader)
+    {
         Message message = new Message();
         message.setType(Message.Type.groupchat);
         if (stanza != null) {
             // payload initialized as XML string from DB
             try {
-                SAXReader xmlReader = setupSAXReader();
                 Element element = xmlReader.read(new StringReader(stanza)).getRootElement();
                 for (Element child : (List<Element>)element.elements()) {
                     Namespace ns = child.getNamespace();
@@ -213,7 +234,7 @@ public final class MUCRoomHistory {
         historyStrategy.addMessage(message);
     }
 
-    private SAXReader setupSAXReader() throws SAXException {
+    public static SAXReader setupSAXReader() throws SAXException {
         SAXReader xmlReader = new SAXReader();
         xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
         xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);

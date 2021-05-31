@@ -622,6 +622,7 @@
             <tr>
                 <th>&nbsp;</th>
                 <th nowrap><fmt:message key="group.edit.username" /></th>
+                <th nowrap><fmt:message key="group.edit.name" /></th>
                 <c:if test="${not webManager.groupManager.readOnly}">
                     <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
                     <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
@@ -632,7 +633,7 @@
 
             <c:if test="${listPager.totalItemCount == 0}">
                 <tr>
-                    <td align="center" colspan="4">
+                    <td align="center" colspan="5">
                         <br>
                         <fmt:message key="group.edit.user_hint" />
                         <br>
@@ -655,6 +656,7 @@
                              onclick="submitForm();"
                         >
                     </th>
+                    <th><!-- TODO: add search for full name here --></th>
                     <c:if test="${not webManager.groupManager.readOnly}">
                         <th></th>
                         <th></th>
@@ -711,6 +713,11 @@
                             </c:otherwise>
                         </c:choose>
                     </td>
+                    <td>
+                        <c:if test="${webManager.userManager.isRegisteredUser(member, false)}">
+                            <c:out value="${webManager.userManager.getUser(member).name}"/>
+                        </c:if>
+                    </td>
                     <c:if test="${not webManager.groupManager.readOnly}">
                         <td align="center">
                             <input type="checkbox" name="admin" value="${fn:escapeXml(member)}" ${group.admins.contains(member) ? 'checked' : ''}>
@@ -724,7 +731,7 @@
 
             <c:if test="${ ( listPager.totalItemCount != 0 ) and (not webManager.groupManager.readOnly)}">
                 <tr>
-                    <td colspan="2">&nbsp;</td>
+                    <td colspan="3">&nbsp;</td>
                     <td align="center">
                         <input type="submit" name="updateMember" value="Update">
                     </td>

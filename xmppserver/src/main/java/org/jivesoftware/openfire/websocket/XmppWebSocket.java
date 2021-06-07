@@ -183,7 +183,7 @@ public class XmppWebSocket {
      */
     void deliver(String packet)
     {
-        if (isWebSocketOpen())
+        if (isWebSocketOpen() && xmppSession != null)
         {
             try {
                 xmppSession.incrementServerPacketCount();

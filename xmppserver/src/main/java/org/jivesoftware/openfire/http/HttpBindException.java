@@ -19,7 +19,7 @@ package org.jivesoftware.openfire.http;
 /**
  */
 public class HttpBindException extends Exception {
-    private BoshBindingError error;
+    private final BoshBindingError error;
 
     public HttpBindException(String message, BoshBindingError error) {
         super(message);

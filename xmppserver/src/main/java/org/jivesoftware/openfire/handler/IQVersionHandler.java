@@ -22,12 +22,17 @@ import org.dom4j.QName;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implements the TYPE_IQ jabber:iq:version protocol (version info). Allows
@@ -40,6 +45,8 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
 
     private static Element bodyElement;
     private IQHandlerInfo info;
+
+    private static final Logger Log = LoggerFactory.getLogger(IQVersionHandler.class);
 
     public IQVersionHandler() {
         super("XMPP Server Version Handler");
@@ -76,6 +83,34 @@ public class IQVersionHandler extends IQHandler implements ServerFeaturesProvide
             IQ result = IQ.createResultIQ(packet);
             result.setError(PacketError.Condition.not_acceptable);
             return result;
+        } else if (IQ.Type.result == packet.getType()) {
+            /* handle results coming through BOSH Connections,
+             * other results are processed in org.jivesoftware.openfire.net.SocketRead.java - getIQ()
+             */
+            LocalSession localSession = (LocalSession) XMPPServer.getInstance().getSessionManager().getSession(packet.getFrom());
+
+            Element query = packet.getChildElement();
+            List<Element> elements = query.elements();
+            if (elements.size() > 0) {
+                for (Element element : elements) {
+                    if (element.getName() != null && element.getStringValue() != null) {
+                        if (localSession!=null)
+                        {
+                            localSession.setSoftwareVersionData(element.getName(), element.getStringValue());
+                        }
+                        else
+                        {
+                            /*
+                              The result comes from a server 2 server connection, so we write the information
+                              only to the debug log, because we dont need it at this point.
+                            */
+                            Log.debug("XEP-0092 Packet from={} {}={}",packet.getFrom(),element.getName(),element.getStringValue());
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
         // Ignore any other type of packet
         return null;

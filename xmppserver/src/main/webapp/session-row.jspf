@@ -13,7 +13,7 @@
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
  <%--
-   - This page is meant to be included in other pages. It assumes 2 variables:
+   - This page is meant to be included in other pages. It assumes 4 variables:
    -     * 'sess', a org.jivesoftware.xmpp.Session object
    -     * 'count', an int representing the row number we're on.
    -     * 'current', a boolean which indicates the current row the user is looking (pass in
@@ -39,6 +39,12 @@
     </td>
     <td width="15%" nowrap>
         <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
+    </td>
+    <td width="15%" nowrap>
+        <% String version = sess.getSoftwareVersion().get("version");
+           if (version != null) { %>
+                <%= version %>
+        <% } %>
     </td>
     <% if (ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting()) { %>
     <td nowrap>

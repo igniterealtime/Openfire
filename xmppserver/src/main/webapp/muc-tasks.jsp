@@ -22,24 +22,26 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.time.temporal.ChronoUnit" %>
 <%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
     boolean kickEnabled = ParamUtils.getBooleanParameter(request,"kickEnabled");
+    boolean pingEnabled = ParamUtils.getBooleanParameter(request,"pingEnabled");
     String idletime = ParamUtils.getParameter(request,"idletime");
+    String pingtime = ParamUtils.getParameter(request,"pingtime");
     String maxBatchSize = ParamUtils.getParameter(request,"maxbatchsize");
     String maxBatchInterval = ParamUtils.getParameter(request,"maxbatchinterval");
     String batchGrace = ParamUtils.getParameter(request,"batchgrace");
-    boolean kickSettings = request.getParameter("kickSettings") != null;
+    boolean idleSettings = request.getParameter("idleSettings") != null;
     boolean logSettings = request.getParameter("logSettings") != null;
-    boolean kickSettingSuccess = request.getParameter("kickSettingSuccess") != null;
+    boolean idleSettingSuccess = request.getParameter("idleSettingSuccess") != null;
     boolean logSettingSuccess = request.getParameter("logSettingSuccess") != null;
     String mucname = ParamUtils.getParameter(request,"mucname");
 
@@ -56,9 +58,9 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (kickSettings || logSettings) {
+    if (idleSettings || logSettings) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            kickSettings = false;
+            idleSettings = false;
             logSettings = false;
             errors.put("csrf", "CSRF Failure!");
         }
@@ -66,39 +68,73 @@
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
-    // Handle an update of the kicking task settings
-    if (kickSettings) {
+
+    // Handle an update of the idle user task settings
+    if (idleSettings) {
         if (!kickEnabled) {
-            // Disable kicking users by setting a value of -1
-            mucService.setUserIdleTime(-1);
+            // Disable kicking users by setting a value of null.
+            mucService.setIdleUserKickThreshold(null);
             // Log the event
             webManager.logEvent("disabled muc idle kick timeout for service "+mucname, null);
-            response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
-            return;
-        }
-        // do validation
-        if (idletime == null) {
-            errors.put("idletime","idletime");
-        }
-        int idle = 0;
-        // Try to obtain an int from the provided strings
-        if (errors.size() == 0) {
-            try {
-                idle = Integer.parseInt(idletime) * 1000 * 60;
-            }
-            catch (NumberFormatException e) {
+        } else {
+            // do validation
+            if (idletime == null) {
                 errors.put("idletime","idletime");
             }
-            if (idle < 0) {
-                errors.put("idletime","idletime");
+            Duration idle = null;
+            // Try to obtain an int from the provided strings
+            if (errors.size() == 0) {
+                try {
+                    idle = Duration.ofMinutes(Integer.parseInt(idletime));
+                    if (idle.isNegative()) {
+                        errors.put("idletime","idletime");
+                    }
+                }
+                catch (NumberFormatException e) {
+                    errors.put("idletime","idletime");
+                }
+            }
+
+            if (errors.isEmpty()) {
+                mucService.setIdleUserKickThreshold(idle);
+                // Log the event
+                webManager.logEvent("edited muc idle kick timeout for service "+mucname, "timeout = "+idle);
             }
         }
 
-        if (errors.size() == 0) {
-            mucService.setUserIdleTime(idle);
+        if (!pingEnabled) {
+            // Disable pinging users by setting a value of null.
+            mucService.setIdleUserPingThreshold(null);
             // Log the event
-            webManager.logEvent("edited muc idle kick timeout for service "+mucname, "timeout = "+idle);
-            response.sendRedirect("muc-tasks.jsp?kickSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            webManager.logEvent("disabled muc idle ping timeout for service "+mucname, null);
+        } else {
+            // do validation
+            if (pingtime == null) {
+                errors.put("pingtime","pingtime");
+            }
+            Duration idle = null;
+            // Try to obtain an int from the provided strings
+            if (errors.size() == 0) {
+                try {
+                    idle = Duration.ofMinutes(Integer.parseInt(pingtime));
+                    if (idle.isNegative()) {
+                        errors.put("pingtime","pingtime");
+                    }
+                }
+                catch (NumberFormatException e) {
+                    errors.put("pingtime","pingtime");
+                }
+            }
+
+            if (errors.isEmpty()) {
+                mucService.setIdleUserPingThreshold(idle);
+                // Log the event
+                webManager.logEvent("edited muc idle ping timeout for service "+mucname, "timeout = "+idle);
+            }
+        }
+
+        if (errors.isEmpty()) {
+            response.sendRedirect("muc-tasks.jsp?idleSettingSuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
             return;
         }
     }
@@ -154,6 +190,9 @@
             return;
         }
     }
+
+    pageContext.setAttribute("mucname", mucname);
+    pageContext.setAttribute("mucService", mucService);
 %>
 
 <html>
@@ -170,14 +209,14 @@
 <fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
-<%  if (kickSettingSuccess || logSettingSuccess) { %>
+<%  if (idleSettingSuccess || logSettingSuccess) { %>
 
     <div class="jive-success">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
         <td class="jive-icon-label">
-        <%  if (kickSettingSuccess) { %>
+        <%  if (idleSettingSuccess) { %>
 
             <fmt:message key="muc.tasks.update" />
 
@@ -199,7 +238,7 @@
     <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
     <td width="99%" class="jive-error-text">
 
-        <% if (errors.get("idletime") != null) { %>
+        <% if (errors.get("idletime") != null || errors.get("pingtime") != null) { %>
             <fmt:message key="muc.tasks.valid_idel_minutes" />
         <% } else if (errors.get("maxBatchSize") != null) { %>
             <fmt:message key="muc.tasks.valid_batchsize" />
@@ -217,42 +256,40 @@
 
 
 <!-- BEGIN 'Idle User Settings' -->
-<form action="muc-tasks.jsp?kickSettings" method="post">
+<form action="muc-tasks.jsp?idleSettings" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
-    <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
-    <div class="jive-contentBoxHeader">
-        <fmt:message key="muc.tasks.user_setting" />
-    </div>
-    <div class="jive-contentBox">
+    <input type="hidden" name="mucname" value="<c:out value="${mucname}"/>" />
+    <c:set var="idleheader"><fmt:message key="muc.tasks.user_setting" /></c:set>
+    <admin:contentBox title="${idleheader}">
         <table cellpadding="3" cellspacing="0" border="0">
         <tbody>
             <tr valign="middle">
                 <td width="1%" nowrap>
-                    <input type="radio" name="kickEnabled" value="false" id="rb01"
-                     <%= ((mucService.getUserIdleTime() < 0) ? "checked" : "") %>>
+                    <input type="checkbox" name="pingEnabled" value="true" id="cb01" ${empty mucService.idleUserPingThreshold ? '' : 'checked'}>
                 </td>
                 <td width="99%">
-                    <label for="rb01"><fmt:message key="muc.tasks.never_kick" /></label>
+                    <label for="cb01"><fmt:message key="muc.tasks.ping_user" /></label>
+                    <input type="number" min="1" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
+                           value="${empty mucService.idleUserPingThreshold ? '8' : mucService.idleUserPingThreshold.toMinutes()}">
+                    <fmt:message key="global.minutes" />.
                 </td>
             </tr>
             <tr valign="middle">
                 <td width="1%" nowrap>
-                    <input type="radio" name="kickEnabled" value="true" id="rb02"
-                     <%= ((mucService.getUserIdleTime() > -1) ? "checked" : "") %>>
+                    <input type="checkbox" name="kickEnabled" value="true" id="cb02" ${empty mucService.idleUserKickThreshold ? '' : 'checked'}>
                 </td>
                 <td width="99%">
-                        <label for="rb02"><fmt:message key="muc.tasks.kick_user" /></label>
-                         <input type="number" name="idletime" size="5" maxlength="5"
-                             onclick="this.form.kickEnabled[1].checked=true;"
-                             value="<%= mucService.getUserIdleTime() == -1 ? 30 : mucService.getUserIdleTime() / 1000 / 60 %>">
-                         <fmt:message key="global.minutes" />.
+                    <label for="cb02"><fmt:message key="muc.tasks.kick_user" /></label>
+                    <input type="number" min="1" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled[1].checked=true;"
+                           value="${empty mucService.idleUserKickThreshold ? '30' : mucService.idleUserKickThreshold.toMinutes()}">
+                    <fmt:message key="global.minutes" />.
                 </td>
             </tr>
         </tbody>
         </table>
         <br/>
         <input type="submit" value="<fmt:message key="global.save_settings" />">
-    </div>
+    </admin:contentBox>
 </form>
 <!-- END 'Idle User Settings' -->
 

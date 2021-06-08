@@ -17,11 +17,13 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.core.session.IoSession;
+import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ComponentStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 
 /**
  * ConnectionHandler that knows which subclass of {@link StanzaHandler} should
@@ -31,13 +33,24 @@ import org.jivesoftware.util.JiveGlobals;
  */
 public class ComponentConnectionHandler extends ConnectionHandler {
 
+    /**
+     * Enable / disable backup delivery of stanzas to the XMPP server itself when a stanza failed to be delivered on a
+     * component connection. When disabled, stanzas that can not be delivered on the connection are discarded.
+     */
+    public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.component.backup-packet-delivery.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
     public ComponentConnectionHandler(ConnectionConfiguration configuration) {
         super(configuration);
     }
 
     @Override
     NIOConnection createNIOConnection(IoSession session) {
-        return new NIOConnection(session, XMPPServer.getInstance().getPacketDeliverer(), configuration );
+        final PacketDeliverer backupDeliverer = BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? XMPPServer.getInstance().getPacketDeliverer() : null;
+        return new NIOConnection(session, backupDeliverer, configuration);
     }
 
     @Override

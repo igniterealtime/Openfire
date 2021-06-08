@@ -251,6 +251,15 @@ public class LocalMUCUser implements MUCUser
         // Determine if this user has a pre-existing role in the addressed room.
         final MUCRole preExistingRole = roles.get(roomName);
 
+        // Determine if the stanza is an error response to a stanza that we've previously sent out, that indicates that
+        // the intended recipient is no longer available (eg: "ghost user").
+        if (preExistingRole != null && preExistingRole.getChatRoom().getMUCService().getIdleUserPingThreshold() != null && isDeliveryRelatedErrorResponse(packet)) {
+            Log.info("Removing {} (nickname '{}') from room {} as we've received an indication (logged at debug level) that this is now a ghost user.", preExistingRole.getUserAddress(), preExistingRole.getNickname(), preExistingRole.getChatRoom().getJID() );
+            Log.debug("Stanza indicative of a ghost user: {}", packet);
+            preExistingRole.getChatRoom().leaveRoom(preExistingRole);
+            return;
+        }
+
         if ( packet instanceof IQ )
         {
             process((IQ) packet, roomName, preExistingRole);
@@ -955,6 +964,21 @@ public class LocalMUCUser implements MUCUser
         // Send availability presence for the new nickname
         final String oldNick = preExistingRole.getNickname();
         chatRoom.nicknameChanged(preExistingRole, packet, oldNick, nickname);
+    }
+
+    public static boolean isDeliveryRelatedErrorResponse(@Nonnull final Packet stanza)
+    {
+        final Collection<PacketError.Condition> deliveryRelatedErrorConditions = Arrays.asList(
+            PacketError.Condition.gone,
+            PacketError.Condition.item_not_found,
+            PacketError.Condition.recipient_unavailable,
+            PacketError.Condition.redirect,
+            PacketError.Condition.remote_server_not_found,
+            PacketError.Condition.remote_server_timeout
+        );
+
+        final PacketError error = stanza.getError();
+        return error != null && deliveryRelatedErrorConditions.contains(error.getCondition());
     }
 
     @Override

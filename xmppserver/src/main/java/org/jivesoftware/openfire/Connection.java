@@ -25,6 +25,8 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nullable;
+
 /**
  * Represents a connection on the server.
  *
@@ -303,11 +305,12 @@ public interface Connection extends Closeable {
 
     /**
      * Returns the packet deliverer to use when delivering a packet over the socket fails. The
-     * packet deliverer will retry to send the packet using some other connection, will store
-     * the packet offline for later retrieval or will just drop it.
+     * packet deliverer will retry to send the packet using some other connection or will store
+     * the packet offline for later retrieval. When null, packets will just be dropped.
      *
      * @return the packet deliverer to use when delivering a packet over the socket fails.
      */
+    @Nullable
     PacketDeliverer getPacketDeliverer();
 
     /**

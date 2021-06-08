@@ -22,11 +22,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 import javax.servlet.AsyncContext;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -44,7 +46,7 @@ public class HttpConnection {
 
     private final boolean isRestart;
 
-    private final int pause;
+    private final Duration pause;
 
     private final boolean isTerminate;
 
@@ -53,6 +55,7 @@ public class HttpConnection {
     @Nullable
     private HttpSession session;
 
+    @GuardedBy("this")
     private boolean isClosed;
 
     @Nonnull
@@ -210,11 +213,11 @@ public class HttpConnection {
     }
 
     /**
-     * Returns the number of seconds of pause that the client is requesting, or -1 if it's not requesting a pause.
+     * Returns the number of seconds of pause that the client is requesting, or null if it's not requesting a pause.
      *
-     * @return The amount of seconds of pause that is being requested, or -1.
+     * @return The amount of seconds of pause that is being requested, or null.
      */
-    public int getPause() {
+    public Duration getPause() {
         return pause;
     }
 

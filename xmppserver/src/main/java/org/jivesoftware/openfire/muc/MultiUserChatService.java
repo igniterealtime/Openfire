@@ -27,6 +27,8 @@ import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
@@ -188,40 +190,68 @@ public interface MultiUserChatService extends Component {
     void removeUsersAllowedToCreate(Collection<JID> userJIDs);
 
     /**
-     * Sets the time to elapse between clearing of idle chat users. A <code>TimerTask</code> will be
-     * added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
-     * responsibility is to kick users that have been idle for a certain time. A user is considered
-     * idle if he/she didn't send any message to any group chat room for a certain amount of time.
-     * See {@link #setUserIdleTime(int)}.
+     * Sets the period of the fixed-delay execution of tasks by the <code>Timer</code> whose main responsibility is
+     * to process users that have been idle for a certain time. A user is considered idle if he/she didn't send any
+     * message to any group chat room for a certain amount of time.
      *
-     * @param timeout the time to elapse between clearing of idle chat users.
+     * @param duration The fixed-delay interval in which idle checks need to be performed.
+     * @see #getIdleUserKickThreshold()
+     * @see #getIdleUserPingThreshold()
      */
-    void setKickIdleUsersTimeout(int timeout);
+    void setIdleUserTaskInterval(final @Nonnull Duration duration);
 
     /**
-     * Returns the time to elapse between clearing of idle chat users. A user is considered
-     * idle if he/she didn't send any message to any group chat room for a certain amount of time.
-     * See {@link #getUserIdleTime()}.
+     * Returns the period of fixed-delay executions of tasks that operate on idle users.
      *
-     * @return the time to elapse between clearing of idle chat users.
+     * @return The fixed-delay interval in which idle checks need to be performed.
      */
-    int getKickIdleUsersTimeout();
+    @Nonnull Duration getIdleUserTaskInterval();
 
     /**
-     * Sets the number of milliseconds a user must be idle before he/she gets kicked from all
+     * Sets the duration that a user must be idle before he/she gets kicked from all
      * the rooms. By idle we mean that the user didn't send any message to any group chat room.
      *
-     * @param idle the amount of time to wait before considering a user idle.
+     * Set to null to disable the feature.
+     *
+     * @param duration the amount of time to wait before considering a user idle.
      */
-    void setUserIdleTime(int idle);
+    void setIdleUserKickThreshold(final @Nullable Duration duration);
 
     /**
-     * Returns the number of milliseconds a user must be idle before he/she gets kicked from all
+     * Returns the duration that a user must be idle before he/she gets kicked from all
      * the rooms. By idle we mean that the user didn't send any message to any group chat room.
+     *
+     * Returns null if the feature is disabled.
      *
      * @return the amount of time to wait before considering a user idle.
      */
-    int getUserIdleTime();
+    @Nullable
+    Duration getIdleUserKickThreshold();
+
+    /**
+     * Sets the duration that a user must be idle before he/she gets pinged by the room, to
+     * determine if the user is a 'ghost user'.
+     *
+     * By idle we mean that the user didn't send any message to any group chat room.
+     *
+     * Set to null to disable the feature.
+     *
+     * @param duration the amount of time to wait before considering a user idle.
+     */
+    void setIdleUserPingThreshold(final @Nullable Duration duration);
+
+    /**
+     * Returns the duration that a user must be idle before he/she gets pinged by the rooms that they're an occupant
+     * of (to determine if they're a 'ghost user').
+     *
+     * By idle we mean that the user didn't send any message to any group chat room.
+     *
+     * Returns null if the feature is disabled.
+     *
+     * @return the amount of time to wait before considering a user idle.
+     */
+    @Nullable
+    Duration getIdleUserPingThreshold();
 
     /**
      * Sets the time to elapse between logging the room conversations. A <code>TimerTask</code> will

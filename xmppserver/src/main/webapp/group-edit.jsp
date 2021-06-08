@@ -662,8 +662,8 @@
                 </tr>
             </c:if>
             <%--@elvariable id="member" type="org.xmpp.packet.JID"--%>
-            <c:forEach var="member" items="${listPager.itemsOnCurrentPage}">
-                <tr>
+            <c:forEach var="member" items="${listPager.itemsOnCurrentPage}" varStatus="status">
+                <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
                     <td width="1%">
 
                         <c:choose>

@@ -249,7 +249,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     private Roster getRoster(JID address) {
         String username;
         Roster roster = null;
-        if (localServer.isLocal(address) && userManager.isRegisteredUser(address.getNode())) {
+        if (userManager.isRegisteredUser(address, false)) {
             username = address.getNode();
             try {
                 roster = rosterManager.getRoster(username);

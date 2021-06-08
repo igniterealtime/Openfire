@@ -33,12 +33,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Defines the permissions and actions that a MUCUser may use in
- * a particular room. Each MUCRole defines the relationship between
- * a MUCRoom and a MUCUser.
- * <p>
- * MUCUsers can play different roles in different chatrooms.
- * </p>
+ * Defines the permissions and actions that a MUCUser currently may use in a particular room. Each MUCRole defines the
+ * relationship between a MUCRoom and a MUCUser.
+ *
+ * MUCUsers can play different roles in different chat rooms.
+ *
  * @author Gaston Dombiak
  */
 public interface MUCRole {
@@ -47,6 +46,8 @@ public interface MUCRole {
 
     /**
      * Obtain the current presence status of a user in a chatroom.
+     *
+     * The 'from' address of the presence stanza is guaranteed to reflect the room role of this role.
      *
      * @return The presence of the user in the room.
      */
@@ -64,9 +65,11 @@ public interface MUCRole {
      * It is common for the chatroom or other chat room members to change
      * the role of users (a moderator promoting another user to moderator
      * status for example).
-     * <p>
+     *
      * Owning ChatUsers should have their membership roles updated.
-     * </p>
+     *
+     * A role is a temporary position or privilege level within a room, distinct from a user's long-lived affiliation
+     * with the room. A role lasts only for the duration of an occupant's visit to a room.
      *
      * @param newRole The new role that the user will play.
      * @throws NotAllowedException   Thrown if trying to change the moderator role to an owner or
@@ -77,12 +80,17 @@ public interface MUCRole {
     /**
      * Obtain the role state of the user.
      *
+     * A role is a temporary position or privilege level within a room, distinct from a user's long-lived affiliation
+     * with the room. A role lasts only for the duration of an occupant's visit to a room.
+     *
      * @return The role status of this user.
      */
     Role getRole();
 
     /**
-     * Call this method to promote or demote a user's affiliation in a chatroom.
+     * Call this method to promote or demote a user's affiliation in a chatroom. An affiliation is a long-lived
+     * association or connection with a room. Affiliation is distinct from role. An affiliation lasts across a user's
+     * visits to a room.
      *
      * @param newAffiliation the new affiliation that the user will play.
      * @throws NotAllowedException thrown if trying to ban an owner or an administrator.
@@ -90,7 +98,8 @@ public interface MUCRole {
     void setAffiliation( Affiliation newAffiliation ) throws NotAllowedException;
 
     /**
-     * Obtain the affiliation state of the user.
+     * Obtain the affiliation state of the user, which is a long-lived association or connection with a room.
+     * Affiliation is distinct from role. An affiliation lasts across a user's visits to a room.
      *
      * @return The affiliation status of this user.
      */
@@ -202,7 +211,12 @@ public interface MUCRole {
     /**
      * Sends a packet to the user.
      *
+     * Note that sending a packet can modify it (notably, the 'to' address can be changed. If this is undesired (for
+     * example, because post-processing should not expose the modified 'to' address), then a copy of the original
+     * stanza should be provided as an argument to this method.
+     *
      * @param packet The packet to send
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2163">issue OF-2163</a>
      */
     void send( Packet packet );
 
@@ -308,6 +322,10 @@ public interface MUCRole {
         fmuc.addAttribute("from", reportingFmucAddress.toString() );
     }
 
+    /**
+     * A temporary position or privilege level within a room, distinct from a user's long-lived affiliation with the
+     * room. A role lasts only for the duration of an occupant's visit to a room.
+     */
     enum Role {
 
         /**
@@ -362,6 +380,10 @@ public interface MUCRole {
         }
     }
 
+    /**
+     * A long-lived association or connection with a room. Affiliation is distinct from role. An affiliation lasts
+     * across a user's visits to a room.
+     */
     enum Affiliation {
 
         /**

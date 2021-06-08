@@ -127,12 +127,6 @@
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
-    <!--<servlet>
-        <servlet-name>WebDAVLiteServlet</servlet-name>
-        <servlet-class>org.jivesoftware.openfire.webdav.WebDAVLiteServlet</servlet-class>
-    </servlet>-->
-
-
     <!--@@JSPC-SERVLETS@@-->
 
     <servlet-mapping>

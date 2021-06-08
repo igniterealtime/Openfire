@@ -122,6 +122,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         super.initialize(server);
 
         pepServiceManager = new PEPServiceManager();
+        pepServiceManager.initialize();
     }
 
     public PEPServiceManager getServiceManager()
@@ -136,6 +137,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      */
     @Override
     public void destroy() {
+        if ( pepServiceManager != null ) {
+            pepServiceManager.destroy();
+            pepServiceManager = null;
+        }
         super.destroy();
     }
 
@@ -358,7 +363,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         packet.setTo(bareJidFrom);
 
         // Only service local, registered users.
-        if (!XMPPServer.getInstance().isLocal(senderJID) || !UserManager.getInstance().isRegisteredUser( senderJID.getNode()))
+        if ( !UserManager.getInstance().isRegisteredUser( senderJID, false ))
         {
             final IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());

@@ -68,14 +68,14 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     @Override
-    protected void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
         // add CORS headers for all HTTP responses (errors, etc.)
-        if (boshManager.isCORSEnabled())
+        if (HttpBindManager.HTTP_BIND_CORS_ENABLED.getValue())
         {
             if (boshManager.isAllOriginsAllowed()) {
                 // Set the Access-Control-Allow-Origin header to * to allow all Origin to do the CORS
-                response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
+                response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
             } else {
                 // Get the Origin header from the request and check if it is in the allowed Origin Map.
                 // If it is allowed write it back to the Access-Control-Allow-Origin header of the respond.
@@ -84,16 +84,17 @@ public class HttpBindServlet extends HttpServlet {
                     response.setHeader("Access-Control-Allow-Origin", origin);
                 }
             }
-            response.setHeader("Access-Control-Allow-Methods", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT);
-            response.setHeader("Access-Control-Allow-Headers", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT);
-            response.setHeader("Access-Control-Max-Age", HttpBindManager.HTTP_BIND_CORS_MAX_AGE_DEFAULT);
+
+            // TODO shouldn't we check if the methods and headers that are used in the request match these?
+            response.setHeader("Access-Control-Allow-Methods", String.join(", ", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue()));
+            response.setHeader("Access-Control-Allow-Headers", String.join(", ", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue()));
+            response.setHeader("Access-Control-Max-Age", String.valueOf(HttpBindManager.HTTP_BIND_CORS_MAX_AGE.getDefaultValue().getSeconds())); // TODO: replace with 'toSeconds()' after dropping support for Java 8.
         }
         super.service(request, response);
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         final AsyncContext context = request.startAsync();
 
@@ -119,8 +120,8 @@ public class HttpBindServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
         final AsyncContext context = request.startAsync();
 
         // Asynchronously reads the POSTed input, then triggers #processContent.
@@ -132,8 +133,8 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    protected void processContent(AsyncContext context, String content)
-            throws IOException {
+    protected void processContent(AsyncContext context, String content) throws IOException
+    {
         final String remoteAddress = getRemoteAddress(context);
 
         final HttpBindBody body;
@@ -172,19 +173,18 @@ public class HttpBindServlet extends HttpServlet {
         }
     }
 
-    protected void createNewSession(AsyncContext context, HttpBindBody body)
-            throws IOException
+    protected void createNewSession(AsyncContext context, HttpBindBody body) throws IOException
     {
-        final long rid = body.getRid();
-
         try {
-            final HttpConnection connection = new HttpConnection(rid, context);
+            final HttpConnection connection = new HttpConnection(body, context);
 
             SessionEventDispatcher.dispatchEvent( null, SessionEventDispatcher.EventType.pre_session_created, connection, context );
 
-            connection.setSession(sessionManager.createSession(body, connection));
-            if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
-                Log.info("HTTP RECV(" + connection.getSession().getStreamID().getID() + "): " + body.asXML());
+            final HttpSession session = sessionManager.createSession(body, connection);
+            connection.setSession(session);
+
+            if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
+                Log.info("HTTP RECV(" + session.getStreamID().getID() + "): " + body.asXML());
             }
 
             SessionEventDispatcher.dispatchEvent( connection.getSession(), SessionEventDispatcher.EventType.post_session_created, connection, context );
@@ -199,7 +199,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         final String sid = body.getSid();
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+        if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
             Log.info("HTTP RECV(" + sid + "): " + body.asXML());
         }
 
@@ -246,7 +246,7 @@ public class HttpBindServlet extends HttpServlet {
             content = "_BOSH_(\"" + StringEscapeUtils.escapeEcmaScript(content) + "\")";
         }
         
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+        if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
             Log.info("HTTP SENT(" + session.getStreamID().getID() + "): " + content);
         }
 
@@ -267,7 +267,7 @@ public class HttpBindServlet extends HttpServlet {
     private void sendError(HttpSession session, AsyncContext context, BoshBindingError bindingError)
             throws IOException
     {
-        if (JiveGlobals.getBooleanProperty("log.httpbind.enabled", false)) {
+        if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
             Log.info("HTTP ERR(" + session.getStreamID().getID() + "): " + bindingError.getErrorType().getType() + ", " + bindingError.getCondition() + ".");
         }
         try {
@@ -345,7 +345,7 @@ public class HttpBindServlet extends HttpServlet {
 
             final ServletInputStream inputStream = context.getRequest().getInputStream();
 
-            byte b[] = new byte[1024];
+            byte[] b = new byte[1024];
             int length;
             while (inputStream.isReady() && (length = inputStream.read(b)) != -1) {
                 outStream.write(b, 0, length);

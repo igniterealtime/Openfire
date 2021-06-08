@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.XMPPDateTimeFormat;
@@ -176,7 +177,7 @@ public class NodeSubscription {
      * owner JID or a full JID if the owner wants to receive the notification at a particular
      * resource.<p>
      *
-     * Moreover, since subscriber and owner are separated it should be theorically possible to
+     * Moreover, since subscriber and owner are separated it should be theoretically possible to
      * have a different owner JID (e.g. gato@server1.com) and a subscriber JID
      * (e.g. gato@server2.com). Note that letting this case to happen may open the pubsub service
      * to get spam or security problems. However, the pubsub service should avoid this case to
@@ -189,7 +190,7 @@ public class NodeSubscription {
     }
 
     /**
-     * Retuns the JID of the entity that owns this subscription. The owner entity will have
+     * Returns the JID of the entity that owns this subscription. The owner entity will have
      * a {@link NodeAffiliate} for the owner JID. The owner may have more than one subscription
      * with the node based on what this message
      * {@link org.jivesoftware.openfire.pubsub.Node#isMultipleSubscriptionsEnabled()}.
@@ -488,7 +489,7 @@ public class NodeSubscription {
         }
         if (savedToDB) {
             // Update the subscription in the backend store
-            PubSubPersistenceProviderManager.getInstance().getProvider().updateSubscription(node, this);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateSubscription(node, this);
         }
         // Check if the service needs to subscribe or unsubscribe from the owner presence
         if (!node.isPresenceBasedDelivery() && wasUsingPresence != !presenceStates.isEmpty()) {
@@ -861,7 +862,7 @@ public class NodeSubscription {
 
         if (savedToDB) {
             // Update the subscription in the backend store
-            PubSubPersistenceProviderManager.getInstance().getProvider().updateSubscription(node, this);
+            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateSubscription(node, this);
         }
 
         // Send last published item (if node is leaf node and subscription status is ok)

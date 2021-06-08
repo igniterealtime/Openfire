@@ -237,7 +237,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     private void initSession(ClientSession session) throws UserNotFoundException {
 
         // Only user sessions need to be authenticated
-        if (userManager.isRegisteredUser(session.getAddress().getNode())) {
+        if (userManager.isRegisteredUser(session.getAddress(), false)) {
             String username = session.getAddress().getNode();
 
             // Send pending subscription requests to user if roster service is enabled

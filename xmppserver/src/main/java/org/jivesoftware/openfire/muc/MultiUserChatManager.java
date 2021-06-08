@@ -22,7 +22,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -62,6 +62,9 @@ import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManagerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * Provides centralized management of all configured Multi User Chat (MUC) services.
  * 
@@ -89,7 +92,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private static final String outgoingStatKey = "muc_outgoing";
     private static final String trafficStatGroup = "muc_traffic";
 
-    private ConcurrentHashMap<String,MultiUserChatService> mucServices = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String,MultiUserChatService> mucServices = new ConcurrentHashMap<>();
 
     /**
      * Creates a new MultiUserChatManager instance.
@@ -146,57 +149,104 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     /**
      * Registers a new MultiUserChatService implementation to the manager.
-     * This is typically used if you have a custom MUC implementation that you
-     * want to register with the manager.  In other words, it may not be database
-     * stored and may follow special rules, implementating MultiUserChatService.
-     * It is also used internally to register services from the database.  Triggers
-     * the service to start up.
+     *
+     * This is typically used if you have a custom MUC implementation that you want to register with the manager. In
+     * other words, it may not be database stored and may follow special rules, implementing MultiUserChatService.
+     * It is also used internally to register services from the database.
+     *
+     * Triggers the service to start up.
+     *
+     * An event will be sent to all other cluster nodes to inform them that a new service was added.
      *
      * @param service The MultiUserChatService to be registered.
+     * @see #createMultiUserChatService(String, String, boolean)
      */
-    public void registerMultiUserChatService(MultiUserChatService service) {
+    public void registerMultiUserChatService(@Nonnull final MultiUserChatService service) {
         registerMultiUserChatService(service, true);
     }
 
-    public void registerMultiUserChatService(MultiUserChatService service, boolean allNodes) {
-        Log.debug("MultiUserChatManager: Registering MUC service "+service.getServiceName());
+    /**
+     * Registers a new MultiUserChatService implementation to the manager.
+     *
+     * This is typically used if you have a custom MUC implementation that you want to register with the manager. In
+     * other words, it may not be database stored and may follow special rules, implementing MultiUserChatService.
+     * It is also used internally to register services from the database.
+     *
+     * Triggers the service to start up.
+     *
+     * This method has a boolean parameter that controls whether a 'new service added' event is to be sent to all other
+     * cluster nodes. This generally is desirable when a new service is being created. A reason to _not_ send such an
+     * event is when this method is being invoked as a result of receiving/processing such an event that was received
+     * from another cluster node, or when initializing this instance from database content (which will occur on all
+     * cluster nodes).
+     *
+     * @param service The MultiUserChatService to be registered.
+     * @param allNodes true if a 'service added' event needs to be sent to other cluster nodes.
+     * @see #createMultiUserChatService(String, String, boolean)
+     */
+    public void registerMultiUserChatService(@Nonnull final MultiUserChatService service, final boolean allNodes) {
+        Log.debug("Registering MUC service '{}'", service.getServiceName());
         try {
             ComponentManagerFactory.getComponentManager().addComponent(service.getServiceName(), service);
             mucServices.put(service.getServiceName(), service);
         }
         catch (ComponentException e) {
-            Log.error("MultiUserChatManager: Unable to add "+service.getServiceName()+" as component.", e);
+            Log.error("Unable to register MUC service '{}' as a component.", service.getServiceName(), e);
         }
         if (allNodes) {
+            Log.trace("Sending 'service added' event for MUC service '{}' to all other cluster nodes.", service.getServiceName());
             CacheFactory.doClusterTask(new ServiceAddedEvent(service.getServiceName(), service.getDescription(), service.isHidden()));
         }
     }
 
     /**
-     * Unregisters a MultiUserChatService from the manager.  It can be used
-     * to explicitly unregister services, and is also used internally to unregister
-     * database stored services.  Triggers the service to shut down.
+     * Unregisters a MultiUserChatService from the manager.
+     *
+     * It can be used to explicitly unregister services, and is also used internally to unregister database stored services.
+     *
+     * Triggers the service to shut down.
+     *
+     * An event will be sent to all other cluster nodes to inform them that a new service was added.
      *
      * @param subdomain The subdomain of the service to be unregistered.
+     * @see #removeMultiUserChatService(String)
      */
-    public void unregisterMultiUserChatService(String subdomain) {
+    public void unregisterMultiUserChatService(@Nonnull final String subdomain) {
         unregisterMultiUserChatService(subdomain, true);
     }
 
-    public void unregisterMultiUserChatService(String subdomain, boolean allNodes) {
-        Log.debug("MultiUserChatManager: Unregistering MUC service "+subdomain);
-        MultiUserChatService service = mucServices.get(subdomain);
+    /**
+     * Unregisters a MultiUserChatService from the manager.
+     *
+     * It can be used to explicitly unregister services, and is also used internally to unregister database stored services.
+     *
+     * Triggers the service to shut down.
+     *
+     * This method has a boolean parameter that controls whether a 'service removed' event is to be sent to all other
+     * cluster nodes. This generally is desirable when a pre-existing service is being removed. A reason to _not_ send
+     * such an event is when this method is being invoked as a result of receiving/processing such an event that was
+     * received from another cluster node, or when shutting down this instance (as the service might continue to live on
+     * other cluster nodes).
+     *
+     * @param subdomain The subdomain of the service to be unregistered.
+     * @param allNodes true if a 'service removed' event needs to be sent to other cluster nodes.
+     * @see #removeMultiUserChatService(String)
+     */
+    public void unregisterMultiUserChatService(@Nonnull final String subdomain, final boolean allNodes) {
+        Log.debug("Unregistering MUC service '{}'", subdomain);
+        final MultiUserChatService service = mucServices.remove(subdomain);
         if (service != null) {
             service.shutdown();
             try {
                 ComponentManagerFactory.getComponentManager().removeComponent(subdomain);
             }
             catch (ComponentException e) {
-                Log.error("MultiUserChatManager: Unable to remove "+subdomain+" from component manager.", e);
+                Log.error("Unable to remove MUC service '{}' from component manager.", subdomain, e);
+                mucServices.put(subdomain, service);
             }
-            mucServices.remove(subdomain);
         }
         if (allNodes) {
+            Log.trace("Sending 'service removed' event for MUC service '{}' to all other cluster nodes.", subdomain);
             CacheFactory.doClusterTask(new ServiceRemovedEvent(subdomain));
         }
     }
@@ -207,8 +257,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param includePrivate True if you want to include private/hidden services in the count.
      * @return Number of registered services.
      */
-    public Integer getServicesCount(boolean includePrivate) {
-        Integer servicesCnt = mucServices.size();
+    public int getServicesCount(final boolean includePrivate) {
+        int servicesCnt = mucServices.size();
         if (!includePrivate) {
             for (MultiUserChatService service : mucServices.values()) {
                 if (service.isHidden()) {
@@ -220,7 +270,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     }
 
     /**
-     * Creates a new MUC service and registers it with the manager, and starts up the service.
+     * Creates a new MUC service and registers it with the manager (which causes a cluster-wide notification to be sent)
+     * and starts up the service.
      *
      * @param subdomain Subdomain of the MUC service.
      * @param description Description of the MUC service (can be null for default description)
@@ -228,66 +279,97 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @return MultiUserChatService implementation that was just created.
      * @throws AlreadyExistsException if the service already exists.
      */
-    public MultiUserChatServiceImpl createMultiUserChatService(String subdomain, String description, Boolean isHidden) throws AlreadyExistsException {
-        if (getMultiUserChatServiceID(subdomain) != null) throw new AlreadyExistsException();
-        MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+    @Nonnull
+    public MultiUserChatServiceImpl createMultiUserChatService(@Nonnull final String subdomain, @Nullable final String description, final boolean isHidden) throws AlreadyExistsException {
+        if (getMultiUserChatServiceID(subdomain) != null) {
+            Log.info("Unable to create a service for {} as one already exists.", subdomain);
+            throw new AlreadyExistsException();
+        }
+
+        Log.info("Creating MUC service '{}'", subdomain);
+        final MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
         insertService(subdomain, description, isHidden);
         registerMultiUserChatService(muc);
         return muc;
     }
 
     /**
-     * Updates the configuration of a MUC service.  This is more involved than it may seem.  If the
-     * subdomain is changed, we need to shut down the old service and start up the new one, registering
-     * the new subdomain and cleaning up the old one.  Properties are tied to the ID, which will not change.
+     * Updates the configuration of a MUC service.
+     *
+     * This is more involved than it may seem.
+     *
+     * If the subdomain is changed, we need to shut down the old service and start up the new one, registering
+     * the new subdomain and cleaning up the old one.
+     *
+     * Properties are tied to the ID, which will not change.
      *
      * @param serviceID The ID of the service to be updated.
      * @param subdomain New subdomain to assign to the service.
      * @param description New description to assign to the service.
      * @throws NotFoundException if service was not found.
      */
-    public void updateMultiUserChatService(Long serviceID, String subdomain, String description) throws NotFoundException {
-        MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
-        if (muc == null) throw new NotFoundException();
-        // A NotFoundException is thrown if the specified service was not found.
-        String oldsubdomain = muc.getServiceName();
-        if (!mucServices.containsKey(oldsubdomain)) {
+    public void updateMultiUserChatService(final long serviceID, @Nonnull final String subdomain, @Nullable final String description) throws NotFoundException {
+        final MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
+        if (muc == null) {
+            // A NotFoundException is thrown if the specified service was not found.
+            Log.info("Unable to find service to update for {}", serviceID);
+            throw new NotFoundException();
+        }
+        Log.info("Updating MUC service '{}'", subdomain);
+
+        final String oldSubdomain = muc.getServiceName();
+        if (!mucServices.containsKey(oldSubdomain)) {
             // This should never occur, but just in case...
             throw new NotFoundException();
         }
-        if (oldsubdomain.equals(subdomain)) {
-            // Alright, all we're changing is the description.  This is easy.
+        if (oldSubdomain.equals(subdomain)) {
+            // Alright, all we're changing is the description. This is easy.
             updateService(serviceID, subdomain, description);
             // Update the existing service's description.
             muc.setDescription(description);
+            // TODO broadcast change to other cluster nodes (OF-2164)
         }
         else {
-            // Changing the subdomain, here's where it gets complex.
+            // Changing the subdomain, here's where it   gets complex.
+
             // Unregister existing muc service
             unregisterMultiUserChatService(subdomain, false);
+
             // Update the information stored about the MUC service
             updateService(serviceID, subdomain, description);
+
             // Create new MUC service with new settings
-            muc = new MultiUserChatServiceImpl(subdomain, description, muc.isHidden());
+            final MultiUserChatService replacement = new MultiUserChatServiceImpl(subdomain, description, muc.isHidden());
+
             // Register to new service
-            registerMultiUserChatService(muc, false);
+            registerMultiUserChatService(replacement, false);
+
+            // TODO broadcast change(s) to other cluster nodes (OF-2164)
         }
     }
 
     /**
-     * Updates the configuration of a MUC service.  This is more involved than it may seem.  If the
-     * subdomain is changed, we need to shut down the old service and start up the new one, registering
-     * the new subdomain and cleaning up the old one.  Properties are tied to the ID, which will not change.
+     * Updates the configuration of a MUC service.
      *
-     * @param cursubdomain The current subdomain assigned to the service.
-     * @param newsubdomain New subdomain to assign to the service.
+     * This is more involved than it may seem.
+     *
+     * If the subdomain is changed, we need to shut down the old service and start up the new one, registering the new
+     * subdomain and cleaning up the old one.
+     *
+     * Properties are tied to the ID, which will not change.
+     *
+     * @param currentSubdomain The current subdomain assigned to the service.
+     * @param newSubdomain New subdomain to assign to the service.
      * @param description New description to assign to the service.
      * @throws NotFoundException if service was not found.
      */
-    public void updateMultiUserChatService(String cursubdomain, String newsubdomain, String description) throws NotFoundException {
-        Long serviceID = getMultiUserChatServiceID(cursubdomain);
-        if (serviceID == null) throw new NotFoundException();
-        updateMultiUserChatService(serviceID, newsubdomain, description);
+    public void updateMultiUserChatService(@Nonnull final String currentSubdomain, @Nonnull final String newSubdomain, @Nullable final String description) throws NotFoundException {
+        final Long serviceID = getMultiUserChatServiceID(currentSubdomain);
+        if (serviceID == null) {
+            Log.info("Unable to find service to update for {}", currentSubdomain);
+            throw new NotFoundException();
+        }
+        updateMultiUserChatService(serviceID, newSubdomain, description);
     }
 
     /**
@@ -296,10 +378,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param subdomain The subdomain of the service to be deleted.
      * @throws NotFoundException if the service was not found.
      */
-    public void removeMultiUserChatService(String subdomain) throws NotFoundException {
-        Long serviceID = getMultiUserChatServiceID(subdomain);
+    public void removeMultiUserChatService(@Nonnull final String subdomain) throws NotFoundException {
+        final Long serviceID = getMultiUserChatServiceID(subdomain);
         if (serviceID == null) {
-            Log.error("MultiUserChatManager: Unable to find service to remove for "+subdomain);
+            Log.info("Unable to find service to remove for {}", subdomain);
             throw new NotFoundException();
         }
         removeMultiUserChatService(serviceID);
@@ -311,13 +393,15 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param serviceID The ID opf the service to be deleted.
      * @throws NotFoundException if the service was not found.
      */
-    public void removeMultiUserChatService(Long serviceID) throws NotFoundException {
-        MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
+    public void removeMultiUserChatService(final long serviceID) throws NotFoundException {
+        final MultiUserChatServiceImpl muc = (MultiUserChatServiceImpl) getMultiUserChatService(serviceID);
         if (muc == null) {
-            Log.error("MultiUserChatManager: Unable to find service to remove for service ID "+serviceID);
+            Log.info("Unable to find service to remove for service ID {}", serviceID);
             throw new NotFoundException();
         }
-        unregisterMultiUserChatService(muc.getServiceName());
+        final String subdomain = muc.getServiceName();
+        Log.info("Removing MUC service '{}'", subdomain);
+        unregisterMultiUserChatService(subdomain);
         deleteService(serviceID);
     }
 
@@ -327,49 +411,52 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param serviceID ID of the conference service you wish to query.
      * @return The MultiUserChatService instance associated with the id, or null if none found.
      */
-    public MultiUserChatService getMultiUserChatService(Long serviceID) {
-        String subdomain = getMultiUserChatSubdomain(serviceID);
-        if (subdomain == null) return null;
+    @Nullable
+    public MultiUserChatService getMultiUserChatService(final long serviceID) {
+        final String subdomain = getMultiUserChatSubdomain(serviceID);
+        if (subdomain == null) {
+            return null;
+        }
         return mucServices.get(subdomain);
     }
 
-
     /**
-     * Retrieves a MultiUserChatService instance specified by it's subdomain of the
-     * server's primary domain.  In other words, if the service is conference.example.org,
-     * and the server is example.org, you would specify conference here.
+     * Retrieves a MultiUserChatService instance specified by it's subdomain of the server's primary domain. In other
+     * words: if the service is <tt>conference.example.org</tt>, and the server is <tt>example.org</tt>, you would
+     * specify <tt>conference</tt> here.
      *
      * @param subdomain Subdomain of the conference service you wish to query.
      * @return The MultiUserChatService instance associated with the subdomain, or null if none found.
      */
-    public MultiUserChatService getMultiUserChatService(String subdomain) {
+    @Nullable
+    public MultiUserChatService getMultiUserChatService(@Nonnull final String subdomain) {
         return mucServices.get(subdomain);
     }
 
     /**
-     * Retrieves a MultiUserChatService instance specified by any JID that refers to it.
-     * In other words, it can be a hostname for the service, a room JID, or even the JID
-     * of a occupant of the room.  Basically it takes the hostname part of the JID,
-     * strips off the server hostname from the end, leaving only the subdomain, and then calls
-     * the subdomain version of the call.
+     * Retrieves a MultiUserChatService instance specified by any JID that refers to it. In other words: the argument
+     * value can be a XMPP domain name for the service, a room JID, or even the JID of a occupant of the room. The
+     * implementation takes the domain part of the JID, strips off the server domain name from the end, leaving only the
+     * subdomain, and then calls the subdomain version of the call.
      *
      * @param jid JID that contains a reference to the conference service.
      * @return The MultiUserChatService instance associated with the JID, or null if none found.
      */
-    public MultiUserChatService getMultiUserChatService(JID jid) {
-        String subdomain = jid.getDomain().replace("."+ XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "");
+    @Nullable
+    public MultiUserChatService getMultiUserChatService(@Nonnull final JID jid) {
+        final String subdomain = jid.getDomain().replace("."+ XMPPServer.getInstance().getServerInfo().getXMPPDomain(), "");
         return getMultiUserChatService(subdomain);
     }
 
     /**
-     * Retrieves all of the MultiUserChatServices managed and configured for this server, sorted by
-     * subdomain.
+     * Retrieves all of the MultiUserChatServices managed and configured for this server, sorted by subdomain.
      *
      * @return A list of MultiUserChatServices configured for this server.
      */
+    @Nonnull
     public List<MultiUserChatService> getMultiUserChatServices() {
-        List<MultiUserChatService> services = new ArrayList<>(mucServices.values());
-        Collections.sort(services, new ServiceComparator());
+        final List<MultiUserChatService> services = new ArrayList<>(mucServices.values());
+        services.sort(new ServiceComparator());
         return services;
     }
 
@@ -378,7 +465,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      *
      * @return The number of registered MultiUserChatServices.
      */
-    public Integer getMultiUserChatServicesCount() {
+    public int getMultiUserChatServicesCount() {
         return mucServices.size();
     }
 
@@ -388,23 +475,21 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param subdomain Subdomain of service to check on.
      * @return True or false if the subdomain is registered as a MUC service.
      */
-    public boolean isServiceRegistered(String subdomain) {
-        if (subdomain == null) return false;
+    public boolean isServiceRegistered(@Nullable final String subdomain) {
+        if (subdomain == null) {
+            return false;
+        }
         return mucServices.containsKey(subdomain);
     }
 
     /**
-     * Retrieves ID of MUC service by subdomain.
+     * Retrieves the database ID of a MUC service by subdomain.
      *
      * @param subdomain Subdomain of service to get ID of.
      * @return ID number of MUC service, or null if none found.
      */
-    public Long getMultiUserChatServiceID(String subdomain) {
-        Long id = loadServiceID(subdomain);
-        if (id == -1) {
-            return null;
-        }
-        return id;
+    public Long getMultiUserChatServiceID(@Nonnull final String subdomain) {
+        return loadServiceID(subdomain);
     }
 
     /**
@@ -413,14 +498,19 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
      * @param serviceID ID of service to get subdomain of.
      * @return Subdomain of MUC service, or null if none found.
      */
-    public String getMultiUserChatSubdomain(Long serviceID) {
+    @Nullable
+    public String getMultiUserChatSubdomain(final long serviceID) {
         return loadServiceSubdomain(serviceID);
     }
 
     /**
      * Loads the list of configured services stored in the database.
+     *
+     * This call will add the services to memory on the local cluster node, but will not propagate them to other nodes
+     * in the cluster.
      */
     private void loadServices() {
+        Log.debug("Loading all MUC services from the database.");
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -432,12 +522,14 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
                 String subdomain = rs.getString(1);
                 String description = rs.getString(2);
                 Boolean isHidden = Boolean.valueOf(rs.getString(3));
-                MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+                final MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+
+                Log.trace("... loaded '{}' MUC service from the database.", subdomain);
                 mucServices.put(subdomain, muc);
             }
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("An unexpected exception occurred while trying to load all MUC services from the database.", e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -446,14 +538,16 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     /**
      * Gets a specific subdomain/service's ID number.
+     *
      * @param subdomain Subdomain to retrieve ID for.
-     * @return ID number of service.
+     * @return ID number of service, or null if no such service was found
      */
-    private long loadServiceID(String subdomain) {
+    @Nullable
+    private Long loadServiceID(@Nonnull final String subdomain) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Long id = (long)-1;
+        Long id = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_SERVICE_ID);
@@ -467,20 +561,23 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             }
         }
         catch (Exception e) {
-            // No problem, considering this as a "not found".
+            Log.error("A database exception occurred while trying to load the ID for MUC service '{}' from the database.", subdomain, e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+        Log.trace("Loaded service ID for MUC service '{}'", subdomain);
         return id;
     }
 
     /**
      * Gets a specific subdomain by a service's ID number.
+     *
      * @param serviceID ID to retrieve subdomain for.
-     * @return Subdomain of service.
+     * @return Subdomain of service, or null if no such service was found.
      */
-    private String loadServiceSubdomain(Long serviceID) {
+    @Nullable
+    private String loadServiceSubdomain(final long serviceID) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -493,29 +590,28 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             if (rs.next()) {
                 subdomain = rs.getString(1);
             }
-            else {
-                throw new Exception("Unable to locate subdomain for service ID "+serviceID);
-            }
         }
         catch (Exception e) {
-            // No problem, considering this as a "not found".
+            Log.error("A database exception occurred while trying to load the subdomain for MUC service with database ID {} from the database.", serviceID, e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+        Log.trace("Loaded service name for service with ID {}", serviceID);
         return subdomain;
     }
 
     /**
      * Inserts a new MUC service into the database.
+     *
      * @param subdomain Subdomain of new service.
-     * @param description Description of MUC service.  Can be null for default description.
+     * @param description Description of MUC service. Can be null for default description.
      * @param isHidden True if the service should be hidden from service listing.
      */
-    private void insertService(String subdomain, String description, Boolean isHidden) {
+    private void insertService(@Nonnull final String subdomain, @Nullable final String description, final boolean isHidden) {
         Connection con = null;
         PreparedStatement pstmt = null;
-        Long serviceID = SequenceManager.nextID(JiveConstants.MUC_SERVICE);
+        final long serviceID = SequenceManager.nextID(JiveConstants.MUC_SERVICE);
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(CREATE_SERVICE);
@@ -529,9 +625,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             }
             pstmt.setInt(4, (isHidden ? 1 : 0));
             pstmt.executeUpdate();
+            Log.debug("Inserted MUC service '{}' with database ID {}", subdomain, serviceID);
         }
         catch (SQLException e) {
-            Log.error(e.getMessage(), e);
+            Log.error("A database exception occurred while trying to insert service '{}' to the database.", subdomain, e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -540,11 +637,12 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     /**
      * Updates an existing service's subdomain and description in the database.
+     *
      * @param serviceID ID of the service to update.
      * @param subdomain Subdomain to set service to.
-     * @param description Description of MUC service.  Can be null for default description.
+     * @param description Description of MUC service. Can be null for default description.
      */
-    private void updateService(Long serviceID, String subdomain, String description) {
+    private void updateService(final long serviceID, @Nonnull final String subdomain, @Nullable final String description) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -559,9 +657,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             }
             pstmt.setLong(3, serviceID);
             pstmt.executeUpdate();
+            Log.debug("Updated MUC service '{}' with database ID {}", subdomain, serviceID);
         }
         catch (SQLException e) {
-            Log.error(e.getMessage(), e);
+            Log.error("A database exception occurred while trying to update service with ID {} in the database.", serviceID, e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -570,9 +669,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     /**
      * Deletes a service based on service ID.
+     *
      * @param serviceID ID of the service to delete.
      */
-    private void deleteService(Long serviceID) {
+    private void deleteService(final long serviceID) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -580,9 +680,10 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             pstmt = con.prepareStatement(DELETE_SERVICE);
             pstmt.setLong(1, serviceID);
             pstmt.executeUpdate();
+            Log.debug("Deleted MUC service with database ID {}", serviceID);
         }
         catch (SQLException e) {
-            Log.error(e.getMessage(), e);
+            Log.error("A database exception occurred while trying to remove service with ID {} from the database.", serviceID, e);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -592,7 +693,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     /****************** Statistics code ************************/
     private void addTotalRoomStats() {
         // Register a statistic.
-        Statistic statistic = new Statistic() {
+        final Statistic statistic = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.name");
@@ -632,7 +733,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     private void addTotalOccupantsStats() {
         // Register a statistic.
-        Statistic statistic = new Statistic() {
+        final Statistic statistic = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.name");
@@ -672,7 +773,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     private void addTotalConnectedUsers() {
         // Register a statistic.
-        Statistic statistic = new Statistic() {
+        final Statistic statistic = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.users.name");
@@ -712,7 +813,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     private void addNumberIncomingMessages() {
         // Register a statistic.
-        Statistic statistic = new Statistic() {
+        final Statistic statistic = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.name");
@@ -753,7 +854,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     private void addNumberOutgoingMessages() {
         // Register a statistic.
-        Statistic statistic = new Statistic() {
+        final Statistic statistic = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.name");
@@ -795,67 +896,90 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     // Cluster management tasks
     @Override
     public void joinedCluster() {
-        if (!ClusterManager.isSeniorClusterMember()) {
-            // Get transient rooms and persistent rooms with occupants from senior
-            // cluster member and merge with local ones. If room configuration was
-            // changed in both places then latest configuration will be kept
-            List<ServiceInfo> result = CacheFactory.doSynchronousClusterTask(
-                    new SeniorMemberServicesRequest(), ClusterManager.getSeniorClusterMember().toByteArray());
-            if (result != null) {
-                for (ServiceInfo serviceInfo : result) {
-                    MultiUserChatService service;
-                    service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceInfo.getSubdomain());
-                    if (service == null) {
-                        // This is a service we don't know about yet, create it locally and register it;
-                        service = new MultiUserChatServiceImpl(serviceInfo.getSubdomain(), serviceInfo.getDescription(), serviceInfo.isHidden());
-                        XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
-                    }
+        if (ClusterManager.isSeniorClusterMember()) {
+            Log.info("We are the senior cluster member. No need to query the senior cluster member for MUC service information.");
+            return;
+        }
 
-                    MultiUserChatServiceImpl serviceImpl = (MultiUserChatServiceImpl)service;
+        // Get transient rooms and persistent rooms with occupants from senior cluster member and merge with local ones.
+        // If room configuration was changed in both places then latest configuration will be kept
+        Log.info("Querying the senior cluster member for MUC service information.");
+        final List<ServiceInfo> result = CacheFactory.doSynchronousClusterTask( new SeniorMemberServicesRequest(), ClusterManager.getSeniorClusterMember().toByteArray());
+        if (result == null)
+        {
+            Log.warn("Unexpectedly received a 'null' result when querying senior cluster member for MUC Service information.");
+            return;
+        }
+        NodeID thisNodeID = XMPPServer.getInstance().getNodeID();
+        for (final ServiceInfo serviceInfo : result) {
+            MultiUserChatService service;
+            service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceInfo.getSubdomain());
+            if (service == null) {
+                // This is a service we don't know about yet, create it locally and register it; Highly suspicious,
+                // as the same set of MUC services should be loaded from the database.
+                Log.warn("Senior cluster member is reporting a MUC service that is not recognized: {}", serviceInfo.getSubdomain());
+                service = new MultiUserChatServiceImpl(serviceInfo.getSubdomain(), serviceInfo.getDescription(), serviceInfo.isHidden());
+                XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
+            }
 
-                    for (RoomInfo roomInfo : serviceInfo.getRooms()) {
-                        LocalMUCRoom remoteRoom = roomInfo.getRoom();
-                        LocalMUCRoom localRoom = serviceImpl.getLocalChatRoom(remoteRoom.getName());
-                        if (localRoom == null) {
-                            // Create local room with remote information
-                            localRoom = remoteRoom;
-                            serviceImpl.chatRoomAdded(localRoom);
-                        }
-                        else {
-                            // Update local room with remote information
-                            localRoom.updateConfiguration(remoteRoom);
-                        }
-                        // Add remote occupants to local room
-                        // TODO Handle conflict of nicknames
-                        for (OccupantAddedEvent event : roomInfo.getOccupants()) {
-                            event.setSendPresence(true);
-                            event.run();
-                        }
+            // TODO: Consider if iterating over _all_ rooms is necessary: All database-persisted rooms should generally already
+            //       be available on both nodes (are there database-related race conditions to worry about?) Only rooms that are
+            //       in-memory only (transient) are likely to be processed here.
+            final MultiUserChatServiceImpl serviceImpl = (MultiUserChatServiceImpl)service;
+
+            for (final RoomInfo roomInfo : serviceInfo.getRooms()) {
+                final LocalMUCRoom remoteRoom = roomInfo.getRoom(); // TODO the remote room is treated as a LocalMUCRoom instance here. Is that safe?
+
+                LocalMUCRoom localRoom = serviceImpl.getLocalChatRoom(remoteRoom.getName());
+                if (localRoom == null) {
+                    Log.debug("Create local room with remote information. Room: {}", remoteRoom.getJID());
+                    localRoom = remoteRoom;
+                    serviceImpl.chatRoomAdded(localRoom);
+                }
+                else {
+                    Log.debug("Update local room with remote information. Room: {}", remoteRoom.getJID());
+                    localRoom.updateConfiguration(remoteRoom); // If this would actually change state, that'd be suspicious. Each node should have the same data from the database.
+                }
+
+                // Add remote occupants to local room
+                // TODO Handle conflict of nicknames (OF-2165)
+                for (final OccupantAddedEvent event : roomInfo.getOccupants()) {
+                    if (thisNodeID.equals(event.getNodeID())){
+                        // Do not add occupants as RemoteMucRole who are already on this node as LocalMucRole
+                        continue;
                     }
+                    event.setSendPresence(true);
+                    event.run();
                 }
             }
         }
     }
     
     @Override
-    @SuppressWarnings("unchecked")
     public void joinedCluster(byte[] nodeID) {
-        List<RoomInfo> roomInfos = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
-        if ( roomInfos != null ) {
-            for (RoomInfo roomInfo : roomInfos) {
-                LocalMUCRoom remoteRoom = roomInfo.getRoom();
-                MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
-                LocalMUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
-                if (localRoom == null) {
-                    // Create local room with remote information
-                    localRoom = remoteRoom;
-                    service.chatRoomAdded(localRoom);
-                }
-                // Add remote occupants to local room
-                for (OccupantAddedEvent event : roomInfo.getOccupants()) {
-                    event.setSendPresence(true);
-                    event.run();
-                }
+        Log.info("Querying a cluster member that just joined for its MUC rooms.");
+        final List<RoomInfo> roomInfos = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
+        if ( roomInfos == null ) {
+            Log.warn("Unexpectedly received a 'null' result when querying cluster member {} for MUC Service information.", nodeID);
+            return;
+        }
+
+        // TODO: Optimize: This makes all cluster nodes query the joining node for data that they mostly already should have.
+        for (final RoomInfo roomInfo : roomInfos) {
+            final LocalMUCRoom remoteRoom = roomInfo.getRoom(); // TODO the remote room is treated as a LocalMUCRoom instance here. Is that safe?
+            final MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
+            LocalMUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
+            if (localRoom == null) {
+                Log.debug("Create local room with remote information. Room: {}", remoteRoom.getJID());
+                localRoom = remoteRoom;
+                service.chatRoomAdded(localRoom);
+            }
+
+            // Add remote occupants to local room
+            // TODO Handle conflict of nicknames (OF-2165)
+            for (final OccupantAddedEvent event : roomInfo.getOccupants()) {
+                event.setSendPresence(true);
+                event.run();
             }
         }
     }
@@ -870,8 +994,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         // Remove all room occupants linked to the defunct node as their sessions are cleaned out earlier
         Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
 
-        for (MultiUserChatService service : getMultiUserChatServices()) {
-            for (MUCRoom mucRoom : service.getChatRooms()) {
+        for (final MultiUserChatService service : getMultiUserChatServices()) {
+            for (final MUCRoom mucRoom : service.getChatRooms()) {
                 for (MUCRole mucRole : mucRoom.getOccupants()) {
                     if (mucRole.getNodeID().equals(nodeID)) {
                         mucRoom.leaveRoom(mucRole);
@@ -908,7 +1032,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         // Delete any affiliation of the user to any room of any MUC service
         MUCPersistenceManager
                 .removeAffiliationFromDB(XMPPServer.getInstance().createJID(user.getUsername(), null, true));
-        // TODO Delete any user information from the rooms loaded into memory
+        // TODO Delete any user information from the rooms loaded into memory (OF-2166)
     }
 
     @Override

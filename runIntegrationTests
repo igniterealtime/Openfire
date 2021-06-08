@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.0-alpha3-20200513.010448-11"
+SMACK_VERSION="4.4.2"
 GRADLE_VERSION="6.3"
-FORCE_CUSTOM_GRADLE=false
+FORCE_CUSTOM_GRADLE=true
 CURL_ARGS="--location --silent"
 DEBUG=false
 LOCAL_RUN=false
@@ -18,7 +18,7 @@ usage()
 	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
 	echo "    -l: Launch a local Openfire. (default: off)"
 	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
-	echo "    -g: Download and use a known-good Gradle, rather than use the system in-built (default: off)"
+	echo "    -g: Use system Gradle, rather than use the known-good (default: off)"
 	echo "    -s: Set Smack to the given version (default: ${SMACK_VERSION})"
 	echo "    -h: The hostname for the Openfire under test (default: example.org)"
 	echo "    -u: Admin username for Openfire (default: admin)"
@@ -36,7 +36,7 @@ while getopts dlgs:h:i:u:p: OPTION "$@"; do
 			LOCAL_RUN=true
 			;;
 		g)
-			FORCE_CUSTOM_GRADLE=true
+			FORCE_CUSTOM_GRADLE=false
 			;;
 		s)
 			SMACK_VERSION="${OPTARG}"
@@ -138,7 +138,7 @@ function launchOpenfire {
 	fi
 
 	rm -f distribution/target/distribution-base/conf/openfire.xml
-	cp distribution/src/conf/openfire-demoboot.xml \
+	cp distribution/target/distribution-base/conf/openfire-demoboot.xml \
 		distribution/target/distribution-base/conf/openfire.xml
 
 	echo "Starting Openfire…"
@@ -155,27 +155,19 @@ function runTestsInGradle {
 	echo "Starting Integration Tests (using Smack ${SMACK_VERSION})…"
 
 	DISABLED_INTEGRATION_TESTS=()
-	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatIntegrationTest)
-	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
-	#DISABLED_INTEGRATION_TESTS+=(MultiUserChatLowLevelIntegrationTest)
 
-	# Does sometimes not succeed in Travis (stress test is too much?)
+	# The three tests below suffer from a race condition, making them flap. See https://github.com/igniterealtime/Smack/pull/440
+    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
+    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
+    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
+
+    # Occasionally fails, disabled until cause can be found.
 	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
-
-	#FileTransferIntegrationTest doesn't progress at all on 4.4.0a2
-	DISABLED_INTEGRATION_TESTS+=(FileTransferIntegrationTest)
-	#OX tests use a removed dependency, and so don't compile on 4.4.0a2
-	DISABLED_INTEGRATION_TESTS+=(OXInstantMessagingIntegrationTest)
-	DISABLED_INTEGRATION_TESTS+=(OXSecretKeyBackupIntegrationTest)
+	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
 	DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
 	DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
-
-    # Occasionally fails, disabled until cause can be found.
-    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
-    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
 
 	SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
 	for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do

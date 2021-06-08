@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  db:
+    image: library/postgres:9.6.17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=openfire
+      - POSTGRES_USER=${CONNECTION_USERNAME}
+      - POSTGRES_PASSWORD=${CONNECTION_PASSWORD}
+    volumes:
+      - ${GITHUB_WORKSPACE}/olddb:/docker-entrypoint-initdb.d

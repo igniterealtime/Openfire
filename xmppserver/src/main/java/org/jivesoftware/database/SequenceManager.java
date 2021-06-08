@@ -16,14 +16,19 @@
 
 package org.jivesoftware.database;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +67,7 @@ public class SequenceManager {
             "UPDATE ofID SET id=? WHERE idType=? AND id=?";
 
     // Statically startup a sequence manager for each of the sequence counters.
-    private static Map<Integer, SequenceManager> managers = new ConcurrentHashMap<>();
+    private static final Map<Integer, SequenceManager> managers = new ConcurrentHashMap<>();
 
     static {
         new SequenceManager(JiveConstants.ROSTER, 5);
@@ -70,6 +75,8 @@ public class SequenceManager {
         new SequenceManager(JiveConstants.MUC_ROOM, 5);
         new SequenceManager(JiveConstants.MUC_MESSAGE_ID, 50);
     }
+
+    private static final Cache<Integer, Data> sequenceBlocks = CacheFactory.createCache("Sequences");
 
     /**
      * Returns the next ID of the specified type.
@@ -135,9 +142,7 @@ public class SequenceManager {
         }
     }
 
-    private int type;
-    private long currentID;
-    private long maxID;
+    private final int type;
     private int blockSize;
 
     /**
@@ -150,8 +155,6 @@ public class SequenceManager {
         managers.put(seqType, this);
         this.type = seqType;
         this.blockSize = size;
-        currentID = 0L;
-        maxID = 0L;
     }
 
     /**
@@ -159,14 +162,22 @@ public class SequenceManager {
      * auto-increment database field.
      * @return the next sequence number
      */
-    public synchronized long nextUniqueID() {
-        if (!(currentID < maxID)) {
-            // Get next block -- make 5 attempts at maximum.
-            getNextBlock(5);
+    public long nextUniqueID() {
+        final Lock lock = sequenceBlocks.getLock(type);
+        lock.lock();
+        try {
+            Data data = sequenceBlocks.get(type);
+            if (data == null || !(data.getCurrentID() < data.getMaxID())) {
+                data = getNextBlock();
+            }
+
+            final long id = data.getCurrentID();
+            data.setCurrentID(id + 1);
+            sequenceBlocks.put(type, data);
+            return id;
+        } finally {
+            lock.unlock();
         }
-        long id = currentID;
-        currentID++;
-        return id;
     }
 
     /**
@@ -175,24 +186,19 @@ public class SequenceManager {
      * <li> Select currentID from appropriate db row.
      * <li> Increment id returned from db.
      * <li> Update db row with new id where id=old_id.
-     * <li> If update fails another process checked out the block first; go back to step 1.
-     * Otherwise, done.
      * </ol>
+     *
+     * Calls to this method should only occur while a lock has already been acquired.
+     *
+     * @return the next available ID block
      */
-    private void getNextBlock(int count) {
-        if (count == 0) {
-            Log.error("Failed at last attempt to obtain an ID, aborting...");
-            return;
-        }
-
+    private Data getNextBlock() {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        boolean abortTransaction = false;
-        boolean success = false;
 
         try {
-            con = DbConnectionManager.getTransactionConnection();
+            con = DbConnectionManager.getConnection();
             // Get the current ID from the database.
             pstmt = con.prepareStatement(LOAD_ID);
             pstmt.setInt(1, type);
@@ -217,34 +223,23 @@ public class SequenceManager {
             pstmt.setInt(2, type);
             pstmt.setLong(3, currentID);
             // Check to see if the row was affected. If not, some other process
-            // already changed the original id that we read. Therefore, this
-            // round failed and we'll have to try again.
-            success = pstmt.executeUpdate() == 1;
-            if (success) {
-                this.currentID = currentID;
-                this.maxID = newID;
+            // already changed the original id that we read. This code should be
+            // called under a lock, so this is not supposed to happen. Throw a
+            // very verbose error if it does.
+            if (pstmt.executeUpdate() == 1) {
+                final Data result = new Data(currentID, newID);
+                sequenceBlocks.put(type, result);
+                return result;
+            } else {
+                throw new IllegalStateException("Failed at attempt to obtain an ID, aborting...");
             }
         }
         catch (SQLException e) {
-            Log.error(e.getMessage(), e);
-            abortTransaction = true;
+            Log.error("An exception occurred while trying to obtain new sequence values from the database for type {}", type, e);
+            throw new IllegalStateException("Failed at attempt to obtain an ID, aborting...", e);
         }
         finally {
-            DbConnectionManager.closeStatement(rs, pstmt);
-            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
-        }
-
-        if (!success) {
-            Log.warn("WARNING: failed to obtain next ID block due to " +
-                    "thread contention. Trying again...");
-            // Call this method again, but sleep briefly to try to avoid thread contention.
-            try {
-                Thread.sleep(75);
-            }
-            catch (InterruptedException ie) {
-                // Ignore.
-            }
-            getNextBlock(count - 1);
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -261,6 +256,56 @@ public class SequenceManager {
         }
         finally {
             DbConnectionManager.closeStatement(pstmt);
+        }
+    }
+
+    static class Data implements Serializable {
+        private long currentID;
+        private long maxID;
+
+        Data() { // for serialization.
+        }
+
+        public Data(long currentID, long maxID) {
+            this.currentID = currentID;
+            this.maxID = maxID;
+        }
+
+        public long getCurrentID() {
+            return currentID;
+        }
+
+        public void setCurrentID(long currentID) {
+            this.currentID = currentID;
+        }
+
+        public long getMaxID() {
+            return maxID;
+        }
+
+        public void setMaxID(long maxID) {
+            this.maxID = maxID;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Data data = (Data) o;
+            return currentID == data.currentID && maxID == data.maxID;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(currentID, maxID);
+        }
+
+        @Override
+        public String toString() {
+            return "Data{" +
+                "currentID=" + currentID +
+                ", maxID=" + maxID +
+                '}';
         }
     }
 }

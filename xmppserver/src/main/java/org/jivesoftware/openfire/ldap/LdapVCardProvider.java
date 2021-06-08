@@ -557,7 +557,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                     // perform the replacement.
                     for ( Map.Entry<String, String> entry : replacements.entrySet() ) {
                         final String placeholder = entry.getKey();
-                        final String replacement = entry.getValue();
+                        final String replacement = entry.getValue() != null ? entry.getValue() : "";
                         format = format.replace(placeholder, replacement);
                         Log.trace("Replaced attribute '{}' with '{}'", placeholder, replacement);
                     }

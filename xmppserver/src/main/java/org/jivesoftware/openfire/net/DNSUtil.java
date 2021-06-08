@@ -17,17 +17,21 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -40,6 +44,8 @@ public class DNSUtil {
     private static DirContext context;
 
     private static final Logger logger = LoggerFactory.getLogger(DNSUtil.class);
+
+    private static Cache<String, CacheableOptional<WeightedHostAddress[]>> LOOKUP_CACHE;
 
     /**
      * Internal DNS that allows to specify target IP addresses and ports to use for domains.
@@ -60,6 +66,11 @@ public class DNSUtil {
         }
         catch (Exception e) {
             logger.error("Can't initialize DNS context!", e);
+        }
+        try {
+            LOOKUP_CACHE = CacheFactory.createCache("DNS Records");
+        } catch (Exception e) {
+            logger.error("Can't initialize DNS cache!", e);
         }
     }
 
@@ -103,8 +114,7 @@ public class DNSUtil {
         }
 
         // Attempt the SRV lookup.
-        final List<WeightedHostAddress> srvLookups = new LinkedList<>();
-        srvLookups.addAll(srvLookup("xmpp-server", "tcp", domain ) );
+        final List<WeightedHostAddress> srvLookups = new LinkedList<>(srvLookup("xmpp-server", "tcp", domain));
 
         final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
         if (allowTLS) {
@@ -183,63 +193,104 @@ public class DNSUtil {
      * The results returned by this method are ordered by priority (ascending), and order of equal priority entries is
      * randomized by weight, as defined in the DNS SRV specification.
      *
-     * @param service the symbolic name of the desired service (cannot be null).
-     * @param proto the transport protocol of the desired service; this is usually either TCP or UDP (cannot be null).
-     * @param name the domain name for which this record is valid (cannot be null).
+     * @param service the symbolic name of the desired service.
+     * @param proto the transport protocol of the desired service; this is usually either TCP or UDP.
+     * @param name the domain name for which this record is valid.
      * @return An ordered of results (possibly empty, never null).
      */
-    public static List<WeightedHostAddress> srvLookup(String service, String proto, String name) {
-        if (service == null || proto == null || name == null) {
-            throw new NullPointerException("DNS lookup can't be null");
+    public static List<WeightedHostAddress> srvLookup(@Nonnull final String service, @Nonnull final String proto, @Nonnull final String name) {
+        logger.trace("DNS SRV Lookup for service '{}', protocol '{}' and name '{}'", service, proto, name);
+
+        final String lookup = constructLookup(service, proto, name);
+
+        final CacheableOptional<WeightedHostAddress[]> optional = LOOKUP_CACHE.get(lookup);
+        WeightedHostAddress[] result;
+        if (optional != null) {
+            // Return a cached result.
+            if (optional.isAbsent()) {
+                logger.warn("DNS SRV lookup previously failed for '{}' (negative cache result)", lookup);
+                result = new WeightedHostAddress[0];
+            } else {
+                result = optional.get();
+                if ( result.length == 0 ) {
+                    logger.debug("No SRV record found for '{}' (cached result)", lookup);
+                } else {
+                    logger.trace("{} SRV record(s) found for '{}' (cached result)", result.length, lookup);
+                }
+            }
+        } else {
+            // No result in cache. Query DNS and cache result.
+            try {
+                final Attributes dnsLookup = context.getAttributes(lookup, new String[]{"SRV"});
+                final Attribute srvRecords = dnsLookup.get("SRV");
+                if (srvRecords == null) {
+                    logger.debug("No SRV record found for '{}'", lookup);
+                    result = new WeightedHostAddress[0];
+                } else {
+                    result = new WeightedHostAddress[srvRecords.size()];
+                    final boolean directTLS = lookup.startsWith("_xmpps-"); // XEP-0368
+                    for (int i = 0; i < srvRecords.size(); i++) {
+                        result[i] = new WeightedHostAddress(((String) srvRecords.get(i)).split(" "), directTLS);
+                    }
+                    logger.trace("{} SRV record(s) found for '{}'", result.length, lookup);
+                }
+                LOOKUP_CACHE.put(lookup, CacheableOptional.of(result));
+            } catch (NameNotFoundException e) {
+                logger.debug("No SRV record found for '{}'", lookup, e);
+                LOOKUP_CACHE.put(lookup, CacheableOptional.of(new WeightedHostAddress[0])); // Empty result (different from negative result!)
+                result = new WeightedHostAddress[0];
+            } catch (NamingException e) {
+                logger.error("DNS SRV lookup failed for '{}'", lookup, e);
+                LOOKUP_CACHE.put(lookup, CacheableOptional.of(null)); // Negative result cache (different from empty result!)
+                result = new WeightedHostAddress[0];
+            }
         }
 
+        // Do not store _prioritized_ results in the cache, as there is a random element to the prioritization that needs to happen every time.
+        return prioritize(result);
+    }
+
+    /**
+     * Constructs a DNS SRV lookup query (eg: <tt>_service._proto.name.</tt>)
+     *
+     * @param service the symbolic name of the desired service.
+     * @param proto the transport protocol of the desired service; this is usually either TCP or UDP.
+     * @param name the domain name for which this record is valid.
+     * @return A DNS lookup query
+     */
+    // Package protected to be able to unit test this method.
+    @Nonnull
+    static String constructLookup(@Nonnull final String service, @Nonnull final String proto, @Nonnull final String name)
+    {
+        String lookup = "";
         if ( !service.startsWith( "_" ) )
         {
-            service = "_" + service;
+            lookup += "_";
         }
-        if ( !service.endsWith( "." ) )
+        lookup += service;
+
+        if ( !lookup.endsWith( "." ) )
         {
-            service = service + ".";
+            lookup += ".";
         }
 
         if ( !proto.startsWith( "_" ) )
         {
-            proto = "_" + proto;
+            lookup += "_";
         }
-        if ( !proto.endsWith( "." ) )
+        lookup += proto;
+
+        if ( !lookup.endsWith( "." ) )
         {
-            proto = proto+ ".";
+            lookup += ".";
         }
 
-        if ( !name.endsWith( "." ) ) {
-            name = name + ".";
+        lookup += name;
+        if ( !lookup.endsWith( "." ) ) {
+            lookup += ".";
         }
 
-        // _service._proto.name.
-        final String lookup = (service + proto + name).toLowerCase();
-        try {
-            Attributes dnsLookup =
-                    context.getAttributes(lookup, new String[]{"SRV"});
-            Attribute srvRecords = dnsLookup.get("SRV");
-            if (srvRecords == null) {
-                logger.debug("No SRV record found for domain: " + lookup);
-                return Collections.emptyList();
-            }
-            WeightedHostAddress[] hosts = new WeightedHostAddress[srvRecords.size()];
-            final boolean directTLS = lookup.startsWith( "_xmpps-" ); // XEP-0368
-            for (int i = 0; i < srvRecords.size(); i++) {
-                hosts[i] = new WeightedHostAddress(((String)srvRecords.get(i)).split(" "), directTLS);
-            }
-
-            return prioritize(hosts);
-        }
-        catch (NameNotFoundException e) {
-            logger.debug("No SRV record found for: " + lookup, e);
-        }
-        catch (NamingException e) {
-            logger.error("Can't process DNS lookup!", e);
-        }
-        return Collections.emptyList();
+        return lookup.toLowerCase();
     }
 
     /**
@@ -276,11 +327,11 @@ public class DNSUtil {
     /**
      * Encapsulates a hostname and port.
      */
-    public static class HostAddress {
+    public static class HostAddress implements Serializable {
 
         private final String host;
         private final int port;
-        private boolean directTLS;
+        private final boolean directTLS;
 
         private HostAddress(String host, int port, boolean directTLS) {
             // Host entries in DNS should end with a ".".
@@ -377,9 +428,7 @@ public class DNSUtil {
 
             // finally, append the hosts with zero priority (shuffled)
             Collections.shuffle(zeroWeights);
-            for(WeightedHostAddress zero : zeroWeights) {
-                result.add(zero);
-            }
+            result.addAll(zeroWeights);
         }
 
         return result;

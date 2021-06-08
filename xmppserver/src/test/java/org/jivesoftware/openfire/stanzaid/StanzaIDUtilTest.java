@@ -21,70 +21,7 @@ import static org.junit.Assert.assertEquals;
 public class StanzaIDUtilTest
 {
     /**
-     * Test if {@link StanzaIDUtil.generateUniqueAndStableStanzaID} generates a UUID value
-     * if the provided input does not have a 'origin-id' value
-     */
-    @Test
-    public void testGenerateUUIDWhenNoOriginIDPresent() throws Exception
-    {
-        // Setup fixture.
-        final Packet input = new Message();
-
-        // Execute system under test.
-        final String result = StanzaIDUtil.generateUniqueAndStableStanzaID( input );
-
-        // Verify results.
-        Assert.assertNotNull( result );
-        try
-        {
-            UUID.fromString( result );
-        }
-        catch ( IllegalArgumentException ex )
-        {
-            Assert.fail();
-        }
-    }
-
-    /**
-     * Test if {@link StanzaIDUtil.generateUniqueAndStableStanzaID} uses the 'origin-id' provided value,
-     * if that's present.
-     */
-    @Test
-    public void testUseOriginIDWhenPresent() throws Exception
-    {
-        // Setup fixture.
-        final Packet input = new Message();
-        final String expected = "de305d54-75b4-431b-adb2-eb6b9e546013";
-        input.getElement().addElement( "origin-id", "urn:xmpp:sid:0" ).addAttribute( "id", expected );
-
-        // Execute system under test.
-        final String result = StanzaIDUtil.generateUniqueAndStableStanzaID( input );
-
-        // Verify results.
-        assertEquals( expected, result );
-    }
-
-    /**
-     * Test if {@link StanzaIDUtil.generateUniqueAndStableStanzaID} uses the 'origin-id' provided value,
-     * if that's present, even when the value is not a UUID.
-     */
-    @Test
-    public void testUseOriginIDWhenPresentNonUUID() throws Exception
-    {
-        // Setup fixture.
-        final Packet input = new Message();
-        final String expected = "not-a-uuid";
-        input.getElement().addElement( "origin-id", "urn:xmpp:sid:0" ).addAttribute( "id", expected );
-
-        // Execute system under test.
-        final String result = StanzaIDUtil.generateUniqueAndStableStanzaID( input );
-
-        // Verify results.
-        assertEquals( expected, result );
-    }
-
-    /**
-     * Test if {@link StanzaIDUtil.ensureUniqueAndStableStanzaID} adds a stanza-id element
+     * Test if {@link StanzaIDUtil#ensureUniqueAndStableStanzaID(Packet, JID)} adds a stanza-id element
      * with proper 'by' and UUID value if the provided input does not have a 'origin-id'
      * element.
      */
@@ -114,7 +51,7 @@ public class StanzaIDUtilTest
     }
 
     /**
-     * Test if {@link StanzaIDUtil.ensureUniqueAndStableStanzaID} overwrites a stanza-id
+     * Test if {@link StanzaIDUtil#ensureUniqueAndStableStanzaID(Packet, JID)} overwrites a stanza-id
      * element when another is present with the same 'by' value.
      */
     @Test
@@ -148,7 +85,7 @@ public class StanzaIDUtilTest
     }
 
     /**
-     * Test if {@link StanzaIDUtil.ensureUniqueAndStableStanzaID} does not overwrites
+     * Test if {@link StanzaIDUtil#ensureUniqueAndStableStanzaID(Packet, JID)} does not overwrites
      * a stanza-id element when another is present with a different 'by' value.
      */
     @Test
@@ -172,8 +109,8 @@ public class StanzaIDUtilTest
     }
 
     /**
-     * Test if {@link StanzaIDUtil.ensureUniqueAndStableStanzaID} uses the provided
-     * origin-id value, if there's one.
+     * Test if {@link StanzaIDUtil#ensureUniqueAndStableStanzaID(Packet, JID)} uses a different value, if the provided
+     * data has an origin-id value.
      */
     @Test
     public void testUseOriginIdElement() throws Exception
@@ -200,7 +137,7 @@ public class StanzaIDUtilTest
         {
             Assert.fail();
         }
-        Assert.assertEquals( expected, stanzaIDElement.attributeValue( "id" ) );
+        Assert.assertNotEquals( expected, stanzaIDElement.attributeValue( "id" ) );
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }
 

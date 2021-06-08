@@ -1,3 +1,28 @@
+# Root level stuff
 .git
 .gitignore
 Dockerfile
+.github
+.idea
+.mvn
+.settings
+.vscode
+
+build
+!build/docker
+distribution
+!distribution/target/distribution-base
+documentation
+i18n
+plugins
+starter
+xmppserver
+
+# Deeper stuff
+**/.DS_Store
+**/.classpath
+**/.factorypath
+**/.idea
+**/.project
+**/.settings
+**/*.iml

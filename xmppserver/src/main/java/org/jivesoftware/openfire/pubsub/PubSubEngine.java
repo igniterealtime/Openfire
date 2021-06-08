@@ -683,7 +683,7 @@ public class PubSubEngine
     private void subscribeNodeAsync(final IQ iq, final JID subscriberJID, final Node node, final JID owner, final PubSubService service, final JID from, final Element childElement, final AccessModel accessModel) {
 
         // Check if the subscriber is an anonymous user
-        if (!isComponent(subscriberJID) && !isRemoteServer(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID)) {
+        if (!isComponent(subscriberJID) && !isRemoteServer(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID, true)) {
             // Anonymous users cannot subscribe to the node. Return forbidden error
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
@@ -1293,7 +1293,7 @@ public class PubSubEngine
      */
     public static CreateNodeResponse createNodeHelper(PubSubService service, JID requester, Element configuration, String nodeID, DataForm publishOptions) {
         // Verify that sender has permissions to create nodes
-        if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester))) {
+        if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester, true))) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
         }
@@ -1428,6 +1428,7 @@ public class PubSubEngine
                         newNode.saveToDB();
                     }
 
+                    // TODO Replace with a cluster task that does not interact with the database (OF-2141).
                     CacheFactory.doClusterTask(new RefreshNodeTask(newNode));
                 }
                 else {
@@ -1515,7 +1516,9 @@ public class PubSubEngine
                 // (and update the backend store)
                 node.configure(completedForm);
 
+                // TODO Replace with a cluster task that does not interact with the database (OF-2141).
                 CacheFactory.doClusterTask(new RefreshNodeTask(node));
+
                 // Return that node configuration was successful
                 router.route(IQ.createResultIQ(iq));
             }
@@ -1914,14 +1917,12 @@ public class PubSubEngine
         // has started)
         
         if (XMPPServer.getInstance().isStarted()) {
-            XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
             probePresences(service);
         }
         else {
             XMPPServer.getInstance().addServerListener(new XMPPServerListener() {
                 @Override
                 public void serverStarted() {
-                    XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(service);
                     probePresences(service);
                 }
 
@@ -1947,12 +1948,8 @@ public class PubSubEngine
     }
 
     public void shutdown(PubSubService service) {
-    	PubSubPersistenceProviderManager.getInstance().shutdown(); // FIXME this does not seem right. We shouldn't be shutting down persistency (that's shared for all services) if just one service shuts down!
         if (service != null) {
             Log.debug( "Shutting down pubsub service '{}'", service.getUniqueIdentifier() );
-
-            XMPPServer.getInstance().getEntityCapabilitiesManager().removeListener(service);
-
             if (service.getManager() != null) {
                 // Stop executing ad-hoc commands
                 service.getManager().stop();

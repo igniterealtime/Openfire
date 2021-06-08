@@ -124,8 +124,10 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
 
         // Set the connection manager domain to use delivering a packet fails
-        ((MultiplexerPacketDeliverer) connection.getPacketDeliverer())
-                .setConnectionManagerDomain(address.getDomain());
+        final MultiplexerPacketDeliverer packetDeliverer = (MultiplexerPacketDeliverer) connection.getPacketDeliverer();
+        if (packetDeliverer != null) {
+            packetDeliverer.setConnectionManagerDomain(address.getDomain());
+        }
 
         // Create a ConnectionMultiplexerSession for the new session originated
         // from the connection manager

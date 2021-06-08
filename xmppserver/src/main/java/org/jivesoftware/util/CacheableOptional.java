@@ -66,6 +66,13 @@ public class CacheableOptional<T extends Serializable> implements Cacheable {
     }
 
     @Override
+    public String toString() {
+        return "CacheableOptional{" +
+            (value == null ? "absent value" : "value=" + value) +
+            '}';
+    }
+
+    @Override
     public int getCachedSize() throws CannotCalculateSizeException {
         final int sizeOfValue = CacheSizes.sizeOfAnything(value);
         if (value == null) {

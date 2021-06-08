@@ -42,6 +42,13 @@ initialize_log_dir() {
   ln -sf ${OPENFIRE_LOG_DIR} ${OPENFIRE_DIR}/logs
 }
 
+copy_provided_plugins() {
+  if [ -d "/opt/plugins" ]; then
+    echo "Copying user-provided plugins"
+    cp -nR /opt/plugins/* ${OPENFIRE_DIR}/plugins/
+  fi
+}
+
 # allow arguments to be passed to openfire launch
 if [[ ${1:0:1} = '-' ]]; then
   EXTRA_ARGS="$@"
@@ -51,17 +58,14 @@ fi
 rewire_openfire
 initialize_data_dir
 initialize_log_dir
+copy_provided_plugins
 
-JAVACMD=`which java 2> /dev/null `
+export OPENFIRE_HOME="${OPENFIRE_DIR}"
+
 # default behaviour is to launch openfire
 if [[ -z ${1} ]]; then
-  exec start-stop-daemon --start --chuid ${OPENFIRE_USER}:${OPENFIRE_USER} --exec $JAVACMD -- \
-    -server \
-    -DopenfireHome="${OPENFIRE_DIR}" \
-    -Dopenfire.lib.dir=${OPENFIRE_DIR}/lib \
-    -Dlog4j.configurationFile=${OPENFIRE_DIR}/lib/log4j2.xml \
-    -classpath ${OPENFIRE_DIR}/lib/startup.jar \
-    -jar ${OPENFIRE_DIR}/lib/startup.jar ${EXTRA_ARGS}
+  exec start-stop-daemon --start --chuid ${OPENFIRE_USER}:${OPENFIRE_USER} \
+    --exec "${OPENFIRE_DIR}/bin/openfire.sh" -- ${EXTRA_ARGS}
 else
   exec "$@"
 fi

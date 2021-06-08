@@ -19,7 +19,6 @@
 
 <%@ page import="org.jivesoftware.admin.AdminConsole"%>
 <%@ page import="org.jivesoftware.openfire.Connection"%>
-<%@ page import="org.jivesoftware.openfire.FlashCrossDomainHandler" %>
 <%@ page import="org.jivesoftware.openfire.JMXManager" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
@@ -91,7 +90,6 @@
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
     HttpBindManager httpBindManager = HttpBindManager.getInstance();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
-    FlashCrossDomainHandler flashCrossDomainHandler = XMPPServer.getInstance().getFlashCrossDomainHandler();
 
     boolean rssEnabled = JiveGlobals.getBooleanProperty("rss.enabled", true);
 %>
@@ -635,13 +633,6 @@
         <td><fmt:message key="ports.media_proxy.desc" /></td>
     </tr>
     <% } %>
-    <tr>
-        <td><%= interfaceName %></td>
-        <td><%= flashCrossDomainHandler.getPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-        <td><fmt:message key="ports.flash_cross_domain" /></td>
-        <td><fmt:message key="ports.flash_cross_domain.desc" /></td>
-    </tr>
     <%
         if (JMXManager.isEnabled()) {
     %>

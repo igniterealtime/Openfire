@@ -32,6 +32,7 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -110,6 +111,12 @@
         final String searchCriteria = searchResource.trim();
         filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getResource(), searchCriteria));
     }
+    final String searchVersion = ParamUtils.getStringParameter(request, "searchVersion", "");
+        if(!searchVersion.trim().isEmpty()) {
+            final String searchCriteria = searchVersion.trim();
+            // TODO: Fix this filter
+            filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getResource(), searchCriteria));
+        }
     final String searchNode = ParamUtils.getStringParameter(request, "searchNode", "");
     if(searchNode.equals("local")) {
         filter = filter.and(LocalClientSession.class::isInstance);
@@ -184,15 +191,17 @@
     }
 
     final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter,
-        "refresh", "searchName", "searchResource", "searchNode", "searchStatus", "searchPresence", "searchPriority", "searchHostAddress");
+        "refresh", "searchName", "searchResource", "searchVersion", "searchNode", "searchStatus", "searchPresence", "searchPriority", "searchHostAddress");
     pageContext.setAttribute("listPager", listPager);
     pageContext.setAttribute("searchName", searchName);
     pageContext.setAttribute("searchResource", searchResource);
+    pageContext.setAttribute("searchVersion", searchVersion);
     pageContext.setAttribute("searchNode", searchNode);
     pageContext.setAttribute("searchStatus", searchStatus);
     pageContext.setAttribute("searchPresence", searchPresence);
     pageContext.setAttribute("searchPriority", searchPriority);
     pageContext.setAttribute("searchHostAddress", searchHostAddress);
+    pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
 %>
 <html>
     <head>
@@ -286,7 +295,10 @@
         %>
         </th>
         <th nowrap><fmt:message key="session.details.resource" /></th>
+        <th nowrap><fmt:message key="session.details.version" /></th>
+        <c:if test="${clusteringEnabled}">
         <th nowrap><fmt:message key="session.details.node" /></th>
+        </c:if>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
         <th nowrap><fmt:message key="session.details.priority" /></th>
@@ -320,12 +332,26 @@
             >
         </td>
         <td nowrap>
+            <input type="search"
+                   id="searchVersion"
+                   size="20"
+                   value="<c:out value="${searchVersion}"/>"/>
+            <img src="images/search-16x16.png"
+                 width="16" height="16"
+                 alt="search" title="search"
+                 style="vertical-align: middle;"
+                 onclick="submitForm();"
+            >
+        </td>
+        <c:if test="${clusteringEnabled}">
+        <td nowrap>
             <select id="searchNode" onchange="submitForm();">
                 <option <c:if test='${searchNode eq ""}'>selected</c:if> value=""></option>
                 <option <c:if test='${searchNode eq "local"}'>selected </c:if>value="local"><fmt:message key="session.details.local"/></option>
                 <option <c:if test='${searchNode eq "remote"}'>selected </c:if>value="remote"><fmt:message key="session.details.remote"/></option>
             </select>
         </td>
+        </c:if>
         <td nowrap colspan="2">
             <select id="searchStatus" onchange="submitForm();">
                 <option <c:if test='${searchStatus eq ""}'>selected</c:if> value=""></option>

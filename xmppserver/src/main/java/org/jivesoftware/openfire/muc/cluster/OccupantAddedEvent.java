@@ -31,7 +31,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * Task that will remove a room occupant from the list of occupants in the room.
+ * Task that will add a room occupant from the list of occupants in the room.
  *
  * @author Gaston Dombiak
  */
@@ -58,7 +58,7 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
         roleAddress = occupant.getRoleAddress();
         userAddress = occupant.getUserAddress();
         reportedFmucAddress = occupant.getReportedFmucAddress();
-        nodeID = XMPPServer.getInstance().getNodeID();
+        nodeID = occupant.getNodeID();
     }
 
 

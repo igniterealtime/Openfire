@@ -52,11 +52,19 @@ public class BroadcastPresenceRequest extends MUCRoomTask<Void> {
     public BroadcastPresenceRequest() {
     }
 
-    public BroadcastPresenceRequest( LocalMUCRoom room, MUCRole sender, Presence message, boolean isJoinPresence) {
+    public BroadcastPresenceRequest(@Nonnull final LocalMUCRoom room, @Nonnull final MUCRole sender, @Nonnull final Presence presence, final boolean isJoinPresence) {
         super(room);
         this.userAddressSender = sender.getUserAddress();
-        this.presence = message;
+        this.presence = presence;
         this.isJoinPresence = isJoinPresence;
+
+        if (!presence.getFrom().asBareJID().equals(room.getJID())) {
+            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
+            // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
+            // See: OF-2152
+            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + room.getJID());
+        }
     }
 
     public Presence getPresence() {

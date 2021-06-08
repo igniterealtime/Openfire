@@ -186,7 +186,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
 
     @Override
     public boolean hasInfo(String name, String node, JID senderJID) {
-        return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
+        return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID, false);
     }
 
     @Override

@@ -79,7 +79,6 @@ public interface Statistic {
     /**
      * The type of statistic.
      */
-    @SuppressWarnings({"UnnecessarySemicolon"})  // Support for QDox Parser
     enum Type {
 
         /**

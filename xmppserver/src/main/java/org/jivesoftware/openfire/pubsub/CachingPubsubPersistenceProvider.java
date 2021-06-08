@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -90,7 +91,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
                 flushTask = new TimerTask()
                 {
                     @Override
-                    public void run() { flushPendingItems( false ); } // this member only
+                    public void run() { flushPendingChanges(false ); } // this member only
                 };
                 TaskEngine.getInstance().schedule(flushTask, Math.abs(prng.nextLong())%flushTimerDelay, flushTimerDelay);
             }
@@ -125,6 +126,8 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void shutdown()
     {
+        // OF-2086: Persist cached pubsub data prior to shutdown
+        flushPendingChanges( false );
         TaskEngine.getInstance().cancelScheduledTask( flushTask );
         delegate.shutdown();
     }
@@ -252,8 +255,16 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
+    @Nonnull
+    public Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address) {
+        flushPendingNodes();
+        return delegate.findDirectlySubscribedNodes(address);
+    }
+
+    @Override
     public void createAffiliation(Node node, NodeAffiliate affiliate)
     {
+        log.debug( "Creating node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
         final NodeOperation operation = NodeOperation.createAffiliation( node, affiliate );
         operations.add( operation );
@@ -262,6 +273,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void updateAffiliation(Node node, NodeAffiliate affiliate)
     {
+        log.debug( "Updating node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
         // This affiliation update can replace any pending updates of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
         final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
@@ -282,6 +294,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removeAffiliation(Node node, NodeAffiliate affiliate) {
+        log.debug( "Removing node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
 
         // This affiliation removal can replace any pending creation, update or delete of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
@@ -301,7 +314,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void createSubscription(Node node, NodeSubscription subscription) {
-        log.debug( "Creating node subscription: {} {}", node.getUniqueIdentifier(), subscription.getID() );
+        log.debug( "Creating node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), node.getUniqueIdentifier(), subscription.getID() );
 
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
         final NodeOperation operation = NodeOperation.createSubscription( node, subscription );
@@ -310,7 +323,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void updateSubscription(Node node, NodeSubscription subscription) {
-        log.debug( "Updating node subscription: {} {}", node.getUniqueIdentifier(), subscription.getID() );
+        log.debug( "Updating node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), node.getUniqueIdentifier(), subscription.getID() );
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
 
         // This subscription update can replace any pending updates of the same subscription (since the last create/delete of the node or subscription change of this affiliate to the node).
@@ -332,7 +345,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void removeSubscription(NodeSubscription subscription) {
-        log.debug( "Removing node subscription: {} {}", subscription.getNode().getUniqueIdentifier(), subscription.getID() );
+        log.debug( "Removing node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), subscription.getNode().getUniqueIdentifier(), subscription.getID() );
 
         final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( subscription.getNode().getUniqueIdentifier(), id -> new ArrayList<>() );
 
@@ -439,17 +452,17 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         if (itemsPending.size() > MAX_ITEMS_FLUSH) {
             TaskEngine.getInstance().submit(new Runnable() {
                 @Override
-                public void run() { flushPendingItems(false); }
+                public void run() { flushPendingChanges(false); }
             });
         }
     }
 
-    public void flushPendingItems( Node.UniqueIdentifier nodeUniqueId )
+    public void flushPendingChanges( Node.UniqueIdentifier nodeUniqueId )
     {
-        flushPendingItems(nodeUniqueId, ClusterManager.isClusteringEnabled());
+        flushPendingChanges(nodeUniqueId, ClusterManager.isClusteringEnabled());
     }
 
-    public void flushPendingItems(Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster)
+    public void flushPendingChanges( Node.UniqueIdentifier nodeUniqueId, boolean sendToCluster )
     {
         // forward to other cluster members and wait for response
         if (sendToCluster) {
@@ -460,7 +473,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         flushPendingNode(nodeUniqueId);
 
         if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty()) {
-            return;	 // nothing to do for this cluster member
+            return;	 // nothing left to do for this cluster member.
         }
 
         List<PublishedItem> addList;
@@ -507,19 +520,28 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         delegate.bulkPublishedItems( addList, delList );
     }
 
-    public void flushPendingItems(boolean sendToCluster)
+    /**
+     * Persists any changes that have been applied to the caches by invoking the relevant methods of the delegate.
+     *
+     * A flush can be performed either local (typically used to periodically persist data) or cluster-wide (useful to
+     * ensure that a particular state is reached, cluster-wide).
+     *
+     * @param sendToCluster set to 'true' to trigger a flush on all cluster nodes. If false, a flush will occur only on
+     *                      the local node.
+     */
+    public void flushPendingChanges( boolean sendToCluster )
     {
         // forward to other cluster members and wait for response
         if (sendToCluster) {
             CacheFactory.doSynchronousClusterTask(new FlushTask(), false);
         }
 
-        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty() ) {
-            return;	 // nothing to do for this cluster member
-        }
-
         // TODO: figure out if it's required to first flush pending nodes, cluster-wide, synchronously, before flushing items.
         flushPendingNodes();
+
+        if (itemsToAdd.isEmpty() && itemsToDelete.isEmpty()) {
+            return;	 // Nothing left to do for this cluster member.
+        }
 
         List<PublishedItem> addList;
         List<PublishedItem> delList;
@@ -552,7 +574,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         delegate.bulkPublishedItems( addList, delList );
-        flushPendingItems( sendToCluster );
+        flushPendingChanges( sendToCluster );
     }
 
     @Override
@@ -622,28 +644,28 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public List<PublishedItem> getPublishedItems( final LeafNode node )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
         return delegate.getPublishedItems( node );
     }
 
     @Override
     public List<PublishedItem> getPublishedItems( final LeafNode node, final int maxRows )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
         return delegate.getPublishedItems( node, maxRows );
     }
 
     @Override
     public PublishedItem getLastPublishedItem( final LeafNode node )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
         return delegate.getLastPublishedItem( node );
     }
 
     @Override
     public PublishedItem getPublishedItem( final LeafNode node, final PublishedItem.UniqueIdentifier itemIdentifier )
     {
-        flushPendingItems( node.getUniqueIdentifier() );
+        flushPendingChanges( node.getUniqueIdentifier() );
 
         // try to fetch from cache first without locking
         PublishedItem result = itemCache.get(itemIdentifier);

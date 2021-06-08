@@ -117,11 +117,15 @@ public class PubSubServiceInfo {
             try {
                 if (username.contains("@")) {
                     JID jid = new JID(username);
-                    if (userManager.isRegisteredUser(jid)) {
+                    if (userManager.isRegisteredUser(jid, true)) {
                         return jid;
                     }
-                } else if (userManager.isRegisteredUser(username)) {
-                    return xmppServer.createJID(username, null);
+                } else {
+                    // Assume that the value refers to a user on the local server.
+                    final JID jid = xmppServer.createJID(username, null);
+                    if (userManager.isRegisteredUser(jid, false)) {
+                        return jid;
+                    }
                 }
             } catch (IllegalArgumentException e) {
                 Log.debug("Unable to parse value '{}' as a JID.", username);

@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.*;
 
 import org.apache.mina.core.buffer.IoBuffer;
@@ -78,7 +79,6 @@ public class NIOConnection implements Connection {
      * a packet.
      */
     private PacketDeliverer backupDeliverer;
-    private boolean flashClient = false;
     private int majorVersion = 1;
     private int minorVersion = 0;
     private String language = null;
@@ -114,7 +114,7 @@ public class NIOConnection implements Connection {
      */
     private final ReentrantLock ioSessionLock = new ReentrantLock(true);
 
-    public NIOConnection( IoSession session, PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
+    public NIOConnection(IoSession session, @Nullable PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
         this.configuration = configuration;
@@ -207,6 +207,7 @@ public class NIOConnection implements Connection {
     }
 
     @Override
+    @Nullable
     public PacketDeliverer getPacketDeliverer() {
         return backupDeliverer;
     }
@@ -222,7 +223,7 @@ public class NIOConnection implements Connection {
             }
 
             try {
-                deliverRawText0(flashClient ? "</flash:stream>" : "</stream:stream>");
+                deliverRawText0("</stream:stream>");
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
             }
@@ -300,7 +301,11 @@ public class NIOConnection implements Connection {
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-            backupDeliverer.deliver(packet);
+            if (backupDeliverer != null) {
+                backupDeliverer.deliver(packet);
+            } else {
+                Log.trace("Discarding packet that was due to be delivered on closed connection {}, for which no backup deliverer was configured.", this);
+            }
         }
         else {
             boolean errorDelivering = false;
@@ -308,9 +313,6 @@ public class NIOConnection implements Connection {
             buffer.setAutoExpand(true);
             try {
                 buffer.putString(packet.getElement().asXML(), encoder.get());
-                if (flashClient) {
-                    buffer.put((byte) '\0');
-                }
                 buffer.flip();
                 
                 ioSessionLock.lock();
@@ -328,7 +330,11 @@ public class NIOConnection implements Connection {
                 close();
                 // Retry sending the packet again. Most probably if the packet is a
                 // Message it will be stored offline
-                backupDeliverer.deliver(packet);
+                if (backupDeliverer != null) {
+                    backupDeliverer.deliver(packet);
+                } else {
+                    Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+                }
             }
             else {
                 session.incrementServerPacketCount();
@@ -351,9 +357,6 @@ public class NIOConnection implements Connection {
             //Charset charset = Charset.forName(CHARSET);
             //buffer.putString(text, charset.newEncoder());
             buffer.put(text.getBytes(StandardCharsets.UTF_8));
-            if (flashClient) {
-                buffer.put((byte) '\0');
-            }
             buffer.flip();
             ioSessionLock.lock();
             try {
@@ -420,15 +423,6 @@ public class NIOConnection implements Connection {
     public ConnectionConfiguration getConfiguration()
     {
         return configuration;
-    }
-
-    public boolean isFlashClient() {
-        return flashClient;
-    }
-
-    @Override
-    public void setFlashClient(boolean flashClient) {
-        this.flashClient = flashClient;
     }
 
     @Override

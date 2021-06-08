@@ -852,51 +852,51 @@ public class DbConnectionManager {
         String driverName = metaData.getDriverName().toLowerCase();
 
         // Oracle properties.
-        if (dbName.indexOf("oracle") != -1) {
+        if (dbName.contains("oracle")) {
             databaseType = DatabaseType.oracle;
             streamTextRequired = true;
-            scrollResultsSupported = false; /* TODO comment and test this, it should be supported since 10g */
+            // scrollResultsSupported = false; /* comment and test this, it should be supported since 10g */
             // The i-net AUGURO JDBC driver
-            if (driverName.indexOf("auguro") != -1) {
+            if (driverName.contains("auguro")) {
                 streamTextRequired = false;
                 fetchSizeSupported = true;
                 maxRowsSupported = false;
             }
         }
         // Postgres properties
-        else if (dbName.indexOf("postgres") != -1) {
+        else if (dbName.contains("postgres")) {
             databaseType = DatabaseType.postgresql;
             // Postgres blows, so disable scrolling result sets.
             scrollResultsSupported = false;
             fetchSizeSupported = false;
         }
         // Interbase properties
-        else if (dbName.indexOf("interbase") != -1) {
+        else if (dbName.contains("interbase")) {
             databaseType = DatabaseType.interbase;
             fetchSizeSupported = false;
             maxRowsSupported = false;
         }
         // SQLServer
-        else if (dbName.indexOf("sql server") != -1) {
+        else if (dbName.contains("sql server")) {
             databaseType = DatabaseType.sqlserver;
             // JDBC driver i-net UNA properties
-            if (driverName.indexOf("una") != -1) {
+            if (driverName.contains("una")) {
                 fetchSizeSupported = true;
                 maxRowsSupported = false;
             }
         }
         // MySQL properties
-        else if (dbName.indexOf("mysql") != -1) {
+        else if (dbName.contains("mysql") || dbName.contains("maria")) {
             databaseType = DatabaseType.mysql;
-            transactionsSupported = false; /* TODO comment and test this, it should be supported since 5.0 */
+            // transactionsSupported = false; /* comment and test this, it should be supported since 5.0 */
         }
         // HSQL properties
-        else if (dbName.indexOf("hsql") != -1) {
+        else if (dbName.contains("hsql")) {
             databaseType = DatabaseType.hsqldb;
             // scrollResultsSupported = false; /* comment and test this, it should be supported since 1.7.2 */
         }
         // DB2 properties.
-        else if (dbName.indexOf("db2") != 1) {
+        else if (dbName.contains("db2")) {
             databaseType = DatabaseType.db2;
         }
     }

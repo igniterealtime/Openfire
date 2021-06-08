@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.HistoryStrategy;
 import org.jivesoftware.openfire.muc.MUCEventDelegate;
 import org.jivesoftware.openfire.muc.MUCEventDispatcher;
@@ -72,18 +73,11 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -118,13 +112,21 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The time to elapse between clearing of idle chat users.
      */
-    private int user_timeout = 300000;
+    private Duration userIdleTaskInterval = Duration.ofMinutes(5);
+
     /**
-     * The number of milliseconds a user must be idle before he/she gets kicked from all the rooms.
+     * The period that a user must be idle before he/she gets kicked from all the rooms. Null to disable the feature.
      */
-    private int user_idle = -1;
+    private Duration userIdleKick = null;
+
     /**
-     * Task that kicks idle users from the rooms.
+     * The period that a user must be idle before he/she gets pinged from the rooms that they're in, to determine if
+     * they're a 'ghost'. Null to disable the feature.
+     */
+    private Duration userIdlePing = null;
+
+    /**
+     * Task that kicks and pings idle users from the rooms.
      */
     private UserTimeoutTask userTimeoutTask;
 
@@ -538,12 +540,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Probes the presence of any user who's last packet was sent more than 5 minute ago.
+     * Operates on users that have been inactive for a while. Depending on the configuration of Openfire, these uses
+     * could either be kicked, or be pinged (to determine if they're 'ghost users').
      */
     private class UserTimeoutTask extends TimerTask {
-        /**
-         * Remove any user that has been idle for longer than the user timeout time.
-         */
         @Override
         public void run() {
             checkForTimedOutUsers();
@@ -589,7 +589,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         item.addAttribute( "role", "none" );
                         fragment.addElement( "status" ).addAttribute( "code", "332" );
 
-                        // Make sure that the presence change for each user is only sent to that user (and not broadcasted in the room)!
+                        // Make sure that the presence change for each user is only sent to that user (and not broadcast in the room)!
+                        // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
                         role.send( presence );
                     }
                 }
@@ -615,35 +616,48 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     private void checkForTimedOutUsers() {
-        final long deadline = System.currentTimeMillis() - user_idle;
         for (final LocalMUCUser user : users.values()) {
             try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, user.getAddress().toString()).lock()) {
-                // If user is not present in any room then remove the user from
-                // the list of users
+                // If user is not present in any room then remove the user from the list of users.
                 if (!user.isJoined()) {
-                    removeUser(user.getAddress());
+                    removeUser(user.getAddress()); // Iterating over a collection that is weakly consistent. Removal should not cause Concurrent Modification Exception.
+                    Log.debug("Removed MUC user '{}' that does not seem to be in any room.", user.getAddress());
                     continue;
                 }
-                // Do nothing if this feature is disabled (i.e USER_IDLE equals -1)
-                if (user_idle == -1) {
-                    continue;
-                }
-                if (user.getLastPacketTime() < deadline) {
-                    String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason",
-                            "User exceeded idle time limit.");
-                    // Kick the user from all the rooms that he/she had previuosly joined
-                    MUCRoom room;
-                    Presence kickedPresence;
+
+                final Instant lastActive = Instant.ofEpochMilli(user.getLastPacketTime());
+
+                // Kick users if 'user_idle' feature is enabled and the user has been idle for too long.
+                final boolean doKick = userIdleKick != null && lastActive.isBefore(Instant.now().minus(userIdleKick));
+
+                // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
+                final boolean doPing = !doKick && userIdlePing != null && lastActive.isBefore(Instant.now().minus(userIdlePing));
+
+                if (doKick || doPing) {
+                    final String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User exceeded idle time limit.");
                     for (final LocalMUCRole role : user.getRoles()) {
-                        room = role.getChatRoom();
-                        try {
-                            kickedPresence =
-                                    room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
-                            // Send the updated presence to the room occupants
-                            room.send(kickedPresence, room.getRole());
+                        if (doKick) {
+                            // Kick the user from all the rooms that he/she had previously joined.
+                            try {
+                                final Presence kickedPresence = role.getChatRoom().kickOccupant(user.getAddress(), null, null, timeoutKickReason);
+                                // Send the updated presence to the room occupants
+                                role.getChatRoom().send(kickedPresence, role.getChatRoom().getRole());
+                                Log.debug("Kicked occupant '{}' of room '{}' due to exceeding idle time limit.", user.getAddress(), role.getChatRoom().getJID());
+                            } catch (final NotAllowedException e) {
+                                // Do nothing since we cannot kick owners or admins
+                            }
                         }
-                        catch (final NotAllowedException e) {
-                            // Do nothing since we cannot kick owners or admins
+
+                        if (doPing) {
+                            // Send a ping 'from the room' to the user, from all the rooms that he/she had previously joined.
+                            // If this ping results in a connectivity error, that will be picked up by LocalMucRoom's process
+                            // method, that detects 'ghost users', which will kick the user.
+                            final IQ pingRequest = new IQ( IQ.Type.get );
+                            pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
+                            pingRequest.setFrom( role.getChatRoom().getJID() );
+                            pingRequest.setTo( role.getUserAddress() );
+                            router.route(pingRequest);
+                            Log.debug("Pinged occupant '{}' of room '{}' due to exceeding idle time limit.", user.getAddress(), role.getChatRoom().getJID());
                         }
                     }
                 }
@@ -732,8 +746,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // Verify the policy that allows all local, registered users to create rooms.
-        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID);
-
+        return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID, false);
     }
 
     @Override
@@ -787,8 +800,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             MUCEventDispatcher.roomCreated(room.getRole().getRoleAddress());
         }
         if (loaded || created) {
-            // Notify other cluster nodes that a new room is available
-            CacheFactory.doClusterTask(new RoomAvailableEvent(room));
+            // Initiate FMUC, when enabled.
+            room.getFmucHandler().applyConfigurationChanges();
+
+            // Notify other cluster nodes that a new room is available.
+            // Ensure that the room exists on all nodes, before firing off other room events to avoid race conditions (OF-2207)
+            CacheFactory.doSynchronousClusterTask(new RoomAvailableEvent(room), false);
             for (final MUCRole role : room.getOccupants()) {
                 if (role instanceof LocalMUCRole) {
                     CacheFactory.doClusterTask(new OccupantAddedEvent(room, role));
@@ -803,7 +820,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         boolean loaded = false;
         LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
-            // Check if the room exists in the databclase and was not present in memory
+            // Check if the room exists in the database and was not present in memory
             synchronized (roomBaseMutex.intern(roomName)) {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
@@ -820,11 +837,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     catch (final IllegalArgumentException e) {
                         // The room does not exist so do nothing
                         room = null;
+                        loaded = false;
                     }
                 }
             }
         }
         if (loaded) {
+            // Initiate FMUC, when enabled.
+            room.getFmucHandler().applyConfigurationChanges();
+
             // Notify other cluster nodes that a new room is available
             CacheFactory.doClusterTask(new RoomAvailableEvent(room));
         }
@@ -983,40 +1004,67 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void setKickIdleUsersTimeout(final int timeout) {
-        if (this.user_timeout == timeout) {
+    public void setIdleUserTaskInterval(final @Nonnull Duration duration) {
+        if (Objects.equals(duration, this.userIdleTaskInterval)) {
             return;
         }
+
         // Cancel the existing task because the timeout has changed
         if (userTimeoutTask != null) {
             userTimeoutTask.cancel();
         }
-        this.user_timeout = timeout;
+        this.userIdleTaskInterval = duration;
+
         // Create a new task and schedule it with the new timeout
         userTimeoutTask = new UserTimeoutTask();
-        TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
+        TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
+
         // Set the new property value
-        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Integer.toString(timeout));
+        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Long.toString(userIdleTaskInterval.toMillis()));
     }
 
     @Override
-    public int getKickIdleUsersTimeout() {
-        return user_timeout;
+    @Nonnull
+    public Duration getIdleUserTaskInterval() {
+        return this.userIdleTaskInterval;
     }
 
     @Override
-    public void setUserIdleTime(final int idleTime) {
-        if (this.user_idle == idleTime) {
+    public void setIdleUserKickThreshold(final @Nullable Duration duration)
+    {
+        if (Objects.equals(duration, this.userIdleKick)) {
             return;
         }
-        this.user_idle = idleTime;
+
+        this.userIdleKick = duration;
+
         // Set the new property value
-        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.idle", Integer.toString(idleTime));
+        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.idle", userIdleKick == null ? "-1" : Long.toString(userIdleKick.toMillis()));
     }
 
     @Override
-    public int getUserIdleTime() {
-        return user_idle;
+    public Duration getIdleUserKickThreshold()
+    {
+        return userIdleKick;
+    }
+
+    @Override
+    public void setIdleUserPingThreshold(final @Nullable Duration duration)
+    {
+        if (Objects.equals(duration, this.userIdlePing)) {
+            return;
+        }
+
+        this.userIdlePing = duration;
+
+        // Set the new property value
+        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.ping", userIdlePing == null ? "-1" : Long.toString(userIdlePing.toMillis()));
+    }
+
+    @Override
+    @Nullable
+    public Duration getIdleUserPingThreshold() {
+        return userIdlePing;
     }
 
     @Override
@@ -1261,26 +1309,46 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         String value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.timeout");
-        user_timeout = 300000;
+        userIdleTaskInterval = Duration.ofMinutes(5);
         if (value != null) {
             try {
-                user_timeout = Integer.parseInt(value);
+                userIdleTaskInterval = Duration.ofMillis(Long.parseLong(value));
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.user.timeout for service "+chatServiceName, e);
             }
         }
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.idle");
-        user_idle = -1;
+        userIdleKick = null;
         if (value != null) {
             try {
-                user_idle = Integer.parseInt(value);
+                final long millis = Long.parseLong(value);
+                if ( millis < 0 ) {
+                    userIdleKick = null; // feature is disabled.
+                } else {
+                    userIdleKick = Duration.ofMillis(millis);
+                }
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property tasks.user.idle for service "+chatServiceName, e);
             }
         }
-        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.tasks.log.maxbatchsize");
+        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.ping");
+        userIdlePing = Duration.ofMinutes(8);
+        if (value != null) {
+            try {
+                final long millis = Long.parseLong(value);
+                if ( millis < 0 ) {
+                    userIdlePing = null; // feature is disabled.
+                } else {
+                    userIdlePing = Duration.ofMillis(millis);
+                }
+            }
+            catch (final NumberFormatException e) {
+                Log.error("Wrong number format of property tasks.user.ping for service "+chatServiceName, e);
+            }
+        }
+        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.maxbatchsize");
         logMaxConversationBatchSize = 500;
         if (value != null) {
             try {
@@ -1441,8 +1509,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return An Archiver instance, never null.
      */
     @Override
-    public Archiver getArchiver() {
-        Archiver result = this.archiver;
+    public Archiver<ConversationLogEntry> getArchiver() {
+        Archiver<ConversationLogEntry> result = this.archiver;
         if (result == null) {
             synchronized (this) {
                 result = this.archiver;
@@ -1463,7 +1531,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         // Run through the users every 5 minutes after a 5 minutes server startup delay (default values)
         userTimeoutTask = new UserTimeoutTask();
-        TaskEngine.getInstance().schedule(userTimeoutTask, user_timeout, user_timeout);
+        TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
 
         // Remove unused rooms from memory
         long cleanupFreq = JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
@@ -1478,6 +1546,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Load all the persistent rooms to memory
         for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
             localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
+
+            // Start FMUC, if desired.
+            room.getFmucHandler().applyConfigurationChanges();
         }
     }
 

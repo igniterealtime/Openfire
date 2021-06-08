@@ -734,6 +734,9 @@ public class XMLProperties {
         try {
             SAXReader xmlReader = new SAXReader();
             xmlReader.setEncoding("UTF-8");
+            xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             document = xmlReader.read(in);
         }
         catch (Exception e) {

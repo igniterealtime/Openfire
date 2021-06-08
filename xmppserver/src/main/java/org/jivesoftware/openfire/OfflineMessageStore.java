@@ -23,6 +23,7 @@ import org.dom4j.QName;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -43,11 +44,17 @@ import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jivesoftware.util.SystemProperty;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were
@@ -79,10 +86,40 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         "DELETE FROM ofOffline WHERE username=?";
     private static final String DELETE_OFFLINE_MESSAGE =
         "DELETE FROM ofOffline WHERE username=? AND creationDate=?";
+    private static final String DELETE_OFFLINE_MESSAGE_BEFORE =
+        "DELETE FROM ofOffline WHERE creationDate < ?";
+    private static final String SELECT_SIZE_OFFLINE_ALL_USERS =
+        "SELECT SUM(messageSize),username FROM ofOffline GROUP BY username";
 
     private static final int POOL_SIZE = 10;
-    
-    private Cache<String, Integer> sizeCache;
+
+    private final Cache<String, Integer> sizeCache;
+
+    /**
+     * Members for automatic offline message cleaning
+     * */
+
+    public static final SystemProperty<Duration> OFFLINE_AUTOCLEAN_DAYSTOLIVE = SystemProperty.Builder.ofType(Duration.class)
+    .setKey("xmpp.offline.autoclean.daystolive")
+    .setDefaultValue(Duration.ofDays(365))
+    .setChronoUnit(ChronoUnit.DAYS)
+    .setDynamic(false)
+    .build();
+
+     public static final SystemProperty<Duration> OFFLINE_AUTOCLEAN_CHECKINTERVAL = SystemProperty.Builder.ofType(Duration.class)
+    .setKey("xmpp.offline.autoclean.checkinterval")
+    .setDefaultValue(Duration.ofMinutes(30))
+    .setChronoUnit(ChronoUnit.MINUTES)
+    .setDynamic(false)
+    .build();
+
+     public static final SystemProperty<Boolean> OFFLINE_AUTOCLEAN_ENABLE = SystemProperty.Builder.ofType(Boolean.class)
+    .setKey("xmpp.offline.autoclean.enabled")
+    .setDefaultValue(false)
+    .setDynamic(false)
+    .build();
+
+    private Timer timer = null;
 
     /**
      * Pattern to use for detecting invalid XML characters. Invalid XML characters will
@@ -110,6 +147,18 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     public OfflineMessageStore() {
         super("Offline Message Store");
         sizeCache = CacheFactory.createCache("Offline Message Size");
+        OFFLINE_AUTOCLEAN_ENABLE.addListener( enabled -> {
+                                                if (enabled) {
+                                                    setTimer();
+                                                } else {
+                                                    cancelTimer();
+                                                } } );
+        OFFLINE_AUTOCLEAN_CHECKINTERVAL.addListener( duration -> {
+                                                    // Restart timer if it's running to apply new configuration.
+                                                    if ( OFFLINE_AUTOCLEAN_ENABLE.getValue()) {
+                                                        cancelTimer();
+                                                        setTimer();
+                                                    } } );
     }
 
     /**
@@ -135,14 +184,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
-        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient)) {
-            Log.trace( "Not storing message for which the recipient ({}) is not a registered user.", recipient );
-            return false;
-        }
-        else
-        if (!XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals(recipient.getDomain())) {
-            Log.trace( "Not storing message for which the recipient ({}) is not a local user.", recipient );
-            // Do not store messages sent to users of remote servers
+        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient, false)) {
+            Log.trace( "Not storing message for which the recipient ({}) is not a registered local user.", recipient );
             return false;
         }
 
@@ -494,6 +537,11 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         // Add this module as a user event listener so we can delete
         // all offline messages when a user is deleted
         UserEventDispatcher.addListener(this);
+        //start timer if enabled
+        if (OFFLINE_AUTOCLEAN_ENABLE.getValue())
+        {
+            setTimer();
+        }
     }
 
     @Override
@@ -503,6 +551,8 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         xmlReaders.clear();
         // Remove this module as a user event listener
         UserEventDispatcher.removeListener(this);
+        //stop timer if started
+        cancelTimer();
     }
 
     /**
@@ -562,5 +612,107 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 break;
         }
         return true;
+    }
+
+    private void setTimer() {
+        cancelTimer();
+
+        Log.info("Offline message cleaning - Start timer");
+        timer = new Timer(true);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    if (ClusterManager.isClusteringStarted())
+                    {
+                        if (ClusterManager.isSeniorClusterMember())
+                        {
+                            if (deleteOldOfflineMessagesFromDB())
+                            {
+                                readSizeForAllUsers();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (deleteOldOfflineMessagesFromDB())
+                        {
+                            readSizeForAllUsers();
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.error("Offline message cleaning - Could not set timer for check interval!", e);
+                }
+            }
+        }, Duration.ofSeconds(10).toMillis(), OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue().toMillis()); // starts after 10 seconds and repeat...
+    }
+
+    private void cancelTimer() {
+        Log.info("Offline message cleaning - Stop old timer if started");
+        if (timer != null) {
+            try {
+                timer.cancel();
+                timer.purge();
+            } catch (Exception e) {
+                Log.warn("Offline message cleaning - Could not stop the timer!", e);
+            }
+        }
+        timer = null;
+    }
+
+    public void readSizeForAllUsers() {
+        // See if the size is cached.
+        sizeCache.clear();
+
+        int size = 0;
+        String username = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(SELECT_SIZE_OFFLINE_ALL_USERS);
+
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                size = rs.getInt(1);
+                username = rs.getString(2);
+                // Add the value to cache.
+                sizeCache.put(username, size);
+            }
+        }
+        catch (Exception e) {
+            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
+    private boolean deleteOldOfflineMessagesFromDB() {
+
+        Log.info("Offline message cleaning - Deleting offline messages older than {} days.", OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue().toDays());
+
+        Connection con = null;
+
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+
+            pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE_BEFORE);
+
+            final Instant pastTime = Instant.now().minus(OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue());
+            final String creationDatePast = StringUtils.zeroPadString(String.valueOf(pastTime.toEpochMilli()), 15);
+
+            pstmt.setString(1,creationDatePast);
+            final int updateCount = pstmt.executeUpdate();
+            Log.info("Offline message cleaning - Cleaning successful. Removed {} message(s)", updateCount);
+            return true;
+        } catch (SQLException sqle) {
+            Log.warn("Offline message cleaning - ", sqle);
+            return false;
+        } finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
     }
 }

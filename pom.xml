@@ -4,7 +4,7 @@
 
     <groupId>org.igniterealtime.openfire</groupId>
     <artifactId>parent</artifactId>
-    <version>4.6.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
     <name>Parent</name>
     <packaging>pom</packaging>
 
@@ -36,7 +36,7 @@
 
     <issueManagement>
         <system>jira</system>
-        <url>https://issues.igniterealtime.org/browse/OF</url>
+        <url>https://igniterealtime.atlassian.net/browse/OF</url>
     </issueManagement>
 
     <scm>
@@ -118,15 +118,27 @@
 
         <!-- Versions -->
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
-        <jetty.version>9.4.28.v20200408</jetty.version>
+        <jetty.version>9.4.39.v20210325</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <mina.version>2.1.3</mina.version>
-        <bouncycastle.version>1.65</bouncycastle.version>
+        <bouncycastle.version>1.68</bouncycastle.version>
         <slf4j.version>1.7.30</slf4j.version>
         <log4j.version>2.13.3</log4j.version>
     </properties>
 
     <profiles>
+
+        <!-- OF-2093: Ensure proper cross-compilation, using a compiler flag that's introduced in Java 9. -->
+        <profile>
+            <id>jdk9+</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+        </profile>
+
         <profile>
             <id>release</id>
             <build>
@@ -184,6 +196,31 @@
                             <quiet>true</quiet>
                             <doclint>none</doclint>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>deps</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>6.0.4</version>
+                        <configuration>
+                            <suppressionFiles>
+                                <suppressionFile>.dependency-check-suppressions.xml</suppressionFile>
+                            </suppressionFiles>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -270,6 +307,12 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>versions-maven-plugin</artifactId>
                     <version>2.7</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>6.0.4</version>
                 </plugin>
 
             </plugins>

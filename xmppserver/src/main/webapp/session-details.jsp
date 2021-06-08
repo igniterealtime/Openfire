@@ -32,10 +32,13 @@
 %>
 <%@ page import="org.jivesoftware.openfire.nio.NIOConnection" %>
 <%@ page import="org.jivesoftware.openfire.websocket.WebSocketConnection" %>
-<%@ page import="org.jivesoftware.openfire.http.HttpConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.TreeMap" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.entitycaps.EntityCapabilities" %>
+<%@ page import="java.util.TreeSet" %>
+<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -59,6 +62,8 @@
         response.sendRedirect("session-summary.jsp");
         return;
     }
+
+    boolean showCaps = request.getParameter("show") != null;
 
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
@@ -99,6 +104,8 @@
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
+
+    final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 
     pageContext.setAttribute("address", address);
 %>
@@ -166,6 +173,7 @@
             <% } %>
         </td>
     </tr>
+    <% if (clusteringEnabled) { %>
     <tr>
         <td class="c1">
             <fmt:message key="session.details.node" />
@@ -179,6 +187,7 @@
         </td>
     </tr>
     <%
+        }
         boolean detached = false;
         if (currentSess instanceof LocalClientSession) {
             LocalClientSession s = (LocalClientSession)currentSess;
@@ -400,10 +409,11 @@
 </table>
 </div>
 
-<br>
 <%  // Show Software Version if there is :
     if (!currentSess.getSoftwareVersion().isEmpty()) {
 %>
+    <br>
+
     <div class="jive-table">
         <table cellpadding="3" cellspacing="1" border="0" width="100%">
             <thead>
@@ -433,10 +443,65 @@
     </div>
 <%  } %>
 
+
+<%
+    if (showCaps) {
+        // Show any registered entity capabilities.
+        final EntityCapabilities caps = XMPPServer.getInstance().getEntityCapabilitiesManager().getEntityCapabilities(address);
+        if ( caps != null && (!caps.getIdentities().isEmpty() || !caps.getFeatures().isEmpty())) {
+%>
 <br>
+
+<div class="jive-table">
+    <table cellpadding="3" cellspacing="1" border="0" width="100%">
+        <thead>
+        <tr>
+            <th colspan="2">
+                <fmt:message key="session.details.entity_capabilities"/>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <%
+            if ( !caps.getIdentities().isEmpty() ) {
+            // Use a TreeSet to force natural ordering, which makes things easier to read.
+            for (final String identity : new TreeSet<>(caps.getIdentities())) { %>
+        <tr>
+            <td class="c1">
+                <fmt:message key="session.details.entity_capabilities.identity"/>:
+            </td>
+            <td>
+                <%= StringUtils.escapeHTMLTags(identity)%>
+            </td>
+        </tr>
+        <%
+            } }
+        %>
+        <%
+            // Use a TreeSet to force natural ordering, which makes things easier to read.
+            if ( !caps.getFeatures().isEmpty() ) {
+            for (final String feature : new TreeSet<>(caps.getFeatures())) { %>
+        <tr>
+            <td class="c1">
+                <fmt:message key="session.details.entity_capabilities.feature"/>:
+            </td>
+            <td>
+                <%= StringUtils.escapeHTMLTags(feature)%>
+            </td>
+        </tr>
+        <%
+            } }
+        %>
+        </tbody>
+    </table>
+</div>
+<%  } } %>
+
 <%  // Show a list of multiple user sessions if there is more than 1 session:
     if (sessionCount > 1) {
 %>
+    <br>
+
     <p>
     <b><fmt:message key="session.details.multiple_session" /></b>
     </p>
@@ -447,6 +512,7 @@
         <th>&nbsp;</th>
         <th><fmt:message key="session.details.name" /></th>
         <th><fmt:message key="session.details.resource" /></th>
+        <th nowrap><fmt:message key="session.details.version" /></th>
         <th nowrap><fmt:message key="session.details.node" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.if_presence" /></th>
@@ -493,15 +559,21 @@
 
 <br>
 
-<form action="session-details.jsp">
-<input type="hidden" name="jid" value="<%= URLEncoder.encode(jid, "UTF-8") %>">
+<form action="session-details.jsp" type="post">
+<input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
 <center>
 <%--<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>--%>
 <%----%>
 <%--    <input type="submit" name="message" value="Message this Session">--%>
 <%----%>
 <%--<%  } %>--%>
-<input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">   
+    <% if (showCaps) { %>
+    <input type="submit" name="hide" value="<fmt:message key="session.details.hide-extended" />">
+    <% } else { %>
+    <input type="submit" name="show" value="<fmt:message key="session.details.show-extended" />">
+    <% } %>
+    <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
+
 </center>
 </form>
 

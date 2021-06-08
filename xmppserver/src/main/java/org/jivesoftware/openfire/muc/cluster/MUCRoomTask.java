@@ -29,6 +29,8 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+
 /**
  * Task related to a room to be executed in a cluster node. This is a base
  * class to specific room tasks. The base class just keeps track of the room
@@ -47,11 +49,12 @@ public abstract class MUCRoomTask<V> implements ClusterTask<V> {
     protected MUCRoomTask() {
     }
 
-    protected MUCRoomTask(LocalMUCRoom room) {
+    protected MUCRoomTask(@Nonnull final LocalMUCRoom room) {
         this.roomName = room.getName();
         this.subdomain = room.getMUCService().getServiceName();
     }
 
+    @Nonnull
     public LocalMUCRoom getRoom() {
         MultiUserChatService mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
         if (mucService == null) {
@@ -71,7 +74,7 @@ public abstract class MUCRoomTask<V> implements ClusterTask<V> {
      *
      * @param runnable the task to execute.
      */
-    protected void execute(Runnable runnable) {
+    protected void execute(@Nonnull final Runnable runnable) {
         // Check if we are joining a cluster
         boolean clusterStarting = ClusterManager.isClusteringStarting();
         try {
@@ -97,7 +100,7 @@ public abstract class MUCRoomTask<V> implements ClusterTask<V> {
         return originator;
     }
 
-    public void setOriginator(boolean originator) {
+    public void setOriginator(final boolean originator) {
         this.originator = originator;
     }
 

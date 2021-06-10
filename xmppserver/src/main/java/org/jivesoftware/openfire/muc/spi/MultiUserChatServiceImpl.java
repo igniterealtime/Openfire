@@ -1543,12 +1543,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         Log.info(LocaleUtils.getLocalizedString("startup.starting.muc", Collections.singletonList(getServiceDomain())));
 
-        // Load all the persistent rooms to memory
-        for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, this.getCleanupDate(), router)) {
-            localMUCRoomManager.addRoom(room.getName().toLowerCase(),room);
+        final int preloadDays = MUCPersistenceManager.getIntProperty(chatServiceName, "preload.days", 30);
+        if (preloadDays > 0) {
+            // Load all the persistent rooms to memory
+            final Instant cutoff = Instant.now().minus(Duration.ofDays(preloadDays));
+            for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff), router)) {
+                localMUCRoomManager.addRoom(room.getName().toLowerCase(), room);
 
-            // Start FMUC, if desired.
-            room.getFmucHandler().applyConfigurationChanges();
+                // Start FMUC, if desired.
+                room.getFmucHandler().applyConfigurationChanges();
+            }
         }
     }
 

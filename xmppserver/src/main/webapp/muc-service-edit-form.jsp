@@ -255,6 +255,20 @@
                     <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
                 </td>
             </tr>
+        </table>
+    </div>
+
+    <br/>
+
+    <p>
+        <fmt:message key="groupchat.service.properties.memory_management_description" />
+    </p>
+
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="groupchat.service.properties.memory_management.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <td class="c1">
                     <fmt:message key="groupchat.service.properties.label_service_preload" />

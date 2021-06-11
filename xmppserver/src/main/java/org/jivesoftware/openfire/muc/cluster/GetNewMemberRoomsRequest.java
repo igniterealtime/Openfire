@@ -53,7 +53,7 @@ public class GetNewMemberRoomsRequest implements ClusterTask<List<RoomInfo>> {
         // Get all services that have local occupants and include them in the reply
         for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
             // Get rooms that have local occupants and include them in the reply
-            for (MUCRoom room : mucService.getChatRooms()) {
+            for (MUCRoom room : mucService.getActiveChatRooms()) { // non-actively loaded rooms won't have occupants anyway.
                 LocalMUCRoom localRoom = (LocalMUCRoom) room;
                 Collection<MUCRole> localOccupants = new ArrayList<>();
                 for (MUCRole occupant : room.getOccupants()) {

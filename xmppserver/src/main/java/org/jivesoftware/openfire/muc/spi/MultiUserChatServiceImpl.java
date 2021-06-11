@@ -84,6 +84,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -863,8 +864,50 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
+    @Deprecated
     public List<MUCRoom> getChatRooms() {
         return new ArrayList<>(localMUCRoomManager.getRooms());
+    }
+
+    @Override
+    public List<MUCRoom> getActiveChatRooms() {
+        return new ArrayList<>(localMUCRoomManager.getRooms());
+    }
+
+    @Override
+    public Set<String> getAllRoomNames() {
+        // Combine names of all rooms in the database (to catch any rooms that aren't currently in memory) with all
+        // names of rooms currently in memory (to include rooms that are non-persistent / never saved in the database).
+        // Duplicates will be removed by virtue of using a Set.
+        final Set<String> result = new HashSet<>();
+        result.addAll( MUCPersistenceManager.loadRoomNamesFromDB(this) );
+        result.addAll( localMUCRoomManager.getRooms().stream().map(LocalMUCRoom::getName).collect(Collectors.toSet()) );
+
+        return result;
+    }
+
+    @Override
+    public Collection<MUCRoomSearchInfo> getAllRoomSearchInfo() {
+        // Base the result for all rooms that are in memory, then complement with rooms in the database that haven't
+        // been added yet (to catch all non-active rooms);
+        final List<MUCRoomSearchInfo> result = getActiveChatRooms().stream().map(MUCRoomSearchInfo::new).collect(Collectors.toList());
+
+        if (JiveGlobals.getBooleanProperty("xmpp.muc.search.skip-unloaded-rooms", false)) {
+            return result;
+        }
+
+        final Set<String> loadedNames = result.stream().map(MUCRoomSearchInfo::getName).collect(Collectors.toSet());
+        final Collection<String> dbNames = MUCPersistenceManager.loadRoomNamesFromDB(this);
+        dbNames.removeAll(loadedNames); // what remains needs to be loaded from the database;
+
+        for (final String name : dbNames) {
+            // TODO improve scalability instead of loading every room that wasn't loaded before.
+            final MUCRoom chatRoom = this.getChatRoom(name);
+            if (chatRoom != null) {
+                result.add(new MUCRoomSearchInfo(chatRoom));
+            }
+        }
+        return result;
     }
 
     @Override
@@ -1599,14 +1642,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Retuns the number of existing rooms in the server (i.e. persistent or not,
+     * Returns the number of existing rooms in the server (i.e. persistent or not,
      * in memory or not).
      *
      * @return the number of existing rooms in the server.
      */
     @Override
     public int getNumberChatRooms() {
-         return localMUCRoomManager.getNumberChatRooms();
+        int persisted = MUCPersistenceManager.countRooms(this);
+        final long nonPersisted = localMUCRoomManager.getRooms().stream().filter(room -> !room.isPersistent()).count();
+        return persisted + (int) nonPersisted;
     }
 
     /**

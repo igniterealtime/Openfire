@@ -58,9 +58,14 @@
     if (delete) {
         // Delete the rooms in the service
         if (muc != null) {
-            for (MUCRoom room : muc.getChatRooms()) {
+            for (MUCRoom room : muc.getActiveChatRooms()) {
                 // If the room still exists then destroy it
                 room.destroyRoom(null, reason);
+            }
+
+            // Destroy all rooms that were not loaded in memory.
+            for (final String name : muc.getAllRoomNames()) {
+                muc.getChatRoom(name).destroyRoom(null, reason);
             }
             // Log the event
             webManager.logEvent("destroyed MUC service "+mucname, "reason = "+reason);

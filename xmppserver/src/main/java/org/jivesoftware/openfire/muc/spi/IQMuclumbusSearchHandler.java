@@ -190,7 +190,7 @@ public class IQMuclumbusSearchHandler
         }
 
         // Search for chatrooms matching the request params.
-        List<MUCRoom> mucs = searchForChatrooms( params );
+        List<MUCRoomSearchInfo> mucs = searchForChatrooms( params );
 
         switch ( params.getKey() )
         {
@@ -203,11 +203,11 @@ public class IQMuclumbusSearchHandler
                 break;
         }
 
-        final ResultSet<MUCRoom> searchResults = new ResultSetImpl<>( mucs );
+        final ResultSet<MUCRoomSearchInfo> searchResults = new ResultSetImpl<>( mucs );
 
         // See if the requesting entity would like to apply 'result set management'
         final Element set = iq.getChildElement().element( QName.get( "set", ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT ) );
-        final List<MUCRoom> mucrsm;
+        final List<MUCRoomSearchInfo> mucrsm;
 
         // apply RSM only if the element exists, and the (total) results set is not empty.
         final boolean applyRSM = set != null && !mucs.isEmpty();
@@ -318,12 +318,12 @@ public class IQMuclumbusSearchHandler
         return result;
     }
 
-    protected List<MUCRoom> searchForChatrooms( final SearchParameters params )
+    protected List<MUCRoomSearchInfo> searchForChatrooms( final SearchParameters params )
     {
         Log.debug( "Searching for rooms based on search parameters." );
 
-        List<MUCRoom> mucs = new ArrayList<>();
-        for ( MUCRoom room : mucService.getChatRooms() )
+        List<MUCRoomSearchInfo> mucs = new ArrayList<>();
+        for ( MUCRoomSearchInfo room : mucService.getAllRoomSearchInfo() )
         {
             boolean find = false;
 
@@ -379,11 +379,11 @@ public class IQMuclumbusSearchHandler
         return mucs;
     }
 
-    static Element generateResultElement( final List<MUCRoom> rooms )
+    static Element generateResultElement( final List<MUCRoomSearchInfo> rooms )
     {
         Log.debug( "Generating result element." );
         final Element res = DocumentHelper.createElement( QName.get( RESPONSE_ELEMENT_NAME, NAMESPACE ) );
-        for ( final MUCRoom room : rooms )
+        for ( final MUCRoomSearchInfo room : rooms )
         {
             final Element item = res.addElement( "item" );
             item.addAttribute( "address", room.getJID().toString() );
@@ -422,10 +422,10 @@ public class IQMuclumbusSearchHandler
      * @param mucs The unordered list that will be sorted.
      * @return The order list of MUC rooms.
      */
-    public static List<MUCRoom> sortByAddress( List<MUCRoom> mucs )
+    public static List<MUCRoomSearchInfo> sortByAddress( List<MUCRoomSearchInfo> mucs )
     {
         Log.trace( "Sorting by address." );
-        mucs.sort( Comparator.comparing( MUCRoom::getJID ) );
+        mucs.sort( Comparator.comparing( MUCRoomSearchInfo::getJID) );
         return mucs;
     }
 
@@ -436,7 +436,7 @@ public class IQMuclumbusSearchHandler
      * @param mucs The unordered list that will be sorted.
      * @return The sorted list of MUC rooms.
      */
-    public static List<MUCRoom> sortByUserAmount( List<MUCRoom> mucs )
+    public static List<MUCRoomSearchInfo> sortByUserAmount( List<MUCRoomSearchInfo> mucs )
     {
         Log.trace( "Sorting by occupant count." );
         mucs.sort( ( o1, o2 ) -> o2.getOccupantsCount() - o1.getOccupantsCount() );
@@ -452,10 +452,10 @@ public class IQMuclumbusSearchHandler
      * @return ''true'' if the room may be included in search results, ''false''
      * otherwise.
      */
-    private static boolean canBeIncludedInResult( MUCRoom room )
+    private static boolean canBeIncludedInResult( MUCRoomSearchInfo room )
     {
         // Check if locked rooms may be discovered
-        final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty( room.getMUCService().getServiceName(), "discover.locked", true );
+        final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty( room.getServiceName(), "discover.locked", true );
 
         if ( !discoverLocked && room.isLocked() )
         {

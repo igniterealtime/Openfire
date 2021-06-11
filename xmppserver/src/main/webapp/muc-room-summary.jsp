@@ -24,6 +24,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.util.stream.Collectors" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -67,13 +68,13 @@
     }
 
     // Get the rooms in the server
-    List<MUCRoom> rooms = mucService.getChatRooms();
-    Collections.sort(rooms, new Comparator<MUCRoom>() {
-        public int compare(MUCRoom room1, MUCRoom room2) {
-            return room1.getName().toLowerCase().compareTo(room2.getName().toLowerCase());
+//    List<MUCRoom> rooms = mucService.getChatRooms();
+    List<String> names = mucService.getAllRoomNames().stream().sorted(new Comparator<String>() {
+        public int compare(String room1, String room2) {
+            return room1.toLowerCase().compareTo(room2.toLowerCase());
         }
-    });
-    int roomsCount = rooms.size();
+    } ).collect(Collectors.toList());
+    int roomsCount = names.size();
 
     // paginator vars
     int numPages = (int)Math.ceil((double)roomsCount/(double)range);
@@ -169,7 +170,7 @@
 <tbody>
 
 <%  // Print the list of rooms
-    Iterator<MUCRoom> roomsPage = rooms.subList(start, maxRoomIndex).iterator();
+    Iterator<String> roomsPage = names.subList(start, maxRoomIndex).iterator();
     if (!roomsPage.hasNext()) {
 %>
     <tr>
@@ -182,7 +183,8 @@
     }
     int i = start;
     while (roomsPage.hasNext()) {
-        MUCRoom room = roomsPage.next();
+        String name = roomsPage.next();
+        MUCRoom room = mucService.getChatRoom(name); // This will load the room on-demand if it's not yet in memory.
         i++;
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">

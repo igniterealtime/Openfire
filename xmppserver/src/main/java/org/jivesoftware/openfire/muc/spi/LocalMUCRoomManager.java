@@ -10,15 +10,25 @@ import org.jivesoftware.openfire.muc.MUCRoom;
 
 /**
  * this class supports the simple LocalMUCRoom management including remove,add and query.
+ *
+ * Note that this implementation provides a representation of rooms that are currently actively loaded in memory only.
+ * More rooms might exist in the database.
+ *
  * @author <a href="mailto:583424568@qq.com">wuchang</a>
  * 2016-1-14
  */
 public class LocalMUCRoomManager {
     private final Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
-     
+
+    /**
+     * Returns the number of chat rooms that are currently actively loaded in memory.
+     *
+     * @return a chat room count.
+     */
     public int getNumberChatRooms(){
         return rooms.size();
     }
+
     public void addRoom(final String roomname, final LocalMUCRoom room){
         rooms.put(roomname, room);
         GroupEventDispatcher.addListener(room);

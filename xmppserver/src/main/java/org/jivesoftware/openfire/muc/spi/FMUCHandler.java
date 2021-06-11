@@ -44,8 +44,8 @@ public class FMUCHandler
         .setDefaultValue(false)
         .addListener( isEnabled -> {
             XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
-                service -> service.getChatRooms().forEach(
-                    mucRoom -> mucRoom.getFmucHandler().applyConfigurationChanges()
+                service -> service.getAllRoomNames().forEach(
+                    name -> service.getChatRoom(name).getFmucHandler().applyConfigurationChanges()
                 )
             );
         })

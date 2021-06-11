@@ -216,8 +216,8 @@ public class IQMUCSearchHandler
         }
 
         // search for chatrooms matching the request params.
-        final List<MUCRoom> mucs = new ArrayList<>();
-        for (MUCRoom room : mucService.getChatRooms())
+        final List<MUCRoomSearchInfo> mucs = new ArrayList<>();
+        for (MUCRoomSearchInfo room : mucService.getAllRoomSearchInfo())
         {
             boolean find = false;
 
@@ -252,7 +252,7 @@ public class IQMUCSearchHandler
                 find = true;
             }
 
-            if (numUsers > -1 && room.getParticipants().size() < numUsers)
+            if (numUsers > -1 && room.getParticipantCount() < numUsers)
             {
                 find = false;
             }
@@ -273,14 +273,14 @@ public class IQMUCSearchHandler
             }
         }
 
-        final ResultSet<MUCRoom> searchResults = new ResultSetImpl<>(
+        final ResultSet<MUCRoomSearchInfo> searchResults = new ResultSetImpl<>(
             sortByUserAmount(mucs));
 
         // See if the requesting entity would like to apply 'result set
         // management'
         final Element set = iq.getChildElement().element(
             QName.get("set", ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT));
-        final List<MUCRoom> mucrsm;
+        final List<MUCRoomSearchInfo> mucrsm;
 
         // apply RSM only if the element exists, and the (total) results
         // set is not empty.
@@ -316,7 +316,7 @@ public class IQMUCSearchHandler
 
         final DataForm resultform = new DataForm(DataForm.Type.result);
         boolean atLeastoneResult = false;
-        for (MUCRoom room : mucrsm)
+        for (MUCRoomSearchInfo room : mucrsm)
         {
             final Map<String, Object> fields = new HashMap<>();
             fields.put("name", room.getNaturalLanguageName());
@@ -325,7 +325,7 @@ public class IQMUCSearchHandler
             fields.put(NUM_MAX_USERS, determineMaxUsersDisplay(room.getMaxUsers()));
             fields.put("is_password_protected", room.isPasswordProtected());
             fields.put("is_member_only", room.isMembersOnly());
-            fields.put("jid", room.getRole().getRoleAddress().toString());
+            fields.put("jid", room.getJID().toString());
             resultform.addItemFields(fields);
             atLeastoneResult = true;
         }
@@ -363,16 +363,9 @@ public class IQMUCSearchHandler
      *            The unordered list that will be sorted.
      * @return The sorted list of MUC rooms.
      */
-    private static List<MUCRoom> sortByUserAmount(List<MUCRoom> mucs)
+    private static List<MUCRoomSearchInfo> sortByUserAmount(List<MUCRoomSearchInfo> mucs)
     {
-        Collections.sort(mucs, new Comparator<MUCRoom>()
-        {
-            @Override
-            public int compare(MUCRoom o1, MUCRoom o2)
-            {
-                return o2.getOccupantsCount() - o1.getOccupantsCount();
-            }
-        });
+        Collections.sort(mucs, (o1, o2) -> o2.getOccupantsCount() - o1.getOccupantsCount());
 
         return mucs;
     }
@@ -387,10 +380,10 @@ public class IQMUCSearchHandler
      * @return ''true'' if the room may be included in search results, ''false''
      *         otherwise.
      */
-    private static boolean canBeIncludedInResult(MUCRoom room)
+    private static boolean canBeIncludedInResult(MUCRoomSearchInfo room)
     {
         // Check if locked rooms may be discovered
-        final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty(room.getMUCService().getServiceName(), "discover.locked", true);
+        final boolean discoverLocked = MUCPersistenceManager.getBooleanProperty(room.getServiceName(), "discover.locked", true);
 
         if (!discoverLocked && room.isLocked())
         {

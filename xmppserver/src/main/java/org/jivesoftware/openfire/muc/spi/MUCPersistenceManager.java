@@ -89,6 +89,10 @@ public class MUCPersistenceManager {
         "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
         "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=?";
+    private static final String COUNT_ALL_ROOMS =
+        "SELECT count(*) FROM ofMucRoom WHERE serviceID=?";
+    private static final String LOAD_ALL_ROOM_NAMES =
+        "SELECT name FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID AS roomID, ofMucAffiliation.jid AS jid, ofMucAffiliation.affiliation AS affiliation " +
         "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
@@ -177,6 +181,38 @@ public class MUCPersistenceManager {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return answer;
+    }
+
+    /**
+     * Counts all rooms of a chat service.
+     *
+     * Note that this method will count only rooms that are persisted in the database, and can exclude in-memory rooms
+     * that are not persisted.
+     *
+     * @param service the chat service for which to return a room count.
+     * @return A room number count
+     */
+    public static int countRooms(MultiUserChatService service) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(service.getServiceName());
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(COUNT_ALL_ROOMS);
+            pstmt.setLong(1, serviceID);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new IllegalArgumentException("Service " + service.getServiceName() + " was not found in the database.");
+            }
+            return rs.getInt(1);
+        } catch (SQLException sqle) {
+            Log.error("An exception occurred while trying to count all persisted rooms of service '{}'", service.getServiceName(), sqle);
+            return -1;
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
     }
 
     /**
@@ -540,6 +576,47 @@ public class MUCPersistenceManager {
             DbConnectionManager.closeStatement(pstmt);
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
+    }
+
+    /**
+     * Loads the name of all the rooms that are in the database.
+     *
+     * @param chatserver the chat server that will hold the loaded rooms.
+     * @return a collection with all room names.
+     */
+    public static Collection<String> loadRoomNamesFromDB(MultiUserChatService chatserver) {
+        Log.debug( "Loading room names for chat service {}", chatserver.getServiceName() );
+        Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
+
+        final Set<String> names = new HashSet<>();
+        try {
+            Connection connection = null;
+            PreparedStatement statement = null;
+            ResultSet resultSet = null;
+            try {
+                connection = DbConnectionManager.getConnection();
+                statement = connection.prepareStatement(LOAD_ALL_ROOM_NAMES);
+                statement.setLong(1, serviceID);
+                resultSet = statement.executeQuery();
+
+                while (resultSet.next()) {
+                    try {
+                        names.add(resultSet.getString("name"));
+                    } catch (SQLException e) {
+                        Log.error("A database exception prevented one particular MUC room name to be loaded from the database.", e);
+                    }
+                }
+            } finally {
+                DbConnectionManager.closeConnection(resultSet, statement, connection);
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error("A database error prevented MUC room names to be loaded from the database.", sqle);
+            return Collections.emptyList();
+        }
+
+        Log.debug( "Loaded {} room names for chat service {}", names.size(), chatserver.getServiceName() );
+        return names;
     }
 
     /**

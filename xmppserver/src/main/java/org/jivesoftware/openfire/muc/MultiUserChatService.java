@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.openfire.muc.spi.MUCRoomSearchInfo;
 import org.jivesoftware.util.JiveConstants;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
@@ -32,6 +33,8 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
@@ -383,12 +386,48 @@ public interface MultiUserChatService extends Component {
     void refreshChatRoom(String roomName);
     
     /**
-     * Retuns a list with a snapshot of all the rooms in the server (i.e. persistent or not,
-     * in memory or not).
+     * Returns a list with a snapshot of all the rooms in the server that are loaded in memory.
+     *
+     * Note: up to release 4.6.4 this method was documented to return all the rooms in the server (i.e. persistent or not,
+     * in memory or not). The implementation did not do this, although that behavior had been in place for years.
+     * To avoid future confusion, the method is deprecated, keeping the existing behavior. Replacements have been added
+     * that will return the data as defined in their contract
      *
      * @return a list with a snapshot of all the rooms.
+     * @deprecated replaced by getActiveChatRooms() and getAllRoomNames()
      */
+    @Deprecated // Remove in Openfire 4.7 or later.
     List<MUCRoom> getChatRooms();
+
+    /**
+     * Returns a list with a snapshot of all the rooms in the server that are actively loaded in memory.
+     *
+     * @return a list with a snapshot of rooms.
+     */
+    default List<MUCRoom> getActiveChatRooms() {
+        return getChatRooms(); // Openfire prior to v4.6.4 returned inMemory rooms only.
+    }
+
+    /**
+     * Returns a list of names of all the rooms in the server (i.e. persistent or not, in memory or not).
+     *
+     * @return All room names
+     */
+    default Set<String> getAllRoomNames() {
+        // This implementation is wrong, as it won't include names for rooms that are not actively in memory. This
+        // corresponds to the default behavior prior to release v4.6.4. As a fallback (to not break API), it that's
+        // deemed 'acceptable'. This default implementation should be removed (leaving just the interface signature
+        // in place) in or after Openfire 4.7.
+        return getChatRooms().stream().map(MUCRoom::getName).collect(Collectors.toSet());
+    }
+
+    default Collection<MUCRoomSearchInfo> getAllRoomSearchInfo() {
+        // This implementation is wrong, as it won't include names for rooms that are not actively in memory. This
+        // corresponds to the default behavior prior to release v4.6.4. As a fallback (to not break API), it that's
+        // deemed 'acceptable'. This default implementation should be removed (leaving just the interface signature
+        // in place) in or after Openfire 4.7.
+        return getChatRooms().stream().map(MUCRoomSearchInfo::new).collect(Collectors.toList());
+    }
 
     /**
      * Returns true if the server includes a chatroom with the requested name.

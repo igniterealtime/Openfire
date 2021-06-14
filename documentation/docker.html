@@ -25,7 +25,7 @@
             <p>You can build the container image locally as you might any other, using <pre>docker build . -t openfire:mytag</pre>. Note that Openfire is a large application in a monorepo with a sizeable number of dependencies, and as such doesn't use a multi-stage build for Docker. Instead it builds an image from an already compiled repository. For more repeatable builds, try <pre>build/docker/buildWithDocker.sh</pre>.</p>
 
             <h2>Usage</h2>
-            <p>You can run a simple container with <pre>docker run --rm -d -p 5222:5222 -p 5269:5269 -p 7070:7070 -p 7443:7443 -p 9090:9090 ignitereatime/openfire:sometag</pre> and configure for the internal database. You can add volumes to achieve persistance between restarts and upgrades.</p>
+            <p>You can run a simple container with <pre>docker run --rm -d -p 5222:5222 -p 5269:5269 -p 7070:7070 -p 7443:7443 -p 9090:9090 igniterealtime/openfire:sometag</pre> and configure for the internal database. You can add volumes to achieve persistance between restarts and upgrades.</p>
             <p>For more complex or productionised setups, you could use docker-compose.
                 <pre>
 openfire:

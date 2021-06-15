@@ -18,7 +18,8 @@
     
         <div id="pageBody">
             <h2>Introduction</h2>
-            <p>This isn't an official document, per se. It's a perspective. It's a single developer's experience of what has been useful when working with Openfire, in hopes it helps someone else.</p>
+            <p>Collected tips &amp; tricks for developers and other software engineers working with Openfire</p>
+            <p><a href="https://github.com/igniterealtime/Openfire/edit/master/documentation/working-with-openfire.html">Add your own on GitHub!</a></p>
 
             <h2>Tooling</h2>
             <div>
@@ -88,6 +89,10 @@ function ofdocker(){
                 <p class="code">
                     mvn verify -P deps
                 </p>
+                <p>Or to see all dependencies with potential updates:</p>
+                <p class="code">
+                    mvn versions:display-dependency-updates
+                </p>
 
                 <h3>Docker Stacks</h3>
                 <p>I know we've talked about Openfire Docker containers already, but this is more.</p>
@@ -126,6 +131,12 @@ function ofdocker(){
                         <li><a href="https://xmpp.org/extensions/xep-0313.html">https://xmpp.org/extensions/xep-0313.html</a> - Message Archive Management</li>
                     </ul>
                     Openfire's operation with clients and other servers is almost entirely governed by standards linked to on this page. Notable exclusions are the Admin interface, and Openfire's implementation of clustering.
+                </div>
+
+                <h3>Chat</h3>
+                <div>
+                    <p>If you're stuck on an Openfire problem, come and ask in the <tt>open_chat</tt> channel.</p>
+                    <p>You can visit us via XMPP directly at <a href="xmpp:open_chat@conference.igniterealtime.org">open_chat@conference.igniterealtime.org</a>, or access via our website, <a href="https://www.igniterealtime.org/support/group_chat.jsp">here</a>.</p>
                 </div>
             </div>
         </div>  

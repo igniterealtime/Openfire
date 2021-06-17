@@ -186,7 +186,11 @@ public class XmppWebSocket {
         if (isWebSocketOpen())
         {
             try {
-                xmppSession.incrementServerPacketCount();
+                if (xmppSession != null) { // OF-2265 In certain circumstances, the xmppSession can be absent (eg: when sending an error).
+                    xmppSession.incrementServerPacketCount();
+                } else {
+                    Log.debug("Packet delivery when no xmppSession is present. Should only occur exceptionally. Session: {}, Packet: {}", wsSession, packet);
+                }
                 wsSession.getRemote().sendStringByFuture(packet);
             } catch (Exception e) {
                 Log.error("Packet delivery failed; session: " + wsSession, e);

@@ -123,6 +123,7 @@ import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.util.OrderedExecutor;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.openfire.archive.ArchiveManager;
@@ -1313,6 +1314,9 @@ public class XMPPServer {
 
         // Shutdown the task engine.
         TaskEngine.getInstance().shutdown();
+
+        // Cleanup all instances created of OrderedExecutor.
+        OrderedExecutor.shutdownInstances();
 
         // hack to allow safe stopping
         logger.info("Openfire stopped");

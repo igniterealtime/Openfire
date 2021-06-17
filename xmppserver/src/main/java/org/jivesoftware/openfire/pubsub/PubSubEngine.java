@@ -27,6 +27,8 @@ import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.ImmediateFuture;
+import org.jivesoftware.util.OrderedExecutor;
+import org.jivesoftware.util.OrderedRunnable;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -55,6 +57,49 @@ public class PubSubEngine
      * The packet router for the server.
      */
     private PacketRouter router = null;
+
+    /**
+     * The ordered executor used to publish IQ packets to their respective nodes.
+     * This is specifically used to publish the messages to any particular node, in
+     * the same order as they were submitted. The messages to separate nodes are
+     * published in parallel.
+     */
+    private static final OrderedExecutor publishToNodePool = new OrderedExecutor("PubSub");
+    /**
+     * Used to generate ordering key for publish to node, if node id is null.
+     */
+    private static int defaultOrderingKeyGenPubSub = 0;
+
+    private class PublishToNodeTask implements OrderedRunnable {
+
+        private final PubSubService service;
+
+        private final IQ iq;
+
+        private final Element finalAction;
+
+        private final String orderingKey;
+
+        PublishToNodeTask(final PubSubService service, final IQ iq, final Element finalAction) {
+            this.service = service;
+            this.iq = iq;
+            this.finalAction = finalAction;
+            String nodeID = finalAction.attributeValue("node");
+            this.orderingKey = nodeID != null ? nodeID : String.valueOf(++defaultOrderingKeyGenPubSub);
+
+        }
+
+        @Override
+        public void run() {
+            publishItemsToNode(service, iq, finalAction);
+        }
+
+        @Override
+        public Object getOrderingKey() {
+            return this.orderingKey;
+        }
+
+    }
 
     public PubSubEngine(PacketRouter router) {
         this.router = router;
@@ -88,13 +133,7 @@ public class PubSubEngine
             if (action != null) {
                 // Entity publishes an item
                 // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
-                final Element finalAction = action;
-                return TaskEngine.getInstance().submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        publishItemsToNode(service, iq, finalAction);
-                    }
-                });
+                return publishToNodePool.submit(new PublishToNodeTask(service, iq, action));
             }
             action = childElement.element("subscribe");
             if (action != null) {

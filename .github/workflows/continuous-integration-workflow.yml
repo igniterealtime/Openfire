@@ -112,7 +112,8 @@ jobs:
   connectivity:
 
     name: Execute Connectivity CI tests
-    runs-on: ubuntu-latest
+    # ubuntu-latest may have issues with this workflow?
+    runs-on: ubuntu-18.04
     needs: build
 
     steps:

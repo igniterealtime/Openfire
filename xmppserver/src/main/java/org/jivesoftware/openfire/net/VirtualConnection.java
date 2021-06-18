@@ -30,6 +30,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+
 /**
  * Abstract implementation of the Connection interface that models abstract connections. Abstract
  * connections are connections that don't have a physical connection counterpart. Instead they
@@ -123,6 +125,7 @@ public abstract class VirtualConnection implements Connection {
     }
 
     @Override
+    @Nullable
     public PacketDeliverer getPacketDeliverer() {
         //Ignore
         return null;

@@ -47,8 +47,18 @@
     boolean success = request.getParameter("success") != null;
     String mucname = ParamUtils.getParameter(request,"mucname");
     String mucdesc = ParamUtils.getParameter(request,"mucdesc");
+    int muccleanupdays = ParamUtils.getIntParameter(request, "muccleanupdays", 30);
+    boolean muckeep = ParamUtils.getBooleanParameter(request, "muckeep");
+    int mucpreloaddays = ParamUtils.getIntParameter(request, "mucpreloaddays", 30);
+    boolean mucpreload = ParamUtils.getBooleanParameter(request, "mucpreload");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+    if (muckeep) {
+        muccleanupdays = 0;
+    }
+    if (!mucpreload) {
+        mucpreloaddays = 0;
+    }
 
     if (save) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
@@ -71,7 +81,7 @@
     }
 
     // Handle a save
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     if (save) {
         // Make sure that the MUC Service is lower cased.
         mucname = mucname.toLowerCase();
@@ -86,7 +96,7 @@
                 errors.put("mucname", e.getMessage());
             }
         }
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             // Create or update the service.
             if (!create) {
                 webManager.getMultiUserChatManager().updateMultiUserChatService(mucname, mucname, mucdesc);
@@ -104,42 +114,40 @@
             }
 
             // Update settings only after the service has been created.
-            // TODO move the parsing and validation of these parameters to the section above, that does that for all other parameters.
-            String muccleanupdays = ParamUtils.getParameter(request, "muccleanupdays");
-            if (muccleanupdays != null) {
-                MUCPersistenceManager.setProperty(mucname, "unload.empty_days", muccleanupdays);
+            if (ParamUtils.getParameter(request, "muccleanupdays") != null || muckeep) { // Only explicitly store if set (otherwise use default).
+                MUCPersistenceManager.setProperty(mucname, "unload.empty_days", Integer.toString(muccleanupdays));
             }
 
-            if (ParamUtils.getParameter(request, "muckeep") != null) {
-                if (ParamUtils.getParameter(request, "muckeep").equalsIgnoreCase("on")) {
-                    MUCPersistenceManager.setProperty(mucname, "unload.empty_days", "0");
-                }
+            if (ParamUtils.getParameter(request, "mucpreloaddays") != null || !mucpreload) { // Only explicitly store if set (otherwise use default).
+                MUCPersistenceManager.setProperty(mucname, "preload.days", Integer.toString(mucpreloaddays));
             }
 
             // Log the event
             if (!create) {
-                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc+"\ncleanup = "+muccleanupdays+"\npreload = "+mucpreloaddays);
                 response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
                 return;
             } else {
-                webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc);
+                webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc+"\ncleanup = "+muccleanupdays+"\npreload = "+mucpreloaddays);
                 response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
                 return;
             }
         }
     }    
    
-    boolean muckeep = false;
-    String muccleanupdays = "30"; // default
 
     // When creating a new service (as opposed to editing an existing one), mucName will be initially empty (OF-1954)
 	if (mucname != null) {
-        muccleanupdays = MUCPersistenceManager.getProperty(mucname, "unload.empty_days", muccleanupdays);
+        muccleanupdays = MUCPersistenceManager.getIntProperty(mucname, "unload.empty_days", 30);
+        mucpreloaddays = MUCPersistenceManager.getIntProperty(mucname, "preload.days", 30);
+    } else {
+	    // Defaults for new room.
+	    muccleanupdays = 30;
+	    mucpreloaddays = 30;
     }
 
-	if (Integer.parseInt(muccleanupdays)<=0) {
-        muckeep = true;
-    }
+	muckeep = muccleanupdays<=0;
+	mucpreload = mucpreloaddays>0;
 %>
 
 <html>
@@ -154,15 +162,14 @@
 <meta name="helpPage" content="edit_group_chat_service_properties.html"/>    
 <script>
 	function checkMUCKeep() {
-		var checkedValue = null;
-		var inputKeeps = document.getElementsByName('muckeep');
+		var toggle = document.getElementsByName('muckeep');
 		var inputCleanups = document.getElementsByName('muccleanupdays');
-
-		if (inputKeeps[0].checked) {			
-			inputCleanups[0].disabled = true;			
-		} else {
-			inputCleanups[0].disabled = false;
-		}
+		inputCleanups[0].disabled = toggle[0].checked;
+	}
+	function checkMUCPreload() {
+        var toggle = document.getElementsByName('mucpreload');
+        var days = document.getElementsByName('mucpreloaddays');
+        days[0].disabled = !toggle[0].checked;
 	}
 </script>
 </head>
@@ -248,6 +255,37 @@
                     <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
                 </td>
             </tr>
+        </table>
+    </div>
+
+    <br/>
+
+    <p>
+        <fmt:message key="groupchat.service.properties.memory_management_description" />
+    </p>
+
+    <div class="jive-contentBoxHeader">
+        <fmt:message key="groupchat.service.properties.memory_management.legend" />
+    </div>
+    <div class="jive-contentBox">
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td class="c1">
+                    <fmt:message key="groupchat.service.properties.label_service_preload" />
+                </td>
+                <td>
+                    <input type="checkbox" name="mucpreload" <%= mucpreload ? "checked" : "" %> onClick="checkMUCPreload();">
+                </td>
+            </tr>
+            <tr>
+                <td class="c1">
+                    <fmt:message key="groupchat.service.properties.label_service_preloaddays" />
+                </td>
+                <td>
+                    <input type="number" size="4" maxlength="3" name="mucpreloaddays" <%= mucpreload ? "" : "disabled" %> value="<%= mucpreloaddays %>">
+                </td>
+            </tr>
+
             <tr>
                 <td class="c1">
                    <fmt:message key="groupchat.service.properties.label_service_muckeep" />
@@ -261,7 +299,7 @@
                    <fmt:message key="groupchat.service.properties.label_service_cleanupdays" />
                 </td>
                 <td>
-                    <input type="number" size="4" maxlength="3" name="muccleanupdays" <%= muckeep ? "disabled" : "" %> value="<%= (muccleanupdays != null ? StringUtils.escapeForXML(muccleanupdays) : "") %>">
+                    <input type="number" size="4" maxlength="3" name="muccleanupdays" <%= muckeep ? "disabled" : "" %> value="<%= muccleanupdays %>">
                 </td>
             </tr>
         </table>

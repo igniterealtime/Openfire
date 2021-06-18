@@ -16,20 +16,23 @@
 
 package org.jivesoftware.openfire.pep;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.roster.Roster;
@@ -40,6 +43,8 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -48,6 +53,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import javax.management.ObjectName;
 
 /**
  * <p>
@@ -103,7 +110,42 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     // implementation. This can cause problems in other parts of Openfire that
     // depend on database access (ideally, these should get dedicated resource
     // pools too).
-    private ExecutorService executor = null;
+    private ThreadPoolExecutor executor = null;
+
+    /**
+     * The number of threads to keep in the thread pool used to send PEP notifications, even if they are idle.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.pep.threadpool.size.core")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool used to send PEP notifications.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.pep.threadpool.size.max")
+        .setMinValue(1)
+        .setDefaultValue(2) // Keep this low! See comment written above the 'executor' member/field.
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The number of threads in the thread pool used to send PEP notifications is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> EXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.pep.threadpool.keepalive")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the thread pool executor.
+     */
+    private ObjectName objectName;
 
     /**
      * Constructs a new {@link IQPEPHandler} instance.
@@ -196,7 +238,20 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             // keep the amount of workers low! See comment that goes with the
             // field named 'executor'.
             Log.debug("Starting executor service...");
-            executor = Executors.newScheduledThreadPool(2);
+            executor = new ThreadPoolExecutor(
+                EXECUTOR_CORE_POOL_SIZE.getValue(),
+                EXECUTOR_MAX_POOL_SIZE.getValue(),
+                EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+                TimeUnit.SECONDS,
+                new SynchronousQueue<>(),
+                new NamedThreadFactory( "pep-worker-", null, null, null ) );
+
+            executor = (ThreadPoolExecutor) Executors.newScheduledThreadPool(2, new NamedThreadFactory( "pep-worker-", null, null, null ) );
+
+            if (JMXManager.isEnabled()) {
+                final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+                objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "pep");
+            }
         }
     }
     
@@ -222,6 +277,10 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
          * from the routing tables. We don't need to worry about new packets to
          * arrive - there won't be any.
          */
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
         executor.shutdown();
         try {
             if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {

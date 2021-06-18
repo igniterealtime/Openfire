@@ -29,6 +29,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -54,7 +55,7 @@ public class HttpBindBody
         }
     }
 
-    private ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<>();
+    private final ThreadLocal<XMPPPacketReader> localReader = new ThreadLocal<>();
 
     private final Document document;
 
@@ -133,9 +134,9 @@ public class HttpBindBody
         return language;
     }
 
-    public int getWait()
+    public Duration getWait()
     {
-        return getIntAttribute( document.getRootElement().attributeValue( "wait" ), 60 );
+        return Duration.ofSeconds( getIntAttribute( document.getRootElement().attributeValue( "wait" ), 60 ) );
     }
 
     public int getHold()
@@ -143,9 +144,13 @@ public class HttpBindBody
         return getIntAttribute( document.getRootElement().attributeValue( "hold" ), 1 );
     }
 
-    public int getPause()
+    public Duration getPause()
     {
-        return getIntAttribute( document.getRootElement().attributeValue( "pause" ), -1 );
+        final int value = getIntAttribute( document.getRootElement().attributeValue( "pause" ), -1  );
+        if (value == -1) {
+            return null;
+        }
+        return Duration.ofSeconds(value);
     }
 
     public String getVersion()
@@ -206,7 +211,7 @@ public class HttpBindBody
             return defaultValue;
         }
         try {
-            return Long.valueOf(value);
+            return Long.parseLong(value);
         }
         catch (Exception ex) {
             return defaultValue;
@@ -218,7 +223,7 @@ public class HttpBindBody
             return defaultValue;
         }
         try {
-            return Integer.valueOf(value);
+            return Integer.parseInt(value);
         }
         catch (Exception ex) {
             return defaultValue;

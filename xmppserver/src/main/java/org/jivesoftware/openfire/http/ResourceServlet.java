@@ -26,8 +26,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 import java.io.*;
@@ -40,17 +43,17 @@ public class ResourceServlet extends HttpServlet {
     private static final Logger Log = LoggerFactory.getLogger(ResourceServlet.class);
 
     //    private static String suffix = "";    // Set to "_src" to use source version
-    private static long expiresOffset = 3600 * 24 * 10;	// 10 days util client cache expires
+    private static final Duration expiresOffset = Duration.ofDays(10);	// This long until client cache expires
     private boolean debug = false;
     private boolean disableCompression = false;
-    private static Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
+    private static final Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
-        debug = Boolean.valueOf(config.getInitParameter("debug"));
-        disableCompression = Boolean.valueOf(config.getInitParameter("disableCompression"));
+        debug = Boolean.parseBoolean(config.getInitParameter("debug"));
+        disableCompression = Boolean.parseBoolean(config.getInitParameter("disableCompression"));
     }
 
     @Override
@@ -81,9 +84,8 @@ public class ResourceServlet extends HttpServlet {
         if (!debug) {
             DateFormat formatter = new SimpleDateFormat("d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
             formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
-            response.setHeader("Expires", formatter.format(new Date(System.currentTimeMillis()
-                    + expiresOffset)));
-            response.setHeader("Cache-Control", "max-age=" + expiresOffset);
+            response.setHeader("Expires", formatter.format(Instant.now().plus(expiresOffset)));
+            response.setHeader("Cache-Control", "max-age=" + expiresOffset.getSeconds()); // TODO: replace with 'toSeconds' after Openfire drops support for Java 8.
         }
         else {
             response.setHeader("Expires", "1");
@@ -92,32 +94,34 @@ public class ResourceServlet extends HttpServlet {
 
         try {
             byte[] content;
-            String cacheKey = String.valueOf(compress + " " + javascript);
+            String cacheKey = compress + " " + javascript;
             content = cache.get(cacheKey);
             if (javascript && (debug || content == null)) {
                 content = getJavaScriptContent(compress);
                 cache.put(cacheKey, content);
             }
-            else if(!javascript && content == null) {
+//            else if(!javascript && content == null) {
+//
+//            }
 
-            }
-
-            response.setContentLength(content.length);
+            response.setContentLength(content == null ? 0 : content.length);
             if (compress) {
                 response.setHeader("Content-Encoding", "gzip");
             }
 
             // Write the content out
-            try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
-                try (OutputStream out = response.getOutputStream()) {
+            if (content != null) {
+                try (ByteArrayInputStream in = new ByteArrayInputStream(content)) {
+                    try (OutputStream out = response.getOutputStream()) {
 
-                    // Use a 128K buffer.
-                    byte[] buf = new byte[128 * 1024];
-                    int len;
-                    while ((len = in.read(buf)) != -1) {
-                        out.write(buf, 0, len);
+                        // Use a 128K buffer.
+                        byte[] buf = new byte[128 * 1024];
+                        int len;
+                        while ((len = in.read(buf)) != -1) {
+                            out.write(buf, 0, len);
+                        }
+                        out.flush();
                     }
-                    out.flush();
                 }
             }
         }
@@ -162,7 +166,7 @@ public class ResourceServlet extends HttpServlet {
                 return "";
             }
 
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, "ISO-8859-1"))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.ISO_8859_1))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     sb.append(line.trim()).append('\n');

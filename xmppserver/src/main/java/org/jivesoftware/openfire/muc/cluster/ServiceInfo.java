@@ -55,7 +55,7 @@ public class ServiceInfo implements Externalizable {
         this.isHidden = service.isHidden();
         rooms = new ArrayList<>();
         // Get rooms that have occupants and include them in the reply
-        for (MUCRoom room : service.getChatRooms()) {
+        for (MUCRoom room : service.getActiveChatRooms()) {
             LocalMUCRoom localRoom = (LocalMUCRoom) room;
             if (!room.getOccupants().isEmpty()) {
                 rooms.add(new RoomInfo(localRoom, localRoom.getOccupants()));

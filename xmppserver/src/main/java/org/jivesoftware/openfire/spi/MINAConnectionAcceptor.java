@@ -109,7 +109,7 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
 
             if ( JMXManager.isEnabled() )
             {
-                configureJMX( socketAcceptor, name );
+                // configureJMX( socketAcceptor, name );
             }
 
             final DefaultIoFilterChainBuilder filterChain = socketAcceptor.getFilterChain();

@@ -88,10 +88,32 @@ jobs:
           name: aioxmpp test output
           path: aioxmpp/output
 
+      - name: Expose openfire output
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: openfire logs
+          path: distribution/target/distribution-base/logs/*
+
+  check_branch:
+    runs-on: ubuntu-latest
+    outputs:
+      is_publishable_branch: ${{ steps.check-branch.outputs.is_publishable_branch }}
+    steps:
+      - name: check branch ${{ github.ref }} is either master or a version number
+        id: check-branch
+        run: |
+          if [[ ${{ github.ref }} == 'refs/heads/master' || ${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then
+            echo "::set-output name=is_publishable_branch::true"
+          else
+            echo "::set-output name=is_publishable_branch::false"
+          fi
+
   connectivity:
 
     name: Execute Connectivity CI tests
-    runs-on: ubuntu-latest
+    # ubuntu-latest may have issues with this workflow?
+    runs-on: ubuntu-18.04
     needs: build
 
     steps:
@@ -140,14 +162,14 @@ jobs:
           chmod +x distribution/target/distribution-base/bin/openfire.sh
           chmod +x ./runIntegrationTests
       - name: Run smack tests
-        run: ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 || ./runIntegrationTests -d -l -i 127.0.0.1 # Try tests a few times, in case of flakiness
+        run: ./runIntegrationTests -d -l -i 127.0.0.1
 
   publish-maven:
 
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack]
-    if: ${{github.repository == 'igniterealtime/Openfire' && github.ref == 'refs/heads/master' && github.event_name == 'push'}}
+    needs: [aioxmpp, connectivity, smack, check_branch]
+    if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
       - uses: actions/checkout@v2

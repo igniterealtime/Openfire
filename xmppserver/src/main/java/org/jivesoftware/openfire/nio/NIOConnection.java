@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.*;
 
 import org.apache.mina.core.buffer.IoBuffer;
@@ -113,7 +114,7 @@ public class NIOConnection implements Connection {
      */
     private final ReentrantLock ioSessionLock = new ReentrantLock(true);
 
-    public NIOConnection( IoSession session, PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
+    public NIOConnection(IoSession session, @Nullable PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
         this.ioSession = session;
         this.backupDeliverer = packetDeliverer;
         this.configuration = configuration;
@@ -206,6 +207,7 @@ public class NIOConnection implements Connection {
     }
 
     @Override
+    @Nullable
     public PacketDeliverer getPacketDeliverer() {
         return backupDeliverer;
     }
@@ -299,7 +301,11 @@ public class NIOConnection implements Connection {
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
         if (isClosed()) {
-            backupDeliverer.deliver(packet);
+            if (backupDeliverer != null) {
+                backupDeliverer.deliver(packet);
+            } else {
+                Log.trace("Discarding packet that was due to be delivered on closed connection {}, for which no backup deliverer was configured.", this);
+            }
         }
         else {
             boolean errorDelivering = false;
@@ -324,7 +330,11 @@ public class NIOConnection implements Connection {
                 close();
                 // Retry sending the packet again. Most probably if the packet is a
                 // Message it will be stored offline
-                backupDeliverer.deliver(packet);
+                if (backupDeliverer != null) {
+                    backupDeliverer.deliver(packet);
+                } else {
+                    Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+                }
             }
             else {
                 session.incrementServerPacketCount();

@@ -15,16 +15,19 @@
  */
 package org.jivesoftware.openfire.archive;
 
+import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
 
+import javax.management.ObjectName;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.*;
 
 /**
  * A manager of tasks that write archives into storage.
@@ -34,9 +37,44 @@ import java.util.concurrent.Executors;
 public class ArchiveManager extends BasicModule
 {
     /**
+     * The number of threads to keep in the thread pool that writes messages to the database, even if they are idle.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.archivemanager.threadpool.size.core")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool that writes messages to the database.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.archivemanager.threadpool.size.max")
+        .setMinValue(1)
+        .setDefaultValue(Integer.MAX_VALUE)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The number of threads in the thread pool that writes messages to the database is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> EXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.archivemanager.threadpool.keepalive")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
+
+    /**
      * A thread pool that writes messages to the database.
      */
-    private ExecutorService executor;
+    private ThreadPoolExecutor executor;
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the thread pool executor.
+     */
+    private ObjectName objectName;
 
     /**
      * Currently running tasks.
@@ -58,7 +96,18 @@ public class ArchiveManager extends BasicModule
         {
             throw new IllegalStateException( "Already initialized." );
         }
-        executor = Executors.newCachedThreadPool( new NamedThreadFactory( "archive-service-worker-", null, null, null ) );
+        executor = new ThreadPoolExecutor(
+            EXECUTOR_CORE_POOL_SIZE.getValue(),
+            EXECUTOR_MAX_POOL_SIZE.getValue(),
+            EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new NamedThreadFactory( "archive-service-worker-", null, null, null ) );
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+            objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "archive-manager");
+        }
     }
 
     /**
@@ -70,6 +119,11 @@ public class ArchiveManager extends BasicModule
     @Override
     public void destroy()
     {
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
+
         if ( executor != null )
         {
             executor.shutdown();

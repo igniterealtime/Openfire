@@ -3,7 +3,7 @@ body {
     font-size : 100%;
     background-color : #d3d6d9;
     padding: 0px;
-    color: #33333;
+    color: #333333;
     margin: 0px 0px 30px 0px;
 }
 body, td, th {
@@ -23,6 +23,7 @@ pre, tt, code {
     padding: 40px;
     margin: 30px;
     -moz-border-radius: 6px;
+    border-radius: 6px;
 }
 #pageHeader {
     display: block;
@@ -32,6 +33,7 @@ pre, tt, code {
     border: 1px solid #cccccc;
     border-bottom: none;
     -moz-border-radius: 5px 5px 0px 0px;
+    border-radius: 5px 5px 0px 0px;
     margin: 10px 0px 0px 0px;
 }
 #pageBody {
@@ -110,11 +112,16 @@ h2 {
     color: #335588;
 }
 h3 {
-    font-size : 1.0em;
+    font-size : 1.1em;
     font-weight : bold;
     margin: 25px 0px 3px 0px;
     padding: 0px;
     color: #334466;
+}
+h4 {
+    font-size : 1.0em;
+    font-style: italic;
+    margin: 25px 0px 3px 0px;
 }
 
 
@@ -142,6 +149,10 @@ hr {
     border: none;
     margin: 40px 0px 20px 0px;
 }
+img {
+    width: 90%;
+    object-fit: contain;
+  }
 
 
 fieldset pre {
@@ -153,6 +164,7 @@ fieldset {
     margin-right : 2em;
     border : 1px #ccc solid;
     -moz-border-radius : 5px;
+    border-radius : 5px;
 }
 
 

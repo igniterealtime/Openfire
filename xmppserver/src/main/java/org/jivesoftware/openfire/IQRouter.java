@@ -58,11 +58,11 @@ public class IQRouter extends BasicModule {
     private RoutingTable routingTable;
     private MulticastRouter multicastRouter;
     private String serverName;
-    private List<IQHandler> iqHandlers = new ArrayList<>();
-    private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<>();
-    private Map<String, IQResultListener> resultListeners = new ConcurrentHashMap<>();
-    private Map<String, Long> resultTimeout = new ConcurrentHashMap<>();
-    private Cache<String, NodeID> resultPending = CacheFactory.createCache("Routing Result Listeners");
+    private final List<IQHandler> iqHandlers = new ArrayList<>();
+    private final Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<>();
+    private final Map<String, IQResultListener> resultListeners = new ConcurrentHashMap<>();
+    private final Map<String, Long> resultTimeout = new ConcurrentHashMap<>();
+    private final Cache<String, NodeID> resultPending = CacheFactory.createCache("Routing Result Listeners");
     private SessionManager sessionManager;
     private UserManager userManager;
 
@@ -97,32 +97,22 @@ public class IQRouter extends BasicModule {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
             JID to = packet.getTo();
-            if (session != null && to != null && session.getStatus() == Session.STATUS_CONNECTED &&
-                    !serverName.equals(to.toString())) {
-                // User is requesting this server to authenticate for another server. Return
-                // a bad-request error
-                IQ reply = IQ.createResultIQ(packet);
-                if (childElement != null) {
-                    reply.setChildElement(childElement.createCopy());
-                }
-                reply.setError(PacketError.Condition.bad_request);
-                session.process(reply);
-                Log.warn("User tried to authenticate with this server using an unknown recipient: " +
-                        packet.toXML());
-            }
-            else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
+            if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
                     childElement != null && isLocalServer(to) && (
                         "jabber:iq:auth".equals(childElement.getNamespaceURI()) ||
                         "jabber:iq:register".equals(childElement.getNamespaceURI()) ||
                         "urn:ietf:params:xml:ns:xmpp-bind".equals(childElement.getNamespaceURI())))) {
                 handle(packet);
-            } else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
-                IQ reply = IQ.createResultIQ(packet);
-                if (childElement != null) {
-                    reply.setChildElement(childElement.createCopy());
+            } else {
+                Log.debug("Rejecting stanza from client that has not (yet?) established an authenticated session: {}", packet.toXML());
+                if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
+                    IQ reply = IQ.createResultIQ(packet);
+                    if (childElement != null) {
+                        reply.setChildElement(childElement.createCopy());
+                    }
+                    reply.setError(PacketError.Condition.not_authorized);
+                    session.process(reply);
                 }
-                reply.setError(PacketError.Condition.not_authorized);
-                session.process(reply);
             }
             // Invoke the interceptors after we have processed the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
@@ -504,7 +494,7 @@ public class IQRouter extends BasicModule {
      */
     public void routingFailed( JID recipient, Packet packet )
     {
-        Log.debug( "IQ sent to unreachable address: " + packet.toXML() );
+        Log.debug( "IQ sent to unreachable address '{}': {}", recipient, packet.toXML() );
         final IQ iq = (IQ) packet;
         // If a route to the target address was not found then try to answer a service_unavailable error code to the sender of the IQ packet
         if ( iq.isRequest() )

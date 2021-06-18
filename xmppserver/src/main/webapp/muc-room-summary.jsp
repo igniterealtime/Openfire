@@ -24,6 +24,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.util.stream.Collectors" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -31,8 +32,6 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("muc-room-summary", 15));
     String mucname = ParamUtils.getParameter(request,"mucname");
     String roomJIDStr = ParamUtils.getParameter(request,"roomJID");
     JID roomJID = null;
@@ -62,23 +61,13 @@
         return;
     }
 
-    if (request.getParameter("range") != null) {
-        webManager.setRowsPerPage("muc-room-summary", range);
-    }
-
     // Get the rooms in the server
-    List<MUCRoom> rooms = mucService.getChatRooms();
-    Collections.sort(rooms, new Comparator<MUCRoom>() {
-        public int compare(MUCRoom room1, MUCRoom room2) {
-            return room1.getName().toLowerCase().compareTo(room2.getName().toLowerCase());
-        }
-    });
-    int roomsCount = rooms.size();
+    final List<String> names = mucService.getAllRoomNames().stream()
+        .sorted(Comparator.comparing(String::toLowerCase))
+        .collect(Collectors.toList());
 
     // paginator vars
-    int numPages = (int)Math.ceil((double)roomsCount/(double)range);
-    int curPage = (start/range) + 1;
-    int maxRoomIndex = Math.min(start + range, roomsCount);
+    final ListPager<String> listPager = new ListPager<>(request, response, names, mucname);
 %>
 <html>
     <head>
@@ -110,10 +99,10 @@
 <%  } %>
 
 <p>
-<fmt:message key="muc.room.summary.total_room" />: <%= roomsCount %>,
-<%  if (numPages > 1) { %>
+<fmt:message key="muc.room.summary.total_room" />: <%= listPager.getTotalItemCount() %>,
+<%  if (listPager.getTotalPages() > 1) { %>
 
-    <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (maxRoomIndex) %>,
+    <fmt:message key="global.showing" /> <%= listPager.getFirstItemNumberOnPage() %>-<%= listPager.getLastItemNumberOnPage() %>,
 
 <%  } %>
 <fmt:message key="muc.room.summary.sorted_id" />
@@ -134,22 +123,9 @@
 
 </p>
 
-<%  if (numPages > 1) { %>
+<%  if (listPager.getTotalPages() > 1) { %>
 
-    <p>
-    <fmt:message key="global.pages" />:
-    [
-    <%  for (int i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : URLEncoder.encode(mucname) %>&start=<%= (i*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
-
-    <%  } %>
-    ]
-    </p>
+    <p><fmt:message key="global.pages" />: [ <%=listPager.getPageLinks() %> ]</p>
 
 <%  } %>
 
@@ -169,8 +145,7 @@
 <tbody>
 
 <%  // Print the list of rooms
-    Iterator<MUCRoom> roomsPage = rooms.subList(start, maxRoomIndex).iterator();
-    if (!roomsPage.hasNext()) {
+    if (listPager.getTotalItemCount() < 1) {
 %>
     <tr>
         <td align="center" colspan="7">
@@ -180,9 +155,10 @@
 
 <%
     }
-    int i = start;
-    while (roomsPage.hasNext()) {
-        MUCRoom room = roomsPage.next();
+    final List<String> itemsOnCurrentPage = listPager.getItemsOnCurrentPage();
+    int i = listPager.getFirstItemNumberOnPage();
+    for(String name : itemsOnCurrentPage) {
+        MUCRoom room = mucService.getChatRoom(name); // This will load the room on-demand if it's not yet in memory.
         i++;
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
@@ -241,23 +217,8 @@
 </table>
 </div>
 
-<%  if (numPages > 1) { %>
-
-    <p>
-    <fmt:message key="global.pages" />:
-    [
-    <%  for (i=0; i<numPages; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="muc-room-summary.jsp?mucname=<%= mucname == null ? "" : URLEncoder.encode(mucname) %>&start=<%= (i*range) %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
-
-    <%  } %>
-    ]
-    </p>
-
+<%  if (listPager.getTotalPages() > 1) { %>
+        <p><fmt:message key="global.pages" />: [ <%=listPager.getPageLinks() %> ]</p>
 <%  } %>
 
     </body>

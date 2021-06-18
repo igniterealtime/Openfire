@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.PacketRouter;
@@ -35,6 +36,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 import org.xmpp.packet.JID;
 
 import static org.jivesoftware.openfire.muc.spi.FMUCMode.MasterMaster;
@@ -87,6 +89,10 @@ public class MUCPersistenceManager {
         "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
         "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=?";
+    private static final String COUNT_ALL_ROOMS =
+        "SELECT count(*) FROM ofMucRoom WHERE serviceID=?";
+    private static final String LOAD_ALL_ROOM_NAMES =
+        "SELECT name FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_AFFILIATIONS =
         "SELECT ofMucAffiliation.roomID AS roomID, ofMucAffiliation.jid AS jid, ofMucAffiliation.affiliation AS affiliation " +
         "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
@@ -175,6 +181,38 @@ public class MUCPersistenceManager {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return answer;
+    }
+
+    /**
+     * Counts all rooms of a chat service.
+     *
+     * Note that this method will count only rooms that are persisted in the database, and can exclude in-memory rooms
+     * that are not persisted.
+     *
+     * @param service the chat service for which to return a room count.
+     * @return A room number count
+     */
+    public static int countRooms(MultiUserChatService service) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(service.getServiceName());
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(COUNT_ALL_ROOMS);
+            pstmt.setLong(1, serviceID);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                throw new IllegalArgumentException("Service " + service.getServiceName() + " was not found in the database.");
+            }
+            return rs.getInt(1);
+        } catch (SQLException sqle) {
+            Log.error("An exception occurred while trying to count all persisted rooms of service '{}'", service.getServiceName(), sqle);
+            return -1;
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
     }
 
     /**
@@ -283,6 +321,13 @@ public class MUCPersistenceManager {
                 pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
                 pstmt.setLong(2, room.getID());
                 rs = pstmt.executeQuery();
+
+                SAXReader xmlReader = null;
+                try {
+                    xmlReader = MUCRoomHistory.setupSAXReader();
+                } catch (SAXException e) {
+                    Log.warn("An exception occurred while loading MUC message history from database.", e);
+                }
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
@@ -290,8 +335,10 @@ public class MUCPersistenceManager {
                     String subject = rs.getString("subject");
                     String body = rs.getString("body");
                     String stanza = rs.getString("stanza");
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
-                            body, stanza);
+                    if (xmlReader != null) {
+                        room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
+                            body, stanza, xmlReader);
+                    }
                 }
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
@@ -532,11 +579,52 @@ public class MUCPersistenceManager {
     }
 
     /**
+     * Loads the name of all the rooms that are in the database.
+     *
+     * @param chatserver the chat server that will hold the loaded rooms.
+     * @return a collection with all room names.
+     */
+    public static Collection<String> loadRoomNamesFromDB(MultiUserChatService chatserver) {
+        Log.debug( "Loading room names for chat service {}", chatserver.getServiceName() );
+        Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
+
+        final Set<String> names = new HashSet<>();
+        try {
+            Connection connection = null;
+            PreparedStatement statement = null;
+            ResultSet resultSet = null;
+            try {
+                connection = DbConnectionManager.getConnection();
+                statement = connection.prepareStatement(LOAD_ALL_ROOM_NAMES);
+                statement.setLong(1, serviceID);
+                resultSet = statement.executeQuery();
+
+                while (resultSet.next()) {
+                    try {
+                        names.add(resultSet.getString("name"));
+                    } catch (SQLException e) {
+                        Log.error("A database exception prevented one particular MUC room name to be loaded from the database.", e);
+                    }
+                }
+            } finally {
+                DbConnectionManager.closeConnection(resultSet, statement, connection);
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error("A database error prevented MUC room names to be loaded from the database.", sqle);
+            return Collections.emptyList();
+        }
+
+        Log.debug( "Loaded {} room names for chat service {}", names.size(), chatserver.getServiceName() );
+        return names;
+    }
+
+    /**
      * Loads all the rooms that had occupants after a given date from the database. This query
      * will be executed only when the service is starting up.
      *
      * @param chatserver the chat server that will hold the loaded rooms.
-     * @param cleanupDate rooms that hadn't been used before this date won't be loaded.
+     * @param cleanupDate rooms that hadn't been used after this date won't be loaded.
      * @param packetRouter the PacketRouter that loaded rooms will use to send packets.
      * @return a collection with all the persistent rooms.
      */
@@ -684,6 +772,14 @@ public class MUCPersistenceManager {
     }
 
     private static void loadHistory(Long serviceID, Map<Long, LocalMUCRoom> rooms) throws SQLException {
+        SAXReader xmlReader;
+        try {
+            xmlReader = MUCRoomHistory.setupSAXReader();
+        } catch (SAXException e) {
+            Log.warn("Unable to load MUC rooms from history.", e);
+            return;
+        }
+
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -717,7 +813,7 @@ public class MUCPersistenceManager {
                     String subject   = resultSet.getString("subject");
                     String body      = resultSet.getString("body");
                     String stanza    = resultSet.getString("stanza");
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza, xmlReader);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
                 }
@@ -739,7 +835,8 @@ public class MUCPersistenceManager {
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),
                                                             null,
-                                                            null);
+                                                            null,
+                                                            xmlReader);
             }
         }
     }

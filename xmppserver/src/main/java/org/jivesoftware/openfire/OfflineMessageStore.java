@@ -167,26 +167,26 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      *
      * Note that certain messages are ignored by this implementation, for example, messages that are carbon copies,
      * have 'no-store' hints, or for which the intended recipient is not a local user. When a message is discarded for
-     * reasons like these, this method will return 'false'.
+     * reasons like these, this method will return 'null'.
      *
      * @param message the message to store.
-     * @return true when data was stored, otherwise false.
+     * @return OfflineMessage when data was stored, otherwise null.
      */
-    public boolean addMessage(Message message) {
+    public OfflineMessage addMessage(Message message) {
         if (message == null) {
             Log.trace( "Not storing null message." );
-            return false;
+            return null;
         }
         if(!shouldStoreMessage(message)) {
             Log.trace( "Not storing message, as 'should store' returned false." );
-            return false;
+            return null;
         }
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
         if (username == null || !UserManager.getInstance().isRegisteredUser(recipient, false)) {
             Log.trace( "Not storing message for which the recipient ({}) is not a registered local user.", recipient );
-            return false;
+            return null;
         }
 
         long messageID = SequenceManager.nextID(JiveConstants.OFFLINE);
@@ -196,19 +196,24 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
 
         Connection con = null;
         PreparedStatement pstmt = null;
+        OfflineMessage offlineMessage = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_OFFLINE);
+
+            Date creationDate = new java.util.Date();
             pstmt.setString(1, username);
             pstmt.setLong(2, messageID);
-            pstmt.setString(3, StringUtils.dateToMillis(new java.util.Date()));
+            pstmt.setString(3, StringUtils.dateToMillis(creationDate));
             pstmt.setInt(4, msgXML.length());
             pstmt.setString(5, msgXML);
             pstmt.executeUpdate();
+
+            offlineMessage = new OfflineMessage(creationDate, message.getElement());
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-            return false;
+            return null;
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -220,7 +225,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             size += msgXML.length();
             sizeCache.put(username, size);
         }
-        return true;
+        return offlineMessage;
     }
 
     /**
@@ -564,6 +569,11 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
     static boolean shouldStoreMessage(final Message message) {
         // XEP-0334: Implement the <no-store/> hint to override offline storage
         if (message.getChildElement("no-store", "urn:xmpp:hints") != null) {
+            return false;
+        }
+
+        // OF-2083: Prevent storing offline message that is already stored
+        if (message.getChildElement("offline", "http://jabber.org/protocol/offline") != null) {
             return false;
         }
 

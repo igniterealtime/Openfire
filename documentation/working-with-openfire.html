@@ -1,0 +1,145 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+<head>
+    <title>Openfire: Docker Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <div id="pageContainer">
+        <a name="top"></a>
+        <div id="pageHeader">
+            <div id="logo"></div>
+            <h1>Working with Openfire</h1>
+        </div>
+        <div class="navigation">
+            <a href="index.html">&laquo; Back to documentation index</a>
+        </div>
+    
+        <div id="pageBody">
+            <h2>Introduction</h2>
+            <p>Collected tips &amp; tricks for developers and other software engineers working with Openfire</p>
+            <p><a href="https://github.com/igniterealtime/Openfire/edit/master/documentation/working-with-openfire.html">Add your own on GitHub!</a></p>
+
+            <h2>Tooling</h2>
+            <div>
+                <h3>Docker</h3>
+                <div>
+                    <p>Nothing has sped me up more than being able throw up environments quickly using Docker. Whether it's comparing behaviour, or testing a branch, Docker is fast and trouble free. The only time it's less useful is when you're testing integrations, e.g. Active Directory.</p>
+    
+                    <h4>Building an Openfire container image</h4>
+                    <p>From a terminal in the root of Openfire run:</p>
+                    <p class="code">
+                        ./build/docker/buildWithDocker.sh
+                        docker build . -t openfire:mything
+                    </p>
+        
+                    <h4>Running an Openfire container image</h4>
+                    <p>There are quite a lot of ports involved, or there can be, depending on what you're doing. This list includes pretty much everything. Some of them may conflict with things already running, in which case you'll either need remap, or switch port and reconfigure Openfire accordingly</p>
+                    <p class="code">
+                        docker run --rm -it -p 3478:3478/tcp -p 3479:3479/tcp -p 5222:5222/tcp -p 5223:5223/tcp -p 5229:5229/tcp -p 5262:5262/tcp -p 5263:5263/tcp -p 5275:5275/tcp -p 5276:5276/tcp -p 7070:7070/tcp -p 7443:7443/tcp -p 7777:7777/tcp -p 9090:9090/tcp -p 9091:9091/tcp openfire:mything
+                    </p>
+        
+                    <p>In fact, I've used this so often, I have it as a Bash alias</p>
+                    <pre class="code">
+function ofdocker(){
+    DOCKERCMD="docker run"
+    DOCKERCMD="${DOCKERCMD} --rm -it"
+    DOCKERCMD="${DOCKERCMD} -p 3478:3478/tcp -p 3479:3479/tcp -p 5222:5222/tcp -p 5223:5223/tcp"
+    DOCKERCMD="${DOCKERCMD} -p 5229:5229/tcp -p 5262:5262/tcp -p 5263:5263/tcp -p 5275:5275/tcp"
+    DOCKERCMD="${DOCKERCMD} -p 5276:5276/tcp -p 7070:7070/tcp -p 7443:7443/tcp -p 7777:7777/tcp"
+    DOCKERCMD="${DOCKERCMD} -p 9090:9090/tcp -p 9091:9091/tcp"
+    DOCKERCMD="${DOCKERCMD} openfire:$1 $2"
+    
+    ${DOCKERCMD}
+}
+                    </pre>
+                    <p>The 2nd parameter is passed as CMD params through to Openfire's launch script, so you can do:</p>
+                    <p class="code">
+                        ofdocker mything -demoboot
+                    </p>
+                </div>
+                
+                <h3>Spark Debug Tools</h3>
+                <div>
+                    <p>This may go without saying, given that it's also an Ignite Realtime tool, but the Spark client is as handy for devs as it is for users. Being able to set up a test, then hand-crank some XML that matches a specific use-case or XEP example is invaluable.</p>
+                    <img src="images/spark_debug.png"/>
+                    <p>After sending a stanza, you can use the other views on this pane to see all of the sent &amp; received packets.</p>
+                    <p style="font-style: italic">Enable this from Spark's login pane - Advanced &gt; General &gt; Start debugger on startup</p>
+                </div>
+
+                <h3>Smack Integration Tests</h3>
+                <div>
+                    <p>Some will see the Smack integration tests as unusual. In the Smack project, they're used with a stable XMPP server to test Smack client capabilities. In the Openfire project, they're used with a stable Smack version to test Openfire. Regardless, they are good standards-compliant implementation of XMPP client/server contracts that exercise functionality described in RFCs and XEPs.</p>
+                    
+                    <h4>Set Up</h4>
+                    <p>Clone the code with <tt>git clone git@github.com:igniterealtime/Smack.git</tt></p>
+                    <p style="font-style: italic">On a Mac, you'll hit the problem of a case insensitive file system. The way round this is to use Disk Utility to create a case-sensitive APFS volume to clone into (which via the Terminal will be <tt>diskutil apfs addVolume disk1 'Case-sensitive APFS' Smack</tt>)</p>
+
+                    <h4>Running</h4>
+                    <p><tt>gradle integrationTest</tt> will run the whole suite with default settings</p>
+                    <p>There are plenty of extra parameters you can pass in for controlling which tests to run, who to authenticate as, and what the target of the tests should be. For example, this will run against xmpp.localhost.example instead of example.com, sets the auth credentials for the admin user, and runs only the MUC tests:</p>
+                    <p class="code">
+                        gradle integrationTest -Dsinttest.service=xmpp.localhost.example -Dsinttest.adminAccountUsername=admin -Dsinttest.adminAccountPassword=admin -Dsinttest.securityMode=disabled -Dsinttest.enabledTests=MultiUserChatIntegrationTest
+                    </p>
+                </div>
+
+                <h3>Dependencies</h3>
+                <p>Testing for out-of-date dependencies is important, especially as a release approaches. You can test for ones with known CVEs using dependency-check from within the project using what's built into the POM:</p>
+                <p class="code">
+                    mvn verify -P deps
+                </p>
+                <p>Or to see all dependencies with potential updates:</p>
+                <p class="code">
+                    mvn versions:display-dependency-updates
+                </p>
+
+                <h3>Docker Stacks</h3>
+                <p>I know we've talked about Openfire Docker containers already, but this is more.</p>
+                <p>For a proper representation of a running system for testing out new features, you need Docker Compose.</p>
+                <p>For example, <a href="https://github.com/surevine/openfire-docker-compose">https://github.com/surevine/openfire-docker-compose</a> has configuration options to run Federated or Clustered configurations, backed by databases. This could be extended or used as inspiration for other configurations, such as different/clustered databases configurations, or an LDAP user source.</p>
+            
+                <h3>Useful Plugins</h3>
+                <p>When developing features or diagnosing problems, there are several useful plugins for working with Openfire.Most can be installed via the Plugins pane of Openfire. Sometimes it's useful to load them manually as JARs, especially if you're editing and building your own.</p>
+                Examples:
+                <ul>
+                    <li>DB Access Plugin (<a href="https://github.com/igniterealtime/openfire-dbaccess-plugin">https://github.com/igniterealtime/openfire-dbaccess-plugin</a>)</li>
+                    <li>Thread Dump Plugin (<a href="https://github.com/igniterealtime/openfire-threaddump-plugin">https://github.com/igniterealtime/openfire-threaddump-plugin</a>)</li>
+                </ul>
+            </div>
+
+            <h2>Useful Links</h2>
+            <div>
+                <h3>GitHub</h3>
+                <div>
+                    <p>The useful repositories are all on GitHub, and most are under the Ignite Realtime organisation</p>
+                    Examples:
+                    <ul>
+                        <li><a href="https://github.com/igniterealtime/Openfire">https://github.com/igniterealtime/Openfire</a></li>
+                        <li><a href="https://github.com/igniterealtime/openfire-monitoring-plugin">https://github.com/igniterealtime/openfire-monitoring-plugin</a></li>
+                        <li><a href="https://github.com/igniterealtime/openfire-hazelcast-plugin">https://github.com/igniterealtime/openfire-hazelcast-plugin</a></li>
+                        <li><a href="https://github.com/surevine/openfire-docker-compose">https://github.com/surevine/openfire-docker-compose</a></li>
+                    </ul>
+                </div>
+
+                <h3>Standards</h3>
+                <div>
+                    <p><a href="https://xmpp.org/extensions/">https://xmpp.org/extensions/</a> gives a list of XEPs (XMPP Extension Protocols). It also has links to the RFCs at the top of the page which define the basic operations of XMPP, but those are likely to be of interest & reference only, since for features and bugfixes most work relates to one of the XEPs.</p>
+                    Examples:
+                    <ul>
+                        <li><a href="https://xmpp.org/extensions/xep-0045.html">https://xmpp.org/extensions/xep-0045.html</a> - Multi-User Chat</li>
+                        <li><a href="https://xmpp.org/extensions/xep-0313.html">https://xmpp.org/extensions/xep-0313.html</a> - Message Archive Management</li>
+                    </ul>
+                    Openfire's operation with clients and other servers is almost entirely governed by standards linked to on this page. Notable exclusions are the Admin interface, and Openfire's implementation of clustering.
+                </div>
+
+                <h3>Chat</h3>
+                <div>
+                    <p>If you're stuck on an Openfire problem, come and ask in the <tt>open_chat</tt> channel.</p>
+                    <p>You can visit us via XMPP directly at <a href="xmpp:open_chat@conference.igniterealtime.org">open_chat@conference.igniterealtime.org</a>, or access via our website, <a href="https://www.igniterealtime.org/support/group_chat.jsp">here</a>.</p>
+                </div>
+            </div>
+        </div>  
+    </div>
+</body>
+</html>

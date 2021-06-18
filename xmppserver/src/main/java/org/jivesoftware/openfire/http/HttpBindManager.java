@@ -17,11 +17,14 @@
 package org.jivesoftware.openfire.http;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Connector;
@@ -47,10 +50,7 @@ import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.IdentityStore;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
-import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
+import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
@@ -59,67 +59,271 @@ import org.slf4j.LoggerFactory;
 /**
  * Responsible for making available BOSH (functionality to the outside world, using an embedded web server.
  */
-public final class HttpBindManager implements CertificateEventListener, PropertyEventListener {
+public final class HttpBindManager implements CertificateEventListener {
 
+    private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
+
+    /**
+     * Enable / disable logging of BOSH requests and responses.
+     */
     public static final SystemProperty<Boolean> LOG_HTTPBIND_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("log.httpbind.enabled")
         .setDynamic(true)
         .setDefaultValue(false)
         .build();
 
-    private static final Logger Log = LoggerFactory.getLogger(HttpBindManager.class);
+    /**
+     * Enable / disable BOSH (HTTP Binding) functionality.
+     */
+    public static final SystemProperty<Boolean> HTTP_BIND_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("httpbind.enabled")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .addListener(HttpBindManager::restart)
+        .build();
 
-    public static final String HTTP_BIND_ENABLED = "httpbind.enabled";
+    /**
+     * @deprecated Replaced with HTTP_BIND_ENABLED.getDefaultValue();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final boolean HTTP_BIND_ENABLED_DEFAULT = HTTP_BIND_ENABLED.getDefaultValue();
 
-    public static final boolean HTTP_BIND_ENABLED_DEFAULT = true;
+    /**
+     * TCP port on which the non-encrypted (HTTP) BOSH endpoint is exposed.
+     */
+    public static final SystemProperty<Integer> HTTP_BIND_PORT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("httpbind.port.plain")
+        .setDynamic(true)
+        .setDefaultValue(7070)
+        .addListener(HttpBindManager::restart)
+        .build();
 
-    public static final String HTTP_BIND_PORT = "httpbind.port.plain";
+    /**
+     * @deprecated Replaced with HTTP_BIND_PORT.getDefaultValue();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final int HTTP_BIND_PORT_DEFAULT = HTTP_BIND_PORT.getDefaultValue();
 
-    public static final int HTTP_BIND_PORT_DEFAULT = 7070;
+    /**
+     * TCP port on which the encrypted (HTTPS) BOSH endpoint is exposed.
+     */
+    public static final SystemProperty<Integer> HTTP_BIND_SECURE_PORT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("httpbind.port.secure")
+        .setDynamic(true)
+        .setDefaultValue(7443)
+        .addListener(HttpBindManager::restart)
+        .build();
 
-    public static final String HTTP_BIND_SECURE_PORT = "httpbind.port.secure";
+    /**
+     * @deprecated Replaced with HTTP_BIND_SECURE_PORT.getDefaultValue();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final int HTTP_BIND_SECURE_PORT_DEFAULT = HTTP_BIND_SECURE_PORT.getDefaultValue();
 
-    public static final int HTTP_BIND_SECURE_PORT_DEFAULT = 7443;
+    /**
+     * Minimum amount of threads in the thread pool to perform the network IO related to BOSH traffic.
+     *
+     * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
+     * processing the inbound data (as configured in ({@link HttpSessionManager#MAX_POOL_SIZE}). BOSH
+     * installations expecting heavy loads may want to allocate additional threads to this worker pool to ensure timely
+     * processing of data
+     */
+    public static final SystemProperty<Integer> HTTP_BIND_THREADS_MIN = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("httpbind.client.processing.threads-min")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(8)
+        .setMinValue(1)
+        .build();
 
-    public static final String HTTP_BIND_THREADS = "httpbind.client.processing.threads";
+    /**
+     * Maximum amount of threads in the thread pool to perform the network IO related to BOSH traffic.
+     *
+     * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
+     * processing the inbound data (as configured in ({@link HttpSessionManager#MAX_POOL_SIZE}). BOSH
+     * installations expecting heavy loads may want to allocate additional threads to this worker pool to ensure timely
+     * processing of data
+     */
+    public static final SystemProperty<Integer> HTTP_BIND_THREADS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("httpbind.client.processing.threads")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(200)
+        .setMinValue(1)
+        .build();
 
-    public static final String HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY = "httpbind.client.cert.policy";
+    /**
+     * Amount of time after which idle, surplus threads are removed from the thread pool to perform the network IO
+     * related to BOSH traffic.
+     *
+     * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
+     * processing the inbound data (as configured in ({@link HttpSessionManager#INACTIVITY_TIMEOUT}). BOSH
+     * installations expecting heavy loads may want to allocate additional threads to this worker pool to ensure timely
+     * processing of data
+     */
+    public static final SystemProperty<Duration> HTTP_BIND_THREADS_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("httpbind.client.processing.threads-timeout")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setMaxValue(Duration.ofMillis(Integer.MAX_VALUE)) // Jetty takes an int value, not a long.
+        .build();
 
-    public static final int HTTP_BIND_THREADS_DEFAULT = 200;
+    /**
+     * @deprecated Replaced with HTTP_BIND_THREADS.getDefaultValue();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final int HTTP_BIND_THREADS_DEFAULT = HTTP_BIND_THREADS.getDefaultValue();
 
-    private static final String HTTP_BIND_FORWARDED = "httpbind.forwarded.enabled";
+    /**
+     * The TLS 'mutual authentication' policy that is applied to the BOSH endpoint.
+     */
+    // Ideally, this would be a property of the Connection.ClientAuth enum, but we need to be able to set a 'null' default value (as that will cause a dynamic default to be calculated). Using the dynamic default calculation in this SystemProperty does not work, as it throws NullPointerExceptions during server startup.
+    public static final SystemProperty<String> HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.client.cert.policy")
+        .setDynamic(true)
+        .setDefaultValue(null)
+        .addListener(HttpBindManager::restart)
+        .build();
 
-    private static final String HTTP_BIND_FORWARDED_FOR = "httpbind.forwarded.for.header";
+    /**
+     * Enable / Disable parsing a 'X-Forwarded-For' style HTTP header of BOSH requests.
+     */
+    public static final SystemProperty<Boolean> HTTP_BIND_FORWARDED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("httpbind.forwarded.enabled")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(false)
+        .build();
 
-    private static final String HTTP_BIND_FORWARDED_SERVER = "httpbind.forwarded.server.header";
+    /**
+     * The HTTP header name for 'forwarded for'
+     */
+    public static final SystemProperty<String> HTTP_BIND_FORWARDED_FOR = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.forwarded.for.header")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(HttpHeader.X_FORWARDED_FOR.toString())
+        .build();
 
-    private static final String HTTP_BIND_FORWARDED_HOST = "httpbind.forwarded.host.header";
+    /**
+     * The HTTP header name for 'forwarded server'.
+     */
+    public static final SystemProperty<String> HTTP_BIND_FORWARDED_SERVER = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.forwarded.server.header")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(HttpHeader.X_FORWARDED_SERVER.toString())
+        .build();
 
-    private static final String HTTP_BIND_FORWARDED_HOST_NAME = "httpbind.forwarded.host.name";
+    /**
+     * The HTTP header name for 'forwarded hosts'.
+     */
+    public static final SystemProperty<String> HTTP_BIND_FORWARDED_HOST = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.forwarded.host.header")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(HttpHeader.X_FORWARDED_HOST.toString())
+        .build();
+
+    /**
+     * Sets a forced valued for the host header.
+     */
+    public static final SystemProperty<String> HTTP_BIND_FORWARDED_HOST_NAME = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.forwarded.host.name")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(null)
+        .build();
 
     // http binding CORS default properties
 
-    public static final String HTTP_BIND_CORS_ENABLED = "httpbind.CORS.enabled";
+    /**
+     * Enable / Disable support for Cross-Origin Resource Sharing (CORS) headers in the BOSH endpoint.
+     */
+    public static final SystemProperty<Boolean> HTTP_BIND_CORS_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("httpbind.CORS.enabled")
+        .setDynamic(false)  // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(true)
+        .build();
 
-    public static final boolean HTTP_BIND_CORS_ENABLED_DEFAULT = true;
+    /**
+     * @deprecated Replaced with HTTP_BIND_CORS_ENABLED.getDefaultValue();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final boolean HTTP_BIND_CORS_ENABLED_DEFAULT = HTTP_BIND_CORS_ENABLED.getDefaultValue();
 
-    public static final String HTTP_BIND_CORS_ALLOW_ORIGIN = "httpbind.CORS.domains";
+    /**
+     * The Cross-Origin Resource Sharing (CORS) header value that represents the 'allow all orgins' state.
+     */
+    public static final String HTTP_BIND_CORS_ALLOW_ORIGIN_ALL = "*";
 
-    public static final String HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT = "*";
+    /**
+     * The domain names that are accepted as values for the CORS 'Origin' header in the BOSH endpoint.
+     */
+    public static final SystemProperty<Set<String>> HTTP_BIND_ALLOWED_ORIGINS = SystemProperty.Builder.ofType(Set.class)
+        .setKey("httpbind.CORS.domains")
+        .setDynamic(true)
+        .setDefaultValue(Collections.singleton(HTTP_BIND_CORS_ALLOW_ORIGIN_ALL))
+        .buildSet(String.class);
 
-    public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = "PROPFIND, PROPPATCH, COPY, MOVE, DELETE, MKCOL, LOCK, UNLOCK, PUT, GETLIB, VERSION-CONTROL, CHECKIN, CHECKOUT, UNCHECKOUT, REPORT, UPDATE, CANCELUPLOAD, HEAD, OPTIONS, GET, POST";
+    /**
+     * The HTTP methods that are accepted in the BOSH endpoint.
+     */
+    public static final SystemProperty<Set<String>> HTTP_BIND_CORS_ALLOW_METHODS = SystemProperty.Builder.ofType(Set.class)
+        .setKey("httpbind.CORS.methods")
+        .setDynamic(true)
+        .setDefaultValue(new HashSet<>(Arrays.asList("PROPFIND", "PROPPATCH", "COPY", "MOVE", "DELETE", "MKCOL", "LOCK", "UNLOCK", "PUT", "GETLIB", "VERSION-CONTROL", "CHECKIN", "CHECKOUT", "UNCHECKOUT", "REPORT", "UPDATE", "CANCELUPLOAD", "HEAD", "OPTIONS", "GET", "POST")) )
+        .buildSet(String.class);
 
-    public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = "Overwrite, Destination, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control";
+    /**
+     * @deprecated Replaced with String.join(", ", HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue())
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = String.join(", ", HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue());
 
-    public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = "86400";
+    /**
+     * The name of HTTP headers that are accepted in requests to the BOSH endpoint.
+     */
+    public static final SystemProperty<Set<String>> HTTP_BIND_CORS_ALLOW_HEADERS = SystemProperty.Builder.ofType(Set.class)
+        .setKey("httpbind.CORS.headers")
+        .setDynamic(true)
+        .setDefaultValue(new HashSet<>(Arrays.asList("Overwrite", "Destination", "Content-Type", "Depth", "User-Agent", "X-File-Size", "X-Requested-With", "If-Modified-Since", "X-File-Name", "Cache-Control")) )
+        .buildSet(String.class);
 
-    public static final String HTTP_BIND_REQUEST_HEADER_SIZE = "httpbind.request.header.size";
+    /**
+     * @deprecated Replaced with String.join(", ", HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue())
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = String.join(", ", HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue());;
 
-    public static final int HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT = 32768;
+    /**
+     * How long the results of a preflight request (that is the information contained in the Access-Control-Allow-Methods and Access-Control-Allow-Headers headers) can be cached.
+     */
+    public static final SystemProperty<Duration> HTTP_BIND_CORS_MAX_AGE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("httpbind.CORS.max_age")
+        .setDynamic(true)
+        .setDefaultValue(Duration.ofDays(1))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .build();
 
-    public static Map<String, Boolean> HTTP_BIND_ALLOWED_ORIGINS = new HashMap<>();
+    /**
+     * @deprecated Replaced with HTTP_BIND_CORS_MAX_AGE.getDefaultValue().toSeconds();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = String.valueOf(HTTP_BIND_CORS_MAX_AGE.getDefaultValue().getSeconds()); // TODO replace with 'toSeconds()' after dropping support for Java 8
 
-    private static HttpBindManager instance = new HttpBindManager();
+    /**
+     * the maximum size in bytes of request headers in the BOSH endpoint. Larger headers will allow for more and/or
+     * larger cookies plus larger form content encoded in a URL. However, larger headers consume more memory and can
+     * make a server more vulnerable to denial of service attacks.
+     */
+    public static final SystemProperty<Integer> HTTP_BIND_REQUEST_HEADER_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("httpbind.request.header.size")
+        .setDynamic(true)
+        .setDefaultValue(32768)
+        .build();
+
+    /**
+     * @deprecated Replaced with HTTP_BIND_REQUEST_HEADER_SIZE.getDefaultValue();
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
+    public static final int HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT = HTTP_BIND_REQUEST_HEADER_SIZE.getDefaultValue();
+
+    private static HttpBindManager instance;
 
     private Server httpBindServer;
 
@@ -159,29 +363,16 @@ public final class HttpBindManager implements CertificateEventListener, Property
      */
     private TempFileToucherTask tempFileToucherTask;
 
-    public static HttpBindManager getInstance() {
+    public static synchronized HttpBindManager getInstance() {
+        if (instance == null) {
+            instance = new HttpBindManager();
+        }
         return instance;
     }
 
     private HttpBindManager() {
-        JiveGlobals.migrateProperty(HTTP_BIND_ENABLED);
-        JiveGlobals.migrateProperty(HTTP_BIND_PORT);
-        JiveGlobals.migrateProperty(HTTP_BIND_SECURE_PORT);
-        JiveGlobals.migrateProperty(HTTP_BIND_THREADS);
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED);
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_FOR);
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_SERVER);
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST);
-        JiveGlobals.migrateProperty(HTTP_BIND_FORWARDED_HOST_NAME);
-        JiveGlobals.migrateProperty(HTTP_BIND_CORS_ENABLED);
-        JiveGlobals.migrateProperty(HTTP_BIND_CORS_ALLOW_ORIGIN);
-        JiveGlobals.migrateProperty(HTTP_BIND_REQUEST_HEADER_SIZE);
 
-        PropertyEventDispatcher.addListener( this );
         this.httpSessionManager = new HttpSessionManager();
-
-        // setup the cache for the allowed origins
-        this.setupAllowedOriginsMap();
 
         // Setup the default handlers. Order is important here. First, evaluate if the 'standard' handlers can be used to fulfill requests.
         this.handlerList.addHandler( createBoshHandler() );
@@ -201,14 +392,11 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
     public void start() {
 
-        if (!isHttpBindServiceEnabled()) {
+        if (!HTTP_BIND_ENABLED.getValue()) {
             return;
         }
 
-        // this is the number of threads allocated to each connector/port
-        final int processingThreads = JiveGlobals.getIntProperty(HTTP_BIND_THREADS, HTTP_BIND_THREADS_DEFAULT);
-
-        final QueuedThreadPool tp = new QueuedThreadPool(processingThreads);
+        final QueuedThreadPool tp = new QueuedThreadPool(HTTP_BIND_THREADS.getValue(), HTTP_BIND_THREADS_MIN.getValue(), (int) HTTP_BIND_THREADS_TIMEOUT.getValue().toMillis());
         tp.setName("Jetty-QTP-BOSH");
 
         httpBindServer = new Server(tp);
@@ -319,10 +507,6 @@ public final class HttpBindManager implements CertificateEventListener, Property
         return httpSessionManager;
     }
 
-    private boolean isHttpBindServiceEnabled() {
-        return JiveGlobals.getBooleanProperty(HTTP_BIND_ENABLED, HTTP_BIND_ENABLED_DEFAULT);
-    }
-
     private Connector createConnector( final Server httpBindServer ) {
         final int port = getHttpBindUnsecurePort();
         if (port > 0) {
@@ -382,17 +566,17 @@ public final class HttpBindManager implements CertificateEventListener, Property
         if (isXFFEnabled()) {
             ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
             // default: "X-Forwarded-For"
-            String forwardedForHeader = getXFFHeader();
+            String forwardedForHeader = HTTP_BIND_FORWARDED_FOR.getValue();
             if (forwardedForHeader != null) {
                 customizer.setForwardedForHeader(forwardedForHeader);
             }
             // default: "X-Forwarded-Server"
-            String forwardedServerHeader = getXFFServerHeader();
+            String forwardedServerHeader = HTTP_BIND_FORWARDED_SERVER.getValue();
             if (forwardedServerHeader != null) {
                 customizer.setForwardedServerHeader(forwardedServerHeader);
             }
             // default: "X-Forwarded-Host"
-            String forwardedHostHeader = getXFFHostHeader();
+            String forwardedHostHeader = HTTP_BIND_FORWARDED_HOST.getValue();
             if (forwardedHostHeader != null) {
                 customizer.setForwardedHostHeader(forwardedHostHeader);
             }
@@ -404,7 +588,7 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
             httpConfig.addCustomizer(customizer);
         }
-        httpConfig.setRequestHeaderSize(JiveGlobals.getIntProperty(HTTP_BIND_REQUEST_HEADER_SIZE, HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT));
+        httpConfig.setRequestHeaderSize(HTTP_BIND_REQUEST_HEADER_SIZE.getValue());
    }
 
     private String getBindInterface() {
@@ -495,109 +679,151 @@ public final class HttpBindManager implements CertificateEventListener, Property
 
     // http binding CORS support start
 
-    private void setupAllowedOriginsMap() {
-        final String originString = getCORSAllowOrigin();
-        if (!originString.equals(HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT)) {
-            String[] origins = originString.split(",");
-            // reset the cache
-            HTTP_BIND_ALLOWED_ORIGINS.clear();
-            for (String str : origins) {
-                HTTP_BIND_ALLOWED_ORIGINS.put(str, true);
-            }
-        }
-    }
-
+    /**
+     * @deprecated Replaced by <tt>HTTP_BIND_CORS_ENABLED.getValue()</tt>
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public boolean isCORSEnabled() {
-        return JiveGlobals.getBooleanProperty(HTTP_BIND_CORS_ENABLED, HTTP_BIND_CORS_ENABLED_DEFAULT);
+        return HTTP_BIND_CORS_ENABLED.getValue();
     }
 
+    /**
+     * @deprecated Replaced by <tt>HTTP_BIND_CORS_ENABLED.setValue()</tt>
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setCORSEnabled(Boolean value) {
         if (value != null)
-            JiveGlobals.setProperty(HTTP_BIND_CORS_ENABLED, String.valueOf(value));
+            HTTP_BIND_CORS_ENABLED.setValue(value);
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_ALLOWED_ORIGINS.getValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public String getCORSAllowOrigin() {
-        return JiveGlobals.getProperty(HTTP_BIND_CORS_ALLOW_ORIGIN , HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT);
+        return String.join(",", HTTP_BIND_ALLOWED_ORIGINS.getValue());
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_ALLOWED_ORIGINS.setValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setCORSAllowOrigin(String origins) {
+        final Set<String> update = new HashSet<>();
         if (origins == null || origins.trim().length() == 0)
-             origins = HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT;
+            update.add(HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
         else {
             origins = origins.replaceAll("\\s+", "");
+            final String[] split = origins.split(",");
+            update.addAll(Arrays.asList(split));
         }
-        JiveGlobals.setProperty(HTTP_BIND_CORS_ALLOW_ORIGIN, origins);
-        setupAllowedOriginsMap();
+        HTTP_BIND_ALLOWED_ORIGINS.setValue(update);
     }
 
     public boolean isAllOriginsAllowed() {
-        return HTTP_BIND_CORS_ALLOW_ORIGIN_DEFAULT.equals( getCORSAllowOrigin() );
+        return HTTP_BIND_ALLOWED_ORIGINS.getValue().contains(HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
     }
 
     public boolean isThisOriginAllowed(String origin) {
-        return isAllOriginsAllowed() || HTTP_BIND_ALLOWED_ORIGINS.get(origin) != null;
+        return isAllOriginsAllowed() || HTTP_BIND_ALLOWED_ORIGINS.getValue().stream().anyMatch(o -> o.equalsIgnoreCase(origin));
     }
 
     // http binding CORS support end
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED.getValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public boolean isXFFEnabled() {
-        return JiveGlobals.getBooleanProperty(HTTP_BIND_FORWARDED, false);
+        return HTTP_BIND_FORWARDED.getValue();
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED.setValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setXFFEnabled(boolean enabled) {
-        JiveGlobals.setProperty(HTTP_BIND_FORWARDED, String.valueOf(enabled));
+        HTTP_BIND_FORWARDED.setValue(enabled);
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_FOR.getValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public String getXFFHeader() {
-        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_FOR);
+        return HTTP_BIND_FORWARDED_FOR.getValue();
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_FOR.setValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setXFFHeader(String header) {
-        if (header == null || header.trim().length() == 0) {
-            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_FOR);
+        if (header == null || header.trim().isEmpty()) {
+            HTTP_BIND_FORWARDED_FOR.setValue(null);
         } else {
-            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_FOR, header);
+            HTTP_BIND_FORWARDED_FOR.setValue(header);
         }
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_SERVER.getValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public String getXFFServerHeader() {
-        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_SERVER);
+        return HTTP_BIND_FORWARDED_SERVER.getValue();
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_SERVER.setValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setXFFServerHeader(String header) {
-        if (header == null || header.trim().length() == 0) {
-            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_SERVER);
+        if (header == null || header.trim().isEmpty()) {
+            HTTP_BIND_FORWARDED_SERVER.setValue(null);
         } else {
-            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_SERVER, header);
+            HTTP_BIND_FORWARDED_SERVER.setValue(header);
         }
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST.getValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public String getXFFHostHeader() {
-        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_HOST);
+        return HTTP_BIND_FORWARDED_HOST.getValue();
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST.setValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setXFFHostHeader(String header) {
-        if (header == null || header.trim().length() == 0) {
-            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST);
+        if (header == null || header.trim().isEmpty()) {
+            HTTP_BIND_FORWARDED_HOST.setValue(null);
         } else {
-            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST, header);
+            HTTP_BIND_FORWARDED_HOST.setValue(header);
         }
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST_NAME.getValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public String getXFFHostName() {
-        return JiveGlobals.getProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+        return HTTP_BIND_FORWARDED_HOST_NAME.getValue();
     }
 
+    /**
+     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST_NAME.setValue()
+     */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setXFFHostName(String name) {
-        if (name == null || name.trim().length() == 0) {
-            JiveGlobals.deleteProperty(HTTP_BIND_FORWARDED_HOST_NAME);
+        if (name == null || name.trim().isEmpty()) {
+            HTTP_BIND_FORWARDED_HOST_NAME.setValue(null);
         } else {
-            JiveGlobals.setProperty(HTTP_BIND_FORWARDED_HOST_NAME, name);
+            HTTP_BIND_FORWARDED_HOST_NAME.setValue(name);
         }
-    }
-
-    public void setHttpBindEnabled(boolean isEnabled) {
-        JiveGlobals.setProperty(HTTP_BIND_ENABLED, String.valueOf(isEnabled));
     }
 
     /**
@@ -606,20 +832,12 @@ public final class HttpBindManager implements CertificateEventListener, Property
      * @param unsecurePort the unsecured connection port which clients can connect to.
      * @param securePort the secured connection port which clients can connect to.
      * @throws Exception when there is an error configuring the HTTP binding ports.
+     * @deprecated Replaced with HTTP_BIND_PORT.setValue(unsecurePort) and HTTP_BIND_SECURE_PORT.setValue(unsecurePort);
      */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public void setHttpBindPorts(int unsecurePort, int securePort) throws Exception {
-        if (unsecurePort != HTTP_BIND_PORT_DEFAULT) {
-            JiveGlobals.setProperty(HTTP_BIND_PORT, String.valueOf(unsecurePort));
-        }
-        else {
-            JiveGlobals.deleteProperty(HTTP_BIND_PORT);
-        }
-        if (securePort != HTTP_BIND_SECURE_PORT_DEFAULT) {
-            JiveGlobals.setProperty(HTTP_BIND_SECURE_PORT, String.valueOf(securePort));
-        }
-        else {
-            JiveGlobals.deleteProperty(HTTP_BIND_SECURE_PORT);
-        }
+        HTTP_BIND_PORT.setValue(unsecurePort);
+        HTTP_BIND_SECURE_PORT.setValue(securePort);
     }
 
     /**
@@ -791,18 +1009,22 @@ public final class HttpBindManager implements CertificateEventListener, Property
      * Returns the HTTP binding port which does not use SSL.
      *
      * @return the HTTP binding port which does not use SSL.
+     * @deprecated Replaced with HTTP_BIND_PORT.getValue()
      */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public int getHttpBindUnsecurePort() {
-        return JiveGlobals.getIntProperty(HTTP_BIND_PORT, HTTP_BIND_PORT_DEFAULT);
+        return HTTP_BIND_PORT.getValue();
     }
 
     /**
      * Returns the HTTP binding port which uses SSL.
      *
      * @return the HTTP binding port which uses SSL.
+     * @deprecated Replaced with HTTP_BIND_SECURE_PORT.getValue()
      */
+    @Deprecated // TODO drop in Openfire 4.8.0 or later.
     public int getHttpBindSecurePort() {
-        return JiveGlobals.getIntProperty(HTTP_BIND_SECURE_PORT, HTTP_BIND_SECURE_PORT_DEFAULT);
+        return HTTP_BIND_SECURE_PORT.getValue();
     }
 
     /**
@@ -836,63 +1058,19 @@ public final class HttpBindManager implements CertificateEventListener, Property
         }
     }
 
+    /**
+     * Static reference for {@link #restartServer()} that can be used as a listener of a {@link SystemProperty}.
+     * The provided argument is ignored.
+     */
+    public static void restart(Object ignored) {
+        if (getInstance() != null) {
+            getInstance().restartServer();
+        }
+    }
+
     private synchronized void restartServer() {
         stop();
         start();
-    }
-
-    @Override
-    public void propertySet(String property, Map<String, Object> params) {
-        if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
-            doEnableHttpBind(Boolean.valueOf(params.get("value").toString()));
-        }
-        else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
-            try {
-                Integer.valueOf(params.get("value").toString());
-            }
-            catch (NumberFormatException ne) {
-                JiveGlobals.deleteProperty(HTTP_BIND_PORT);
-                return;
-            }
-            restartServer();
-        }
-        else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
-            try {
-                Integer.valueOf(params.get("value").toString());
-            }
-            catch (NumberFormatException ne) {
-                JiveGlobals.deleteProperty(HTTP_BIND_SECURE_PORT);
-                return;
-            }
-            restartServer();
-        }
-        else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
-            restartServer();
-        }
-    }
-
-    @Override
-    public void propertyDeleted(String property, Map<String, Object> params) {
-        if (property.equalsIgnoreCase(HTTP_BIND_ENABLED)) {
-            doEnableHttpBind(HTTP_BIND_ENABLED_DEFAULT);
-        }
-        else if (property.equalsIgnoreCase(HTTP_BIND_PORT)) {
-            restartServer();
-        }
-        else if (property.equalsIgnoreCase(HTTP_BIND_SECURE_PORT)) {
-            restartServer();
-        }
-        else if (HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.equalsIgnoreCase( property )) {
-            restartServer();
-        }
-    }
-
-    @Override
-    public void xmlPropertySet(String property, Map<String, Object> params) {
-    }
-
-    @Override
-    public void xmlPropertyDeleted(String property, Map<String, Object> params) {
     }
 
     @Override

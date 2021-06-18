@@ -16,19 +16,21 @@
 
 package org.jivesoftware.util;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
+import org.jivesoftware.openfire.JMXManager;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.ObjectName;
 
 /**
  * Performs tasks using worker threads. It also allows tasks to be scheduled to be
@@ -43,7 +45,43 @@ import org.slf4j.LoggerFactory;
 public class TaskEngine {
 
     private static final Logger Log = LoggerFactory.getLogger(TaskEngine.class);
-    private static TaskEngine instance = new TaskEngine();
+
+    /**
+     * The number of threads to keep in the thread pool that is used to execute tasks of Openfire's TaskEngine, even if they are idle.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.taskengine.threadpool.size.core")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool that is used to execute tasks of Openfire's TaskEngine.
+     */
+    public static final SystemProperty<Integer> EXECUTOR_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.taskengine.threadpool.size.max")
+        .setMinValue(1)
+        .setDefaultValue(Integer.MAX_VALUE)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The number of threads in the thread pool that is used to execute tasks of Openfire's TaskEngine is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> EXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.taskengine.threadpool.keepalive")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the taskengine thread pool executor.
+     */
+    private ObjectName objectName;
+
+    private static final TaskEngine instance = new TaskEngine();
 
     /**
      * Returns a task engine instance (singleton).
@@ -55,8 +93,8 @@ public class TaskEngine {
     }
 
     private Timer timer;
-    private ExecutorService executor;
-    private Map<TimerTask, TimerTaskWrapper> wrappedTasks = new ConcurrentHashMap<>();
+    private ThreadPoolExecutor executor;
+    private final Map<TimerTask, TimerTaskWrapper> wrappedTasks = new ConcurrentHashMap<>();
 
     /**
      * Constructs a new task engine.
@@ -64,7 +102,18 @@ public class TaskEngine {
     private TaskEngine() {
         timer = new Timer("TaskEngine-timer", true);
         final ThreadFactory threadFactory = new NamedThreadFactory( "TaskEngine-pool-", true, Thread.NORM_PRIORITY, Thread.currentThread().getThreadGroup(), 0L );
-        executor = Executors.newCachedThreadPool( threadFactory );
+        executor = new ThreadPoolExecutor(
+            EXECUTOR_CORE_POOL_SIZE.getValue(),
+            EXECUTOR_MAX_POOL_SIZE.getValue(),
+            EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            threadFactory);
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(executor);
+            objectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "taskEngine");
+        }
     }
 
     /**
@@ -275,6 +324,11 @@ public class TaskEngine {
      * Shuts down the task engine service.
      */
     public void shutdown() {
+        if (objectName != null) {
+            JMXManager.tryUnregister(objectName);
+            objectName = null;
+        }
+
         if (executor != null) {
             executor.shutdown();
             executor = null;

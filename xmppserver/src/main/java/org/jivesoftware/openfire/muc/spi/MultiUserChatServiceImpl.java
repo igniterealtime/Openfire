@@ -1591,7 +1591,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Load all the persistent rooms to memory
             final Instant cutoff = Instant.now().minus(Duration.ofDays(preloadDays));
             for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff), router)) {
-                localMUCRoomManager.addRoom(room.getName().toLowerCase(), room);
+                localMUCRoomManager.addRoom(room.getName(), room);
 
                 // Start FMUC, if desired.
                 room.getFmucHandler().applyConfigurationChanges();

@@ -232,7 +232,7 @@ jobs:
     steps:
       - name: Set up variables if we're on master
         if: ${{ github.ref == 'refs/heads/master' }}
-        run: echo "SOURCE_TAG=latest" >> $GITHUB_ENV
+        run: echo "SOURCE_TAG=alpha" >> $GITHUB_ENV
 
       - name: Set up variables if we're on a tag
         if: ${{ contains(github.ref, 'refs/tags/') }}

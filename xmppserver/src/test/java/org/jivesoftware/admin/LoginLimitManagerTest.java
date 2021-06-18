@@ -22,10 +22,11 @@ public class LoginLimitManagerTest {
     private LoginLimitManager loginLimitManager;
 
     @Mock private SecurityAuditManager securityAuditManager;
+    @Mock private TaskEngine taskEngine;
 
     @Before
     public void setUp() {
-        loginLimitManager = new LoginLimitManager(securityAuditManager, TaskEngine.getInstance());
+        loginLimitManager = new LoginLimitManager(securityAuditManager, taskEngine);
     }
 
     @Test

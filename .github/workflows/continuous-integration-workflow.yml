@@ -203,7 +203,7 @@ jobs:
     # Based on https://github.com/GabLeRoux/github-actions-examples/blob/e0468ce2731b08bd8b1f7cd09d0b94c541310693/.github/workflows/secret_based_conditions.yml
     name: Check if Docker Hub secrets exist
     runs-on: ubuntu-latest
-    needs: [build, smack] # Add all tests when they're stable
+    needs: [build, aioxmpp, connectivity, smack]
     outputs:
       is_DOCKERHUB_SECRET_set: ${{ steps.checksecret_job.outputs.is_DOCKERHUB_SECRET_set }}
     steps:
@@ -232,7 +232,7 @@ jobs:
     steps:
       - name: Set up variables if we're on master
         if: ${{ github.ref == 'refs/heads/master' }}
-        run: echo "SOURCE_TAG=latest" >> $GITHUB_ENV
+        run: echo "SOURCE_TAG=alpha" >> $GITHUB_ENV
 
       - name: Set up variables if we're on a tag
         if: ${{ contains(github.ref, 'refs/tags/') }}

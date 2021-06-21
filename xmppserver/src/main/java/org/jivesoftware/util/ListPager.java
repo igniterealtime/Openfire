@@ -228,8 +228,14 @@ public class ListPager<T> {
             cssClass = "";
         }
 
+        String additionalParamString = "";
+        for (final String additionalFormField : additionalFormFields) {
+            final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "");
+            additionalParamString+=String.format("%s=%s&",additionalFormField,StringEscapeUtils.escapeXml11(formFieldValue));
+        }
+
         sb.append(String.format("\n<a href='%s' onclick='return jumpToPage(%d)'%s>%s</a>",
-            String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
+            String.format("?%s%s=%d",additionalParamString, REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
             pageToLink,
             cssClass,
             pageToLink));

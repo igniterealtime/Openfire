@@ -67,7 +67,7 @@
         .collect(Collectors.toList());
 
     // paginator vars
-    final ListPager<String> listPager = new ListPager<>(request, response, names, mucname);
+    final ListPager<String> listPager = new ListPager<>(request, response, names, "mucname");
 %>
 <html>
     <head>

@@ -163,7 +163,7 @@
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
         <td width="1%">
-            <%= i %>
+            <%= (i-1) %>
         </td>
         <td width="45%" valign="middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>

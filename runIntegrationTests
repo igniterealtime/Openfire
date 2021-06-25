@@ -161,13 +161,18 @@ function runTestsInGradle {
     DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
     DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
 
+    # Occasionally fail because of unstable AbstractSmackIntegrationTest#performActionAndWaitForPresence being used.
+    # See https://github.com/igniterealtime/Smack/commit/5bfe789e08ebb251b3c4302cb653c715eee363ea for unstable solution.
+    # Disable until AbstractSmackIntegrationTest#performActionAndWaitForPresence is improved/replaced.
+	DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
+	DISABLED_INTEGRATION_TESTS+=(SoftwareInfoIntegrationTest)
+
     # Occasionally fails, disabled until cause can be found.
 	DISABLED_INTEGRATION_TESTS+=(XmppConnectionIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(StreamManagementTest)
 	DISABLED_INTEGRATION_TESTS+=(WaitForClosingStreamElementTest)
 	DISABLED_INTEGRATION_TESTS+=(IoTControlIntegrationTest)
 	DISABLED_INTEGRATION_TESTS+=(ModularXmppClientToServerConnectionLowLevelIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(EntityCapsTest)
 
 	SINTTEST_DISABLED_TESTS_ARGUMENT="-Dsinttest.disabledTests="
 	for disabledTest in "${DISABLED_INTEGRATION_TESTS[@]}"; do

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.roster;
 
+import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,7 +27,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
@@ -37,6 +43,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 /**
  * Defines the provider methods required for creating, reading, updating and deleting roster
@@ -58,11 +65,11 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
             "INSERT INTO ofRoster (username, rosterID, jid, sub, ask, recv, nick) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_ROSTER_ITEM =
-            "UPDATE ofRoster SET sub=?, ask=?, recv=?, nick=? WHERE rosterID=?";
+            "UPDATE ofRoster SET sub=?, ask=?, recv=?, nick=?, stanza=? WHERE rosterID=?";
     private static final String DELETE_ROSTER_ITEM_GROUPS =
             "DELETE FROM ofRosterGroups WHERE rosterID=?";
     private static final String CREATE_ROSTER_ITEM_GROUPS =
-            "INSERT INTO ofRosterGroups (rosterID, %s, groupName) VALUES (?, ?, ?)";
+            "INSERT INTO ofRosterGroups (rosterID, %s, groupName, stanza) VALUES (?, ?, ?, ?)";
     private static final String DELETE_ROSTER_ITEM =
             "DELETE FROM ofRoster WHERE rosterID=?";
     private static final String LOAD_USERNAMES =
@@ -70,13 +77,19 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     private static final String COUNT_ROSTER_ITEMS =
             "SELECT COUNT(rosterID) FROM ofRoster WHERE username=?";
      private static final String LOAD_ROSTER =
-             "SELECT jid, rosterID, sub, ask, recv, nick FROM ofRoster WHERE username=?";
+             "SELECT jid, rosterID, sub, ask, recv, nick, stanza FROM ofRoster WHERE username=?";
     private static final String LOAD_ROSTER_ITEM_GROUPS =
              "SELECT ofRosterGroups.rosterID,groupName FROM ofRosterGroups " +
              "INNER JOIN ofRoster ON ofRosterGroups.rosterID = ofRoster.rosterID " +
              "WHERE username=? ORDER BY ofRosterGroups.rosterID, %s";
 
     private final Cache<String, LinkedList<RosterItem>> rosterItemCache = CacheFactory.createCache( "RosterItems" );
+
+    /**
+     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
+     */
+    private final static int POOL_SIZE = 10;
+    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     /* (non-Javadoc)
      * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
@@ -133,7 +146,8 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
             pstmt.setInt(2, item.getAskStatus().getValue());
             pstmt.setInt(3, item.getRecvStatus().getValue());
             pstmt.setString(4, item.getNickname());
-            pstmt.setLong(5, rosterID);
+            pstmt.setString(5, item.getStoredSubscribeStanza().toXML());
+            pstmt.setLong(6, rosterID);
             pstmt.executeUpdate();
             // Close now the statement (do not wait to be GC'ed)
             DbConnectionManager.fastcloseStmt(pstmt);
@@ -255,14 +269,27 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        SAXReader xmlReader = null;
         try {
             // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER);
             pstmt.setString(1, username);
             rs = pstmt.executeQuery();
+            if (xmlReaders.isEmpty()) {
+                xmlReader = new SAXReader();
+                xmlReader.setEncoding("UTF-8");
+            } else {
+                xmlReader = xmlReaders.take();
+            }
             while (rs.next()) {
                 // Create a new RosterItem (ie. user contact) from the stored information
+                // First parse out the presence, if it's there.
+                Presence presence = null;
+                if (rs.getString(7) != null) {
+                    Element root = xmlReader.read(new StringReader(rs.getString(7))).getRootElement();
+                    presence = new Presence(root);
+                }
                 RosterItem item = new RosterItem(rs.getLong(2),
                         new JID(rs.getString(1)),
                         RosterItem.SubType.getTypeFromInt(rs.getInt(3)),
@@ -294,11 +321,14 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             rosterItemCache.put( username, itemList );
         }
-        catch (SQLException e) {
+        catch (SQLException | InterruptedException | DocumentException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
+            if (xmlReader != null) {
+                xmlReaders.offer(xmlReader); // If full, toss it.
+            }
         }
         return itemList.iterator();
     }

@@ -297,6 +297,9 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
                         RosterItem.RecvType.getTypeFromInt(rs.getInt(5)),
                         rs.getString(6),
                         null);
+                if (presence != null) {
+                    item.setStoredSubscribeStanza(presence);
+                }
                 // Add the loaded RosterItem (ie. user contact) to the result
                 itemList.add(item);
                 itemsByID.put(item.getID(), item);

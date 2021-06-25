@@ -16,11 +16,17 @@
 
 package org.jivesoftware.util.cache;
 
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+
 import java.io.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Utility methods to assist in working with the Externalizable interfaces. This class
@@ -35,12 +41,35 @@ import java.util.Set;
  */
 public class ExternalizableUtil {
 
-    private static ExternalizableUtil instance = new ExternalizableUtil();
+    private static ExternalizableUtil instance;
 
     private ExternalizableUtilStrategy strategy = new DefaultExternalizableUtil();
 
     static {
         instance = new ExternalizableUtil();
+    }
+
+    /**
+     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
+     */
+    private final static int POOL_SIZE = 10;
+    private final BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
+
+    private SAXReader takeSAXReader() throws InterruptedException {
+        SAXReader xmlReader;
+        if (! xmlReaders.isEmpty()) {
+            xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+        } else {
+            xmlReader = xmlReaders.take();
+        }
+        return xmlReader;
+    }
+
+    private void returnSAXReader(SAXReader xmlReader) {
+        if (xmlReader != null) {
+            xmlReaders.offer(xmlReader); // If full, toss it.
+        }
     }
 
     public static ExternalizableUtil getInstance() {
@@ -371,5 +400,21 @@ public class ExternalizableUtil {
      */
     public int readStrings(DataInput in, Collection<String> collection) throws IOException {
         return strategy.readStrings(in, collection);
+    }
+
+    public void writeXML(DataOutput out, Element element) throws IOException {
+        strategy.writeSafeUTF(out, element.asXML());
+    }
+
+    public Element readXML(DataInput in) throws IOException {
+        SAXReader xmlReader = null;
+        try {
+            xmlReader = takeSAXReader();
+            return xmlReader.read(new StringReader(readSafeUTF(in))).getRootElement();
+        } catch(DocumentException | InterruptedException e) {
+            throw new IOException(e.getMessage());
+        } finally {
+            returnSAXReader(xmlReader);
+        }
     }
 }

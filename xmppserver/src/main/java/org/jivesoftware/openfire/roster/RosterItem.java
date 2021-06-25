@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.roster;
 
+import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
@@ -27,11 +28,10 @@ import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import javax.xml.bind.Element;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -227,6 +227,8 @@ public class RosterItem implements Cacheable, Externalizable {
     protected Set<String> invisibleSharedGroups = new HashSet<>();
     protected SubType subStatus;
     protected AskType askStatus;
+    // Presence for type='subscribe'.
+    protected Presence subscribeStanza;
     /**
      * Holds the ID that uniquely identifies the roster in the backend store. A value of
      * zero means that the roster item is not persistent.
@@ -615,6 +617,7 @@ public class RosterItem implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfInt(); // askStatus
         size += CacheSizes.sizeOfInt(); // recvStatus
         size += CacheSizes.sizeOfLong(); // id
+        size += CacheSizes.sizeOfString(subscribeStanza.toXML());
         return size;
     }
 
@@ -632,6 +635,10 @@ public class RosterItem implements Cacheable, Externalizable {
         ExternalizableUtil.getInstance().writeInt(out, subStatus.getValue());
         ExternalizableUtil.getInstance().writeInt(out, askStatus.getValue());
         ExternalizableUtil.getInstance().writeLong(out, rosterID);
+        ExternalizableUtil.getInstance().writeBoolean(out, subscribeStanza != null);
+        if (subscribeStanza != null) {
+            ExternalizableUtil.getInstance().writeXML(out, subscribeStanza.getElement());
+        }
     }
 
     @Override
@@ -648,5 +655,30 @@ public class RosterItem implements Cacheable, Externalizable {
         subStatus = SubType.getTypeFromInt(ExternalizableUtil.getInstance().readInt(in));
         askStatus = AskType.getTypeFromInt(ExternalizableUtil.getInstance().readInt(in));
         rosterID = ExternalizableUtil.getInstance().readLong(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            subscribeStanza = new Presence(ExternalizableUtil.getInstance().readXML(in));
+        }
+    }
+
+    public Presence getSubscribeStanza() throws IllegalStateException {
+        if (recvStatus != RecvType.SUBSCRIBE) {
+            throw new IllegalStateException("Wrong receive state");
+        }
+        if (subscribeStanza == null) {
+            Presence presence = new Presence();
+            presence.setFrom(jid);
+            presence.setType(Presence.Type.subscribe);
+            return presence;
+        } else {
+            return subscribeStanza;
+        }
+    }
+
+    public Presence getStoredSubscribeStanza() {
+        return subscribeStanza;
+    }
+
+    public void setStoredSubscribeStanza(Presence subscribeStanza) {
+        this.subscribeStanza = subscribeStanza;
     }
 }

@@ -137,7 +137,7 @@ public class JMXManager {
         XMPP_JMX_ENABLED.setValue(enabled);
     }
 
-    public static JMXManager getInstance() {
+    public static synchronized JMXManager getInstance() {
         if (instance == null) {
             instance = new JMXManager();
             if (isEnabled()) {

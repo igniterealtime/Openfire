@@ -617,7 +617,9 @@ public class RosterItem implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfInt(); // askStatus
         size += CacheSizes.sizeOfInt(); // recvStatus
         size += CacheSizes.sizeOfLong(); // id
-        size += CacheSizes.sizeOfString(subscribeStanza.toXML());
+        if (subscribeStanza != null) {
+            size += CacheSizes.sizeOfString(subscribeStanza.toXML());
+        }
         return size;
     }
 

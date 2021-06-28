@@ -133,7 +133,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
             pstmt.setInt(2, item.getAskStatus().getValue());
             pstmt.setInt(3, item.getRecvStatus().getValue());
             pstmt.setString(4, item.getNickname());
-            pstmt.setString(5, item.getStoredSubscribeStanza().toXML());
+            pstmt.setString(5, item.getStoredSubscribeStanza() == null ? null : item.getStoredSubscribeStanza().toXML());
             pstmt.setLong(6, rosterID);
             pstmt.executeUpdate();
             // Close now the statement (do not wait to be GC'ed)

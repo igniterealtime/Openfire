@@ -16,34 +16,26 @@
 
 package org.jivesoftware.openfire.roster;
 
-import java.io.StringReader;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Defines the provider methods required for creating, reading, updating and deleting roster
@@ -84,12 +76,6 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
              "WHERE username=? ORDER BY ofRosterGroups.rosterID, %s";
 
     private final Cache<String, LinkedList<RosterItem>> rosterItemCache = CacheFactory.createCache( "RosterItems" );
-
-    /**
-     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
-     */
-    private final static int POOL_SIZE = 10;
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
 
     /* (non-Javadoc)
      * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
@@ -270,25 +256,18 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        SAXReader xmlReader = null;
         try {
             // Load all the contacts in the roster
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_ROSTER);
             pstmt.setString(1, username);
             rs = pstmt.executeQuery();
-            if (xmlReaders.isEmpty()) {
-                xmlReader = new SAXReader();
-                xmlReader.setEncoding("UTF-8");
-            } else {
-                xmlReader = xmlReaders.take();
-            }
             while (rs.next()) {
                 // Create a new RosterItem (ie. user contact) from the stored information
                 // First parse out the presence, if it's there.
                 Presence presence = null;
                 if (rs.getString(7) != null) {
-                    Element root = xmlReader.read(new StringReader(rs.getString(7))).getRootElement();
+                    Element root = SAXReaderUtil.readRootElement(rs.getString(7));
                     presence = new Presence(root);
                 }
                 RosterItem item = new RosterItem(rs.getLong(2),
@@ -325,14 +304,11 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             rosterItemCache.put( username, itemList );
         }
-        catch (SQLException | InterruptedException | DocumentException e) {
+        catch (SQLException | InterruptedException | ExecutionException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
-            if (xmlReader != null) {
-                xmlReaders.offer(xmlReader); // If full, toss it.
-            }
         }
         return itemList.iterator();
     }

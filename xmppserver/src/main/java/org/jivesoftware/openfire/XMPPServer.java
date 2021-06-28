@@ -39,8 +39,6 @@ import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JNDIDataSourceProvider;
 import org.jivesoftware.openfire.admin.AdminManager;
@@ -119,17 +117,11 @@ import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
-import org.jivesoftware.util.InitializationException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.*;
 import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -1134,8 +1126,7 @@ public class XMPPServer {
         if (openfireHome == null) {
             try (InputStream in = getClass().getResourceAsStream("/openfire_init.xml")) {
                 if (in != null) {
-                    Document doc = readDocument(in);
-                    String path = doc.getRootElement().getText();
+                    String path = SAXReaderUtil.readRootElement(in).getText();
                     try {
                         if (path != null) {
                             openfireHome = verifyHome(path, jiveConfigName);
@@ -1162,14 +1153,6 @@ public class XMPPServer {
             // Set the name of the config file
             JiveGlobals.setConfigName(jiveConfigName);
         }
-    }
-
-    private Document readDocument(InputStream in) throws SAXException, DocumentException {
-        SAXReader reader = new SAXReader();
-        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        return reader.read(in);
     }
 
     /**

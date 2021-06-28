@@ -16,24 +16,21 @@
 
 package org.jivesoftware.openfire.vcard;
 
-import java.io.StringReader;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Default implementation of the VCardProvider interface, which reads and writes data
@@ -56,23 +53,6 @@ public class DefaultVCardProvider implements VCardProvider {
     private static final String INSERT_PROPERTY =
         "INSERT INTO ofVCard (username, vcard) VALUES (?, ?)";
 
-    private static final int POOL_SIZE = 10;
-    /**
-     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
-     */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
-
-
-    public DefaultVCardProvider() {
-        super();
-        // Initialize the pool of sax readers
-        for (int i=0; i<POOL_SIZE; i++) {
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
-            xmlReaders.add(xmlReader);
-        }
-    }
-
     @Override
     public Element loadVCard(String username) {
         synchronized (userBaseMutex.intern(username)) {
@@ -80,27 +60,19 @@ public class DefaultVCardProvider implements VCardProvider {
             PreparedStatement pstmt = null;
             ResultSet rs = null;
             Element vCardElement = null;
-            SAXReader xmlReader = null;
             try {
-                // Get a sax reader from the pool
-                xmlReader = xmlReaders.take();
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_PROPERTIES);
                 pstmt.setString(1, username);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    vCardElement =
-                            xmlReader.read(new StringReader(rs.getString(1))).getRootElement();
+                    vCardElement = SAXReaderUtil.readRootElement(rs.getString(1));
                 }
             }
             catch (Exception e) {
                 Log.error("Error loading vCard of username: " + username, e);
             }
             finally {
-                // Return the sax reader to the pool
-                if (xmlReader != null) {
-                    xmlReaders.add(xmlReader);
-                }
                 DbConnectionManager.closeConnection(rs, pstmt, con);
             }
 

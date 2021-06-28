@@ -16,22 +16,19 @@
 
 package org.jivesoftware.openfire.privacy;
 
-import java.io.StringReader;
+import org.dom4j.Element;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.SAXReaderUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
-import org.jivesoftware.database.DbConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Provider for the privacy lists system. Privacy lists are read and written
@@ -62,12 +59,6 @@ public class PrivacyListProvider {
     private static final String INSERT_PRIVACY_LIST =
             "INSERT INTO ofPrivacyList (username, name, isDefault, list) VALUES (?, ?, ?, ?)";
 
-    private static final int POOL_SIZE = 50;
-    /**
-     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
-     */
-    private BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
-
     /**
      * Boolean used to optimize getters when the database is empty
      */
@@ -84,12 +75,6 @@ public class PrivacyListProvider {
     
     private PrivacyListProvider() {
         super();
-        // Initialize the pool of sax readers
-        for (int i=0; i<POOL_SIZE; i++) {
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
-            xmlReaders.add(xmlReader);
-        }
 
         // Checks if the PrivacyLists database is empty. 
         // In that case, we can optimize away many database calls. 
@@ -177,23 +162,13 @@ public class PrivacyListProvider {
         }
 
         PrivacyList privacyList = null;
-        SAXReader xmlReader = null;
         try {
-            // Get a sax reader from the pool
-            xmlReader = xmlReaders.take();
-            Element listElement = xmlReader.read(new StringReader(listValue)).getRootElement();
+            Element listElement = SAXReaderUtil.readRootElement(listValue);
             privacyList = new PrivacyList(username, listName, isDefault, listElement);
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
         }
-        finally {
-            // Return the sax reader to the pool
-            if (xmlReader != null) {
-                xmlReaders.add(xmlReader);
-            }
-        }
-
 
         return privacyList;
     }
@@ -239,21 +214,12 @@ public class PrivacyListProvider {
         }
 
         PrivacyList privacyList = null;
-        SAXReader xmlReader = null;
         try {
-            // Get a sax reader from the pool
-            xmlReader = xmlReaders.take();
-            Element listElement = xmlReader.read(new StringReader(listValue)).getRootElement();
+            Element listElement = SAXReaderUtil.readRootElement(listValue);
             privacyList = new PrivacyList(username, listName, true, listElement);
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
-        }
-        finally {
-            // Return the sax reader to the pool
-            if (xmlReader != null) {
-                xmlReaders.add(xmlReader);
-            }
         }
 
         return privacyList;

@@ -17,13 +17,12 @@
 package org.jivesoftware.admin;
 
 import org.dom4j.*;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,7 +67,7 @@ public class AdminConsole {
      * @throws Exception if an error occurs when parsing the XML or adding it to the model.
      */
     public static void addModel(String name, InputStream in) throws Exception {
-        Document doc = getDocument(in);
+        Document doc = SAXReaderUtil.readDocument(in);
         addModel(name, (Element)doc.selectSingleNode("/adminconsole"));
     }
 
@@ -230,7 +229,7 @@ public class AdminConsole {
             return;
         }
         try {
-            Document doc = getDocument(in);
+            Document doc = SAXReaderUtil.readDocument(in);
             coreModel = (Element)doc.selectSingleNode("/adminconsole");
         }
         catch (Exception e) {
@@ -496,14 +495,5 @@ public class AdminConsole {
                 return 0;
             }
         }
-    }
-
-    private static Document getDocument(InputStream in) throws SAXException, DocumentException {
-        SAXReader saxReader = new SAXReader();
-        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        saxReader.setIgnoreComments(true);
-        return saxReader.read(in);
     }
 }

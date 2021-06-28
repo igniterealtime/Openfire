@@ -20,11 +20,13 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -69,13 +71,13 @@ public class PluginCacheConfigurator {
 
     public void configure(String pluginName) {
         try {
-            Document cacheXml = readDocument(configDataStream);
+            Document cacheXml = SAXReaderUtil.readDocument(configDataStream);
             List<Node> mappings = cacheXml.selectNodes("/cache-config/cache-mapping");
             for (Node mapping: mappings) {
                 registerCache(pluginName, mapping);
             }
         }
-        catch (DocumentException | SAXException e) {
+        catch (ExecutionException | InterruptedException e) {
             Log.error(e.getMessage(), e);
         }
     }
@@ -103,13 +105,5 @@ public class PluginCacheConfigurator {
         }
 
         return paramMap;
-    }
-
-    private Document readDocument(InputStream in) throws SAXException, DocumentException {
-        SAXReader reader = new SAXReader();
-        reader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        reader.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        reader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        return reader.read(in);
     }
 }

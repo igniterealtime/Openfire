@@ -16,54 +16,31 @@
 
 package org.jivesoftware.openfire.container;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.jar.JarFile;
-import java.util.zip.ZipException;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.spi.LoggerContext;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JavaSpecVersion;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.Version;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.jar.JarFile;
+import java.util.zip.ZipException;
 
 /**
  * Manages plugins.
@@ -617,8 +594,7 @@ public class PluginManager
             }
 
             // Instantiate the plugin!
-            final SAXReader saxReader = setupSAXReader();
-            final Document pluginXML = saxReader.read( pluginConfig.toFile() );
+            final Document pluginXML = SAXReaderUtil.readDocument( pluginConfig.toFile() );
 
             final String className = pluginXML.selectSingleNode( "/plugin/class" ).getText().trim();
             final Plugin plugin;
@@ -750,15 +726,6 @@ public class PluginManager
             failureToLoadCount.put( canonicalName, ++count );
             return false;
         }
-    }
-
-    private SAXReader setupSAXReader() throws SAXException {
-        final SAXReader saxReader = new SAXReader();
-        saxReader.setEncoding( "UTF-8" );
-        saxReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        saxReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        saxReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        return saxReader;
     }
 
     private PluginDevEnvironment configurePluginDevEnvironment( final Path pluginDir, String classesDir, String webRoot ) throws IOException

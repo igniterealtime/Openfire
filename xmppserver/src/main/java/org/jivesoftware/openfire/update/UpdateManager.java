@@ -16,28 +16,6 @@
 
 package org.jivesoftware.openfire.update;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.Writer;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -52,23 +30,26 @@ import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.DefaultRoutePlanner;
 import org.apache.http.util.EntityUtils;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginMetadata;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.Version;
-import org.jivesoftware.util.XMLWriter;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
+
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Service that frequently checks for new server or plugins releases. By default the service
@@ -563,11 +544,10 @@ public class UpdateManager extends BasicModule {
     }
 
     private void processServerUpdateResponse(String response, boolean notificationsEnabled)
-        throws DocumentException, SAXException {
+        throws ExecutionException, InterruptedException {
         // Reset last known update information
         serverUpdate = null;
-        SAXReader xmlReader = setupSAXReader();
-        Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
+        Element xmlResponse = SAXReaderUtil.readRootElement(response);
         // Parse response and keep info as Update objects
         Element openfire = xmlResponse.element("openfire");
         if (openfire != null) {
@@ -608,13 +588,12 @@ public class UpdateManager extends BasicModule {
     }
 
     private void processAvailablePluginsResponse(String response, boolean notificationsEnabled)
-        throws DocumentException, SAXException {
+        throws ExecutionException, InterruptedException {
         // Reset last known list of available plugins
         availablePlugins = new HashMap<>();
 
         // Parse response and keep info as AvailablePlugin objects
-        SAXReader xmlReader = setupSAXReader();
-        Element xmlResponse = xmlReader.read(new StringReader(response)).getRootElement();
+        Element xmlResponse = SAXReaderUtil.readRootElement(response);
         Iterator plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
             Element plugin = (Element) plugins.next();
@@ -800,9 +779,8 @@ public class UpdateManager extends BasicModule {
             Log.warn("Cannot retrieve server updates. File must be readable: " + file.getName());
             return;
         }
-        try (FileReader reader = new FileReader(file)){
-            SAXReader xmlReader = setupSAXReader();
-            xmlResponse = xmlReader.read(reader);
+        try {
+            xmlResponse = SAXReaderUtil.readDocument(file);
         } catch (Exception e) {
             Log.error("Error reading server-update.xml", e);
             return;
@@ -851,9 +829,8 @@ public class UpdateManager extends BasicModule {
             Log.warn("Cannot retrieve available plugins. File must be readable: " + file.getName());
             return;
         }
-        try (FileReader reader = new FileReader(file)) {
-            SAXReader xmlReader = setupSAXReader();
-            xmlResponse = xmlReader.read(reader);
+        try {
+            xmlResponse = SAXReaderUtil.readDocument(file);
         } catch (Exception e) {
             Log.error("Error reading available-plugins.xml", e);
             return;
@@ -878,12 +855,4 @@ public class UpdateManager extends BasicModule {
         return pluginUpdates;
     }
 
-    private SAXReader setupSAXReader() throws SAXException {
-        SAXReader xmlReader = new SAXReader();
-        xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        xmlReader.setEncoding("UTF-8");
-        return xmlReader;
-    }
 }

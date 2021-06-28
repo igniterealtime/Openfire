@@ -16,20 +16,17 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.io.Serializable;
-import java.io.StringReader;
-import java.util.Date;
-import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pep.PEPServiceManager;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.io.Serializable;
+import java.util.Date;
+import java.util.Objects;
 
 /**
  * A published item to a node. Once an item was published to a node, node subscribers will be
@@ -47,22 +44,7 @@ public class PublishedItem implements Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(PublishedItem.class);
 
-    private static final int POOL_SIZE = 50;
-    /**
-     * Pool of SAX Readers. SAXReader is not thread safe so we need to have a pool of readers.
-     */
-    private static BlockingQueue<SAXReader> xmlReaders = new LinkedBlockingQueue<>(POOL_SIZE);
-
     private static final long serialVersionUID = 7012925993623144574L;
-    
-    static {
-        // Initialize the pool of sax readers
-        for (int i=0; i<POOL_SIZE; i++) {
-            SAXReader xmlReader = new SAXReader();
-            xmlReader.setEncoding("UTF-8");
-            xmlReaders.add(xmlReader);
-        }    	
-    }
     
     /**
      * JID of the entity that published the item to the node. This is the full JID
@@ -188,16 +170,10 @@ public class PublishedItem implements Serializable {
             synchronized (this) {
                 if (payload == null) {
                     // payload initialized as XML string from DB
-                    SAXReader xmlReader = null;
                     try {
-                        xmlReader = xmlReaders.take();
-                        payload = xmlReader.read(new StringReader(payloadXML)).getRootElement(); 
+                        payload = SAXReaderUtil.readRootElement(payloadXML);
                     } catch (Exception ex) {
                          log.error("Failed to parse payload XML", ex);
-                    } finally {
-                        if (xmlReader != null) {
-                            xmlReaders.add(xmlReader);
-                        }
                     }
                 }
             }

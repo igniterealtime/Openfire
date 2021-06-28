@@ -62,14 +62,14 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     private static final Logger Log = LoggerFactory.getLogger(DefaultRosterItemProvider.class);
 
     private static final String CREATE_ROSTER_ITEM =
-            "INSERT INTO ofRoster (username, rosterID, jid, sub, ask, recv, nick) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            "INSERT INTO ofRoster (username, rosterID, jid, sub, ask, recv, nick, stanza) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_ROSTER_ITEM =
             "UPDATE ofRoster SET sub=?, ask=?, recv=?, nick=?, stanza=? WHERE rosterID=?";
     private static final String DELETE_ROSTER_ITEM_GROUPS =
             "DELETE FROM ofRosterGroups WHERE rosterID=?";
     private static final String CREATE_ROSTER_ITEM_GROUPS =
-            "INSERT INTO ofRosterGroups (rosterID, %s, groupName, stanza) VALUES (?, ?, ?, ?)";
+            "INSERT INTO ofRosterGroups (rosterID, %s, groupName) VALUES (?, ?, ?)";
     private static final String DELETE_ROSTER_ITEM =
             "DELETE FROM ofRoster WHERE rosterID=?";
     private static final String LOAD_USERNAMES =
@@ -113,6 +113,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
             pstmt.setInt(5, item.getAskStatus().getValue());
             pstmt.setInt(6, item.getRecvStatus().getValue());
             pstmt.setString(7, item.getNickname());
+            pstmt.setString(8, item.getStoredSubscribeStanza() == null ? null : item.getStoredSubscribeStanza().toXML());
             pstmt.executeUpdate();
 
             item.setID(rosterID);

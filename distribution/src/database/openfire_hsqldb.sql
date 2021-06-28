@@ -59,6 +59,7 @@ CREATE TABLE ofRoster (
   ask                   INTEGER         NOT NULL,
   recv                  INTEGER         NOT NULL,
   nick                  VARCHAR(255),
+  stanza                LONGVARCHAR,
   CONSTRAINT ofRoster_pk PRIMARY KEY (rosterID)
 );
 CREATE INDEX ofRoster_username_idx ON ofRoster (username);
@@ -376,7 +377,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 32);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 33);
 
 // Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

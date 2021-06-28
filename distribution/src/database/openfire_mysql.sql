@@ -56,6 +56,7 @@ CREATE TABLE ofRoster (
   ask                   TINYINT         NOT NULL,
   recv                  TINYINT         NOT NULL,
   nick                  VARCHAR(255),
+  stanza                TEXT,
   PRIMARY KEY (rosterID),
   INDEX ofRoster_unameid_idx (username),
   INDEX ofRoster_jid_idx (jid(255))
@@ -366,7 +367,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 32);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 33);
 
 # Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

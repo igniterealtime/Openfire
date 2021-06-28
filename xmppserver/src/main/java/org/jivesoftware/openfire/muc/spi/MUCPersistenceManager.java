@@ -16,28 +16,24 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.math.BigInteger;
-import java.sql.*;
-import java.util.*;
-import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import org.xmpp.packet.JID;
+
+import java.math.BigInteger;
+import java.sql.*;
+import java.util.Date;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jivesoftware.openfire.muc.spi.FMUCMode.MasterMaster;
 
@@ -322,12 +318,6 @@ public class MUCPersistenceManager {
                 pstmt.setLong(2, room.getID());
                 rs = pstmt.executeQuery();
 
-                SAXReader xmlReader = null;
-                try {
-                    xmlReader = MUCRoomHistory.setupSAXReader();
-                } catch (SAXException e) {
-                    Log.warn("An exception occurred while loading MUC message history from database.", e);
-                }
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
@@ -335,10 +325,7 @@ public class MUCPersistenceManager {
                     String subject = rs.getString("subject");
                     String body = rs.getString("body");
                     String stanza = rs.getString("stanza");
-                    if (xmlReader != null) {
-                        room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject,
-                            body, stanza, xmlReader);
-                    }
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
                 }
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
@@ -772,14 +759,6 @@ public class MUCPersistenceManager {
     }
 
     private static void loadHistory(Long serviceID, Map<Long, LocalMUCRoom> rooms) throws SQLException {
-        SAXReader xmlReader;
-        try {
-            xmlReader = MUCRoomHistory.setupSAXReader();
-        } catch (SAXException e) {
-            Log.warn("Unable to load MUC rooms from history.", e);
-            return;
-        }
-
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -813,7 +792,7 @@ public class MUCPersistenceManager {
                     String subject   = resultSet.getString("subject");
                     String body      = resultSet.getString("body");
                     String stanza    = resultSet.getString("stanza");
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza, xmlReader);
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
                 }
@@ -835,8 +814,7 @@ public class MUCPersistenceManager {
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),
                                                             null,
-                                                            null,
-                                                            xmlReader);
+                                                            null);
             }
         }
     }

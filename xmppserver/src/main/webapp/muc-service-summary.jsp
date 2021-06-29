@@ -204,7 +204,7 @@
             <a href="muc-room-summary.jsp?mucname==<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>
         </td>
         <td width="5%">
-            <%= service.getNumberConnectedUsers(false) %>
+            <%= service.getNumberConnectedUsers() %>
         </td>
         <td width="1%" align="center">
             <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"

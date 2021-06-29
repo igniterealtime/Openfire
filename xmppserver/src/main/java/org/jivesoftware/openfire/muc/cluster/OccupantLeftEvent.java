@@ -17,7 +17,7 @@
 package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
@@ -28,8 +28,7 @@ import java.io.ObjectOutput;
 import java.util.List;
 
 /**
- * Task that removes a room occupant from the list of occupants in the room. The
- * occupant to remove is actually a {@link org.jivesoftware.openfire.muc.spi.RemoteMUCRole}.
+ * Task that removes a room occupant from the list of occupants in the room.
  *
  * @author Gaston Dombiak
  */
@@ -41,7 +40,7 @@ public class OccupantLeftEvent extends MUCRoomTask<Void> {
     public OccupantLeftEvent() {
     }
 
-    public OccupantLeftEvent(LocalMUCRoom room, MUCRole role) {
+    public OccupantLeftEvent(MUCRoom room, MUCRole role) {
         super(room);
         this.role = role;
         this.nickname = role.getNickname();

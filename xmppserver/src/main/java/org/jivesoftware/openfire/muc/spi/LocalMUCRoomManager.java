@@ -9,7 +9,7 @@ import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.muc.MUCRoom;
 
 /**
- * this class supports the simple LocalMUCRoom management including remove,add and query.
+ * this class supports the simple MUCRoom management including remove,add and query.
  *
  * Note that this implementation provides a representation of rooms that are currently actively loaded in memory only.
  * More rooms might exist in the database.
@@ -18,7 +18,7 @@ import org.jivesoftware.openfire.muc.MUCRoom;
  * 2016-1-14
  */
 public class LocalMUCRoomManager {
-    private final Map<String, LocalMUCRoom> rooms = new ConcurrentHashMap<>();
+    private final Map<String, MUCRoom> rooms = new ConcurrentHashMap<>();
 
     /**
      * Returns the number of chat rooms that are currently actively loaded in memory.
@@ -29,22 +29,22 @@ public class LocalMUCRoomManager {
         return rooms.size();
     }
 
-    public void addRoom(final String roomname, final LocalMUCRoom room){
+    public void addRoom(final String roomname, final MUCRoom room){
         rooms.put(roomname, room);
         GroupEventDispatcher.addListener(room);
     }
     
-    public Collection<LocalMUCRoom> getRooms(){
+    public Collection<MUCRoom> getRooms(){
         return rooms.values();
     }
     
-    public LocalMUCRoom getRoom(final String roomname){
+    public MUCRoom getRoom(final String roomname){
         return rooms.get(roomname);
     }
     
-    public LocalMUCRoom removeRoom(final String roomname){
+    public MUCRoom removeRoom(final String roomname){
         //memory leak will happen if we forget remove it from GroupEventDispatcher
-        final LocalMUCRoom room = rooms.remove(roomname);
+        final MUCRoom room = rooms.remove(roomname);
         if (room != null) {
             GroupEventDispatcher.removeListener(room);
         }

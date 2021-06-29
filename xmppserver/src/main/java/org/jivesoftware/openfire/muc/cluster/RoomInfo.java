@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.Externalizable;
@@ -38,7 +37,7 @@ import java.util.List;
  * @author Gaston Dombiak
  */
 public class RoomInfo implements Externalizable {
-    private LocalMUCRoom room;
+    private MUCRoom room;
     private List<OccupantAddedEvent> occupants = new ArrayList<>();
 
 
@@ -48,7 +47,7 @@ public class RoomInfo implements Externalizable {
     public RoomInfo() {
     }
 
-    public RoomInfo(LocalMUCRoom room, Collection<MUCRole> occupants) {
+    public RoomInfo(MUCRoom room, Collection<MUCRole> occupants) {
         this.room = room;
         for (MUCRole occupant : occupants) {
             this.occupants.add(new OccupantAddedEvent(room, occupant));
@@ -56,7 +55,7 @@ public class RoomInfo implements Externalizable {
     }
 
 
-    public LocalMUCRoom getRoom() {
+    public MUCRoom getRoom() {
         return room;
     }
 
@@ -72,7 +71,7 @@ public class RoomInfo implements Externalizable {
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        room = (LocalMUCRoom) ExternalizableUtil.getInstance().readSerializable(in);
+        room = (MUCRoom) ExternalizableUtil.getInstance().readSerializable(in);
         ExternalizableUtil.getInstance().readExternalizableCollection(in, occupants, getClass().getClassLoader());
     }
 }

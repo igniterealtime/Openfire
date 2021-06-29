@@ -20,13 +20,12 @@ import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
@@ -38,18 +37,11 @@ import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.muc.HistoryStrategy;
-import org.jivesoftware.openfire.muc.MUCEventDelegate;
-import org.jivesoftware.openfire.muc.MUCEventDispatcher;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MUCUser;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.muc.cluster.GetNumberConnectedUsers;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
 import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.AutoCloseableReentrantLock;
 import org.jivesoftware.util.JiveGlobals;
@@ -57,7 +49,9 @@ import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
@@ -75,15 +69,14 @@ import org.xmpp.resultsetmanagement.ResultSet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -103,12 +96,11 @@ import java.util.stream.Collectors;
  * @author Gaston Dombiak
  */
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
-        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener
+        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener, ClusterEventListener
 {
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
 
     private static final Interner<String> roomBaseMutex = Interners.newWeakInterner();
-    private static final Interner<JID> jidBaseMutex = Interners.newWeakInterner();
 
     /**
      * The time to elapse between clearing of idle chat users.
@@ -164,13 +156,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private final LocalMUCRoomManager localMUCRoomManager = new LocalMUCRoomManager();
 
     /**
-     * Chat users managed by this manager. This includes only users connected to this JVM.
-     * That means that when running inside of a cluster each node will have its own manager
-     * that in turn will keep its own list of locally connected.
+     * Chat users for this service.
      *
      * table: key user jid (XMPPAddress); value ChatUser
      */
-    private final Map<JID, LocalMUCUser> users = new ConcurrentHashMap<>();
+    private final Cache<JID, MUCUser> users;
+
+    /**
+     * A copy of #users but with entities that are added to the cache on this JVM only.
+     * This is used when joining/leaving a cluster.
+     */
+    private final ConcurrentMap<JID, MUCUser> localUsers;
+
     private final HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
@@ -328,6 +325,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         this.isHidden = isHidden;
         historyStrategy = new HistoryStrategy(null);
+
+        users = CacheFactory.createCache("MUC Users for service " + chatServiceName);
+        users.setMaxLifetime(-1);
+        users.setMaxCacheSize(-1L);
+
+        localUsers = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -569,13 +572,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         final ExecutorService service = Executors.newFixedThreadPool( Math.min( users.size(), 10 ) );
 
         // Queue all tasks in the executor service.
-        for ( final LocalMUCUser user : users.values() )
+        for ( final MUCUser user : users.values() )
         {
             // Submit a concurrent task for each local user (that could be in more than one (local) room).
+            if (!(SessionManager.getInstance().getSession(user.getAddress()) instanceof LocalSession)) {
+                continue;
+            }
+
             service.submit(() -> {
                 try
                 {
-                    for ( final LocalMUCRole role : user.getRoles() )
+                    for ( final MUCRole role : user.getRoles() )
                     {
                         final MUCRoom room = role.getChatRoom();
 
@@ -607,7 +614,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         try
         {
             service.awaitTermination( JiveGlobals.getIntProperty( "xmpp.muc.await-termination-millis", 500 ), TimeUnit.MILLISECONDS );
-            Log.debug( "Successfully notified all {} local users about the imminent destruction of chat service '{}'", users.size(), chatServiceName );
+            Log.debug( "Successfully notified all local users about the imminent destruction of chat service '{}'", chatServiceName );
         }
         catch ( final InterruptedException e )
         {
@@ -617,12 +624,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     private void checkForTimedOutUsers() {
-        for (final LocalMUCUser user : users.values()) {
-            try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, user.getAddress().toString()).lock()) {
+        if (!ClusterManager.isSeniorClusterMemberOrNotClustered()) {
+            return;
+        }
+        final Set<JID> toRemove = new HashSet<>();
+        for (final MUCUser user : users.values()) {
+            try {
                 // If user is not present in any room then remove the user from the list of users.
                 if (!user.isJoined()) {
-                    removeUser(user.getAddress()); // Iterating over a collection that is weakly consistent. Removal should not cause Concurrent Modification Exception.
-                    Log.debug("Removed MUC user '{}' that does not seem to be in any room.", user.getAddress());
+                    toRemove.add(user.getAddress());
                     continue;
                 }
 
@@ -636,7 +646,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                 if (doKick || doPing) {
                     final String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User exceeded idle time limit.");
-                    for (final LocalMUCRole role : user.getRoles()) {
+                    for (final MUCRole role : user.getRoles()) {
                         if (doKick) {
                             // Kick the user from all the rooms that he/she had previously joined.
                             try {
@@ -651,7 +661,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                         if (doPing) {
                             // Send a ping 'from the room' to the user, from all the rooms that he/she had previously joined.
-                            // If this ping results in a connectivity error, that will be picked up by LocalMucRoom's process
+                            // If this ping results in a connectivity error, that will be picked up by MucRoom's process
                             // method, that detects 'ghost users', which will kick the user.
                             final IQ pingRequest = new IQ( IQ.Type.get );
                             pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
@@ -667,6 +677,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         }
+
+        toRemove.forEach( user -> {
+            removeUser(user);
+            Log.debug("Removed MUC user '{}' that does not seem to be in any room.", user);
+        });
     }
 
     /**
@@ -706,9 +721,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Date cleanUpDate = getCleanupDate();
                 if (cleanUpDate!=null)
                 {
-                    Iterator<LocalMUCRoom> it = localMUCRoomManager.getRooms().iterator();
+                    Iterator<MUCRoom> it = localMUCRoomManager.getRooms().iterator();
                     while (it.hasNext()) {
-                        LocalMUCRoom room = it.next();
+                        MUCRoom room = it.next();
                         Date emptyDate = room.getEmptyDate();
                         if (emptyDate != null && emptyDate.before(cleanUpDate)) {
                             removeChatRoom(room.getName());
@@ -752,13 +767,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public MUCRoom getChatRoom(final String roomName, final JID userjid) throws NotAllowedException {
-        LocalMUCRoom room;
+        MUCRoom room;
         boolean loaded = false;
         boolean created = false;
         synchronized (roomBaseMutex.intern(roomName)) {
             room = localMUCRoomManager.getRoom(roomName);
             if (room == null) {
-                room = new LocalMUCRoom(this, roomName, router);
+                room = new MUCRoom(this, roomName, router);
                 // If the room is persistent load the configuration values from the DB
                 try {
                     // Try to load the room's configuration from the database (if the room is
@@ -807,8 +822,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Notify other cluster nodes that a new room is available.
             // Ensure that the room exists on all nodes, before firing off other room events to avoid race conditions (OF-2207)
             CacheFactory.doSynchronousClusterTask(new RoomAvailableEvent(room), false);
-            for (final MUCRole role : room.getOccupants()) {
-                if (role instanceof LocalMUCRole) {
+            for (final org.jivesoftware.openfire.muc.MUCRole role : room.getOccupants()) {
+                if (role instanceof MUCRole) {
                     CacheFactory.doClusterTask(new OccupantAddedEvent(room, role));
                 }
             }
@@ -819,13 +834,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public MUCRoom getChatRoom(final String roomName) {
         boolean loaded = false;
-        LocalMUCRoom room = localMUCRoomManager.getRoom(roomName);
+        MUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
             // Check if the room exists in the database and was not present in memory
             synchronized (roomBaseMutex.intern(roomName)) {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
-                    room = new LocalMUCRoom(this, roomName, router);
+                    room = new MUCRoom(this, roomName, router);
                     // If the room is persistent load the configuration values from the DB
                     try {
                         // Try to load the room's configuration from the database (if the room is
@@ -859,7 +874,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         getChatRoom(roomName);
     }
 
-    public LocalMUCRoom getLocalChatRoom(final String roomName) {
+    public MUCRoom getLocalChatRoom(final String roomName) {
         return localMUCRoomManager.getRoom(roomName);
     }
 
@@ -881,7 +896,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Duplicates will be removed by virtue of using a Set.
         final Set<String> result = new HashSet<>();
         result.addAll( MUCPersistenceManager.loadRoomNamesFromDB(this) );
-        result.addAll( localMUCRoomManager.getRooms().stream().map(LocalMUCRoom::getName).collect(Collectors.toSet()) );
+        result.addAll( localMUCRoomManager.getRooms().stream().map(MUCRoom::getName).collect(Collectors.toSet()) );
 
         return result;
     }
@@ -927,7 +942,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param room the removed room in another cluster node.
      */
     @Override
-    public void chatRoomRemoved(final LocalMUCRoom room) {
+    public void chatRoomRemoved(final MUCRoom room) {
         removeChatRoom(room.getName(), false);
     }
 
@@ -938,12 +953,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param room the created room in another cluster node.
      */
     @Override
-    public void chatRoomAdded(final LocalMUCRoom room) {
+    public void chatRoomAdded(final MUCRoom room) {
         localMUCRoomManager.addRoom(room.getName(), room) ;
     }
 
     private void removeChatRoom(final String roomName, final boolean notify) {
-        final LocalMUCRoom room = localMUCRoomManager.removeRoom(roomName);
+        final MUCRoom room = localMUCRoomManager.removeRoom(roomName);
         if (room != null) {
             Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
             totalChatTime += room.getChatLength();
@@ -977,47 +992,48 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param jabberID The user's normal jid, not the chat nickname jid.
      */
     private void removeUser(final JID jabberID) {
-        final LocalMUCUser user = users.remove(jabberID);
-        if (user != null) {
-            for (final LocalMUCRole role : user.getRoles()) {
-                try {
-                    role.getChatRoom().leaveRoom(role);
-                }
-                catch (final Exception e) {
-                    Log.error(e.getMessage(), e);
+        final Lock lock = users.getLock(jabberID);
+        lock.lock();
+        try {
+            final MUCUser user = users.remove(jabberID);
+            localUsers.remove(jabberID);
+            if (user != null) {
+                for (final MUCRole role : user.getRoles()) {
+                    try {
+                        role.getChatRoom().leaveRoom(role);
+                    } catch (final Exception e) {
+                        Log.error(e.getMessage(), e);
+                    }
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     /**
-     * Obtain a chat user by XMPPAddress. Only returns users that are connected to this JVM.
+     * Obtain a chat user by XMPPAddress.
      *
      * @param userjid The XMPPAddress of the user.
      * @param roomName name of the room to receive the packet.
      * @return The chatuser corresponding to that XMPPAddress.
      */
-    MUCUser getChatUser(final JID userjid, final String roomName) {
+    public MUCUser getChatUser(final JID userjid, final String roomName) {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }
-        LocalMUCUser user;
-        synchronized (jidBaseMutex.intern(userjid)) {
+        MUCUser user;
+        final Lock lock = users.getLock(userjid);
+        lock.lock();
+        try {
             user = users.get(userjid);
             if (user == null) {
-                if (roomName != null) {
-                    // Check if the JID belong to a user hosted in another cluster node
-                    final LocalMUCRoom localMUCRoom = localMUCRoomManager.getRoom(roomName);
-                    if (localMUCRoom != null) {
-                        final MUCRole occupant = localMUCRoom.getOccupantByFullJID(userjid);
-                        if (occupant != null && !occupant.isLocal()) {
-                            return new RemoteMUCUser(userjid, localMUCRoom);
-                        }
-                    }
-                }
-                user = new LocalMUCUser(this, userjid);
+                user = new MUCUser(this, userjid);
                 users.put(userjid, user);
+                localUsers.put(userjid, user);
             }
+        } finally {
+            lock.unlock();
         }
         return user;
     }
@@ -1025,7 +1041,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public Collection<MUCRole> getMUCRoles(final JID user) {
         final List<MUCRole> userRoles = new ArrayList<>();
-        for (final LocalMUCRoom room : localMUCRoomManager.getRooms()) {
+        for (final MUCRoom room : localMUCRoomManager.getRooms()) {
             final MUCRole role = room.getOccupantByFullJID(user);
             if (role != null) {
                 userRoles.add(role);
@@ -1590,7 +1606,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (preloadDays > 0) {
             // Load all the persistent rooms to memory
             final Instant cutoff = Instant.now().minus(Duration.ofDays(preloadDays));
-            for (final LocalMUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff), router)) {
+            for (final MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff), router)) {
                 localMUCRoomManager.addRoom(room.getName(), room);
 
                 // Start FMUC, if desired.
@@ -1655,28 +1671,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Retuns the total number of occupants in all rooms in the server.
+     * Returns the total number of occupants in all rooms.
      *
-     * @param onlyLocal true if only users connected to this JVM will be considered. Otherwise count cluster wise.
-     * @return the number of existing rooms in the server.
+     * @return the total number of occupants.
      */
     @Override
-    public int getNumberConnectedUsers(final boolean onlyLocal) {
-        int total = 0;
-        for (final LocalMUCUser user : users.values()) {
+    public int getNumberConnectedUsers() {
+        int total = 0; // TODO for performance, replace this with users.size(). For that to work, we need to be able to remove the isJoined check.
+        for (final MUCUser user : users.values()) {
             if (user.isJoined()) {
                 total = total + 1;
-            }
-        }
-        // Add users from remote cluster nodes
-        if (!onlyLocal) {
-            final Collection<Integer> results =
-                    CacheFactory.doSynchronousClusterTask(new GetNumberConnectedUsers(), false);
-            for (final Integer result : results) {
-                if (result == null) {
-                    continue;
-                }
-                total = total + result;
             }
         }
         return total;
@@ -2051,7 +2055,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Answer the room occupants as items if that info is publicly available
             final MUCRoom room = getChatRoom(name);
             if (room != null && canDiscoverRoom(room, senderJID)) {
-                for (final MUCRole role : room.getOccupants()) {
+                for (final org.jivesoftware.openfire.muc.MUCRole role : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
                     answer.add(new DiscoItem(role.getRoleAddress(), null, null, null));
                 }
@@ -2117,6 +2121,103 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public boolean isHidden() {
         return isHidden;
+    }
+
+
+    @Override
+    public void joinedCluster() {
+        // The local node joined a cluster.
+        //
+        // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
+        // cache implementation to the clustered cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
+        // available on all other cluster nodes. Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // Let all other nodes know that our local users have now joined as occupants of the respective rooms.
+        // TODO does this work properly when the rooms are not known on the other nodes?
+
+        //there is overlap here in MultiUserChatManager
+    }
+
+    @Override
+    public void joinedCluster(byte[] nodeID) {
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
+    }
+
+    @Override
+    public void leftCluster() {
+        // The local cluster node left the cluster.
+        if (XMPPServer.getInstance().isShuttingDown()) {
+            // Do not put effort in restoring the correct state if we're shutting down anyway.
+            return;
+        }
+
+        // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
+        // cache implementation to the default cache implementation that's done in the implementation of
+        // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
+        // has been created). Data that's available on the local node needs to be added again.
+        restoreCacheContent();
+
+        // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
+        // the cluster (eg: server features provided only by other cluster nodes, now unavailable to the local cluster
+        // node): the only cache that's being used in this implementation does not have an associated event listening
+        // mechanism when data is added to or removed from it.
+    }
+
+    @Override
+    public void leftCluster(byte[] nodeID) {
+        // Another node left the cluster.
+        //
+        // If the cluster node leaves in an orderly fashion, it might have broadcasted
+        // the necessary events itself. This cannot be depended on, as the cluster node
+        // might have disconnected unexpectedly (as a result of a crash or network issue).
+        //
+        // Determine what data was available only on that node, and remove that.
+        //
+        // All remaining cluster nodes will be in a race to clean up the
+        // same data. The implementation below accounts for that, by only having the
+        // senior cluster node to perform the cleanup.
+        if (ClusterManager.isSeniorClusterMember()) {
+            // Remove occupants added by node that is gone.
+            final Set<MUCUser> gone = new HashSet<>();
+            final NodeID leftNode = NodeID.getInstance(nodeID);
+            for (final MUCUser user : users.values()) {
+                if (leftNode.equals(user.getNodeID())) {
+                    gone.add(user);
+                }
+            }
+
+            Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
+            for(final MUCUser user : gone) {
+                try {
+                    user.getRoles().forEach(mucRole -> mucRole.getChatRoom().leaveRoom(mucRole));
+                } finally {
+                    users.remove(user.getAddress());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void markedAsSeniorClusterMember() {
+        // Do nothing
+    }
+
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
+     * ({@link #leftCluster()} a cluster.
+     */
+    private void restoreCacheContent() {
+        Log.trace( "Restoring cache content for cache '{}' by adding all MUC Users that are provided by the local cluster node.", users.getName() );
+        for (Map.Entry<JID, MUCUser> entry : localUsers.entrySet()) {
+            users.put(entry.getKey(), entry.getValue());
+        }
     }
 
 }

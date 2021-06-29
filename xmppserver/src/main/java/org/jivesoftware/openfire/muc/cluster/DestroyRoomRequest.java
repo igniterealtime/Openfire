@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
@@ -38,13 +38,13 @@ public class DestroyRoomRequest extends MUCRoomTask<Void> {
     public DestroyRoomRequest() {
     }
 
-    public DestroyRoomRequest(LocalMUCRoom room, JID alternateJID, String reason) {
+    public DestroyRoomRequest(MUCRoom room, JID alternateJID, String reason) {
         super(room);
         this.alternateJID = alternateJID;
         this.reason = reason;
     }
 
-    public DestroyRoomRequest(LocalMUCRoom room, String alternateJID, String reason) {
+    public DestroyRoomRequest(MUCRoom room, String alternateJID, String reason) {
         super(room);
         this.alternateJID = new JID(alternateJID);
         this.reason = reason;

@@ -59,7 +59,7 @@ public class FMUCHandler
     /**
      * The room for which this handler operates.
      */
-    private final LocalMUCRoom room;
+    private final MUCRoom room;
 
     /**
      * The router used to send packets for the room.
@@ -93,7 +93,7 @@ public class FMUCHandler
      */
     private Map<JID, InboundJoin> inboundJoins = new HashMap<>();
 
-    public FMUCHandler( @Nonnull LocalMUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
+    public FMUCHandler(@Nonnull MUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
     }
@@ -487,7 +487,7 @@ public class FMUCHandler
         return join( mucRole, true, true );
     }
 
-    protected synchronized Future<?> join( @Nonnull MUCRole mucRole, final boolean includeInbound, final boolean includeOutbound )
+    protected synchronized Future<?> join(@Nonnull MUCRole mucRole, final boolean includeInbound, final boolean includeOutbound )
     {
         if ( !(room.isFmucEnabled() && FMUC_ENABLED.getValue()) ) {
             Log.debug( "(room: '{}'): FMUC disabled, skipping FMUC join.", room.getJID() );
@@ -618,7 +618,7 @@ public class FMUCHandler
         return result;
     }
 
-    private void doPropagateOutbound( @Nonnull Packet stanza, @Nonnull MUCRole sender, @Nonnull CompletableFuture<?> result )
+    private void doPropagateOutbound(@Nonnull Packet stanza, @Nonnull MUCRole sender, @Nonnull CompletableFuture<?> result )
     {
         Log.debug("(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joined FMUC node {}.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), outboundJoin.getPeer() );
 
@@ -701,7 +701,7 @@ public class FMUCHandler
         }
 
         final JID from;
-        if ( sender instanceof LocalMUCRoom.RoomRole ) {
+        if ( sender.getRoleAddress().getResource() == null ) {
             // This role represents the room itself as the sender. Rooms do not have a 'user' address.
             from = sender.getRoleAddress();
         } else {
@@ -995,7 +995,8 @@ public class FMUCHandler
             }
 
             // Use a room role that can be used to identify the remote fmuc node (to prevent data from being echo'd back)
-            final LocalMUCRoom.RoomRole roomRole = new LocalMUCRoom.RoomRole( room, outboundJoin.getPeer() );
+            final MUCRole roomRole = MUCRole.createRoomRole(room);
+            roomRole.setReportedFmucAddress( outboundJoin.getPeer() );
 
             // Use received data to augment state of the local room.
             for ( final Packet response : outboundJoinProgress.getResponses() ) {
@@ -1155,9 +1156,9 @@ public class FMUCHandler
 
         final JID userJID = getFMUCFromJID( presence );
 
-        final LocalMUCUser user = new LocalMUCUser(room.getMUCService(), userJID );
+        final MUCUser user = new MUCUser(room.getMUCService(), userJID );
 
-        final LocalMUCRole joinRole = new LocalMUCRole( room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence));
+        final MUCRole joinRole = new MUCRole( room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence));
         joinRole.setReportedFmucAddress( userJID );
 
         final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( user, nickname );
@@ -1184,7 +1185,7 @@ public class FMUCHandler
      *
      * This method is intended to be used when a remote node is being disconnected from the FMUC node set, without having
      * sent 'leave' presence stanzas for its occupants. This method generates such presence stanzas, and delegates
-     * further processing to {@link makeRemoteOccupantLeaveRoom}
+     * further processing to {@link #makeRemoteOccupantLeaveRoom(Presence)}
      *
      * @param removedRemoteOccupants The occupants to be removed from the room.
      */
@@ -1237,12 +1238,13 @@ public class FMUCHandler
         }
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCRole leaveRole = room.getOccupantByFullJID( userJID );
+        final MUCRole leaveRole = (MUCRole) room.getOccupantByFullJID( userJID );
         leaveRole.setPresence( createCopyWithoutFMUC(presence) ); // update presence to reflect the 'leave' - this is used later to broadcast to other occupants.
 
         // Send presence to inform all occupants of the room that the user has left.
         room.sendLeavePresenceToExistingOccupants( leaveRole )
-            .thenRunAsync( () -> {
+            // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
+            .thenRun( () -> {
                 // Update the (local) room state to now include this occupant.
                 room.removeOccupantRole( leaveRole );
 
@@ -1351,7 +1353,7 @@ public class FMUCHandler
             throw new IllegalArgumentException( "Expected argument 'joiningPeer' to be a bare JID, but it was not: " + joiningPeer );
         }
 
-        // TODO. Can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomHistoryAfterJoin be reused to reduce duplicate code and responsibilities?
+        // TODO. Can org.jivesoftware.openfire.muc.spi.MUCRoom.sendRoomHistoryAfterJoin be reused to reduce duplicate code and responsibilities?
         Log.trace("(room: '{}'): Sending history to joining node '{}'.", room.getJID(), joiningPeer );
         final MUCRoomHistory roomHistory = room.getRoomHistory();
         final Iterator<Message> history = roomHistory.getMessageHistory();
@@ -1382,7 +1384,7 @@ public class FMUCHandler
 
         Log.trace("(room: '{}'): Sending subject to joining node '{}'.", room.getJID(), joiningPeer );
 
-        // TODO can org.jivesoftware.openfire.muc.spi.LocalMUCRoom.sendRoomSubjectAfterJoin be re-used?
+        // TODO can org.jivesoftware.openfire.muc.spi.MUCRoom.sendRoomSubjectAfterJoin be re-used?
         final MUCRoomHistory roomHistory = room.getRoomHistory();
         Message roomSubject = roomHistory.getChangedSubject();
         if ( roomSubject != null ) {
@@ -1800,7 +1802,7 @@ public class FMUCHandler
             final MUCRole sender;
             final CompletableFuture<?> future;
 
-            QueuedStanza( final Packet stanza, final MUCRole sender, final CompletableFuture<?> future ) {
+            QueuedStanza(final Packet stanza, final MUCRole sender, final CompletableFuture<?> future ) {
                 this.stanza = stanza;
                 this.sender = sender;
                 this.future = future;

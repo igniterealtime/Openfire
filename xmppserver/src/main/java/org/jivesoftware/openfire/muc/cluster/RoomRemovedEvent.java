@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.ClusterTask;
 
@@ -32,12 +32,12 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class RoomRemovedEvent implements ClusterTask<Void> {
-    private LocalMUCRoom room;
+    private MUCRoom room;
 
     public RoomRemovedEvent() {
     }
 
-    public RoomRemovedEvent(LocalMUCRoom room) {
+    public RoomRemovedEvent(MUCRoom room) {
         this.room = room;
     }
 
@@ -59,7 +59,7 @@ public class RoomRemovedEvent implements ClusterTask<Void> {
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        room = new LocalMUCRoom();
+        room = new MUCRoom();
         room.readExternal(in);
     }
 }

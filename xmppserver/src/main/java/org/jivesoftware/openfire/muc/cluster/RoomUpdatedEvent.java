@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire.muc.cluster;
 
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -30,12 +30,12 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class RoomUpdatedEvent extends MUCRoomTask<Void> {
-    private LocalMUCRoom room;
+    private MUCRoom room;
 
     public RoomUpdatedEvent() {
     }
 
-    public RoomUpdatedEvent(LocalMUCRoom room) {
+    public RoomUpdatedEvent(MUCRoom room) {
         super(room);
         this.room = room;
     }
@@ -65,7 +65,7 @@ public class RoomUpdatedEvent extends MUCRoomTask<Void> {
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        room = new LocalMUCRoom();
+        room = new MUCRoom();
         room.readExternal(in);
     }
 }

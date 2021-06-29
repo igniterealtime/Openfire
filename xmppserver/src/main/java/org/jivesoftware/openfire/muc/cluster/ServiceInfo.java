@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.muc.cluster;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -56,9 +55,8 @@ public class ServiceInfo implements Externalizable {
         rooms = new ArrayList<>();
         // Get rooms that have occupants and include them in the reply
         for (MUCRoom room : service.getActiveChatRooms()) {
-            LocalMUCRoom localRoom = (LocalMUCRoom) room;
             if (!room.getOccupants().isEmpty()) {
-                rooms.add(new RoomInfo(localRoom, localRoom.getOccupants()));
+                rooms.add(new RoomInfo(room, room.getOccupants()));
             }
         }
     }

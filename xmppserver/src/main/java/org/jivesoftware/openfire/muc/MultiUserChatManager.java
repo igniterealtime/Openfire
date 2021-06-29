@@ -15,18 +15,6 @@
  */
 package org.jivesoftware.openfire.muc;
 
-import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -36,15 +24,7 @@ import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
-import org.jivesoftware.openfire.muc.cluster.GetNewMemberRoomsRequest;
-import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
-import org.jivesoftware.openfire.muc.cluster.RoomInfo;
-import org.jivesoftware.openfire.muc.cluster.SeniorMemberServicesRequest;
-import org.jivesoftware.openfire.muc.cluster.ServiceAddedEvent;
-import org.jivesoftware.openfire.muc.cluster.ServiceInfo;
-import org.jivesoftware.openfire.muc.cluster.ServiceRemovedEvent;
-import org.jivesoftware.openfire.muc.cluster.ServiceUpdatedEvent;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.cluster.*;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventListener;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
@@ -64,6 +44,12 @@ import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides centralized management of all configured Multi User Chat (MUC) services.
@@ -798,7 +784,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             public double sample() {
                 double users = 0;
                 for (MultiUserChatService service : getMultiUserChatServices()) {
-                    users += service.getNumberConnectedUsers(false);
+                    users += service.getNumberConnectedUsers();
                 }
                 return users;
             }
@@ -928,9 +914,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             final MultiUserChatServiceImpl serviceImpl = (MultiUserChatServiceImpl)service;
 
             for (final RoomInfo roomInfo : serviceInfo.getRooms()) {
-                final LocalMUCRoom remoteRoom = roomInfo.getRoom(); // TODO the remote room is treated as a LocalMUCRoom instance here. Is that safe?
+                final MUCRoom remoteRoom = roomInfo.getRoom();
 
-                LocalMUCRoom localRoom = serviceImpl.getLocalChatRoom(remoteRoom.getName());
+                MUCRoom localRoom = serviceImpl.getLocalChatRoom(remoteRoom.getName());
                 if (localRoom == null) {
                     Log.debug("Create local room with remote information. Room: {}", remoteRoom.getJID());
                     localRoom = remoteRoom;
@@ -966,9 +952,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
         // TODO: Optimize: This makes all cluster nodes query the joining node for data that they mostly already should have.
         for (final RoomInfo roomInfo : roomInfos) {
-            final LocalMUCRoom remoteRoom = roomInfo.getRoom(); // TODO the remote room is treated as a LocalMUCRoom instance here. Is that safe?
+            final MUCRoom remoteRoom = roomInfo.getRoom();
             final MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
-            LocalMUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
+            MUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
             if (localRoom == null) {
                 Log.debug("Create local room with remote information. Room: {}", remoteRoom.getJID());
                 localRoom = remoteRoom;
@@ -991,18 +977,20 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
     @Override
     public void leftCluster(byte[] nodeID) {
-        // Remove all room occupants linked to the defunct node as their sessions are cleaned out earlier
-        Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
-
-        for (final MultiUserChatService service : getMultiUserChatServices()) {
-            for (final MUCRoom mucRoom : service.getChatRooms()) {
-                for (MUCRole mucRole : mucRoom.getOccupants()) {
-                    if (mucRole.getNodeID().equals(nodeID)) {
-                        mucRoom.leaveRoom(mucRole);
-                    }
-                }
-            }
-        }
+// This has been moved to MultiUserChatServiceImpl
+//
+//        // Remove all room occupants linked to the defunct node as their sessions are cleaned out earlier
+//        Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
+//
+//        for (final MultiUserChatService service : getMultiUserChatServices()) {
+//            for (final MUCRoom mucRoom : service.getChatRooms()) {
+//                for (MUCRole mucRole : mucRoom.getOccupants()) {
+//                    if (mucRole.getNodeID().equals(nodeID)) {
+//                        mucRoom.leaveRoom(mucRole);
+//                    }
+//                }
+//            }
+//        }
     }
 
     @Override

@@ -18,10 +18,9 @@ package org.jivesoftware.openfire.muc.cluster;
 
 import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -49,7 +48,7 @@ public class OccupantAddedEvent extends MUCRoomTask<Void> {
     public OccupantAddedEvent() {
     }
 
-    public OccupantAddedEvent(LocalMUCRoom room, MUCRole occupant) {
+    public OccupantAddedEvent(MUCRoom room, MUCRole occupant) {
         super(room);
         presence = occupant.getPresence();
         role = occupant.getRole().ordinal();

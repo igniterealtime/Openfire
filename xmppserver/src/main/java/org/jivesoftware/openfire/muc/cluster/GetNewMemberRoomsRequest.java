@@ -18,9 +18,8 @@ package org.jivesoftware.openfire.muc.cluster;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.util.cache.ClusterTask;
 
 import java.io.IOException;
@@ -49,23 +48,27 @@ public class GetNewMemberRoomsRequest implements ClusterTask<List<RoomInfo>> {
 
     @Override
     public void run() {
-        rooms = new ArrayList<>();
-        // Get all services that have local occupants and include them in the reply
-        for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
-            // Get rooms that have local occupants and include them in the reply
-            for (MUCRoom room : mucService.getActiveChatRooms()) { // non-actively loaded rooms won't have occupants anyway.
-                LocalMUCRoom localRoom = (LocalMUCRoom) room;
-                Collection<MUCRole> localOccupants = new ArrayList<>();
-                for (MUCRole occupant : room.getOccupants()) {
-                    if (occupant.isLocal()) {
-                        localOccupants.add(occupant);
-                    }
-                }
-                if (!localOccupants.isEmpty()) {
-                    rooms.add(new RoomInfo(localRoom, localOccupants));
-                }
-            }
-        }
+        // TODO re-implement, or possible remove/replace this. With the move from state maintained by each cluster node to state maintained in a
+        //      shared data structure (a clustered cache), the requirement to 'sync' rooms when a node joins a cluster changes significantly. There
+        //      will still be a need for some kind of synchronization (eg: to retrieve non-persisted MUC room data), but that likely is significationly
+        //      different from the purpose that this implementation used to have.
+//        rooms = new ArrayList<>();
+//        // Get all services that have local occupants and include them in the reply
+//        for (MultiUserChatService mucService : XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices()) {
+//            // Get rooms that have local occupants and include them in the reply
+//            for (MUCRoom room : mucService.getActiveChatRooms()) { // non-actively loaded rooms won't have occupants anyway.
+//                LocalMUCRoom localRoom = (LocalMUCRoom) room;
+//                Collection<MUCRole> localOccupants = new ArrayList<>();
+//                for (MUCRole occupant : room.getOccupants()) {
+//                    if (occupant.isLocal()) {
+//                        localOccupants.add(occupant);
+//                    }
+//                }
+//                if (!localOccupants.isEmpty()) {
+//                    rooms.add(new RoomInfo(localRoom, localOccupants));
+//                }
+//            }
+//        }
     }
 
     @Override

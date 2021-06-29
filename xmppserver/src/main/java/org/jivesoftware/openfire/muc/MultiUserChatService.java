@@ -20,7 +20,6 @@ import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MUCRoomSearchInfo;
 import org.jivesoftware.util.JiveConstants;
@@ -38,7 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
- * independently from the rest of the Jive server infrastruture. This theoretically allows
+ * independently from the rest of the Jive server infrastructure. This theoretically allows
  * deployment of the groupchat on a separate server from the main IM server.
  * 
  * @author Gaston Dombiak
@@ -443,7 +442,7 @@ public interface MultiUserChatService extends Component {
      *
      * @param room the removed room in another cluster node.
      */
-    void chatRoomRemoved( LocalMUCRoom room );
+    void chatRoomRemoved( MUCRoom room );
 
     /**
      * Notification message indicating that a chat room has been created
@@ -451,7 +450,7 @@ public interface MultiUserChatService extends Component {
      *
      * @param room the created room in another cluster node.
      */
-    void chatRoomAdded( LocalMUCRoom room );
+    void chatRoomAdded( MUCRoom room );
 
     /**
      * Removes the room associated with the given name.
@@ -462,9 +461,7 @@ public interface MultiUserChatService extends Component {
 
     /**
      * Returns the list of {@link org.jivesoftware.openfire.muc.MUCRole} in all rooms for the specified
-     * user's session. When running in a cluster the list will include
-     * {@link org.jivesoftware.openfire.muc.spi.LocalMUCRole} and {@link org.jivesoftware.openfire.muc.spi.RemoteMUCRole}.
-     *
+     * user's session.
      *
      * @param user the full JID that identifies the session of the user.
      * @return the list of MUCRoles in all rooms for the specified user's session.
@@ -487,12 +484,11 @@ public interface MultiUserChatService extends Component {
     int getNumberChatRooms();
 
     /**
-     * Retuns the total number of occupants in all rooms in the server.
+     * Returns the total number of occupants in all rooms.
      *
-     * @param onlyLocal true if only users connected to this JVM will be considered. Otherwise count cluster wise.
-     * @return the number of existing rooms in the server.
+     * @return the count of all occupants.
      */
-    int getNumberConnectedUsers( boolean onlyLocal );
+    int getNumberConnectedUsers();
 
     /**
      * Retuns the total number of users that have joined in all rooms in the server.

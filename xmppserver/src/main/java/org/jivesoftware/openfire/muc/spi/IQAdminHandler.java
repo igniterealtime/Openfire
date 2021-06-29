@@ -25,11 +25,7 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
-import org.jivesoftware.openfire.muc.CannotBeInvitedException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -51,13 +47,13 @@ public class IQAdminHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(IQAdminHandler.class);
 
-    private final LocalMUCRoom room;
+    private final MUCRoom room;
 
     private final PacketRouter router;
 
     private final boolean skipInvite;
 
-    public IQAdminHandler(LocalMUCRoom chatroom, PacketRouter packetRouter) {
+    public IQAdminHandler(MUCRoom chatroom, PacketRouter packetRouter) {
         this.room = chatroom;
         this.router = packetRouter;
         this.skipInvite = JiveGlobals.getBooleanProperty("xmpp.muc.skipInvite", false);

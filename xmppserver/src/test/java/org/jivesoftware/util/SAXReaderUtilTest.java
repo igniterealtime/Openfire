@@ -16,6 +16,7 @@
 package org.jivesoftware.util;
 
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -23,9 +24,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Verifies the implementation of {@link SAXReaderUtil}
@@ -79,7 +80,7 @@ public class SAXReaderUtilTest
     public void testInputStream() throws Exception
     {
         // Setup test fixture.
-        final InputStream input =  new ByteArrayInputStream("<foo><bar>test</bar></foo>".getBytes(StandardCharsets.UTF_8));
+        final InputStream input = new ByteArrayInputStream("<foo><bar>test</bar></foo>".getBytes(StandardCharsets.UTF_8));
 
         // Execute system under test.
         final Document output = SAXReaderUtil.readDocument(input);
@@ -89,5 +90,33 @@ public class SAXReaderUtilTest
         assertEquals("foo", output.getRootElement().getName());
         assertNotNull(output.getRootElement().element("bar"));
         assertEquals("test", output.getRootElement().elementText("bar"));
+    }
+
+    /**
+     * Without a ExecutorService, problems during parsing/reading data would cause a DocumentException. By executing
+     * this implementation through a Callable, these Exceptions are wrapped in a ExecutorException. This test verifies
+     * that a DocumentException, caused by a problem parsing XML, remains accessible through the ExecutorException that
+     * is thrown.
+     */
+    @Test
+    public void testDocumentException() throws Exception
+    {
+        // Setup test fixture.
+        final InputStream input = new ByteArrayInputStream("this is not valid XML".getBytes(StandardCharsets.UTF_8));
+
+        final ExecutionException result;
+        try {
+            // Execute system under test.
+            SAXReaderUtil.readDocument(input);
+            fail("An ExecutionException should have been thrown.");
+            return;
+        } catch (ExecutionException e) {
+            result = e;
+        }
+
+        // Verify result.
+        assertNotNull(result);
+        assertNotNull(result.getCause());
+        assertEquals(DocumentException.class, result.getCause().getClass());
     }
 }

@@ -223,7 +223,7 @@ public final class SAXReaderUtil
             try {
                 return constructNewReader();
             } catch (SAXException e) {
-                Log.error("Unable to parse XML data.", e);
+                Log.error("Unable to construct a new XML parser.", e);
                 return null;
             }
         });

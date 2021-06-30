@@ -71,6 +71,9 @@ public class DefaultVCardProvider implements VCardProvider {
             }
             catch (Exception e) {
                 Log.error("Error loading vCard of username: " + username, e);
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
             }
             finally {
                 DbConnectionManager.closeConnection(rs, pstmt, con);

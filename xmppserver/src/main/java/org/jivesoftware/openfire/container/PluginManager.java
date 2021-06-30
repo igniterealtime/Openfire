@@ -724,6 +724,9 @@ public class PluginManager
                 count = 0;
             }
             failureToLoadCount.put( canonicalName, ++count );
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             return false;
         }
     }

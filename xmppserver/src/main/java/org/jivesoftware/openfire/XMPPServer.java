@@ -1140,6 +1140,9 @@ public class XMPPServer {
             catch (Exception e) {
                 System.err.println("Error loading openfire_init.xml to find home.");
                 e.printStackTrace();
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
 

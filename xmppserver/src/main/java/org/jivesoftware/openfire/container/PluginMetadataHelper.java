@@ -559,6 +559,10 @@ public class PluginMetadataHelper
         catch ( Exception e )
         {
             Log.error( "Unable to get element value '{}' from plugin.xml of plugin in '{}':", xpath, pluginDir, e );
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+
         }
         return null;
     }

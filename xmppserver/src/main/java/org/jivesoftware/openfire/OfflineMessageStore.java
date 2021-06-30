@@ -237,7 +237,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                 OfflineMessage message;
                 try {
                     message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
-                } catch (ExecutionException | InterruptedException e) {
+                } catch (ExecutionException e) {
                     // Try again after removing invalid XML chars (e.g. &#12;)
                     Matcher matcher = pattern.matcher(msgXML);
                     if (matcher.find()) {
@@ -245,10 +245,19 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                     }
                     try {
                         message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
-                    } catch (ExecutionException | InterruptedException de) {
+                    } catch (ExecutionException de) {
                         Log.error("Failed to route packet (offline message): " + msgXML, de);
                         continue; // skip and process remaining offline messages
+                    } catch (InterruptedException de) {
+                        Thread.currentThread().interrupt();
+                        Log.error("Offline Message retrieval interrupted", de);
+                        break; // Skip all further offline messages
                     }
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.error("Offline Message retrieval interrupted", e);
+                    break; // Skip all further offline messages
                 }
 
                 // if there is already a delay stamp, we shouldn't add another.
@@ -319,6 +328,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         catch (Exception e) {
             Log.error("Error retrieving offline messages of username: " + username +
                     " creationDate: " + creationDate, e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

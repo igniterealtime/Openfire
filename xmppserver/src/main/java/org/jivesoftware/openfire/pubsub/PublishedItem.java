@@ -173,7 +173,10 @@ public class PublishedItem implements Serializable {
                     try {
                         payload = SAXReaderUtil.readRootElement(payloadXML);
                     } catch (Exception ex) {
-                         log.error("Failed to parse payload XML", ex);
+                        log.error("Failed to parse payload XML", ex);
+                        if (ex instanceof InterruptedException) {
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
             }

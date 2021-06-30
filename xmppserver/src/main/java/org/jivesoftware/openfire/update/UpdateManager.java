@@ -163,6 +163,9 @@ public class UpdateManager extends BasicModule {
                             }
                             catch (Exception e) {
                                 Log.error("Error checking for updates", e);
+                                if (e instanceof InterruptedException) {
+                                    Thread.currentThread().interrupt();
+                                }
                             }
                             // Keep track of the last time we checked for updates.
                             final Instant lastUpdate = Instant.now();
@@ -181,6 +184,7 @@ public class UpdateManager extends BasicModule {
                 }
                 catch (InterruptedException e) {
                     Log.error(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
                 }
                 finally {
                     // Clean up reference to this thread
@@ -783,6 +787,9 @@ public class UpdateManager extends BasicModule {
             xmlResponse = SAXReaderUtil.readDocument(file);
         } catch (Exception e) {
             Log.error("Error reading server-update.xml", e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             return;
         }
 
@@ -833,6 +840,9 @@ public class UpdateManager extends BasicModule {
             xmlResponse = SAXReaderUtil.readDocument(file);
         } catch (Exception e) {
             Log.error("Error reading available-plugins.xml", e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             return;
         }
 

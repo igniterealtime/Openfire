@@ -99,6 +99,8 @@ public final class SAXReaderUtil
      *
      * @param stream The data to be parsed as an XML Document.
      * @return an XML Document.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final InputStream stream) throws ExecutionException, InterruptedException {
         return parserService.submit(new ParserTask(stream)).get();
@@ -111,6 +113,8 @@ public final class SAXReaderUtil
      *
      * @param stream The data to be parsed as an XML Document.
      * @return an XML Document root element.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Element readRootElement(@Nonnull final InputStream stream) throws ExecutionException, InterruptedException {
         return readDocument(stream).getRootElement();
@@ -125,6 +129,8 @@ public final class SAXReaderUtil
      *
      * @param text The data to be parsed as an XML Document.
      * @return an XML Document.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final String text) throws ExecutionException, InterruptedException {
         return parserService.submit(new ParserTask(new StringReader(text))).get();
@@ -137,6 +143,8 @@ public final class SAXReaderUtil
      *
      * @param text The data to be parsed as an XML Document.
      * @return an XML Document root element.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Element readRootElement(@Nonnull final String text) throws ExecutionException, InterruptedException {
         return readDocument(text).getRootElement();
@@ -151,6 +159,8 @@ public final class SAXReaderUtil
      *
      * @param reader The data to be parsed as an XML Document.
      * @return an XML Document.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final Reader reader) throws ExecutionException, InterruptedException {
         return parserService.submit(new ParserTask(reader)).get();
@@ -163,6 +173,8 @@ public final class SAXReaderUtil
      *
      * @param reader The data to be parsed as an XML Document.
      * @return an XML Document root element.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Element readRootElement(@Nonnull final Reader reader) throws ExecutionException, InterruptedException {
         return readDocument(reader).getRootElement();
@@ -177,6 +189,8 @@ public final class SAXReaderUtil
      *
      * @param file The data to be parsed as an XML Document.
      * @return an XML Document.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final File file) throws ExecutionException, InterruptedException {
         return parserService.submit(new ParserTask(file)).get();
@@ -189,6 +203,8 @@ public final class SAXReaderUtil
      *
      * @param file The data to be parsed as an XML Document.
      * @return an XML Document root element.
+     * @throws ExecutionException on any error that occurs during parsing (this typically has a {@link org.dom4j.DocumentException} as its cause).
+     * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Element readRootElement(@Nonnull final File file) throws ExecutionException, InterruptedException {
         return readDocument(file).getRootElement();

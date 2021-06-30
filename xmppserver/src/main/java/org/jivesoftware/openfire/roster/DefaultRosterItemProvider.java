@@ -304,8 +304,11 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
 
             rosterItemCache.put( username, itemList );
         }
-        catch (SQLException | InterruptedException | ExecutionException e) {
+        catch (SQLException | ExecutionException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);

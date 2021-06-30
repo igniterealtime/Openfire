@@ -181,6 +181,9 @@ public final class MUCRoomHistory {
                 }
             } catch (Exception ex) {
                 Log.error("Failed to parse payload XML", ex);
+                if (ex instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
         message.setSubject(subject);

@@ -72,10 +72,14 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
                             .replace("@nickname@", username);
                     vcard = SAXReaderUtil.readRootElement(str);
                 } catch (UserNotFoundException unfe) {
-                    LOG.error("Unable to find user:" + String.valueOf(username) + " for loading its vcard", unfe);
+                    LOG.error("Unable to find user '{}' for loading its vcard", username, unfe);
                     return null;
-                } catch (ExecutionException | InterruptedException e) {
-                    LOG.error("vcard parsing error", e);
+                } catch (ExecutionException e) {
+                    LOG.error("VCard parsing error", e);
+                    return null;
+                } catch (InterruptedException e) {
+                    LOG.error("VCard parsing interrupted", e);
+                    Thread.currentThread().interrupt();
                     return null;
                 }
 

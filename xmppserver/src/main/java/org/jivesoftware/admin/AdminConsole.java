@@ -234,6 +234,9 @@ public class AdminConsole {
         }
         catch (Exception e) {
             Log.error("Failure when parsing main admin-sidebar.xml file", e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
         try {
             in.close();
@@ -274,6 +277,9 @@ public class AdminConsole {
                     msg += " from resource: " + url.toString();
                 }
                 Log.warn(msg, e);
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
             }
             try {
                 if(classLoader != null && gitprops.isEmpty()){

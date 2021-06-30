@@ -168,6 +168,9 @@ public class PrivacyListProvider {
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         return privacyList;
@@ -220,6 +223,9 @@ public class PrivacyListProvider {
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         return privacyList;

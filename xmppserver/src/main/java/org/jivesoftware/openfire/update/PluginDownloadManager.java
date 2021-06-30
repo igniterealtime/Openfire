@@ -94,6 +94,10 @@ public class PluginDownloadManager {
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+
         }
 
         return false;

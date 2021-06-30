@@ -76,8 +76,10 @@ public class PluginCacheConfigurator {
             for (Node mapping: mappings) {
                 registerCache(pluginName, mapping);
             }
-        }
-        catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException e) {
+            Log.error(e.getMessage(), e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             Log.error(e.getMessage(), e);
         }
     }

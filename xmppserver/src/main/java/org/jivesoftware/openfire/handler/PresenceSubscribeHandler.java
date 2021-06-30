@@ -299,6 +299,13 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 item = roster.createRosterItem(target, false, true);
                 newItem = true;
             }
+
+            if (Presence.Type.subscribe == type && !isSending) {
+                // For inbound <presence type='subscribe'/>, we should update the stored stanza here.
+                item.setStoredSubscribeStanza(presence);
+                RosterManager.getRosterItemProvider().updateItem(roster.getUsername(), item);
+            }
+
             // Get a snapshot of the item state
             oldAsk = item.getAskStatus();
             oldSub = item.getSubStatus();
@@ -306,8 +313,11 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             // Update the item state based in the received presence type
             updateState(item, type, isSending);
             // Update the roster IF the item state has changed
-            if (oldAsk != item.getAskStatus() || oldSub != item.getSubStatus() ||
-                    oldRecv != item.getRecvStatus()) {
+            if (oldAsk != item.getAskStatus() || oldSub != item.getSubStatus() || oldRecv != item.getRecvStatus()) {
+                if (oldRecv == RosterItem.RECV_SUBSCRIBE && item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                    // No longer asking for a subscription. Clean up the original subscription request stanza.
+                    item.setStoredSubscribeStanza(null);
+                }
                 roster.updateRosterItem(item);
             }
             else if (newItem) {
@@ -315,9 +325,6 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 if (item.getSubStatus() != RosterItem.SUB_NONE ||
                         item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
                     roster.broadcast(item, false);
-                } else {
-                    // For <presence type='subscribe'/>, we should update the stored stanza here.
-                    item.setStoredSubscribeStanza(presence);
                 }
             }
         }

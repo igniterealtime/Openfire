@@ -91,11 +91,27 @@ public final class SAXReaderUtil
     }
 
     /**
+     * Schedules parsing of the provided input stream into an XML Document as an asynchronous process. This method
+     * returns a {@link Future} object that can be used to obtain the result of the asynchronous process.
+     *
+     * The XML parsing is delegated to a limited set of parsers, that is fronted by an Executor Service. The amount of
+     * parsers that are available is equal to the amount of threads available in the Executor Service. This can be
+     * optimized by using the SystemProperties in this class.
+     *
+     * @param stream The data to be parsed as an XML Document.
+     * @return A Future representing pending completion of parsing the provided data as an XML Document.
+     */
+    public static Future<Document> readDocumentAsync(@Nonnull final InputStream stream) {
+        return parserService.submit(new ParserTask(stream));
+    }
+
+    /**
      * Parses an XML Document from the content provided by an input stream.
      *
-     * The XML parsing is delegated to a limited set of parsers. When a parser is not immediately available, this method
-     * will block until one becomes available. The availability of parsers can be optimized by using the SystemProperties
-     * in this class.
+     * Equivalent to calling <tt>readDocumentAsync(input).get()</tt>
+     *
+     * The XML parsing is delegated to a limited set of parsers, as documented in {@link #readDocumentAsync(InputStream)}.
+     * When a parser is not immediately available, this method will block until one becomes available.
      *
      * @param stream The data to be parsed as an XML Document.
      * @return an XML Document.
@@ -103,7 +119,7 @@ public final class SAXReaderUtil
      * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final InputStream stream) throws ExecutionException, InterruptedException {
-        return parserService.submit(new ParserTask(stream)).get();
+        return readDocumentAsync(stream).get();
     }
 
     /**
@@ -121,11 +137,27 @@ public final class SAXReaderUtil
     }
 
     /**
+     * Schedules parsing of the provided text into an XML Document as an asynchronous process. This method
+     * returns a {@link Future} object that can be used to obtain the result of the asynchronous process.
+     *
+     * The XML parsing is delegated to a limited set of parsers, that is fronted by an Executor Service. The amount of
+     * parsers that are available is equal to the amount of threads available in the Executor Service. This can be
+     * optimized by using the SystemProperties in this class.
+     *
+     * @param text The data to be parsed as an XML Document.
+     * @return A Future representing pending completion of parsing the provided data as an XML Document.
+     */
+    public static Future<Document> readDocumentAsync(@Nonnull final String text) {
+        return parserService.submit(new ParserTask(new StringReader(text)));
+    }
+
+    /**
      * Parses an XML Document from the provided text.
      *
-     * The XML parsing is delegated to a limited set of parsers. When a parser is not immediately available, this method
-     * will block until one becomes available. The availability of parsers can be optimized by using the SystemProperties
-     * in this class.
+     * Equivalent to calling <tt>readDocumentAsync(input).get()</tt>
+     *
+     * The XML parsing is delegated to a limited set of parsers, as documented in {@link #readDocumentAsync(String)}.
+     * When a parser is not immediately available, this method will block until one becomes available.
      *
      * @param text The data to be parsed as an XML Document.
      * @return an XML Document.
@@ -133,7 +165,7 @@ public final class SAXReaderUtil
      * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final String text) throws ExecutionException, InterruptedException {
-        return parserService.submit(new ParserTask(new StringReader(text))).get();
+        return readDocumentAsync(text).get();
     }
 
     /**
@@ -151,11 +183,27 @@ public final class SAXReaderUtil
     }
 
     /**
+     * Schedules parsing of the provided reader into an XML Document as an asynchronous process. This method
+     * returns a {@link Future} object that can be used to obtain the result of the asynchronous process.
+     *
+     * The XML parsing is delegated to a limited set of parsers, that is fronted by an Executor Service. The amount of
+     * parsers that are available is equal to the amount of threads available in the Executor Service. This can be
+     * optimized by using the SystemProperties in this class.
+     *
+     * @param reader The data to be parsed as an XML Document.
+     * @return A Future representing pending completion of parsing the provided data as an XML Document.
+     */
+    public static Future<Document> readDocumentAsync(@Nonnull final Reader reader) {
+        return parserService.submit(new ParserTask(reader));
+    }
+
+    /**
      * Parses an XML Document from the content provided by a reader.
      *
-     * The XML parsing is delegated to a limited set of parsers. When a parser is not immediately available, this method
-     * will block until one becomes available. The availability of parsers can be optimized by using the SystemProperties
-     * in this class.
+     * Equivalent to calling <tt>readDocumentAsync(input).get()</tt>
+     *
+     * The XML parsing is delegated to a limited set of parsers, as documented in {@link #readDocumentAsync(Reader)}.
+     * When a parser is not immediately available, this method will block until one becomes available.
      *
      * @param reader The data to be parsed as an XML Document.
      * @return an XML Document.
@@ -163,7 +211,7 @@ public final class SAXReaderUtil
      * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final Reader reader) throws ExecutionException, InterruptedException {
-        return parserService.submit(new ParserTask(reader)).get();
+        return readDocumentAsync(reader).get();
     }
 
     /**
@@ -181,11 +229,27 @@ public final class SAXReaderUtil
     }
 
     /**
+     * Schedules parsing of content of afile into an XML Document as an asynchronous process. This method
+     * returns a {@link Future} object that can be used to obtain the result of the asynchronous process.
+     *
+     * The XML parsing is delegated to a limited set of parsers, that is fronted by an Executor Service. The amount of
+     * parsers that are available is equal to the amount of threads available in the Executor Service. This can be
+     * optimized by using the SystemProperties in this class.
+     *
+     * @param file The data to be parsed as an XML Document.
+     * @return A Future representing pending completion of parsing the provided data as an XML Document.
+     */
+    public static Future<Document> readDocumentAsync(@Nonnull final File file) {
+        return parserService.submit(new ParserTask(file));
+    }
+
+    /**
      * Parses an XML Document from the content provided by a file.
      *
-     * The XML parsing is delegated to a limited set of parsers. When a parser is not immediately available, this method
-     * will block until one becomes available. The availability of parsers can be optimized by using the SystemProperties
-     * in this class.
+     * Equivalent to calling <tt>readDocumentAsync(input).get()</tt>
+     *
+     * The XML parsing is delegated to a limited set of parsers, as documented in {@link #readDocumentAsync(File)}.
+     * When a parser is not immediately available, this method will block until one becomes available.
      *
      * @param file The data to be parsed as an XML Document.
      * @return an XML Document.
@@ -193,7 +257,7 @@ public final class SAXReaderUtil
      * @throws InterruptedException when the task that is scheduled to perform the parsing gets interrupted during the execution of the task.
      */
     public static Document readDocument(@Nonnull final File file) throws ExecutionException, InterruptedException {
-        return parserService.submit(new ParserTask(file)).get();
+        return readDocumentAsync(file).get();
     }
 
     /**

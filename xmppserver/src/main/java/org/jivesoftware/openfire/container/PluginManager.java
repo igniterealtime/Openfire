@@ -881,6 +881,12 @@ public class PluginManager
         if ( pluginLoader != null )
         {
             pluginLoader.unloadJarFiles();
+
+            try {
+                pluginLoader.close(); // OF-2348
+            } catch (IOException e) {
+                Log.warn( "Closing plugin loader failed for '{}':", canonicalName , e);
+            }
         }
         else
         {
@@ -944,6 +950,7 @@ public class PluginManager
         }
         else if ( plugin != null )
         {
+            //FIXME this make no sense, while state of plugin is undetermined, (Destroy is partly executed, files are/are not removed)
             Log.info( "Restore references since we failed to remove the plugin '{}'.", canonicalName );
             pluginsLoaded.put( canonicalName, plugin );
             pluginDirs.put( canonicalName, pluginFile );

@@ -1905,26 +1905,31 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                 final FormField fieldDescr = dataForm.addField();
                 fieldDescr.setVariable("muc#roominfo_description");
+                fieldDescr.setType(FormField.Type.text_single);
                 fieldDescr.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.desc"));
                 fieldDescr.addValue(room.getDescription());
 
                 final FormField fieldSubj = dataForm.addField();
                 fieldSubj.setVariable("muc#roominfo_subject");
+                fieldSubj.setType(FormField.Type.text_single);
                 fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
                 fieldSubj.addValue(room.getSubject());
 
                 final FormField fieldOcc = dataForm.addField();
                 fieldOcc.setVariable("muc#roominfo_occupants");
+                fieldOcc.setType(FormField.Type.text_single);
                 fieldOcc.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
                 fieldOcc.addValue(Integer.toString(room.getOccupantsCount()));
 
                 /*field = new XFormFieldImpl("muc#roominfo_lang");
+                field.setType(FormField.Type.text_single);
                 field.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.language"));
                 field.addValue(room.getLanguage());
                 dataForm.addField(field);*/
 
                 final FormField fieldDate = dataForm.addField();
                 fieldDate.setVariable("x-muc#roominfo_creationdate");
+                fieldDate.setType(FormField.Type.text_single);
                 fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
                 fieldDate.addValue(XMPPDateTimeFormat.format(room.getCreationDate()));
                 final Set<DataForm> dataForms = new HashSet<>();
@@ -1932,7 +1937,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return dataForms;
             }
         }
-        return new HashSet<DataForm>();
+        return new HashSet<>();
     }
 
     /**

@@ -87,6 +87,7 @@ public class GetUsersPresence extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
+        field.setType(FormField.Type.text_multi);
         field.setLabel("The presences of active users");
         field.setVariable("activeuserpresences");
 

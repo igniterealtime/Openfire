@@ -796,18 +796,22 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         fieldTypeSoftwareVersion.addValue("urn:xmpp:dataforms:softwareinfo");
 
                         final FormField fieldOs = dataFormSoftwareVersion.addField();
+                        fieldOs.setType(Type.text_single);
                         fieldOs.setVariable("os");
                         fieldOs.addValue( System.getProperty("os.name"));
 
                         final FormField fieldOsVersion = dataFormSoftwareVersion.addField();
+                        fieldOsVersion.setType(Type.text_single);
                         fieldOsVersion.setVariable("os_version");
-                        fieldOsVersion .addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
+                        fieldOsVersion.addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
 
                         final FormField fieldSoftware = dataFormSoftwareVersion.addField();
+                        fieldSoftware.setType(Type.text_single);
                         fieldSoftware.setVariable("software");
                         fieldSoftware.addValue(AdminConsole.getAppName());
 
                         final FormField fieldSoftwareVersion = dataFormSoftwareVersion.addField();
+                        fieldSoftwareVersion.setType(Type.text_single);
                         fieldSoftwareVersion.setVariable("software_version");
                         fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
 

@@ -106,18 +106,21 @@ public class GetAdminConsoleInfo extends AdHocCommand {
 
         // Add the bind interface
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel("Bind interface");
         field.setVariable("bindInterface");
         field.addValue(bindInterface);
 
         // Add the port
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel("Port");
         field.setVariable("adminPort");
         field.addValue(adminPort);
 
         // Add the secure port
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel("Secure port");
         field.setVariable("adminSecurePort");
         field.addValue(adminSecurePort);

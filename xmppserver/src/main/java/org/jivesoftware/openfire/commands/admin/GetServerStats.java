@@ -58,21 +58,25 @@ public class GetServerStats extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(LocaleUtils.getLocalizedString("index.server_name"));
         field.setVariable("name");
         field.addValue(AdminConsole.getAppName());
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(LocaleUtils.getLocalizedString("index.version"));
         field.setVariable("version");
         field.addValue(AdminConsole.getVersionString());
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(LocaleUtils.getLocalizedString("index.domain_name"));
         field.setVariable("domain");
         field.addValue(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(LocaleUtils.getLocalizedString("index.jvm"));
         field.setVariable("os");
         String vmName = System.getProperty("java.vm.name");
@@ -85,6 +89,7 @@ public class GetServerStats extends AdHocCommand {
         field.addValue(System.getProperty("java.version") + " " +System.getProperty("java.vendor") +vmName);
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(LocaleUtils.getLocalizedString("index.uptime"));
         field.setVariable("uptime");
         field.addValue(XMPPDateTimeFormat.format(XMPPServer.getInstance().getServerInfo().getLastStarted()));
@@ -99,6 +104,7 @@ public class GetServerStats extends AdHocCommand {
         double percentFree = ((maxMemory - usedMemory)/maxMemory)*100.0;
         double percentUsed = 100 - percentFree;
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(LocaleUtils.getLocalizedString("index.memory"));
         field.setVariable("memory");
         field.addValue(mbFormat.format(usedMemory) + " MB of " + mbFormat.format(maxMemory) + " MB (" +
@@ -115,11 +121,13 @@ public class GetServerStats extends AdHocCommand {
             }
         }
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel("Available Users");
         field.setVariable("activeusersnum");
         field.addValue(users.size());
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel("Available Users Sessions");
         field.setVariable("sessionsnum");
         field.addValue(availableSessions);

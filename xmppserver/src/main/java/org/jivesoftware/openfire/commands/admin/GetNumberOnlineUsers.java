@@ -53,8 +53,10 @@ public class GetNumberOnlineUsers extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(getLabel());
         field.setVariable("onlineusersnum");
+
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
         Set<String> users = new HashSet<>(sessions.size());

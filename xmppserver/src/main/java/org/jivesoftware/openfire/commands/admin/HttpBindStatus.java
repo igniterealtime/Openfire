@@ -62,17 +62,20 @@ public class HttpBindStatus extends AdHocCommand {
         HttpBindManager manager = HttpBindManager.getInstance();
         boolean isEnabled = manager.isHttpBindEnabled();
         field = form.addField();
+        field.setType(FormField.Type.boolean_type);
         field.setLabel("Http Bind Enabled");
         field.setVariable("httpbindenabled");
         field.addValue(String.valueOf(isEnabled));
 
         if (isEnabled) {
             field = form.addField();
+            field.setType(FormField.Type.text_single);
             field.setLabel("Http Bind Address");
             field.setVariable("httpbindaddress");
             field.addValue(manager.getHttpBindUnsecureAddress());
 
             field = form.addField();
+            field.setType(FormField.Type.text_single);
             field.setLabel("Http Bind Secure Address");
             field.setVariable("httpbindsecureaddress");
             field.addValue(manager.getHttpBindSecureAddress());
@@ -80,6 +83,7 @@ public class HttpBindStatus extends AdHocCommand {
             String jsUrl = manager.getJavaScriptUrl();
             if (jsUrl != null) {
                 field = form.addField();
+                field.setType(FormField.Type.text_single);
                 field.setLabel("Http Bind JavaScript Address");
                 field.setVariable("javascriptaddress");
                 field.addValue(jsUrl);

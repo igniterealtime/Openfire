@@ -59,6 +59,7 @@ public class Ping extends AdHocCommand
         form.setTitle("Server ping result (pong!)");
 
         final FormField field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel("Server Time");
         field.setVariable("timestamp");
         field.addValue( XMPPDateTimeFormat.format(new Date()) );

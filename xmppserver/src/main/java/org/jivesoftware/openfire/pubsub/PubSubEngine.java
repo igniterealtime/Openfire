@@ -1888,6 +1888,7 @@ public class PubSubEngine
             if (completedForm.getField("pubsub#access_model") == null) {
                 // Add the field that will specify the access model of the node
                 formField = completedForm.addField();
+                formField.setType(FormField.Type.list_single);
                 formField.setVariable("pubsub#access_model");
                 formField.addValue(accessModel);
             }
@@ -1900,6 +1901,7 @@ public class PubSubEngine
             if (!groups.isEmpty()) {
                 // Add the field that will contain the specified groups
                 formField = completedForm.addField();
+                formField.setType(FormField.Type.list_multi);
                 formField.setVariable("pubsub#roster_groups_allowed");
                 // Add each group as a value of the groups field
                 for (Iterator it = groups.iterator(); it.hasNext();) {

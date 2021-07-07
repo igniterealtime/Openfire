@@ -566,10 +566,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         formField.addValue("http://jabber.org/protocol/pubsub#subscribe_options");
 
         formField = dataForm.addField();
+        formField.setType(FormField.Type.list_single);
         formField.setVariable("pubsub#subscription_type");
         formField.addValue("items");
 
         formField = dataForm.addField();
+        formField.setType(FormField.Type.list_single);
         formField.setVariable("pubsub#subscription_depth");
         formField.addValue("all");
 

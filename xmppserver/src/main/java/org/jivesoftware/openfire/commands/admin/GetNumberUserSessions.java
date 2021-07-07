@@ -48,6 +48,7 @@ public class GetNumberUserSessions extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
+        field.setType(FormField.Type.text_single);
         field.setLabel(getLabel());
         field.setVariable("onlineuserssessionsnum");
         SessionManager sessionManager = SessionManager.getInstance();

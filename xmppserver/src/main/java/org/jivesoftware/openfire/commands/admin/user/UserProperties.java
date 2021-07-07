@@ -68,12 +68,15 @@ public class UserProperties extends AdHocCommand {
 
     private void populateResponseFields(DataForm form, List<String> accounts) {
         FormField jidField = form.addField();
+        jidField.setType(FormField.Type.jid_multi);
         jidField.setVariable("accountjids");
 
         FormField emailField = form.addField();
+        emailField.setType(FormField.Type.text_multi);
         emailField.setVariable("email");
 
         FormField nameField = form.addField();
+        nameField.setType(FormField.Type.text_multi);
         nameField.setVariable("name");
 
         UserManager manager = UserManager.getInstance();

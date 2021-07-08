@@ -426,7 +426,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         }
                     } else {
                         Log.trace( "Stanza is a regular MUC stanza." );
-                        getChatUser(userJid, roomName).process(packet);
+                        getChatUser(userJid).process(packet);
                     }
                 }
             }
@@ -1015,10 +1015,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Obtain a chat user by XMPPAddress.
      *
      * @param userjid The XMPPAddress of the user.
-     * @param roomName name of the room to receive the packet.
      * @return The chatuser corresponding to that XMPPAddress.
      */
-    public MUCUser getChatUser(final JID userjid, final String roomName) {
+    public MUCUser getChatUser(final JID userjid) {
         if (router == null) {
             throw new IllegalStateException("Not initialized");
         }

@@ -308,7 +308,7 @@ public class MUCRole implements Cacheable, Externalizable {
     public void destroy() {
         // Notify the user that he/she is no longer in the room
         final MultiUserChatServiceImpl service =((MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid));
-        final MUCUser mucUser = (MUCUser) service.getChatUser(userJid, roomJid.getNode());
+        final MUCUser mucUser = service.getChatUser(userJid);
         mucUser.removeRole(roomJid.getNode());
         // TODO The casts in this implementation should be cleaned up.
     }

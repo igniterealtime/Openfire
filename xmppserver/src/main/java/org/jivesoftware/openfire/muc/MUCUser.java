@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Representation of users interacting with the chat service. A user
@@ -75,14 +74,19 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     private String serviceName;
 
     /**
+     * The chat service that this user belongs to. Lazily initiated by {@link #getChatService()}
+     */
+    private transient MultiUserChatService service;
+
+    /**
      * Real system XMPPAddress for the user.
      */
     private JID realjid;
 
     /**
-     * Table: key roomName.toLowerCase(); value MUCRole.
+     * Names of the rooms (in this chat service) in which this user has a MUCRole.
      */
-    private Map<String, MUCRole> roles = new ConcurrentHashMap<>();
+    private Set<String> roomNames = new HashSet<>();
 
     /**
      * Time of last packet sent.
@@ -105,6 +109,15 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     {
         this.realjid = jid;
         this.serviceName = chatservice.getServiceName();
+        this.service = chatservice;
+    }
+
+    private synchronized MultiUserChatService getChatService() {
+        if (service == null) {
+            service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+        }
+
+        return service;
     }
 
     /**
@@ -114,40 +127,43 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      */
     public boolean isJoined()
     {
-        return !roles.isEmpty();
+        return !roomNames.isEmpty();
     }
 
     /**
-     * Get all roles for this user.
+     * Get the names of all rooms that this user has a role in.
      *
-     * @return Iterator over all roles for this user
+     * @return An unmodifiable collection of all room names for this MUCUser.
      */
-    public Collection<MUCRole> getRoles()
-    {
-        return Collections.unmodifiableCollection(roles.values());
+    // TODO: it is expected that every Room in this collection contains a MUCRole for this user, and vice versa. Can this be guaranteed?
+    public Collection<String> getRoomNames() { return Collections.unmodifiableCollection(roomNames); }
+
+    /**
+     * Register that this user has a role in a particular room.
+     *
+     * It is imperative that the content of #roomNames and MUCRoom#ROOM_OCCUPANTS_CACHE are kept in sync. This method
+     * should therefore only, and exclusively, be called by methods that add content to that cache (such as
+     * {@link MUCRoom#addOccupantRole(MUCRole)})
+     *
+     * @param roomName name of a MUC room.
+     */
+    void addRoomName(String roomName) {
+        roomNames.add(roomName);
+        // FIXME persist this change in the cache that holds all MUCUser instances!
     }
 
     /**
-     * Adds the role of the user in a particular room.
+     * Remove registration of role for a user in a particular room.
      *
-     * @param roomName The name of the room.
-     * @param role     The new role of the user.
+     * It is imperative that the content of #roomNames and MUCRoom#ROOM_OCCUPANTS_CACHE are kept in sync. This method
+     * should therefore only, and exclusively, be called by methods that remove content from that cache (such as
+     * {@link MUCRoom#removeOccupantRole(MUCRole)})
+     *
+     * @param roomName name of a MUC room.
      */
-    public void addRole( String roomName, MUCRole role )
-    {
-        roles.put(roomName, role);
-    }
-
-    /**
-     * Removes the role of the user in a particular room.
-     *
-     * Note: PREREQUISITE: A lock on this object has already been obtained.
-     *
-     * @param roomName The name of the room we're being removed
-     */
-    public void removeRole( String roomName )
-    {
-        roles.remove(roomName);
+    public void removeRoomName(String roomName) {
+        roomNames.remove(roomName);
+        // FIXME persist this change in the cache that holds all MUCUser instances!
     }
 
     /**
@@ -257,13 +273,23 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             return;
         }
 
-        lastPacketTime = System.currentTimeMillis();
+        lastPacketTime = System.currentTimeMillis(); // FIXME ensure that the change to this instance is visible in the clustered cache!
 
         StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 
         // Determine if this user has a pre-existing role in the addressed room.
-        final MUCRole preExistingRole = roles.get(roomName);
-        Log.warn("Preexisting role for user {} in room {}: {}", this.realjid, roomName, preExistingRole == null ? "(none)" : preExistingRole);
+        final MUCRole preExistingRole;
+        if (roomNames.contains(roomName)) {
+            final MUCRoom room = getChatService().getChatRoom(roomName);
+            if (room == null) {
+                preExistingRole = null;
+            } else {
+                preExistingRole = room.getOccupantByFullJID(getAddress());
+            }
+        } else {
+            preExistingRole = null;
+        }
+        Log.debug("Preexisting role for user {} in room {}: {}", this.realjid, roomName, preExistingRole == null ? "(none)" : preExistingRole);
 
         // Determine if the stanza is an error response to a stanza that we've previously sent out, that indicates that
         // the intended recipient is no longer available (eg: "ghost user").
@@ -329,7 +355,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         @Nonnull final Message packet,
         @Nonnull final String roomName )
     {
-        final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+        final MultiUserChatService service = getChatService();
         if (service == null) {
             throw new IllegalStateException("Unable to find MUC service '"+serviceName+"' to process packet in room '"+roomName+"': " + packet.toXML());
         }
@@ -826,7 +852,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         try
         {
             // Get or create the room
-            final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+            final MultiUserChatService service = getChatService();
             if (service == null) {
                 throw new IllegalStateException("Unable to find MUC service '"+serviceName+"' to get or create room '"+roomName+"' for " + packet.getFrom());
             }
@@ -926,7 +952,6 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down)
             preExistingRole.setPresence(packet);
             preExistingRole.getChatRoom().leaveRoom(preExistingRole);
-            removeRole(roomName);
         }
         else
         {
@@ -1047,7 +1072,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         int size = CacheSizes.sizeOfObject(); // overhead of object.
         size += CacheSizes.sizeOfString(serviceName);
         size += CacheSizes.sizeOfAnything(realjid);
-        size += CacheSizes.sizeOfMap(roles);
+        size += CacheSizes.sizeOfCollection(roomNames);
         size += CacheSizes.sizeOfLong(); // lastPacketTime
         return size;
     }
@@ -1056,7 +1081,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, serviceName);
         ExternalizableUtil.getInstance().writeSafeUTF(out, realjid.toString());
-        ExternalizableUtil.getInstance().writeExternalizableMap(out, roles);
+        ExternalizableUtil.getInstance().writeSerializableCollection(out, roomNames);
         ExternalizableUtil.getInstance().writeLong(out, lastPacketTime);
     }
 
@@ -1064,9 +1089,9 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         serviceName = ExternalizableUtil.getInstance().readSafeUTF(in);
         realjid = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
-        roles = new ConcurrentHashMap<>();
-        ExternalizableUtil.getInstance().readExternalizableMap(in, roles, this.getClass().getClassLoader());
-        lastPacketTime= ExternalizableUtil.getInstance().readLong(in);
+        roomNames = new HashSet<>();
+        ExternalizableUtil.getInstance().readSerializableCollection(in, roomNames, this.getClass().getClassLoader());
+        lastPacketTime = ExternalizableUtil.getInstance().readLong(in);
     }
 
     @Override
@@ -1074,7 +1099,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         return "MUCUser{" +
             "serviceName='" + serviceName + '\'' +
             ", realjid=" + realjid +
-            ", roles=" + roles +
+            ", rooms=" + roomNames +
             ", lastPacketTime=" + lastPacketTime +
             '}';
     }

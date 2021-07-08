@@ -1156,9 +1156,9 @@ public class FMUCHandler
 
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCUser user = new MUCUser(room.getMUCService(), userJID );
+        final MUCUser user = ((MultiUserChatServiceImpl)room.getMUCService()).getChatUser(userJID);
+        final MUCRole joinRole = new MUCRole(room, nickname, role, affiliation, userJID, createCopyWithoutFMUC(presence));
 
-        final MUCRole joinRole = new MUCRole( room, nickname, role, affiliation, user, createCopyWithoutFMUC(presence));
         joinRole.setReportedFmucAddress( userJID );
 
         final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( user, nickname );
@@ -1219,7 +1219,7 @@ public class FMUCHandler
 
     /**
      * Processes a presence stanza that is expected to be an FMUC-flavored 'leave' representation, and removes the
-     * remote user to the room.
+     * remote user from the room.
      *
      * This method will <em>not</em> make modifications to the state of the FMUC node set. It expects those changes to
      * be taken care of by the caller.
@@ -1238,14 +1238,14 @@ public class FMUCHandler
         }
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCRole leaveRole = (MUCRole) room.getOccupantByFullJID( userJID );
+        final MUCRole leaveRole = room.getOccupantByFullJID( userJID );
         leaveRole.setPresence( createCopyWithoutFMUC(presence) ); // update presence to reflect the 'leave' - this is used later to broadcast to other occupants.
 
         // Send presence to inform all occupants of the room that the user has left.
         room.sendLeavePresenceToExistingOccupants( leaveRole )
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
             .thenRun( () -> {
-                // Update the (local) room state to now include this occupant.
+                // Update the (local) room state to no longer include this occupant.
                 room.removeOccupantRole( leaveRole );
 
                 // Fire event that occupant left the room.

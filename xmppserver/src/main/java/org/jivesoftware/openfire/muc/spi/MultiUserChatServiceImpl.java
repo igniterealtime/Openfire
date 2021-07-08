@@ -51,7 +51,6 @@ import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.cache.CacheUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
@@ -582,9 +581,20 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             service.submit(() -> {
                 try
                 {
-                    for ( final MUCRole role : user.getRoles() )
+                    for (final String roomName : user.getRoomNames())
                     {
-                        final MUCRoom room = role.getChatRoom();
+                        final MUCRoom room = getChatRoom(roomName);
+                        if (room == null) {
+                            // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
+                            Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                            continue;
+                        }
+                        final MUCRole role = room.getOccupantByFullJID(user.getAddress());
+                        if (role == null) {
+                            // Mismatch between MUCUser#getRooms() and MUCRoom#ROOM_OCCUPANTS_CACHE ?
+                            Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' but that role does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                            continue;
+                        }
 
                         // Send a presence stanza of type "unavailable" to the occupant
                         final Presence presence = room.createPresence( Presence.Type.unavailable );
@@ -646,14 +656,20 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                 if (doKick || doPing) {
                     final String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User exceeded idle time limit.");
-                    for (final MUCRole role : user.getRoles()) {
+                    for (final String roomName : user.getRoomNames()) {
+                        final MUCRoom room = getChatRoom(roomName);
+                        if (room == null) {
+                            // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
+                            Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                            continue;
+                        }
                         if (doKick) {
                             // Kick the user from all the rooms that he/she had previously joined.
                             try {
-                                final Presence kickedPresence = role.getChatRoom().kickOccupant(user.getAddress(), null, null, timeoutKickReason);
+                                final Presence kickedPresence = room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
                                 // Send the updated presence to the room occupants
-                                role.getChatRoom().send(kickedPresence, role.getChatRoom().getRole());
-                                Log.debug("Kicked occupant '{}' of room '{}' due to exceeding idle time limit.", user.getAddress(), role.getChatRoom().getJID());
+                                room.send(kickedPresence, room.getRole());
+                                Log.debug("Kicked occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
                             } catch (final NotAllowedException e) {
                                 // Do nothing since we cannot kick owners or admins
                             }
@@ -665,10 +681,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             // method, that detects 'ghost users', which will kick the user.
                             final IQ pingRequest = new IQ( IQ.Type.get );
                             pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
-                            pingRequest.setFrom( role.getChatRoom().getJID() );
-                            pingRequest.setTo( role.getUserAddress() );
+                            pingRequest.setFrom( room.getJID() );
+                            pingRequest.setTo( user.getAddress() );
                             router.route(pingRequest);
-                            Log.debug("Pinged occupant '{}' of room '{}' due to exceeding idle time limit.", user.getAddress(), role.getChatRoom().getJID());
+                            Log.debug("Pinged occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
                         }
                     }
                 }
@@ -998,9 +1014,21 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             final MUCUser user = users.remove(jabberID);
             localUsers.remove(jabberID);
             if (user != null) {
-                for (final MUCRole role : user.getRoles()) {
+                for (final String roomName : user.getRoomNames()) {
+                    final MUCRoom room = getChatRoom(roomName);
+                    if (room == null) {
+                        // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
+                        Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                        continue;
+                    }
+                    final MUCRole role = room.getOccupantByFullJID(user.getAddress());
+                    if (role == null) {
+                        // Mismatch between MUCUser#getRooms() and MUCRoom#ROOM_OCCUPANTS_CACHE ?
+                        Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' but that role does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                        continue;
+                    }
                     try {
-                        role.getChatRoom().leaveRoom(role);
+                        room.leaveRoom(role);
                     } catch (final Exception e) {
                         Log.error(e.getMessage(), e);
                     }
@@ -2191,11 +2219,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
             for(final MUCUser user : gone) {
-                try {
-                    user.getRoles().forEach(mucRole -> mucRole.getChatRoom().leaveRoom(mucRole));
-                } finally {
-                    users.remove(user.getAddress());
-                }
+                // FIXME
+//                try {
+//                    user.getRoles().forEach(mucRole -> mucRole.getChatRoom().leaveRoom(mucRole));
+//                } finally {
+//                    users.remove(user.getAddress());
+//                }
             }
         }
     }

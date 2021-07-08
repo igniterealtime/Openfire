@@ -557,11 +557,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         try {
             final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
             if (occupants == null) {
-                throw new UserNotFoundException();
+                throw new UserNotFoundException("Unable to find occupant with nickname '" + nickname + "' in room '" + name + "'");
             }
             final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname)).collect(Collectors.toList());
             if (roles.isEmpty()) {
-                throw new UserNotFoundException();
+                throw new UserNotFoundException("Unable to find occupant with nickname '" + nickname + "' in room '" + name + "'");
             }
             return roles;
         } finally {
@@ -804,7 +804,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
                 Log.debug( "Adding user '{}' as an occupant of room '{}' using nickname '{}'.", user.getAddress(), this.getJID(), nickname );
 
                 // Create a new role for this user in this room.
-                joinRole = new MUCRole(this, nickname, role, affiliation, user, presence);
+                joinRole = new MUCRole(this, nickname, role, affiliation, user.getAddress(), presence);
 
                 // See if we need to join a federated room. Note that this can be blocking!
                 final Future<?> join = fmucHandler.join(joinRole);
@@ -1233,6 +1233,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         } finally {
             lock.unlock();
         }
+
+        final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(role.getUserAddress());
+        mucUser.addRoomName(getJID().getNode());
     }
 
     /**
@@ -1299,6 +1302,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         sendLeavePresenceToExistingOccupants(leaveRole)
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun( () -> {
+                    removeOccupantRole(leaveRole);
 
                 // TODO remove this distinction between actions that need to occur on individual cluster nodes. All nodes should operate on the same data structure (a shared cache). Maybe inline the OccupantLeftEvent implementation?
 //                    if (leaveRole.isLocal()) {
@@ -1376,8 +1380,8 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
     public void removeOccupantRole(MUCRole leaveRole) {
         Log.trace( "Remove occupant from room {}: {}", this.getJID(), leaveRole );
 
-        // Notify the user that he/she is no longer in the room
-        leaveRole.destroy();
+        final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
+        mucUser.removeRoomName(getJID().getNode());
 
         final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
         lock.lock();
@@ -1411,8 +1415,8 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
                         // list of removed occupants to process later outside of the lock.
                         removedRoles.add(leaveRole);
 
-                        // Notify the user that he/she is no longer in the room
-                        leaveRole.destroy();
+                        final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
+                        mucUser.removeRoomName(getJID().getNode());
 
                         if (destroyRequest.isOriginator()) {
                             // Fire event that occupant left the room

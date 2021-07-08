@@ -116,19 +116,23 @@ public class MUCRole implements Cacheable, Externalizable {
     /**
      * Create a new role.
      *
+     * Note that whenever a new instance of MUCRole is created to reflect a new relation between an end-user and a MUC
+     * room, it is typically needed to register the same relation by adding the name of the chatroom to the collection
+     * of room names in MUCUser#roomNames. It is the responsibility of the caller to ensure that this is done.
+     *
      * @param chatroom the room the role is valid in.
      * @param nickname the nickname of the user in the role.
      * @param role the role of the user in the room.
      * @param affiliation the affiliation of the user in the room.
-     * @param chatuser the user on the chat server.
+     * @param userJid the 'real' JID of the user in the role.
      * @param presence the presence sent by the user to join the room.
      */
     public MUCRole(MUCRoom chatroom, String nickname,
-                   MUCRole.Role role, MUCRole.Affiliation affiliation, MUCUser chatuser, Presence presence)
+                   MUCRole.Role role, MUCRole.Affiliation affiliation, JID userJid, Presence presence)
     {
         this.roomJid = chatroom.getJID();
         this.nick = nickname;
-        this.userJid = chatuser.getAddress();
+        this.userJid = userJid;
         this.role = role;
         this.affiliation = affiliation;
 
@@ -144,9 +148,6 @@ public class MUCRole implements Cacheable, Externalizable {
         if (element != null) {
             voiceOnly = element.element("deaf-occupant") != null;
         }
-
-        // Add the new role to the list of roles
-        chatuser.addRole(roomJid.getNode(), this);
     }
 
     /**
@@ -299,18 +300,6 @@ public class MUCRole implements Cacheable, Externalizable {
     public void changeNickname(String nickname) {
         this.nick = nickname;
         setRoleAddress(new JID(roomJid.getNode(), roomJid.getDomain(), nick));
-    }
-
-    /**
-     * Destroys this role after the occupant left the room. This role will be
-     * removed from MUCUser.
-     */
-    public void destroy() {
-        // Notify the user that he/she is no longer in the room
-        final MultiUserChatServiceImpl service =((MultiUserChatServiceImpl)XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid));
-        final MUCUser mucUser = service.getChatUser(userJid);
-        mucUser.removeRole(roomJid.getNode());
-        // TODO The casts in this implementation should be cleaned up.
     }
 
     /**

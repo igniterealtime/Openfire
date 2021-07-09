@@ -22,7 +22,6 @@ import org.dom4j.QName;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.cache.CacheSizes;

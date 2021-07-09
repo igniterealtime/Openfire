@@ -170,10 +170,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private final HistoryStrategy historyStrategy;
 
     private RoutingTable routingTable = null;
-    /**
-     * The packet router for the server.
-     */
-    private PacketRouter router = null;
+
     /**
      * The handler of packets with namespace jabber:iq:register for the server.
      */
@@ -402,7 +399,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     final IQ reply = IQ.createResultIQ( (IQ) packet );
                     reply.setChildElement( ((IQ) packet).getChildElement().createCopy() );
                     reply.setError( PacketError.Condition.feature_not_implemented );
-                    router.route( reply );
+                    XMPPServer.getInstance().getPacketRouter().route( reply );
                 }
                 Log.debug( "Ignoring stanza addressed at conference service: {}", packet.toXML() );
             }
@@ -458,34 +455,34 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         if ("jabber:iq:register".equals(namespace)) {
             final IQ reply = registerHandler.handleIQ(iq);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
         else if ("jabber:iq:search".equals(namespace)) {
             final IQ reply = searchHandler.handleIQ(iq);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
         else if (IQMuclumbusSearchHandler.NAMESPACE.equals(namespace)) {
             final IQ reply = muclumbusSearchHandler.handleIQ(iq);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
         else if (IQMUCvCardHandler.NAMESPACE.equals(namespace)) {
             final IQ reply = mucVCardHandler.handleIQ(iq);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
             // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes
             // a component
             final IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
             // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes
             // a component
             final IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
         else if ("urn:xmpp:ping".equals(namespace)) {
-            router.route( IQ.createResultIQ(iq) );
+            XMPPServer.getInstance().getPacketRouter().route( IQ.createResultIQ(iq) );
         }
         else if (this.iqHandlers != null) {
             final IQHandler h = this.iqHandlers.get(namespace);
@@ -493,13 +490,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 try {
                     final IQ reply = h.handleIQ(iq);
                     if (reply != null) {
-                        router.route(reply);
+                        XMPPServer.getInstance().getPacketRouter().route(reply);
                     }
                 } catch (final UnauthorizedException e) {
                     final IQ reply = IQ.createResultIQ(iq);
                     reply.setType(IQ.Type.error);
                     reply.setError(PacketError.Condition.service_unavailable);
-                    router.route(reply);
+                    XMPPServer.getInstance().getPacketRouter().route(reply);
                 }
                 return true;
             }
@@ -683,7 +680,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
                             pingRequest.setFrom( room.getJID() );
                             pingRequest.setTo( user.getAddress() );
-                            router.route(pingRequest);
+                            XMPPServer.getInstance().getPacketRouter().route(pingRequest);
                             Log.debug("Pinged occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
                         }
                     }
@@ -789,7 +786,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         synchronized (roomBaseMutex.intern(roomName)) {
             room = localMUCRoomManager.getRoom(roomName);
             if (room == null) {
-                room = new MUCRoom(this, roomName, router);
+                room = new MUCRoom(this, roomName);
                 // If the room is persistent load the configuration values from the DB
                 try {
                     // Try to load the room's configuration from the database (if the room is
@@ -856,7 +853,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             synchronized (roomBaseMutex.intern(roomName)) {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
-                    room = new MUCRoom(this, roomName, router);
+                    room = new MUCRoom(this, roomName);
                     // If the room is persistent load the configuration values from the DB
                     try {
                         // Try to load the room's configuration from the database (if the room is
@@ -1046,7 +1043,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @return The chatuser corresponding to that XMPPAddress.
      */
     public MUCUser getChatUser(final JID userjid) {
-        if (router == null) {
+        if (registerHandler == null) {
             throw new IllegalStateException("Not initialized");
         }
         MUCUser user;
@@ -1337,7 +1334,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         initializeSettings();
 
         routingTable = server.getRoutingTable();
-        router = server.getPacketRouter();
         // Configure the handler of iq:register packets
         registerHandler = new IQMUCRegisterHandler(this);
         // Configure the handlers of search requests
@@ -1633,7 +1629,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (preloadDays > 0) {
             // Load all the persistent rooms to memory
             final Instant cutoff = Instant.now().minus(Duration.ofDays(preloadDays));
-            for (final MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff), router)) {
+            for (final MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff))) {
                 localMUCRoomManager.addRoom(room.getName(), room);
 
                 // Start FMUC, if desired.

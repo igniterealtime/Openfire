@@ -161,7 +161,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      *
      * @param roomName name of a MUC room.
      */
-    public void removeRoomName(String roomName) {
+    void removeRoomName(String roomName) {
         roomNames.remove(roomName);
         // FIXME persist this change in the cache that holds all MUCUser instances!
     }
@@ -1039,32 +1039,16 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     }
 
     @Override
-    public int hashCode()
-    {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((realjid == null) ? 0 : realjid.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MUCUser mucUser = (MUCUser) o;
+        return Objects.equals(serviceName, mucUser.serviceName) && Objects.equals(realjid, mucUser.realjid);
     }
 
     @Override
-    public boolean equals( Object obj )
-    {
-        if ( this == obj )
-        { return true; }
-        if ( obj == null )
-        { return false; }
-        if ( getClass() != obj.getClass() )
-        { return false; }
-        MUCUser other = (MUCUser) obj;
-        if ( realjid == null )
-        {
-            if ( other.realjid != null )
-            { return false; }
-        }
-        else if ( !realjid.equals(other.realjid) )
-        { return false; }
-        return true;
+    public int hashCode() {
+        return Objects.hash(serviceName, realjid);
     }
 
     @Override

@@ -17,7 +17,6 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.SystemProperty;
@@ -62,11 +61,6 @@ public class FMUCHandler
     private final MUCRoom room;
 
     /**
-     * The router used to send packets for the room.
-     */
-    private final PacketRouter router;
-
-    /**
      * Indicates if FMUC functionality has been started.
      */
     private boolean isStarted;
@@ -93,9 +87,8 @@ public class FMUCHandler
      */
     private Map<JID, InboundJoin> inboundJoins = new HashMap<>();
 
-    public FMUCHandler(@Nonnull MUCRoom chatroom, @Nonnull PacketRouter packetRouter) {
+    public FMUCHandler(@Nonnull MUCRoom chatroom) {
         this.room = chatroom;
-        this.router = packetRouter;
     }
 
     /**
@@ -233,7 +226,7 @@ public class FMUCHandler
                     left.setFrom(room.getJID());
                     left.setTo(inboundJoin.getPeer());
                     left.getElement().addElement(FMUC).addElement("left");
-                    router.route(left);
+                    XMPPServer.getInstance().getPacketRouter().route(left);
                 }
                 catch ( Exception e )
                 {
@@ -347,7 +340,7 @@ public class FMUCHandler
 
                     final Presence enriched = enrichWithFMUCElement(leave, occupantToLeave.getReportedFmucAddress() != null ? occupantToLeave.getReportedFmucAddress() : occupantToLeave.getUserAddress());
 
-                    router.route(enriched);
+                    XMPPServer.getInstance().getPacketRouter().route(enriched);
                 } catch ( Exception e ) {
                     Log.warn("(room: '{}'): An exception occurred while informing joined node '{}' that occupant '{}' left the MUC.", room.getJID(), peer, occupantToLeave.getUserAddress(), e);
                 }
@@ -573,7 +566,7 @@ public class FMUCHandler
         outboundJoinProgress = new OutboundJoinProgress(outboundJoinConfiguration.getPeer(), result );
 
         Log.trace( "(room: '{}'): Sending FMUC join request: {}", room.getJID(), joinStanza.toXML() );
-        router.route(joinStanza);
+        XMPPServer.getInstance().getPacketRouter().route(joinStanza);
 
         return result;
     }
@@ -640,7 +633,7 @@ public class FMUCHandler
         }
 
         // Send the outbound stanza.
-        router.route( enriched );
+        XMPPServer.getInstance().getPacketRouter().route( enriched );
     }
 
     /**
@@ -675,7 +668,7 @@ public class FMUCHandler
             final Packet enriched = enrichWithFMUCElement( stanza, sender );
             enriched.setFrom( sender.getRoleAddress());
             enriched.setTo( inboundJoin.getPeer() );
-            router.route( enriched );
+            XMPPServer.getInstance().getPacketRouter().route( enriched );
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -793,7 +786,7 @@ public class FMUCHandler
             if ( stanza instanceof IQ && ((IQ) stanza).isRequest() ) {
                 final IQ errorResult = IQ.createResultIQ( (IQ) stanza);
                 errorResult.setError(PacketError.Condition.service_unavailable);
-                router.route( errorResult );
+                XMPPServer.getInstance().getPacketRouter().route( errorResult );
             }
             return;
         }
@@ -854,7 +847,7 @@ public class FMUCHandler
                 if ( stanza instanceof IQ && ((IQ) stanza).isRequest() ) {
                     final IQ errorResult = IQ.createResultIQ( (IQ) stanza);
                     errorResult.setError(PacketError.Condition.service_unavailable);
-                    router.route( errorResult );
+                    XMPPServer.getInstance().getPacketRouter().route( errorResult );
                 }
             }
         }
@@ -934,7 +927,7 @@ public class FMUCHandler
                         leaveFMUCSet.getElement().addElement( FMUC ).addElement( "left" );
                         inboundJoins.remove(remoteMUC);
 
-                        router.route( leaveFMUCSet );
+                        XMPPServer.getInstance().getPacketRouter().route( leaveFMUCSet );
                     }
                 } else if ( isJoin ) {
                     Log.trace("(room: '{}'): Occupant '{}' joined room on remote FMUC peer '{}'", room.getJID(), author, remoteMUC );
@@ -1296,7 +1289,7 @@ public class FMUCHandler
         if ( rejectionMessage != null && !rejectionMessage.trim().isEmpty() ) {
             rejectEl.setText( rejectionMessage );
         }
-        router.route( rejection );
+        XMPPServer.getInstance().getPacketRouter().route( rejection );
     }
 
     /**
@@ -1343,7 +1336,7 @@ public class FMUCHandler
             xitem.addAttribute( "role", occupant.getRole().toString() );
             xitem.addAttribute( "jid", occupant.getRoleAddress().toString() );
 
-            router.route( enriched );
+            XMPPServer.getInstance().getPacketRouter().route( enriched );
         }
     }
 
@@ -1372,7 +1365,7 @@ public class FMUCHandler
             enriched.setFrom( originalAuthorRoleAddress );
             enriched.setTo( joiningPeer );
 
-            router.route( enriched );
+            XMPPServer.getInstance().getPacketRouter().route( enriched );
         }
     }
 
@@ -1411,7 +1404,7 @@ public class FMUCHandler
         enriched.setFrom( originalAuthorRoleAddress );
         enriched.setTo( joiningPeer );
 
-        router.route( enriched );
+        XMPPServer.getInstance().getPacketRouter().route( enriched );
     }
 
     public static boolean isSubject( @Nonnull final Packet stanza )

@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
@@ -612,16 +611,15 @@ public class MUCPersistenceManager {
      *
      * @param chatserver the chat server that will hold the loaded rooms.
      * @param cleanupDate rooms that hadn't been used after this date won't be loaded.
-     * @param packetRouter the PacketRouter that loaded rooms will use to send packets.
      * @return a collection with all the persistent rooms.
      */
-    public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate, PacketRouter packetRouter) {
+    public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
         Log.debug( "Loading rooms for chat service {}", chatserver.getServiceName() );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Map<Long, MUCRoom> rooms;
         try {
-            rooms = loadRooms(serviceID, cleanupDate, chatserver, packetRouter);
+            rooms = loadRooms(serviceID, cleanupDate, chatserver);
             loadHistory(serviceID, rooms);
             loadAffiliations(serviceID, rooms);
             loadMembers(serviceID, rooms);
@@ -647,7 +645,7 @@ public class MUCPersistenceManager {
         return rooms.values();
     }
 
-    private static Map<Long, MUCRoom> loadRooms(Long serviceID, Date cleanupDate, MultiUserChatService chatserver, PacketRouter packetRouter) throws SQLException {
+    private static Map<Long, MUCRoom> loadRooms(Long serviceID, Date cleanupDate, MultiUserChatService chatserver) throws SQLException {
         final Map<Long, MUCRoom> rooms = new HashMap<>();
 
         Connection connection = null;
@@ -670,7 +668,7 @@ public class MUCPersistenceManager {
 
             while (resultSet.next()) {
                 try {
-                    MUCRoom room = new MUCRoom(chatserver, resultSet.getString("name"), packetRouter);
+                    MUCRoom room = new MUCRoom(chatserver, resultSet.getString("name"));
                     room.setID(resultSet.getLong("roomID"));
                     room.setCreationDate(new Date(Long.parseLong(resultSet.getString("creationDate").trim())));
                     room.setModificationDate(new Date(Long.parseLong(resultSet.getString("modificationDate").trim())));

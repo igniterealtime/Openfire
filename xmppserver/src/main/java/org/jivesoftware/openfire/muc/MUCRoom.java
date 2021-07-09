@@ -21,7 +21,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.GroupEventListener;
@@ -97,11 +96,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
      * The role of the room itself.
      */
     private MUCRole role;
-
-    /**
-     * The router used to send packets for the room.
-     */
-    private PacketRouter router;
 
     /**
      * The start time of the chat.
@@ -347,14 +341,12 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
      *
      * @param chatservice the service hosting the room.
      * @param roomname the name of the room.
-     * @param packetRouter the router for sending packets from the room.
      */
-    public MUCRoom(@Nonnull MultiUserChatService chatservice, @Nonnull String roomname, @Nonnull PacketRouter packetRouter) {
+    public MUCRoom(@Nonnull MultiUserChatService chatservice, @Nonnull String roomname) {
         this.mucService = chatservice;
         this.name = roomname;
         this.naturalLanguageName = roomname;
         this.description = roomname;
-        this.router = packetRouter;
         this.startTime = System.currentTimeMillis();
         this.creationDate = new Date(startTime);
         this.modificationDate = new Date(startTime);
@@ -373,9 +365,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         this.registrationEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.registrationEnabled", true);
         // TODO Allow to set the history strategy from the configuration form?
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
-        this.iqOwnerHandler = new IQOwnerHandler(this, packetRouter);
-        this.iqAdminHandler = new IQAdminHandler(this, packetRouter);
-        this.fmucHandler = new FMUCHandler(this, packetRouter);
+        this.iqOwnerHandler = new IQOwnerHandler(this);
+        this.iqAdminHandler = new IQAdminHandler(this);
+        this.fmucHandler = new FMUCHandler(this);
         // No one can join the room except the room's owner
         this.lockedTime = startTime;
         // Set the default roles for which presence is broadcast
@@ -1618,7 +1610,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
             IQ reply = IQ.createResultIQ((IQ) packet);
             reply.setChildElement(((IQ) packet).getChildElement());
             reply.setError(PacketError.Condition.bad_request);
-            router.route(reply);
+            XMPPServer.getInstance().getPacketRouter().route(reply);
         }
     }
 
@@ -2606,7 +2598,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
             frag.addAttribute("jid", role.getRoleAddress().toBareJID());
 
             // Send the message with the invitation
-            router.route(message);
+            XMPPServer.getInstance().getPacketRouter().route(message);
         }
         else {
             throw new ForbiddenException();
@@ -2646,7 +2638,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         }
 
         // Send the message with the invitation
-        router.route(message);
+        XMPPServer.getInstance().getPacketRouter().route(message);
     }
 
     public IQOwnerHandler getIQOwnerHandler() {
@@ -3733,13 +3725,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         if (mucService == null) throw new IllegalArgumentException("MUC service not found for subdomain: " + subdomain);
         roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
 
-        PacketRouter packetRouter = XMPPServer.getInstance().getPacketRouter();
-        this.iqOwnerHandler = new IQOwnerHandler(this, packetRouter);
-        this.iqAdminHandler = new IQAdminHandler(this, packetRouter);
-        this.fmucHandler = new FMUCHandler(this, packetRouter);
+        this.iqOwnerHandler = new IQOwnerHandler(this);
+        this.iqAdminHandler = new IQAdminHandler(this);
+        this.fmucHandler = new FMUCHandler(this);
 
         role = MUCRole.createRoomRole(this);
-        router = packetRouter;
     }
 
     public void updateConfiguration(MUCRoom otherRoom) {

@@ -60,7 +60,7 @@ import java.util.stream.Stream;
  * @author Gaston Dombiak
  */
 @JiveID(JiveConstants.MUC_ROOM)
-public class MUCRoom implements GroupEventListener, Externalizable, Result {
+public class MUCRoom implements GroupEventListener, Externalizable, Result, Cacheable {
 
     private static final Logger Log = LoggerFactory.getLogger(MUCRoom.class);
 
@@ -3615,6 +3615,57 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
     }
 
     @Override
+    public int getCachedSize() throws CannotCalculateSizeException {
+        // Approximate the size of the object in bytes by calculating the size of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject();      // overhead of object
+        size += CacheSizes.sizeOfString(name);
+        size += CacheSizes.sizeOfAnything(role);
+        size += CacheSizes.sizeOfLong();        // startTime
+        size += CacheSizes.sizeOfLong();        // endTime
+        size += CacheSizes.sizeOfBoolean();     // isDestroyed
+        size += CacheSizes.sizeOfAnything(roomHistory);
+        size += CacheSizes.sizeOfLong();        // lockedTime
+        size += CacheSizes.sizeOfCollection(owners);
+        size += CacheSizes.sizeOfCollection(admins);
+        size += CacheSizes.sizeOfMap(members);
+        size += CacheSizes.sizeOfCollection(outcasts);
+        size += CacheSizes.sizeOfString(naturalLanguageName);
+        size += CacheSizes.sizeOfString(description);
+        size += CacheSizes.sizeOfBoolean();     // canOccupantsChangeSubject
+        size += CacheSizes.sizeOfInt();         // maxUsers
+        size += CacheSizes.sizeOfCollection(rolesToBroadcastPresence);
+        size += CacheSizes.sizeOfBoolean();     // publicRoom
+        size += CacheSizes.sizeOfBoolean();     // persistent
+        size += CacheSizes.sizeOfBoolean();     // moderated
+        size += CacheSizes.sizeOfBoolean();     // membersOnly
+        size += CacheSizes.sizeOfBoolean();     // canOccupantsInvite
+        size += CacheSizes.sizeOfString(password);
+        size += CacheSizes.sizeOfBoolean();     // canAnyoneDiscoverJID
+        size += CacheSizes.sizeOfString(canSendPrivateMessage);
+        size += CacheSizes.sizeOfBoolean();     // logEnabled
+        size += CacheSizes.sizeOfBoolean();     // loginRestrictedToNickname
+        size += CacheSizes.sizeOfBoolean();     // canChangeNickname
+        size += CacheSizes.sizeOfBoolean();     // registrationEnabled
+        size += CacheSizes.sizeOfBoolean();     // fmucEnabled
+        size += CacheSizes.sizeOfAnything(fmucOutboundNode);
+        size += CacheSizes.sizeOfObject();      // fmucOutboundMode enum reference
+        size += CacheSizes.sizeOfCollection(fmucInboundNodes);
+        size += 1024; // Handwavy size of IQOwnerHandler (which holds sizeable data forms)
+        size += CacheSizes.sizeOfObject() + CacheSizes.sizeOfObject() + CacheSizes.sizeOfBoolean(); // iqAdminHandler
+        if (fmucHandler != null) {
+            size += 2048; // Guestimate of fmucHandler
+        }
+        size += CacheSizes.sizeOfString(subject);
+        size += CacheSizes.sizeOfLong();        // roomID
+        size += CacheSizes.sizeOfDate();        // creationDate
+        size += CacheSizes.sizeOfDate();        // modificationDate
+        size += CacheSizes.sizeOfDate();        // emptyDate
+        size += CacheSizes.sizeOfBoolean();     // savedToDB
+        return size;
+    }
+
+    @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, name);
         ExternalizableUtil.getInstance().writeLong(out, startTime);
@@ -3770,6 +3821,16 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result {
         emptyDate = otherRoom.emptyDate;
         savedToDB = otherRoom.savedToDB;
         mucService = otherRoom.mucService;
+    }
+
+    @Override
+    public String toString() {
+        return "MUCRoom{" +
+            "roomID=" + roomID +
+            ", name='" + name + '\'' +
+            ", mucService=" + mucService +
+            ", savedToDB=" + savedToDB +
+            '}';
     }
 
     /*

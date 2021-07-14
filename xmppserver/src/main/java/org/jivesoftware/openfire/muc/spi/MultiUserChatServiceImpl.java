@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
@@ -99,8 +97,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 {
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
 
-    private static final Interner<String> roomBaseMutex = Interners.newWeakInterner();
-
     /**
      * The time to elapse between clearing of idle chat users.
      */
@@ -152,7 +148,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * LocalMUCRoom chat manager which supports simple chatroom management
      */
-    private final LocalMUCRoomManager localMUCRoomManager = new LocalMUCRoomManager();
+    private final LocalMUCRoomManager localMUCRoomManager;
 
     /**
      * Chat users for this service.
@@ -322,11 +318,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         this.isHidden = isHidden;
         historyStrategy = new HistoryStrategy(null);
 
-        users = CacheFactory.createCache("MUC Users for service " + chatServiceName);
+        users = CacheFactory.createCache("MUC Service '" + chatServiceName + "' Users");
         users.setMaxLifetime(-1);
         users.setMaxCacheSize(-1L);
 
         localUsers = new ConcurrentHashMap<>();
+        localMUCRoomManager = new LocalMUCRoomManager(this);
     }
 
     @Override
@@ -783,7 +780,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCRoom room;
         boolean loaded = false;
         boolean created = false;
-        synchronized (roomBaseMutex.intern(roomName)) {
+        final Lock lock = localMUCRoomManager.getLock(roomName);
+        lock.lock();
+        try {
             room = localMUCRoomManager.getRoom(roomName);
             if (room == null) {
                 room = new MUCRoom(this, roomName);
@@ -823,6 +822,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
                 localMUCRoomManager.addRoom(roomName, room);
             }
+        } finally {
+            lock.unlock();
         }
         if (created) {
             // Fire event that a new room has been created
@@ -850,7 +851,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         MUCRoom room = localMUCRoomManager.getRoom(roomName);
         if (room == null) {
             // Check if the room exists in the database and was not present in memory
-            synchronized (roomBaseMutex.intern(roomName)) {
+            final Lock lock = localMUCRoomManager.getLock(roomName);
+            lock.lock();
+            try {
                 room = localMUCRoomManager.getRoom(roomName);
                 if (room == null) {
                     room = new MUCRoom(this, roomName);
@@ -869,6 +872,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         loaded = false;
                     }
                 }
+            } finally {
+                lock.unlock();
             }
         }
         if (loaded) {
@@ -883,8 +888,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void refreshChatRoom(final String roomName) {
-        localMUCRoomManager.removeRoom(roomName);
-        getChatRoom(roomName);
+        final Lock lock = localMUCRoomManager.getLock(roomName);
+        lock.lock();
+        try {
+            localMUCRoomManager.removeRoom(roomName);
+            getChatRoom(roomName);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public MUCRoom getLocalChatRoom(final String roomName) {

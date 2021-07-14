@@ -747,7 +747,9 @@ public class MUCRole implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfAnything(roomJid);
         size += CacheSizes.sizeOfAnything(userJid);
         size += CacheSizes.sizeOfString(nick);
-        size += CacheSizes.sizeOfAnything(presence.getElement());
+        if (presence != null) {
+            size += CacheSizes.sizeOfAnything(presence.getElement());
+        }
         size += CacheSizes.sizeOfAnything(role);
         size += CacheSizes.sizeOfAnything(affiliation);
         size += CacheSizes.sizeOfBoolean(); // voiceOnly

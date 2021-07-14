@@ -19,19 +19,22 @@ package org.jivesoftware.openfire.muc;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import javax.annotation.Nullable;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 
 /**
  * Represent the data model for one <code>MUCRoom</code> history. Including chat transcript,
@@ -39,7 +42,7 @@ import java.util.ListIterator;
  * 
  * @author Gaston Dombiak
  */
-public final class MUCRoomHistory {
+public final class MUCRoomHistory implements Externalizable {
     private static final Logger Log = LoggerFactory.getLogger(MUCRoomHistory.class);
 
     private MUCRoom room;
@@ -47,6 +50,12 @@ public final class MUCRoomHistory {
     private HistoryStrategy historyStrategy;
 
     private boolean isNonAnonymousRoom;
+
+    /**
+     * This constructor is provided to comply with the Externalizable interface contract. It should not be used directly.
+     */
+    public MUCRoomHistory()
+    {}
 
     public MUCRoomHistory(MUCRoom mucRoom, HistoryStrategy historyStrategy) {
         this.room = mucRoom;
@@ -243,5 +252,40 @@ public final class MUCRoomHistory {
      */
     public boolean isSubjectChangeRequest(Message message) {
         return historyStrategy.isSubjectChangeRequest(message);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MUCRoomHistory that = (MUCRoomHistory) o;
+        return isNonAnonymousRoom == that.isNonAnonymousRoom && room.equals(that.room) && historyStrategy.equals(that.historyStrategy);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(room, historyStrategy, isNonAnonymousRoom);
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSerializable(out, room.getJID());
+        ExternalizableUtil.getInstance().writeBoolean(out, isNonAnonymousRoom);
+        ExternalizableUtil.getInstance().writeSerializable(out, historyStrategy);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        final JID roomJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+        final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID);
+        if (service == null) {
+            throw new IllegalStateException("Deserializing history for non-existing service of room named "+ roomJID);
+        }
+        room = service.getChatRoom(roomJID.getNode());
+        if (room == null) {
+            throw new IllegalStateException("Deserializing history for non-existing room named "+ roomJID);
+        }
+        isNonAnonymousRoom = ExternalizableUtil.getInstance().readBoolean(in);
+        historyStrategy = (HistoryStrategy) ExternalizableUtil.getInstance().readSerializable(in);
     }
 }

@@ -16,20 +16,24 @@
 
 package org.jivesoftware.openfire.muc;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
+import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
 import javax.annotation.Nullable;
 
@@ -43,7 +47,7 @@ import javax.annotation.Nullable;
  * @author Gaston Dombiak
  * @author Derek DeMoro
  */
-public class HistoryStrategy {
+public class HistoryStrategy implements Externalizable {
 
     private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
 
@@ -55,33 +59,46 @@ public class HistoryStrategy {
     /**
      * List containing the history of messages.
      */
+    // TODO it is likely that a lot of serialization (in a cluster) can be prevented by replacing this queue with a clustered cache.
     private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
+
     /**
      * Default max number.
      */
     private static final int DEFAULT_MAX_NUMBER = 25;
+
     /**
      * The maximum number of chat history messages stored for the room.
      */
     private int maxNumber;
+
     /**
      * The parent history used for default settings, or null if no parent
      * (chat server defaults).
      */
     private HistoryStrategy parent;
+
     /**
      * Track the latest room subject change or null if none exists yet.
      */
     private Message roomSubject = null;
+
     /**
      * The string prefix to be used on the context property names
      * (do not include trailing dot).
      */
     private String contextPrefix = null;
+
     /**
      * The subdomain of the service the properties are set on.
      */
     private String contextSubdomain = null;
+
+    /**
+     * This constructor is provided to comply with the Externalizable interface contract. It should not be used directly.
+     */
+    public HistoryStrategy()
+    {}
 
     /**
      * Create a history strategy with the given parent strategy (for defaults) or null if no 
@@ -225,7 +242,7 @@ public class HistoryStrategy {
     public Iterator<Message> getMessageHistory(){
         LinkedList<Message> list = new LinkedList<>(history);
         // Sort messages. Messages may be out of order when running inside of a cluster
-        Collections.sort(list, new MessageComparator());
+        list.sort(new MessageComparator());
         return list.iterator();
     }
 
@@ -239,8 +256,68 @@ public class HistoryStrategy {
     public ListIterator<Message> getReverseMessageHistory(){
         LinkedList<Message> list = new LinkedList<>(history);
         // Sort messages. Messages may be out of order when running inside of a cluster
-        Collections.sort(list, new MessageComparator());
+        list.sort(new MessageComparator());
         return list.listIterator(list.size());
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        ExternalizableUtil.getInstance().writeSerializable(out, type);
+        ExternalizableUtil.getInstance().writeSerializableCollection(out, history.stream().map(message -> (DefaultElement)message.getElement()).collect(Collectors.toCollection(ArrayList::new)));
+        ExternalizableUtil.getInstance().writeInt(out, maxNumber);
+
+        ExternalizableUtil.getInstance().writeBoolean(out,parent != null);
+        if (parent != null) {
+            ExternalizableUtil.getInstance().writeSerializable(out, parent);
+        }
+
+        ExternalizableUtil.getInstance().writeBoolean(out, roomSubject != null);
+        if (roomSubject != null) {
+            ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement)roomSubject.getElement());
+        }
+
+        ExternalizableUtil.getInstance().writeBoolean(out, contextPrefix != null);
+        if (contextPrefix != null) {
+            ExternalizableUtil.getInstance().writeSafeUTF(out, contextPrefix);
+        }
+
+        ExternalizableUtil.getInstance().writeBoolean(out, contextSubdomain != null);
+        if (contextSubdomain != null) {
+            ExternalizableUtil.getInstance().writeSafeUTF(out, contextSubdomain);
+        }
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        type = (Type) ExternalizableUtil.getInstance().readSerializable(in);
+        final ArrayList<DefaultElement> serializedHistory = new ArrayList<>();
+        ExternalizableUtil.getInstance().readSerializableCollection(in, serializedHistory, this.getClass().getClassLoader());
+        history = serializedHistory.stream().map(Message::new).collect(Collectors.toCollection(ConcurrentLinkedQueue::new));
+        maxNumber = ExternalizableUtil.getInstance().readInt(in);
+
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            parent = (HistoryStrategy) ExternalizableUtil.getInstance().readSerializable(in);
+        } else {
+            parent = null;
+        }
+
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            roomSubject = new Message((DefaultElement) ExternalizableUtil.getInstance().readSerializable(in));
+        } else {
+            roomSubject = null;
+        }
+
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            contextPrefix = ExternalizableUtil.getInstance().readSafeUTF(in);
+        } else {
+            contextPrefix = null;
+        }
+
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            contextSubdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
+        } else {
+            contextSubdomain = null;
+        }
     }
 
     /**
@@ -355,5 +432,30 @@ public class HistoryStrategy {
             String stamp2 = o2.getChildElement("delay", "urn:xmpp:delay").attributeValue("stamp");
             return stamp1.compareTo(stamp2);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HistoryStrategy that = (HistoryStrategy) o;
+        return maxNumber == that.maxNumber && type == that.type
+            && Objects.equals(contextPrefix, that.contextPrefix) && Objects.equals(contextSubdomain, that.contextSubdomain)
+            && (roomSubject == that.roomSubject || (roomSubject != null && that.roomSubject != null && Objects.equals(roomSubject.toXML(), that.roomSubject.toXML())) )
+            && equalsHistory(that.history) && Objects.equals(parent, that.parent);
+    }
+
+    private boolean equalsHistory(Object o) {
+        if (this.history == o) return true;
+        if (o == null || this.history.getClass() != o.getClass()) return false;
+        Collection<Message> that = (Collection<Message>) o;
+        final ArrayList<String> thatList = that.stream().map(Packet::toXML).collect(Collectors.toCollection(ArrayList::new));
+        final ArrayList<String> thisList = history.stream().map(Packet::toXML).collect(Collectors.toCollection(ArrayList::new));
+        return thatList.equals(thisList);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, history, maxNumber, parent, roomSubject, contextPrefix, contextSubdomain);
     }
 }

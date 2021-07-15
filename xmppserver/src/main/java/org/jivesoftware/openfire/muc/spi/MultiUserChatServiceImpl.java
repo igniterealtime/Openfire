@@ -2214,26 +2214,26 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // All remaining cluster nodes will be in a race to clean up the
         // same data. The implementation below accounts for that, by only having the
         // senior cluster node to perform the cleanup.
-        if (ClusterManager.isSeniorClusterMember()) {
-            // Remove occupants added by node that is gone.
-            final Set<MUCUser> gone = new HashSet<>();
-            final NodeID leftNode = NodeID.getInstance(nodeID);
-            for (final MUCUser user : users.values()) {
-                if (leftNode.equals(user.getNodeID())) {
-                    gone.add(user);
-                }
-            }
-
-            Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
-            for(final MUCUser user : gone) {
-                // FIXME
-//                try {
-//                    user.getRoles().forEach(mucRole -> mucRole.getChatRoom().leaveRoom(mucRole));
-//                } finally {
-//                    users.remove(user.getAddress());
+//        if (ClusterManager.isSeniorClusterMember()) {
+//            // Remove occupants added by node that is gone.
+//            final Set<MUCUser> gone = new HashSet<>();
+//            final NodeID leftNode = NodeID.getInstance(nodeID);
+//            for (final MUCUser user : users.values()) {
+//                if (leftNode.equals(user.getNodeID())) {
+//                    gone.add(user);
 //                }
-            }
-        }
+//            }
+//
+//            Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
+//            for(final MUCUser user : gone) {
+//                // FIXME
+////                try {
+////                    user.getRoles().forEach(mucRole -> mucRole.getChatRoom().leaveRoom(mucRole));
+////                } finally {
+////                    users.remove(user.getAddress());
+////                }
+//            }
+//        }
     }
 
     @Override
@@ -2250,9 +2250,26 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     private void restoreCacheContent() {
         Log.trace( "Restoring cache content for cache '{}' by adding all MUC Users that are provided by the local cluster node.", users.getName() );
+
         for (Map.Entry<JID, MUCUser> entry : localUsers.entrySet()) {
-            users.put(entry.getKey(), entry.getValue());
+            final Lock lock = users.getLock(entry.getKey());
+            lock.lock();
+            try {
+                if (!users.containsKey(entry.getKey())) {
+                    users.put(entry.getKey(), entry.getValue());
+                } else {
+                    final MUCUser userInCluster = users.get(entry.getKey());
+                    if (!userInCluster.equals(entry.getValue())) { // TODO: unsure if #equals() is enough to verify equality here.
+                        Log.warn("Joined an Openfire cluster on which a MUC user exists that clashes with a MUC users that exists locally. MUC user name: '{}' on service '{}'", entry.getKey(), chatServiceName);
+                        // FIXME handle collision. Two nodes have different rooms using the same name.
+                    }
+                }
+            } finally {
+                lock.unlock();
+            }
         }
+
+        localMUCRoomManager.restoreCacheContent();
     }
 
 }

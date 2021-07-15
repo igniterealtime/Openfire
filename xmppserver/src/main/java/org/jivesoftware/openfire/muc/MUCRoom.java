@@ -820,9 +820,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             }
         }
 
-        Log.trace( "Notify other cluster nodes that a new occupant ('{}') joined room '{}'", joinRole.getUserAddress(), joinRole.getChatRoom() );
-        CacheFactory.doClusterTask(new OccupantAddedEvent(this, joinRole));
-
         // Exchange initial presence information between occupants of the room.
         sendInitialPresencesToNewOccupant( joinRole );
 
@@ -1275,16 +1272,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         return CompletableFuture.completedFuture(null);
     }
 
-    public void occupantAdded(OccupantAddedEvent event) {
-
-        // Update the date when the last occupant left the room
-        setEmptyDate(null);
-        if (event.isOriginator()) {
-            // Fire event that occupant joined the room
-            MUCEventDispatcher.occupantJoined(getRole().getRoleAddress(), event.getUserAddress(), event.getNickname());
-        }
-    }
-
     /**
      * Remove a member from the chat room.
      *
@@ -1294,56 +1281,32 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         sendLeavePresenceToExistingOccupants(leaveRole)
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun( () -> {
-                    removeOccupantRole(leaveRole);
+                // Remove occupant from room and destroy room if empty and not persistent
+                removeOccupantRole(leaveRole);
 
-                // TODO remove this distinction between actions that need to occur on individual cluster nodes. All nodes should operate on the same data structure (a shared cache). Maybe inline the OccupantLeftEvent implementation?
-//                    if (leaveRole.isLocal()) {
-//                        // Ask other cluster nodes to remove occupant from room
-//                        OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
-//                        CacheFactory.doClusterTask(event);
-//                    }
+                // Fire event that occupant left the room
+                MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
 
-                    // Remove occupant from room and destroy room if empty and not persistent
-                    OccupantLeftEvent event = new OccupantLeftEvent(this, leaveRole);
-                    event.setOriginator(true);
-                    event.run();
+                // TODO Implement this: If the room owner becomes unavailable for any reason before
+                // submitting the form (e.g., a lost connection), the service will receive a presence
+                // stanza of type "unavailable" from the owner to the room@service/nick or room@service
+                // (or both). The service MUST then destroy the room, sending a presence stanza of type
+                // "unavailable" from the room to the owner including a <destroy/> element and reason
+                // (if provided) as defined under the "Destroying a Room" use case.
+
+                // Remove the room from the service only if there are no more occupants and the room is
+                // not persistent
+                if (getOccupants().isEmpty()) {
+                    if (!isPersistent()) {
+                        endTime = System.currentTimeMillis();
+                        mucService.removeChatRoom(name);
+                        // Fire event that the room has been destroyed
+                        MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
+                    }
+                    // Update the date when the last occupant left the room
+                    setEmptyDate(new Date());
                 }
-            );
-    }
-
-    public void leaveRoom(OccupantLeftEvent event)
-    {
-        MUCRole leaveRole = event.getRole();
-        if (leaveRole == null) {
-            return;
-        }
-
-        if ( event.isOriginator() ) {
-            // Fire event that occupant left the room
-            MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
-        }
-
-        // TODO Implement this: If the room owner becomes unavailable for any reason before
-        // submitting the form (e.g., a lost connection), the service will receive a presence
-        // stanza of type "unavailable" from the owner to the room@service/nick or room@service
-        // (or both). The service MUST then destroy the room, sending a presence stanza of type
-        // "unavailable" from the room to the owner including a <destroy/> element and reason
-        // (if provided) as defined under the "Destroying a Room" use case.
-
-        // Remove the room from the service only if there are no more occupants and the room is
-        // not persistent
-        if (getOccupants().isEmpty()) {
-            if (!isPersistent()) {
-                endTime = System.currentTimeMillis();
-                if (event.isOriginator()) {
-                    mucService.removeChatRoom(name);
-                    // Fire event that the room has been destroyed
-                    MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
-                }
-            }
-            // Update the date when the last occupant left the room
-            setEmptyDate(new Date());
-        }
+            });
     }
 
     /**
@@ -2865,7 +2828,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
         // Get the role(s) to kick
-        List<MUCRole> occupants = null;
+        final List<MUCRole> occupants;
         try {
             occupants = getOccupantsByNickname(kickPresence.getFrom().getResource());
             for (MUCRole kickedRole : occupants) {
@@ -2888,13 +2851,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 kickedRole.send(kickSelfPresence);
 
                 // Remove the occupant from the room's occupants lists
-                OccupantLeftEvent event = new OccupantLeftEvent(this, kickedRole);
-                event.setOriginator(true);
-                event.run();
-
-                // Remove the occupant from the room's occupants lists
-                event = new OccupantLeftEvent(this, kickedRole);
-                CacheFactory.doClusterTask(event);
+                leaveRoom(kickedRole);
             }
         } catch (UserNotFoundException e) {
             Log.debug("Unable to kick '{}' from room '{}' as there's no occupant with that nickname.", kickPresence.getFrom().getResource(), getJID(), e);

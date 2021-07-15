@@ -36,9 +36,6 @@ import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
-import org.jivesoftware.openfire.muc.cluster.OccupantAddedEvent;
-import org.jivesoftware.openfire.muc.cluster.RoomAvailableEvent;
-import org.jivesoftware.openfire.muc.cluster.RoomRemovedEvent;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.AutoCloseableReentrantLock;
@@ -832,15 +829,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (loaded || created) {
             // Initiate FMUC, when enabled.
             room.getFmucHandler().applyConfigurationChanges();
-
-            // Notify other cluster nodes that a new room is available.
-            // Ensure that the room exists on all nodes, before firing off other room events to avoid race conditions (OF-2207)
-            CacheFactory.doSynchronousClusterTask(new RoomAvailableEvent(room), false);
-            for (final org.jivesoftware.openfire.muc.MUCRole role : room.getOccupants()) {
-                if (role instanceof MUCRole) {
-                    CacheFactory.doClusterTask(new OccupantAddedEvent(room, role));
-                }
-            }
         }
         return room;
     }
@@ -879,9 +867,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (loaded) {
             // Initiate FMUC, when enabled.
             room.getFmucHandler().applyConfigurationChanges();
-
-            // Notify other cluster nodes that a new room is available
-            CacheFactory.doClusterTask(new RoomAvailableEvent(room));
         }
         return room;
     }
@@ -956,40 +941,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void removeChatRoom(final String roomName) {
-        removeChatRoom(roomName, true);
-    }
-
-    /**
-     * Notification message indicating that the specified chat room was
-     * removed from some other cluster member.
-     *
-     * @param room the removed room in another cluster node.
-     */
-    @Override
-    public void chatRoomRemoved(final MUCRoom room) {
-        removeChatRoom(room.getName(), false);
-    }
-
-    /**
-     * Notification message indicating that a chat room has been created
-     * in another cluster member.
-     *
-     * @param room the created room in another cluster node.
-     */
-    @Override
-    public void chatRoomAdded(final MUCRoom room) {
-        localMUCRoomManager.addRoom(room.getName(), room) ;
-    }
-
-    private void removeChatRoom(final String roomName, final boolean notify) {
         final MUCRoom room = localMUCRoomManager.removeRoom(roomName);
         if (room != null) {
             Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
             totalChatTime += room.getChatLength();
-            if (notify) {
-                // Notify other cluster nodes that a room has been removed
-                CacheFactory.doClusterTask(new RoomRemovedEvent(room));
-            }
         } else {
             Log.info("No chatroom {} during removal.", roomName);
         }

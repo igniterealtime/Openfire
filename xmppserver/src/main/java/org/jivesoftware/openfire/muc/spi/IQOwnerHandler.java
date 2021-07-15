@@ -28,10 +28,8 @@ import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.*;
-import org.jivesoftware.openfire.muc.cluster.RoomUpdatedEvent;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -176,10 +174,6 @@ public class IQOwnerHandler {
             // message
             if (room.isLocked() && !room.isManuallyLocked()) {
                 room.unlock(senderRole);
-            }
-            if (!room.isDestroyed) {
-                // Let other cluster nodes that the room has been updated
-                CacheFactory.doClusterTask(new RoomUpdatedEvent(room));
             }
             break;
             

@@ -2813,6 +2813,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             //Inform the other occupants that user has been kicked
             broadcastPresence(updatedPresence, false, sender);
         }
+        // TODO should this return presence/should callers distribute this stanza (alternatively: should this stanza be broadcast in this method)?
         return updatedPresence;
     }
 

@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.ArrayList;
 
 import static org.junit.Assert.*;
@@ -62,7 +63,7 @@ public class MUCUserTest {
         input.addRoomName("Room-Test");
         final Field lastPacketTimeField = MUCUser.class.getDeclaredField("lastPacketTime");
         lastPacketTimeField.setAccessible(true);
-        lastPacketTimeField.set(input, 123);
+        lastPacketTimeField.set(input, Instant.ofEpochMilli(13151241));
         lastPacketTimeField.setAccessible(false);
 
         // Execute system under test.

@@ -882,120 +882,32 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     // Cluster management tasks
     @Override
     public void joinedCluster() {
-        if (ClusterManager.isSeniorClusterMember()) {
-            Log.info("We are the senior cluster member. No need to query the senior cluster member for MUC service information.");
-            return;
-        }
-
-        // Get transient rooms and persistent rooms with occupants from senior cluster member and merge with local ones.
-        // If room configuration was changed in both places then latest configuration will be kept
-        Log.info("Querying the senior cluster member for MUC service information.");
-        final List<ServiceInfo> result = CacheFactory.doSynchronousClusterTask( new SeniorMemberServicesRequest(), ClusterManager.getSeniorClusterMember().toByteArray());
-        if (result == null)
-        {
-            Log.warn("Unexpectedly received a 'null' result when querying senior cluster member for MUC Service information.");
-            return;
-        }
-        NodeID thisNodeID = XMPPServer.getInstance().getNodeID();
-        for (final ServiceInfo serviceInfo : result) {
-            MultiUserChatService service;
-            service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceInfo.getSubdomain());
-            if (service == null) {
-                // This is a service we don't know about yet, create it locally and register it; Highly suspicious,
-                // as the same set of MUC services should be loaded from the database.
-                Log.warn("Senior cluster member is reporting a MUC service that is not recognized: {}", serviceInfo.getSubdomain());
-                service = new MultiUserChatServiceImpl(serviceInfo.getSubdomain(), serviceInfo.getDescription(), serviceInfo.isHidden());
-                XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service);
-            }
-
-            // TODO: Consider if iterating over _all_ rooms is necessary: All database-persisted rooms should generally already
-            //       be available on both nodes (are there database-related race conditions to worry about?) Only rooms that are
-            //       in-memory only (transient) are likely to be processed here.
-            final MultiUserChatServiceImpl serviceImpl = (MultiUserChatServiceImpl)service;
-
-            for (final RoomInfo roomInfo : serviceInfo.getRooms()) {
-                final MUCRoom remoteRoom = roomInfo.getRoom();
-
-                MUCRoom localRoom = serviceImpl.getLocalChatRoom(remoteRoom.getName());
-                if (localRoom == null) {
-                    Log.debug("Create local room with remote information. Room: {}", remoteRoom.getJID());
-                    localRoom = remoteRoom;
-                    serviceImpl.chatRoomAdded(localRoom);
-                }
-                else {
-                    Log.debug("Update local room with remote information. Room: {}", remoteRoom.getJID());
-                    localRoom.updateConfiguration(remoteRoom); // If this would actually change state, that'd be suspicious. Each node should have the same data from the database.
-                }
-
-                // Add remote occupants to local room
-                // TODO Handle conflict of nicknames (OF-2165)
-                for (final OccupantAddedEvent event : roomInfo.getOccupants()) {
-                    if (thisNodeID.equals(event.getNodeID())){
-                        // Do not add occupants as RemoteMucRole who are already on this node as LocalMucRole
-                        continue;
-                    }
-                    event.setSendPresence(true);
-                    event.run();
-                }
-            }
-        }
+        // TODO: get transient (non-persistent) rooms from cluster.
+        // TODO: when rooms of the same name exist on the cluster, let occupants of remote and local node know about each-other (send 'join' presences). Handle nickname conflicts
     }
     
     @Override
     public void joinedCluster(byte[] nodeID) {
-        Log.info("Querying a cluster member that just joined for its MUC rooms.");
-        final List<RoomInfo> roomInfos = CacheFactory.doSynchronousClusterTask(new GetNewMemberRoomsRequest(), nodeID);
-        if ( roomInfos == null ) {
-            Log.warn("Unexpectedly received a 'null' result when querying cluster member {} for MUC Service information.", nodeID);
-            return;
-        }
-
-        // TODO: Optimize: This makes all cluster nodes query the joining node for data that they mostly already should have.
-        for (final RoomInfo roomInfo : roomInfos) {
-            final MUCRoom remoteRoom = roomInfo.getRoom();
-            final MultiUserChatServiceImpl service = (MultiUserChatServiceImpl)remoteRoom.getMUCService();
-            MUCRoom localRoom = service.getLocalChatRoom(remoteRoom.getName());
-            if (localRoom == null) {
-                Log.debug("Create local room with remote information. Room: {}", remoteRoom.getJID());
-                localRoom = remoteRoom;
-                service.chatRoomAdded(localRoom);
-            }
-
-            // Add remote occupants to local room
-            // TODO Handle conflict of nicknames (OF-2165)
-            for (final OccupantAddedEvent event : roomInfo.getOccupants()) {
-                event.setSendPresence(true);
-                event.run();
-            }
-        }
+        // TODO: get transient (non-persistent) rooms from cluster.
+        // TODO: when rooms of the same name exist on the cluster, let occupants of remote and local node know about each-other (send 'join' presences). Handle nickname conflicts
     }
 
     @Override
     public void leftCluster() {
-        // Do nothing. An unavailable presence will be created for occupants hosted in other cluster nodes.
+        // TODO: get transient (non-persistent) rooms from cluster.
+        // TODO: when rooms of the same name exist on the cluster, let occupants of remote and local node know about each-other (send 'join' presences). Handle nickname conflicts
     }
 
     @Override
     public void leftCluster(byte[] nodeID) {
-// This has been moved to MultiUserChatServiceImpl
-//
-//        // Remove all room occupants linked to the defunct node as their sessions are cleaned out earlier
-//        Log.debug("Removing orphaned occupants associated with defunct node: {}", new String(nodeID, StandardCharsets.UTF_8));
-//
-//        for (final MultiUserChatService service : getMultiUserChatServices()) {
-//            for (final MUCRoom mucRoom : service.getChatRooms()) {
-//                for (MUCRole mucRole : mucRoom.getOccupants()) {
-//                    if (mucRole.getNodeID().equals(nodeID)) {
-//                        mucRoom.leaveRoom(mucRole);
-//                    }
-//                }
-//            }
-//        }
+        // TODO: get transient (non-persistent) rooms from cluster.
+        // TODO: when rooms of the same name exist on the cluster, let occupants of remote and local node know about each-other (send 'join' presences). Handle nickname conflicts
     }
 
     @Override
     public void markedAsSeniorClusterMember() {
-        // Do nothing
+        // TODO: get transient (non-persistent) rooms from cluster.
+        // TODO: when rooms of the same name exist on the cluster, let occupants of remote and local node know about each-other (send 'join' presences). Handle nickname conflicts
     }
 
     @Override

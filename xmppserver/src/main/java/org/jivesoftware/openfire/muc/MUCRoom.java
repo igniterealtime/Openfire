@@ -1388,9 +1388,15 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         }
     }
 
-    public void destroyRoom(DestroyRoomRequest destroyRequest) {
-        JID alternateJID = destroyRequest.getAlternateJID();
-        String reason = destroyRequest.getReason();
+    /**
+     * Destroys the room. Each occupant will be removed and will receive a presence stanza of type
+     * "unavailable" whose "from" attribute will be the occupant's nickname that the user knows he
+     * or she has been removed from the room.
+     *
+     * @param alternateJID an optional alternate JID. Commonly used to provide a replacement room. (can be {@code null})
+     * @param reason an optional reason why the room was destroyed (can be {@code null}).
+     */
+    public void destroyRoom(JID alternateJID, String reason) {
         Collection<MUCRole> removedRoles = new CopyOnWriteArrayList<>();
 
         final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
@@ -1410,20 +1416,15 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                         final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
                         mucUser.removeRoomName(getJID().getNode());
 
-                        if (destroyRequest.isOriginator()) {
-                            // Fire event that occupant left the room
-                            MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
-                        }
+                        MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
                     }
                 }
             }
             endTime = System.currentTimeMillis();
             // Set that the room has been destroyed
             isDestroyed = true;
-            if (destroyRequest.isOriginator()) {
-                // Removes the room from the list of rooms hosted in the service
-                mucService.removeChatRoom(name);
-            }
+            // Removes the room from the list of rooms hosted in the service
+            mucService.removeChatRoom(name);
         }
         finally {
             lock.unlock();
@@ -1458,26 +1459,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 Log.error(e.getMessage(), e);
             }
         }
-        if (destroyRequest.isOriginator()) {
-            // Remove the room from the DB if the room was persistent
-            MUCPersistenceManager.deleteFromDB(this);
-            // Fire event that the room has been destroyed
-            MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
-        }
-    }
 
-    /**
-     * Destroys the room. Each occupant will be removed and will receive a presence stanza of type
-     * "unavailable" whose "from" attribute will be the occupant's nickname that the user knows he
-     * or she has been removed from the room.
-     *
-     * @param alternateJID an optional alternate JID. Commonly used to provide a replacement room. (can be {@code null})
-     * @param reason an optional reason why the room was destroyed (can be {@code null}).
-     */
-    public void destroyRoom(JID alternateJID, String reason) {
-        DestroyRoomRequest destroyRequest = new DestroyRoomRequest(this, alternateJID, reason);
-        destroyRequest.setOriginator(true);
-        destroyRequest.run();
+        // Remove the room from the DB if the room was persistent
+        MUCPersistenceManager.deleteFromDB(this);
+        // Fire event that the room has been destroyed
+        MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
     }
 
     /**

@@ -25,10 +25,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 import org.dom4j.tree.DefaultElement;
-import org.jivesoftware.openfire.muc.cluster.UpdateHistoryStrategy;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,10 +138,6 @@ public class HistoryStrategy implements Externalizable {
         if (contextPrefix != null){
             MUCPersistenceManager.setProperty(contextSubdomain, contextPrefix + ".maxNumber", Integer.toString(maxNumber));
         }
-        if (parent == null) {
-            // Update the history strategy of the MUC service
-            CacheFactory.doClusterTask(new UpdateHistoryStrategy(contextSubdomain, this));
-        }
     }
 
     /**
@@ -161,10 +155,6 @@ public class HistoryStrategy implements Externalizable {
         }
         if (contextPrefix != null){
             MUCPersistenceManager.setProperty(contextSubdomain, contextPrefix + ".type", type.toString());
-        }
-        if (parent == null) {
-            // Update the history strategy of the MUC service
-            CacheFactory.doClusterTask(new UpdateHistoryStrategy(contextSubdomain, this));
         }
     }
 

@@ -23,7 +23,6 @@ import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.disco.DiscoInfoProvider;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.disco.DiscoItemsProvider;
@@ -63,7 +62,6 @@ import org.xmpp.resultsetmanagement.ResultSet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -152,7 +150,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * table: key user jid (XMPPAddress); value ChatUser
      */
-    private final Cache<JID, MUCUser> users;
+    private final Cache<JID, MUCUser> USERS_CACHE;
 
     /**
      * A copy of #users but with entities that are added to the cache on this JVM only.
@@ -315,9 +313,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         this.isHidden = isHidden;
         historyStrategy = new HistoryStrategy(null);
 
-        users = CacheFactory.createCache("MUC Service '" + chatServiceName + "' Users");
-        users.setMaxLifetime(-1);
-        users.setMaxCacheSize(-1L);
+        USERS_CACHE = CacheFactory.createCache("MUC Service '" + chatServiceName + "' Users");
+        USERS_CACHE.setMaxLifetime(-1);
+        USERS_CACHE.setMaxCacheSize(-1L);
 
         localUsers = new ConcurrentHashMap<>();
         localMUCRoomManager = new LocalMUCRoomManager(this);
@@ -554,15 +552,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     {
         Log.debug( "Notifying all local users about the imminent destruction of chat service '{}'", chatServiceName );
 
-        if (users.isEmpty()) {
+        if (USERS_CACHE.isEmpty()) {
             return;
         }
 
         // A thread pool is used to broadcast concurrently, as well as to limit the execution time of this service.
-        final ExecutorService service = Executors.newFixedThreadPool( Math.min( users.size(), 10 ) );
+        final ExecutorService service = Executors.newFixedThreadPool( Math.min( USERS_CACHE.size(), 10 ) );
 
         // Queue all tasks in the executor service.
-        for ( final MUCUser user : users.values() )
+        for ( final MUCUser user : USERS_CACHE.values() )
         {
             // Submit a concurrent task for each local user (that could be in more than one (local) room).
             if (!(SessionManager.getInstance().getSession(user.getAddress()) instanceof LocalSession)) {
@@ -629,7 +627,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return;
         }
         final Set<JID> toRemove = new HashSet<>();
-        for (final MUCUser user : users.values()) {
+        for (final MUCUser user : USERS_CACHE.values()) {
             try {
                 // If user is not present in any room then remove the user from the list of users.
                 if (!user.isJoined()) {
@@ -637,7 +635,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     continue;
                 }
 
-                final Instant lastActive = Instant.ofEpochMilli(user.getLastPacketTime());
+                final Instant lastActive = user.getLastPacketTime();
 
                 // Kick users if 'user_idle' feature is enabled and the user has been idle for too long.
                 final boolean doKick = userIdleKick != null && lastActive.isBefore(Instant.now().minus(userIdleKick));
@@ -971,10 +969,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param jabberID The user's normal jid, not the chat nickname jid.
      */
     private void removeUser(final JID jabberID) {
-        final Lock lock = users.getLock(jabberID);
+        final Lock lock = USERS_CACHE.getLock(jabberID);
         lock.lock();
         try {
-            final MUCUser user = users.remove(jabberID);
+            final MUCUser user = USERS_CACHE.remove(jabberID);
             localUsers.remove(jabberID);
             if (user != null) {
                 for (final String roomName : user.getRoomNames()) {
@@ -1013,13 +1011,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             throw new IllegalStateException("Not initialized");
         }
         MUCUser user;
-        final Lock lock = users.getLock(userjid);
+        final Lock lock = USERS_CACHE.getLock(userjid);
         lock.lock();
         try {
-            user = users.get(userjid);
+            user = USERS_CACHE.get(userjid);
             if (user == null) {
                 user = new MUCUser(this, userjid);
-                users.put(userjid, user);
+                USERS_CACHE.put(userjid, user);
                 localUsers.put(userjid, user);
             }
         } finally {
@@ -1667,7 +1665,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public int getNumberConnectedUsers() {
         int total = 0; // TODO for performance, replace this with users.size(). For that to work, we need to be able to remove the isJoined check.
-        for (final MUCUser user : users.values()) {
+        for (final MUCUser user : USERS_CACHE.values()) {
             if (user.isJoined()) {
                 total = total + 1;
             }
@@ -2204,16 +2202,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * ({@link #leftCluster()} a cluster.
      */
     private void restoreCacheContent() {
-        Log.trace( "Restoring cache content for cache '{}' by adding all MUC Users that are provided by the local cluster node.", users.getName() );
+        Log.trace( "Restoring cache content for cache '{}' by adding all MUC Users that are provided by the local cluster node.", USERS_CACHE.getName() );
 
         for (Map.Entry<JID, MUCUser> entry : localUsers.entrySet()) {
-            final Lock lock = users.getLock(entry.getKey());
+            final Lock lock = USERS_CACHE.getLock(entry.getKey());
             lock.lock();
             try {
-                if (!users.containsKey(entry.getKey())) {
-                    users.put(entry.getKey(), entry.getValue());
+                if (!USERS_CACHE.containsKey(entry.getKey())) {
+                    USERS_CACHE.put(entry.getKey(), entry.getValue());
                 } else {
-                    final MUCUser userInCluster = users.get(entry.getKey());
+                    final MUCUser userInCluster = USERS_CACHE.get(entry.getKey());
                     if (!userInCluster.equals(entry.getValue())) { // TODO: unsure if #equals() is enough to verify equality here.
                         Log.warn("Joined an Openfire cluster on which a MUC user exists that clashes with a MUC users that exists locally. MUC user name: '{}' on service '{}'", entry.getKey(), chatServiceName);
                         // FIXME handle collision. Two nodes have different rooms using the same name.

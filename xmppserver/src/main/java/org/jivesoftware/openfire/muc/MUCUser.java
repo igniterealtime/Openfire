@@ -44,6 +44,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -71,6 +72,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     /**
      * The name of the chat service that this user belongs to.
      */
+    // Only set during construction or when deserialized. Would have been 'final' if not for implementing Externalizable
     private String serviceName;
 
     /**
@@ -81,6 +83,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     /**
      * Real system XMPPAddress for the user.
      */
+    // Only set during construction or when deserialized. Would have been 'final' if not for implementing Externalizable
     private JID realjid;
 
     /**
@@ -91,7 +94,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     /**
      * Time of last packet sent.
      */
-    private long lastPacketTime;
+    private Instant lastPacketTime;
 
     /**
      * This constructor is provided to comply with the Externalizable interface contract. It should not be used directly.
@@ -167,11 +170,11 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     }
 
     /**
-     * Get time (in milliseconds from System currentTimeMillis()) since last packet.
+     * Get instant when the last packet was sent from this user.
      *
      * @return The time when the last packet was sent from this user
      */
-    public long getLastPacketTime()
+    public Instant getLastPacketTime()
     {
         return lastPacketTime;
     }
@@ -273,7 +276,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             return;
         }
 
-        lastPacketTime = System.currentTimeMillis(); // FIXME ensure that the change to this instance is visible in the clustered cache!
+        lastPacketTime = Instant.now();
 
         StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 
@@ -1057,7 +1060,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         size += CacheSizes.sizeOfString(serviceName);
         size += CacheSizes.sizeOfAnything(realjid);
         size += CacheSizes.sizeOfCollection(roomNames);
-        size += CacheSizes.sizeOfLong(); // lastPacketTime
+        size += CacheSizes.sizeOfObject() + CacheSizes.sizeOfLong() + CacheSizes.sizeOfInt(); // lastPacketTime
         return size;
     }
 
@@ -1066,7 +1069,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         ExternalizableUtil.getInstance().writeSafeUTF(out, serviceName);
         ExternalizableUtil.getInstance().writeSafeUTF(out, realjid.toString());
         ExternalizableUtil.getInstance().writeSerializableCollection(out, roomNames);
-        ExternalizableUtil.getInstance().writeLong(out, lastPacketTime);
+        ExternalizableUtil.getInstance().writeSerializable(out, lastPacketTime);
     }
 
     @Override
@@ -1075,7 +1078,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         realjid = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
         roomNames = new HashSet<>();
         ExternalizableUtil.getInstance().readSerializableCollection(in, roomNames, this.getClass().getClassLoader());
-        lastPacketTime = ExternalizableUtil.getInstance().readLong(in);
+        lastPacketTime = (Instant) ExternalizableUtil.getInstance().readSerializable(in);
     }
 
     @Override

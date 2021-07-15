@@ -437,22 +437,6 @@ public interface MultiUserChatService extends Component {
     boolean hasChatRoom(String roomName);
 
     /**
-     * Notification message indicating that the specified chat room was
-     * removed from some other cluster member.
-     *
-     * @param room the removed room in another cluster node.
-     */
-    void chatRoomRemoved( MUCRoom room );
-
-    /**
-     * Notification message indicating that a chat room has been created
-     * in another cluster member.
-     *
-     * @param room the created room in another cluster node.
-     */
-    void chatRoomAdded( MUCRoom room );
-
-    /**
      * Removes the room associated with the given name.
      * 
      * @param roomName The room to remove.

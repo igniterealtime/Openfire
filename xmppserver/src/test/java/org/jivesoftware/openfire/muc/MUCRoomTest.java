@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.muc;
 
-import org.dom4j.Element;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.ConcurrentGroupMap;
@@ -23,11 +22,9 @@ import org.jivesoftware.openfire.muc.spi.FMUCMode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Presence;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,7 +36,8 @@ import java.time.Instant;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
@@ -86,8 +84,22 @@ public class MUCRoomTest {
         populateField(roomRole, "roomJid", new JID("room-test-role-jid@example.org"));
         populateField(roomRole, "role", MUCRole.Role.visitor);
         populateField(roomRole, "affiliation", MUCRole.Affiliation.member);
-        populateField(roomRole, "rJID", new JID("room-test-jid@example.org"));
+        populateField(roomRole, "rJID", new JID("room-test-jid@conference.example.org"));
 
+        final List<MUCRole> occupants = new ArrayList<>();
+        final MUCRole occupantA = new MUCRole();
+        populateField(occupantA, "roomJid", new JID("occupantA@example.org"));
+        populateField(occupantA, "role", MUCRole.Role.participant);
+        populateField(occupantA, "affiliation", MUCRole.Affiliation.member);
+        populateField(occupantA, "rJID", new JID("room-test-jid@conference.example.org/occupantA"));
+        occupants.add(occupantA);
+
+        final MUCRole occupantB = new MUCRole();
+        populateField(occupantB, "roomJid", new JID("occupantBA@example.org"));
+        populateField(occupantB, "role", MUCRole.Role.none);
+        populateField(occupantB, "affiliation", MUCRole.Affiliation.member);
+        populateField(occupantB, "rJID", new JID("room-test-jid@conference.example.org/occupantB"));
+        occupants.add(occupantB);
 
         final ConcurrentGroupList<JID> owners = new ConcurrentGroupList<>();
         owners.add(new JID("unit-test-owner-1@example.com"));
@@ -113,6 +125,7 @@ public class MUCRoomTest {
         final MUCRoom input = new MUCRoom(); // Set all fields to a non-default value, for a more specific test!
         populateField(input, "mucService", mockService);
         populateField(input, "name", "test-room-name");
+        populateField(input, "occupants", occupants);
         populateField(input, "role", roomRole);
         populateField(input, "startTime", Instant.now().minus(Duration.ofDays(4)).toEpochMilli());
         populateField(input, "endTime", Instant.now().minus(Duration.ofHours(23)).toEpochMilli());
@@ -172,6 +185,8 @@ public class MUCRoomTest {
         assertNotNull(result);
         assertTrue(result instanceof MUCRoom);
         assertEquals(input, result);
+        assertEquals(2, ((MUCRoom) result).getOccupantsCount());
+        assertEquals(new ArrayList<>(input.getOccupants()), new ArrayList<>(((MUCRoom) result).getOccupants()));
         assertEquals(input.getName(), ((MUCRoom) result).getName());
         assertEquals(input.getID(), ((MUCRoom) result).getID());
         assertEquals(input.getCreationDate(), ((MUCRoom) result).getCreationDate());

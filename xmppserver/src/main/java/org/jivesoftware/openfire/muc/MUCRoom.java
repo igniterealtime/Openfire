@@ -25,12 +25,14 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.group.*;
-import org.jivesoftware.openfire.muc.cluster.*;
 import org.jivesoftware.openfire.muc.spi.*;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.cache.*;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
@@ -46,9 +48,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A chat room on the chat server manages its users, and enforces it's own security rules.
@@ -83,9 +83,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     private MultiUserChatService mucService;
 
     /**
-     * A cache that contains all occupants (MUC roles), mapped by the JID of the room.
+     * All occupants that are associated with this room.
      */
-    private final static Cache<JID, RoomOccupants> ROOM_OCCUPANTS_CACHE = CacheFactory.createCache("MUC Room Occupants");
+    public ArrayList<MUCRole> occupants = new ArrayList<>();
 
     /**
      * The name of the room.
@@ -544,21 +544,14 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             throw new UserNotFoundException();
         }
 
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                throw new UserNotFoundException("Unable to find occupant with nickname '" + nickname + "' in room '" + name + "'");
-            }
-            final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname)).collect(Collectors.toList());
-            if (roles.isEmpty()) {
-                throw new UserNotFoundException("Unable to find occupant with nickname '" + nickname + "' in room '" + name + "'");
-            }
-            return roles;
-        } finally {
-            lock.unlock();
+        final List<MUCRole> roles = occupants.stream()
+            .filter(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname))
+            .collect(Collectors.toList());
+
+        if (roles.isEmpty()) {
+            throw new UserNotFoundException("Unable to find occupant with nickname '" + nickname + "' in room '" + name + "'");
         }
+        return roles;
     }
 
     /**
@@ -569,22 +562,17 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @return The user's roles in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
-    public List<MUCRole> getOccupantsByBareJID(JID jid) throws UserNotFoundException {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                throw new UserNotFoundException();
-            }
-            final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getUserAddress().asBareJID().equals(jid)).collect(Collectors.toList());
-            if (roles.isEmpty()) {
-                throw new UserNotFoundException();
-            }
-            return Collections.unmodifiableList(roles);
-        } finally {
-            lock.unlock();
+    public List<MUCRole> getOccupantsByBareJID(JID jid) throws UserNotFoundException
+    {
+        final List<MUCRole> roles = occupants.stream()
+            .filter(mucRole -> mucRole.getUserAddress().asBareJID().equals(jid))
+            .collect(Collectors.toList());
+
+        if (roles.isEmpty()) {
+            throw new UserNotFoundException();
         }
+
+        return Collections.unmodifiableList(roles);
     }
 
     /**
@@ -594,24 +582,18 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @param jid The full jid of the user you'd like to obtain  (cannot be {@code null}).
      * @return The user's role in the room or null if not found.
      */
-    public MUCRole getOccupantByFullJID(JID jid) {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                return null;
-            }
-            final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getUserAddress().equals(jid)).collect(Collectors.toList());
-            switch (roles.size()) {
-                case 0: return null;
-                default:
-                    Log.warn("Room '{}' has more than one role with full JID '{}'!", getJID(), jid);
-                    // Intended fall-through: return the first one.
-                case 1: return roles.iterator().next();
-            }
-        } finally {
-            lock.unlock();
+    public MUCRole getOccupantByFullJID(JID jid)
+    {
+        final List<MUCRole> roles = occupants.stream()
+            .filter(mucRole -> mucRole.getUserAddress().equals(jid))
+            .collect(Collectors.toList());
+
+        switch (roles.size()) {
+            case 0: return null;
+            default:
+                Log.warn("Room '{}' has more than one role with full JID '{}'!", getJID(), jid);
+                // Intended fall-through: return the first one.
+            case 1: return roles.iterator().next();
         }
     }
 
@@ -621,18 +603,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @return a collection with all users in the chatroom
      */
     public Collection<MUCRole> getOccupants() {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final boolean hasOccupants = ROOM_OCCUPANTS_CACHE.containsKey(getJID());
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                return Collections.emptyList();
-            }
-            return occupants.asUnmodifiableCollection();
-        } finally {
-            lock.unlock();
-        }
+        return Collections.unmodifiableCollection(occupants);
     }
 
     /**
@@ -641,7 +612,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @return int the number of occupants in the chatroom at the moment.
      */
     public int getOccupantsCount() {
-        return getOccupants().size();
+        return occupants.size();
     }
 
     /**
@@ -650,26 +621,16 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @param nickname The nickname of the user you'd like to obtain  (cannot be {@code null}).
      * @return True if a nickname is taken
      */
-    public boolean hasOccupant(String nickname) {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            return occupants != null && occupants.stream().anyMatch(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname));
-        } finally {
-            lock.unlock();
-        }
+    public boolean hasOccupant(String nickname)
+    {
+        return occupants.stream()
+            .anyMatch(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname));
     }
 
-    public boolean hasOccupant(JID jid) {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            return occupants != null && occupants.stream().anyMatch(mucRole -> mucRole.getUserAddress().equals(jid) || mucRole.getUserAddress().asBareJID().equals(jid));
-        } finally {
-            lock.unlock();
-        }
+    public boolean hasOccupant(JID jid)
+    {
+        return occupants.stream()
+            .anyMatch(mucRole -> mucRole.getUserAddress().equals(jid) || mucRole.getUserAddress().asBareJID().equals(jid));
     }
 
     /**
@@ -906,16 +867,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         joinRole.send(roomSubject);
     }
 
-    public boolean alreadyJoinedWithThisNick(@Nonnull MUCUser user, @Nonnull String nickname )
+    public boolean alreadyJoinedWithThisNick(@Nonnull MUCUser user, @Nonnull String nickname)
     {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            return occupants != null && occupants.stream().anyMatch(mucRole -> mucRole.getUserAddress().equals(user.getAddress()) && mucRole.getNickname().equalsIgnoreCase(nickname));
-        } finally {
-            lock.unlock();
-        }
+        return occupants.stream()
+            .anyMatch(mucRole -> mucRole.getUserAddress().equals(user.getAddress()) && mucRole.getNickname().equalsIgnoreCase(nickname));
     }
 
     /**
@@ -1022,23 +977,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void checkJoinRoomPreconditionNicknameInUse(@Nonnull final MUCUser user, @Nonnull String nickname ) throws UserAlreadyExistsException
     {
-        boolean canJoin;
+        occupants.forEach(occupant -> Log.trace( "Occupant already in room: {}", occupant));
         final JID bareJID = user.getAddress().asBareJID();
-
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants != null) {
-                Log.trace("Has occupants");
-                occupants.stream().forEach( occupant -> Log.trace( "Occupant already in room: {}", occupant ));
-            }
-
-            canJoin = occupants == null || occupants.stream().noneMatch(mucRole -> !mucRole.getUserAddress().asBareJID().equals(bareJID) && mucRole.getNickname().equalsIgnoreCase(nickname));
-        } finally {
-            lock.unlock();
-        }
-
+        final boolean canJoin = occupants == null || occupants.stream().noneMatch(mucRole -> !mucRole.getUserAddress().asBareJID().equals(bareJID) && mucRole.getNickname().equalsIgnoreCase(nickname));
         Log.trace( "{} Room join precondition 'nickname in use': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", user.getAddress(), canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new UserAlreadyExistsException( "Someone else in the room uses the nickname that you want to use." );
@@ -1210,18 +1151,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     public void addOccupantRole( @Nonnull final MUCRole role )
     {
         Log.trace( "Add occupant to room {}: {}", this.getJID(), role );
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                occupants = new RoomOccupants();
-            }
-            occupants.roles.add(role);
-            ROOM_OCCUPANTS_CACHE.put(getJID(), occupants);
-        } finally {
-            lock.unlock();
-        }
+        occupants.add(role);
 
         final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(role.getUserAddress());
         mucUser.addRoomName(getJID().getNode());
@@ -1338,17 +1268,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
         mucUser.removeRoomName(getJID().getNode());
 
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants != null) {
-                occupants.roles.remove(leaveRole);
-                ROOM_OCCUPANTS_CACHE.put(getJID(), occupants);
-            }
-        } finally {
-            lock.unlock();
-        }
+        occupants.remove(leaveRole);
     }
 
     /**
@@ -1362,36 +1282,27 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     public void destroyRoom(JID alternateJID, String reason) {
         Collection<MUCRole> removedRoles = new CopyOnWriteArrayList<>();
 
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            fmucHandler.stop();
+        fmucHandler.stop();
 
-            // Remove each occupant.
-            final Collection<MUCRole> mucRoles = ROOM_OCCUPANTS_CACHE.remove(getJID()).asUnmodifiableCollection();
-            if (mucRoles != null) {
-                for (MUCRole leaveRole : mucRoles) {
-                    if (leaveRole != null) {
-                        // Add the removed occupant to the list of removed occupants. We are keeping a
-                        // list of removed occupants to process later outside of the lock.
-                        removedRoles.add(leaveRole);
+        // Remove each occupant from a copy of the list of occupants (to prevent ConcurrentModificationException).
+        for (MUCRole leaveRole : getOccupants()) {
+            if (leaveRole != null) {
+                // Add the removed occupant to the list of removed occupants. We are keeping a
+                // list of removed occupants to process later outside of the lock.
+                removedRoles.add(leaveRole);
 
-                        final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
-                        mucUser.removeRoomName(getJID().getNode());
+                final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
+                mucUser.removeRoomName(getJID().getNode());
 
-                        MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
-                    }
-                }
+                MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
             }
-            endTime = System.currentTimeMillis();
-            // Set that the room has been destroyed
-            isDestroyed = true;
-            // Removes the room from the list of rooms hosted in the service
-            mucService.removeChatRoom(name);
         }
-        finally {
-            lock.unlock();
-        }
+        endTime = System.currentTimeMillis();
+        // Set that the room has been destroyed
+        isDestroyed = true;
+        // Removes the room from the list of rooms hosted in the service
+        mucService.removeChatRoom(name);
+
         // Send an unavailable presence to each removed occupant
         for (MUCRole removedRole : removedRoles) {
             try {
@@ -2658,18 +2569,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @return a collection with the current list of moderators.
      */
     public Collection<MUCRole> getModerators() {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                return Collections.emptyList();
-            }
-            final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getRole() == MUCRole.Role.moderator).collect(Collectors.toList());
-            return Collections.unmodifiableList(roles);
-        } finally {
-            lock.unlock();
-        }
+        final List<MUCRole> roles = occupants.stream()
+            .filter(mucRole -> mucRole.getRole() == MUCRole.Role.moderator)
+            .collect(Collectors.toList());
+        return Collections.unmodifiableList(roles);
     }
 
     /**
@@ -2679,18 +2582,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @return a collection with the current list of moderators.
      */
     public Collection<MUCRole> getParticipants() {
-        final Lock lock = ROOM_OCCUPANTS_CACHE.getLock(getJID());
-        lock.lock();
-        try {
-            final RoomOccupants occupants = ROOM_OCCUPANTS_CACHE.get(getJID());
-            if (occupants == null) {
-                return Collections.emptyList();
-            }
-            final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getRole() == MUCRole.Role.participant).collect(Collectors.toList());
-            return Collections.unmodifiableList(roles);
-        } finally {
-            lock.unlock();
+        if (occupants == null) {
+            return Collections.emptyList();
         }
+        final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getRole() == MUCRole.Role.participant).collect(Collectors.toList());
+        return Collections.unmodifiableList(roles);
     }
 
     /**
@@ -3558,6 +3454,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         // Approximate the size of the object in bytes by calculating the size of each field.
         int size = 0;
         size += CacheSizes.sizeOfObject();      // overhead of object
+        size += CacheSizes.sizeOfCollection(occupants);
         size += CacheSizes.sizeOfString(name);
         size += CacheSizes.sizeOfAnything(role);
         size += CacheSizes.sizeOfLong();        // startTime
@@ -3607,6 +3504,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSafeUTF(out, name);
+        ExternalizableUtil.getInstance().writeExternalizableCollection(out, occupants);
         ExternalizableUtil.getInstance().writeLong(out, startTime);
         ExternalizableUtil.getInstance().writeLong(out, endTime);
         ExternalizableUtil.getInstance().writeLong(out, lockedTime);
@@ -3664,6 +3562,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         name = ExternalizableUtil.getInstance().readSafeUTF(in);
+        ExternalizableUtil.getInstance().readExternalizableCollection(in, occupants, getClass().getClassLoader());
         startTime = ExternalizableUtil.getInstance().readLong(in);
         endTime = ExternalizableUtil.getInstance().readLong(in);
         lockedTime = ExternalizableUtil.getInstance().readLong(in);
@@ -3767,6 +3666,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         return "MUCRoom{" +
             "roomID=" + roomID +
             ", name='" + name + '\'' +
+            ", occupants=" + occupants.stream() +
             ", mucService=" + mucService +
             ", savedToDB=" + savedToDB +
             '}';
@@ -3896,44 +3796,5 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     @Override
     public void groupCreated(Group group, Map params) {
         // ignore
-    }
-
-    public static class RoomOccupants implements Cacheable, Externalizable
-    {
-        public ArrayList<MUCRole> roles;
-
-        public RoomOccupants() {
-            roles = new ArrayList<>();
-        }
-
-        @Override
-        public void writeExternal(ObjectOutput out) throws IOException {
-            try {
-                ExternalizableUtil.getInstance().writeExternalizableCollection(out, roles);
-            } catch (IOException | RuntimeException e ) {
-                Log.error("write error", e);
-                throw e;
-            }
-        }
-
-        @Override
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            final ClassLoader classLoader = getClass().getClassLoader();
-            roles = new ArrayList<>();
-            ExternalizableUtil.getInstance().readExternalizableCollection(in, roles, classLoader);
-        }
-
-        @Override
-        public int getCachedSize() throws CannotCalculateSizeException {
-            return CacheSizes.sizeOfObject() + CacheSizes.sizeOfCollection(roles);
-        }
-
-        public Stream<MUCRole> stream() {
-            return roles.stream();
-        }
-
-        public Collection<MUCRole> asUnmodifiableCollection() {
-            return Collections.unmodifiableList(roles);
-        }
     }
 }

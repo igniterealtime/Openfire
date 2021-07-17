@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -358,6 +359,25 @@ public interface MultiUserChatService extends Component {
     boolean canDiscoverRoom(final MUCRoom room, final JID entity);
 
     /**
+     * Generates a mutex object that controls cluster-wide access to a MUCRoom instance that represents the room in this
+     * service identified by the provided name.
+     *
+     * The lock, once returned, is not acquired/set.
+     *
+     * @param roomName Name of the room for which to return a lock.
+     * @return The lock (which has not been set yet).
+     */
+    @Nonnull Lock getLock(@Nonnull final String roomName);
+
+    /**
+     * Makes available the current state of the provided MUCRoom instance to all nodes in the Openfire cluster (if the
+     * local server is part of such a cluster). This method should be used whenever a MUCRoom instance has been changed.
+     *
+     * @param room The room for which to broadcast state changes across the Openfire cluster.
+     */
+    void syncChatRoom(@Nonnull final MUCRoom room);
+
+    /**
      * Obtains a chatroom by name. A chatroom is created for that name if none exists and the user
      * has permission. The user that asked for the chatroom will be the room's owner if the chatroom
      * was created.
@@ -367,6 +387,7 @@ public interface MultiUserChatService extends Component {
      * @return The chatroom for the given name.
      * @throws NotAllowedException If the caller doesn't have permission to create a new room.
      */
+    // TODO see if this can be replaced with an explicit 'create'.
     MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException;
 
     /**

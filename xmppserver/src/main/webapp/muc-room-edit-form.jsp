@@ -274,6 +274,8 @@
             // Send the IQ packet that will modify the room's configuration
             room.getIQOwnerHandler().handleIQ(iq, room.getRole());
 
+            webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
+
             // Changes good, so redirect
             String params;
             if (create) {

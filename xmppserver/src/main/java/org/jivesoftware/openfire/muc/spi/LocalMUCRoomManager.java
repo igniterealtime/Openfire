@@ -9,18 +9,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
- * this class supports the simple MUCRoom management including remove,add and query.
+ * This class supports the simple MUCRoom management including remove, add and query. Its sole invoking entity should be
+ * the instance of {@link MultiUserChatService} that is provided as an argument to the constructor. Most of the access
+ * modifiers of methods of this class are 'package' to reflect this.
  *
- * Note that this implementation provides a representation of rooms that are currently actively loaded in memory only.
- * More rooms might exist in the database.
- *
- * @author <a href="mailto:583424568@qq.com">wuchang</a>
- * 2016-1-14
+ * @author <a href="mailto:583424568@qq.com">wuchang</a> 2016-1-14
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class LocalMUCRoomManager
 {
@@ -37,6 +37,7 @@ public class LocalMUCRoomManager
 
     LocalMUCRoomManager(@Nonnull final MultiUserChatService service) {
         this.serviceName = service.getServiceName();
+        Log.debug("Instantiating for service '{}'", serviceName);
         CACHE_ROOM= CacheFactory.createCache("MUC Service '" + serviceName + "' Rooms");
         CACHE_ROOM.setMaxLifetime(-1);
         CACHE_ROOM.setMaxCacheSize(-1L);
@@ -47,33 +48,44 @@ public class LocalMUCRoomManager
      *
      * @return a chat room count.
      */
-    public int getNumberChatRooms(){
-        return CACHE_ROOM.size();
+    int getNumberChatRooms()
+    {
+        final int result = CACHE_ROOM.size();
+        Log.trace("Room count for service '{}': {}", serviceName, result);
+        return result;
     }
 
-    public Lock getLock(@Nonnull final String roomName) {
+    @Nonnull Lock getLock(@Nonnull final String roomName) {
+        Log.trace("Obtaining lock for room '{}' of service '{}'", roomName, serviceName);
         return CACHE_ROOM.getLock(roomName);
     }
 
-    public void addRoom(final String roomname, final MUCRoom room) {
-        final Lock lock = CACHE_ROOM.getLock(roomname);
+    void addRoom(@Nonnull final MUCRoom room) {
+        final Lock lock = CACHE_ROOM.getLock(room.getName());
         lock.lock();
         try {
-            CACHE_ROOM.put(roomname, room);
-            rooms.put(roomname, room);
+            Log.trace("Adding room '{}' of service '{}'", room.getName(), serviceName);
+            CACHE_ROOM.put(room.getName(), room);
+            rooms.put(room.getName(), room);
         } finally {
             lock.unlock();
         }
 
-        GroupEventDispatcher.addListener(room); // TODO this event listener is added only in the node where the room is created. Does this mean that events are not prop
+        GroupEventDispatcher.addListener(room); // TODO this event listener is added only in the node where the room is created. Does this mean that events are not propagated in a cluster?
     }
 
-    public void updateRoom(final String roomname, final MUCRoom room) {
-        final Lock lock = CACHE_ROOM.getLock(roomname);
+    void syncRoom(@Nonnull final MUCRoom room) {
+        final Lock lock = CACHE_ROOM.getLock(room.getName());
         lock.lock();
         try {
-            CACHE_ROOM.put(roomname, room);
-            rooms.put(roomname, room);
+            Log.trace("Syncing room '{}' of service '{}'", room.getName(), serviceName);
+            if (room.isDestroyed) {
+                CACHE_ROOM.remove(room.getName());
+                rooms.remove(room.getName());
+            } else {
+                CACHE_ROOM.put(room.getName(), room);
+                rooms.put(room.getName(), room);
+            }
         } finally {
             lock.unlock();
         }
@@ -83,32 +95,34 @@ public class LocalMUCRoomManager
     //      this method probably needs work. Documentation should be added and/or this should return an Unmodifiable collection (although
     //      that still does not rule out modifications to individual collection items. Can we replace it completely with a 'getRoomNames()'
     //      method, which would then force usage to acquire a lock before operating on a room.
-    public Collection<MUCRoom> getRooms(){
+    Collection<MUCRoom> getRooms(){
         return CACHE_ROOM.values();
     }
 
     // TODO this should probably not be used without a lock having been acquired and set. Update all usages to do so.
-    public MUCRoom getRoom(final String roomname){
-        return CACHE_ROOM.get(roomname);
+    MUCRoom getRoom(@Nonnull final String roomName){
+        return CACHE_ROOM.get(roomName);
     }
     
-    public MUCRoom removeRoom(final String roomname){
+    MUCRoom removeRoom(@Nonnull final String roomName){
         //memory leak will happen if we forget remove it from GroupEventDispatcher
-        final Lock lock = CACHE_ROOM.getLock(roomname);
+        final Lock lock = CACHE_ROOM.getLock(roomName);
         lock.lock();
         try {
-            final MUCRoom room = CACHE_ROOM.remove(roomname);
+            Log.trace("Removing room '{}' of service '{}'", roomName, serviceName);
+            final MUCRoom room = CACHE_ROOM.remove(roomName);
             if (room != null) {
                 GroupEventDispatcher.removeListener(room);
             }
-            rooms.remove(roomname);
+            rooms.remove(roomName);
             return room;
         } finally {
             lock.unlock();
         }
     }
     
-    public void cleanupRooms(final Date cleanUpDate) {
+    Duration cleanupRooms(@Nonnull final Date cleanUpDate) {
+        Duration totalChatTime = Duration.ZERO;
         final Set<String> roomNames = getRooms().stream().map(MUCRoom::getName).collect(Collectors.toSet());
         for (final String roomName : roomNames) {
             final Lock lock = CACHE_ROOM.getLock(roomName);
@@ -116,12 +130,15 @@ public class LocalMUCRoomManager
             try {
                 final MUCRoom room = getRoom(roomName);
                 if (room.getEmptyDate() != null && room.getEmptyDate().before(cleanUpDate)) {
+                    Log.info("Unloading chat room (due to inactivity):" + roomName + "|" + room.getClass().getName());
                     removeRoom(roomName);
+                    totalChatTime = totalChatTime.plus(Duration.ofMillis(room.getChatLength()));
                 }
             } finally {
                 lock.unlock();
             }
         }
+        return totalChatTime;
     }
 
     /**

@@ -78,6 +78,8 @@
         if (room != null) {
             // If the room still exists then destroy it
             room.destroyRoom(alternateJID, reason);
+            webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
+
             // Log the event
             webManager.logEvent("destroyed MUC room "+roomName, "reason = "+reason+"\nalt jid = "+alternateJID);
         }

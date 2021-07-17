@@ -92,6 +92,7 @@
             stoppedSomething = true;
             webManager.logEvent("closed FMUC inbound join from " + stopSession, null);
         }
+        webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
         if (stoppedSomething) {
             response.sendRedirect("muc-room-federation.jsp?closeSuccess=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
@@ -128,6 +129,7 @@
                 room.setFmucOutboundMode(FMUCMode.MasterMaster); // We currently do not support another mode than master-master.
                 room.getFmucHandler().applyConfigurationChanges();
                 room.saveToDB();
+                webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
             } catch ( Exception e ) {
                 LoggerFactory.getLogger("muc-room-federation.jsp").warn("An exception occurred while trying to apply an FMUC config change to room {}", roomJID, e );
                 errors.put( "fmuchandler", e.getMessage() );

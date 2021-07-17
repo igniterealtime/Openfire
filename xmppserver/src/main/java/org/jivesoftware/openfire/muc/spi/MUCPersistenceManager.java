@@ -188,6 +188,7 @@ public class MUCPersistenceManager {
      * @return A room number count
      */
     public static int countRooms(MultiUserChatService service) {
+        Log.debug("Counting rooms for service '{}' in the database.", service.getServiceName());
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -216,6 +217,7 @@ public class MUCPersistenceManager {
      * @param room the room to load from the database if persistent
      */
     public static void loadFromDB(MUCRoom room) {
+        Log.debug("Attempting to load room '{}' from the database.", room.getName());
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -402,6 +404,7 @@ public class MUCPersistenceManager {
      * @param room The room to save its configuration.
      */
     public static void saveToDB(MUCRoom room) {
+        Log.debug("Attempting to save room '{}' to the database.", room.getName());
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -529,6 +532,8 @@ public class MUCPersistenceManager {
      * @param room the room to remove from the database.
      */
     public static void deleteFromDB(MUCRoom room) {
+        Log.debug("Attempting to delete room '{}' from the database.", room.getName());
+
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
@@ -571,7 +576,7 @@ public class MUCPersistenceManager {
      * @return a collection with all room names.
      */
     public static Collection<String> loadRoomNamesFromDB(MultiUserChatService chatserver) {
-        Log.debug( "Loading room names for chat service {}", chatserver.getServiceName() );
+        Log.debug("Loading room names for chat service {}", chatserver.getServiceName());
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Set<String> names = new HashSet<>();

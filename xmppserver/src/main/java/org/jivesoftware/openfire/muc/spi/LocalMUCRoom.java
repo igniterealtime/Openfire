@@ -1508,7 +1508,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
         if (!canBroadcastPresence(sender.getRole())) {
             // Just send the presence to the sender of the presence
-            sender.send(stanza);
+            final Presence selfPresence = createSelfPresenceCopy(new BroadcastPresenceRequest(this, sender, stanza, isJoinPresence));
+            sender.send(selfPresence);
             return CompletableFuture.completedFuture(null);
         }
 

@@ -1635,6 +1635,15 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 fragSelfPresence.addElement("status").addAttribute("code", "100");
             }
 
+            if ( isLogEnabled() )
+            {
+                // XEP-0045 section 7.2.12: Room Logging:
+                // If the user is entering a room in which the discussions are logged (...), the service (..) MUST also
+                // warn the user that the discussions are logged. This is done by including a status code of "170" in
+                // the initial presence that the room sends to the new occupant
+                fragSelfPresence.addElement("status").addAttribute("code", "170");
+            }
+
             if ( isRoomNew )
             {
                 fragSelfPresence.addElement("status").addAttribute("code", "201");

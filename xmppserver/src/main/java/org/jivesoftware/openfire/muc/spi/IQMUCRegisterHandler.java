@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.muc.spi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -112,112 +113,127 @@ class IQMUCRegisterHandler {
         // Get the target room
         MUCRoom room = null;
         String name = packet.getTo().getNode();
-        if (name != null) {
+        if (name == null) {
+            // Can't register with the service itself, so answer a feature-not-implemented error
+            reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(PacketError.Condition.feature_not_implemented);
+            return reply;
+        }
+
+        final Lock lock = mucService.getLock(name);
+        lock.lock();
+        try {
             room = mucService.getChatRoom(name);
-        }
-        if (room == null) {
-            // The room doesn't exist so answer a NOT_FOUND error
-            reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.item_not_found);
-            return reply;
-        }
-        else if (!room.isRegistrationEnabled() ||
-                 (packet.getFrom() != null && 
-                  MUCRole.Affiliation.outcast == room.getAffiliation(packet.getFrom().asBareJID()))) {
-            // The room does not accept users to register or
-            // the user is an outcast and is not allowed to register
-            reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.not_allowed);
-            return reply;
-        }
-
-        if (IQ.Type.get == packet.getType()) {
-            reply = IQ.createResultIQ(packet);
-            String nickname = room.getReservedNickname(packet.getFrom());
-            Element currentRegistration = probeResult.createCopy();
-            if (nickname != null) {
-                // The user is already registered with the room so answer a completed form
-                ElementUtil.setProperty(currentRegistration, "query.registered", null);
-                currentRegistration.addElement("username").addText(nickname);
-
-                Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                currentRegistration.remove(form);
-//                @SuppressWarnings("unchecked")
-//				Iterator<Element> fields = form.elementIterator("field");
-//
-//                Element field;
-//                while (fields.hasNext()) {
-//                    field = fields.next();
-//                    if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
-//                        field.addElement("value").addText(nickname);
-//                    }
-//                }
-                reply.setChildElement(currentRegistration);
-            }
-            else {
-                // The user is not registered with the room so answer an empty form
-                reply.setChildElement(currentRegistration);
-            }
-        }
-        else if (IQ.Type.set ==  packet.getType()) {
-            try {
-                // Keep a registry of the updated presences
-                List<Presence> presences = new ArrayList<>();
-
+            if (room == null) {
+                // The room doesn't exist so answer a NOT_FOUND error
                 reply = IQ.createResultIQ(packet);
-                Element iq = packet.getChildElement();
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.item_not_found);
+                return reply;
+            }
+            else if (!room.isRegistrationEnabled() ||
+                     (packet.getFrom() != null &&
+                      MUCRole.Affiliation.outcast == room.getAffiliation(packet.getFrom().asBareJID()))) {
+                // The room does not accept users to register or
+                // the user is an outcast and is not allowed to register
+                reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.not_allowed);
+                return reply;
+            }
 
-                if (ElementUtil.includesProperty(iq, "query.remove")) {
-                    // The user is deleting his registration
-                    presences.addAll(room.addNone(packet.getFrom(), room.getRole()));
+            if (IQ.Type.get == packet.getType()) {
+                reply = IQ.createResultIQ(packet);
+                String nickname = room.getReservedNickname(packet.getFrom());
+                Element currentRegistration = probeResult.createCopy();
+                if (nickname != null) {
+                    // The user is already registered with the room so answer a completed form
+                    ElementUtil.setProperty(currentRegistration, "query.registered", null);
+                    currentRegistration.addElement("username").addText(nickname);
+
+                    Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
+                    currentRegistration.remove(form);
+        //                @SuppressWarnings("unchecked")
+        //				Iterator<Element> fields = form.elementIterator("field");
+        //
+        //                Element field;
+        //                while (fields.hasNext()) {
+        //                    field = fields.next();
+        //                    if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
+        //                        field.addElement("value").addText(nickname);
+        //                    }
+        //                }
+                    reply.setChildElement(currentRegistration);
                 }
                 else {
-                    // The user is trying to register with a room
-                    Element formElement = iq.element("x");
-                    // Check if a form was used to provide the registration info
-                    if (formElement != null) {
-                        // Get the sent form
-                        final DataForm registrationForm = new DataForm(formElement);
-                        // Get the desired nickname sent in the form
-                        List<String> values = registrationForm.getField("muc#register_roomnick")
-                                .getValues();
-                        String nickname = (!values.isEmpty() ? values.get(0) : null);
+                    // The user is not registered with the room so answer an empty form
+                    reply.setChildElement(currentRegistration);
+                }
+            }
+            else if (IQ.Type.set ==  packet.getType()) {
+                try {
+                    // Keep a registry of the updated presences
+                    List<Presence> presences = new ArrayList<>();
 
-                        // TODO The rest of the fields of the form are ignored. If we have a
-                        // requirement in the future where we need those fields we'll have to change
-                        // MUCRoom.addMember in order to receive a RegistrationInfo (new class)
+                    reply = IQ.createResultIQ(packet);
+                    Element iq = packet.getChildElement();
 
-                        // Add the new member to the members list
-                        presences.addAll(room.addMember(packet.getFrom(),
-                                nickname,
-                                room.getRole()));
+                    if (ElementUtil.includesProperty(iq, "query.remove")) {
+                        // The user is deleting his registration
+                        presences.addAll(room.addNone(packet.getFrom(), room.getRole()));
                     }
                     else {
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.bad_request);
-                    }
-                }
-                // Send the updated presences to the room occupants
-                for (Presence presence : presences) {
-                    room.send(presence, room.getRole());
-                }
+                        // The user is trying to register with a room
+                        Element formElement = iq.element("x");
+                        // Check if a form was used to provide the registration info
+                        if (formElement != null) {
+                            // Get the sent form
+                            final DataForm registrationForm = new DataForm(formElement);
+                            // Get the desired nickname sent in the form
+                            List<String> values = registrationForm.getField("muc#register_roomnick")
+                                    .getValues();
+                            String nickname = (!values.isEmpty() ? values.get(0) : null);
 
+                            // TODO The rest of the fields of the form are ignored. If we have a
+                            // requirement in the future where we need those fields we'll have to change
+                            // MUCRoom.addMember in order to receive a RegistrationInfo (new class)
+
+                            // Add the new member to the members list
+                            presences.addAll(room.addMember(packet.getFrom(),
+                                    nickname,
+                                    room.getRole()));
+                        }
+                        else {
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.bad_request);
+                        }
+                    }
+                    // Send the updated presences to the room occupants
+                    for (Presence presence : presences) {
+                        room.send(presence, room.getRole());
+                    }
+
+                }
+                catch (ForbiddenException e) {
+                    reply = IQ.createResultIQ(packet);
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.forbidden);
+                }
+                catch (ConflictException e) {
+                    reply = IQ.createResultIQ(packet);
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.conflict);
+                }
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
+                }
             }
-            catch (ForbiddenException e) {
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.forbidden);
-            }
-            catch (ConflictException e) {
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.conflict);
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
+
+            // Ensure that other cluster nodes see the changes applied above.
+            mucService.syncChatRoom(room);
+        } finally {
+            lock.unlock();
         }
         return reply;
     }

@@ -46,6 +46,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Representation of users interacting with the chat service. A user
@@ -144,7 +145,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     /**
      * Register that this user has a role in a particular room.
      *
-     * It is imperative that the content of #roomNames and MUCRoom#ROOM_OCCUPANTS_CACHE are kept in sync. This method
+     * It is imperative that the content of #roomNames and MUCRoom#occupants are kept in sync. This method
      * should therefore only, and exclusively, be called by methods that add content to that cache (such as
      * {@link MUCRoom#addOccupantRole(MUCRole)})
      *
@@ -158,7 +159,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     /**
      * Remove registration of role for a user in a particular room.
      *
-     * It is imperative that the content of #roomNames and MUCRoom#ROOM_OCCUPANTS_CACHE are kept in sync. This method
+     * It is imperative that the content of #roomNames and MUCRoom#occupants are kept in sync. This method
      * should therefore only, and exclusively, be called by methods that remove content from that cache (such as
      * {@link MUCRoom#removeOccupantRole(MUCRole)})
      *
@@ -276,44 +277,61 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             return;
         }
 
+        Log.trace("User '{}' is sending a packet to room '{}'", this.realjid, roomName);
+
         lastPacketTime = Instant.now();
 
         StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 
-        // Determine if this user has a pre-existing role in the addressed room.
-        final MUCRole preExistingRole;
-        if (roomNames.contains(roomName)) {
-            final MUCRoom room = getChatService().getChatRoom(roomName);
-            if (room == null) {
-                preExistingRole = null;
+        final Lock lock = getChatService().getLock(roomName);
+        lock.lock();
+        try {
+            // Get the room, if one exists.
+            @Nullable MUCRoom room = getChatService().getChatRoom(roomName);
+
+            // Determine if this user has a pre-existing role in the addressed room.
+            final MUCRole preExistingRole;
+            if (roomNames.contains(roomName)) {
+                if (room == null) {
+                    preExistingRole = null;
+                } else {
+                    preExistingRole = room.getOccupantByFullJID(getAddress());
+                }
             } else {
-                preExistingRole = room.getOccupantByFullJID(getAddress());
+                preExistingRole = null;
             }
-        } else {
-            preExistingRole = null;
-        }
-        Log.debug("Preexisting role for user {} in room {}: {}", this.realjid, roomName, preExistingRole == null ? "(none)" : preExistingRole);
+            Log.debug("Preexisting role for user {} in room {} (that currently {} exist): {}", this.realjid, roomName, room == null ? "does not" : "does", preExistingRole == null ? "(none)" : preExistingRole);
 
-        // Determine if the stanza is an error response to a stanza that we've previously sent out, that indicates that
-        // the intended recipient is no longer available (eg: "ghost user").
-        if (preExistingRole != null && preExistingRole.getChatRoom().getMUCService().getIdleUserPingThreshold() != null && isDeliveryRelatedErrorResponse(packet)) {
-            Log.info("Removing {} (nickname '{}') from room {} as we've received an indication (logged at debug level) that this is now a ghost user.", preExistingRole.getUserAddress(), preExistingRole.getNickname(), preExistingRole.getChatRoom().getJID() );
-            Log.debug("Stanza indicative of a ghost user: {}", packet);
-            preExistingRole.getChatRoom().leaveRoom(preExistingRole);
-            return;
-        }
+            // Determine if the stanza is an error response to a stanza that we've previously sent out, that indicates that
+            // the intended recipient is no longer available (eg: "ghost user").
+            if (preExistingRole != null && getChatService().getIdleUserPingThreshold() != null && isDeliveryRelatedErrorResponse(packet)) {
+                Log.info("Removing {} (nickname '{}') from room {} as we've received an indication (logged at debug level) that this is now a ghost user.", preExistingRole.getUserAddress(), preExistingRole.getNickname(), roomName);
+                Log.debug("Stanza indicative of a ghost user: {}", packet);
+                room.leaveRoom(preExistingRole);
+                getChatService().syncChatRoom(room);
+                return;
+            }
 
-        if ( packet instanceof IQ )
-        {
-            process((IQ) packet, roomName, preExistingRole);
-        }
-        else if ( packet instanceof Message )
-        {
-            process((Message) packet, roomName, preExistingRole);
-        }
-        else if ( packet instanceof Presence )
-        {
-            process((Presence) packet, roomName, preExistingRole);
+            if ( packet instanceof IQ )
+            {
+                process((IQ) packet, room, preExistingRole);
+            }
+            else if ( packet instanceof Message )
+            {
+                process((Message) packet, room, preExistingRole);
+            }
+            else if ( packet instanceof Presence )
+            {
+                // Return value is non-null while argument is, in case this is a request to create a new room.
+                room = process((Presence) packet, roomName, room, preExistingRole);
+            }
+
+            // Ensure that other cluster nodes see any changes that might have been applied.
+            if (room != null) {
+                getChatService().syncChatRoom(room);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -321,27 +339,32 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Processes a Message stanza.
      *
      * @param packet          The stanza to route
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void process(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
+        @Nullable final MUCRoom room,
         @Nullable final MUCRole preExistingRole )
     {
-        if ( Message.Type.error == packet.getType() )
-        {
-            Log.trace("Ignoring messages of type 'error' sent to MUC room '{}'", roomName);
+        if (Message.Type.error == packet.getType()) {
+            Log.trace("Ignoring messages of type 'error' sent by '{}' to MUC room '{}'", packet.getFrom(), packet.getTo());
+            return;
+        }
+
+        if (room == null) {
+            Log.debug("Rejecting message stanza sent by '{}' to room '{}': Room does not exist.", packet.getFrom(), packet.getTo());
+            sendErrorPacket(packet, PacketError.Condition.recipient_unavailable, "The room that the message was addressed to is not available.");
             return;
         }
 
         if ( preExistingRole == null )
         {
-            processNonOccupantMessage(packet, roomName);
+            processNonOccupantMessage(packet, room);
         }
         else
         {
-            processOccupantMessage(packet, roomName, preExistingRole);
+            processOccupantMessage(packet, room, preExistingRole);
         }
     }
 
@@ -352,24 +375,12 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * messages are responded to with an error.
      *
      * @param packet   The stanza to process
-     * @param roomName The name of the room that the stanza was addressed to.
+     * @param room     The room that the stanza was addressed to.
      */
     private void processNonOccupantMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName )
+        @Nonnull final MUCRoom room )
     {
-        final MultiUserChatService service = getChatService();
-        if (service == null) {
-            throw new IllegalStateException("Unable to find MUC service '"+serviceName+"' to process packet in room '"+roomName+"': " + packet.toXML());
-        }
-
-        if ( !service.hasChatRoom(roomName) )
-        {
-            // The sender is not an occupant of a NON-EXISTENT room!!!
-            Log.debug("Rejecting message stanza sent by '{}' to room '{}': Room does not exist.", packet.getFrom(), roomName);
-            sendErrorPacket(packet, PacketError.Condition.recipient_unavailable, "The room that the message was addressed to is not available.");
-        }
-
         boolean declinedInvitation = false;
         Element userInfo = null;
         if ( Message.Type.normal == packet.getType() )
@@ -387,16 +398,16 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
 
         if ( declinedInvitation )
         {
-            Log.debug("Processing room invitation declination sent by '{}' to room '{}'.", packet.getFrom(), roomName);
+            Log.debug("Processing room invitation declination sent by '{}' to room '{}'.", packet.getFrom(), room.getName());
             final Element info = userInfo.element("decline");
-            service.getChatRoom(roomName).sendInvitationRejection(
+            room.sendInvitationRejection(
                 new JID(info.attributeValue("to")),
                 info.elementTextTrim("reason"),
                 packet.getFrom());
         }
         else
         {
-            Log.debug("Rejecting message stanza sent by '{}' to room '{}': Sender is not an occupant of the room: {}", packet.getFrom(), roomName, packet.toXML());
+            Log.debug("Rejecting message stanza sent by '{}' to room '{}': Sender is not an occupant of the room: {}", packet.getFrom(), room.getName(), packet.toXML());
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not in the room.");
         }
     }
@@ -405,12 +416,12 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Processes a Message stanza that was sent by a user that's in the room.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void processOccupantMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole )
     {
         // Check and reject conflicting packets with conflicting roles In other words, another user already has this nickname
@@ -421,10 +432,9 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             return;
         }
 
-        final MUCRoom chatRoom = preExistingRole.getChatRoom();
-        if ( chatRoom.getRoomHistory().isSubjectChangeRequest(packet) )
+        if (room.getRoomHistory().isSubjectChangeRequest(packet))
         {
-            processChangeSubjectMessage(packet, roomName, preExistingRole);
+            processChangeSubjectMessage(packet, room, preExistingRole);
             return;
         }
 
@@ -439,14 +449,14 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         // Public message (not addressed to a specific occupant)
         if ( nickname == null && Message.Type.groupchat == type )
         {
-            processPublicMessage(packet, roomName, preExistingRole);
+            processPublicMessage(packet, room, preExistingRole);
             return;
         }
 
         // Private message (addressed to a specific occupant)
         if ( nickname != null && (Message.Type.chat == type || Message.Type.normal == type) )
         {
-            processPrivateMessage(packet, roomName, preExistingRole);
+            processPrivateMessage(packet, room, preExistingRole);
             return;
         }
 
@@ -458,14 +468,14 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             if ( userInfo != null && userInfo.element("invite") != null )
             {
                 // An occupant is sending invitations
-                processSendingInvitationMessage(packet, roomName, preExistingRole);
+                processSendingInvitationMessage(packet, room, preExistingRole);
                 return;
             }
 
             if ( userInfo != null && userInfo.element("decline") != null )
             {
                 // An occupant has declined an invitation
-                processDecliningInvitationMessage(packet, roomName, preExistingRole);
+                processDecliningInvitationMessage(packet, room);
                 return;
             }
         }
@@ -478,23 +488,22 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Process a 'change subject' message sent by an occupant of the room.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void processChangeSubjectMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole )
     {
-        Log.trace("Processing subject change request from occupant '{}' to room '{}'.", packet.getFrom(), roomName);
+        Log.trace("Processing subject change request from occupant '{}' to room '{}'.", packet.getFrom(), room.getName());
         try
         {
-            final MUCRoom chatRoom = preExistingRole.getChatRoom();
-            chatRoom.changeSubject(packet, preExistingRole);
+            room.changeSubject(packet, preExistingRole);
         }
         catch ( ForbiddenException e )
         {
-            Log.debug("Rejecting subject change request from occupant '{}' to room '{}'.", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting subject change request from occupant '{}' to room '{}'.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.forbidden, "You are not allowed to change the subject of this room.");
         }
     }
@@ -503,23 +512,22 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Process a public message sent by an occupant of the room.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void processPublicMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole )
     {
-        Log.trace("Processing public message from occupant '{}' to room '{}'.", packet.getFrom(), roomName);
+        Log.trace("Processing public message from occupant '{}' to room '{}'.", packet.getFrom(), room.getName());
         try
         {
-            final MUCRoom chatRoom = preExistingRole.getChatRoom();
-            chatRoom.sendPublicMessage(packet, preExistingRole);
+            room.sendPublicMessage(packet, preExistingRole);
         }
         catch ( ForbiddenException e )
         {
-            Log.debug("Rejecting public message from occupant '{}' to room '{}'. User is not allowed to send message (might not have voice).", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting public message from occupant '{}' to room '{}'. User is not allowed to send message (might not have voice).", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.forbidden, "You are not allowed to send a public message to the room (you might require 'voice').");
         }
     }
@@ -528,28 +536,27 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Process a private message sent by an occupant of the room.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void processPrivateMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole )
     {
-        Log.trace("Processing private message from occupant '{}' to room '{}'.", packet.getFrom(), roomName);
+        Log.trace("Processing private message from occupant '{}' to room '{}'.", packet.getFrom(), room.getName());
         try
         {
-            final MUCRoom chatRoom = preExistingRole.getChatRoom();
-            chatRoom.sendPrivatePacket(packet, preExistingRole);
+            room.sendPrivatePacket(packet, preExistingRole);
         }
         catch ( ForbiddenException e )
         {
-            Log.debug("Rejecting private message from occupant '{}' to room '{}'. User has a role that disallows sending private messages in this room.", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting private message from occupant '{}' to room '{}'. User has a role that disallows sending private messages in this room.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.forbidden, "You are not allowed to send a private messages in the room.");
         }
         catch ( NotFoundException e )
         {
-            Log.debug("Rejecting private message from occupant '{}' to room '{}'. User addressing a non-existent recipient.", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting private message from occupant '{}' to room '{}'. User addressing a non-existent recipient.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.recipient_unavailable, "The intended recipient of your private message is not available.");
         }
     }
@@ -558,15 +565,15 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Process a room-invitation message sent by an occupant of the room.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void processSendingInvitationMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole )
     {
-        Log.trace("Processing an invitation message from occupant '{}' to room '{}'.", packet.getFrom(), roomName);
+        Log.trace("Processing an invitation message from occupant '{}' to room '{}'.", packet.getFrom(), room.getName());
         try
         {
             final Element userInfo = packet.getChildElement("x", "http://jabber.org/protocol/muc#user");
@@ -583,29 +590,28 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
                 JID jid = new JID(info.attributeValue("to"));
 
                 // Add the user as a member of the room if the room is members only
-                final MUCRoom chatRoom = preExistingRole.getChatRoom();
-                if ( chatRoom.isMembersOnly() )
+                if (room.isMembersOnly())
                 {
-                    chatRoom.addMember(jid, null, preExistingRole);
+                    room.addMember(jid, null, preExistingRole);
                 }
 
                 // Send the invitation to the invitee
-                chatRoom.sendInvitation(jid, info.elementTextTrim("reason"), preExistingRole, extensions);
+                room.sendInvitation(jid, info.elementTextTrim("reason"), preExistingRole, extensions);
             }
         }
         catch ( ForbiddenException e )
         {
-            Log.debug("Rejecting invitation message from occupant '{}' in room '{}': Invitations are not allowed, or occupant is not allowed to modify the member list.", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting invitation message from occupant '{}' in room '{}': Invitations are not allowed, or occupant is not allowed to modify the member list.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.forbidden, "This room disallows invitations to be sent, or you're not allowed to modify the member list of this room.");
         }
         catch ( ConflictException e )
         {
-            Log.debug("Rejecting invitation message from occupant '{}' in room '{}'.", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting invitation message from occupant '{}' in room '{}'.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.conflict, "An unexpected exception occurred."); // TODO Is this code reachable?
         }
         catch ( CannotBeInvitedException e )
         {
-            Log.debug("Rejecting invitation message from occupant '{}' in room '{}': The user being invited does not have access to the room.", packet.getFrom(), roomName, e);
+            Log.debug("Rejecting invitation message from occupant '{}' in room '{}': The user being invited does not have access to the room.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "The user being invited does not have access to the room.");
         }
     }
@@ -614,18 +620,15 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Process a declination of a room-invitation message sent by an occupant of the room.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
-     * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
+     * @param room            The room that the stanza was addressed to.
      */
     private void processDecliningInvitationMessage(
         @Nonnull final Message packet,
-        @Nonnull final String roomName,
-        @Nonnull final MUCRole preExistingRole )
+        @Nonnull final MUCRoom room)
     {
-        Log.trace("Processing an invite declination message from '{}' to room '{}'.", packet.getFrom(), roomName);
+        Log.trace("Processing an invite declination message from '{}' to room '{}'.", packet.getFrom(), room.getName());
         final Element info = packet.getChildElement("x", "http://jabber.org/protocol/muc#user").element("decline");
-        final MUCRoom chatRoom = preExistingRole.getChatRoom();
-        chatRoom.sendInvitationRejection(new JID(info.attributeValue("to")),
+        room.sendInvitationRejection(new JID(info.attributeValue("to")),
             info.elementTextTrim("reason"), packet.getFrom());
     }
 
@@ -633,18 +636,18 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Processes an IQ stanza.
      *
      * @param packet          The stanza to route
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
      */
     private void process(
         @Nonnull final IQ packet,
-        @Nonnull final String roomName,
+        @Nullable final MUCRoom room,
         @Nullable final MUCRole preExistingRole )
     {
         // Packets to a specific node/group/room
-        if ( preExistingRole == null )
+        if ( preExistingRole == null || room == null)
         {
-            Log.debug("Ignoring stanza received from a non-occupant of '{}': {}", roomName, packet.toXML());
+            Log.debug("Ignoring stanza received from a non-occupant of a room (room might not even exist): {}", packet.toXML());
             if ( packet.isRequest() )
             {
                 // If a non-occupant sends a disco to an address of the form <room@service/nick>, a MUC service MUST
@@ -662,7 +665,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
                 try
                 {
                     // User is sending an IQ result packet to another room occupant
-                    preExistingRole.getChatRoom().sendPrivatePacket(packet, preExistingRole);
+                    room.sendPrivatePacket(packet, preExistingRole);
                 }
                 catch ( NotFoundException | ForbiddenException e )
                 {
@@ -691,11 +694,11 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
                 Element query = packet.getElement().element("query");
                 if ( query != null && "http://jabber.org/protocol/muc#owner".equals(query.getNamespaceURI()) )
                 {
-                    preExistingRole.getChatRoom().getIQOwnerHandler().handleIQ(packet, preExistingRole);
+                    room.getIQOwnerHandler().handleIQ(packet, preExistingRole);
                 }
                 else if ( query != null && "http://jabber.org/protocol/muc#admin".equals(query.getNamespaceURI()) )
                 {
-                    preExistingRole.getChatRoom().getIQAdminHandler().handleIQ(packet, preExistingRole);
+                    room.getIQAdminHandler().handleIQ(packet, preExistingRole);
                 }
                 else
                 {
@@ -713,12 +716,12 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
                         else
                         {
                             Log.trace("User '{}' is sending an IQ stanza to another room occupant (as a PM) with nickname: '{}'.", packet.getFrom(), toNickname);
-                            preExistingRole.getChatRoom().sendPrivatePacket(packet, preExistingRole);
+                            room.sendPrivatePacket(packet, preExistingRole);
                         }
                     }
                     else
                     {
-                        Log.debug("An IQ request was addressed to the MUC room '{}' which cannot answer it: {}", roomName, packet.toXML());
+                        Log.debug("An IQ request was addressed to the MUC room '{}' which cannot answer it: {}", room.getName(), packet.toXML());
                         sendErrorPacket(packet, PacketError.Condition.bad_request, "IQ request cannot be processed by the MUC room itself.");
                     }
                 }
@@ -764,25 +767,38 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
     /**
      * Process a Presence stanza.
      *
+     * This method might be invoked for a room that does not yet exist (when the presence is a room-creation request).
+     * This is why this method, unlike the process methods for Message and IQ stanza takes a <em>room name</em> argument
+     * and returns the room that processed to request.
+     *
      * @param packet          The stanza to process.
      * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to, if it exists.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza, if any.
+     * @return the room that handled the request
      */
-    private void process(
+    @Nullable
+    private MUCRoom process(
         @Nonnull final Presence packet,
         @Nonnull final String roomName,
+        @Nullable final MUCRoom room,
         @Nullable final MUCRole preExistingRole )
     {
-        final Element mucInfo = packet.getChildElement("x", "http://jabber.org/protocol/muc");
+        final Element mucInfo = packet.getChildElement("x", "http://jabber.org/protocol/muc"); // only sent in initial presence
         final String nickname = packet.getTo().getResource() == null
             || packet.getTo().getResource().trim().isEmpty() ? null
             : packet.getTo().getResource().trim();
+
+        if ( preExistingRole == null && Presence.Type.unavailable == packet.getType() ) {
+            Log.debug("Silently ignoring user '{}' leaving a room that it has no role in '{}' (was the room just destroyed)?", packet.getFrom(), roomName);
+            return null;
+        }
 
         if ( preExistingRole == null || mucInfo != null )
         {
             // If we're not already in a room (role == null), we either are joining it or it's not properly addressed and we drop it silently.
             // Alternative is that mucInfo is not null, in which case the client thinks it isn't in the room, so we should join anyway.
-            processRoomJoinRequest(packet, roomName, nickname);
+            return processRoomJoinRequest(packet, roomName, room, nickname);
         }
         else
         {
@@ -792,38 +808,52 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             {
                 Log.debug("Rejecting conflicting stanza with conflicting roles: {}", packet.toXML());
                 sendErrorPacket(packet, PacketError.Condition.conflict, "Another user uses this nickname.");
-                return;
+                return room;
             }
 
+            if (room == null) {
+                if (Presence.Type.unavailable == packet.getType()) {
+                    Log.debug("Silently ignoring user '{}' leaving a non-existing room '{}' (was the room just destroyed)?", packet.getFrom(), roomName);
+                } else {
+                    Log.warn("Unable to process presence update from user '{}' to a non-existing room: {}", packet.getFrom(), roomName);
+                }
+                return null;
+            }
             try
             {
                 if ( nickname != null && !preExistingRole.getNickname().equalsIgnoreCase(nickname) && Presence.Type.unavailable != packet.getType() )
                 {
                     // Occupant has changed his nickname. Send two presences to each room occupant.
-                    processNickNameChange(packet, preExistingRole, nickname);
+                    processNickNameChange(packet, room, preExistingRole, nickname);
                 }
                 else
                 {
-                    processPresenceUpdate(packet, roomName, preExistingRole);
+                    processPresenceUpdate(packet, room, preExistingRole);
                 }
             }
             catch ( Exception e )
             {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
+            return room;
         }
     }
 
     /**
      * Process a request to join a room.
      *
+     * This method might be invoked for a room that does not yet exist (when the presence is a room-creation request).
+     *
      * @param packet   The stanza representing the nickname-change request.
      * @param roomName The name of the room that the stanza was addressed to.
+     * @param room     The room that the stanza was addressed to, if it exists.
      * @param nickname The requested nickname.
+     * @return the room that handled the request
      */
-    private void processRoomJoinRequest(
+    private MUCRoom processRoomJoinRequest(
         @Nonnull final Presence packet,
         @Nonnull final String roomName,
+        @Nullable MUCRoom room,
         @Nullable String nickname )
     {
         Log.trace("Processing join request from '{}' for room '{}'", packet.getFrom(), roomName);
@@ -838,7 +868,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             {
                 sendErrorPacket(packet, PacketError.Condition.jid_malformed, "A nickname (resource-part) is required in order to join a room.");
             }
-            return;
+            return null;
         }
 
         if ( !packet.isAvailable() )
@@ -848,24 +878,22 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             {
                 sendErrorPacket(packet, PacketError.Condition.unexpected_request, "Unexpected stanza type: " + packet.getType());
             }
-            return;
+            return null;
         }
 
-        final MUCRoom room;
-        try
-        {
-            // Get or create the room
-            final MultiUserChatService service = getChatService();
-            if (service == null) {
-                throw new IllegalStateException("Unable to find MUC service '"+serviceName+"' to get or create room '"+roomName+"' for " + packet.getFrom());
+        if (room == null) {
+            try {
+                // Create the room
+                final MultiUserChatService service = getChatService();
+                if (service == null) {
+                    throw new IllegalStateException("Unable to find MUC service '" + serviceName + "' to get or create room '" + roomName + "' for " + packet.getFrom());
+                }
+                room = service.getChatRoom(roomName, packet.getFrom());
+            } catch (NotAllowedException e) {
+                Log.debug("Request from '{}' to join room '{}' rejected: user does not have permission to create a new room.", packet.getFrom(), roomName, e);
+                sendErrorPacket(packet, PacketError.Condition.not_allowed, "You do not have permission to create a new room.");
+                return null;
             }
-            room = service.getChatRoom(roomName, packet.getFrom());
-        }
-        catch ( NotAllowedException e )
-        {
-            Log.debug("Request from '{}' to join room '{}' rejected: user does not have permission to create a new room.", packet.getFrom(), roomName, e);
-            sendErrorPacket(packet, PacketError.Condition.not_allowed, "You do not have permission to create a new room.");
-            return;
         }
 
         try
@@ -935,31 +963,32 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             Log.debug("Request from '{}' to join room '{}' rejected: user attempts to use nickname '{}' which is different from the reserved nickname.", packet.getFrom(), roomName, nickname, e);
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You're trying to join with a nickname different than the reserved nickname.");
         }
+        return room;
     }
 
     /**
      * Process a presence status update for a user.
      *
      * @param packet          The stanza to process
-     * @param roomName        The name of the room that the stanza was addressed to.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza.
      */
     private void processPresenceUpdate(
         @Nonnull final Presence packet,
-        @Nonnull final String roomName,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole )
     {
         if ( Presence.Type.unavailable == packet.getType() )
         {
-            Log.trace("Occupant '{}' of room '{}' is leaving.", preExistingRole.getUserAddress(), roomName);
+            Log.trace("Occupant '{}' of room '{}' is leaving.", preExistingRole.getUserAddress(), room.getName());
             // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down)
             preExistingRole.setPresence(packet);
-            preExistingRole.getChatRoom().leaveRoom(preExistingRole);
+            room.leaveRoom(preExistingRole);
         }
         else
         {
-            Log.trace("Occupant '{}' of room '{}' changed its availability status.", preExistingRole.getUserAddress(), roomName);
-            preExistingRole.getChatRoom().presenceUpdated(preExistingRole, packet);
+            Log.trace("Occupant '{}' of room '{}' changed its availability status.", preExistingRole.getUserAddress(), room.getName());
+            room.presenceUpdated(preExistingRole, packet);
         }
     }
 
@@ -967,34 +996,34 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      * Process a request to change a nickname.
      *
      * @param packet          The stanza representing the nickname-change request.
+     * @param room            The room that the stanza was addressed to.
      * @param preExistingRole The role of this user in the addressed room prior to processing of this stanza.
      * @param nickname        The requested nickname.
      */
     private void processNickNameChange(
         @Nonnull final Presence packet,
+        @Nonnull final MUCRoom room,
         @Nonnull final MUCRole preExistingRole,
         @Nonnull String nickname )
         throws UserNotFoundException
     {
-        final MUCRoom chatRoom = preExistingRole.getChatRoom();
+        Log.trace("Occupant '{}' of room '{}' tries to change its nickname to '{}'.", preExistingRole.getUserAddress(), room.getName(), nickname);
 
-        Log.trace("Occupant '{}' of room '{}' tries to change its nickname to '{}'.", preExistingRole.getUserAddress(), chatRoom.getName(), nickname);
-
-        if ( chatRoom.getOccupantsByBareJID(packet.getFrom().asBareJID()).size() > 1 )
+        if ( room.getOccupantsByBareJID(packet.getFrom().asBareJID()).size() > 1 )
         {
             Log.trace("Nickname change request denied: requestor '{}' is not an occupant of the room.", packet.getFrom().asBareJID());
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not an occupant of this chatroom.");
             return;
         }
 
-        if ( !chatRoom.canChangeNickname() )
+        if ( !room.canChangeNickname() )
         {
             Log.trace("Nickname change request denied: Room configuration does not allow nickname changes.");
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "Chatroom does not allow nickname changes.");
             return;
         }
 
-        if ( chatRoom.hasOccupant(nickname) )
+        if ( room.hasOccupant(nickname) )
         {
             Log.trace("Nickname change request denied: the requested nickname '{}' is used by another occupant of the room.", nickname);
             sendErrorPacket(packet, PacketError.Condition.conflict, "This nickname is taken.");
@@ -1010,11 +1039,11 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         final Element frag = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
         frag.element("item").addAttribute("nick", nickname);
         frag.addElement("status").addAttribute("code", "303");
-        chatRoom.send(presence, preExistingRole);
+        room.send(presence, preExistingRole);
 
         // Send availability presence for the new nickname
         final String oldNick = preExistingRole.getNickname();
-        chatRoom.nicknameChanged(preExistingRole, packet, oldNick, nickname);
+        room.nicknameChanged(preExistingRole, packet, oldNick, nickname);
     }
 
     public static boolean isDeliveryRelatedErrorResponse(@Nonnull final Packet stanza)

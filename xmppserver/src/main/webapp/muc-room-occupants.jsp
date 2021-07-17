@@ -69,6 +69,8 @@
         if (role != null) {
             try {
                 room.kickOccupant(role.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), null, consoleKickReason);
+                webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
+
                 // Log the event
                 webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
                 // Done, so redirect

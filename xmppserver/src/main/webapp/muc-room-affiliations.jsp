@@ -129,6 +129,8 @@
                 }
                 // Send the IQ packet that will modify the room's configuration
                 room.getIQAdminHandler().handleIQ(iq, room.getRole());
+                webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
+
                 // Log the event
                 for (String memberJID : memberJIDs) {
                     webManager.logEvent("set MUC affilation to "+affiliation+" for "+memberJID+" in "+roomName, null);
@@ -159,6 +161,8 @@
         try {
         // Send the IQ packet that will modify the room's configuration
         room.getIQAdminHandler().handleIQ(iq, room.getRole());
+        webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
+
         // done, return
         response.sendRedirect("muc-room-affiliations.jsp?deletesuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
         return;

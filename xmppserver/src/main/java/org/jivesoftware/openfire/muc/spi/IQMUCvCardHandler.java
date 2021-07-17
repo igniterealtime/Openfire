@@ -38,6 +38,7 @@ import org.xmpp.packet.Presence;
 
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Implements the TYPE_IQ vcard-temp protocol, to be used for MUC rooms.
@@ -93,49 +94,58 @@ public class IQMUCvCardHandler extends IQHandler
                 }
                 else
                 {
-                    final MUCRoom room = mucService.getChatRoom(roomName);
-                    Log.debug("vCard update request from: '{}', for: '{}' relates to room: {}", packet.getFrom(), packet.getTo(), room);
-                    if ( room == null || !room.getOwners().contains(packet.getFrom().asBareJID()) )
-                    {
-                        Log.debug("vCard update request from: '{}', for: '{}' is invalid: room does not exist, or sender is not allowed to discover the room.", packet.getFrom(), packet.getTo());
-                        result.setChildElement(packet.getChildElement().createCopy());
-                        result.setError(PacketError.Condition.forbidden);
-                        result.getError().setText("You are not an owner of this room.");
-                    }
-                    else
-                    {
-                        Element vcard = packet.getChildElement();
-                        if ( vcard != null )
+                    final Lock lock = mucService.getLock(roomName);
+                    lock.lock();
+                    try {
+                        final MUCRoom room = mucService.getChatRoom(roomName);
+                        Log.debug("vCard update request from: '{}', for: '{}' relates to room: {}", packet.getFrom(), packet.getTo(), room);
+                        if ( room == null || !room.getOwners().contains(packet.getFrom().asBareJID()) )
                         {
-                            try
+                            Log.debug("vCard update request from: '{}', for: '{}' is invalid: room does not exist, or sender is not allowed to discover the room.", packet.getFrom(), packet.getTo());
+                            result.setChildElement(packet.getChildElement().createCopy());
+                            result.setError(PacketError.Condition.forbidden);
+                            result.getError().setText("You are not an owner of this room.");
+                        }
+                        else
+                        {
+                            Element vcard = packet.getChildElement();
+                            if ( vcard != null )
                             {
-                                VCardManager.getInstance().setVCard(room.getJID().toString(), vcard);
-
-                                // This is what EJabberd does. Mimic it, for compatibility.
-                                sendConfigChangeNotification(room);
-
-                                // Mimic a client that broadcasts a vCard update. Converse seems to need this.
-                                final String hash = calculatePhotoHash(vcard);
-                                sendVCardUpdateNotification(room, hash);
-                                Log.debug("vCard update request from: '{}', for: '{}' processed successfully.", packet.getFrom(), packet.getTo());
-                            }
-                            catch ( UnsupportedOperationException e )
-                            {
-                                Log.debug("Entity '{}' tried to set VCard, but the configured VCard provider is read-only. An IQ error will be returned to sender.", packet.getFrom());
-                                // VCards can include binary data. Let's not echo that back in the error.
-                                // result.setChildElement( packet.getChildElement().createCopy() );
-
-                                result.setError(PacketError.Condition.not_allowed);
-
-                                Locale locale = JiveGlobals.getLocale(); // default to server locale.
-                                final Session session = SessionManager.getInstance().getSession(result.getTo());
-                                if ( session != null && session.getLanguage() != null )
+                                try
                                 {
-                                    locale = session.getLanguage(); // use client locale if one is available.
+                                    VCardManager.getInstance().setVCard(room.getJID().toString(), vcard);
+
+                                    // This is what EJabberd does. Mimic it, for compatibility.
+                                    sendConfigChangeNotification(room);
+
+                                    // Mimic a client that broadcasts a vCard update. Converse seems to need this.
+                                    final String hash = calculatePhotoHash(vcard);
+                                    sendVCardUpdateNotification(room, hash);
+                                    Log.debug("vCard update request from: '{}', for: '{}' processed successfully.", packet.getFrom(), packet.getTo());
                                 }
-                                result.getError().setText(LocaleUtils.getLocalizedString("vcard.read_only", locale), locale.getLanguage());
+                                catch ( UnsupportedOperationException e )
+                                {
+                                    Log.debug("Entity '{}' tried to set VCard, but the configured VCard provider is read-only. An IQ error will be returned to sender.", packet.getFrom());
+                                    // VCards can include binary data. Let's not echo that back in the error.
+                                    // result.setChildElement( packet.getChildElement().createCopy() );
+
+                                    result.setError(PacketError.Condition.not_allowed);
+
+                                    Locale locale = JiveGlobals.getLocale(); // default to server locale.
+                                    final Session session = SessionManager.getInstance().getSession(result.getTo());
+                                    if ( session != null && session.getLanguage() != null )
+                                    {
+                                        locale = session.getLanguage(); // use client locale if one is available.
+                                    }
+                                    result.getError().setText(LocaleUtils.getLocalizedString("vcard.read_only", locale), locale.getLanguage());
+                                }
                             }
                         }
+
+                        // No need to ensure that other cluster nodes see the changes applied above, as this code does not apply changes.
+                        // mucService.syncChatRoom(room);
+                    } finally {
+                        lock.unlock();
                     }
                 }
             }
@@ -170,43 +180,52 @@ public class IQMUCvCardHandler extends IQHandler
                 result.setChildElement(RESPONSE_ELEMENT_NAME, NAMESPACE);
                 // Only try to get the vCard values of rooms that can be discovered
                 // Answer the room occupants as items if that info is publicly available
-                final MUCRoom room = mucService.getChatRoom(roomName);
-                Log.debug("vCard retrieve request from: '{}', for: '{}' relates to room: {}", packet.getFrom(), packet.getTo(), room);
+                final Lock lock = mucService.getLock(roomName);
+                lock.lock();
+                try {
+                    final MUCRoom room = mucService.getChatRoom(roomName);
+                    Log.debug("vCard retrieve request from: '{}', for: '{}' relates to room: {}", packet.getFrom(), packet.getTo(), room);
 
-                if ( room != null && mucService.canDiscoverRoom(room, packet.getFrom()) )
-                {
-                    VCardManager vManager = VCardManager.getInstance();
-                    Element userVCard = vManager.getVCard(room.getJID().toString());
-                    if ( userVCard != null )
+                    if ( room != null && mucService.canDiscoverRoom(room, packet.getFrom()) )
                     {
-                        // Check if the requester wants to ignore some vCard's fields
-                        Element filter = packet.getChildElement().element(QName.get("filter", "vcard-temp-filter"));
-                        if ( filter != null )
+                        VCardManager vManager = VCardManager.getInstance();
+                        Element userVCard = vManager.getVCard(room.getJID().toString());
+                        if ( userVCard != null )
                         {
-                            // Create a copy so we don't modify the original vCard
-                            userVCard = userVCard.createCopy();
-                            // Ignore fields requested by the user
-                            for ( Iterator<Element> toFilter = filter.elementIterator(); toFilter.hasNext(); )
+                            // Check if the requester wants to ignore some vCard's fields
+                            Element filter = packet.getChildElement().element(QName.get("filter", "vcard-temp-filter"));
+                            if ( filter != null )
                             {
-                                Element field = toFilter.next();
-                                Element fieldToRemove = userVCard.element(field.getName());
-                                if ( fieldToRemove != null )
+                                // Create a copy so we don't modify the original vCard
+                                userVCard = userVCard.createCopy();
+                                // Ignore fields requested by the user
+                                for ( Iterator<Element> toFilter = filter.elementIterator(); toFilter.hasNext(); )
                                 {
-                                    fieldToRemove.detach();
+                                    Element field = toFilter.next();
+                                    Element fieldToRemove = userVCard.element(field.getName());
+                                    if ( fieldToRemove != null )
+                                    {
+                                        fieldToRemove.detach();
+                                    }
                                 }
                             }
+                            result.setChildElement(userVCard);
+                            Log.debug("vCard retrieve request from: '{}', for: '{}' processed successfully.", packet.getFrom(), packet.getTo());
                         }
-                        result.setChildElement(userVCard);
-                        Log.debug("vCard retrieve request from: '{}', for: '{}' processed successfully.", packet.getFrom(), packet.getTo());
                     }
-                }
-                else
-                {
-                    Log.debug("vCard retrieve request from: '{}', for: '{}' is invalid: room does not exist, or sender is not allowed to discover the room.", packet.getFrom(), packet.getTo());
-                    result = IQ.createResultIQ(packet);
-                    result.setChildElement(packet.getChildElement().createCopy());
-                    result.setError(PacketError.Condition.item_not_found);
-                    result.getError().setText("Request 'to' references a room that cannot be found (or is not discoverable by you).");
+                    else
+                    {
+                        Log.debug("vCard retrieve request from: '{}', for: '{}' is invalid: room does not exist, or sender is not allowed to discover the room.", packet.getFrom(), packet.getTo());
+                        result = IQ.createResultIQ(packet);
+                        result.setChildElement(packet.getChildElement().createCopy());
+                        result.setError(PacketError.Condition.item_not_found);
+                        result.getError().setText("Request 'to' references a room that cannot be found (or is not discoverable by you).");
+                    }
+
+                    // No need to ensure that other cluster nodes see the changes applied above, as this code does not apply changes.
+                    // mucService.syncChatRoom(room);
+                } finally {
+                    lock.unlock();
                 }
             }
         }

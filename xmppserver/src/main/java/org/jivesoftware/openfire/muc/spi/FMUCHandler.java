@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 // TODO: monitor health of s2s connection, somehow?
 public class FMUCHandler
@@ -44,7 +45,19 @@ public class FMUCHandler
         .addListener( isEnabled -> {
             XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
                 service -> service.getAllRoomNames().forEach(
-                    name -> service.getChatRoom(name).getFmucHandler().applyConfigurationChanges()
+                    name -> {
+                        final Lock lock = service.getLock(name);
+                        lock.lock();
+                        try {
+                            final MUCRoom room = service.getChatRoom(name);
+                            room.getFmucHandler().applyConfigurationChanges();
+
+                            // Ensure that other cluster nodes see the changes applied above.
+                            service.syncChatRoom(room);
+                        } finally {
+                            lock.unlock();
+                        }
+                    }
                 )
             );
         })

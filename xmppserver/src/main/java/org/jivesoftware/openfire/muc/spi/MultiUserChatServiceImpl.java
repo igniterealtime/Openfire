@@ -405,12 +405,24 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString()).lock()) {
                     if ( !packet.getElement().elements(FMUCHandler.FMUC).isEmpty() ) {
                         Log.trace( "Stanza is a FMUC stanza." );
-                        final MUCRoom chatRoom = getChatRoom(roomName);
-                        if ( chatRoom != null ) {
-                            chatRoom.getFmucHandler().process(packet);
+                        if (roomName == null) {
+                            Log.warn("Unable to process FMUC stanza, as it does not address a room: {}", packet.toXML());
                         } else {
-                            Log.warn( "Unable to process FMUC stanza, as room it's addressed to does not exist: {}", roomName );
-                            // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
+                            final Lock lock = getLock(roomName);
+                            lock.lock();
+                            try {
+                                final MUCRoom chatRoom = getChatRoom(roomName);
+                                if (chatRoom != null) {
+                                    chatRoom.getFmucHandler().process(packet);
+                                    // Ensure that other cluster nodes see the changes applied by the method above.
+                                    syncChatRoom(chatRoom);
+                                } else {
+                                    Log.warn("Unable to process FMUC stanza, as room it's addressed to does not exist: {}", roomName);
+                                    // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
+                                }
+                            } finally {
+                                lock.unlock();
+                            }
                         }
                     } else {
                         Log.trace( "Stanza is a regular MUC stanza." );
@@ -572,6 +584,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 {
                     for (final String roomName : user.getRoomNames())
                     {
+                        // Obtaining the room without acquiring a lock. Usage of the room is read-only (the implementation below
+                        // should not modify the room state in a way that the cluster cares about), and more importantly, speed
+                        // is of importance (waiting for every room's lock to be acquired would slow down the shutdown process).
+                        // Lastly, this service is shutting down (likely because the server is shutting down). The trade-off
+                        // between speed and access of room state while not holding a lock seems worth while here.
                         final MUCRoom room = getChatRoom(roomName);
                         if (room == null) {
                             // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
@@ -580,7 +597,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         }
                         final MUCRole role = room.getOccupantByFullJID(user.getAddress());
                         if (role == null) {
-                            // Mismatch between MUCUser#getRooms() and MUCRoom#ROOM_OCCUPANTS_CACHE ?
+                            // Mismatch between MUCUser#getRooms() and MUCRoom#occupants ?
                             Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' but that role does not seem to exist.", user.getAddress(), roomName, chatServiceName);
                             continue;
                         }
@@ -646,34 +663,46 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if (doKick || doPing) {
                     final String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User exceeded idle time limit.");
                     for (final String roomName : user.getRoomNames()) {
-                        final MUCRoom room = getChatRoom(roomName);
-                        if (room == null) {
-                            // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
-                            Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                        final Lock lock = getLock(roomName);
+                        if (!lock.tryLock()) { // Don't block on locked rooms, as we're processing many of them. We'll get them in the next round.
+                            Log.info("Skip ping/kick check for idle users in room '{}' of service '{}' as a cluster-wide mutex for the room could not immediately be obtained.'", roomName, chatServiceName);
                             continue;
                         }
-                        if (doKick) {
-                            // Kick the user from all the rooms that he/she had previously joined.
-                            try {
-                                final Presence kickedPresence = room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
-                                // Send the updated presence to the room occupants
-                                room.send(kickedPresence, room.getRole());
-                                Log.debug("Kicked occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
-                            } catch (final NotAllowedException e) {
-                                // Do nothing since we cannot kick owners or admins
+                        try {
+                            final MUCRoom room = getChatRoom(roomName);
+                            if (room == null) {
+                                // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
+                                Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getAddress(), roomName, chatServiceName);
+                                continue;
                             }
-                        }
+                            if (doKick) {
+                                // Kick the user from all the rooms that he/she had previously joined.
+                                try {
+                                    final Presence kickedPresence = room.kickOccupant(user.getAddress(), null, null, timeoutKickReason);
+                                    // Send the updated presence to the room occupants
+                                    room.send(kickedPresence, room.getRole());
+                                    Log.debug("Kicked occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
+                                } catch (final NotAllowedException e) {
+                                    // Do nothing since we cannot kick owners or admins
+                                }
+                            }
 
-                        if (doPing) {
-                            // Send a ping 'from the room' to the user, from all the rooms that he/she had previously joined.
-                            // If this ping results in a connectivity error, that will be picked up by MucRoom's process
-                            // method, that detects 'ghost users', which will kick the user.
-                            final IQ pingRequest = new IQ( IQ.Type.get );
-                            pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
-                            pingRequest.setFrom( room.getJID() );
-                            pingRequest.setTo( user.getAddress() );
-                            XMPPServer.getInstance().getPacketRouter().route(pingRequest);
-                            Log.debug("Pinged occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
+                            if (doPing) {
+                                // Send a ping 'from the room' to the user, from all the rooms that he/she had previously joined.
+                                // If this ping results in a connectivity error, that will be picked up by MucRoom's process
+                                // method, that detects 'ghost users', which will kick the user.
+                                final IQ pingRequest = new IQ( IQ.Type.get );
+                                pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
+                                pingRequest.setFrom( room.getJID() );
+                                pingRequest.setTo( user.getAddress() );
+                                XMPPServer.getInstance().getPacketRouter().route(pingRequest);
+                                Log.debug("Pinged occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getAddress(), roomName, chatServiceName);
+                            }
+
+                            // Ensure that other cluster nodes see any changes that might have been applied.
+                            syncChatRoom(room);
+                        } finally {
+                            lock.unlock();
                         }
                     }
                 }
@@ -726,14 +755,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Date cleanUpDate = getCleanupDate();
                 if (cleanUpDate!=null)
                 {
-                    Iterator<MUCRoom> it = localMUCRoomManager.getRooms().iterator();
-                    while (it.hasNext()) {
-                        MUCRoom room = it.next();
-                        Date emptyDate = room.getEmptyDate();
-                        if (emptyDate != null && emptyDate.before(cleanUpDate)) {
-                            removeChatRoom(room.getName());
-                        }
-                    }
+                    totalChatTime += localMUCRoomManager.cleanupRooms(cleanUpDate).toMillis();
                 }
             }
             catch (final Throwable e) {
@@ -768,6 +790,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         // Verify the policy that allows all local, registered users to create rooms.
         return allRegisteredUsersAllowedToCreate && UserManager.getInstance().isRegisteredUser(bareJID, false);
+    }
+
+    @Override
+    @Nonnull public Lock getLock(@Nonnull final String roomName) {
+        return localMUCRoomManager.getLock(roomName);
+    }
+
+    public void syncChatRoom(@Nonnull final MUCRoom room) {
+        Log.trace("Syncing state of chatroom '{}' to the cluster.", room.getName());
+        localMUCRoomManager.syncRoom(room);
     }
 
     @Override
@@ -815,7 +847,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         created = true;
                     }
                 }
-                localMUCRoomManager.addRoom(roomName, room);
+                localMUCRoomManager.addRoom(room);
             }
         } finally {
             lock.unlock();
@@ -850,7 +882,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         // room may be an old room that was not present in memory)
                         MUCPersistenceManager.loadFromDB(room);
                         loaded = true;
-                        localMUCRoomManager.addRoom(roomName,room);
+                        localMUCRoomManager.addRoom(room);
                     }
                     catch (final IllegalArgumentException e) {
                         // The room does not exist so do nothing
@@ -881,10 +913,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
     }
 
-    public MUCRoom getLocalChatRoom(final String roomName) {
-        return localMUCRoomManager.getRoom(roomName);
-    }
-
     @Override
     @Deprecated
     public List<MUCRoom> getChatRooms() {
@@ -908,6 +936,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return result;
     }
 
+    // This method operates on MUC rooms without acquiring a cluster lock for them. As the usage is read-only, and the
+    // method would have to lock _every_ room, the cost of acquiring all locks seem to outweigh the benefit.
     @Override
     public Collection<MUCRoomSearchInfo> getAllRoomSearchInfo() {
         // Base the result for all rooms that are in memory, then complement with rooms in the database that haven't
@@ -939,12 +969,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void removeChatRoom(final String roomName) {
-        final MUCRoom room = localMUCRoomManager.removeRoom(roomName);
-        if (room != null) {
-            Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
-            totalChatTime += room.getChatLength();
-        } else {
-            Log.info("No chatroom {} during removal.", roomName);
+        final Lock lock = localMUCRoomManager.getLock(roomName);
+        lock.lock();
+        try {
+            final MUCRoom room = localMUCRoomManager.removeRoom(roomName);
+            if (room != null) {
+                Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
+                totalChatTime += room.getChatLength();
+            } else {
+                Log.info("No chatroom {} during removal.", roomName);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -976,6 +1012,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             localUsers.remove(jabberID);
             if (user != null) {
                 for (final String roomName : user.getRoomNames()) {
+                    // TODO should we acquire a room lock here? Acquiring a room lock while holding a user lock seems like a good way to introduce cluster-wide deadlocks.
                     final MUCRoom room = getChatRoom(roomName);
                     if (room == null) {
                         // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
@@ -984,12 +1021,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     }
                     final MUCRole role = room.getOccupantByFullJID(user.getAddress());
                     if (role == null) {
-                        // Mismatch between MUCUser#getRooms() and MUCRoom#ROOM_OCCUPANTS_CACHE ?
+                        // Mismatch between MUCUser#getRooms() and MUCRoom#occupants ?
                         Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' but that role does not seem to exist.", user.getAddress(), roomName, chatServiceName);
                         continue;
                     }
                     try {
                         room.leaveRoom(role);
+                        // Ensure that all cluster nodes see the change to the room
+                        syncChatRoom(room);
                     } catch (final Exception e) {
                         Log.error(e.getMessage(), e);
                     }
@@ -1594,7 +1633,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Load all the persistent rooms to memory
             final Instant cutoff = Instant.now().minus(Duration.ofDays(preloadDays));
             for (final MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff))) {
-                localMUCRoomManager.addRoom(room.getName(), room);
+                localMUCRoomManager.addRoom(room);
 
                 // Start FMUC, if desired.
                 room.getFmucHandler().applyConfigurationChanges();

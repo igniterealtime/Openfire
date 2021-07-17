@@ -768,7 +768,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 }
                 catch ( InterruptedException | ExecutionException | TimeoutException e )
                 {
-                    Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+                    Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joinRole.getUserAddress(), this.getJID(), e);
                 }
 
                 addOccupantRole( joinRole );
@@ -790,11 +790,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             final Duration timeout = SELF_PRESENCE_TIMEOUT.getValue();
             future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch ( InterruptedException e ) {
-            Log.debug( "Presence broadcast has been interrupted before it completed. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+            Log.debug( "Presence broadcast has been interrupted before it completed. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), this.getJID(), e);
         } catch ( TimeoutException e ) {
-            Log.warn( "Presence broadcast has not yet been completed within the allocated period. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+            Log.warn( "Presence broadcast has not yet been completed within the allocated period. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), this.getJID(), e);
         } catch ( ExecutionException e ) {
-            Log.warn( "Presence broadcast caused an exception. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), joinRole.getChatRoom(), e);
+            Log.warn( "Presence broadcast caused an exception. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), this.getJID(), e);
         }
 
         // If the room has just been created send the "room locked until configuration is confirmed" message.
@@ -1118,11 +1118,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     void sendInitialPresencesToNewOccupant(MUCRole joinRole) {
         if (!JOIN_PRESENCE_ENABLE.getValue()) {
-            Log.debug( "Skip exchanging presence between existing occupants of room '{}' and new occupant '{}' as it is disabled by configuration.", joinRole.getChatRoom().getJID(), joinRole.getUserAddress() );
+            Log.debug( "Skip exchanging presence between existing occupants of room '{}' and new occupant '{}' as it is disabled by configuration.", this.getJID(), joinRole.getUserAddress() );
             return;
         }
 
-        Log.trace( "Send presence of existing occupants of room '{}' to new occupant '{}'.", joinRole.getChatRoom().getJID(), joinRole.getUserAddress() );
+        Log.trace( "Send presence of existing occupants of room '{}' to new occupant '{}'.", this.getJID(), joinRole.getUserAddress() );
         for ( final MUCRole occupant : getOccupants() ) {
             if (occupant == joinRole) {
                 continue;
@@ -1164,7 +1164,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public CompletableFuture<Void> sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), leaveRole.getChatRoom().getJID() );
+        Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), this.getJID() );
         try {
             final Presence originalPresence = leaveRole.getPresence();
             final Presence presence = originalPresence.createCopy(); // Defensive copy to not modify the original.
@@ -1197,7 +1197,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             }
         }
         catch (Exception e) {
-            Log.error( "An exception occurred while sending leave presence of occupant '"+leaveRole.getUserAddress()+"' to the other occupants of room: '"+leaveRole.getChatRoom().getJID()+"'.", e);
+            Log.error( "An exception occurred while sending leave presence of occupant '{}' to the other occupants of room: '{}'.", leaveRole.getUserAddress(), this.getJID(), e);
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -1246,12 +1246,12 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public CompletableFuture<Void> sendInitialPresenceToExistingOccupants( MUCRole joinRole) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), joinRole.getChatRoom().getJID() );
+        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), this.getJID() );
         try {
             final Presence joinPresence = joinRole.getPresence().createCopy();
             return broadcastPresence(joinPresence, true, joinRole);
         } catch (Exception e) {
-            Log.error( "An exception occurred while sending initial presence of new occupant '"+joinRole.getUserAddress()+"' to the existing occupants of room: '"+joinRole.getChatRoom().getJID()+"'.", e);
+            Log.error( "An exception occurred while sending initial presence of new occupant '{}' to the existing occupants of room: '{}'", joinRole.getUserAddress(), this.getJID(), e);
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -3666,7 +3666,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         return "MUCRoom{" +
             "roomID=" + roomID +
             ", name='" + name + '\'' +
-            ", occupants=" + occupants.stream() +
+            ", occupants=" + occupants.size() +
             ", mucService=" + mucService +
             ", savedToDB=" + savedToDB +
             '}';

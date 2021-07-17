@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
@@ -39,10 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.forms.FormField.Type;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#owner. This kind of 
@@ -248,6 +243,9 @@ public class IQOwnerHandler {
             throw new ConflictException();
         }
 
+        // Status codes signifying privacy-related configuration changes to be sent to everyone.
+        Set<Integer> statusCodes = new HashSet<>();
+
         // Keep a registry of the updated presences
         List<Presence> presences = new ArrayList<>(admins.size() + owners.size());
 
@@ -362,7 +360,19 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_whois");
         if (field != null) {
-            room.setCanAnyoneDiscoverJID(("anyone".equals(field.getFirstValue())));
+            final boolean newValue = ("anyone".equals(field.getFirstValue()));
+            final boolean oldValue = room.canAnyoneDiscoverJID();
+            room.setCanAnyoneDiscoverJID(newValue);
+
+            // XEP-0045, section 10.2.1: If the room is now non-anonymous, status code 172.
+            if (newValue && !oldValue) {
+                statusCodes.add(172);
+            }
+
+            // XEP-0045, section 10.2.1: If the room is now semi-anonymous, status code 173.
+            if (!newValue && oldValue) {
+                statusCodes.add(173);
+            }
         }
 
         field = completedForm.getField("muc#roomconfig_allowpm");
@@ -372,7 +382,19 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_enablelogging");
         if (field != null) {
-            room.setLogEnabled( parseFirstValueAsBoolean( field, true ) );
+            final boolean newValue = parseFirstValueAsBoolean(field, true);
+            final boolean oldValue = room.isLogEnabled();
+            room.setLogEnabled(newValue);
+
+            // XEP-0045, section 10.2.1: If room logging is now enabled, status code 170.
+            if (newValue && !oldValue) {
+                statusCodes.add(170);
+            }
+
+            // XEP-0045, section 10.2.1: If room logging is now disabled, status code 171.
+            if (!newValue && oldValue) {
+                statusCodes.add(171);
+            }
         }
 
         field = completedForm.getField("x-muc#roomconfig_reservednick");
@@ -442,6 +464,19 @@ public class IQOwnerHandler {
         // Send the updated presences to the room occupants
         for (Object presence : presences) {
             room.send((Presence) presence, room.getRole());
+        }
+
+        // XEP-0045 section 10.2.1 "Notification of Configuration Changes: A room MUST send notification to all occupants
+        // when the room configuration changes in a way that has an impact on the privacy or security profile of the room.
+        if (!statusCodes.isEmpty()) {
+            final Message message = new Message();
+            message.setFrom(room.getJID());
+            message.setTo(room.getJID());
+            message.setType(Message.Type.groupchat);
+            final Element x = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
+            statusCodes.forEach(code -> x.addElement("status").addAttribute("code", String.valueOf(code)));
+
+            room.send(message, room.getRole());
         }
     }
 

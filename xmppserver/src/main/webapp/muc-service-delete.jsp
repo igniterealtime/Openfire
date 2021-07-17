@@ -65,7 +65,9 @@
 
             // Destroy all rooms that were not loaded in memory.
             for (final String name : muc.getAllRoomNames()) {
-                muc.getChatRoom(name).destroyRoom(null, reason);
+                final MUCRoom room = muc.getChatRoom(name);
+                room.destroyRoom(null, reason);
+                muc.syncChatRoom(room);
             }
             // Log the event
             webManager.logEvent("destroyed MUC service "+mucname, "reason = "+reason);

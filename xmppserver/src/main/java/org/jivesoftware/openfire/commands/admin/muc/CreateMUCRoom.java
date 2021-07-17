@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Allows via AdHoc commands the creation of a Multi-User Chat room.
@@ -93,15 +94,6 @@ public class CreateMUCRoom extends AdHocCommand {
             return;
         }
         JID admin = admins.iterator().next();
-        MUCRoom room;
-        try {
-            room = mucService.getChatRoom(roomname, admin);
-        }
-        catch (NotAllowedException e) {
-            note.addAttribute("type", "error");
-            note.setText("No permission to create rooms.");
-            return;
-        }
 
         boolean isPersistent;
         try {
@@ -116,7 +108,6 @@ public class CreateMUCRoom extends AdHocCommand {
             note.setText("persistent has invalid value. Needs to be boolean.");
             return;
         }
-        room.setPersistent(isPersistent);
 
         boolean isPublic;
         try {
@@ -131,11 +122,32 @@ public class CreateMUCRoom extends AdHocCommand {
             note.setText("public has invalid value. Needs to be boolean.");
             return;
         }
-        room.setPublicRoom(isPublic);
 
-        String password = get(data, "password", 0);
-        if (password != null) {
-            room.setPassword(password);
+        final Lock lock = mucService.getLock(roomname);
+        lock.lock();
+        try {
+            MUCRoom room;
+            try {
+                room = mucService.getChatRoom(roomname, admin);
+            }
+            catch (NotAllowedException e) {
+                note.addAttribute("type", "error");
+                note.setText("No permission to create rooms.");
+                return;
+            }
+
+            room.setPersistent(isPersistent);
+            room.setPublicRoom(isPublic);
+
+            String password = get(data, "password", 0);
+            if (password != null) {
+                room.setPassword(password);
+            }
+
+            // Make sure that other cluster nodes see the changes made here.
+            mucService.syncChatRoom(room);
+        } finally {
+            lock.unlock();
         }
     }
 

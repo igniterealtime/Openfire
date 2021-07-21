@@ -39,7 +39,7 @@ import org.xmpp.packet.JID;
 import java.util.*;
 
 /**
- * An AdHocCommandHandler is responsbile for providing discoverable information about the
+ * An AdHocCommandHandler is responsible for providing discoverable information about the
  * supported commands and for handling commands requests. This is an implementation of JEP-50:
  * Ad-Hoc Commands.<p>
  *
@@ -54,7 +54,7 @@ import java.util.*;
  * {@code "xmpp.command.timeout"}.<p>
  *
  * New commands can be added dynamically by sending the message {@link #addCommand(AdHocCommand)}.
- * The command will immediatelly appear in the disco#items list and might be executed by those
+ * The command will immediately appear in the disco#items list and might be executed by those
  * users with enough execution permissions.
  *
  * @author Gaston Dombiak

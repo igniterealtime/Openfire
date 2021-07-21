@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Provides several utility methods for file transfer manager implementaions to utilize.
+ * Provides several utility methods for file transfer manager implementations to utilize.
  *
  * @author Alexander Wenckus
  */

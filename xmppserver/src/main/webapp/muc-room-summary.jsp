@@ -109,7 +109,7 @@
 
 <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
 -- <fmt:message key="muc.room.summary.service" />:
-    <select name="mucname" onchange="location.href='muc-room-summary.jsp?mucname=' + this.options[this.selectedIndex].value;">
+    <select name="mucname" id="mucname" onchange="location.href='muc-room-summary.jsp?mucname=' + this.options[this.selectedIndex].value;">
 <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
     if (service.isHidden()) {
         // Private and hidden, skip it.
@@ -163,7 +163,7 @@
 %>
     <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
         <td width="1%">
-            <%= i %>
+            <%= (i-1) %>
         </td>
         <td width="45%" valign="middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
@@ -221,5 +221,10 @@
         <p><fmt:message key="global.pages" />: [ <%=listPager.getPageLinks() %> ]</p>
 <%  } %>
 
+<%=listPager.getJumpToPageForm()%>
+
+<script type="text/javascript">
+    <%=listPager.getPageFunctions()%>
+</script>
     </body>
 </html>

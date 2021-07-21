@@ -51,7 +51,7 @@ import org.xmpp.packet.PacketError;
 
 /**
  * Manages the transfering of files between two remote entities on the jabber network.
- * This class acts independtly as a Jabber component from the rest of the server, according to
+ * This class acts independently as a Jabber component from the rest of the server, according to
  * the Jabber <a href="http://www.jabber.org/jeps/jep-0065.html">SOCKS5 bytestreams protocol</a>.
  *
  * @author Alexander Wenckus

@@ -67,7 +67,7 @@
         .collect(Collectors.toList());
 
     // paginator vars
-    final ListPager<String> listPager = new ListPager<>(request, response, names, mucname);
+    final ListPager<String> listPager = new ListPager<>(request, response, names, "mucname");
 %>
 <html>
     <head>
@@ -109,7 +109,7 @@
 
 <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
 -- <fmt:message key="muc.room.summary.service" />:
-    <select name="mucname" onchange="location.href='muc-room-summary.jsp?mucname=' + this.options[this.selectedIndex].value;">
+    <select name="mucname" id="mucname" onchange="location.href='muc-room-summary.jsp?mucname=' + this.options[this.selectedIndex].value;">
 <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
     if (service.isHidden()) {
         // Private and hidden, skip it.
@@ -221,5 +221,10 @@
         <p><fmt:message key="global.pages" />: [ <%=listPager.getPageLinks() %> ]</p>
 <%  } %>
 
+<%=listPager.getJumpToPageForm()%>
+
+<script type="text/javascript">
+    <%=listPager.getPageFunctions()%>
+</script>
     </body>
 </html>

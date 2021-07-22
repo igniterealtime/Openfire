@@ -45,11 +45,13 @@ import java.util.*;
 public final class MUCRoomHistory implements Externalizable {
     private static final Logger Log = LoggerFactory.getLogger(MUCRoomHistory.class);
 
-    private MUCRoom room;
+    private JID roomAddress;
 
     private HistoryStrategy historyStrategy;
 
     private boolean isNonAnonymousRoom;
+
+    private transient MUCRoom room; // Lazily initialized by #getRoom()
 
     /**
      * This constructor is provided to comply with the Externalizable interface contract. It should not be used directly.
@@ -57,9 +59,10 @@ public final class MUCRoomHistory implements Externalizable {
     public MUCRoomHistory()
     {}
 
-    public MUCRoomHistory(MUCRoom mucRoom, HistoryStrategy historyStrategy) {
-        this.room = mucRoom;
-        this.isNonAnonymousRoom = mucRoom.canAnyoneDiscoverJID();
+    public MUCRoomHistory(MUCRoom room, HistoryStrategy historyStrategy) {
+        this.roomAddress = room.getJID();
+        this.room = room;
+        this.isNonAnonymousRoom = getRoom().canAnyoneDiscoverJID();
         this.historyStrategy = historyStrategy;
     }
 
@@ -70,7 +73,7 @@ public final class MUCRoomHistory implements Externalizable {
         // unless the message is changing the room's subject
         if (!isSubjectChangeRequest &&
             (fromJID == null || fromJID.toString().length() == 0 ||
-             fromJID.equals(room.getRole().getRoleAddress()))) {
+             fromJID.equals(getRoom().getRole().getRoleAddress()))) {
             return;
         }
         // Do not store regular messages if there is no message strategy (keep subject change requests)
@@ -87,17 +90,17 @@ public final class MUCRoomHistory implements Externalizable {
         Message packetToAdd = packet.createCopy();
 
         // Check if the room has changed its configuration
-        if (isNonAnonymousRoom != room.canAnyoneDiscoverJID()) {
-            isNonAnonymousRoom = room.canAnyoneDiscoverJID();
+        if (isNonAnonymousRoom != getRoom().canAnyoneDiscoverJID()) {
+            isNonAnonymousRoom = getRoom().canAnyoneDiscoverJID();
             // Update the "from" attribute of the delay information in the history
             // TODO Make this update in a separate thread
             for (Iterator<Message> it = getMessageHistory(); it.hasNext();) {
                 Message message = it.next();
                 Element delayElement = message.getChildElement("delay", "urn:xmpp:delay");
-                if (room.canAnyoneDiscoverJID()) {
+                if (getRoom().canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute
                     try {
-                        MUCRole role = room.getOccupant(message.getFrom().getResource());
+                        MUCRole role = getRoom().getOccupant(message.getFrom().getResource());
                         delayElement.addAttribute("from", role.getUserAddress().toString());
                     }
                     catch (UserNotFoundException e) {
@@ -116,10 +119,10 @@ public final class MUCRoomHistory implements Externalizable {
         Element delayInformation = packetToAdd.addChildElement("delay", "urn:xmpp:delay");
         Date current = new Date();
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(current));
-        if (room.canAnyoneDiscoverJID()) {
+        if (getRoom().canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             try {
-                MUCRole role = room.getOccupant(packet.getFrom().getResource());
+                MUCRole role = getRoom().getOccupant(packet.getFrom().getResource());
                 delayInformation.addAttribute("from", role.getUserAddress().toString());
             }
             catch (UserNotFoundException e) {
@@ -199,27 +202,46 @@ public final class MUCRoomHistory implements Externalizable {
         message.setBody(body);
         // Set the sender of the message
         if (nickname != null && nickname.trim().length() > 0) {
-            JID roomJID = room.getRole().getRoleAddress();
+            JID roomJID = getRoom().getRole().getRoleAddress();
             // Recreate the sender address based on the nickname and room's JID
             message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(), nickname, true));
         }
         else {
             // Set the room as the sender of the message
-            message.setFrom(room.getRole().getRoleAddress());
+            message.setFrom(getRoom().getRole().getRoleAddress());
         }
 
         // Add the delay information to the message
         Element delayInformation = message.addChildElement("delay", "urn:xmpp:delay");
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(sentDate));
-        if (room.canAnyoneDiscoverJID()) {
+        if (getRoom().canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute
             delayInformation.addAttribute("from", senderJID);
         }
         else {
             // Set the Room JID as the "from" attribute
-            delayInformation.addAttribute("from", room.getRole().getRoleAddress().toString());
+            delayInformation.addAttribute("from", getRoom().getRole().getRoleAddress().toString());
         }
         historyStrategy.addMessage(message);
+    }
+
+    /**
+     * Returns the room for which this instance is operating.
+     *
+     * @return A room.
+     */
+    protected synchronized MUCRoom getRoom() {
+        if (room == null) {
+            final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomAddress);
+            if (service == null) {
+                throw new IllegalStateException("Deserializing history for non-existing service of room named " + roomAddress);
+            }
+            room = service.getChatRoom(roomAddress.getNode());
+            if (room == null) {
+                throw new IllegalStateException("Deserializing history for non-existing room named " + roomAddress);
+            }
+        }
+        return room;
     }
 
     /**
@@ -259,32 +281,24 @@ public final class MUCRoomHistory implements Externalizable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MUCRoomHistory that = (MUCRoomHistory) o;
-        return isNonAnonymousRoom == that.isNonAnonymousRoom && room.equals(that.room) && historyStrategy.equals(that.historyStrategy);
+        return isNonAnonymousRoom == that.isNonAnonymousRoom && roomAddress.equals(that.roomAddress) && historyStrategy.equals(that.historyStrategy);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(room, historyStrategy, isNonAnonymousRoom);
+        return Objects.hash(roomAddress, historyStrategy, isNonAnonymousRoom);
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        ExternalizableUtil.getInstance().writeSerializable(out, room.getJID());
+        ExternalizableUtil.getInstance().writeSerializable(out, roomAddress);
         ExternalizableUtil.getInstance().writeBoolean(out, isNonAnonymousRoom);
         ExternalizableUtil.getInstance().writeSerializable(out, historyStrategy);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        final JID roomJID = (JID) ExternalizableUtil.getInstance().readSerializable(in);
-        final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID);
-        if (service == null) {
-            throw new IllegalStateException("Deserializing history for non-existing service of room named "+ roomJID);
-        }
-        room = service.getChatRoom(roomJID.getNode());
-        if (room == null) {
-            throw new IllegalStateException("Deserializing history for non-existing room named "+ roomJID);
-        }
+        roomAddress = (JID) ExternalizableUtil.getInstance().readSerializable(in);
         isNonAnonymousRoom = ExternalizableUtil.getInstance().readBoolean(in);
         historyStrategy = (HistoryStrategy) ExternalizableUtil.getInstance().readSerializable(in);
     }

@@ -122,7 +122,7 @@ public class PrivacyList implements Cacheable, Externalizable {
 
     /**
      * Returns true if this privacy list is the default list to apply for the user. Default
-     * privacy lists can be overriden per session by setting an active privacy list.
+     * privacy lists can be overridden per session by setting an active privacy list.
      *
      * @return true if this privacy list is the default list to apply for the user.
      */
@@ -132,7 +132,7 @@ public class PrivacyList implements Cacheable, Externalizable {
 
     /**
      * Sets if this privacy list is the default list to apply for the user. Default
-     * privacy lists can be overriden per session by setting an active privacy list.
+     * privacy lists can be overridden per session by setting an active privacy list.
      *
      * @param isDefault true if this privacy list is the default list to apply for the user.
      */

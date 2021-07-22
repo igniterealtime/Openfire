@@ -29,7 +29,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
 /** Handler of XML stanzas sent by clients connected directly to the server. Received packet will
- * have their FROM attribute overriden to avoid spoofing.<p>
+ * have their FROM attribute overridden to avoid spoofing.<p>
  *
  * By default the hostname specified in the stream header sent by clients will not be validated.
  * When validated the TO attribute of the stream header has to match the server name or a valid

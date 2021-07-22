@@ -305,7 +305,7 @@ public class AdminConsole {
 
         // Add in all overrides.
         for (Element element : overrideModels.values()) {
-            // See if global settings are overriden.
+            // See if global settings are overridden.
             Element appName = (Element)element.selectSingleNode("//adminconsole/global/appname");
             if (appName != null) {
                 Element existingAppName = (Element)generatedModel.selectSingleNode(

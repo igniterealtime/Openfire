@@ -2243,6 +2243,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                             x.element("item").addElement("reason").setText(reason);
                         }
                         x.addElement("status").addAttribute("code", isOutcast ? "301" : "321");
+
+                        // This removes the kicked occupant from the room. The presenceUpdates returned by this method
+                        // (that will be broadcast to all occupants by the caller) won't reach it.
                         kickPresence(presence, senderRole.getUserAddress(), senderRole.getNickname());
                     }
                 }
@@ -2716,6 +2719,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * presence with the actor that initiated the kick (if any). The occupant will also be removed
      * from the occupants lists.
      *
+     * Note that the remaining occupants of the room are not informed by this implementation. It is the responsibility
+     * of the caller to ensure that this occurs.
+     *
      * @param kickPresence the presence of the occupant to kick from the room.
      * @param actorJID The JID of the actor that initiated the kick or {@code null} if the info
      * @param nick The actor nickname.
@@ -2723,10 +2729,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
         // Get the role(s) to kick
-        final List<MUCRole> occupants;
+        final List<MUCRole> kickedRoles;
         try {
-            occupants = getOccupantsByNickname(kickPresence.getFrom().getResource());
-            for (MUCRole kickedRole : occupants) {
+            kickedRoles = getOccupantsByNickname(kickPresence.getFrom().getResource());
+            for (MUCRole kickedRole : kickedRoles) {
                 // Add the actor's JID that kicked this user from the room
                 if (actorJID!=null && actorJID.toString().length() > 0) {
                     Element frag = kickPresence.getChildElement(
@@ -2740,13 +2746,13 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
                 // Send a defensive copy (to not leak a change to the 'to' address - this is possibly overprotective here,
                 // but we're erring on the side of caution) of the unavailable presence to the banned user.
-                Presence kickSelfPresence = kickPresence.createCopy();
+                final Presence kickSelfPresence = kickPresence.createCopy();
                 Element fragKickSelfPresence = kickSelfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 fragKickSelfPresence.addElement("status").addAttribute("code", "110");
                 kickedRole.send(kickSelfPresence);
 
                 // Remove the occupant from the room's occupants lists
-                leaveRoom(kickedRole);
+                removeOccupantRole(kickedRole);
             }
         } catch (UserNotFoundException e) {
             Log.debug("Unable to kick '{}' from room '{}' as there's no occupant with that nickname.", kickPresence.getFrom().getResource(), getJID(), e);

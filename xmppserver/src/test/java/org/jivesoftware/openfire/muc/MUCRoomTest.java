@@ -64,7 +64,7 @@ public class MUCRoomTest {
         doReturn("conference.example.org").when(mockService).getServiceDomain();
 
         when(mockMUCManager.getMultiUserChatService(anyString())).thenReturn(mockService);
-        when(mockMUCManager.getMultiUserChatService((JID)any())).thenReturn(mockService);
+        //when(mockMUCManager.getMultiUserChatService((JID)any())).thenReturn(mockService);
         when(xmppServer.getMultiUserChatManager()).thenReturn(mockMUCManager);
 
         //noinspection deprecation
@@ -165,7 +165,7 @@ public class MUCRoomTest {
         populateField(input, "savedToDB", true);
 
         // Return our newly created room when it's being requested from the service (used by serialization).
-        when(mockService.getChatRoom(input.getJID().getNode())).thenReturn(input);
+        //when(mockService.getChatRoom(input.getJID().getNode())).thenReturn(input);
 
         // Execute system under test.
         final byte[] serialized;

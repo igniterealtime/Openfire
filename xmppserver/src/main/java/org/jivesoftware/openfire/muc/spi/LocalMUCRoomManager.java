@@ -78,7 +78,7 @@ public class LocalMUCRoomManager
         final Lock lock = CACHE_ROOM.getLock(room.getName());
         lock.lock();
         try {
-            Log.trace("Syncing room '{}' of service '{}'", room.getName(), serviceName);
+            Log.trace("Syncing room '{}' of service '{}' (destroy: {})", room.getName(), serviceName, room.isDestroyed);
             if (room.isDestroyed) {
                 CACHE_ROOM.remove(room.getName());
                 rooms.remove(room.getName());

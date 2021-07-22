@@ -1229,9 +1229,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 if (getOccupants().isEmpty()) {
                     if (!isPersistent()) {
                         endTime = System.currentTimeMillis();
-                        mucService.removeChatRoom(name);
-                        // Fire event that the room has been destroyed
-                        MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
+                        destroyRoom(null, "Removal of empty, non-persistent room.");
                     }
                     // Update the date when the last occupant left the room
                     setEmptyDate(new Date());

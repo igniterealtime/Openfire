@@ -761,7 +761,6 @@ public class MUCRole implements Cacheable, Externalizable {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-        Log.error("writing using classloader {}", getClass().getClassLoader());
         try {
             ExternalizableUtil.getInstance().writeSafeUTF(out, roomJid.toString());
             ExternalizableUtil.getInstance().writeBoolean(out, userJid != null);

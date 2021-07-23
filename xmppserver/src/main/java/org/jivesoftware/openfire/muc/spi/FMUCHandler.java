@@ -46,7 +46,7 @@ public class FMUCHandler
             XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
                 service -> service.getAllRoomNames().forEach(
                     name -> {
-                        final Lock lock = service.getLock(name);
+                        final Lock lock = service.getChatRoomLock(name);
                         lock.lock();
                         try {
                             final MUCRoom room = service.getChatRoom(name);
@@ -1254,7 +1254,7 @@ public class FMUCHandler
                 // Update the (local) room state to no longer include this occupant.
                 final MUCUser mucUser = ((MultiUserChatServiceImpl)room.getMUCService()).getChatUser(leaveRole.getUserAddress());
                 room.removeOccupantRole(mucUser, leaveRole);
-                ((MultiUserChatServiceImpl)room.getMUCService()).syncMUCUser(mucUser);
+                ((MultiUserChatServiceImpl)room.getMUCService()).syncChatUser(mucUser);
 
                 // Fire event that occupant left the room.
                 MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());

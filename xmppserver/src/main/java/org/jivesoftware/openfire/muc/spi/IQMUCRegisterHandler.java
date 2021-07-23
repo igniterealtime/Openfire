@@ -121,7 +121,7 @@ class IQMUCRegisterHandler {
             return reply;
         }
 
-        final Lock lock = mucService.getLock(name);
+        final Lock lock = mucService.getChatRoomLock(name);
         lock.lock();
         try {
             room = mucService.getChatRoom(name);

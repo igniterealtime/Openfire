@@ -281,7 +281,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
 
         StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 
-        final Lock lock = getChatService().getLock(roomName);
+        final Lock lock = getChatService().getChatRoomLock(roomName);
         lock.lock();
         try {
             // Get the room, if one exists.
@@ -289,7 +289,6 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
 
             // Determine if this user has a pre-existing role in the addressed room.
             final MUCRole preExistingRole;
-            Log.debug("this user in room(names): {}", String.join(",", roomNames));
             if (roomNames.contains(roomName)) {
                 if (room == null) {
                     preExistingRole = null;

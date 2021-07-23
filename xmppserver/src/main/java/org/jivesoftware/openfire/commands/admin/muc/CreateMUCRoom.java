@@ -123,7 +123,7 @@ public class CreateMUCRoom extends AdHocCommand {
             return;
         }
 
-        final Lock lock = mucService.getLock(roomname);
+        final Lock lock = mucService.getChatRoomLock(roomname);
         lock.lock();
         try {
             MUCRoom room;

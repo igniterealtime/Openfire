@@ -118,7 +118,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     /**
      * The default vCard provider is used to handle the vCard in the database. vCard
-     * fields that can be overriden are stored in the database.
+     * fields that can be overridden are stored in the database.
      *
      * This is used/created only if we are storing avatars in the database.
      */

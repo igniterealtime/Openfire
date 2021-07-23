@@ -439,9 +439,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         }
                     } else {
                         Log.trace( "Stanza is a regular MUC stanza." );
-                        final MUCUser chatUser = getChatUser(userJid);
-                        chatUser.process(packet);
-                        syncChatUser(chatUser); // Make visible changes to the cluster. At the very least, the timestamp of the last processed stanza will have changed.
+                        getChatUser(userJid).process(packet);
                     }
                 }
             }

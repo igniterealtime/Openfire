@@ -1162,7 +1162,7 @@ public class FMUCHandler
 
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCUser user = ((MultiUserChatServiceImpl)room.getMUCService()).getChatUser(userJID);
+        final MUCUser user = room.getMUCService().getChatUser(userJID);
         final MUCRole joinRole = new MUCRole(room, nickname, role, affiliation, userJID, createCopyWithoutFMUC(presence));
 
         joinRole.setReportedFmucAddress( userJID );
@@ -1252,9 +1252,8 @@ public class FMUCHandler
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
             .thenRun( () -> {
                 // Update the (local) room state to no longer include this occupant.
-                final MUCUser mucUser = ((MultiUserChatServiceImpl)room.getMUCService()).getChatUser(leaveRole.getUserAddress());
+                final MUCUser mucUser = room.getMUCService().getChatUser(leaveRole.getUserAddress());
                 room.removeOccupantRole(mucUser, leaveRole);
-                ((MultiUserChatServiceImpl)room.getMUCService()).syncChatUser(mucUser);
 
                 // Fire event that occupant left the room.
                 MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());

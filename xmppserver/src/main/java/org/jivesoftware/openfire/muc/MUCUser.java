@@ -153,6 +153,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      */
     void addRoomName(String roomName) {
         roomNames.add(roomName);
+        getChatService().syncChatUser(this);
     }
 
     /**
@@ -166,6 +167,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      */
     void removeRoomName(String roomName) {
         roomNames.remove(roomName);
+        getChatService().syncChatUser(this);
     }
 
     /**
@@ -278,6 +280,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
         Log.trace("User '{}' is sending a packet to room '{}'", this.realjid, roomName);
 
         lastPacketTime = Instant.now();
+        getChatService().syncChatUser(this); // Make visible changes to the cluster.
 
         StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 

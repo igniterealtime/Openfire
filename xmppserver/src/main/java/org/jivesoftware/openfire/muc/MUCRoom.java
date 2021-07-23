@@ -771,7 +771,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                     Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joinRole.getUserAddress(), this.getJID(), e);
                 }
 
-                addOccupantRole( joinRole );
+                addOccupantRole( user, joinRole );
 
             } else {
                 // Grab the existing one.
@@ -1146,15 +1146,15 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Adds the role of the occupant from all the internal occupants collections.
      *
+     * @param user The MUC user that has a new role.
      * @param role the role to add.
      */
-    public void addOccupantRole( @Nonnull final MUCRole role )
+    public void addOccupantRole(@Nonnull final MUCUser user, @Nonnull final MUCRole role)
     {
         Log.trace( "Add occupant to room {}: {}", this.getJID(), role );
         occupants.add(role);
 
-        final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(role.getUserAddress());
-        mucUser.addRoomName(getJID().getNode());
+        user.addRoomName(getJID().getNode());
     }
 
     /**
@@ -1205,14 +1205,15 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Remove a member from the chat room.
      *
-     * @param leaveRole room occupant that left the room  (cannot be {@code null}).
+     * @param user The room occupant that left the room
+     * @param leaveRole The role that the user that left the room has prior to the user leaving.
      */
-    public void leaveRoom(MUCRole leaveRole) {
+    public void leaveRoom(@Nonnull final MUCUser user, @Nonnull final MUCRole leaveRole) {
         sendLeavePresenceToExistingOccupants(leaveRole)
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun( () -> {
                 // Remove occupant from room and destroy room if empty and not persistent
-                removeOccupantRole(leaveRole);
+                removeOccupantRole(user, leaveRole);
 
                 // Fire event that occupant left the room
                 MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
@@ -1258,13 +1259,13 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * Removes the role of the occupant from all the internal occupants collections. The role will
      * also be removed from the user's roles.
      *
+     * @param user The MUC user that no longer has the role.
      * @param leaveRole the role to remove.
      */
-    public void removeOccupantRole(MUCRole leaveRole) {
+    public void removeOccupantRole(@Nonnull final MUCUser user, @Nonnull final MUCRole leaveRole) {
         Log.trace( "Remove occupant from room {}: {}", this.getJID(), leaveRole );
 
-        final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
-        mucUser.removeRoomName(getJID().getNode());
+        user.removeRoomName(getJID().getNode());
 
         occupants.remove(leaveRole);
     }
@@ -1291,6 +1292,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
                 final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(leaveRole.getUserAddress());
                 mucUser.removeRoomName(getJID().getNode());
+                ((MultiUserChatServiceImpl)mucService).syncMUCUser(mucUser);
 
                 MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
             }
@@ -2752,7 +2754,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 kickedRole.send(kickSelfPresence);
 
                 // Remove the occupant from the room's occupants lists
-                removeOccupantRole(kickedRole);
+                final MUCUser mucUser = ((MultiUserChatServiceImpl)mucService).getChatUser(kickedRole.getUserAddress());
+                removeOccupantRole(mucUser, kickedRole);
+                ((MultiUserChatServiceImpl)mucService).syncMUCUser(mucUser);
             }
         } catch (UserNotFoundException e) {
             Log.debug("Unable to kick '{}' from room '{}' as there's no occupant with that nickname.", kickPresence.getFrom().getResource(), getJID(), e);

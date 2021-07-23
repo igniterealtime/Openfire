@@ -453,7 +453,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         }
                     } else {
                         Log.trace( "Stanza is a regular MUC stanza." );
-                        getChatUser(userJid).process(packet);
+                        final MUCUser chatUser = getChatUser(userJid);
+                        chatUser.process(packet);
+                        syncMUCUser(chatUser); // Make visible changes to the cluster. At the very least, the timestamp of the last processed stanza will have changed.
                     }
                 }
             }
@@ -829,6 +831,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         localMUCRoomManager.syncRoom(room);
     }
 
+    public void syncMUCUser(@Nonnull final MUCUser user) {
+        final Lock lock = USERS_CACHE.getLock(user.getAddress());
+        lock.lock();
+        try {
+            Log.trace("Syncing user '{}' of service '{}'. Rooms: {}", user.getAddress(), chatServiceName, String.join(",", user.getRoomNames()), new Throwable());
+            USERS_CACHE.put(user.getAddress(), user);
+            localUsers.put(user.getAddress(), user);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public MUCRoom getChatRoom(final String roomName, final JID userjid) throws NotAllowedException {
         MUCRoom room;
@@ -1053,7 +1067,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         continue;
                     }
                     try {
-                        room.leaveRoom(role);
+                        room.leaveRoom(user, role);
                         // Ensure that all cluster nodes see the change to the room
                         syncChatRoom(room);
                     } catch (final Exception e) {
@@ -1069,8 +1083,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Obtain a chat user by XMPPAddress.
      *
+     * Note that when obtaining an user instance using this method, the caller should take responsibility to make sure
+     * that any changes to the instance will become visible to other cluster nodes (which is done by invoking
+     * {@link #syncMUCUser(MUCUser)}.
+     *
      * @param userjid The XMPPAddress of the user.
      * @return The chatuser corresponding to that XMPPAddress.
+     * @see #syncMUCUser(MUCUser)
      */
     public MUCUser getChatUser(final JID userjid) {
         if (registerHandler == null) {

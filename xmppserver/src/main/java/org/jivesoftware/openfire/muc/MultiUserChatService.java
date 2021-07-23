@@ -381,20 +381,30 @@ public interface MultiUserChatService extends Component {
      * Obtains a chatroom by name. A chatroom is created for that name if none exists and the user
      * has permission. The user that asked for the chatroom will be the room's owner if the chatroom
      * was created.
-     * 
+     *
+     * Note that when obtaining a room instance using this method, the caller should take responsibility to make sure
+     * that any changes to the instance will become visible to other cluster nodes (which is done by invoking
+     * {@link #syncChatRoom(MUCRoom)}.
+     *
      * @param roomName Name of the room to get.
      * @param userjid The user's normal jid, not the chat nickname jid.
      * @return The chatroom for the given name.
      * @throws NotAllowedException If the caller doesn't have permission to create a new room.
+     * @see #syncChatRoom(MUCRoom)
      */
     // TODO see if this can be replaced with an explicit 'create'.
     MUCRoom getChatRoom(String roomName, JID userjid) throws NotAllowedException;
 
     /**
      * Obtains a chatroom by name. If the chatroom does not exists then null will be returned.
-     * 
+     *
+     * Note that when obtaining a room instance using this method, the caller should take responsibility to make sure
+     * that any changes to the instance will become visible to other cluster nodes (which is done by invoking
+     * {@link #syncChatRoom(MUCRoom)}.
+     *
      * @param roomName Name of the room to get.
      * @return The chatroom for the given name or null if the room does not exists.
+     * @see #syncChatRoom(MUCRoom)
      */
     MUCRoom getChatRoom(String roomName);
     

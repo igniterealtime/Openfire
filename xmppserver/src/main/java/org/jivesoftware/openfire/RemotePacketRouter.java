@@ -21,7 +21,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 /**
- * A RemotePacketRouter is responsible for deliverying packets to entities hosted
+ * A RemotePacketRouter is responsible for delivering packets to entities hosted
  * in remote nodes of the cluster.
  *
  * @author Gaston Dombiak

@@ -80,9 +80,9 @@ import java.util.List;
 public interface RoutingTable {
 
     /**
-     * Adds a route to the routing table for the specified outoing server session. When running
+     * Adds a route to the routing table for the specified outgoing server session. When running
      * inside of a cluster this message {@code must} be sent from the cluster node that is
-     * actually holding the physical connectoin to the remote server.
+     * actually holding the physical connection to the remote server.
      *
      * @param route the address associated to the route.
      * @param destination the outgoing server session.
@@ -256,7 +256,7 @@ public interface RoutingTable {
     Collection<DomainPair> getServerRoutes();
 
     /**
-     * Returns the number of outgoing server sessions hosted in this JVM. When runing inside of
+     * Returns the number of outgoing server sessions hosted in this JVM. When running inside of
      * a cluster you will need to get this value for each cluster node to learn the total number
      * of outgoing server sessions.
      *
@@ -311,9 +311,9 @@ public interface RoutingTable {
     boolean removeClientRoute(JID route);
 
     /**
-     * Returns true if a route to an outoing server has been successfully removed. When running
+     * Returns true if a route to an outgoing server has been successfully removed. When running
      * inside of a cluster this message {@code must} be sent from the cluster node that is
-     * actually holding the physical connectoin to the remote server. 
+     * actually holding the physical connection to the remote server.
      *
      * @param route the route to remove.
      * @return true if the route was successfully removed.
@@ -332,19 +332,19 @@ public interface RoutingTable {
     boolean removeComponentRoute(JID route);
 
     /**
-     * Sets the {@link RemotePacketRouter} to use for deliverying packets to entities hosted
+     * Sets the {@link RemotePacketRouter} to use for delivering packets to entities hosted
      * in remote nodes of the cluster.
      *
-     * @param remotePacketRouter the RemotePacketRouter to use for deliverying packets to entities hosted
+     * @param remotePacketRouter the RemotePacketRouter to use for delivering packets to entities hosted
      *        in remote nodes of the cluster.
      */
     void setRemotePacketRouter(RemotePacketRouter remotePacketRouter);
 
     /**
-     * Returns the {@link RemotePacketRouter} to use for deliverying packets to entities hosted
+     * Returns the {@link RemotePacketRouter} to use for delivering packets to entities hosted
      * in remote nodes of the cluster or {@code null} if none was set.
      *
-     * @return the RemotePacketRouter to use for deliverying packets to entities hosted
+     * @return the RemotePacketRouter to use for delivering packets to entities hosted
      *        in remote nodes of the cluster.
      */
     RemotePacketRouter getRemotePacketRouter();
@@ -354,7 +354,7 @@ public interface RoutingTable {
      * across the cluster. Both available and unavailable client sessions will receive the message.
      *
      * @param packet the message to broadcast.
-     * @param onlyLocal true if only client sessions connecte to the local JVM will get the message.
+     * @param onlyLocal true if only client sessions connect to the local JVM will get the message.
      */
     void broadcastPacket(Message packet, boolean onlyLocal);
 }

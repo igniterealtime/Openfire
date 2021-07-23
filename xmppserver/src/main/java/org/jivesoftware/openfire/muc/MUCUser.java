@@ -147,13 +147,12 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      *
      * It is imperative that the content of #roomNames and MUCRoom#occupants are kept in sync. This method
      * should therefore only, and exclusively, be called by methods that add content to that cache (such as
-     * {@link MUCRoom#addOccupantRole(MUCRole)})
+     * {@link MUCRoom#addOccupantRole(MUCUser, MUCRole)})
      *
      * @param roomName name of a MUC room.
      */
     void addRoomName(String roomName) {
         roomNames.add(roomName);
-        // FIXME persist this change in the cache that holds all MUCUser instances!
     }
 
     /**
@@ -161,13 +160,12 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
      *
      * It is imperative that the content of #roomNames and MUCRoom#occupants are kept in sync. This method
      * should therefore only, and exclusively, be called by methods that remove content from that cache (such as
-     * {@link MUCRoom#removeOccupantRole(MUCRole)})
+     * {@link MUCRoom#removeOccupantRole(MUCUser, MUCRole)})
      *
      * @param roomName name of a MUC room.
      */
     void removeRoomName(String roomName) {
         roomNames.remove(roomName);
-        // FIXME persist this change in the cache that holds all MUCUser instances!
     }
 
     /**
@@ -291,10 +289,12 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
 
             // Determine if this user has a pre-existing role in the addressed room.
             final MUCRole preExistingRole;
+            Log.debug("this user in room(names): {}", String.join(",", roomNames));
             if (roomNames.contains(roomName)) {
                 if (room == null) {
                     preExistingRole = null;
                 } else {
+                    if (Log.isDebugEnabled()) room.getOccupants().forEach(o->Log.debug("Current occupant: {}", o));
                     preExistingRole = room.getOccupantByFullJID(getAddress());
                 }
             } else {
@@ -307,7 +307,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             if (preExistingRole != null && getChatService().getIdleUserPingThreshold() != null && isDeliveryRelatedErrorResponse(packet)) {
                 Log.info("Removing {} (nickname '{}') from room {} as we've received an indication (logged at debug level) that this is now a ghost user.", preExistingRole.getUserAddress(), preExistingRole.getNickname(), roomName);
                 Log.debug("Stanza indicative of a ghost user: {}", packet);
-                room.leaveRoom(preExistingRole);
+                room.leaveRoom(this, preExistingRole);
                 getChatService().syncChatRoom(room);
                 return;
             }
@@ -324,6 +324,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             {
                 // Return value is non-null while argument is, in case this is a request to create a new room.
                 room = process((Presence) packet, roomName, room, preExistingRole);
+
             }
 
             // Ensure that other cluster nodes see any changes that might have been applied.
@@ -983,7 +984,7 @@ public class MUCUser implements ChannelHandler<Packet>, Cacheable, Externalizabl
             Log.trace("Occupant '{}' of room '{}' is leaving.", preExistingRole.getUserAddress(), room.getName());
             // TODO Consider that different nodes can be creating and processing this presence at the same time (when remote node went down)
             preExistingRole.setPresence(packet);
-            room.leaveRoom(preExistingRole);
+            room.leaveRoom(this, preExistingRole);
         }
         else
         {

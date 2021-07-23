@@ -1291,8 +1291,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 removedRoles.add(leaveRole);
 
                 final MUCUser mucUser = mucService.getChatUser(leaveRole.getUserAddress());
-                mucUser.removeRoomName(getJID().getNode());
-                mucService.syncChatUser(mucUser);
+                mucUser.removeRoomName(this.name);
 
                 MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
             }
@@ -2754,9 +2753,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 kickedRole.send(kickSelfPresence);
 
                 // Remove the occupant from the room's occupants lists
-                final MUCUser mucUser = mucService.getChatUser(kickedRole.getUserAddress());
-                removeOccupantRole(mucUser, kickedRole);
-                mucService.syncChatUser(mucUser);
+                removeOccupantRole(mucService.getChatUser(kickedRole.getUserAddress()), kickedRole);
             }
         } catch (UserNotFoundException e) {
             Log.debug("Unable to kick '{}' from room '{}' as there's no occupant with that nickname.", kickPresence.getFrom().getResource(), getJID(), e);

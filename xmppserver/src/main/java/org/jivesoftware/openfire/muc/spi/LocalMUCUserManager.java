@@ -142,7 +142,7 @@ class LocalMUCUserManager
         final Lock lock = USER_CACHE.getLock(user.getAddress());
         lock.lock();
         try {
-            Log.trace("Syncing user '{}' of service '{}'.", user.getAddress(), serviceName);
+            Log.trace("Syncing user '{}' of service '{}'. In rooms: {}", user.getAddress(), serviceName, String.join(",", user.getRoomNames()));
             USER_CACHE.put(user.getAddress(), user);
             localUsers.put(user.getAddress(), user);
         } finally {

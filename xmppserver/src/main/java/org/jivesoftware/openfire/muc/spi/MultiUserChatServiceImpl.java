@@ -18,7 +18,10 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -34,7 +37,14 @@ import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.HistoryStrategy;
+import org.jivesoftware.openfire.muc.MUCEventDelegate;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MUCUser;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.AutoCloseableReentrantLock;
@@ -64,8 +74,23 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -319,6 +344,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         localUsers = new ConcurrentHashMap<>();
         localMUCRoomManager = new LocalMUCRoomManager(this);
+
+        ClusterManager.addListener(this);
     }
 
     @Override
@@ -2152,6 +2179,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void joinedCluster() {
+        Log.debug("Service {} joined a cluster - going to merge {} local users with {} cluster cache users", chatServiceName, localUsers.size(), USERS_CACHE.size());
+
         // The local node joined a cluster.
         //
         // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
@@ -2168,6 +2197,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void joinedCluster(byte[] nodeID) {
+        Log.debug("Service {} got notified that node {} joined a cluster - going to merge {} local users with {} cluster cache users", chatServiceName, nodeID, localUsers.size(), USERS_CACHE.size());
+
         // Another node joined a cluster that we're already part of. It is expected that
         // the implementation of #joinedCluster() as executed on the cluster node that just
         // joined will synchronize all relevant data. This method need not do anything.
@@ -2175,6 +2206,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void leftCluster() {
+        Log.debug("Service {} left a cluster - going to merge {} local users with {} cluster cache users", chatServiceName, localUsers.size(), USERS_CACHE.size());
+
         // The local cluster node left the cluster.
         if (XMPPServer.getInstance().isShuttingDown()) {
             // Do not put effort in restoring the correct state if we're shutting down anyway.
@@ -2195,6 +2228,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void leftCluster(byte[] nodeID) {
+        Log.debug("Service {} got notified that node {} left a cluster - going to merge {} local users with {} cluster cache users", chatServiceName, nodeID, localUsers.size(), USERS_CACHE.size());
+
         // Another node left the cluster.
         //
         // If the cluster node leaves in an orderly fashion, it might have broadcasted

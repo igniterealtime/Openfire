@@ -46,7 +46,7 @@ public class FMUCHandler
             XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
                 service -> service.getAllRoomNames().forEach(
                     name -> {
-                        final Lock lock = service.getLock(name);
+                        final Lock lock = service.getChatRoomLock(name);
                         lock.lock();
                         try {
                             final MUCRoom room = service.getChatRoom(name);
@@ -1162,7 +1162,7 @@ public class FMUCHandler
 
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCUser user = ((MultiUserChatServiceImpl)room.getMUCService()).getChatUser(userJID);
+        final MUCUser user = room.getMUCService().getChatUser(userJID);
         final MUCRole joinRole = new MUCRole(room, nickname, role, affiliation, userJID, createCopyWithoutFMUC(presence));
 
         joinRole.setReportedFmucAddress( userJID );
@@ -1175,7 +1175,7 @@ public class FMUCHandler
         else
         {
             // Update the (local) room state to now include this occupant.
-            room.addOccupantRole(joinRole);
+            room.addOccupantRole(user, joinRole);
 
             // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
             // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
@@ -1252,7 +1252,8 @@ public class FMUCHandler
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
             .thenRun( () -> {
                 // Update the (local) room state to no longer include this occupant.
-                room.removeOccupantRole( leaveRole );
+                final MUCUser mucUser = room.getMUCService().getChatUser(leaveRole.getUserAddress());
+                room.removeOccupantRole(mucUser, leaveRole);
 
                 // Fire event that occupant left the room.
                 MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());

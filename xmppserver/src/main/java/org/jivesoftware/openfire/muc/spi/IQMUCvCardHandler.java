@@ -94,7 +94,7 @@ public class IQMUCvCardHandler extends IQHandler
                 }
                 else
                 {
-                    final Lock lock = mucService.getLock(roomName);
+                    final Lock lock = mucService.getChatRoomLock(roomName);
                     lock.lock();
                     try {
                         final MUCRoom room = mucService.getChatRoom(roomName);
@@ -180,7 +180,7 @@ public class IQMUCvCardHandler extends IQHandler
                 result.setChildElement(RESPONSE_ELEMENT_NAME, NAMESPACE);
                 // Only try to get the vCard values of rooms that can be discovered
                 // Answer the room occupants as items if that info is publicly available
-                final Lock lock = mucService.getLock(roomName);
+                final Lock lock = mucService.getChatRoomLock(roomName);
                 lock.lock();
                 try {
                     final MUCRoom room = mucService.getChatRoom(roomName);

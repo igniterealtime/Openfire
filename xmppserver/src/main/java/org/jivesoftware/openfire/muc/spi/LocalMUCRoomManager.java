@@ -64,7 +64,7 @@ class LocalMUCRoomManager
     /**
      * A cluster-local copy of rooms, used to (re)populating #ROOM_CACHE upon cluster join or leave.
      */
-    private final Map<String, MUCRoom> localUsers = new HashMap<>();
+    private final Map<String, MUCRoom> localRooms = new HashMap<>();
 
     /**
      * Creates a new instance, specific for the provided MUC service.
@@ -120,7 +120,7 @@ class LocalMUCRoomManager
         try {
             Log.trace("Adding room '{}' of service '{}'", room.getName(), serviceName);
             ROOM_CACHE.put(room.getName(), room);
-            localUsers.put(room.getName(), room);
+            localRooms.put(room.getName(), room);
         } finally {
             lock.unlock();
         }
@@ -142,10 +142,10 @@ class LocalMUCRoomManager
             Log.trace("Syncing room '{}' of service '{}' (destroy: {})", room.getName(), serviceName, room.isDestroyed);
             if (room.isDestroyed) {
                 ROOM_CACHE.remove(room.getName());
-                localUsers.remove(room.getName());
+                localRooms.remove(room.getName());
             } else {
                 ROOM_CACHE.put(room.getName(), room);
-                localUsers.put(room.getName(), room);
+                localRooms.put(room.getName(), room);
             }
         } finally {
             lock.unlock();
@@ -198,7 +198,7 @@ class LocalMUCRoomManager
             if (room != null) {
                 GroupEventDispatcher.removeListener(room);
             }
-            localUsers.remove(roomName);
+            localRooms.remove(roomName);
             return room;
         } finally {
             lock.unlock();
@@ -245,7 +245,7 @@ class LocalMUCRoomManager
     void restoreCacheContent() {
         Log.trace( "Restoring cache content for cache '{}' by adding all MUC Rooms that are known to the local node.", ROOM_CACHE.getName() );
 
-        for (Map.Entry<String, MUCRoom> entry : localUsers.entrySet()) {
+        for (Map.Entry<String, MUCRoom> entry : localRooms.entrySet()) {
             final Lock lock = ROOM_CACHE.getLock(entry.getKey());
             lock.lock();
             try {

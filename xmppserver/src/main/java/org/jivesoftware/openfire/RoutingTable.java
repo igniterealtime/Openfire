@@ -33,7 +33,7 @@ import java.util.List;
  * Remote sessions may be possible in clustered servers.</li>
  * <li>Chatbot - A chatbot which will have various packets routed to it.</li>
  * <li>Transport - A transport for foreign server domains. Foreign domains
- * may be hosted in the same server JVM (e.g. virutal hosted servers, groupchat
+ * may be hosted in the same server JVM (e.g. virtual hosted servers, groupchat
  * servers, etc).</li>
  * </ul>
  * <p>In almost all cases, the caller should not be concerned with what
@@ -47,9 +47,9 @@ import java.util.List;
  * managers should add a route for both the generic user@server.com as well as
  * user@server.com/resource routes (knowing that one is an alias for the other
  * is the responsibility of the session or session manager).</p>
- * <p>In order to accomodate broadcasts, you can also do partial matches by querying
+ * <p>In order to accommodate broadcasts, you can also do partial matches by querying
  * all 'child' nodes of a particular node. The routing table contains a forest of
- * node trees. The node tree is arranged in the following heirarchy:</p>
+ * node trees. The node tree is arranged in the following hierarchy:</p>
  * <ul>
  * <li>forest - All nodes in the routing table. An XMPP address with host, name, and resource set
  * to null will match all nodes stored in the routing table. Use with extreme caution as the

@@ -57,21 +57,7 @@ public interface MUCEventListener {
      * @param user the JID of the user leaving the room.
      * @param nickname nickname of the user leaving the room.
      */
-    default void occupantLeft(JID roomJID, JID user, String nickname) {
-        // Default method to allow code written against deprecated two arg version
-    }
-
-    /**
-     * Event triggered when an occupant left a room.
-     *
-     * @param roomJID the JID of the room where the occupant has left.
-     * @param user    the JID of the user leaving the room.
-     * @deprecated Since 4.4.0, replaced by {@link #occupantLeft(JID, JID, String)}
-     */
-    @Deprecated
-    default void occupantLeft(JID roomJID, JID user) {
-        // Deprecated, please use occupantLeft with extra nickname field
-    }
+    void occupantLeft(JID roomJID, JID user, String nickname);
 
     /**
      * Event triggered when an occupant changed his nickname in a room.

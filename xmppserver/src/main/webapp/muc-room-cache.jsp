@@ -25,11 +25,9 @@
 <%@ page import="java.time.Duration" %>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl" %>
 <%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="org.jivesoftware.openfire.muc.MUCUser" %>
 <%@ page import="org.jivesoftware.util.cache.Cache" %>
 <%@ page import="org.jivesoftware.openfire.muc.MUCRoom" %>
 <%@ page import="java.util.stream.Collectors" %>
-<%@ page import="org.jivesoftware.openfire.muc.MUCRole" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>

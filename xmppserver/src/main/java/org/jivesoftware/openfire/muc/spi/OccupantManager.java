@@ -30,6 +30,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,6 +93,7 @@ public class OccupantManager implements MUCEventListener
      * Maintains state for all occupants of this service.
      */
     @Nonnull
+    // FIXME when joining a cluster, the NodeID of the local user changes. This collection needs to be updated then.
     private final ConcurrentMap<NodeID, Set<Occupant>> occupantsByNode = new ConcurrentHashMap<>();
 
     /**
@@ -295,6 +297,52 @@ public class OccupantManager implements MUCEventListener
             .map(Occupant::getRealJID)
             .collect(Collectors.toSet())
             .size();
+    }
+
+    // cluster leave
+    public boolean exists(@Nonnull final Occupant occupant) {
+        // TODO optimize this. Iterating over all values is very inefficient.
+        return occupantsByNode.values().parallelStream().anyMatch( clusterOccupants -> clusterOccupants.contains(occupant) );
+    }
+
+    // cluster leave
+    @Nonnull
+    public Set<Occupant> occupantsForRoomByNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID) {
+        return occupantsByNode.getOrDefault(nodeID, Collections.emptySet()).stream()
+            .filter(occupant -> occupant.getRoomName().equals(roomName))
+            .collect(Collectors.toSet());
+    }
+
+    /**
+     * Removes and returns all data that was maintained for a particular cluster node. It is assumed that this method
+     * is used in reaction to that cluster node having left the cluster.
+     *
+     * @param nodeID Identifier of the cluster node that left.
+     * @return All data that this instance maintained for the cluster node.
+     */
+    @Nullable
+    public Set<Occupant> leftCluster(@Nonnull final NodeID nodeID) {
+        return occupantsByNode.remove(nodeID);
+    }
+
+    /**
+     * Removes and returns all data that was maintained for cluster nodes other than the local node. It is assumed that
+     * this method is used in reaction to the local cluster node having left the cluster.
+     *
+     * @return All data that this instance maintained for all cluster nodes except the local one.
+     */
+    @Nullable
+    public Set<Occupant> leftCluster() {
+        final Set<Occupant> result = new HashSet<>();
+        final Iterator<Map.Entry<NodeID, Set<Occupant>>> iterator = occupantsByNode.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final Map.Entry<NodeID, Set<Occupant>> entry = iterator.next();
+            if (!entry.getKey().equals(XMPPServer.getInstance().getNodeID()) && !entry.getKey().equals(XMPPServer.getInstance().getDefaultNodeID())) {
+                result.addAll(entry.getValue());
+                iterator.remove();
+            }
+        }
+        return result;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2021 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1162,12 +1162,11 @@ public class FMUCHandler
 
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCUser user = room.getMUCService().getChatUser(userJID);
         final MUCRole joinRole = new MUCRole(room, nickname, role, affiliation, userJID, createCopyWithoutFMUC(presence));
 
         joinRole.setReportedFmucAddress( userJID );
 
-        final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( user, nickname );
+        final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( userJID, nickname );
         if (clientOnlyJoin)
         {
             Log.warn( "(room: '{}'): Ignoring join of occupant on remote peer '{}' with nickname '{}' as this user is already in the room.", room.getJID(), remoteMUC, nickname );
@@ -1175,14 +1174,11 @@ public class FMUCHandler
         else
         {
             // Update the (local) room state to now include this occupant.
-            room.addOccupantRole(user, joinRole);
+            room.addOccupantRole(joinRole);
 
             // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
             // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
             room.sendInitialPresenceToExistingOccupants(joinRole);
-
-            // Fire event that occupant joined the room.
-            MUCEventDispatcher.occupantJoined(room.getJID(), joinRole.getUserAddress(), joinRole.getNickname());
         }
     }
 
@@ -1252,11 +1248,7 @@ public class FMUCHandler
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
             .thenRun( () -> {
                 // Update the (local) room state to no longer include this occupant.
-                final MUCUser mucUser = room.getMUCService().getChatUser(leaveRole.getUserAddress());
-                room.removeOccupantRole(mucUser, leaveRole);
-
-                // Fire event that occupant left the room.
-                MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+                room.removeOccupantRole(leaveRole);
             });
     }
 

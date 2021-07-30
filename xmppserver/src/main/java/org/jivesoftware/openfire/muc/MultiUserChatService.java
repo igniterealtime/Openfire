@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2021 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -370,34 +370,12 @@ public interface MultiUserChatService extends Component {
     @Nonnull Lock getChatRoomLock(@Nonnull final String roomName);
 
     /**
-     * Generates a mutex object that controls cluster-wide access to a MUCUser instance that represents the user in this
-     * service identified by the provided name.
-     *
-     * The JID that is to be provided as the argument to this method should be the 'real' JID of the user (as opposed to
-     * a role-based JID like room-at-service-slash-nickname).
-     *
-     * The lock, once returned, is not acquired/set.
-     *
-     * @param userAddress JID of the user for which to return a lock.
-     * @return The lock (which has not been set yet).
-     */
-    @Nonnull Lock getChatUserLock(@Nonnull final JID userAddress);
-
-    /**
      * Makes available the current state of the provided MUCRoom instance to all nodes in the Openfire cluster (if the
      * local server is part of such a cluster). This method should be used whenever a MUCRoom instance has been changed.
      *
      * @param room The room for which to persist state changes across the Openfire cluster.
      */
     void syncChatRoom(@Nonnull final MUCRoom room);
-
-    /**
-     * Makes available the current state of the provided MUCUser instance to all nodes in the Openfire cluster (if the
-     * local server is part of such a cluster). This method should be used whenever a MUCUser instance has been changed.
-     *
-     * @param user The user for which to persist state changes across the Openfire cluster.
-     */
-    void syncChatUser(@Nonnull final MUCUser user);
 
     /**
      * Obtains a chatroom by name. A chatroom is created for that name if none exists and the user
@@ -431,23 +409,6 @@ public interface MultiUserChatService extends Component {
      * @see #syncChatRoom(MUCRoom)
      */
     @Nullable MUCRoom getChatRoom(@Nonnull final String roomName);
-
-    /**
-     * Obtain a chat user by XMPPAddress, which is the 'real' JID of the user (as opposed to a role-based JID like
-     * room-at-service-slash-nickname).
-     *
-     * When no instance is available for the provided JID, a new instance will be created.
-     *
-     * Note that when obtaining an user instance using this method, the caller should take responsibility to make sure
-     * that any changes to the instance will become visible to other cluster nodes (which is done by invoking
-     * {@link #syncChatUser(MUCUser)}.  Where appropriate, the caller should apply a mutex (as returned by
-     * {@link #getChatUserLock(JID)}) to control concurrent access to chat room instances.
-     *
-     * @param userAddress The XMPPAddress of the user.
-     * @return The chatuser corresponding to that XMPPAddress.
-     * @see #syncChatUser(MUCUser)
-     */
-    @Nonnull MUCUser getChatUser(@Nonnull final JID userAddress);
 
     /**
      * Returns a list with a snapshot of all the rooms in the server that are loaded in memory.

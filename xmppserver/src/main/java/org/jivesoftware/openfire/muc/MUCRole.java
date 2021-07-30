@@ -21,7 +21,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -360,16 +359,6 @@ public class MUCRole implements Cacheable, Externalizable {
      */
     public boolean isRemoteFmuc() {
         return getReportedFmucAddress() != null;
-    };
-
-    /**
-     * Returns the id of the node that is hosting the room occupant.
-     *
-     * @return the id of the node that is hosting the room occupant.
-     */
-    // FIXME Does this serve a purpose now that that we do not distinguish between remote and local roles? Also, this is _wrong_ with regards to users that join through s2s.
-    public NodeID getNodeID() {
-        return XMPPServer.getInstance().getNodeID();
     }
 
     private void setRoleAddress(JID jid) {

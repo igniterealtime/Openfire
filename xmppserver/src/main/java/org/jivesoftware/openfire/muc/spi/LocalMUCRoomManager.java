@@ -26,7 +26,11 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -47,7 +51,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:583424568@qq.com">wuchang</a> 2016-1-14
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-class LocalMUCRoomManager
+public class LocalMUCRoomManager
 {
     private static final Logger Log = LoggerFactory.getLogger(LocalMUCRoomManager.class);
 
@@ -245,22 +249,33 @@ class LocalMUCRoomManager
     void restoreCacheContent() {
         Log.trace( "Restoring cache content for cache '{}' by adding all MUC Rooms that are known to the local node.", ROOM_CACHE.getName() );
 
-        for (Map.Entry<String, MUCRoom> entry : localRooms.entrySet()) {
-            final Lock lock = ROOM_CACHE.getLock(entry.getKey());
+        for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet()) {
+            final Lock lock = ROOM_CACHE.getLock(localRoomEntry.getKey());
             lock.lock();
             try {
-                if (!ROOM_CACHE.containsKey(entry.getKey())) {
-                    ROOM_CACHE.put(entry.getKey(), entry.getValue());
+                final MUCRoom localRoom = localRoomEntry.getValue();
+                if (!ROOM_CACHE.containsKey(localRoomEntry.getKey())) {
+                    ROOM_CACHE.put(localRoomEntry.getKey(), localRoom);
                 } else {
-                    final MUCRoom roomInCluster = ROOM_CACHE.get(entry.getKey());
-                    if (!roomInCluster.equals(entry.getValue())) { // TODO: unsure if #equals() is enough to verify equality here.
-                        Log.warn("Joined an Openfire cluster on which a room exists that clashes with a room that exists locally. Room name: '{}' on service '{}'", entry.getKey(), serviceName);
-                        // FIXME handle collision. Two nodes have different rooms using the same name.
+                    final MUCRoom roomInCluster = ROOM_CACHE.get(localRoomEntry.getKey());
+                    if (!roomInCluster.equals(localRoom)) {
+                        // TODO: unsure if #equals() is enough to verify equality here.
+                        Log.warn("Joined an Openfire cluster on which a room exists that clashes with a room that exists locally. Room name: '{}' on service '{}'", localRoomEntry.getKey(), serviceName);
+                        // TODO: handle collision. Two nodes have different rooms using the same name.
+                        // Current handling is to not change the room in the local storage - and ignore the clustered cache entry.
                     }
                 }
             } finally {
                 lock.unlock();
             }
         }
+    }
+
+    public Cache<String, MUCRoom> getROOM_CACHE() {
+        return ROOM_CACHE;
+    }
+
+    public Map<String, MUCRoom> getLocalRooms() {
+        return localRooms;
     }
 }

@@ -15,18 +15,6 @@
  */
 package org.jivesoftware.util.cache;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -43,6 +31,18 @@ import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Creates Cache objects. The returned caches will either be local or clustered
@@ -835,6 +835,7 @@ public class CacheFactory {
                             public void leftCluster() {
                                 destroyed = true;
                                 ClusterManager.removeListener(this);
+                                log.debug("CacheFactory is not listening for cluster events anymore because it left the cluster");
                             }
 
                             @Override

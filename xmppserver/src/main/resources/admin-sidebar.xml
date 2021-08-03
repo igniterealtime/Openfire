@@ -555,6 +555,11 @@
                           url="muc-tasks.jsp"
                           description="${sidebar.muc-tasks.descr}"/>
 
+                    <!-- Service Inspect MUC Cache -->
+                    <item id="muc-room-cache" name="${sidebar.muc-room-cache}"
+                          url="muc-room-cache.jsp"
+                          description="${sidebar.muc-room-cache.descr}"/>
+
                     <!-- Delete Service -->
                     <item id="muc-service-delete" name="${sidebar.muc-service-delete}"
                           url="muc-service-delete.jsp"

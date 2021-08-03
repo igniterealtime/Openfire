@@ -46,7 +46,7 @@ import java.util.concurrent.locks.Lock;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-class LocalMUCUserManager
+public class LocalMUCUserManager
 {
     private static final Logger Log = LoggerFactory.getLogger(LocalMUCUserManager.class);
 
@@ -208,22 +208,33 @@ class LocalMUCUserManager
     {
         Log.trace( "Restoring cache content for cache '{}' by adding all MUC Users that are known to the local node.", USER_CACHE.getName() );
 
-        for (Map.Entry<JID, MUCUser> entry : localUsers.entrySet()) {
-            final Lock lock = USER_CACHE.getLock(entry.getKey());
+        for (Map.Entry<JID, MUCUser> localUserEntry : localUsers.entrySet()) {
+            final Lock lock = USER_CACHE.getLock(localUserEntry.getKey());
             lock.lock();
             try {
-                if (!USER_CACHE.containsKey(entry.getKey())) {
-                    USER_CACHE.put(entry.getKey(), entry.getValue());
+                final MUCUser localUser = localUserEntry.getValue();
+                if (!USER_CACHE.containsKey(localUserEntry.getKey())) {
+                    USER_CACHE.put(localUserEntry.getKey(), localUser);
                 } else {
-                    final MUCUser userInCluster = USER_CACHE.get(entry.getKey());
-                    if (!userInCluster.equals(entry.getValue())) { // TODO: unsure if #equals() is enough to verify equality here.
-                        Log.warn("Joined an Openfire cluster on which a MUC user exists that clashes with a MUC users that exists locally. MUC user name: '{}' on service '{}'", entry.getKey(), serviceName);
-                        // FIXME handle collision. Two nodes have different users using the same name.
+                    final MUCUser userInCluster = USER_CACHE.get(localUserEntry.getKey());
+                    if (!userInCluster.equals(localUser)) {
+                        // TODO: unsure if #equals() is enough to verify equality here.
+                        Log.warn("Joined an Openfire cluster on which a MUC user exists that clashes with a MUC users that exists locally. MUC user name: '{}' on service '{}'", localUserEntry.getKey(), serviceName);
+                        // TODO: handle collision. Two nodes have different users using the same name.
+                        // Current handling is to not change the user in the local storage - and ignore the clustered cache entry.
                     }
                 }
             } finally {
                 lock.unlock();
             }
         }
+    }
+
+    public Cache<JID, MUCUser> getUSER_CACHE() {
+        return USER_CACHE;
+    }
+
+    public Map<JID, MUCUser> getLocalUsers() {
+        return localUsers;
     }
 }

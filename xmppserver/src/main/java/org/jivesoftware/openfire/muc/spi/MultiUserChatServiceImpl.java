@@ -2258,4 +2258,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         localMUCRoomManager.restoreCacheContent();
     }
 
+    public LocalMUCUserManager getLocalMUCUserManager() {
+        return localMUCUserManager;
+    }
+
+    public LocalMUCRoomManager getLocalMUCRoomManager() {
+        return localMUCRoomManager;
+    }
 }

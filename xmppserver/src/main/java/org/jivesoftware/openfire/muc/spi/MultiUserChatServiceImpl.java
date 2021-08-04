@@ -2914,6 +2914,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void joinedCluster() {
+        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        Log.debug("Service {} joined a cluster - going to restore {} rooms", fullServiceName, localMUCRoomManager.size());
+
         // The local node joined a cluster.
         //
         // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
@@ -2936,6 +2939,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void joinedCluster(byte[] nodeID) {
+        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        Log.debug("Service {} got notified that node {} joined a cluster", fullServiceName, new String(nodeID));
+
+        // Another node joined a cluster that we're already part of. It is expected that
+        // the implementation of #joinedCluster() as executed on the cluster node that just
+        // joined will synchronize all relevant data. This method need not do anything.
         // Another node joined a cluster that we're already part of.
 
         // TODO: Let the new nodes know about our local occupants, as it should tell its local users that they've now joined.
@@ -2944,6 +2953,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void leftCluster() {
+        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        Log.debug("Service {} joined a cluster - going to restore {} rooms", fullServiceName, localMUCRoomManager.size());
+
         // The local cluster node left the cluster.
         if (XMPPServer.getInstance().isShuttingDown()) {
             // Do not put effort in restoring the correct state if we're shutting down anyway.
@@ -2965,6 +2977,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void leftCluster(byte[] nodeID) {
+        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        Log.debug("Service {} got notified that node {} left a cluster", fullServiceName, new String(nodeID));
+
         // Another node left the cluster.
         //
         // If the cluster node leaves in an orderly fashion, it might have broadcasted
@@ -3002,6 +3017,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         localMUCRoomManager.restoreCacheContent();
     }
 
+    public LocalMUCRoomManager getLocalMUCRoomManager() {
+        return localMUCRoomManager;
+    }
     private void makeOccupantsOnDisconnectedClusterNodesLeave(@Nullable final Set<OccupantManager.Occupant> occupantsOnRemovedNodes)
     {
         if (occupantsOnRemovedNodes == null || occupantsOnRemovedNodes.isEmpty()) {

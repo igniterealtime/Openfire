@@ -22,7 +22,6 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.time.Duration" %>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.jivesoftware.util.cache.Cache" %>

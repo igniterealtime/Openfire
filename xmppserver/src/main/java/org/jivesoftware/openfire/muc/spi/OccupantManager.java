@@ -345,6 +345,12 @@ public class OccupantManager implements MUCEventListener
         return result;
     }
 
+    // TODO This getter was added for the muc-room-cache.jsp page. Possibly public access is not appropriate here.
+    @Nonnull
+    public ConcurrentMap<NodeID, Set<Occupant>> getOccupantsByNode() {
+        return occupantsByNode;
+    }
+
     @Override
     public void roomCreated(JID roomJID) {
         // Not used.
@@ -373,7 +379,7 @@ public class OccupantManager implements MUCEventListener
     /**
      * Representation of a user that is an occupant of a chatroom.
      */
-    static class Occupant {
+    public static class Occupant {
         String roomName;
         String nickname;
         JID realJID;

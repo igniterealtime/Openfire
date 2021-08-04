@@ -27,6 +27,10 @@
 <%@ page import="org.jivesoftware.util.cache.Cache" %>
 <%@ page import="org.jivesoftware.openfire.muc.MUCRoom" %>
 <%@ page import="java.util.stream.Collectors" %>
+<%@ page import="org.jivesoftware.openfire.muc.spi.OccupantManager" %>
+<%@ page import="org.jivesoftware.openfire.cluster.NodeID" %>
+<%@ page import="java.util.concurrent.ConcurrentMap" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -64,6 +68,24 @@
     final Set<String> roomsOnlyInClusteredCache = roomsClustered.keySet().stream().filter(jid -> !roomsLocal.containsKey(jid)).collect(Collectors.toSet());
     final Set<String> roomsOnlyInLocalCache = roomsLocal.keySet().stream().filter(jid -> !roomsClustered.containsKey(jid)).collect(Collectors.toSet());
 
+    final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = mucService.getOccupantManager().getOccupantsByNode();
+    // Reorganise the occupants-by-node by room name
+    final Map<String, Map<NodeID, Set<OccupantManager.Occupant>>> occupantsByNodeByRoom = new HashMap<>();
+    for (Map.Entry<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeEntry : occupantsByNode.entrySet()) {
+        for (OccupantManager.Occupant occupant : occupantsByNodeEntry.getValue()) {
+            if (!occupantsByNodeByRoom.containsKey(occupant.getRoomName())) {
+                occupantsByNodeByRoom.put(occupant.getRoomName(), new HashMap<>());
+            }
+            Map<NodeID, Set<OccupantManager.Occupant>> registrationForThisRoom = occupantsByNodeByRoom.get(occupant.getRoomName());
+            if (!registrationForThisRoom.containsKey(occupantsByNodeEntry.getKey())) {
+                registrationForThisRoom.put(occupantsByNodeEntry.getKey(), new HashSet<>());
+            }
+            registrationForThisRoom.get(occupantsByNodeEntry.getKey()).add(occupant);
+        }
+    }
+
+    NodeID thisNodeID = XMPPServer.getInstance().getNodeID();
+
     pageContext.setAttribute("mucName", mucName);
     pageContext.setAttribute("mucService", mucService);
     pageContext.setAttribute("roomsClustered", roomsClustered);
@@ -71,6 +93,8 @@
     pageContext.setAttribute("roomsInBothCaches", roomsInBothCaches);
     pageContext.setAttribute("roomsOnlyInClusteredCache", roomsOnlyInClusteredCache);
     pageContext.setAttribute("roomsOnlyInLocalCache", roomsOnlyInLocalCache);
+    pageContext.setAttribute("occupantsByNodeByRoom", occupantsByNodeByRoom);
+    pageContext.setAttribute("thisNodeID", thisNodeID);
 %>
 
 <html>
@@ -94,7 +118,7 @@
             <th nowrap></th>
             <th nowrap><fmt:message key="muc.room_cache.local_cache" /></th>
             <th nowrap><fmt:message key="muc.room_cache.shared_cache" /></th>
-            <th nowrap><fmt:message key="muc.room_cache.room_details" /></th>
+            <th nowrap><fmt:message key="muc.room_cache.occupant_registry" /></th>
         </tr>
         </thead>
         <tbody>
@@ -129,7 +153,7 @@
                 <fmt:message key="muc.room_cache.admins" /><br/>
                 <fmt:message key="muc.room_cache.members" /><br/>
             </td>
-            <td width="25%">
+            <td width="20%">
                 <%
                     if (localRoom != null) {
                         Set<String> occupants = localRoom.getOccupants().stream().map(role -> role.getNickname() + ":" + role.getUserAddress().toFullJID()).collect(Collectors.toSet());
@@ -154,7 +178,7 @@
                     }
                 %>
             </td>
-            <td width="25%" class="jive-icon">
+            <td width="20%">
                 <%
                     if (clusteredRoom != null) {
                         Set<String> occupants = clusteredRoom.getOccupants().stream().map(role -> role.getNickname() + ":" + role.getUserAddress().toFullJID()).collect(Collectors.toSet());
@@ -179,7 +203,22 @@
                     }
                 %>
             </td>
-            <td width="25%">
+            <td width="35%">
+                <%
+                    final Map<NodeID, Set<OccupantManager.Occupant>> occupantsRegistrationForThisRoom = occupantsByNodeByRoom.get(roomName);
+                    if (occupantsRegistrationForThisRoom != null) {
+                        for(NodeID nodeID : occupantsRegistrationForThisRoom.keySet()) {
+                            boolean isCurrentNode = nodeID.equals(thisNodeID);
+                            Set<OccupantManager.Occupant> occupants = occupantsRegistrationForThisRoom.get(nodeID);
+                            Set<String> occupantDumpItems = occupants.stream().map(occupant -> occupant.getNickname() + ":" + occupant.getRealJID().toFullJID()).collect(Collectors.toSet());
+                            String occupantsDump = String.join("\n", occupantDumpItems);
+                %>
+                            <span style="text-decoration: underline; font-weight: bold<%= isCurrentNode ? "; font-style: italic" : ""%>"><%=nodeID%></span><br/>
+                            <span title="<%=occupantsDump%>"><%= occupants.size() %> occupants</span><br/>
+                <%
+                        }
+                    }
+                %>
             </td>
         </tr>
         <%

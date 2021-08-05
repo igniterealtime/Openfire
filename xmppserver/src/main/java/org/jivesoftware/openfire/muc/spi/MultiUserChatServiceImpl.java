@@ -2964,11 +2964,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        // Get all room occupants that lived on the node that disconnected
-        final Set<OccupantManager.Occupant> occupantsOnRemovedNode = occupantManager.leftCluster();
+        // Get all room occupants that lived on all other nodes, as from the perspective of this node, those nodes are
+        // now no longer part of the cluster.
+        final Set<OccupantManager.Occupant> occupantsOnRemovedNodes = occupantManager.leftCluster();
 
-        // Send presence 'leave' for all of these user to the users that remain in the chatroom (on this node)
-        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode);
+        // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
+        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNodes);
     }
 
     @Override

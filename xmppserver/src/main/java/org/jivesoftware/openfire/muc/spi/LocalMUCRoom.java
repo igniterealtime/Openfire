@@ -779,7 +779,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             List<MUCRole> occupants = occupantsByNickname.get(nickname.toLowerCase());
             // Is this client already joined with this nickname?
             for (MUCRole mucRole : occupants) {
-                if (mucRole.getUserAddress().equals(user.getAddress())) {
+                if (mucRole.getUserAddress().equals(user.getAddress()) && occupantsByFullJID.get(user.getAddress()) != null) {
                     return true;
                 }
             }

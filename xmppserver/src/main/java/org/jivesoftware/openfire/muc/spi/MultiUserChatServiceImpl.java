@@ -3045,14 +3045,23 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     // broadcast to the user that is leaving. That user is clearly unreachable in this instance (as it lives on
                     // a now disconnected cluster node.
                     final Presence presence = new Presence(Presence.Type.unavailable);
-                    presence.setTo(new JID(chatRoom.getJID().getNode(), chatRoom.getJID().getDomain(), occupant.nickname));
-                    presence.setFrom(presence.getTo());
+                    presence.setTo(recipient.getRealJID());
+                    presence.setFrom(new JID(chatRoom.getJID().getNode(), chatRoom.getJID().getDomain(), occupant.nickname));
                     final Element childElement = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
                     final Element item = childElement.addElement("item");
                     item.addAttribute("role", "none");
                     if (chatRoom.canAnyoneDiscoverJID() || chatRoom.getModerators().stream().anyMatch(m->m.getUserAddress().asBareJID().equals(recipient.realJID.asBareJID()))) {
                         // Send non-anonymous - add JID.
                         item.addAttribute("jid", occupant.realJID.toString());
+                    }
+
+                    // We _need_ to go through the MUCRole for sending this stanza, as that has some additional logic (eg: FMUC).
+                    final MUCRole recipientRole = chatRoom.getOccupantByFullJID(recipient.getRealJID());
+                    if (recipientRole != null) {
+                        recipientRole.send(presence);
+                    } else {
+                        Log.warn("Unable to find MUCRole for recipient '{}' in room {} while broadcasting 'leave' presence for occupants on disconnected cluster node(s).", recipient.getRealJID(), chatRoom.getJID());
+                        XMPPServer.getInstance().getPacketRouter().route(presence); // This is a partial fix that will _probably_ work if FMUC is not used. Better than nothing? (although an argument for failing-fast can be made).
                     }
                 } catch (Exception e) {
                     Log.warn("A problem occurred while notifying local occupant that user '{}' left room '{}' as a result of a cluster disconnect.", occupant.nickname, occupant.roomName, e);

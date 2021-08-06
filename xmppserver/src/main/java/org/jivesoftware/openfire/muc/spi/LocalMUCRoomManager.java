@@ -16,21 +16,19 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -242,29 +240,115 @@ public class LocalMUCRoomManager
      * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
      * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
      * contain the data that's provided by the local node. This method restores data that's provided by the local node
-     * in the cache. It is expected to be invoked right after joining
+     * in the cache. It is expected to be invoked right after joining the cluster.
+     *
      * ({@link org.jivesoftware.openfire.cluster.ClusterEventListener#joinedCluster()} or leaving
-     * ({@link org.jivesoftware.openfire.cluster.ClusterEventListener#leftCluster()} a cluster.
      */
-    void restoreCacheContent() {
-        Log.trace( "Restoring cache content for cache '{}' by adding all MUC Rooms that are known to the local node.", ROOM_CACHE.getName() );
+    void restoreCacheContentAfterJoin(@Nullable final Set<OccupantManager.Occupant> localOccupants)
+    {
+        Log.debug( "Restoring cache content for cache '{}' after we joined the cluster, by adding all MUC Rooms that are known to the local node.", ROOM_CACHE.getName() );
 
-        for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet()) {
-            final Lock lock = ROOM_CACHE.getLock(localRoomEntry.getKey());
+        final Map<String, List<OccupantManager.Occupant>> localOccupantByRoom;
+        if (localOccupants == null) {
+            localOccupantByRoom = Collections.emptyMap();
+        } else {
+            localOccupantByRoom = localOccupants.stream().collect(Collectors.groupingBy(OccupantManager.Occupant::getRoomName));
+        }
+
+        // The state of the rooms in the clustered cache should be modified to include our local occupants.
+        for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet())
+        {
+            final String roomName = localRoomEntry.getKey();
+            Log.trace("Re-adding local room '{}' to cluster cache.", roomName);
+
+            final Lock lock = ROOM_CACHE.getLock(roomName);
             lock.lock();
             try {
                 final MUCRoom localRoom = localRoomEntry.getValue();
-                if (!ROOM_CACHE.containsKey(localRoomEntry.getKey())) {
-                    ROOM_CACHE.put(localRoomEntry.getKey(), localRoom);
+                if (!ROOM_CACHE.containsKey(roomName)) {
+                    Log.trace("Room was not known to the cluster. Added our representation.");
+                    ROOM_CACHE.put(roomName, localRoom);
                 } else {
-                    final MUCRoom roomInCluster = ROOM_CACHE.get(localRoomEntry.getKey());
+                    Log.trace("Room was known to the cluster. Merging our local representation with cluster-provided data.");
+                    final MUCRoom roomInCluster = ROOM_CACHE.get(roomName);
+
+                    // Get all occupants that were provided by the local node, and add them to the cluster-representation.
+                    final List<OccupantManager.Occupant> localOccupantsToRestore = localOccupantByRoom.get(roomName);
+                    if (localOccupantsToRestore != null) {
+                        Log.trace("These occupants of the room are recognized as living on our cluster node. Adding them from the cluster-based room: {}", localOccupantsToRestore.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+                        for (OccupantManager.Occupant localOccupantToRestore : localOccupantsToRestore ) {
+                            // Get the Role for the local occupant from the local representation of the room, and add that to the cluster room.
+                            final MUCRole localOccupantRole = localRoom.getOccupantByFullJID(localOccupantToRestore.getRealJID());
+                            if (localOccupantRole == null) {
+                                Log.trace("Trying to add occupant '{}' but no role for that occupant exists in the local room. Data inconsistency?", localOccupantToRestore.getRealJID());
+                                continue;
+                            }
+                            roomInCluster.addOccupantRole(localOccupantRole);
+                        }
+                    }
+
                     if (!roomInCluster.equals(localRoom)) {
                         // TODO: unsure if #equals() is enough to verify equality here.
-                        Log.warn("Joined an Openfire cluster on which a room exists that clashes with a room that exists locally. Room name: '{}' on service '{}'", localRoomEntry.getKey(), serviceName);
+                        Log.warn("Joined an Openfire cluster on which a room exists that clashes with a room that exists locally. Room name: '{}' on service '{}'", roomName, serviceName);
                         // TODO: handle collision. Two nodes have different rooms using the same name.
-                        // Current handling is to not change the room in the local storage - and ignore the clustered cache entry.
+                    }
+
+                    // Sync room back to make cluster aware of changes.
+                    Log.trace("Re-added local room '{}' to cache, with occupants: {}", roomName, roomInCluster.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
+                    ROOM_CACHE.put(roomName, roomInCluster);
+
+                    // TODO: update the local copy of the room with occupants, maybe?
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    /**
+     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
+     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
+     * contain the data that's provided by the local node. This method restores data that's provided by the local node
+     * in the cache. It is expected to be invoked right after leaving the cluster.
+     *
+     * ({@link org.jivesoftware.openfire.cluster.ClusterEventListener#leftCluster()} a cluster.
+     */
+    void restoreCacheContentAfterLeave(@Nullable final Set<OccupantManager.Occupant> occupantsOnRemovedNodes)
+    {
+        Log.debug( "Restoring cache content for cache '{}' after we left the cluster, by adding all MUC Rooms that are known to the local node.", ROOM_CACHE.getName() );
+
+        final Map<String, List<OccupantManager.Occupant>> occupantsOnRemovedNodesByRoom;
+        if (occupantsOnRemovedNodes == null) {
+            occupantsOnRemovedNodesByRoom = Collections.emptyMap();
+        } else {
+            occupantsOnRemovedNodesByRoom = occupantsOnRemovedNodes.stream().collect(Collectors.groupingBy(OccupantManager.Occupant::getRoomName));
+        }
+
+        for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet()) {
+            final String roomName = localRoomEntry.getKey();
+            Log.trace("Re-adding local room '{}' to cluster cache.", roomName);
+            final Lock lock = ROOM_CACHE.getLock(roomName);
+            lock.lock();
+            try {
+                final MUCRoom room = localRoomEntry.getValue();
+
+                // The state of the rooms in the clustered cache should be modified to remove all but our local occupants.
+                final List<OccupantManager.Occupant> occupantsToRemove = occupantsOnRemovedNodesByRoom.get(roomName);
+                if (occupantsToRemove != null) {
+                    Log.trace("These occupants of the room are recognized as living on another cluster node. Removing them from the room: {}", occupantsToRemove.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+                    for (OccupantManager.Occupant occupantToRemove : occupantsToRemove) {
+                        final MUCRole occupantRole = room.getOccupantByFullJID(occupantToRemove.getRealJID());
+                        if (occupantRole == null) {
+                            Log.trace("Trying to remove occupant '{}' but no role for that occupant exists in the room. Data inconsistency?", occupantToRemove.getRealJID());
+                            continue;
+                        }
+                        room.removeOccupantRole(occupantRole);
                     }
                 }
+
+                // Place room in cluster cache.
+                Log.trace("Re-added local room '{}' to cache, with occupants: {}", roomName, room.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
+                ROOM_CACHE.put(roomName, room);
             } finally {
                 lock.unlock();
             }

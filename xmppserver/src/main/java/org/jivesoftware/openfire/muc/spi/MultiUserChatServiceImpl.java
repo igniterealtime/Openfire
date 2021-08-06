@@ -35,11 +35,13 @@ import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
 import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.Component;
@@ -2923,20 +2925,20 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public void joinedCluster() {
         // The local node joined a cluster.
-        //
+
         // Upon joining a cluster, clustered caches are reset to their clustered equivalent (by the swap from the local
         // cache implementation to the clustered cache implementation that's done in the implementation of
         // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
-        restoreCacheContent();
+        final Set<OccupantManager.Occupant> localOccupants = occupantManager.getLocalOccupants();
+        localMUCRoomManager.restoreCacheContentAfterJoin(localOccupants);
 
-        // Let the other nodes know about our local occupants, as they should tell its local users that new occupants have joined.
-        // Note that this effort is strictly about eventing (sending presence stanzas): state has already been synchronised, as
-        // the caches have been restored.
+        // Let the other nodes know about our local occupants, as they need this information when it might leave the
+        // cluster (OF-2224) and should tell its local users that new occupants have joined (OF-2233).
+        CacheFactory.doClusterTask( new SyncLocalOccupantsAndSendJoinPresenceTask(this.chatServiceName, localOccupants) );
 
-
-        // Let our local users know that all 'remote' users have now joined as occupants of existing rooms
-
+        // MUCRoom chatroom, String nickname,
+        //                   MUCRole.Role role, MUCRole.Affiliation affiliation, JID userJid, Presence presence
         // TODO does this work properly when the rooms are not known on the other nodes?
 
         //there is overlap here in MultiUserChatManager
@@ -2944,10 +2946,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void joinedCluster(byte[] nodeID) {
+        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        Log.debug("Service {} got notified that node {} joined a cluster", fullServiceName, new String(nodeID));
+
         // Another node joined a cluster that we're already part of.
 
-        // TODO: Let the new nodes know about our local occupants, as it should tell its local users that they've now joined.
-
+        // Let the new node know about our local occupants, as it needs this information when it might leave the cluster
+        // again (OF-2224). The data is also needed for the joined node to be able to tell its local users that other
+        // occupants have now joined a MUC room that they're in (OF-2233). To generate these stanzas, the receiving node
+        // will probably need additional information. It can obtain this from the clustered cache. Even though we can't
+        // be sure if that node has fully added _its own_ data to that cache (we don't know if restoreCacheContent()
+        // has finished execution), we can be sure that the cache already holds data as provided by _us_.
+        final Set<OccupantManager.Occupant> localOccupants = occupantManager.getLocalOccupants();
+        CacheFactory.doClusterTask( new SyncLocalOccupantsAndSendJoinPresenceTask(this.chatServiceName, localOccupants), nodeID );
     }
 
     @Override
@@ -2958,15 +2969,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return;
         }
 
+        // Get all room occupants that lived on all other nodes, as from the perspective of this node, those nodes are
+        // now no longer part of the cluster.
+        final Set<OccupantManager.Occupant> occupantsOnRemovedNodes = occupantManager.leftCluster();
+
         // Upon leaving a cluster, clustered caches are reset to their local equivalent (by the swap from the clustered
         // cache implementation to the default cache implementation that's done in the implementation of
         // org.jivesoftware.util.cache.CacheFactory.leftCluster). This means that they now hold no data (as a new cache
         // has been created). Data that's available on the local node needs to be added again.
-        restoreCacheContent();
-
-        // Get all room occupants that lived on all other nodes, as from the perspective of this node, those nodes are
-        // now no longer part of the cluster.
-        final Set<OccupantManager.Occupant> occupantsOnRemovedNodes = occupantManager.leftCluster();
+        localMUCRoomManager.restoreCacheContentAfterLeave(occupantsOnRemovedNodes);
 
         // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
         makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNodes);
@@ -2976,7 +2987,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void leftCluster(byte[] nodeID) {
         // Another node left the cluster.
         //
-        // If the cluster node leaves in an orderly fashion, it might have broadcasted
+        // If the cluster node leaves in an orderly fashion, it might have broadcast
         // the necessary events itself. This cannot be depended on, as the cluster node
         // might have disconnected unexpectedly (as a result of a crash or network issue).
         //
@@ -2984,13 +2995,31 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // All chatroom occupants that were connected to the now disconnected node are no longer 'in the room'. The
         // remaining occupants should receive 'occupant left' stanzas to reflect this.
 
-        // FIXME the content of the room cache can still hold (some) of these occupants. They should be removed from there!
-
         // Get all room occupants that lived on the node that disconnected
         final Set<OccupantManager.Occupant> occupantsOnRemovedNode = occupantManager.leftCluster(NodeID.getInstance(nodeID));
 
         // Send presence 'leave' for all of these user to the users that remain in the chatroom (on this node)
         makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode);
+
+        // The content of the room cache can still hold (some) of these occupants. They should be removed from there!
+        if (occupantsOnRemovedNode != null) {
+            // The state of the rooms in the clustered cache should be modified to remove all but our local occupants.
+            for (OccupantManager.Occupant occupant : occupantsOnRemovedNode) {
+                final Lock lock = this.getChatRoomLock(occupant.getRoomName());
+                lock.lock();
+                try {
+                    final MUCRoom room = this.getChatRoom(occupant.getRoomName());
+                    if (room == null) {
+                        continue;
+                    }
+                    final MUCRole occupantRole = room.getOccupantByFullJID(occupant.getRealJID());
+                    room.removeOccupantRole(occupantRole);
+                    this.syncChatRoom(room);
+                } finally {
+                    lock.unlock();
+                }
+            }
+        }
     }
 
     @Override
@@ -3000,24 +3029,113 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // TODO: Check if all occupants are still reachable
     }
 
-    /**
-     * When the local node is joining or leaving a cluster, {@link org.jivesoftware.util.cache.CacheFactory} will swap
-     * the implementation used to instantiate caches. This causes the cache content to be 'reset': it will no longer
-     * contain the data that's provided by the local node. This method restores data that's provided by the local node
-     * in the cache. It is expected to be invoked right after joining ({@link #joinedCluster()} or leaving
-     * ({@link #leftCluster()} a cluster.
-     */
-    private void restoreCacheContent() {
-        localMUCRoomManager.restoreCacheContent();
+    public LocalMUCRoomManager getLocalMUCRoomManager() {
+        return localMUCRoomManager;
     }
 
+    /**
+     * Used by other nodes telling us about their occupants.
+     * @param task
+     */
+    public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task) {
+        occupantManager.process(task);
+        makeOccupantsOnConnectedClusterNodeJoin(task.getOccupants(), task.getOriginator());
+    }
+
+    /**
+     * Sends presence 'join' stanzas on behalf of chatroom occupants that are now connected to the cluster (by virtue
+     * of a cluster node joining the cluster) to other room occupants are local to this cluster node.
+     *
+     * Note that this method does not change state (in either the clustered cache, or local equivalents): it only sends stanzas.
+     *
+     * @param occupantsOnConnectedNodes The occupants for which to send stanzas.
+     * @param remoteNodeID The cluster node ID of the server that joined the cluster.
+     */
+    private void makeOccupantsOnConnectedClusterNodeJoin(@Nullable final Set<OccupantManager.Occupant> occupantsOnConnectedNodes, @Nonnull NodeID remoteNodeID)
+    {
+        Log.debug("Going to send 'join' presence stanzas on the local cluster node for {} occupant(s) of cluster node {} that is now part of our cluster.", occupantsOnConnectedNodes == null || occupantsOnConnectedNodes.isEmpty() ? 0 : occupantsOnConnectedNodes.size(), remoteNodeID);
+        if (occupantsOnConnectedNodes == null || occupantsOnConnectedNodes.isEmpty()) {
+            return;
+        }
+
+        if (!MUCRoom.JOIN_PRESENCE_ENABLE.getValue()) {
+            Log.trace("Skipping, as presences are disabled by configuration.");
+            return;
+        }
+
+        // Find all occupants that were not already on any other node in the cluster. This intends to prevent sending 'join'
+        // presences for occupants that are in the same room, using the same nickname, but using a client that is
+        // connected to a cluster node that already was in the cluster.
+        final Set<OccupantManager.Occupant> toAdd = occupantsOnConnectedNodes.stream()
+            .filter(occupant -> !occupantManager.exists(occupant, remoteNodeID))
+            .collect(Collectors.toSet());
+        Log.trace("After accounting for occupants already in the room by virtue of having another connected device using the same nickname, {} presence stanza(s) are to be sent.", toAdd.size());
+
+        // For each, broadcast a 'join' presence in the room(s).
+        for (final OccupantManager.Occupant occupant : toAdd)
+        {
+            Log.trace("Preparing to send 'join' stanza for occupant '{}' (using nickname '{}') of room '{}'", occupant.getRealJID(), occupant.getNickname(), occupant.getRoomName());
+
+            final MUCRoom chatRoom = getChatRoom(occupant.roomName);
+            if (chatRoom == null) {
+                Log.info("User {} seems to be an occupant (using nickname '{}') of a non-existent room named '{}' on newly connected cluster node(s).", occupant.realJID, occupant.nickname, occupant.roomName);
+                continue;
+            }
+
+            // At this stage, the occupant information must already be available through the clustered cache.
+            final MUCRole occupantRole = chatRoom.getOccupantByFullJID(occupant.getRealJID());
+            if (occupantRole == null) {
+                Log.warn("A remote cluster node ({}) tells us that user {} is supposed to be an occupant (using nickname '{}') of a room named '{}' but the data in the cluster cache does not indicate that this is true.", remoteNodeID, occupant.realJID, occupant.nickname, occupant.roomName);
+                continue;
+            }
+
+            if (!chatRoom.canBroadcastPresence(occupantRole.getRole())) {
+                Log.trace("Skipping join stanza, as room is configured to not broadcast presence for role {}", occupantRole.getRole());
+                continue;
+            }
+
+            // To prevent each (remaining) cluster node from broadcasting the same presence to all occupants of all cluster nodes,
+            // this broadcasts only to occupants on the local node.
+            final Set<OccupantManager.Occupant> recipients = occupantManager.occupantsForRoomByNode(occupant.roomName, XMPPServer.getInstance().getNodeID());
+            for (OccupantManager.Occupant recipient : recipients) {
+                Log.trace("Preparing stanza for recipient {} (nickname: {})", recipient.getRealJID(), recipient.getNickname());
+                try {
+                    // Note that we cannot use org.jivesoftware.openfire.muc.MUCRoom.broadcastPresence() as this would attempt to
+                    // broadcast to the user that is 'joining' to all users. We only want to broadcast locally here.
+
+                    // We _need_ to go through the MUCRole for sending this stanza, as that has some additional logic (eg: FMUC).
+                    final MUCRole recipientRole = chatRoom.getOccupantByFullJID(recipient.getRealJID());
+                    if (recipientRole != null) {
+                        recipientRole.send(occupantRole.getPresence());
+                    } else {
+                        Log.warn("Unable to find MUCRole for recipient '{}' in room {} while broadcasting 'join' presence for occupants on joining cluster node {}.", recipient.getRealJID(), chatRoom.getJID(), remoteNodeID);
+                        XMPPServer.getInstance().getPacketRouter().route(occupantRole.getPresence()); // This is a partial fix that will _probably_ work if FMUC is not used. Better than nothing? (although an argument for failing-fast can be made).
+                    }
+                } catch (Exception e) {
+                    Log.warn("A problem occurred while notifying local occupant that user '{}' joined room '{}' as a result of a cluster node {} joining the cluster.", occupant.nickname, occupant.roomName, remoteNodeID, e);
+                }
+            }
+        }
+        Log.debug("Finished sending 'join' presence stanzas on the local cluster node.");
+    }
+
+    /**
+     * Sends presence 'leave' stanzas on behalf of chatroom occupants that are no longer connected to the cluster to
+     * room occupants that are local to this cluster node.
+     *
+     * Note that this method does not change state (in either the clustered cache, or local equivalents): it only sends stanzas.
+     *
+     * @param occupantsOnRemovedNodes The occupants for which to send stanzas
+     */
     private void makeOccupantsOnDisconnectedClusterNodesLeave(@Nullable final Set<OccupantManager.Occupant> occupantsOnRemovedNodes)
     {
+        Log.debug("Going to send 'leave' presence stanzas on the local cluster node for {} occupant(s) of one or more cluster nodes that are no longer part of our cluster.", occupantsOnRemovedNodes == null || occupantsOnRemovedNodes.isEmpty() ? 0 : occupantsOnRemovedNodes.size());
         if (occupantsOnRemovedNodes == null || occupantsOnRemovedNodes.isEmpty()) {
             return;
         }
 
         if (!MUCRoom.JOIN_PRESENCE_ENABLE.getValue()) {
+            Log.trace("Skipping, as presences are disabled by configuration.");
             return;
         }
 
@@ -3027,20 +3145,24 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         final Set<OccupantManager.Occupant> toRemove = occupantsOnRemovedNodes.stream()
             .filter(occupant -> !occupantManager.exists(occupant))
             .collect(Collectors.toSet());
+        Log.trace("After accounting for occupants still in the room by virtue of having another connected device using the same nickname, {} presence stanza(s) are to be sent.", toRemove.size());
 
         // For each, broadcast a 'leave' presence in the room(s).
         for(final OccupantManager.Occupant occupant : toRemove) {
-            final MUCRoom chatRoom = getChatRoom(occupant.roomName);
+            Log.trace("Preparing to send 'leave' stanza for occupant '{}' (using nickname '{}') of room '{}'", occupant.getRealJID(), occupant.getNickname(), occupant.getRoomName());
+            final MUCRoom chatRoom = getChatRoom(occupant.getRoomName());
             if (chatRoom == null) {
-                Log.info("User {} seems to be an occupant (using nickname '{}') of a non-existent room named '{}' on disconnected cluster node(s).", occupant.realJID, occupant.nickname, occupant.roomName);
+                Log.info("User {} seems to be an occupant (using nickname '{}') of a non-existent room named '{}' on disconnected cluster node(s).", occupant.getRealJID(), occupant.getNickname(), occupant.getRoomName());
                 continue;
             }
 
             // To prevent each (remaining) cluster node from broadcasting the same presence to all occupants of all remaining nodes,
             // this broadcasts only to occupants on the local node.
-            final Set<OccupantManager.Occupant> recipients = occupantManager.occupantsForRoomByNode(occupant.roomName, XMPPServer.getInstance().getNodeID());
+            final Set<OccupantManager.Occupant> recipients = occupantManager.occupantsForRoomByNode(occupant.getRoomName(), XMPPServer.getInstance().getNodeID());
+            Log.trace("Intended recipients, count: {} (occupants of the same room, on the local cluster node): {}", recipients.size(), recipients.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
             for (OccupantManager.Occupant recipient : recipients) {
                 try {
+                    Log.trace("Preparing stanza for recipient {} (nickname: {})", recipient.getRealJID(), recipient.getNickname());
                     // Note that we cannot use chatRoom.sendLeavePresenceToExistingOccupants(leaveRole) as this would attempt to
                     // broadcast to the user that is leaving. That user is clearly unreachable in this instance (as it lives on
                     // a now disconnected cluster node.
@@ -3050,9 +3172,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     final Element childElement = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
                     final Element item = childElement.addElement("item");
                     item.addAttribute("role", "none");
-                    if (chatRoom.canAnyoneDiscoverJID() || chatRoom.getModerators().stream().anyMatch(m->m.getUserAddress().asBareJID().equals(recipient.realJID.asBareJID()))) {
+                    if (chatRoom.canAnyoneDiscoverJID() || chatRoom.getModerators().stream().anyMatch(m->m.getUserAddress().asBareJID().equals(recipient.getRealJID().asBareJID()))) {
                         // Send non-anonymous - add JID.
-                        item.addAttribute("jid", occupant.realJID.toString());
+                        item.addAttribute("jid", occupant.getRealJID().toString());
                     }
 
                     // We _need_ to go through the MUCRole for sending this stanza, as that has some additional logic (eg: FMUC).
@@ -3068,9 +3190,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
             }
         }
-    }
-
-    public LocalMUCRoomManager getLocalMUCRoomManager() {
-        return localMUCRoomManager;
+        Log.debug("Finished sending 'leave' presence stanzas on the local cluster node.");
     }
 }

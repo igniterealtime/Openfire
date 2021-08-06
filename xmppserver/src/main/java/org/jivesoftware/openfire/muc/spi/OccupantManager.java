@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedTask;
 import org.jivesoftware.openfire.muc.cluster.OccupantRemovedTask;
 import org.jivesoftware.openfire.muc.cluster.OccupantUpdatedTask;
+import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -244,6 +245,23 @@ public class OccupantManager implements MUCEventListener
     }
 
     /**
+     * Used by other nodes telling us about all of their occupants.
+     *
+     * @param task Cluster task that informs of occupants on a remote node.
+     */
+    public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task) {
+        final Set<Occupant> oldOccupants = occupantsByNode.put(task.getOriginator(), task.getOccupants());
+        if (oldOccupants != null) {
+            if (oldOccupants.equals(task.getOccupants())) {
+                Log.info("We received a copy of local MUC occupants from node {}, but we already had this information. This hints at a possible inefficient sharing of data across the cluster.", task.getOriginator());
+            } else {
+                Log.warn("We received a copy of local MUC occupants from node {}, but we already had occupants for this node. However, the new data is different from the old data!", task.getOriginator());
+            }
+        }
+    }
+
+
+    /**
      * Returns the name of all the rooms that a particular XMPP entity (user) is currently an occupant of.
      *
      * @param realJID The XMPP address of a user
@@ -297,6 +315,19 @@ public class OccupantManager implements MUCEventListener
             .map(Occupant::getRealJID)
             .collect(Collectors.toSet())
             .size();
+    }
+
+    // cluster join
+    public boolean exists(@Nonnull final Occupant occupant, @Nullable final NodeID exclude) {
+        // TODO optimize this. Iterating over all values is very inefficient.
+        for (final Map.Entry<NodeID, Set<Occupant>> entry : occupantsByNode.entrySet()) {
+            if (!entry.getKey().equals(exclude)) {
+                if (entry.getValue().contains(occupant)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // cluster leave

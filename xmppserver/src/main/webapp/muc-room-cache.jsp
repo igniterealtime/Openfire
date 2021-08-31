@@ -29,7 +29,6 @@
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="org.jivesoftware.openfire.muc.spi.OccupantManager" %>
 <%@ page import="org.jivesoftware.openfire.cluster.NodeID" %>
-<%@ page import="java.util.concurrent.ConcurrentMap" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -68,7 +67,7 @@
     final Set<String> roomsOnlyInClusteredCache = roomsClustered.keySet().stream().filter(jid -> !roomsLocal.containsKey(jid)).collect(Collectors.toSet());
     final Set<String> roomsOnlyInLocalCache = roomsLocal.keySet().stream().filter(jid -> !roomsClustered.containsKey(jid)).collect(Collectors.toSet());
 
-    final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = mucService.getOccupantManager().getOccupantsByNode();
+    final Map<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = mucService.getOccupantManager().getOccupantsByNode();
     // Reorganise the occupants-by-node by room name
     final Map<String, Map<NodeID, Set<OccupantManager.Occupant>>> occupantsByNodeByRoom = new HashMap<>();
     for (Map.Entry<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeEntry : occupantsByNode.entrySet()) {

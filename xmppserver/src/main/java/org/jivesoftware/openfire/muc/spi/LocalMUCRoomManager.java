@@ -90,7 +90,7 @@ public class LocalMUCRoomManager
     int size()
     {
         final int result = ROOM_CACHE.size();
-        Log.trace("Room count for service '{}': {}", serviceName, result);
+        Log.debug("Room count for service '{}': {}", serviceName, result);
         return result;
     }
 
@@ -106,7 +106,7 @@ public class LocalMUCRoomManager
     @Nonnull
     Lock getLock(@Nonnull final String roomName)
     {
-        Log.trace("Obtaining lock for room '{}' of service '{}'", roomName, serviceName);
+        Log.debug("Obtaining lock for room '{}' of service '{}'", roomName, serviceName);
         return ROOM_CACHE.getLock(roomName);
     }
 
@@ -120,7 +120,7 @@ public class LocalMUCRoomManager
         final Lock lock = ROOM_CACHE.getLock(room.getName());
         lock.lock();
         try {
-            Log.trace("Adding room '{}' of service '{}'", room.getName(), serviceName);
+            Log.debug("Adding room '{}' of service '{}'", room.getName(), serviceName);
             ROOM_CACHE.put(room.getName(), room);
             localRooms.put(room.getName(), room);
         } finally {
@@ -141,7 +141,7 @@ public class LocalMUCRoomManager
         final Lock lock = ROOM_CACHE.getLock(room.getName());
         lock.lock();
         try {
-            Log.trace("Syncing room '{}' of service '{}' (destroy: {})", room.getName(), serviceName, room.isDestroyed);
+            Log.debug("Syncing room '{}' of service '{}' (destroy: {})", room.getName(), serviceName, room.isDestroyed);
             if (room.isDestroyed) {
                 ROOM_CACHE.remove(room.getName());
                 localRooms.remove(room.getName());
@@ -195,7 +195,7 @@ public class LocalMUCRoomManager
         final Lock lock = ROOM_CACHE.getLock(roomName);
         lock.lock();
         try {
-            Log.trace("Removing room '{}' of service '{}'", roomName, serviceName);
+            Log.debug("Removing room '{}' of service '{}'", roomName, serviceName);
             final MUCRoom room = ROOM_CACHE.remove(roomName);
             if (room != null) {
                 GroupEventDispatcher.removeListener(room);
@@ -259,28 +259,28 @@ public class LocalMUCRoomManager
         for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet())
         {
             final String roomName = localRoomEntry.getKey();
-            Log.trace("Re-adding local room '{}' to cluster cache.", roomName);
+            Log.debug("Re-adding local room '{}' to cluster cache.", roomName);
 
             final Lock lock = ROOM_CACHE.getLock(roomName);
             lock.lock();
             try {
                 final MUCRoom localRoom = localRoomEntry.getValue();
                 if (!ROOM_CACHE.containsKey(roomName)) {
-                    Log.trace("Room was not known to the cluster. Added our representation.");
+                    Log.debug("Room was not known to the cluster. Added our representation.");
                     ROOM_CACHE.put(roomName, localRoom);
                 } else {
-                    Log.trace("Room was known to the cluster. Merging our local representation with cluster-provided data.");
+                    Log.debug("Room was known to the cluster. Merging our local representation with cluster-provided data.");
                     final MUCRoom roomInCluster = ROOM_CACHE.get(roomName);
 
                     // Get all occupants that were provided by the local node, and add them to the cluster-representation.
                     final List<OccupantManager.Occupant> localOccupantsToRestore = localOccupantByRoom.get(roomName);
                     if (localOccupantsToRestore != null) {
-                        Log.trace("These occupants of the room are recognized as living on our cluster node. Adding them from the cluster-based room: {}", localOccupantsToRestore.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+                        Log.debug("These occupants of the room are recognized as living on our cluster node. Adding them from the cluster-based room: {}", localOccupantsToRestore.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
                         for (OccupantManager.Occupant localOccupantToRestore : localOccupantsToRestore ) {
                             // Get the Role for the local occupant from the local representation of the room, and add that to the cluster room.
                             final MUCRole localOccupantRole = localRoom.getOccupantByFullJID(localOccupantToRestore.getRealJID());
                             if (localOccupantRole == null) {
-                                Log.trace("Trying to add occupant '{}' but no role for that occupant exists in the local room. Data inconsistency?", localOccupantToRestore.getRealJID());
+                                Log.debug("Trying to add occupant '{}' but no role for that occupant exists in the local room. Data inconsistency?", localOccupantToRestore.getRealJID());
                                 continue;
                             }
                             roomInCluster.addOccupantRole(localOccupantRole);
@@ -294,7 +294,7 @@ public class LocalMUCRoomManager
                     }
 
                     // Sync room back to make cluster aware of changes.
-                    Log.trace("Re-added local room '{}' to cache, with occupants: {}", roomName, roomInCluster.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
+                    Log.debug("Re-added local room '{}' to cache, with occupants: {}", roomName, roomInCluster.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
                     ROOM_CACHE.put(roomName, roomInCluster);
 
                     // TODO: update the local copy of the room with occupants, maybe?
@@ -326,7 +326,7 @@ public class LocalMUCRoomManager
 
         for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet()) {
             final String roomName = localRoomEntry.getKey();
-            Log.trace("Re-adding local room '{}' to cluster cache.", roomName);
+            Log.debug("Re-adding local room '{}' to cluster cache.", roomName);
             final Lock lock = ROOM_CACHE.getLock(roomName);
             lock.lock();
             try {
@@ -335,11 +335,11 @@ public class LocalMUCRoomManager
                 // The state of the rooms in the clustered cache should be modified to remove all but our local occupants.
                 final List<OccupantManager.Occupant> occupantsToRemove = occupantsOnRemovedNodesByRoom.get(roomName);
                 if (occupantsToRemove != null) {
-                    Log.trace("These occupants of the room are recognized as living on another cluster node. Removing them from the room: {}", occupantsToRemove.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+                    Log.debug("These occupants of the room are recognized as living on another cluster node. Removing them from the room: {}", occupantsToRemove.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
                     for (OccupantManager.Occupant occupantToRemove : occupantsToRemove) {
                         final MUCRole occupantRole = room.getOccupantByFullJID(occupantToRemove.getRealJID());
                         if (occupantRole == null) {
-                            Log.trace("Trying to remove occupant '{}' but no role for that occupant exists in the room. Data inconsistency?", occupantToRemove.getRealJID());
+                            Log.debug("Trying to remove occupant '{}' but no role for that occupant exists in the room. Data inconsistency?", occupantToRemove.getRealJID());
                             continue;
                         }
                         room.removeOccupantRole(occupantRole);
@@ -347,7 +347,7 @@ public class LocalMUCRoomManager
                 }
 
                 // Place room in cluster cache.
-                Log.trace("Re-added local room '{}' to cache, with occupants: {}", roomName, room.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
+                Log.debug("Re-added local room '{}' to cache, with occupants: {}", roomName, room.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
                 ROOM_CACHE.put(roomName, room);
             } finally {
                 lock.unlock();

@@ -36,7 +36,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.event.GroupEventListener;
+import org.jivesoftware.openfiret.GroupEventListener;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.ConcurrentGroupMap;
 import org.jivesoftware.openfire.group.Group;
@@ -600,7 +600,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             return MUCRole.Role.participant;
         }
         else {
-            // if true, default to participant evne if the room is moderated
+            // if true, default to participant even if the room is moderated
             if(JiveGlobals.getXMLProperty("xmpp.muc.room.defaultToParticipant", false)){
                 return MUCRole.Role.participant;
             }

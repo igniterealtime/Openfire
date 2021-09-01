@@ -600,6 +600,10 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             return MUCRole.Role.participant;
         }
         else {
+             // if true, default to participant even if the room is moderated
+            if(JiveGlobals.getXMLProperty("xmpp.muc.room.defaultToParticipant", false)){
+                return MUCRole.Role.participant;
+            }
             return isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
         }
     }

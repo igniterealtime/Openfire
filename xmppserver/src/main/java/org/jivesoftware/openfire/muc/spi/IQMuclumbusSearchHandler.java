@@ -158,7 +158,7 @@ public class IQMuclumbusSearchHandler
      */
     public IQ handleIQ( IQ iq )
     {
-        Log.trace( "Received request: {}", iq );
+        Log.debug( "Received request: {}", iq );
 
         final IQ reply = IQ.createResultIQ( iq );
         if ( !PROPERTY_ENABLED.getValue() )
@@ -214,7 +214,7 @@ public class IQMuclumbusSearchHandler
 
         if ( applyRSM )
         {
-            Log.trace( "Applying RSM" );
+            Log.debug( "Applying RSM" );
             if ( !ResultSet.isValidRSMRequest( set ) )
             {
                 reply.setError( Condition.bad_request );
@@ -235,7 +235,7 @@ public class IQMuclumbusSearchHandler
         else
         {
             // if no rsm, all found rooms are part of the result.
-            Log.trace( "Not applying RSM" );
+            Log.debug( "Not applying RSM" );
             mucrsm = new ArrayList<>( searchResults );
         }
 
@@ -424,7 +424,7 @@ public class IQMuclumbusSearchHandler
      */
     public static List<MUCRoomSearchInfo> sortByAddress( List<MUCRoomSearchInfo> mucs )
     {
-        Log.trace( "Sorting by address." );
+        Log.debug( "Sorting by address." );
         mucs.sort( Comparator.comparing( MUCRoomSearchInfo::getJID) );
         return mucs;
     }
@@ -438,7 +438,7 @@ public class IQMuclumbusSearchHandler
      */
     public static List<MUCRoomSearchInfo> sortByUserAmount( List<MUCRoomSearchInfo> mucs )
     {
-        Log.trace( "Sorting by occupant count." );
+        Log.debug( "Sorting by occupant count." );
         mucs.sort( ( o1, o2 ) -> o2.getOccupantsCount() - o1.getOccupantsCount() );
         return mucs;
     }

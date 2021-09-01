@@ -55,7 +55,7 @@
 
         <RollingFile name="all-out" fileName="${sys:openfireHome}/logs/all.log" filePattern="${sys:openfireHome}/logs/all.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %msg%n</Pattern>
+                <Pattern>%d{ABSOLUTE} %highlight{%-5p} [%15.15t]: %c{.40} - %msg%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="100 MB"/>
@@ -79,6 +79,8 @@
 
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
+        <Logger name="com.hazelcast.internal.partition.impl.MigrationManager" level="info"/>
+        <Logger name="com.hazelcast.spi.impl.operationservice.impl.InvocationMonitor" level="info"/>
 
         <Root level="all">
             <AppenderRef ref="all-out"/>

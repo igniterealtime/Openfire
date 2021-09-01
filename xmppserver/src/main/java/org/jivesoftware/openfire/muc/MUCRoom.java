@@ -828,7 +828,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     private void sendRoomHistoryAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCRole joinRole, @Nullable HistoryRequest historyRequest )
     {
         if (historyRequest == null) {
-            Log.trace( "Sending default room history to user '{}' that joined room '{}'.", realAddress, this.getJID() );
+            Log.debug( "Sending default room history to user '{}' that joined room '{}'.", realAddress, this.getJID() );
             final Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {
                 // OF-2163: Prevent modifying the original history stanza (that can be retrieved by others later) by making a defensive copy.
@@ -837,7 +837,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 joinRole.send(message);
             }
         } else {
-            Log.trace( "Sending user-requested room history to user '{}' that joined room '{}'.", realAddress, this.getJID() );
+            Log.debug( "Sending user-requested room history to user '{}' that joined room '{}'.", realAddress, this.getJID() );
             historyRequest.sendHistory(joinRole, roomHistory);
         }
     }
@@ -847,7 +847,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void sendRoomSubjectAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCRole joinRole )
     {
-        Log.trace( "Sending room subject to user '{}' that joined room '{}'.", realAddress, this.getJID() );
+        Log.debug( "Sending room subject to user '{}' that joined room '{}'.", realAddress, this.getJID() );
 
         Message roomSubject = roomHistory.getChangedSubject();
         if (roomSubject != null) {
@@ -923,7 +923,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 canJoin = false;
             }
         }
-        Log.trace( "{} Room join precondition 'delegate': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'delegate': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new UnauthorizedException();
         }
@@ -938,7 +938,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     private void checkJoinRoomPreconditionMaxOccupants( @Nonnull final JID realAddress ) throws ServiceUnavailableException
     {
         final boolean canJoin = canJoinRoom(realAddress);
-        Log.trace( "{} Room join precondition 'max occupants': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'max occupants': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoinRoom(realAddress)) {
             throw new ServiceUnavailableException( "This room has reached its maximum number of occupants." );
         }
@@ -960,7 +960,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 canJoin = false;
             }
         }
-        Log.trace( "{} Room join precondition 'room locked': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'room locked': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new RoomLockedException( "This room is locked (and you are not an owner)." );
         }
@@ -975,10 +975,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void checkJoinRoomPreconditionNicknameInUse(@Nonnull final JID realAddress, @Nonnull String nickname ) throws UserAlreadyExistsException
     {
-        occupants.forEach(occupant -> Log.trace( "Occupant already in room: {}", occupant));
+        occupants.forEach(occupant -> Log.debug( "Occupant already in room: {}", occupant));
         final JID bareJID = realAddress.asBareJID();
         final boolean canJoin = occupants == null || occupants.stream().noneMatch(mucRole -> !mucRole.getUserAddress().asBareJID().equals(bareJID) && mucRole.getNickname().equalsIgnoreCase(nickname));
-        Log.trace( "{} Room join precondition 'nickname in use': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'nickname in use': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new UserAlreadyExistsException( "Someone else in the room uses the nickname that you want to use." );
         }
@@ -1002,7 +1002,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 canJoin = false;
             }
         }
-        Log.trace( "{} Room join precondition 'password protection': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'password protection': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new UnauthorizedException( "You did not supply the correct password needed to join this room." );
         }
@@ -1024,7 +1024,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 canJoin = false;
             }
         }
-        Log.trace( "{} Room join precondition 'nickname reserved': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'nickname reserved': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new ConflictException( "Someone else in the room has reserved the nickname that you want to use." );
         }
@@ -1050,7 +1050,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             }
         }
 
-        Log.trace( "{} Room join precondition 'restricted to nickname': User '{}' {} join room {}. Reserved nickname: '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID(), reservedNickname );
+        Log.debug( "{} Room join precondition 'restricted to nickname': User '{}' {} join room {}. Reserved nickname: '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID(), reservedNickname );
         if (!canJoin) {
             throw new NotAcceptableException( "This room is configured to restrict joins to reserved nicknames. The nickname that you supplied was not the nickname that you reserved for this room, which is: " + reservedNickname );
         }
@@ -1066,7 +1066,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     {
         boolean canJoin = affiliation != MUCRole.Affiliation.outcast;
 
-        Log.trace( "{} Room join precondition 'is outcast': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'is outcast': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new ForbiddenException( "You have been banned (marked as 'outcast') from this room." );
         }
@@ -1082,7 +1082,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     {
         boolean canJoin = !isMembersOnly() || Arrays.asList( MUCRole.Affiliation.admin, MUCRole.Affiliation.owner, MUCRole.Affiliation.member ).contains( affiliation );
 
-        Log.trace( "{} Room join precondition 'member-only': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
+        Log.debug( "{} Room join precondition 'member-only': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new RegistrationRequiredException( "This room is member-only, but you are not a member." );
         }
@@ -1120,7 +1120,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             return;
         }
 
-        Log.trace( "Send presence of existing occupants of room '{}' to new occupant '{}'.", this.getJID(), joinRole.getUserAddress() );
+        Log.debug( "Send presence of existing occupants of room '{}' to new occupant '{}'.", this.getJID(), joinRole.getUserAddress() );
         for ( final MUCRole occupant : getOccupants() ) {
             if (occupant == joinRole) {
                 continue;
@@ -1148,7 +1148,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public void addOccupantRole(@Nonnull final MUCRole role)
     {
-        Log.trace( "Add occupant to room {}: {}", this.getJID(), role );
+        Log.debug( "Add occupant to room {}: {}", this.getJID(), role );
         occupants.add(role);
 
         // Fire event that occupant joined the room.
@@ -1162,7 +1162,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public CompletableFuture<Void> sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), this.getJID() );
+        Log.debug( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), this.getJID() );
         try {
             final Presence originalPresence = leaveRole.getPresence();
             final Presence presence = originalPresence.createCopy(); // Defensive copy to not modify the original.
@@ -1239,7 +1239,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public CompletableFuture<Void> sendInitialPresenceToExistingOccupants( MUCRole joinRole) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), this.getJID() );
+        Log.debug( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), this.getJID() );
         try {
             final Presence joinPresence = joinRole.getPresence().createCopy();
             return broadcastPresence(joinPresence, true, joinRole);
@@ -1256,7 +1256,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @param leaveRole the role to remove.
      */
     public void removeOccupantRole(@Nonnull final MUCRole leaveRole) {
-        Log.trace( "Remove occupant from room {}: {}", this.getJID(), leaveRole );
+        Log.debug( "Remove occupant from room {}: {}", this.getJID(), leaveRole );
         occupants.remove(leaveRole);
         MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
     }
@@ -1539,7 +1539,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             {
                 // Do not send broadcast presence to occupants hosted in other FMUC nodes.
                 if (occupant.isRemoteFmuc()) {
-                    Log.trace( "Not sending presence update of '{}' to {}: This occupant is on another FMUC node.", presence.getFrom(), occupant.getUserAddress() );
+                    Log.debug( "Not sending presence update of '{}' to {}: This occupant is on another FMUC node.", presence.getFrom(), occupant.getUserAddress() );
                     continue;
                 }
 
@@ -1547,13 +1547,13 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 final Presence toSend;
                 if (occupant.getPresence().getFrom().equals(presence.getTo())) {
                     // This occupant is the subject of the stanza. Send the 'self-presence' stanza.
-                    Log.trace( "Sending self-presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
+                    Log.debug( "Sending self-presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
                     toSend = selfPresence;
                 } else if ( !canAnyoneDiscoverJID && MUCRole.Role.moderator != occupant.getRole() ) {
-                    Log.trace( "Sending anonymized presence of '{}' to {}: The room is semi-anon, and this occupant is not a moderator.", presence.getFrom(), occupant.getUserAddress() );
+                    Log.debug( "Sending anonymized presence of '{}' to {}: The room is semi-anon, and this occupant is not a moderator.", presence.getFrom(), occupant.getUserAddress() );
                     toSend = anonPresence;
                 } else {
-                    Log.trace( "Sending presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
+                    Log.debug( "Sending presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
                     toSend = nonAnonPresence;
                 }
 

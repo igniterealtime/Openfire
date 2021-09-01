@@ -83,7 +83,7 @@ import java.util.stream.Collectors;
  * @author Gaston Dombiak
  */
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
-        ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener, ClusterEventListener
+    ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener, ClusterEventListener
 {
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
 
@@ -1064,7 +1064,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         @Nonnull final Presence packet,
         @Nonnull final String roomName,
         @Nullable final MUCRoom room,
-        @Nullable final MUCRole preExistingRole )
+        @Nullable MUCRole preExistingRole )
     {
         final Element mucInfo = packet.getChildElement("x", "http://jabber.org/protocol/muc"); // only sent in initial presence
         final String nickname = packet.getTo().getResource() == null
@@ -1073,9 +1073,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         if ( preExistingRole == null && Presence.Type.unavailable == packet.getType() ) {
 
+            // This is for clustering scenarios where one node could already have cleaned up the clustered cache,
+            // but the local node still needs to process the 'unavailable' presence of the leaving occupant.
+            preExistingRole = localMUCRoomManager.getLocalRooms().get(roomName).getOccupantByFullJID(packet.getFrom());
+
+            if (preExistingRole == null) {
                 Log.debug("Silently ignoring user '{}' leaving a room that it has no role in '{}' (was the room just destroyed)?", packet.getFrom(), roomName);
                 return null;
+            } else {
+                Log.debug("NOT silently ignoring user {} leaving a room. Sending 'unavailable' presence for room {} because the occupant was still present in the local room cache", packet.getFrom(), roomName);
             }
+        }
         if ( preExistingRole == null || mucInfo != null )
         {
             // If we're not already in a room (role == null), we either are joining it or it's not properly addressed and we drop it silently.
@@ -2006,7 +2014,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void setAllowToDiscoverMembersOnlyRooms(final boolean allowToDiscoverMembersOnlyRooms) {
         this.allowToDiscoverMembersOnlyRooms = allowToDiscoverMembersOnlyRooms;
         MUCPersistenceManager.setProperty(chatServiceName, "discover.membersOnly",
-                Boolean.toString(allowToDiscoverMembersOnlyRooms));
+            Boolean.toString(allowToDiscoverMembersOnlyRooms));
     }
 
     /**
@@ -2031,7 +2039,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public void setAllowToDiscoverLockedRooms(final boolean allowToDiscoverLockedRooms) {
         this.allowToDiscoverLockedRooms = allowToDiscoverLockedRooms;
         MUCPersistenceManager.setProperty(chatServiceName, "discover.locked",
-                Boolean.toString(allowToDiscoverLockedRooms));
+            Boolean.toString(allowToDiscoverLockedRooms));
     }
 
     @Override
@@ -2146,13 +2154,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         allowToDiscoverLockedRooms =
-                MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.locked", true);
+            MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.locked", true);
         allowToDiscoverMembersOnlyRooms =
-                MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.membersOnly", true);
+            MUCPersistenceManager.getBooleanProperty(chatServiceName, "discover.membersOnly", true);
         roomCreationRestricted =
-                MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.anyone", false);
+            MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.anyone", false);
         allRegisteredUsersAllowedToCreate =
-                MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.all-registered", false );
+            MUCPersistenceManager.getBooleanProperty(chatServiceName, "create.all-registered", false );
         // Load the list of JIDs that are allowed to create a MUC room
         property = MUCPersistenceManager.getProperty(chatServiceName, "create.jid");
         allowedToCreate.clear();
@@ -2244,10 +2252,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         emptyLimit = 30 * 24;
         if (value != null) {
             try {
-            	if (Integer.parseInt(value)>0)
-            		emptyLimit = Integer.parseInt(value) * (long)24;
-            	else
-            		emptyLimit = -1;
+                if (Integer.parseInt(value)>0)
+                    emptyLimit = Integer.parseInt(value) * (long)24;
+                else
+                    emptyLimit = -1;
             }
             catch (final NumberFormatException e) {
                 Log.error("Wrong number format of property unload.empty_days for service "+chatServiceName, e);
@@ -3025,12 +3033,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Get all room occupants that lived on the node that disconnected
         final Set<OccupantManager.Occupant> occupantsOnRemovedNode = occupantManager.leftCluster(NodeID.getInstance(nodeID));
 
-        // Send presence 'leave' for all of these user to the users that remain in the chatroom (on this node)
-        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode);
         // The content of the room cache can still hold (some) of these occupants. They should be removed from there!
         if (occupantsOnRemovedNode != null) {
             // The state of the rooms in the clustered cache should be modified to remove all but our local occupants.
-            for (OccupantManager.Occupant occupant : occupantsOnRemovedNode) {
+            for (Iterator<OccupantManager.Occupant> i = occupantsOnRemovedNode.iterator(); i.hasNext(); ) {
+                OccupantManager.Occupant occupant = i.next();
                 final Lock lock = this.getChatRoomLock(occupant.getRoomName());
                 lock.lock();
                 try {
@@ -3040,14 +3047,27 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     }
                     final MUCRole occupantRole = room.getOccupantByFullJID(occupant.getRealJID());
 
+                    // When leaving a cluster, the routing table will also detect that some clients are no
+                    // longer available. And send presence unavailable stanzas accordingly. Because of that,
+                    // the occupant may already have been removed from the room. This may however not happen
+                    // at all if federated users are in play. Hence the null check here: if the occupant is
+                    // no longer in the room, we don't need to remove it.
+                    if (occupantRole != null) {
                         room.removeOccupantRole(occupantRole);
                         this.syncChatRoom(room);
+                        Log.debug("Removed occupant role {} from room {}.", occupantRole, room.getJID());
+                    } else {
+                        // Occupant already removed, so we don't need to send 'leave' presence
+                        i.remove();
+                    }
                 } finally {
                     lock.unlock();
                 }
             }
         }
 
+        // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
+        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode);
 
         occupantManager.logOccupantData("Other node " + new String(nodeID) + " left our cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
     }
@@ -3216,6 +3236,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                     // We _need_ to go through the MUCRole for sending this stanza, as that has some additional logic (eg: FMUC).
                     final MUCRole recipientRole = chatRoom.getOccupantByFullJID(recipient.getRealJID());
+                    Log.debug("Stanza now being sent: {}", presence.toXML());
                     if (recipientRole != null) {
                         recipientRole.send(presence);
                     } else {

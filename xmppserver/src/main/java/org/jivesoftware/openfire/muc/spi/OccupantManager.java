@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.muc.spi;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCEventListener;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedTask;
@@ -172,7 +173,7 @@ public class OccupantManager implements MUCEventListener
     public void logOccupantData(String reasonForLogging, LocalTime start, Map<String, MUCRoom> roomCache) {
         LocalTime end = LocalTime.now();
         StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        List<String> callStack = Arrays.stream(elements).skip(2l).limit(10l).map(StackTraceElement::toString).collect(Collectors.toList());
+        List<String> callStack = Arrays.stream(elements).skip(2L).limit(10L).map(StackTraceElement::toString).collect(Collectors.toList());
         Log.debug("================== OCCUPANT MANAGER DATA ==================");
         Log.debug("===                         TIME                        ===");
         Log.debug(
@@ -204,19 +205,17 @@ public class OccupantManager implements MUCEventListener
         if (roomCache == null) {
             Log.debug("===                     NOT SPECIFIED                   ===");
         } else {
-            roomCache.entrySet().forEach(e -> {
-                Log.debug("= " + e.getKey() + " ---> " + e.getValue().getName() + " ---> " + e.getValue().getOccupants().stream().map(mr -> mr.getNickname()).collect(Collectors.joining("/")));
-            });
+            roomCache
+                .values()
+                .forEach(room -> Log.debug("= " + room.getName() + " ---> " + room
+                    .getOccupants()
+                    .stream()
+                    .map(MUCRole::getNickname)
+                    .collect(Collectors.joining("/"))
+                ));
         }
-        Log.debug("=                        COUNT: {}", occupantsByRealJid.size());
-        occupantsByRealJid.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(occupant -> Log.debug("= - {}", occupant));
-        });
         Log.debug("===                  TOP OF CALL STACK                  ===");
-        callStack.forEach(se -> {
-            Log.debug("= {}", se);
-        });
+        callStack.forEach(se -> Log.debug("= {}", se));
         Log.debug("================ END OCCUPANT MANAGER DATA ================");
     }
 
@@ -246,7 +245,7 @@ public class OccupantManager implements MUCEventListener
             return;
         }
 
-        Log.trace("New local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, userJID, nickname);
+        Log.debug("New local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, userJID, nickname);
         final OccupantAddedTask task = new OccupantAddedTask(serviceName, roomJID.getNode(), nickname, userJID, XMPPServer.getInstance().getNodeID());
         process(task); // On this cluster node.
 
@@ -275,7 +274,7 @@ public class OccupantManager implements MUCEventListener
             return;
         }
 
-        Log.trace("Updated local occupancy in room '{}' of service '{}': entity '{}' now nickname '{}' (was: '{}')", roomJID.getNode(), serviceName, newNickname, oldNickname, userJID);
+        Log.debug("Updated local occupancy in room '{}' of service '{}': entity '{}' now nickname '{}' (was: '{}')", roomJID.getNode(), serviceName, newNickname, oldNickname, userJID);
         final OccupantUpdatedTask task = new OccupantUpdatedTask(serviceName, roomJID.getNode(), oldNickname, newNickname, userJID, XMPPServer.getInstance().getNodeID());
         process(task); // On this cluster node.
 
@@ -303,7 +302,7 @@ public class OccupantManager implements MUCEventListener
             return;
         }
 
-        Log.trace("Removed local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, nickname, userJID);
+        Log.debug("Removed local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, nickname, userJID);
         final OccupantRemovedTask task = new OccupantRemovedTask(serviceName, roomJID.getNode(), nickname, userJID, XMPPServer.getInstance().getNodeID());
         process(task); // On this cluster node.
 
@@ -438,7 +437,7 @@ public class OccupantManager implements MUCEventListener
      */
     public boolean exists(@Nonnull final Occupant occupant, @Nullable final NodeID exclude) {
         return nodesByOccupant.getOrDefault(occupant, new HashSet<>()).stream()
-            .anyMatch(nodeID -> exclude == null || !nodeID.equals(exclude));
+            .anyMatch(nodeID -> !nodeID.equals(exclude));
     }
 
     public boolean exists(@Nonnull final Occupant occupant) {

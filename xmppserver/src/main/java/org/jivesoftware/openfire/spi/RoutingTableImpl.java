@@ -1157,17 +1157,21 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
             .filter( entry -> entry.getValue().getNodeID().equals(nodeID))
             .forEach( entry -> {
-                removedSessionCount.getAndIncrement();
-                final JID fullJID = new JID(entry.getKey());
-                removeClientRoute(fullJID);
-                if ( entry.getValue().isAvailable() )
-                {
-                    // Simulate that the session has just gone offline
-                    final Presence offline = new Presence();
-                    offline.setFrom(fullJID);
-                    offline.setTo(new JID(null, serverName, null, true));
-                    offline.setType(Presence.Type.unavailable);
-                    XMPPServer.getInstance().getPacketRouter().route(offline);
+                try {
+                    removedSessionCount.getAndIncrement();
+                    final JID fullJID = new JID(entry.getKey());
+                    removeClientRoute(fullJID);
+                    if ( entry.getValue().isAvailable() )
+                    {
+                        // Simulate that the session has just gone offline
+                        final Presence offline = new Presence();
+                        offline.setFrom(fullJID);
+                        offline.setTo(new JID(null, serverName, null, true));
+                        offline.setType(Presence.Type.unavailable);
+                        XMPPServer.getInstance().getPacketRouter().route(offline);
+                    }
+                } catch (Exception e) {
+                    Log.warn("Unable to route presence update when processing cluster leave, entrySet={}", entry, e);
                 }
             });
         Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), removedSessionCount.get() );

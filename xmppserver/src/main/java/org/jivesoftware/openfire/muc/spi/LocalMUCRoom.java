@@ -600,7 +600,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             return MUCRole.Role.participant;
         }
         else {
-            // if true, default to participant evne if the room is moderated
+            // if true, default to participant even if the room is moderated
             if(JiveGlobals.getXMLProperty("xmpp.muc.room.defaultToParticipant", false)){
                 return MUCRole.Role.participant;
             }
@@ -2011,7 +2011,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public List<Presence> addOwner(JID jid, MUCRole sendRole) throws ForbiddenException {
-        
+
         final JID bareJID = jid.asBareJID();
         lock.writeLock().lock();
         try {
@@ -2101,7 +2101,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.admin));
-        
+
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
         return applyAffiliationChange(getRole(), bareJID, null);
@@ -2176,7 +2176,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
         // Update other cluster nodes with new member
         CacheFactory.doClusterTask(new AddMember(this, jid.toBareJID(), (nickname == null ? "" : nickname)));
-        
+
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
         return applyAffiliationChange(getRole(), bareJID, null);
@@ -2232,7 +2232,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.outcast));
-        
+
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
         return applyAffiliationChange(senderRole, bareJID, reason);
@@ -2244,7 +2244,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public List<Presence> addNone(JID jid, MUCRole senderRole) throws ForbiddenException, ConflictException {
-        
+
         final JID bareJID = jid.asBareJID();
         MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
         boolean jidWasAffiliated = false;
@@ -2282,7 +2282,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
         }
         // Update other cluster nodes with new affiliation
         CacheFactory.doClusterTask(new AddAffiliation(this, jid.toBareJID(), MUCRole.Affiliation.none));
-        
+
         if (jidWasAffiliated) {
             // apply the affiliation change, assigning a new affiliation
             // based on the group(s) of the affected user(s)
@@ -2301,17 +2301,17 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
      * applied to each presence corresponding to that user. If the given JID is a group,
      * each user in the group is evaluated to determine what their new affiliations will
      * be. The returned presence updates will be broadcast to the occupants of the room.
-     * 
+     *
      * @param senderRole Typically the room itself, or an owner/admin
      * @param affiliationJID The JID for the user or group that has been changed
      * @param reason An optional reason to explain why a user was kicked from the room
      * @return List of presence updates to be delivered to the room's occupants
      */
     private List<Presence> applyAffiliationChange(MUCRole senderRole, final JID affiliationJID, String reason) {
-        
+
         // Update the presence(s) for the new affiliation and inform all occupants
         List<JID> affectedOccupants = new ArrayList<>();
-        
+
         // first, determine which actual (user) JIDs are affected by the affiliation change
         if (GroupJID.isGroup(affiliationJID)) {
             try {
@@ -2331,7 +2331,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
                 affectedOccupants.add(affiliationJID);
             }
         }
-        
+
         // now update each of the affected occupants with a new role/affiliation
         MUCRole.Role newRole;
         MUCRole.Affiliation newAffiliation;
@@ -3240,7 +3240,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             // Set that the room is now in the DB
             savedToDB = true;
             // Notify other cluster nodes that the room is now in DB
-            CacheFactory.doClusterTask(new RoomUpdatedEvent(this)); 
+            CacheFactory.doClusterTask(new RoomUpdatedEvent(this));
             // Save the existing room owners to the DB
             for (JID owner : owners) {
                 MUCPersistenceManager.saveAffiliationToDB(
@@ -3485,7 +3485,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             return false;
         return roomID==other.roomID;
     }
-    
+
     // overrides for important Group events
 
     @Override
@@ -3541,7 +3541,7 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     public void adminRemoved(Group group, Map params) {
         applyAffiliationChangeAndSendPresence(new JID((String)params.get("admin")));
     }
-    
+
     private void applyAffiliationChangeAndSendPresence(JID groupMember) {
         List<Presence> presences = applyAffiliationChange(getRole(), groupMember, null);
         for (Presence presence : presences) {
@@ -3553,6 +3553,6 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     public void groupCreated(Group group, Map params) {
         // ignore
     }
-    
-    
+
+
 }

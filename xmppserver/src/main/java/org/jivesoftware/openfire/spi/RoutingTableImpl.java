@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -108,7 +109,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
      */
-    private Cache<String, ClientRoute> usersCache;
+    private final Cache<String, ClientRoute> usersCache;
     /**
      * Cache (unlimited, never expire) that holds sessions of anonymous user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
@@ -178,11 +179,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         boolean available = destination.getPresence().isAvailable();
         Log.debug("Adding client route {}", route);
         localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
+        final ClientRoute newClientRoute = new ClientRoute(server.getNodeID(), available);
         if (destination.getAuthToken().isAnonymous()) {
             Lock lockAn = anonymousUsersCache.getLock(route.toString());
             lockAn.lock();
             try {
-                added = anonymousUsersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) ==
+                added = anonymousUsersCache.put(route.toString(), newClientRoute) ==
                         null;
             }
             finally {
@@ -204,7 +206,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             Lock lockU = usersCache.getLock(route.toString());
             lockU.lock();
             try {
-                added = usersCache.put(route.toString(), new ClientRoute(server.getNodeID(), available)) == null;
+                Log.debug("Adding client route {} to users cache under key {}", newClientRoute, route);
+                added = usersCache.put(route.toString(), newClientRoute) == null;
             }
             finally {
                 lockU.unlock();
@@ -943,12 +946,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         ClientRoute clientRoute;
         Lock lockU = usersCache.getLock(address);
         lockU.lock();
+        int cacheSizeBefore = usersCache.size();
         try {
             clientRoute = usersCache.remove(address);
         }
         finally {
             lockU.unlock();
         }
+        Log.debug("Removed users cache entry for {} / {}, changing entry count from {} to {}", route, clientRoute, cacheSizeBefore, usersCache.size(), new Throwable());
         if (clientRoute == null) {
             Lock lockA = anonymousUsersCache.getLock(address);
             lockA.lock();
@@ -984,7 +989,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 lock.unlock();
             }
         }
-        Log.debug("Removing client route {}", route);
+        Log.debug("Removing client route {} from routing table", route);
         localRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return clientRoute != null;
     }
@@ -1154,24 +1159,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Drop routes for all client sessions connected via the defunct cluster node.
         final AtomicLong removedSessionCount = new AtomicLong();
-        Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
+
+        final Map<JID, Boolean> clientRoutesToRemove = Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
             .filter( entry -> entry.getValue().getNodeID().equals(nodeID))
-            .forEach( entry -> {
+            .collect(Collectors.toMap(e -> new JID(e.getKey()), e -> e.getValue().isAvailable()));
+
+        clientRoutesToRemove.entrySet().forEach( entry -> {
                 try {
                     removedSessionCount.getAndIncrement();
-                    final JID fullJID = new JID(entry.getKey());
-                    removeClientRoute(fullJID);
-                    if ( entry.getValue().isAvailable() )
+                    removeClientRoute(entry.getKey());
+                    if ( entry.getValue() )
                     {
                         // Simulate that the session has just gone offline
                         final Presence offline = new Presence();
-                        offline.setFrom(fullJID);
+                        offline.setFrom(entry.getKey());
                         offline.setTo(new JID(null, serverName, null, true));
                         offline.setType(Presence.Type.unavailable);
                         XMPPServer.getInstance().getPacketRouter().route(offline);
                     }
                 } catch (Exception e) {
-                    Log.warn("Unable to route presence update when processing cluster leave, entrySet={}", entry, e);
+                    Log.warn("Unable to route presence update when processing cluster leave, entry={}", entry, e);
                 }
             });
         Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), removedSessionCount.get() );
@@ -1203,13 +1210,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     private void restoreCacheContent()
     {
-        Log.trace( "Restoring cache content for cache '{}' by adding all outgoing server routes that are connected to the local cluster node.", serversCache.getName() );
+        Log.debug( "Restoring cache content for cache '{}' by adding all outgoing server routes that are connected to the local cluster node.", serversCache.getName() );
         localRoutingTable.getServerRoutes().forEach( route -> route.getOutgoingDomainPairs().forEach( address -> serversCache.put( address, server.getNodeID()) ) );
 
-        Log.trace( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
+        Log.debug( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
         localRoutingTable.getComponentRoute().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));
 
-        Log.trace( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessions.getName() );
+        Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessions.getName() );
 
         // Add client sessions hosted locally to the cache (using new nodeID)
         for (LocalClientSession session : localRoutingTable.getClientRoutes()) {

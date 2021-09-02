@@ -451,6 +451,15 @@ public class OccupantManager implements MUCEventListener
             .collect(Collectors.toSet());
     }
 
+    @Nonnull
+    public Set<Occupant> occupantsForRoomExceptForNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID) {
+        return occupantsByNode.entrySet().stream().filter(e -> !e.getKey().equals(nodeID))
+            .map(Map.Entry::getValue)
+            .flatMap(Collection::stream)
+            .filter(occupant -> occupant.getRoomName().equals(roomName))
+            .collect(Collectors.toSet());
+    }
+
     /**
      * Removes and returns all data that was maintained for a particular cluster node. It is assumed that this method
      * is used in reaction to that cluster node having left the cluster.

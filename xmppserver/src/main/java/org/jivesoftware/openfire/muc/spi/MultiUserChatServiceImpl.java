@@ -3001,7 +3001,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         localMUCRoomManager.restoreCacheContentAfterLeave(occupantsOnRemovedNodes);
 
         // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
-        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNodes);
+        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNodes, null);
 
         occupantManager.logOccupantData("This node left a cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
     }
@@ -3059,7 +3059,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
-        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode);
+        makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode, NodeID.getInstance(nodeID));
 
         occupantManager.logOccupantData("Other node " + new String(nodeID) + " left our cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
     }
@@ -3176,7 +3176,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @param occupantsOnRemovedNodes The occupants for which to send stanzas
      */
-    private void makeOccupantsOnDisconnectedClusterNodesLeave(@Nullable final Set<OccupantManager.Occupant> occupantsOnRemovedNodes)
+    private void makeOccupantsOnDisconnectedClusterNodesLeave(@Nullable final Set<OccupantManager.Occupant> occupantsOnRemovedNodes, NodeID nodeID)
     {
         Log.debug("Going to send 'leave' presence stanzas on the local cluster node for {} occupant(s) of one or more cluster nodes that are no longer part of our cluster.", occupantsOnRemovedNodes == null || occupantsOnRemovedNodes.isEmpty() ? 0 : occupantsOnRemovedNodes.size());
         if (occupantsOnRemovedNodes == null || occupantsOnRemovedNodes.isEmpty()) {
@@ -3207,8 +3207,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // To prevent each (remaining) cluster node from broadcasting the same presence to all occupants of all remaining nodes,
             // this broadcasts only to occupants on the local node.
-            final Set<OccupantManager.Occupant> recipients = occupantManager.occupantsForRoomByNode(occupant.getRoomName(), XMPPServer.getInstance().getNodeID());
-            Log.trace("Intended recipients, count: {} (occupants of the same room, on the local cluster node): {}", recipients.size(), recipients.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+            final Set<OccupantManager.Occupant> recipients;
+            if (nodeID == null) {
+                recipients = occupantManager.occupantsForRoomByNode(occupant.getRoomName(), XMPPServer.getInstance().getNodeID());
+                Log.trace("Intended recipients, count: {} (occupants of the same room, on local node): {}", recipients.size(), recipients.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+            } else {
+                recipients = occupantManager.occupantsForRoomExceptForNode(occupant.getRoomName(), nodeID);
+                Log.trace("Intended recipients, count: {} (occupants of the same room, on all remaining cluster nodes): {}", recipients.size(), recipients.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
+            }
             for (OccupantManager.Occupant recipient : recipients) {
                 try {
                     Log.trace("Preparing stanza for recipient {} (nickname: {})", recipient.getRealJID(), recipient.getNickname());

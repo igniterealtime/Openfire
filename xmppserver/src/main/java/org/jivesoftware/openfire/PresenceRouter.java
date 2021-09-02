@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -158,7 +159,11 @@ public class PresenceRouter extends BasicModule {
 
                     // The user sent a directed presence to an entity
                     // Broadcast it to all connected resources
-                    for (JID jid : routingTable.getRoutes(recipientJID, senderJID)) {
+                    final List<JID> routes = routingTable.getRoutes(recipientJID, senderJID);
+                    Log.debug("Going to route packet with recipientJID={} and senderJID={} to {} routes", recipientJID, senderJID, routes.size());
+
+                    for (JID jid : routes) {
+                        Log.debug("Broadcasting to route {}", jid);
                         // Register the sent directed presence
                         updateHandler.directedPresenceSent(packet, jid, recipientJID.toString());
                         // Route the packet

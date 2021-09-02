@@ -403,7 +403,10 @@ public class MUCRole implements Cacheable, Externalizable {
             return;
         }
 
+        Log.debug("Send packet {} to nickname {} and userJid {}", packet.toXML(), getNickname(), userJid);
+
         if (getNickname() == null) { // If this is a 'room role'.
+            Log.debug("Nickname is null, assuming room role");
             getChatRoom().send(packet, this);
             return;
         }

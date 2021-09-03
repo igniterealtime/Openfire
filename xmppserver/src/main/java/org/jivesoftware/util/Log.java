@@ -75,7 +75,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.
      *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabed, otherwise {@code false}
+     * @return {@code true} if logging is enabled, otherwise {@code false}
      */
     @Deprecated
     public static boolean isErrorEnabled() {
@@ -85,7 +85,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isDebugEnabled()}.
      *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabed, otherwise {@code false}
+     * @return {@code true} if logging is enabled, otherwise {@code false}
      */
     @Deprecated
     public static boolean isDebugEnabled() {
@@ -97,6 +97,16 @@ public final class Log {
         setLogLevel();
     }
 
+    /**
+     * @deprecated replaced by {@link org.slf4j.Logger#isTraceEnabled()}.
+     *             Functionality of this method is delegated there.
+     * @return {@code true} if logging is enabled, otherwise {@code false}
+     */
+    @Deprecated
+    public static boolean isTraceEnabled() {
+        return Logger.isTraceEnabled();
+    }
+    
     public static void setTraceEnabled(final boolean enabled) {
         traceEnabled = enabled;
         setLogLevel();
@@ -122,7 +132,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isInfoEnabled()}.
      *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabed, otherwise {@code false}
+     * @return {@code true} if logging is enabled, otherwise {@code false}
      */
     @Deprecated
     public static boolean isInfoEnabled() {
@@ -132,7 +142,7 @@ public final class Log {
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#isWarnEnabled()}.
      *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabed, otherwise {@code false}
+     * @return {@code true} if logging is enabled, otherwise {@code false}
      */
     @Deprecated
     public static boolean isWarnEnabled() {
@@ -176,17 +186,6 @@ public final class Log {
         }
     }
 
-    public static void markDebugLogFile(String username) {
-        String message = getMarkMessage(username);
-        debug(message);
-    }
-
-    public static void rotateDebugLogFile() {
-        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        File logFile = new File(Log.getLogDirectory(), "debug.log");
-        emptyFile(logFile);
-    }
-
     /**
      * @deprecated replaced by {@link org.slf4j.Logger#info(String)}.
      *             Functionality of this method is delegated there.
@@ -222,17 +221,6 @@ public final class Log {
         if (isInfoEnabled()) {
             Logger.info(s, throwable);
         }
-    }
-
-    public static void markInfoLogFile(String username) {
-        String message = getMarkMessage(username);
-        info(message);
-    }
-
-    public static void rotateInfoLogFile() {
-        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        File logFile = new File(Log.getLogDirectory(), "info.log");
-        emptyFile(logFile);
     }
     
     /**
@@ -270,17 +258,6 @@ public final class Log {
         if (isWarnEnabled()) {
             Logger.warn(s, throwable);
         }
-    }
-
-    public static void markWarnLogFile(String username) {
-        String message = getMarkMessage(username);
-        warn(message);
-    }
-
-    public static void rotateWarnLogFile() {
-        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        File logFile = new File(Log.getLogDirectory(), "warn.log");
-        emptyFile(logFile);
     }
 
     /**
@@ -329,23 +306,24 @@ public final class Log {
         }
     }
 
-    public static void markErrorLogFile(String username) {
+    public static void rotateOpenfireLogFile() {
+        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
+        File logFile = new File(Log.getLogDirectory(), "openfire.log");
+        emptyFile(logFile);
+    }
+
+    public static void markOpenfireLogFile(String username) {
         String message = getMarkMessage(username);
-        error(message);
-    }
+        File logFile = new File(Log.getLogDirectory(), "openfire.log");
 
-    public static void rotateErrorLogFile() {
-        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        File logFile = new File(Log.getLogDirectory(), "error.log");
-        emptyFile(logFile);
+        try(FileWriter fw = new FileWriter(logFile, true);
+            PrintWriter out = new PrintWriter(fw))
+        {
+            out.println(message);
+        } catch (IOException e) {
+            e.printStackTrace(); // Writing it to the logfile feels wrong, as we're processing the logfile here.
+        }
     }
-
-    public static void rotateAllLogFile() {
-        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        File logFile = new File(Log.getLogDirectory(), "all.log");
-        emptyFile(logFile);
-    }
-
     
     /**
      * Returns the directory that log files exist in. The directory name will

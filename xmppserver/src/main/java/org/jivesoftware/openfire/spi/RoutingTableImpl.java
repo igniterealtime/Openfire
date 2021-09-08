@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.carbons.Received;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -1062,8 +1063,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         messageRouter = server.getMessageRouter();
         presenceRouter = server.getPresenceRouter();
         presenceUpdateHandler = server.getPresenceUpdateHandler();
-        // Listen to cluster events
-        ClusterManager.addListener(this);
+        // Listen to cluster events, and be one of the first listeners to handle events
+        ClusterManager.addListener(this, -10);
     }
 
     @Override

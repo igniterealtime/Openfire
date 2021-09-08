@@ -833,8 +833,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
     private void checkJoinRoomPreconditionDelegate( @Nonnull final LocalMUCUser user ) throws UnauthorizedException
     {
         boolean canJoin = true;
-        if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
-            if (!((MultiUserChatServiceImpl)mucService).getMUCDelegate().joiningRoom(this, user.getAddress())) {
+        if (mucService.getMUCDelegate() != null) {
+            if (!mucService.getMUCDelegate().joiningRoom(this, user.getAddress())) {
                 // Delegate said no, reject join.
                 canJoin = false;
             }
@@ -2618,8 +2618,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
             message.setFrom(role.getRoleAddress());
             message.setTo(to);
 
-            if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
-                switch(((MultiUserChatServiceImpl)mucService).getMUCDelegate().sendingInvitation(this, to, senderRole.getUserAddress(), reason)) {
+            if (mucService.getMUCDelegate() != null) {
+                switch (mucService.getMUCDelegate().sendingInvitation(this, to, senderRole.getUserAddress(), reason)) {
                     case HANDLED_BY_DELEGATE:
                         //if the delegate is taking care of it, there's nothing for us to do
                         return;
@@ -2669,8 +2669,8 @@ public class LocalMUCRoom implements MUCRoom, GroupEventListener {
 
     @Override
     public void sendInvitationRejection(JID to, String reason, JID sender) {
-    if (((MultiUserChatServiceImpl)mucService).getMUCDelegate() != null) {
-            switch(((MultiUserChatServiceImpl)mucService).getMUCDelegate().sendingInvitationRejection(this, to, sender, reason)) {
+        if (mucService.getMUCDelegate() != null) {
+            switch (mucService.getMUCDelegate().sendingInvitationRejection(this, to, sender, reason)) {
                     case HANDLED_BY_DELEGATE:
                         //if the delegate is taking care of it, there's nothing for us to do
                             return;

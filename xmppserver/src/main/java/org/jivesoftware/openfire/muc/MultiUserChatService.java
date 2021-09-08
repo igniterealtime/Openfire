@@ -599,7 +599,22 @@ public interface MultiUserChatService extends Component {
 
     /**
      * Removes an extra Disco identity from the list of identities returned for the conference service.
+     *
      * @param name Name of identity to remove.
      */
     void removeExtraIdentity(String name);
+
+    /**
+     * Sets the MUC event delegate handler for this service.
+     *
+     * @param delegate Handler for MUC events.
+     */
+    void setMUCDelegate(final MUCEventDelegate delegate);
+
+    /**
+     * Gets the MUC event delegate handler for this service.
+     *
+     * @return Handler for MUC events (delegate)
+     */
+    MUCEventDelegate getMUCDelegate();
 }

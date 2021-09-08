@@ -1993,6 +1993,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Sets the MUC event delegate handler for this service.
      * @param delegate Handler for MUC events.
      */
+    @Override
     public void setMUCDelegate(final MUCEventDelegate delegate) {
         mucEventDelegate = delegate;
     }
@@ -2001,6 +2002,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Gets the MUC event delegate handler for this service.
      * @return Handler for MUC events (delegate)
      */
+    @Override
     public MUCEventDelegate getMUCDelegate() {
         return mucEventDelegate;
     }

@@ -2129,7 +2129,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         muclumbusSearchHandler = new IQMuclumbusSearchHandler(this);
         mucVCardHandler = new IQMUCvCardHandler(this);
         MUCEventDispatcher.addListener(occupantManager);
-        ClusterManager.addListener(this);
+
+        // Ensure that cluster events are handled in RoutingTableImpl first (due to higher listener sequence here)
+        ClusterManager.addListener(this, 0);
     }
 
     public void initializeSettings() {

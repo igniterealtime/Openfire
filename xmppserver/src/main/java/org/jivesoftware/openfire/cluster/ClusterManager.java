@@ -16,16 +16,7 @@
 
 package org.jivesoftware.openfire.cluster;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-
+import org.apache.commons.lang3.tuple.Pair;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.util.JiveGlobals;
@@ -36,6 +27,19 @@ import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 /**
  * A cluster manager is responsible for triggering events related to clustering.
@@ -48,7 +52,7 @@ public class ClusterManager {
     private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
 
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
-    private static Queue<ClusterEventListener> listeners = new ConcurrentLinkedQueue<>();
+    private static Queue<Pair<Integer, ClusterEventListener>> listeners = new ConcurrentLinkedQueue<>();
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<>(10000);
     private static Thread dispatcher;
 
@@ -103,8 +107,15 @@ public class ClusterManager {
                                     CacheFactory.leftCluster();
                                 }
                             }
+
                             // Now notify rest of the listeners
-                            for (ClusterEventListener listener : listeners) {
+                            final List<ClusterEventListener> listenersOrderedBySequence = listeners
+                                .stream()
+                                .sorted(Comparator.comparing(Pair::getKey))
+                                .map(Pair::getValue)
+                                .collect(Collectors.toList());
+
+                            for (ClusterEventListener listener : listenersOrderedBySequence) {
                                 try {
                                     switch (eventType) {
                                         case joined_cluster: {
@@ -156,10 +167,20 @@ public class ClusterManager {
      * @param listener the listener.
      */
     public static void addListener(ClusterEventListener listener) {
+        ClusterManager.addListener(listener, 0);
+    }
+
+    /**
+     * Registers a listener to receive events, defining the order in which listeners are invoked.
+     *
+     * @param listener the listener.
+     * @param sequence defines the order of listener invocation.
+     */
+    public static void addListener(ClusterEventListener listener, int sequence) {
         if (listener == null) {
             throw new NullPointerException();
         }
-        listeners.add(listener);
+        listeners.add(Pair.of(sequence, listener));
     }
 
     /**
@@ -168,9 +189,12 @@ public class ClusterManager {
      * @param listener the listener.
      */
     public static void removeListener(ClusterEventListener listener) {
-        listeners.remove(listener);
+        final Optional<Pair<Integer, ClusterEventListener>> removeMe = listeners
+            .stream()
+            .filter(p -> p.getValue().equals(listener))
+            .findAny();
+        removeMe.ifPresent(listeners::remove);
     }
-
 
     /**
      * Triggers event indicating that this JVM is now part of a cluster. At this point the

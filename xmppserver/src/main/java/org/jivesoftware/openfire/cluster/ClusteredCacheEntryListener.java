@@ -1,11 +1,14 @@
 package org.jivesoftware.openfire.cluster;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public interface ClusteredCacheEntryListener<K, V> {
-    void entryAdded(K key, V newValue, NodeID nodeID);
-    void entryRemoved(K key, V oldValue, NodeID nodeID);
-    void entryUpdated(K key, V oldValue, V newValue, NodeID nodeID);
-    void entryEvicted(K key, V oldValue, NodeID nodeID);
-    void mapCleared(NodeID nodeID);
-    void mapEvicted(NodeID nodeID);
+    void entryAdded(@Nonnull final K key, @Nullable final V newValue, @Nonnull final NodeID nodeID);
+    void entryRemoved(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID);
+    void entryUpdated(@Nonnull final K key, @Nullable final V oldValue, @Nullable final V newValue, @Nonnull final NodeID nodeID);
+    void entryEvicted(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID);
+    void mapCleared(@Nonnull final NodeID nodeID);
+    void mapEvicted(@Nonnull final NodeID nodeID);
     boolean handlesValues();
 }

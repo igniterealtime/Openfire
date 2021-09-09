@@ -51,6 +51,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -698,7 +700,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     private class DirectedPresenceListener implements ClusteredCacheEntryListener<String, Collection<DirectedPresence>> {
 
         @Override
-        public void entryAdded(final String sender, final Collection<DirectedPresence> newValue, final NodeID nodeID) {
+        public void entryAdded(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> newValue, @Nonnull final NodeID nodeID) {
             // Ignore events originated from this JVM
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -721,7 +723,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void entryUpdated(final String sender, final Collection<DirectedPresence> oldValue, final Collection<DirectedPresence> newValue, final NodeID nodeID) {
+        public void entryUpdated(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> oldValue, @Nullable final Collection<DirectedPresence> newValue, @Nonnull final NodeID nodeID) {
             // Ignore events originated from this JVM
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -748,7 +750,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void entryRemoved(final String sender, final Collection<DirectedPresence> oldValue, final NodeID nodeID) {
+        public void entryRemoved(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             if (oldValue != null) { // Otherwise there is nothing to remove
                 if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                     nodePresences.get(nodeID).remove(sender);
@@ -757,12 +759,12 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void entryEvicted(final String sender, final Collection<DirectedPresence> oldValue, final NodeID nodeID) {
+        public void entryEvicted(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             entryRemoved(sender, oldValue, nodeID);
         }
 
         @Override
-        public void mapEvicted(final NodeID nodeID) {
+        public void mapEvicted(@Nonnull final NodeID nodeID) {
             // ignore events which were triggered by this node
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 nodePresences.get(nodeID).clear();
@@ -770,7 +772,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void mapCleared(final NodeID nodeID) {
+        public void mapCleared(@Nonnull final NodeID nodeID) {
             mapEvicted(nodeID);
         }
 

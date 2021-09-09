@@ -7,4 +7,5 @@ public interface ClusteredCacheEntryListener<K, V> {
     void entryEvicted(K key, V oldValue, NodeID nodeID);
     void mapCleared(NodeID nodeID);
     void mapEvicted(NodeID nodeID);
+    boolean handlesValues();
 }

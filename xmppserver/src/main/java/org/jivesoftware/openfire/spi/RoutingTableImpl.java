@@ -105,6 +105,24 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Key: server domain pair, Value: nodeID
      */
     private Cache<DomainPair, NodeID> serversCache;
+
+    /**
+     * A map that, for all nodes in the cluster except for the local one, tracks if a server to server connection has
+     * been established.
+     *
+     * Whenever any cluster node adds or removes an entry to the #serversCache, this map, on <em>every</em> cluster
+     * node, will receive a corresponding update. This ensures that every cluster node has a complete overview of all
+     * cache entries (or at least the most important details of each entry - we should avoid duplicating the entire
+     * cache, as that somewhat defaults the purpose of having the cache - however for this specific cache we need all
+     * data, so this basically becomes a reverse lookup table).
+     *
+     * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
+     * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
+     * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
+     * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     */
+    private final ConcurrentMap<NodeID, Set<DomainPair>> s2sDomainPairsByClusterNode = new ConcurrentHashMap<>();
+
     /**
      * Cache (unlimited, never expire) that holds components connected to the server.
      * Key: component domain, Value: list of nodeIDs hosting the component
@@ -1124,20 +1142,30 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<String, ClientRoute> cacheEventListener = new UserCacheEntryListener();
+        final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new AbstractCacheEntryListener<>(routeOwnersByClusterNode);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream())
             // this filter isn't needed if we do this before restoreCacheContent.
             .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
-            .forEach(entry -> cacheEventListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
+            .forEach(entry -> userCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
+
+        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
+        // which is intended to be used (only) in the event of a cluster split.
+        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new AbstractCacheEntryListener<>(s2sDomainPairsByClusterNode);
+
+        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+        serversCache.entrySet().stream()
+            // this filter isn't needed if we do this before restoreCacheContent.
+            .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
+            .forEach(entry -> serversCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
 
         // Add the entry listener to the cache. Note that, when #joinedCluster() fired, the cache will _always_ have been replaced,
         // meaning that it won't have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This
         // takes away the need to explicitly deregister the listener in that case.
         final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
-        usersCache.addListener(cacheEventListener, includeValues);
-        anonymousUsersCache.addListener(cacheEventListener, includeValues);
+        usersCache.addListener(userCacheEntryListener, includeValues);
+        anonymousUsersCache.addListener(userCacheEntryListener, includeValues);
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence.
         // Probe presences of remote sessions when subscribed to presence of local session.
@@ -1192,11 +1220,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         });
         routeOwnersByClusterNode.clear();
+
+        // Remove outgoing server sessions hosted in node that left the cluster
+        s2sDomainPairsByClusterNode.values()
+            .stream()
+            .flatMap(Collection::stream)
+            .forEach(domainPair -> {
+                try {
+                    removeServerRoute(domainPair);
+                } catch (Exception e) {
+                    Log.error("We have left the cluster. Federated connections on other nodes are no longer available. To reflect this, we're deleting these routes. While doing this for '{}', this caused an exception to occur.", domainPair, e);
+                }
+            });
+        s2sDomainPairsByClusterNode.clear();
     }
 
     @Override
     public void leftCluster(byte[] nodeID)
     {
+        final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
+
         // Another node left the cluster.
 
         // When a peer server leaves the cluster, any remote routes that were
@@ -1215,7 +1258,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final AtomicLong removedSessionCount = new AtomicLong();
 
         final Map<JID, Boolean> clientRoutesToRemove = Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
-            .filter( entry -> entry.getValue().getNodeID().equals(nodeID))
+            .filter( entry -> entry.getValue().getNodeID().equals(nodeIDOfLostNode))
             .collect(Collectors.toMap(e -> new JID(e.getKey()), e -> e.getValue().isAvailable()));
 
         clientRoutesToRemove.entrySet().forEach( entry -> {
@@ -1235,18 +1278,27 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     Log.warn("Unable to route presence update when processing cluster leave, entry={}", entry, e);
                 }
             });
-        Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", NodeID.getInstance( nodeID ), removedSessionCount.get() );
+
+        Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", nodeIDOfLostNode, removedSessionCount.get() );
+
+        // Remove outgoing server sessions hosted in node that left the cluster
+        final Set<DomainPair> remoteServers = s2sDomainPairsByClusterNode.remove(nodeIDOfLostNode);
+        if (remoteServers != null) {
+            for (final DomainPair domainPair : remoteServers) {
+                removeServerRoute(domainPair);
+            }
+        }
 
         // Remove routes for server domains that were accessed through the defunct node.
-        final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache( serversCache, NodeID.getInstance( nodeID ) );
+        final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache( serversCache, nodeIDOfLostNode);
         removedServers.forEach( removedServer -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route was removed.", NodeID.getInstance( nodeID ), removedServer.getRemote() );
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route was removed.", nodeIDOfLostNode, removedServer.getRemote() );
         } );
 
         // Remove component routes for the defunct node.
-        final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache( componentsCache, NodeID.getInstance( nodeID ) );
+        final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache( componentsCache, nodeIDOfLostNode);
         modifiedComponents.get( false ).keySet().forEach( removedComponentDomain -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route was removed", NodeID.getInstance( nodeID ), removedComponentDomain );
+            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route was removed", nodeIDOfLostNode, removedComponentDomain );
         } );
     }
 
@@ -1279,40 +1331,46 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     /**
-     * Responsible for maintaining data in #routeOwnersByClusterNode, which needs to reflect all entries that exist
-     * on cluster nodes other than the local cluster node.
+     * Responsible for maintaining data in the provided constructor argument, which needs to reflect all entries that
+     * exist on cluster nodes other than the local cluster node.
      */
-    private class UserCacheEntryListener implements ClusteredCacheEntryListener<String, ClientRoute> {
-        @Override
-        public void entryAdded(@Nonnull final String key, @Nullable final ClientRoute value, @Nonnull final NodeID nodeID) {
-            routeOwnersByClusterNode.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
+    private class AbstractCacheEntryListener<K, V> implements ClusteredCacheEntryListener<K, V> {
+        private final ConcurrentMap<NodeID, Set<K>> reverseCacheRepresentation;
+
+        private AbstractCacheEntryListener(@Nonnull final ConcurrentMap<NodeID, Set<K>> reverseCacheRepresentation) {
+            this.reverseCacheRepresentation = reverseCacheRepresentation;
         }
 
-        @Override public void entryRemoved(@Nonnull final String key, @Nullable final ClientRoute oldValue, @Nonnull final NodeID nodeID) {
-            routeOwnersByClusterNode.computeIfPresent(nodeID, (k, v) -> {
+        @Override
+        public void entryAdded(@Nonnull final K key, @Nullable final V value, @Nonnull final NodeID nodeID) {
+            reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
+        }
+
+        @Override public void entryRemoved(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
+            reverseCacheRepresentation.computeIfPresent(nodeID, (k, v) -> {
                 v.remove(key);
                 return v;
             });
         }
 
         @Override
-        public void entryUpdated(@Nonnull final String key, @Nullable final ClientRoute oldValue, @Nullable final ClientRoute newValue, @Nonnull final NodeID nodeID) {
+        public void entryUpdated(@Nonnull final K key, @Nullable final V oldValue, @Nullable final V newValue, @Nonnull final NodeID nodeID) {
             // Don't do anything, because we only care about keys.
         }
 
         @Override
-        public void entryEvicted(@Nonnull final String key, @Nullable final ClientRoute oldValue, @Nonnull final NodeID nodeID) {
+        public void entryEvicted(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
             entryRemoved(key, oldValue, nodeID);
         }
 
         @Override
         public void mapCleared(@Nonnull final NodeID nodeID) {
-            routeOwnersByClusterNode.remove(nodeID);
+            reverseCacheRepresentation.remove(nodeID);
         }
 
         @Override
         public void mapEvicted(@Nonnull final NodeID nodeID) {
-            routeOwnersByClusterNode.remove(nodeID);
+            reverseCacheRepresentation.remove(nodeID);
         }
     }
 }

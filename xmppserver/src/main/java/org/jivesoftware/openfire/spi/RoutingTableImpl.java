@@ -128,6 +128,24 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Key: component domain, Value: list of nodeIDs hosting the component
      */
     private Cache<String, HashSet<NodeID>> componentsCache;
+
+    /**
+     * A map that, for all nodes in the cluster except for the local one, tracks if a component connection has
+     * been established.
+     *
+     * Whenever any cluster node adds or removes an entry to the #componentsCache, this map, on <em>every</em> cluster
+     * node, will receive a corresponding update. This ensures that every cluster node has a complete overview of all
+     * cache entries (or at least the most important details of each entry - we should avoid duplicating the entire
+     * cache, as that somewhat defaults the purpose of having the cache - however for this specific cache we need all
+     * data, so this basically becomes a reverse lookup table).
+     *
+     * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
+     * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
+     * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
+     * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     */
+    private ConcurrentMap<NodeID, Set<String>> componentsByClusterNode = new ConcurrentHashMap<>();
+
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
@@ -1160,12 +1178,31 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> serversCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
 
-        // Add the entry listener to the cache. Note that, when #joinedCluster() fired, the cache will _always_ have been replaced,
-        // meaning that it won't have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This
-        // takes away the need to explicitly deregister the listener in that case.
+        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
+        // which is intended to be used (only) in the event of a cluster split.
+        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new AbstractCacheEntryListener<>(componentsByClusterNode);
+
+        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+        componentsCache.entrySet().forEach(entry -> {
+            entry.getValue().forEach(nodeIdForComponent -> { // Iterate over all node ids on which the component is known
+                    if (!nodeIdForComponent.equals(XMPPServer.getInstance().getNodeID())) {
+                        // Here we pretend that the component has been added by the node id on which it is reported to
+                        // be available. This might not have been the case, but it is probably accurate. An alternative
+                        // approach is not easily available.
+                        componentsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), nodeIdForComponent);
+                    }
+                }
+            );
+        });
+
+        // Add the entry listeners to the corresponding caches. Note that, when #joinedCluster() fired, the cache will
+        // _always_ have been replaced, meaning that it won't have old event listeners. When #leaveCluster() fires, the
+        // cache will be destroyed. This takes away the need to explicitly deregister the listener in that case.
         final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
         usersCache.addListener(userCacheEntryListener, includeValues);
         anonymousUsersCache.addListener(userCacheEntryListener, includeValues);
+        serversCache.addListener(serversCacheEntryListener, includeValues);
+        componentsCache.addListener(componentsCacheEntryListener, includeValues);
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence.
         // Probe presences of remote sessions when subscribed to presence of local session.
@@ -1233,6 +1270,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             });
         s2sDomainPairsByClusterNode.clear();
+
+        // Remove component connections hosted in node that left the cluster
+        for (Map.Entry<NodeID, Set<String>> entry : componentsByClusterNode.entrySet()) {
+            NodeID nodeId = entry.getKey();
+            for (String componentJid : entry.getValue()) {
+                removeComponentRoute(new JID(componentJid), nodeId);
+            }
+        };
     }
 
     @Override
@@ -1286,6 +1331,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         if (remoteServers != null) {
             for (final DomainPair domainPair : remoteServers) {
                 removeServerRoute(domainPair);
+            }
+        }
+
+        // Remove component connections hosted in node that left the cluster
+        final Set<String> componentJids = componentsByClusterNode.remove(nodeIDOfLostNode);
+        if (componentJids != null) {
+            for (final String componentJid : componentJids) {
+                removeComponentRoute(new JID(componentJid), nodeIDOfLostNode);
             }
         }
 

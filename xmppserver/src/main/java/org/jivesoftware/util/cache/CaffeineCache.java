@@ -15,6 +15,9 @@
  */
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collection;
@@ -492,5 +495,15 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     public Set<K> keySet()
     {
         return Collections.unmodifiableSet( cache.asMap().keySet() );
+    }
+
+    @Override
+    public String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeListener(@Nonnull final String listenerId) {
+        throw new UnsupportedOperationException();
     }
 }

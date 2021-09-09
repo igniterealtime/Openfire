@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
-import org.jivesoftware.openfire.cluster.ClusteredCacheEventManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
@@ -590,7 +589,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 //            .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
 //            .forEach(entry -> listener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
 
-        ClusteredCacheEventManager.addListener(listener, directedPresencesCache.getName());
+        final boolean includeValues = false; // This event handler needs to operate on cache values. We can't reduce overhead by suppressing value transmission.
+        directedPresencesCache.addListener(listener, includeValues);
 
         // TODO Also remove the listener upon cluster leave?
     }
@@ -697,10 +697,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     /**
      * EntryListener implementation tracks events for caches of c2s sessions.
      */
-    private class DirectedPresenceListener implements ClusteredCacheEntryListener<String, Collection<DirectedPresence>> {
+    private class DirectedPresenceListener implements ClusteredCacheEntryListener<String, ConcurrentLinkedQueue<DirectedPresence>> {
 
         @Override
-        public void entryAdded(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> newValue, @Nonnull final NodeID nodeID) {
+        public void entryAdded(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> newValue, @Nonnull final NodeID nodeID) {
+            if (newValue == null) {
+                throw new IllegalStateException("Null value detected. This listener was probably registered using a configuration that suppresses values. This listener requires values, so it can't properly function in this configuration.");
+            }
+
             // Ignore events originated from this JVM
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -723,7 +727,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void entryUpdated(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> oldValue, @Nullable final Collection<DirectedPresence> newValue, @Nonnull final NodeID nodeID) {
+        public void entryUpdated(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> oldValue, @Nullable final ConcurrentLinkedQueue<DirectedPresence> newValue, @Nonnull final NodeID nodeID) {
+            if (newValue == null) {
+                throw new IllegalStateException("Null value detected. This listener was probably registered using a configuration that suppresses values. This listener requires values, so it can't properly function in this configuration.");
+            }
+
             // Ignore events originated from this JVM
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                 // Check if the directed presence was sent to an entity hosted by this JVM
@@ -750,7 +758,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void entryRemoved(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
+        public void entryRemoved(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             if (oldValue != null) { // Otherwise there is nothing to remove
                 if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
                     nodePresences.get(nodeID).remove(sender);
@@ -759,7 +767,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
 
         @Override
-        public void entryEvicted(@Nonnull final String sender, @Nullable final Collection<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
+        public void entryEvicted(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             entryRemoved(sender, oldValue, nodeID);
         }
 
@@ -774,11 +782,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         @Override
         public void mapCleared(@Nonnull final NodeID nodeID) {
             mapEvicted(nodeID);
-        }
-
-        @Override
-        public boolean handlesValues() {
-            return true;
         }
     }
 }

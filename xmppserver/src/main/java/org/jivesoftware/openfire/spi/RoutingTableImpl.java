@@ -31,7 +31,6 @@ import org.jivesoftware.openfire.carbons.Received;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
-import org.jivesoftware.openfire.cluster.ClusteredCacheEventManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -58,6 +57,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,6 +67,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -117,6 +120,24 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Key: full JID, Value: {nodeID, available/unavailable}
      */
     private Cache<String, ClientRoute> anonymousUsersCache;
+
+    /**
+     * A map that, for all nodes in the cluster except for the local one, tracks if a particular entity (identified by
+     * its full JID) has a ClientRoute in either #usersCache or #anonymousUsersCache. Every String in the collections
+     * that are the value of this map corresponds to a key in one of those caches.
+     *
+     * Whenever any cluster node adds or removes an entry to either #usersCache or #anonymousUsersCache, this map, on
+     * <em>every</em> cluster node, will receive a corresponding update. This ensures that every cluster node has a
+     * complete overview of all cache entries (or at least the most important details of each entry - we should avoid
+     * duplicating the entire cache, as that somewhat defaults the purpose of having the cache).
+     *
+     * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
+     * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
+     * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
+     * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     */
+    private ConcurrentMap<NodeID, Set<String>> routeOwnersByClusterNode = new ConcurrentHashMap<>();
+
     /**
      * Cache (unlimited, never expire) that holds set of connected resources of authenticated users
      * (includes anonymous).
@@ -1101,6 +1122,23 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
+        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
+        // which is intended to be used (only) in the event of a cluster split.
+        final ClusteredCacheEntryListener<String, ClientRoute> cacheEventListener = new UserCacheEntryListener();
+
+        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+        Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream())
+            // this filter isn't needed if we do this before restoreCacheContent.
+            .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
+            .forEach(entry -> cacheEventListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
+
+        // Add the entry listener to the cache. Note that, when #joinedCluster() fired, the cache will _always_ have been replaced,
+        // meaning that it won't have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This
+        // takes away the need to explicitly deregister the listener in that case.
+        final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
+        usersCache.addListener(cacheEventListener, includeValues);
+        anonymousUsersCache.addListener(cacheEventListener, includeValues);
+
         // Broadcast presence of local sessions to remote sessions when subscribed to presence.
         // Probe presences of remote sessions when subscribed to presence of local session.
         // Send pending subscription requests to local sessions from remote sessions.
@@ -1139,7 +1177,21 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        // TODO OF-2066: all clients on other nodes are now unavailable! Send out the appropriate presence updates/events
+        // All clients on all other nodes are now unavailable! Simulate an unavailable presence for sessions that were
+        // being hosted in other cluster nodes.
+        // TODO this code is ported from the hazelcast plugin. It, however, explicitly stated to do this only in #leftCluster(). Why isn't this needed in #leftCluster(NodeID)?
+        routeOwnersByClusterNode.values().stream().flatMap(Collection::stream).forEach( fullJID -> {
+            final JID offlineJID = new JID(fullJID);
+            try {
+                final Presence presence = new Presence(Presence.Type.unavailable);
+                presence.setFrom(offlineJID);
+                XMPPServer.getInstance().getPresenceRouter().route(presence);
+            }
+            catch (final PacketException e) {
+                Log.error("We have left the cluster. Users on other cluster nodes are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf. While doing this for '{}', this caused an exception to occur.", fullJID, e);
+            }
+        });
+        routeOwnersByClusterNode.clear();
     }
 
     @Override
@@ -1223,6 +1275,44 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Add client sessions hosted locally to the cache (using new nodeID)
         for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
             addClientRoute(session.getAddress(), session);
+        }
+    }
+
+    /**
+     * Responsible for maintaining data in #routeOwnersByClusterNode, which needs to reflect all entries that exist
+     * on cluster nodes other than the local cluster node.
+     */
+    private class UserCacheEntryListener implements ClusteredCacheEntryListener<String, ClientRoute> {
+        @Override
+        public void entryAdded(@Nonnull final String key, @Nullable final ClientRoute value, @Nonnull final NodeID nodeID) {
+            routeOwnersByClusterNode.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
+        }
+
+        @Override public void entryRemoved(@Nonnull final String key, @Nullable final ClientRoute oldValue, @Nonnull final NodeID nodeID) {
+            routeOwnersByClusterNode.computeIfPresent(nodeID, (k, v) -> {
+                v.remove(key);
+                return v;
+            });
+        }
+
+        @Override
+        public void entryUpdated(@Nonnull final String key, @Nullable final ClientRoute oldValue, @Nullable final ClientRoute newValue, @Nonnull final NodeID nodeID) {
+            // Don't do anything, because we only care about keys.
+        }
+
+        @Override
+        public void entryEvicted(@Nonnull final String key, @Nullable final ClientRoute oldValue, @Nonnull final NodeID nodeID) {
+            entryRemoved(key, oldValue, nodeID);
+        }
+
+        @Override
+        public void mapCleared(@Nonnull final NodeID nodeID) {
+            routeOwnersByClusterNode.remove(nodeID);
+        }
+
+        @Override
+        public void mapEvicted(@Nonnull final NodeID nodeID) {
+            routeOwnersByClusterNode.remove(nodeID);
         }
     }
 }

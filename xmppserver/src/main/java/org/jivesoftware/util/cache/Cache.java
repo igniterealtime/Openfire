@@ -16,6 +16,9 @@
 
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
@@ -243,4 +246,24 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     default boolean isValueSecret() {
         return this.secretValue.get();
     }
+
+    /**
+     * Registers a listener to receive entry events for this cache.
+     *
+     * To optimize the amount of data that is being processed, this method allows the listener to be registered in a way
+     * that suppresses values from being sent to it. In that case, only keys will be included in the event listener
+     * invocation.
+     *
+     * @param listener the listener to be registered.
+     * @param includeValues defines if the listener should receive the valus associated with the events.
+     * @return a unique identifier for the listener which is used as a key to remove the listener
+     */
+    String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues);
+
+    /**
+     * Removes a previously registered event listener.
+     *
+     * @param listenerId the identifier of the listener to be removed.
+     */
+    void removeListener(@Nonnull final String listenerId);
 }

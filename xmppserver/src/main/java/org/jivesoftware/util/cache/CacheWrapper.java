@@ -15,6 +15,9 @@
  */
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -157,4 +160,13 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
         return cache.put(key, value);
     }
 
+    @Override
+    public String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues) {
+        return cache.addListener(listener, includeValues);
+    }
+
+    @Override
+    public void removeListener(@Nonnull final String listenerId) {
+        cache.removeListener(listenerId);
+    }
 }

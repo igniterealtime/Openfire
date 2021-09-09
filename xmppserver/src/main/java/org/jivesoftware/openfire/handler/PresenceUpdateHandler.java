@@ -52,11 +52,7 @@ import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
@@ -116,13 +112,30 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * Key: sender, Value: list of DirectedPresences
      */
     private Cache<String, ConcurrentLinkedQueue<DirectedPresence>> directedPresencesCache;
+
     /**
      * Same as the directedPresencesCache but only keeps directed presences sent from
      * users connected to this JVM.
      */
     private final Map<String, ConcurrentLinkedQueue<DirectedPresence>> localDirectedPresences;
 
-    private final Map<NodeID, Map<String, Collection<String>>> nodePresences = new ConcurrentHashMap<>();
+    /**
+     * A map that, for all nodes in the cluster except for the local one, tracks what directed presences a particular
+     * user has sent, as tracked in #directedPresencesCache. Every key of the inner map corresponds to a key in that
+     * cache (which is the JID of the sender of the direct presence). Every String in the collection that is the mapped
+     * value corresponds to the recipient of the DirectedPresence as maintained in the cache.
+     *
+     * Whenever any cluster node adds or removes an entry to {@link #directedPresencesCache}, this map, on
+     * <em>every</em> cluster node, will receive a corresponding update. This ensures that every cluster node has a
+     * complete overview of all cache entries (or at least the most important details of each entry - we should avoid
+     * duplicating the entire cache, as that somewhat defaults the purpose of having the cache).
+     *
+     * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
+     * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
+     * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
+     * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     */
+    private final Map<NodeID, Map<String /* jid of sender */, Collection<String /* jid of recipients */>>> directedPresenceAddressingByClusterNode = new ConcurrentHashMap<>();
 
     private RoutingTable routingTable;
     private RosterManager rosterManager;
@@ -582,17 +595,22 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
         final DirectedPresenceListener listener = new DirectedPresenceListener();
 
-        // TODO
-//        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
-//        directedPresencesCache.entrySet().stream()
-//            // this filter isn't needed if we do this before restoreCacheContent.
-//            .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
-//            .forEach(entry -> listener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
+        Log.debug("Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.");
+        directedPresencesCache.entrySet().stream()
+            // this filter isn't needed if we do this before restoreCacheContent.
+            .filter(entry -> !entry.getValue().isEmpty() && !Arrays.equals(entry.getValue().peek().getNodeID(), XMPPServer.getInstance().getNodeID().toByteArray()))
+            .forEach(entry -> {
+                assert entry.getValue().peek() != null; // should be impossible given the filter above.
+                // We are assuming that the nodeID for every directed presence in the collection is equal.
+                final NodeID nodeID = NodeID.getInstance(entry.getValue().peek().getNodeID());
+                listener.entryAdded(entry.getKey(), entry.getValue(), nodeID);
+            });
 
-        final boolean includeValues = false; // This event handler needs to operate on cache values. We can't reduce overhead by suppressing value transmission.
+        // Add the entry listener to the cache. Note that, when #joinedCluster() fired, the cache will _always_ have been replaced,
+        // meaning that it won't have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This
+        // takes away the need to explicitly deregister the listener in that case.
+        final boolean includeValues = true; // This event handler needs to operate on cache values. We can't reduce overhead by suppressing value transmission.
         directedPresencesCache.addListener(listener, includeValues);
-
-        // TODO Also remove the listener upon cluster leave?
     }
 
     @Override
@@ -616,7 +634,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        for (NodeID nodeID : new HashSet<>(nodePresences.keySet())) {
+        for (NodeID nodeID : new HashSet<>(directedPresenceAddressingByClusterNode.keySet())) {
             // Clean up directed presences sent from entities hosted in the leaving node to local entities
             // Clean up directed presences sent to entities hosted in the leaving node from local entities
             cleanupDirectedPresences(nodeID);
@@ -673,8 +691,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     }
 
     private void cleanupDirectedPresences(final NodeID nodeID) {
-        // Remove traces of directed presences sent from node that is gone to entities hosted in this JVM
-        final Map<String, Collection<String>> senders = nodePresences.remove(nodeID);
+        Log.debug("Remove traces of directed presences sent from node '{}' that is gone to entities hosted in this JVM.", nodeID);
+        final Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.remove(nodeID);
         if (senders != null) {
             for (final Map.Entry<String, Collection<String>> entry : senders.entrySet()) {
                 final String sender = entry.getKey();
@@ -716,10 +734,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     .collect(Collectors.toSet());
 
                 if (!handlers.isEmpty()) {
-                    Map<String, Collection<String>> senders = nodePresences.get(nodeID);
+                    Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.get(nodeID);
                     if (senders == null) {
                         senders = new ConcurrentHashMap<>();
-                        nodePresences.put(nodeID, senders);
+                        directedPresenceAddressingByClusterNode.put(nodeID, senders);
                     }
                     senders.put(sender, handlers);
                 }
@@ -743,10 +761,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     .flatMap(dp -> dp.getReceivers().stream())
                     .collect(Collectors.toSet());
 
-                Map<String, Collection<String>> senders = nodePresences.get(nodeID);
+                Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.get(nodeID);
                 if (senders == null) {
                     senders = new ConcurrentHashMap<>();
-                    nodePresences.put(nodeID, senders);
+                    directedPresenceAddressingByClusterNode.put(nodeID, senders);
                 }
                 if (!handlers.isEmpty()) {
                     senders.put(sender, handlers);
@@ -761,7 +779,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         public void entryRemoved(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             if (oldValue != null) { // Otherwise there is nothing to remove
                 if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-                    nodePresences.get(nodeID).remove(sender);
+                    directedPresenceAddressingByClusterNode.get(nodeID).remove(sender);
                 }
             }
         }
@@ -775,7 +793,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         public void mapEvicted(@Nonnull final NodeID nodeID) {
             // ignore events which were triggered by this node
             if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-                nodePresences.get(nodeID).clear();
+                directedPresenceAddressingByClusterNode.get(nodeID).clear();
             }
         }
 

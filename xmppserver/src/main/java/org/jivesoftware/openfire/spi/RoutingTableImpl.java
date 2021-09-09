@@ -71,7 +71,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -104,7 +103,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      * Key: server domain pair, Value: nodeID
      */
-    private Cache<DomainPair, NodeID> serversCache;
+    private final Cache<DomainPair, NodeID> serversCache;
 
     /**
      * A map that, for all nodes in the cluster except for the local one, tracks if a server to server connection has
@@ -144,7 +143,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
      * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
      */
-    private ConcurrentMap<NodeID, Set<String>> componentsByClusterNode = new ConcurrentHashMap<>();
+    private final ConcurrentMap<NodeID, Set<String>> componentsByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
@@ -155,7 +154,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds sessions of anonymous user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
      */
-    private Cache<String, ClientRoute> anonymousUsersCache;
+    private final Cache<String, ClientRoute> anonymousUsersCache;
 
     /**
      * A map that, for all nodes in the cluster except for the local one, tracks if a particular entity (identified by
@@ -179,7 +178,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * (includes anonymous).
      * Key: bare JID, Value: set of full JIDs of the user
      */
-    private Cache<String, HashSet<String>> usersSessions;
+    private final Cache<String, HashSet<String>> usersSessions;
 
     private String serverName;
     private XMPPServer server;
@@ -1203,6 +1202,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         anonymousUsersCache.addListener(userCacheEntryListener, includeValues);
         serversCache.addListener(serversCacheEntryListener, includeValues);
         componentsCache.addListener(componentsCacheEntryListener, includeValues);
+        // This is not necessary for the usersSessions cache, because its content is being managed while the content
+        // of users cache and anonymous users cache is being managed.
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence.
         // Probe presences of remote sessions when subscribed to presence of local session.
@@ -1211,7 +1212,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Send available presences of local sessions to other resources of the same user.
         PresenceUpdateHandler presenceUpdateHandler = XMPPServer.getInstance().getPresenceUpdateHandler();
         for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
-            // Simulate that the local session has just became available
+            // Simulate that the local session has just become available
             session.setInitialized(false);
             // Simulate that current session presence has just been received
             presenceUpdateHandler.process(session.getPresence());
@@ -1247,6 +1248,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // TODO this code is ported from the hazelcast plugin. It, however, explicitly stated to do this only in #leftCluster(). Why isn't this needed in #leftCluster(NodeID)?
         routeOwnersByClusterNode.values().stream().flatMap(Collection::stream).forEach( fullJID -> {
             final JID offlineJID = new JID(fullJID);
+
+            removeClientRoute(offlineJID);
+
             try {
                 final Presence presence = new Presence(Presence.Type.unavailable);
                 presence.setFrom(offlineJID);
@@ -1288,41 +1292,55 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Another node left the cluster.
 
         // When a peer server leaves the cluster, any remote routes that were
-        // associated with the defunct node must be dropped from the routing 
+        // associated with the defunct node must be dropped from the routing
         // caches that are shared by the remaining cluster member(s).
-
-        // Determine what components were available only on that node, and remove them.
-        // All remaining cluster nodes will be in a race to clean up the
-        // same data. The implementation below accounts for that, by only having the
-        // senior cluster node to perform the cleanup.
-        if (!ClusterManager.isSeniorClusterMember()) {
-            return;
-        }
 
         // Drop routes for all client sessions connected via the defunct cluster node.
         final AtomicLong removedSessionCount = new AtomicLong();
 
-        final Map<JID, Boolean> clientRoutesToRemove = Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
-            .filter( entry -> entry.getValue().getNodeID().equals(nodeIDOfLostNode))
-            .collect(Collectors.toMap(e -> new JID(e.getKey()), e -> e.getValue().isAvailable()));
 
-        clientRoutesToRemove.entrySet().forEach( entry -> {
-                try {
-                    removedSessionCount.getAndIncrement();
-                    removeClientRoute(entry.getKey());
-                    if ( entry.getValue() )
-                    {
-                        // Simulate that the session has just gone offline
-                        final Presence offline = new Presence();
-                        offline.setFrom(entry.getKey());
-                        offline.setTo(new JID(null, serverName, null, true));
-                        offline.setType(Presence.Type.unavailable);
-                        XMPPServer.getInstance().getPacketRouter().route(offline);
-                    }
-                } catch (Exception e) {
-                    Log.warn("Unable to route presence update when processing cluster leave, entry={}", entry, e);
-                }
-            });
+        // All clients on all other nodes are now unavailable! Simulate an unavailable presence for sessions that were
+        // being hosted in other cluster nodes.
+        routeOwnersByClusterNode.remove(nodeIDOfLostNode).stream().forEach( fullJID -> {
+            final JID offlineJID = new JID(fullJID);
+
+            removeClientRoute(offlineJID);
+
+            try {
+                final Presence presence = new Presence(Presence.Type.unavailable);
+                presence.setFrom(offlineJID);
+                XMPPServer.getInstance().getPresenceRouter().route(presence);
+                // TODO This broadcasts the presence over the entire (remaining) cluster, which is too much because it
+                // is done by all remaining nodes
+                // TODO This should only be done for routes that were previously 'available'. See commented out code below.
+            }
+            catch (final PacketException e) {
+                Log.error("We have left the cluster. Users on other cluster nodes are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf. While doing this for '{}', this caused an exception to occur.", fullJID, e);
+            }
+        });
+
+
+//        final Map<JID, Boolean> clientRoutesToRemove = Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
+//            .filter(entry -> entry.getValue().getNodeID().equals(nodeIDOfLostNode))
+//            .collect(Collectors.toMap(e -> new JID(e.getKey()), e -> e.getValue().isAvailable()));
+//
+//        clientRoutesToRemove.entrySet().forEach( entry -> {
+//                try {
+//                    removedSessionCount.getAndIncrement();
+//                    removeClientRoute(entry.getKey());
+//                    if ( entry.getValue() )
+//                    {
+//                        // Simulate that the session has just gone offline
+//                        final Presence offline = new Presence();
+//                        offline.setFrom(entry.getKey());
+//                        offline.setTo(new JID(null, serverName, null, true));
+//                        offline.setType(Presence.Type.unavailable);
+//                        XMPPServer.getInstance().getPacketRouter().route(offline);
+//                    }
+//                } catch (Exception e) {
+//                    Log.warn("Unable to route presence update when processing cluster leave, entry={}", entry, e);
+//                }
+//            });
 
         Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", nodeIDOfLostNode, removedSessionCount.get() );
 

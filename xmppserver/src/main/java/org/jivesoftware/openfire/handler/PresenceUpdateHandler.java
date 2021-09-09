@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+import org.jivesoftware.openfire.cluster.ClusteredCacheEventManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.roster.Roster;
@@ -578,15 +579,18 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        ClusterManager.addListener(directedPresencesCache, new DirectedPresenceListener());
-        ClusterManager.addListener(directedPresencesCache, new DirectedPresenceListener());
-//        addEntryListener(directedPresencesCache, new DirectedPresenceListener());
+        final DirectedPresenceListener listener = new DirectedPresenceListener();
 
+        // TODO
+//        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+//        directedPresencesCache.entrySet().stream()
+//            // this filter isn't needed if we do this before restoreCacheContent.
+//            .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
+//            .forEach(entry -> listener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
 
-        // It does not appear to be needed to invoke any kind of event listeners for the data that was gained by joining
-        // the cluster (eg: directed presence provided by other cluster nodes now available to the local cluster node):
-        // the only cache that's being used in this implementation does not have an associated event listening mechanism
-        // when data is added to or removed from it.
+        ClusteredCacheEventManager.addListener(listener, directedPresencesCache.getName());
+
+        // TODO Also remove the listener upon cluster leave?
     }
 
     @Override
@@ -768,6 +772,11 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         @Override
         public void mapCleared(final NodeID nodeID) {
             mapEvicted(nodeID);
+        }
+
+        @Override
+        public boolean handlesValues() {
+            return true;
         }
     }
 }

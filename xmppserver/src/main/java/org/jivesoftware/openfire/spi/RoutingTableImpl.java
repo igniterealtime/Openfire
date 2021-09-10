@@ -28,10 +28,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.carbons.Received;
-import org.jivesoftware.openfire.cluster.ClusterEventListener;
-import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
-import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.cluster.*;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.forward.Forwarded;
@@ -59,18 +56,12 @@ import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -1414,10 +1405,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         @Override
         public void entryAdded(@Nonnull final K key, @Nullable final V value, @Nonnull final NodeID nodeID) {
+            if (XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                return; // only interested in events that originate from other than the local cluster node.
+            }
             reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
         }
 
         @Override public void entryRemoved(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
+            if (XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                return; // only interested in events that originate from other than the local cluster node.
+            }
             reverseCacheRepresentation.computeIfPresent(nodeID, (k, v) -> {
                 v.remove(key);
                 return v;
@@ -1431,16 +1428,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         @Override
         public void entryEvicted(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
+            if (XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                return; // only interested in events that originate from other than the local cluster node.
+            }
             entryRemoved(key, oldValue, nodeID);
         }
 
         @Override
         public void mapCleared(@Nonnull final NodeID nodeID) {
+            if (XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                return; // only interested in events that originate from other than the local cluster node.
+            }
             reverseCacheRepresentation.remove(nodeID);
         }
 
         @Override
         public void mapEvicted(@Nonnull final NodeID nodeID) {
+            if (XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                return; // only interested in events that originate from other than the local cluster node.
+            }
             reverseCacheRepresentation.remove(nodeID);
         }
     }

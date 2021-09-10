@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2021 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,11 @@
 
 package org.jivesoftware.util;
 
+import javax.annotation.Nonnull;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -47,5 +51,28 @@ public class CollectionUtils
     {
         final Map<Object, Boolean> seen = new ConcurrentHashMap<>();
         return t -> seen.putIfAbsent( keyExtractor.apply( t ), Boolean.TRUE ) == null;
+    }
+
+    /**
+     * Returns all elements that occur more than exactly once in the combination of all elements from all provided
+     * collections.
+     *
+     * @param collections The collection for which to return duplicates
+     * @param <V> The type of the entities in the collections.
+     * @return The duplicates
+     */
+    @Nonnull
+    public static <V> Set<V> findDuplicates(@Nonnull final Collection<V>... collections)
+    {
+        final Set<V> merged = new HashSet<>();
+        final Set<V> duplicates = new HashSet<>();
+        for (Collection<V> collection : collections) {
+            for (V o : collection) {
+                if (!merged.add(o)) {
+                    duplicates.add(o);
+                }
+            }
+        }
+        return duplicates;
     }
 }

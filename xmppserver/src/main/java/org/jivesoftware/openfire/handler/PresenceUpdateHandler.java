@@ -610,7 +610,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         // meaning that it won't have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This
         // takes away the need to explicitly deregister the listener in that case.
         final boolean includeValues = true; // This event handler needs to operate on cache values. We can't reduce overhead by suppressing value transmission.
-        directedPresencesCache.addListener(listener, includeValues);
+        directedPresencesCache.addClusteredCacheEntryListener(listener, includeValues, false);
     }
 
     @Override
@@ -723,24 +723,21 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 throw new IllegalStateException("Null value detected. This listener was probably registered using a configuration that suppresses values. This listener requires values, so it can't properly function in this configuration.");
             }
 
-            // Ignore events originated from this JVM
-            if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-                // Check if the directed presence was sent to an entity hosted by this JVM
-                final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-                final Set<String> handlers = newValue
-                    .stream()
-                    .filter(dp -> routingTable.isLocalRoute(dp.getHandler()))
-                    .flatMap(dp -> dp.getReceivers().stream())
-                    .collect(Collectors.toSet());
+            // Check if the directed presence was sent to an entity hosted by this JVM
+            final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+            final Set<String> handlers = newValue
+                .stream()
+                .filter(dp -> routingTable.isLocalRoute(dp.getHandler()))
+                .flatMap(dp -> dp.getReceivers().stream())
+                .collect(Collectors.toSet());
 
-                if (!handlers.isEmpty()) {
-                    Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.get(nodeID);
-                    if (senders == null) {
-                        senders = new ConcurrentHashMap<>();
-                        directedPresenceAddressingByClusterNode.put(nodeID, senders);
-                    }
-                    senders.put(sender, handlers);
+            if (!handlers.isEmpty()) {
+                Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.get(nodeID);
+                if (senders == null) {
+                    senders = new ConcurrentHashMap<>();
+                    directedPresenceAddressingByClusterNode.put(nodeID, senders);
                 }
+                senders.put(sender, handlers);
             }
         }
 
@@ -750,37 +747,32 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 throw new IllegalStateException("Null value detected. This listener was probably registered using a configuration that suppresses values. This listener requires values, so it can't properly function in this configuration.");
             }
 
-            // Ignore events originated from this JVM
-            if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-                // Check if the directed presence was sent to an entity hosted by this JVM
-                final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+            // Check if the directed presence was sent to an entity hosted by this JVM
+            final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
-                final Set<String> handlers = newValue
-                    .stream()
-                    .filter(dp -> routingTable.isLocalRoute(dp.getHandler()))
-                    .flatMap(dp -> dp.getReceivers().stream())
-                    .collect(Collectors.toSet());
+            final Set<String> handlers = newValue
+                .stream()
+                .filter(dp -> routingTable.isLocalRoute(dp.getHandler()))
+                .flatMap(dp -> dp.getReceivers().stream())
+                .collect(Collectors.toSet());
 
-                Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.get(nodeID);
-                if (senders == null) {
-                    senders = new ConcurrentHashMap<>();
-                    directedPresenceAddressingByClusterNode.put(nodeID, senders);
-                }
-                if (!handlers.isEmpty()) {
-                    senders.put(sender, handlers);
-                } else {
-                    // Remove any traces of the sender since no directed presence was sent to this JVM
-                    senders.remove(sender);
-                }
+            Map<String, Collection<String>> senders = directedPresenceAddressingByClusterNode.get(nodeID);
+            if (senders == null) {
+                senders = new ConcurrentHashMap<>();
+                directedPresenceAddressingByClusterNode.put(nodeID, senders);
+            }
+            if (!handlers.isEmpty()) {
+                senders.put(sender, handlers);
+            } else {
+                // Remove any traces of the sender since no directed presence was sent to this JVM
+                senders.remove(sender);
             }
         }
 
         @Override
         public void entryRemoved(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             if (oldValue != null) { // Otherwise there is nothing to remove
-                if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-                    directedPresenceAddressingByClusterNode.get(nodeID).remove(sender);
-                }
+                directedPresenceAddressingByClusterNode.get(nodeID).remove(sender);
             }
         }
 
@@ -791,10 +783,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
         @Override
         public void mapEvicted(@Nonnull final NodeID nodeID) {
-            // ignore events which were triggered by this node
-            if (!XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-                directedPresenceAddressingByClusterNode.get(nodeID).clear();
-            }
+            directedPresenceAddressingByClusterNode.get(nodeID).clear();
         }
 
         @Override

@@ -161,12 +161,12 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues) {
-        return cache.addListener(listener, includeValues);
+    public String addClusteredCacheEntryListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues, final boolean includeEventsFromLocalNode) {
+        return cache.addClusteredCacheEntryListener(listener, includeValues, includeEventsFromLocalNode);
     }
 
     @Override
-    public void removeListener(@Nonnull final String listenerId) {
-        cache.removeListener(listenerId);
+    public void removeClusteredCacheEntryListener(@Nonnull final String listenerId) {
+        cache.removeClusteredCacheEntryListener(listenerId);
     }
 }

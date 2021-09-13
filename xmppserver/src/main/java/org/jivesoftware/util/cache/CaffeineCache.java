@@ -498,12 +498,12 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     }
 
     @Override
-    public String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues) {
+    public String addClusteredCacheEntryListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues, final boolean includeEventsFromLocalNode) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void removeListener(@Nonnull final String listenerId) {
+    public void removeClusteredCacheEntryListener(@Nonnull final String listenerId) {
         throw new UnsupportedOperationException();
     }
 }

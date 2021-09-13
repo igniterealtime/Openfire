@@ -255,15 +255,16 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      * invocation.
      *
      * @param listener the listener to be registered.
-     * @param includeValues defines if the listener should receive the valus associated with the events.
+     * @param includeValues defines if the listener should receive the values associated with the events.
+     * @param includeEventsFromLocalNode defines if the listener should be invoked for events that originate on the local node.
      * @return a unique identifier for the listener which is used as a key to remove the listener
      */
-    String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues);
+    String addClusteredCacheEntryListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues, final boolean includeEventsFromLocalNode);
 
     /**
      * Removes a previously registered event listener.
      *
      * @param listenerId the identifier of the listener to be removed.
      */
-    void removeListener(@Nonnull final String listenerId);
+    void removeClusteredCacheEntryListener(@Nonnull final String listenerId);
 }

@@ -15,6 +15,14 @@
  */
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LinkedListNode;
+import org.jivesoftware.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collection;
@@ -24,15 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LinkedListNode;
-import org.jivesoftware.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.annotation.Nonnull;
 
 /**
  * Default, non-distributed implementation of the Cache interface.
@@ -646,12 +645,12 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
-    public String addListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues) {
+    public String addClusteredCacheEntryListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues, final boolean includeEventsFromLocalNode) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void removeListener(@Nonnull final String listenerId) {
+    public void removeClusteredCacheEntryListener(@Nonnull final String listenerId) {
         throw new UnsupportedOperationException();
     }
 }

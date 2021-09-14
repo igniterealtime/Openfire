@@ -1186,6 +1186,27 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     /**
+     * Verifies that {@link #componentsCache}, {@link #localRoutingTable#getComponentRoute()} and {@link #componentsByClusterNode}
+     * are in a consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @return A consistency state report.
+     * @see #componentsCache which is the cache that is used tho share data with other cluster nodes.
+     * @see LocalRoutingTable#getComponentRoute() which holds content added to the cache by the local cluster node.
+     * @see #componentsByClusterNode which holds content added to the cache by cluster nodes other than the local node.
+     */
+    public Multimap<String, String> clusteringStateConsistencyReportForComponentRoutes() {
+        // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
+        // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
+        // are being performed.
+        return ConsistencyChecks.generateReportForRoutingTableComponentRoutes(componentsCache, localRoutingTable.getComponentRoute(), new HashMap<>(componentsByClusterNode));
+    }
+
+    /**
      * Verifies that {@link #usersCache}, {@link #anonymousUsersCache}, {@link #localRoutingTable#getClientsRoutes(boolean)}
      * and {@link #routeOwnersByClusterNode} are in a consistent state.
      *
@@ -1218,31 +1239,37 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
+        Log.debug("Add the entry listeners to the corresponding caches.");
+        // Register a cache entry event listeners that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
         final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(routeOwnersByClusterNode);
+        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(s2sDomainPairsByClusterNode);
+        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(componentsByClusterNode);
 
-        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+        // Note that, when #joinedCluster() fired, the cache will _always_ have been replaced, meaning that it won't
+        // have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This takes away the need
+        // to explicitly deregister the listener in that case.
+        final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
+        usersCache.addClusteredCacheEntryListener(userCacheEntryListener, includeValues, false);
+        anonymousUsersCache.addClusteredCacheEntryListener(userCacheEntryListener, includeValues, false);
+        serversCache.addClusteredCacheEntryListener(serversCacheEntryListener, includeValues, false);
+        componentsCache.addClusteredCacheEntryListener(componentsCacheEntryListener, includeValues, false);
+        // This is not necessary for the usersSessions cache, because its content is being managed while the content
+        // of users cache and anonymous users cache is being managed.
+
+        // Ensure that event listeners have been registered with the caches, before starting to simulate 'entryAdded' events,
+        // to prevent the possibility of having entries that are missed by the simulation because of bad timing.
+        Log.debug("Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.");
         Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream())
             // this filter isn't needed if we do this before restoreCacheContent.
             .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> userCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
 
-        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
-        // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(s2sDomainPairsByClusterNode);
-
-        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         serversCache.entrySet().stream()
             // this filter isn't needed if we do this before restoreCacheContent.
             .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> serversCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
 
-        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
-        // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(componentsByClusterNode);
-
-        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         componentsCache.entrySet().forEach(entry -> {
             entry.getValue().forEach(nodeIdForComponent -> { // Iterate over all node ids on which the component is known
                     if (!nodeIdForComponent.equals(XMPPServer.getInstance().getNodeID())) {
@@ -1254,17 +1281,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             );
         });
-
-        // Add the entry listeners to the corresponding caches. Note that, when #joinedCluster() fired, the cache will
-        // _always_ have been replaced, meaning that it won't have old event listeners. When #leaveCluster() fires, the
-        // cache will be destroyed. This takes away the need to explicitly deregister the listener in that case.
-        final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
-        usersCache.addClusteredCacheEntryListener(userCacheEntryListener, includeValues, false);
-        anonymousUsersCache.addClusteredCacheEntryListener(userCacheEntryListener, includeValues, false);
-        serversCache.addClusteredCacheEntryListener(serversCacheEntryListener, includeValues, false);
-        componentsCache.addClusteredCacheEntryListener(componentsCacheEntryListener, includeValues, false);
-        // This is not necessary for the usersSessions cache, because its content is being managed while the content
-        // of users cache and anonymous users cache is being managed.
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence.
         // Probe presences of remote sessions when subscribed to presence of local session.

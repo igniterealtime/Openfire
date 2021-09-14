@@ -57,8 +57,6 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -1269,7 +1267,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new AbstractCacheEntryListener<>(routeOwnersByClusterNode);
+        final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(routeOwnersByClusterNode);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream())
@@ -1279,7 +1277,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new AbstractCacheEntryListener<>(s2sDomainPairsByClusterNode);
+        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(s2sDomainPairsByClusterNode);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         serversCache.entrySet().stream()
@@ -1289,7 +1287,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new AbstractCacheEntryListener<>(componentsByClusterNode);
+        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(componentsByClusterNode);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         componentsCache.entrySet().forEach(entry -> {
@@ -1409,6 +1407,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final AtomicLong removedSessionCount = new AtomicLong();
 
 
+        // TODO Comment below and log statement in catch block are correct? Are we sure *all* nodes left? Isn't it just one?
         // All clients on all other nodes are now unavailable! Simulate an unavailable presence for sessions that were
         // being hosted in other cluster nodes.
         routeOwnersByClusterNode.remove(nodeIDOfLostNode).stream().forEach( fullJID -> {
@@ -1511,47 +1510,4 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
-    /**
-     * Responsible for maintaining data in the provided constructor argument, which needs to reflect all entries that
-     * exist on cluster nodes other than the local cluster node.
-     */
-    private class AbstractCacheEntryListener<K, V> implements ClusteredCacheEntryListener<K, V> {
-        private final ConcurrentMap<NodeID, Set<K>> reverseCacheRepresentation;
-
-        private AbstractCacheEntryListener(@Nonnull final ConcurrentMap<NodeID, Set<K>> reverseCacheRepresentation) {
-            this.reverseCacheRepresentation = reverseCacheRepresentation;
-        }
-
-        @Override
-        public void entryAdded(@Nonnull final K key, @Nullable final V value, @Nonnull final NodeID nodeID) {
-            reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
-        }
-
-        @Override public void entryRemoved(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
-            reverseCacheRepresentation.computeIfPresent(nodeID, (k, v) -> {
-                v.remove(key);
-                return v;
-            });
-        }
-
-        @Override
-        public void entryUpdated(@Nonnull final K key, @Nullable final V oldValue, @Nullable final V newValue, @Nonnull final NodeID nodeID) {
-            // Don't do anything, because we only care about keys.
-        }
-
-        @Override
-        public void entryEvicted(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
-            entryRemoved(key, oldValue, nodeID);
-        }
-
-        @Override
-        public void mapCleared(@Nonnull final NodeID nodeID) {
-            reverseCacheRepresentation.remove(nodeID);
-        }
-
-        @Override
-        public void mapEvicted(@Nonnull final NodeID nodeID) {
-            reverseCacheRepresentation.remove(nodeID);
-        }
-    }
 }

@@ -31,6 +31,7 @@
     webManager.init(pageContext);
 
     // Calculations for RoutingTableImpl
+    pageContext.setAttribute("clusteringStateConsistencyReportForServerRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForServerRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForClientRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForClientRoutes());
 
     pageContext.setAttribute("newLineChar", "\n");
@@ -60,7 +61,40 @@
     <p>To guard against data inconsistency as a result of cluster outages, as well as for the local node to know what data was 'lost' (which might need to be operate on, for example to let local users know that certain other users are now no longer reachable), each cluster node maintains a partial copy for each cache entry, that contains a minimal amount of data.</p>
 
     <admin:contentBox title="Routing Table Caches">
+        <h4>Servers Cache</h4>
+        <p>The cache describes what <em>outgoing</em> S2S connections (identified by DomainPair) are physically connected to which cluster node(s). Like client connections, an (outgoing) S2S connection is uniquely established on one cluster node (multiple concurrent outgoing connections cannot exist).</p>
+        <c:forEach items="${clusteringStateConsistencyReportForServerRoutes.asMap()}" var="messageGroup">
+            <ul>
+                <c:forEach items="${messageGroup.value}" var="line">
+                    <li>
+                        <c:choose>
+                            <c:when test="${messageGroup.key eq 'info'}"><img src="images/info-16x16.gif" alt="informational"></c:when>
+                            <c:when test="${messageGroup.key eq 'pass'}"><img src="images/check.gif" alt="consistent"></c:when>
+                            <c:when test="${messageGroup.key eq 'fail'}"><img src="images/x.gif" alt="inconsistency"></c:when>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test='${fn:contains(line, newLineChar)}'>
+                                <c:forTokens items="${line}" delims="${newLineChar}" var="descr" begin="0" end="0">
+                                    <c:out value="${descr}"/>
+                                </c:forTokens>
+                                <ul>
+                                    <c:forTokens items="${line}" delims="${newLineChar}" var="item" begin="1">
+                                        <li><c:out value="${item}"/></li>
+                                    </c:forTokens>
+                                </ul>
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${line}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </li>
+                </c:forEach>
+            </ul>
+        </c:forEach>
+
         <h4>Routing Users Cache & Routing AnonymousUsers Cache</h4>
+        <p>The caches describes what C2S connections (identified by full JID) are physically connected to what cluster node. Unlike server-to-server connection, a C2S connection is uniquely established to one cluster node (multiple concurrent connections <em>for the same full JID</em> cannot exist).</p>
+
         <c:forEach items="${clusteringStateConsistencyReportForClientRoutes.asMap()}" var="messageGroup">
             <ul>
                 <c:forEach items="${messageGroup.value}" var="line">

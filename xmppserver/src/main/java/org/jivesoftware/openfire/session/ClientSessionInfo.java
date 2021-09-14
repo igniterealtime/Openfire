@@ -47,6 +47,7 @@ public class ClientSessionInfo implements Externalizable {
     private boolean messageCarbonsEnabled;
     private boolean hasRequestedBlocklist;
     private NodeID nodeID;
+    private boolean anonymous;
 
     public ClientSessionInfo() {
     }
@@ -57,8 +58,9 @@ public class ClientSessionInfo implements Externalizable {
         activeList = session.getActiveList() != null ? session.getActiveList().getName() : null;
         offlineFloodStopped = session.isOfflineFloodStopped();
         messageCarbonsEnabled = session.isMessageCarbonsEnabled();
-        hasRequestedBlocklist=session.hasRequestedBlocklist();
+        hasRequestedBlocklist = session.hasRequestedBlocklist();
         nodeID = XMPPServer.getInstance().getNodeID();
+        anonymous = session.isAnonymousUser();
     }
 
     public Presence getPresence() {
@@ -87,6 +89,10 @@ public class ClientSessionInfo implements Externalizable {
         return nodeID;
     }
 
+    public boolean isAnonymous() {
+        return anonymous;
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
@@ -102,6 +108,7 @@ public class ClientSessionInfo implements Externalizable {
         ExternalizableUtil.getInstance().writeBoolean(out, messageCarbonsEnabled);    
         ExternalizableUtil.getInstance().writeBoolean(out, hasRequestedBlocklist);
         ExternalizableUtil.getInstance().writeSerializable(out, nodeID);
+        ExternalizableUtil.getInstance().writeBoolean(out, anonymous);
     }
 
     @Override
@@ -118,5 +125,6 @@ public class ClientSessionInfo implements Externalizable {
         messageCarbonsEnabled = ExternalizableUtil.getInstance().readBoolean(in);
         hasRequestedBlocklist = ExternalizableUtil.getInstance().readBoolean(in);
         nodeID = (NodeID) ExternalizableUtil.getInstance().readSerializable(in);
+        anonymous = ExternalizableUtil.getInstance().readBoolean(in);
     }
 }

@@ -1407,9 +1407,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final AtomicLong removedSessionCount = new AtomicLong();
 
 
-        // TODO Comment below and log statement in catch block are correct? Are we sure *all* nodes left? Isn't it just one?
-        // All clients on all other nodes are now unavailable! Simulate an unavailable presence for sessions that were
-        // being hosted in other cluster nodes.
+        // Clients on leaving node are now unavailable! Simulate an unavailable presence for sessions that were being
+        // hosted on that node.
         routeOwnersByClusterNode.remove(nodeIDOfLostNode).stream().forEach( fullJID -> {
             final JID offlineJID = new JID(fullJID);
 
@@ -1424,7 +1423,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // TODO This should only be done for routes that were previously 'available'. See commented out code below.
             }
             catch (final PacketException e) {
-                Log.error("We have left the cluster. Users on other cluster nodes are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf. While doing this for '{}', this caused an exception to occur.", fullJID, e);
+                Log.error("Remote node {} left the cluster. Users on that node are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf.  While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, fullJID, e);
             }
         });
 

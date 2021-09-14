@@ -16,19 +16,12 @@
 
 package org.jivesoftware.openfire;
 
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
-
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
@@ -38,9 +31,25 @@ import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
-import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.ClientSessionInfo;
+import org.jivesoftware.openfire.session.ComponentSession;
+import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
+import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.GetSessionsCountTask;
+import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalComponentSession;
+import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.ReverseLookupUpdatingCacheEntryListener;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -55,6 +64,24 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+
+import java.net.UnknownHostException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -126,6 +153,21 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * Key: stream ID that identifies the socket/session, Value: nodeID
      */
     private Cache<StreamID, NodeID> incomingServerSessionsCache;
+    /**
+     * A map that, for all nodes in the cluster except for the local one, tracks stream ids of incoming server sessions.
+     *
+     * Whenever any cluster node adds or removes an entry to the #incomingServerSessionsCache, this map, on
+     * <em>every</em> cluster node, will receive a corresponding update. This ensures that every cluster node has a
+     * complete overview of all cache entries (or at least the most important details of each entry - we should avoid
+     * duplicating the entire cache, as that somewhat defaults the purpose of having the cache - however for this
+     * specific cache we need all data, so this basically becomes a reverse lookup table).
+     *
+     * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
+     * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
+     * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
+     * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     */
+    private final ConcurrentMap<NodeID, Set<StreamID>> incomingServerSessionsByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds list of incoming sessions
@@ -1612,12 +1654,23 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        // It does not appear to be needed to invoke any kind of event listeners for the data that was gained by joining
-        // the cluster (eg: sessions connected to other cluster nodes, now suddenly available to the local cluster node):
-        // There are six caches in play here, but only the content of one of them goes accompanied by firing off event
-        // listeners (sessionInfoCache). However, when already running in a clustered environment, those events are
-        // never broadcasted over the cluster, so there shouldn't be a need to do so for all sessions that were
-        // gained/lost when joining or leaving a cluster either.
+        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
+        // which is intended to be used (only) in the event of a cluster split.
+        final ClusteredCacheEntryListener<StreamID, NodeID> incomingServerSessionsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(incomingServerSessionsByClusterNode);
+
+        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+        incomingServerSessionsCache.entrySet().stream()
+            // this filter isn't needed if we do this before restoreCacheContent.
+            .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
+            .forEach(entry -> incomingServerSessionsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
+
+
+        // Add the entry listeners to the corresponding caches. Note that, when #joinedCluster() fired, the cache will
+        // _always_ have been replaced, meaning that it won't have old event listeners. When #leaveCluster() fires, the
+        // cache will be destroyed. This takes away the need to explicitly deregister the listener in that case.
+        final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
+        incomingServerSessionsCache.addClusteredCacheEntryListener(incomingServerSessionsCacheEntryListener, includeValues, false);
+
     }
 
     @Override
@@ -1641,6 +1694,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
+        incomingServerSessionsByClusterNode.clear();
+
         // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
         // the cluster (eg: sessions connected to other cluster nodes, now unavailable to the local cluster node):
         // There are six caches in play here, but only the content of one of them goes accompanied by firing off event
@@ -1661,23 +1716,33 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // All remaining cluster nodes will be in a race to clean up the
         // same data. The implementation below accounts for that, by only having the
         // senior cluster node to perform the cleanup.
+
+        // TODO What if the leaving/disconnected node was the senior member? Then the race to clean up may have no contestants?
+
         if (!ClusterManager.isSeniorClusterMember())
         {
             return;
         }
 
+        final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
+
+        // Remove incoming server sessions hosted in node that left the cluster
+        incomingServerSessionsByClusterNode.remove(nodeIDOfLostNode)
+            .stream()
+            .forEach(streamID -> {
+                try {
+                    final IncomingServerSession session = XMPPServer.getInstance().getRemoteSessionLocator().getIncomingServerSession(nodeID, streamID);
+                    // Remove all the hostnames that were registered for this server session
+                    for (final String hostname : session.getValidatedDomains()) {
+                        unregisterIncomingServerSession(hostname, session); // Will also remove it from the cache if that didn't happen before
+                    }
+                } catch (Exception e) {
+                    Log.error("Node {} left the cluster. Incoming server sessions on that node are no longer available. To reflect this, we're deleting these sessions. While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, streamID, e);
+                }
+            });
+
         CacheUtil.removeValueFromMultiValuedCache(componentSessionsCache, NodeID.getInstance(nodeID));
         CacheUtil.removeValueFromCache(multiplexerSessionsCache, NodeID.getInstance(nodeID));
-        final Set<StreamID> removedStreamIDs = CacheUtil.removeValueFromCache(incomingServerSessionsCache, NodeID.getInstance(nodeID));
-
-        // Update the collection of 'sockets/sessions coming from the same remote hostname' as well as the collection of 'validated domains' to reflect the loss of incoming server sessions.
-        if ( !removedStreamIDs.isEmpty() )
-        {
-            Log.debug("Cluster node {} just left the cluster, and was the node where incoming server sessions with IDs '{}' were living. They are no longer available.",
-                      NodeID.getInstance(nodeID),
-                      String.join(", ", removedStreamIDs.stream().map(StreamID::getID).collect(Collectors.toSet())));
-            unregisterIncomingServerSession(removedStreamIDs);
-        }
 
         // In some cache implementations, the entry-set is unmodifiable. To guard against potential
         // future changes of this implementation (that would make the implementation incompatible with

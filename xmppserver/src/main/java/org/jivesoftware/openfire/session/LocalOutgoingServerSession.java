@@ -204,27 +204,34 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
             else
             {
-                log.debug( "Unable to re-use an existing session. Creating a new session ..." );
-                int port = RemoteServerManager.getPortForServer(remoteDomain);
-                session = createOutgoingSession(localDomain, remoteDomain, port);
-                if (session != null) {
-                    log.debug( "Created a new session." );
+                try {
+                    log.debug("Unable to re-use an existing session. Creating a new session ...");
+                    int port = RemoteServerManager.getPortForServer(remoteDomain);
+                    session = createOutgoingSession(localDomain, remoteDomain, port);
+                    if (session != null) {
+                        log.debug("Created a new session.");
 
-                    session.addOutgoingDomainPair(localDomain, remoteDomain);
-                    sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
-                    log.debug( "Authentication successful." );
-                    //inform all listeners as well.
-                    ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
-                    return true;
-                } else {
-                    log.warn( "Unable to authenticate: Fail to create new session." );
-                    return false;
+                        session.addOutgoingDomainPair(localDomain, remoteDomain);
+                        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+                        log.debug("Authentication successful.");
+                        //inform all listeners as well.
+                        ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
+                        return true;
+                    } else {
+                        log.warn("Unable to authenticate: Fail to create new session.");
+                        return false;
+                    }
+                } catch (Exception e) {
+                    if (session != null) {
+                        session.close();
+                    }
+                    throw e;
                 }
             }
         }
         catch (Exception e)
         {
-            log.error( "An exception occurred while authenticating remote domain!", e );
+            log.error( "An exception occurred while authenticating to remote domain '{}'!", remoteDomain, e );
             return false;
         }
     }
@@ -746,8 +753,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     @Override
     public void addOutgoingDomainPair(String localDomain, String remoteDomain) {
         final DomainPair domainPair = new DomainPair(localDomain, remoteDomain);
-        outgoingDomainPairs.add(domainPair);
         XMPPServer.getInstance().getRoutingTable().addServerRoute(domainPair, this);
+        outgoingDomainPairs.add(domainPair);
     }
 
     @Override

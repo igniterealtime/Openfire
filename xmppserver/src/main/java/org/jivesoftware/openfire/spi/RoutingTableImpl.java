@@ -215,15 +215,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public void addServerRoute(DomainPair address, LocalOutgoingServerSession destination) {
-        localRoutingTable.addRoute(address, destination);
         Lock lock = serversCache.getLock(address);
         lock.lock();
         try {
-            serversCache.put(address, server.getNodeID());
+            final NodeID oldValue = serversCache.putIfAbsent(address, server.getNodeID());
+            if (oldValue != null && !oldValue.equals(XMPPServer.getInstance().getNodeID())) {
+                // Existing implementation assumes that only one node has an outgoing server connection for a domain. Fail if that's not the case. See: OF-2280
+                throw new IllegalStateException("The local cluster node attempts to established a new S2S connection to '"+address+"', but such a connection already exists on cluster node '"+oldValue+"'.");
+            }
         }
         finally {
             lock.unlock();
         }
+        localRoutingTable.addRoute(address, destination);
     }
 
     @Override

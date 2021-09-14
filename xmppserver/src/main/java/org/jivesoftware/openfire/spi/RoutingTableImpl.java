@@ -93,6 +93,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      * Key: server domain pair, Value: nodeID
+     *
+     * @see LocalRoutingTable#getServerRoutes() which holds content added by the local cluster node.
+     * @see #s2sDomainPairsByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private final Cache<DomainPair, NodeID> serversCache;
 
@@ -110,14 +113,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
      * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
      * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     *
+     * @see #serversCache which is the cache for which this field is a supporting data structure.
      */
     private final ConcurrentMap<NodeID, Set<DomainPair>> s2sDomainPairsByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds components connected to the server.
      * Key: component domain, Value: list of nodeIDs hosting the component
+     *
+     * @see LocalRoutingTable#getComponentRoute() which holds content added by the local cluster node.
+     * @see #componentsByClusterNode which holds content added by cluster nodes other than the local node.
      */
-    private Cache<String, HashSet<NodeID>> componentsCache;
+    private final Cache<String, HashSet<NodeID>> componentsCache;
 
     /**
      * A map that, for all nodes in the cluster except for the local one, tracks if a component connection has
@@ -133,17 +141,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
      * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
      * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     *
+     * @see #componentsCache which is the cache for which this field is a supporting data structure.
      */
     private final ConcurrentMap<NodeID, Set<String>> componentsByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
+     *
+     * @see LocalRoutingTable#getClientRoutes() which holds content added by the local cluster node.
+     * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private final Cache<String, ClientRoute> usersCache;
+
     /**
      * Cache (unlimited, never expire) that holds sessions of anonymous user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
+     *
+     * @see LocalRoutingTable#getClientRoutes() which holds content added by the local cluster node.
+     * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private final Cache<String, ClientRoute> anonymousUsersCache;
 
@@ -161,19 +178,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
      * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
      * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     *
+     * @see #usersCache which is one of the two caches for which this field is a supporting data structure.
+     * @see #anonymousUsersCache which is one of the two for which this field is a supporting data structure.
      */
-    private ConcurrentMap<NodeID, Set<String>> routeOwnersByClusterNode = new ConcurrentHashMap<>();
+    private final ConcurrentMap<NodeID, Set<String>> routeOwnersByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds set of connected resources of authenticated users
      * (includes anonymous).
      * Key: bare JID, Value: set of full JIDs of the user
+     *
+     * Note: unlike the other caches in this implementation, this cache does not explicitly have supporting data
+     * structures. Instead, it implicitly uses the supporting data structures of {@link #usersCache} and {@link #anonymousUsersCache}.
      */
     private final Cache<String, HashSet<String>> usersSessions;
 
     private String serverName;
     private XMPPServer server;
-    private LocalRoutingTable localRoutingTable;
+    private final LocalRoutingTable localRoutingTable;
     private RemotePacketRouter remotePacketRouter;
     private IQRouter iqRouter;
     private MessageRouter messageRouter;
@@ -1138,8 +1161,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     /**
-     * Verifies that userCache, anonymousUserCache, localRoutingTable.getClientRoutes and routeOwnersByClusterNode
-     * are in a consistent state.
+     * Verifies that {@link #usersCache}, {@link #anonymousUsersCache}, {@link #localRoutingTable#getClientsRoutes(boolean)}
+     * and {@link #routeOwnersByClusterNode} are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
      *
@@ -1147,6 +1170,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
      *
      * @return A consistency state report.
+     * @see #usersCache which is one of the two caches that is used tho share data with other cluster nodes.
+     * @see #anonymousUsersCache which is one of the two caches that is used tho share data with other cluster nodes.
+     * @see LocalRoutingTable#getClientRoutes() which holds content added to the caches by the local cluster node.
+     * @see #routeOwnersByClusterNode which holds content added to the caches by cluster nodes other than the local node.
      */
     public Multimap<String, String> clusteringStateConsistencyReportForClientRoutes() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as

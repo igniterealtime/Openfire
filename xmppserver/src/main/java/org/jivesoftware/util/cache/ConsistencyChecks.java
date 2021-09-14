@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 public class ConsistencyChecks
 {
     /**
-     * Verifies that userCache, anonymousUserCache, localRoutingTable.getClientRoutes and routeOwnersByClusterNode
+     * Verifies that usersCache, anonymousUsersCache, localRoutingTable.getClientRoutes and routeOwnersByClusterNode
      * are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.

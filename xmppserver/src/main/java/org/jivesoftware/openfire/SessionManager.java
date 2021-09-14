@@ -1713,16 +1713,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // might have disconnected unexpectedly (as a result of a crash or network issue).
         //
         // Determine what components were available only on that node, and remove them.
-        // All remaining cluster nodes will be in a race to clean up the
-        // same data. The implementation below accounts for that, by only having the
-        // senior cluster node to perform the cleanup.
-
-        // TODO What if the leaving/disconnected node was the senior member? Then the race to clean up may have no contestants?
-
-        if (!ClusterManager.isSeniorClusterMember())
-        {
-            return;
-        }
+        // All remaining cluster nodes will be in a race to clean up the same data. We can
+        // not depend on cluster seniority to appoint a 'single' cleanup node, because for
+        // a small moment we may not have a senior cluster member.
 
         final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
 
@@ -1741,6 +1734,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 }
             });
 
+
+
+        // For componentSessionsCache and multiplexerSessionsCache there is no clean up to be done, except for removing
+        // the value from the cache. Therefore it is unnecessary to create a reverse lookup tracking state per (remote)
+        // node.
         CacheUtil.removeValueFromMultiValuedCache(componentSessionsCache, NodeID.getInstance(nodeID));
         CacheUtil.removeValueFromCache(multiplexerSessionsCache, NodeID.getInstance(nodeID));
 

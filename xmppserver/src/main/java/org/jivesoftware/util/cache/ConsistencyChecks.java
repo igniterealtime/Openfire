@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.util.CollectionUtils;
+import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -82,7 +83,7 @@ public class ConsistencyChecks
         }
         final Set<DomainPair> remoteServerRoutesAddressingDuplicates = CollectionUtils.findDuplicates(remoteServerRoutesAddressing);
 
-        final Set<DomainPair> ServerRoutesAddressingBothLocalAndRemote = CollectionUtils.findDuplicates(localServerRoutesAddressing, remoteServerRoutesAddressing);
+        final Set<DomainPair> serverRoutesAddressingBothLocalAndRemote = CollectionUtils.findDuplicates(localServerRoutesAddressing, remoteServerRoutesAddressing);
 
         final Multimap<String, String> result = HashMultimap.create();
 
@@ -120,17 +121,17 @@ public class ConsistencyChecks
             result.put("fail", String.format("s2sDomainPairsByClusterNode tracks data for cluster nodes that are not recognized. All cluster nodeIDs as recognized: %s All cluster nodeIDs for which data is tracked: %s.", clusterNodeIDs.stream().map(NodeID::toString).collect(Collectors.joining(", ")), s2sDomainPairsByClusterNode.keySet().stream().map(NodeID::toString).collect(Collectors.joining(", "))));
         }
 
-        if (ServerRoutesAddressingBothLocalAndRemote.isEmpty()) {
+        if (serverRoutesAddressingBothLocalAndRemote.isEmpty()) {
             result.put("pass", "There are elements that are both 'remote' (in s2sDomainPairsByClusterNode) as well as 'local' (in LocalRoutingTable's getServerRoutes()).");
         } else {
-            result.put("fail", String.format("There are %d elements that are both 'remote' (in s2sDomainPairsByClusterNode) as well as 'local' (in LocalRoutingTable's getServerRoutes()): %s", ServerRoutesAddressingBothLocalAndRemote.size(), ServerRoutesAddressingBothLocalAndRemote.stream().map(DomainPair::toString).collect(Collectors.joining(", ")) ) );
+            result.put("fail", String.format("There are %d elements that are both 'remote' (in s2sDomainPairsByClusterNode) as well as 'local' (in LocalRoutingTable's getServerRoutes()): %s", serverRoutesAddressingBothLocalAndRemote.size(), serverRoutesAddressingBothLocalAndRemote.stream().map(DomainPair::toString).collect(Collectors.joining(", ")) ) );
         }
 
         final Set<DomainPair> nonCachedLocalServerRouteAddressing = localServerRoutesAddressing.stream().filter( v -> !cache.containsKey(v) ).collect(Collectors.toSet());
         if (nonCachedLocalServerRouteAddressing.isEmpty()) {
             result.put("pass", String.format("All elements in LocalRoutingTable's getServerRoutes() response exist in %s.", serversCache.getName()) );
         } else {
-            result.put("fail", String.format("Not all elements in of LocalRoutingTable's getClientRoutes() response exist in %s. These %d entries do not: %s", serversCache.getName(), nonCachedLocalServerRouteAddressing.size(), nonCachedLocalServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))) );
+            result.put("fail", String.format("Not all elements in of LocalRoutingTable's getServerRoutes() response exist in %s. These %d entries do not: %s", serversCache.getName(), nonCachedLocalServerRouteAddressing.size(), nonCachedLocalServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))) );
         }
 
         final Set<DomainPair> nonCachedRemoteServerRouteAddressing = remoteServerRoutesAddressing.stream().filter( v -> !cache.containsKey(v) ).collect(Collectors.toSet());
@@ -145,6 +146,115 @@ public class ConsistencyChecks
             result.put("pass", String.format("All cache entries of %s exist in s2sDomainPairsByClusterNode and/or LocalRoutingTable's getServerRoutes() response.", serversCache.getName() ) );
         } else {
             result.put("fail", String.format("Not cache entries of %s exist in s2sDomainPairsByClusterNode and/or LocalRoutingTable's getServerRoutes() response. These %d entries do not: %s", serversCache.getName(), nonLocallyStoredCachedServerRouteAddressing.size(), nonLocallyStoredCachedServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))) );
+        }
+
+        return result;
+    }
+
+    /**
+     * Verifies that #componentsCache, #localRoutingTable#getComponentRoute and #componentsByClusterNode of
+     * {@link org.jivesoftware.openfire.spi.RoutingTableImpl} are in a consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @param componentsCache The cache that is used to share data across cluster nodes
+     * @param localComponentRoutes The data structure that keeps track of what data was added to the cache by the local cluster node.
+     * @param componentsByClusterNode The data structure that keeps track of what data was added to the cache by the remote cluster nodes.
+     * @return A consistency state report.
+     */
+    public static Multimap<String, String> generateReportForRoutingTableComponentRoutes(
+        @Nonnull final Cache<String, HashSet<NodeID>> componentsCache,
+        @Nonnull final Collection<RoutableChannelHandler> localComponentRoutes,
+        @Nonnull final HashMap<NodeID, Set<String>> componentsByClusterNode)
+    {
+        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
+
+        // Take a snapshots to reduce the chance of data changing while diagnostics are being performed
+        final ConcurrentMap<String, HashSet<NodeID>> cache = new ConcurrentHashMap<>(componentsCache);
+
+        final List<String> localComponentRoutesAddressing = localComponentRoutes.stream().map(r -> r.getAddress().toString()).collect(Collectors.toList());
+        final Set<String> localComponentRoutesAddressingDuplicates = CollectionUtils.findDuplicates(localComponentRoutesAddressing);
+
+        final List<String> remoteComponentRoutesAddressingWithNodeId = new ArrayList<>();
+        for (Map.Entry<NodeID, Set<String>> entry : componentsByClusterNode.entrySet()) {
+            for(String item : entry.getValue()) {
+                remoteComponentRoutesAddressingWithNodeId.add(item + " (" + entry.getKey() + ")");
+            }
+        }
+        final Multimap<String, String> result = HashMultimap.create();
+
+        result.put("info", String.format("The cache named %s is used to share data in the cluster, which contains %d component routes.", componentsCache.getName(), cache.size()) );
+        result.put("info", String.format("LocalRoutingTable's getComponentRoute() response is used to track 'local' data to be restored after a cache switch-over. It tracks %d routes.", localComponentRoutesAddressing.size() ) );
+        result.put("info", String.format("The field componentsByClusterNode is used to track data in the cache from every other cluster node. It contains %d routes for %d cluster nodes.", componentsByClusterNode.values().stream().reduce(0, (subtotal, values) -> subtotal + values.size(), Integer::sum), componentsByClusterNode.keySet().size() ) );
+
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", componentsCache.getName(), cache.entrySet().stream().map(e->e.getKey() + "on nodes: " + e.getValue().stream().map(NodeID::toString).collect(Collectors.joining(", "))).collect(Collectors.joining("\n"))));
+        result.put("data", String.format("LocalRoutingTable's getComponentRoute() response contains these entries (these represent 'local' data):\n%s", localComponentRoutes.stream().map(RoutableChannelHandler::getAddress).map(JID::toString).collect(Collectors.joining("\n"))));
+        result.put("data", String.format("componentsByClusterNode contains these entries (these represent 'remote' data):\n%s", String.join("\n", remoteComponentRoutesAddressingWithNodeId)));
+
+        if (localComponentRoutesAddressingDuplicates.isEmpty()) {
+            result.put("pass", "There is no overlap in addressing of LocalRoutingTable's getComponentRoute() response (They are all unique values).");
+        } else {
+            result.put("fail", String.format("There is overlap in addressing of LocalRoutingTable's getComponentRoute() response (They are not all unique values). These %d values are duplicated: %s", localComponentRoutesAddressingDuplicates.size(), String.join(", ", localComponentRoutesAddressingDuplicates)) );
+        }
+
+        if (!componentsByClusterNode.containsKey(XMPPServer.getInstance().getNodeID())) {
+            result.put("pass", "componentsByClusterNode does not track data for the local cluster node.");
+        } else {
+            result.put("fail", "componentsByClusterNode tracks data for the local cluster node.");
+        }
+
+        if (clusterNodeIDs.containsAll(componentsByClusterNode.keySet())) {
+            result.put("pass", "componentsByClusterNode tracks data for cluster nodes that are recognized in the cluster.");
+        } else {
+            result.put("fail", String.format("componentsByClusterNode tracks data for cluster nodes that are not recognized. All cluster nodeIDs as recognized: %s All cluster nodeIDs for which data is tracked: %s.", clusterNodeIDs.stream().map(NodeID::toString).collect(Collectors.joining(", ")), componentsByClusterNode.keySet().stream().map(NodeID::toString).collect(Collectors.joining(", "))));
+        }
+
+        final Set<String> nonCachedLocalComponentRouteAddressing = localComponentRoutesAddressing.stream().filter( v -> !cache.containsKey(v) ).filter( v -> !cache.get(v).contains(XMPPServer.getInstance().getNodeID())).collect(Collectors.toSet());
+        if (nonCachedLocalComponentRouteAddressing.isEmpty()) {
+            result.put("pass", String.format("All elements in LocalRoutingTable's getComponentRoute() response exist in %s.", componentsCache.getName()) );
+        } else {
+            result.put("fail", String.format("Not all elements in of LocalRoutingTable's getComponentRoute() response exist in %s. These %d entries do not: %s", componentsCache.getName(), nonCachedLocalComponentRouteAddressing.size(), nonCachedLocalComponentRouteAddressing.stream().map(v -> v + " on " + XMPPServer.getInstance().getNodeID()).collect(Collectors.joining(", "))) );
+        }
+
+        final Set<String> nonCachedRemoteComponentRouteAddressing = new HashSet<>();
+        for (final Map.Entry<NodeID, Set<String>> entry : componentsByClusterNode.entrySet()) {
+            final NodeID remoteNodeID = entry.getKey();
+            final Set<String> remoteComponentAddresses = entry.getValue();
+            for (final String remoteComponentAddress : remoteComponentAddresses) {
+                if (!cache.containsKey(remoteComponentAddress) || !cache.get(remoteComponentAddress).contains(remoteNodeID)) {
+                    nonCachedRemoteComponentRouteAddressing.add(remoteComponentAddress + " on " + remoteNodeID);
+                }
+            }
+        }
+        if (nonCachedRemoteComponentRouteAddressing.isEmpty()) {
+            result.put("pass", String.format("All elements in componentsByClusterNode exist in %s.", componentsCache.getName() ) );
+        } else {
+            result.put("fail", String.format("Not all component routes in componentsByClusterNode exist in %s. These %d entries do not: %s", componentsCache.getName(), nonCachedRemoteComponentRouteAddressing.size(), String.join(", ", nonCachedLocalComponentRouteAddressing)) );
+        }
+
+        final Set<String> nonLocallyStoredCachedComponentRouteAddressing = new HashSet<>();
+        for (final Map.Entry<String, HashSet<NodeID>> entry : cache.entrySet()) {
+            final String componentAddress = entry.getKey();
+            final Set<NodeID> nodeIDs = entry.getValue();
+            for (final NodeID nodeID : nodeIDs) {
+                if (nodeID.equals(XMPPServer.getInstance().getNodeID())) {
+                    if (localComponentRoutes.stream().noneMatch(v->v.getAddress().toString().equals(componentAddress))) {
+                        nonLocallyStoredCachedComponentRouteAddressing.add(componentAddress + " on " + nodeID + " (the local cluster node)");
+                    }
+                } else {
+                    if (!componentsByClusterNode.containsKey(nodeID) || !componentsByClusterNode.get(nodeID).contains(componentAddress)) {
+                        nonLocallyStoredCachedComponentRouteAddressing.add(componentAddress + " on " + nodeID);
+                    }
+                }
+            }
+        }
+        if (nonLocallyStoredCachedComponentRouteAddressing.isEmpty()) {
+            result.put("pass", String.format("All cache entries of %s exist in componentsByClusterNode and/or LocalRoutingTable's getComponentRoute() response.", componentsCache.getName() ) );
+        } else {
+            result.put("fail", String.format("Not all cache entries of %s exist in componentsByClusterNode and/or LocalRoutingTable's getComponentRoute() response. These %d entries do not: %s", componentsCache.getName(), nonLocallyStoredCachedComponentRouteAddressing.size(), String.join(", ", nonLocallyStoredCachedComponentRouteAddressing)) );
         }
 
         return result;
@@ -259,14 +369,14 @@ public class ConsistencyChecks
         if (nonLocallyStoredCachedRouteOwners.isEmpty()) {
             result.put("pass", String.format("All cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response.", usersCache.getName() ) );
         } else {
-            result.put("fail", String.format("Not cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response. These %d entries do not: %s", usersCache.getName(), nonLocallyStoredCachedRouteOwners.size(), String.join(", ", nonLocallyStoredCachedRouteOwners)) );
+            result.put("fail", String.format("Not all cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response. These %d entries do not: %s", usersCache.getName(), nonLocallyStoredCachedRouteOwners.size(), String.join(", ", nonLocallyStoredCachedRouteOwners)) );
         }
 
         final Set<String> nonLocallyStoredCachedAnonRouteOwners = anonymousUsersCacheKeySet.stream().filter( v -> !localClientRoutesOwners.contains(v) ).filter( v -> !remoteClientRoutesOwners.contains(v) ).collect(Collectors.toSet());
         if (nonLocallyStoredCachedAnonRouteOwners.isEmpty()) {
             result.put("pass", String.format("All cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response.", anonymousUsersCache.getName() ) );
         } else {
-            result.put("fail", String.format("Not cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response. These %d entries do not: %s", anonymousUsersCache.getName(), nonLocallyStoredCachedAnonRouteOwners.size(), String.join(", ", nonLocallyStoredCachedAnonRouteOwners)) );
+            result.put("fail", String.format("Not all cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response. These %d entries do not: %s", anonymousUsersCache.getName(), nonLocallyStoredCachedAnonRouteOwners.size(), String.join(", ", nonLocallyStoredCachedAnonRouteOwners)) );
         }
 
         return result;

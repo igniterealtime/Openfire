@@ -32,6 +32,7 @@
 
     // Calculations for RoutingTableImpl
     pageContext.setAttribute("clusteringStateConsistencyReportForServerRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForServerRoutes());
+    pageContext.setAttribute("clusteringStateConsistencyReportForComponentRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForComponentRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForClientRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForClientRoutes());
 
     pageContext.setAttribute("newLineChar", "\n");
@@ -64,6 +65,37 @@
         <h4>Servers Cache</h4>
         <p>The cache describes what <em>outgoing</em> S2S connections (identified by DomainPair) are physically connected to which cluster node(s). Like client connections, an (outgoing) S2S connection is uniquely established on one cluster node (multiple concurrent outgoing connections cannot exist).</p>
         <c:forEach items="${clusteringStateConsistencyReportForServerRoutes.asMap()}" var="messageGroup">
+            <ul>
+                <c:forEach items="${messageGroup.value}" var="line">
+                    <li>
+                        <c:choose>
+                            <c:when test="${messageGroup.key eq 'info'}"><img src="images/info-16x16.gif" alt="informational"></c:when>
+                            <c:when test="${messageGroup.key eq 'pass'}"><img src="images/check.gif" alt="consistent"></c:when>
+                            <c:when test="${messageGroup.key eq 'fail'}"><img src="images/x.gif" alt="inconsistency"></c:when>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test='${fn:contains(line, newLineChar)}'>
+                                <c:forTokens items="${line}" delims="${newLineChar}" var="descr" begin="0" end="0">
+                                    <c:out value="${descr}"/>
+                                </c:forTokens>
+                                <ul>
+                                    <c:forTokens items="${line}" delims="${newLineChar}" var="item" begin="1">
+                                        <li><c:out value="${item}"/></li>
+                                    </c:forTokens>
+                                </ul>
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${line}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </li>
+                </c:forEach>
+            </ul>
+        </c:forEach>
+
+        <h4>Component Cache</h4>
+        <p>The cache describes what component are physically connected to which cluster node(s), which includes both externally connected components as well as internal components. UnLike server and client connections, a component connection is <em>not</em> uniquely established on one cluster node (each cluster node can have a local route to the same component address).</p>
+        <c:forEach items="${clusteringStateConsistencyReportForComponentRoutes.asMap()}" var="messageGroup">
             <ul>
                 <c:forEach items="${messageGroup.value}" var="line">
                     <li>

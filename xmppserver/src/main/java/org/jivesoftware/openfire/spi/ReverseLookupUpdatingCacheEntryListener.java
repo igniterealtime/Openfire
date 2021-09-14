@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
@@ -34,7 +49,8 @@ public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredC
 
     @Override
     public void entryUpdated(@Nonnull final K key, @Nullable final V oldValue, @Nullable final V newValue, @Nonnull final NodeID nodeID) {
-        // Don't do anything, because we only care about keys.
+        // Although we only care about keys, we do need to process this for caches in which values are not uniquely 'owned' by a particular node, such as the #componentsCache.
+        reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
     }
 
     @Override

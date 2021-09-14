@@ -133,6 +133,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * Note that, unlike other caches, this cache is populated only when clustering is enabled.
      */
     private Cache<String, ClientSessionInfo> sessionInfoCache;
+    /**
+     * A map that, for all nodes in the cluster except for the local one, tracks session jids of session infos.
+     *
+     * Whenever any cluster node adds or removes an entry to the #sessionInfoCache, this map, on
+     * <em>every</em> cluster node, will receive a corresponding update. This ensures that every cluster node has a
+     * complete overview of all cache entries (or at least the most important details of each entry - we should avoid
+     * duplicating the entire cache, as that somewhat defaults the purpose of having the cache).
+     *
+     * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
+     * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
+     * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
+     * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
+     */
+    private final ConcurrentMap<NodeID, Set<String>> sessionInfoKeysByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds external component sessions.
@@ -1664,13 +1678,22 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> incomingServerSessionsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
 
+        // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
+        // which is intended to be used (only) in the event of a cluster split.
+        final ClusteredCacheEntryListener<String, ClientSessionInfo> sessionInfoKeysClusterNodeCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(sessionInfoKeysByClusterNode);
+
+        // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
+        sessionInfoCache.entrySet().stream()
+            // this filter isn't needed if we do this before restoreCacheContent.
+            .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
+            .forEach(entry -> sessionInfoKeysClusterNodeCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
 
         // Add the entry listeners to the corresponding caches. Note that, when #joinedCluster() fired, the cache will
         // _always_ have been replaced, meaning that it won't have old event listeners. When #leaveCluster() fires, the
         // cache will be destroyed. This takes away the need to explicitly deregister the listener in that case.
         final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
         incomingServerSessionsCache.addClusteredCacheEntryListener(incomingServerSessionsCacheEntryListener, includeValues, false);
-
+        sessionInfoCache.addClusteredCacheEntryListener(sessionInfoKeysClusterNodeCacheEntryListener, includeValues, false);
     }
 
     @Override
@@ -1734,7 +1757,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 }
             });
 
-
+        // Remove client sessions hosted in node that left the cluster
+        sessionInfoKeysByClusterNode.remove(nodeIDOfLostNode).forEach(fullJID -> {
+            // TODO Can we really rely on the item still being in the sessionInfoCache?
+            final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.get(fullJID);
+            final JID offlineJID = new JID(fullJID);
+            removeSession(null, offlineJID, clientSessionInfoAboutToBeRemoved.isAnonymous(), true);
+        });
 
         // For componentSessionsCache and multiplexerSessionsCache there is no clean up to be done, except for removing
         // the value from the cache. Therefore it is unnecessary to create a reverse lookup tracking state per (remote)

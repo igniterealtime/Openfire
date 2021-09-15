@@ -45,10 +45,7 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.cache.CacheUtil;
-import org.jivesoftware.util.cache.ConsistencyChecks;
+import org.jivesoftware.util.cache.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -62,6 +59,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -1103,15 +1101,20 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         lock.lock();
         try {
             HashSet<NodeID> nodes = componentsCache.get(address);
+            Log.info("Nodes for route {} PRE MOD: {}", address, nodes);
             if (nodes != null) {
-                removed = nodes.remove(nodeID);
+                nodes.remove(nodeID);
                 if (nodes.isEmpty()) {
+                    Log.info("Removed node {} for route {} and deleted route", nodeID, route);
                     componentsCache.remove(address);
+                    removed = true;
                 }
                 else {
+                    Log.info("Removed node {} for route {}", nodeID, route);
                     componentsCache.put(address, nodes);
                 }
             }
+            Log.info("Nodes for route {} POST MOD: {}", address, nodes);
         } finally {
             lock.unlock();
         }
@@ -1244,16 +1247,17 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // which is intended to be used (only) in the event of a cluster split.
         final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(routeOwnersByClusterNode);
         final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(s2sDomainPairsByClusterNode);
-        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(componentsByClusterNode);
+        final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new ReverseLookupComputingCacheEntryListener<>(componentsByClusterNode,
+            nodeIDS -> nodeIDS.stream().filter(n->!n.equals(XMPPServer.getInstance().getNodeID())).collect(Collectors.toSet())
+        );
 
         // Note that, when #joinedCluster() fired, the cache will _always_ have been replaced, meaning that it won't
         // have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This takes away the need
         // to explicitly deregister the listener in that case.
-        final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
-        usersCache.addClusteredCacheEntryListener(userCacheEntryListener, includeValues, false);
-        anonymousUsersCache.addClusteredCacheEntryListener(userCacheEntryListener, includeValues, false);
-        serversCache.addClusteredCacheEntryListener(serversCacheEntryListener, includeValues, false);
-        componentsCache.addClusteredCacheEntryListener(componentsCacheEntryListener, includeValues, false);
+        usersCache.addClusteredCacheEntryListener(userCacheEntryListener, false, false);
+        anonymousUsersCache.addClusteredCacheEntryListener(userCacheEntryListener, false, false);
+        serversCache.addClusteredCacheEntryListener(serversCacheEntryListener, false, false);
+        componentsCache.addClusteredCacheEntryListener(componentsCacheEntryListener, true, true);
         // This is not necessary for the usersSessions cache, because its content is being managed while the content
         // of users cache and anonymous users cache is being managed.
 
@@ -1378,23 +1382,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Clients on leaving node are now unavailable! Simulate an unavailable presence for sessions that were being
         // hosted on that node.
-        routeOwnersByClusterNode.remove(nodeIDOfLostNode).stream().forEach( fullJID -> {
-            final JID offlineJID = new JID(fullJID);
+        final Set<String> removed = routeOwnersByClusterNode.remove(nodeIDOfLostNode);
+        if (removed != null) {
+            removed.stream().forEach( fullJID -> {
+                final JID offlineJID = new JID(fullJID);
 
-            removeClientRoute(offlineJID);
+                removeClientRoute(offlineJID);
 
-            try {
-                final Presence presence = new Presence(Presence.Type.unavailable);
-                presence.setFrom(offlineJID);
-                XMPPServer.getInstance().getPresenceRouter().route(presence);
-                // TODO This broadcasts the presence over the entire (remaining) cluster, which is too much because it
-                // is done by all remaining nodes
-                // TODO This should only be done for routes that were previously 'available'. See commented out code below.
-            }
-            catch (final PacketException e) {
-                Log.error("Remote node {} left the cluster. Users on that node are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf.  While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, fullJID, e);
-            }
-        });
+                try {
+                    final Presence presence = new Presence(Presence.Type.unavailable);
+                    presence.setFrom(offlineJID);
+                    XMPPServer.getInstance().getPresenceRouter().route(presence);
+                    // TODO This broadcasts the presence over the entire (remaining) cluster, which is too much because it
+                    // is done by all remaining nodes
+                    // TODO This should only be done for routes that were previously 'available'. See commented out code below.
+                }
+                catch (final PacketException e) {
+                    Log.error("Remote node {} left the cluster. Users on that node are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf.  While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, fullJID, e);
+                }
+            });
+        }
 
 
 //        final Map<JID, Boolean> clientRoutesToRemove = Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
@@ -1432,6 +1439,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Remove component connections hosted in node that left the cluster
         final Set<String> componentJids = componentsByClusterNode.remove(nodeIDOfLostNode);
         if (componentJids != null) {
+            Log.info("Removing node '{}' from componentsByClusteredNode: {}", nodeIDOfLostNode, componentJids);
             for (final String componentJid : componentJids) {
                 removeComponentRoute(new JID(componentJid), nodeIDOfLostNode);
             }

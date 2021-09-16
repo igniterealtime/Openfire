@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire;
 
+import com.google.common.collect.Multimap;
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -49,7 +50,6 @@ import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.openfire.spi.ReverseLookupUpdatingCacheEntryListener;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -58,6 +58,8 @@ import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheUtil;
+import org.jivesoftware.util.cache.ConsistencyChecks;
+import org.jivesoftware.util.cache.ReverseLookupUpdatingCacheEntryListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -1871,5 +1873,27 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             }
         }
     }
+
+    /**
+     * Verifies that {@link #incomingServerSessionsCache}, {@link #localSessionManager#getIncomingServerSessions()}
+     * and {@link #incomingServerSessionsByClusterNode} are in a consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @return A consistency state report.
+     * @see #incomingServerSessionsCache which is the cache that is used tho share data with other cluster nodes.
+     * @see LocalSessionManager#getIncomingServerSessions() which holds content added to the caches by the local cluster node.
+     * @see #incomingServerSessionsByClusterNode which holds content added to the caches by cluster nodes other than the local node.
+     */
+    public Multimap<String, String> clusteringStateConsistencyReportForClientRoutes() {
+        // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
+        // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
+        // are being performed.
+        return ConsistencyChecks.generateReportForSessionManagerIncomingServerSessions(incomingServerSessionsCache, localSessionManager.getIncomingServerSessions(), incomingServerSessionsByClusterNode);
+    }
+
 
 }

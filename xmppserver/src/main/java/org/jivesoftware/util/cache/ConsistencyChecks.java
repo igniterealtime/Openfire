@@ -19,25 +19,33 @@ package org.jivesoftware.util.cache;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.jivesoftware.openfire.RoutableChannelHandler;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.util.CollectionUtils;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
- * This class defines methods that verify that the state of a cache and it's various supporting data structures (in which
+ * This class defines methods that verify that the state of a cache and its various supporting data structures (in which
  * some data duplication is expected) is consistent.
  *
  * This code has been taken from the classes that are responsible for maintaining the cache to reduce the code complexity
@@ -122,7 +130,7 @@ public class ConsistencyChecks
         }
 
         if (serverRoutesAddressingBothLocalAndRemote.isEmpty()) {
-            result.put("pass", "There are elements that are both 'remote' (in s2sDomainPairsByClusterNode) as well as 'local' (in LocalRoutingTable's getServerRoutes()).");
+            result.put("pass", "There are no elements that are both 'remote' (in s2sDomainPairsByClusterNode) as well as 'local' (in LocalRoutingTable's getServerRoutes()).");
         } else {
             result.put("fail", String.format("There are %d elements that are both 'remote' (in s2sDomainPairsByClusterNode) as well as 'local' (in LocalRoutingTable's getServerRoutes()): %s", serverRoutesAddressingBothLocalAndRemote.size(), serverRoutesAddressingBothLocalAndRemote.stream().map(DomainPair::toString).collect(Collectors.joining(", ")) ) );
         }
@@ -377,6 +385,120 @@ public class ConsistencyChecks
             result.put("pass", String.format("All cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response.", anonymousUsersCache.getName() ) );
         } else {
             result.put("fail", String.format("Not all cache entries of %s exist in routeOwnersByClusterNode and/or LocalRoutingTable's getClientRoutes() response. These %d entries do not: %s", anonymousUsersCache.getName(), nonLocallyStoredCachedAnonRouteOwners.size(), String.join(", ", nonLocallyStoredCachedAnonRouteOwners)) );
+        }
+
+        return result;
+    }
+
+    /**
+     * Verifies that #incomingServerSessionsCache, #localIncomingServerSessions and #incomingServerSessionsByClusterNode
+     * of {@link org.jivesoftware.openfire.SessionManager} are in a consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @param incomingServerSessionsCache The cache that is used to share data across cluster nodes
+     * @param localIncomingServerSessions The data structure that keeps track of what data was added to the cache by the local cluster node.
+     * @param incomingServerSessionsByClusterNode The data structure that keeps track of what data was added to the cache by the remote cluster nodes.
+     * @return A consistency state report.
+     */
+    public static Multimap<String, String> generateReportForSessionManagerIncomingServerSessions(
+        @Nonnull final Cache<StreamID, NodeID> incomingServerSessionsCache,
+        @Nonnull final Collection<LocalIncomingServerSession> localIncomingServerSessions,
+        @Nonnull final Map<NodeID, Set<StreamID>> incomingServerSessionsByClusterNode
+    ) {
+        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
+
+        // Take snapshots of all data structures at as much the same time as possible.
+        final ConcurrentMap<StreamID, NodeID> cache = new ConcurrentHashMap<>(incomingServerSessionsCache);
+        final List<StreamID> localIncomingServerSessionsStreamIDs = localIncomingServerSessions.stream().map(LocalIncomingServerSession::getStreamID).collect(Collectors.toList());
+        final List<StreamID> remoteIncomingServerSessions = incomingServerSessionsByClusterNode.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        final List<String> remoteIncomingServerSessionsWithNodeId = new ArrayList<>();
+        for (Map.Entry<NodeID, Set<StreamID>> entry : incomingServerSessionsByClusterNode.entrySet()) {
+            for (StreamID item : entry.getValue()) {
+                remoteIncomingServerSessionsWithNodeId.add(item + " (" + entry.getKey() + ")");
+            }
+        }
+
+        // Duplicates detection
+        final Set<StreamID> localIncomingServerSessionsDuplicates = CollectionUtils.findDuplicates(localIncomingServerSessionsStreamIDs);
+        final Set<StreamID> remoteIncomingServerSessionsDuplicates = CollectionUtils.findDuplicates(remoteIncomingServerSessions);
+        final Set<StreamID> incomingServerSessionsBothLocalAndRemote = CollectionUtils.findDuplicates(localIncomingServerSessionsStreamIDs, remoteIncomingServerSessions);
+
+        // Detection of other inconsistencies
+        final Set<StreamID> nonLocallyStoredCachedIncomingServerSessions = cache.keySet()
+            .stream()
+            .filter( v -> !localIncomingServerSessionsStreamIDs.contains(v) )
+            .filter( v -> !remoteIncomingServerSessions.contains(v) )
+            .collect(Collectors.toSet());
+        final Set<StreamID> nonCachedLocalIncomingServerSessions = localIncomingServerSessionsStreamIDs.stream().filter( v -> !cache.containsKey(v) ).collect(Collectors.toSet());
+        final Set<StreamID> nonCachedRemoteIncomingServerSessions = remoteIncomingServerSessions.stream().filter( v -> !cache.containsKey(v) ).collect(Collectors.toSet());
+
+        // Generate report
+        final Multimap<String, String> result = HashMultimap.create();
+
+        result.put("info", String.format("The cache named %s is used to share data in the cluster, which contains %d incoming server sessions.", incomingServerSessionsCache.getName(), cache.size()) );
+        result.put("info", String.format("SessionManager's TODO response is used to track 'local' data to be restored after a cache switch-over. It tracks %d incoming server sessions.", localIncomingServerSessionsStreamIDs.size() ) );
+        result.put("info", String.format("The field incomingServerSessionsByClusterNode is used to track data in the cache from every other cluster node. It contains %d routes for %d cluster nodes.", incomingServerSessionsByClusterNode.values().stream().reduce(0, (subtotal, values) -> subtotal + values.size(), Integer::sum), incomingServerSessionsByClusterNode.size() ) );
+
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", incomingServerSessionsCache.getName(), cache.keySet()
+            .stream()
+            .map(StreamID::getID)
+            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("SessionManager's localSessionManager contains these entries (these represent 'local' data):\n%s", localIncomingServerSessionsStreamIDs
+            .stream()
+            .map(StreamID::getID)
+            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("incomingServerSessionsByClusterNode contains these entries (these represent 'remote' data):\n%s", String.join("\n", remoteIncomingServerSessionsWithNodeId)));
+
+        if (!incomingServerSessionsByClusterNode.containsKey(XMPPServer.getInstance().getNodeID())) {
+            result.put("pass", "incomingServerSessionsByClusterNode does not track data for the local cluster node.");
+        } else {
+            result.put("fail", "incomingServerSessionsByClusterNode tracks data for the local cluster node.");
+        }
+
+        if (clusterNodeIDs.containsAll(incomingServerSessionsByClusterNode.keySet())) {
+            result.put("pass", "incomingServerSessionsByClusterNode tracks data for cluster nodes that are recognized in the cluster.");
+        } else {
+            result.put("fail", String.format("incomingServerSessionsByClusterNode tracks data for cluster nodes that are not recognized. All cluster nodeIDs as recognized: %s All cluster nodeIDs for which data is tracked: %s.", clusterNodeIDs.stream().map(NodeID::toString).collect(Collectors.joining(", ")), incomingServerSessionsByClusterNode.keySet().stream().map(NodeID::toString).collect(Collectors.joining(", "))));
+        }
+
+        if (localIncomingServerSessionsDuplicates.isEmpty()) {
+            result.put("pass", "There is no overlap in local incoming server sessions (they are all unique values).");
+        } else {
+            result.put("fail", String.format("There is overlap in local incoming server sessions (they are not all unique values). These %d values are duplicated: %s", localIncomingServerSessionsDuplicates.size(), localIncomingServerSessionsDuplicates.stream().map(StreamID::getID).collect(Collectors.joining(", ")) ) );
+        }
+
+        if (remoteIncomingServerSessionsDuplicates.isEmpty()) {
+            result.put("pass", "There is no overlap in incomingServerSessionsByClusterNode (they are all unique values).");
+        } else {
+            result.put("fail", String.format("There is overlap in incomingServerSessionsByClusterNode (they are not all unique values). These %d values are duplicated: %s", remoteIncomingServerSessionsDuplicates.size(), remoteIncomingServerSessionsDuplicates.stream().map(StreamID::getID).collect(Collectors.joining(", ")) ) );
+        }
+
+        if (incomingServerSessionsBothLocalAndRemote.isEmpty()) {
+            result.put("pass", "There are no elements that are both 'remote' (in incomingServerSessionsByClusterNode) as well as 'local' (in SessionManager's localSessionManager).");
+        } else {
+            result.put("fail", String.format("There are %d elements that are both 'remote' (in incomingServerSessionsByClusterNode) as well as 'local' (in SessionManager's localSessionManager): %s", incomingServerSessionsBothLocalAndRemote.size(), incomingServerSessionsBothLocalAndRemote.stream().map(StreamID::getID).collect(Collectors.joining(", ")) ) );
+        }
+
+        if (nonCachedLocalIncomingServerSessions.isEmpty()) {
+            result.put("pass", String.format("All elements in SessionManager's localSessionManager exist in %s.", incomingServerSessionsCache.getName()) );
+        } else {
+            result.put("fail", String.format("Not all elements in SessionManager's localSessionManager exist in %s. These %d entries do not: %s", incomingServerSessionsCache.getName(), nonCachedLocalIncomingServerSessions.size(), nonCachedLocalIncomingServerSessions.stream().map(StreamID::getID).collect(Collectors.joining(", "))) );
+        }
+
+        if (nonCachedRemoteIncomingServerSessions.isEmpty()) {
+            result.put("pass", String.format("All elements inincomingServerSessionsByClusterNode exist in %s.", incomingServerSessionsCache.getName()) );
+        } else {
+            result.put("fail", String.format("Not all elements in incomingServerSessionsByClusterNode exist in %s. These %d entries do not: %s", incomingServerSessionsCache.getName(), nonCachedRemoteIncomingServerSessions.size(), nonCachedRemoteIncomingServerSessions.stream().map(StreamID::getID).collect(Collectors.joining(", "))) );
+        }
+
+        if (nonLocallyStoredCachedIncomingServerSessions.isEmpty()) {
+            result.put("pass", String.format("All cache entries of %s exist in incomingServerSessionsByClusterNode and/or SessionManager's localSessionManager.", incomingServerSessionsCache.getName() ) );
+        } else {
+            result.put("fail", String.format("Not cache entries of %s exist in incomingServerSessionsByClusterNode and/or SessionManager's localSessionManager. These %d entries do not: %s", incomingServerSessionsCache.getName(), nonLocallyStoredCachedIncomingServerSessions.size(), nonLocallyStoredCachedIncomingServerSessions.stream().map(StreamID::getID).collect(Collectors.joining(", "))) );
         }
 
         return result;

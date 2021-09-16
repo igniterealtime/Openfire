@@ -1687,7 +1687,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         sessionInfoCache.entrySet().stream()
             // this filter isn't needed if we do this before restoreCacheContent.
-            .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
+            .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> sessionInfoKeysClusterNodeCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
 
         // Add the entry listeners to the corresponding caches. Note that, when #joinedCluster() fired, the cache will

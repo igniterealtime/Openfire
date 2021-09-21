@@ -36,6 +36,7 @@
     pageContext.setAttribute("clusteringStateConsistencyReportForComponentRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForComponentRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForClientRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForClientRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForIncomingServerSessions", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForClientRoutes());
+    pageContext.setAttribute("clusteringStateConsistencyReportForSessionInfos", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForSessionInfos());
 
     pageContext.setAttribute("newLineChar", "\n");
 %>
@@ -159,9 +160,41 @@
         </c:forEach>
 
         <h4>Incoming Server Sessions Cache</h4>
-        <p>The caches describes ...</p>
+        <p>The cache describes ...</p>
 
         <c:forEach items="${clusteringStateConsistencyReportForIncomingServerSessions.asMap()}" var="messageGroup">
+            <ul>
+                <c:forEach items="${messageGroup.value}" var="line">
+                    <li>
+                        <c:choose>
+                            <c:when test="${messageGroup.key eq 'info'}"><img src="images/info-16x16.gif" alt="informational"></c:when>
+                            <c:when test="${messageGroup.key eq 'pass'}"><img src="images/check.gif" alt="consistent"></c:when>
+                            <c:when test="${messageGroup.key eq 'fail'}"><img src="images/x.gif" alt="inconsistency"></c:when>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test='${fn:contains(line, newLineChar)}'>
+                                <c:forTokens items="${line}" delims="${newLineChar}" var="descr" begin="0" end="0">
+                                    <c:out value="${descr}"/>
+                                </c:forTokens>
+                                <ul>
+                                    <c:forTokens items="${line}" delims="${newLineChar}" var="item" begin="1">
+                                        <li><c:out value="${item}"/></li>
+                                    </c:forTokens>
+                                </ul>
+                            </c:when>
+                            <c:otherwise>
+                                <c:out value="${line}"/>
+                            </c:otherwise>
+                        </c:choose>
+                    </li>
+                </c:forEach>
+            </ul>
+        </c:forEach>
+
+        <h4>Tracked sessions Cache</h4>
+        <p>The cache describes ...</p>
+
+        <c:forEach items="${clusteringStateConsistencyReportForSessionInfos.asMap()}" var="messageGroup">
             <ul>
                 <c:forEach items="${messageGroup.value}" var="line">
                     <li>

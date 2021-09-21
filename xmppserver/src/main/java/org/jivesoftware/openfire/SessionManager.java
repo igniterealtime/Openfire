@@ -1892,8 +1892,30 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.
+
         return ConsistencyChecks.generateReportForSessionManagerIncomingServerSessions(incomingServerSessionsCache, localSessionManager.getIncomingServerSessions(), incomingServerSessionsByClusterNode);
     }
 
+    /**
+     * Verifies that {@link #sessionInfoCache}, {@link #routingTable#getClientsRoutes(boolean)}
+     * and {@link #sessionInfoKeysByClusterNode} are in a consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @return A consistency state report.
+     * @see #sessionInfoCache which is the cache that is used tho share data with other cluster nodes.
+     * @see RoutingTable#getClientsRoutes(boolean) which holds content added to the caches by the local cluster node.
+     * @see #sessionInfoKeysByClusterNode which holds content added to the caches by cluster nodes other than the local node.
+     */
+    public Multimap<String, String> clusteringStateConsistencyReportForSessionInfos() {
+        // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
+        // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
+        // are being performed.
+
+        return ConsistencyChecks.generateReportForSessionManagerSessionInfos(sessionInfoCache, routingTable.getClientsRoutes(true), sessionInfoKeysByClusterNode);
+    }
 
 }

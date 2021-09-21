@@ -30,7 +30,10 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.carbons.Received;
-import org.jivesoftware.openfire.cluster.*;
+import org.jivesoftware.openfire.cluster.ClusterEventListener;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.forward.Forwarded;
@@ -45,7 +48,12 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.cache.*;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheUtil;
+import org.jivesoftware.util.cache.ConsistencyChecks;
+import org.jivesoftware.util.cache.ReverseLookupComputingCacheEntryListener;
+import org.jivesoftware.util.cache.ReverseLookupUpdatingCacheEntryListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -54,7 +62,15 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1101,20 +1117,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         lock.lock();
         try {
             HashSet<NodeID> nodes = componentsCache.get(address);
-            Log.info("Nodes for route {} PRE MOD: {}", address, nodes);
             if (nodes != null) {
                 nodes.remove(nodeID);
                 if (nodes.isEmpty()) {
-                    Log.info("Removed node {} for route {} and deleted route", nodeID, route);
                     componentsCache.remove(address);
                     removed = true;
                 }
                 else {
-                    Log.info("Removed node {} for route {}", nodeID, route);
                     componentsCache.put(address, nodes);
                 }
             }
-            Log.info("Nodes for route {} POST MOD: {}", address, nodes);
         } finally {
             lock.unlock();
         }
@@ -1374,9 +1386,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     {
         final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
 
-        Log.trace("Left cluster --- {} --- component cache content {}", nodeIDOfLostNode, componentsCache);
-        Log.trace("Left cluster --- {} --- tracking data content {}", nodeIDOfLostNode, componentsByClusterNode);
-
         // Another node left the cluster.
 
         // When a peer server leaves the cluster, any remote routes that were
@@ -1443,10 +1452,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
 
+        // Potentially the cache is broken now. Because at cluster break we don't know which data was present on the
+        // disconnected cluster node. The component route cache is special in the sense that an entry is not directly
+        // related to a single cluster node. Therefor we need to ensure that all entries are in there, before surgically
+        // removing those that really need to be removed.
+        // Restore cache from 'remote' data structure
+        componentsByClusterNode.entrySet().forEach(e -> {
+            for (String componentDomain : e.getValue()) {
+                if (!e.getKey().equals(nodeIDOfLostNode)) {
+                    CacheUtil.addValueToMultiValuedCache(componentsCache, componentDomain, e.getKey(), HashSet::new);
+                }
+            }
+        });
+        // Restore cache from 'local' data structure
+        localRoutingTable.getComponentRoute().forEach(route -> CacheUtil.addValueToMultiValuedCache(componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new));
+
         // Remove component connections hosted in node that left the cluster
         final Set<String> componentJids = componentsByClusterNode.remove(nodeIDOfLostNode);
         if (componentJids != null) {
-            Log.info("Removing node '{}' from componentsByClusteredNode: {}", nodeIDOfLostNode, componentJids);
+            Log.debug("Removing node '{}' from componentsByClusteredNode: {}", nodeIDOfLostNode, componentJids);
             for (final String componentJid : componentJids) {
                 removeComponentRoute(new JID(componentJid), nodeIDOfLostNode);
             }

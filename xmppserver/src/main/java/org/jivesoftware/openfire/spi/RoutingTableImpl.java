@@ -1043,7 +1043,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         finally {
             lockU.unlock();
         }
-        Log.debug("Removed users cache entry for {} / {}, changing entry count from {} to {}", route, clientRoute, cacheSizeBefore, usersCache.size(), new Throwable());
+        Log.debug("Removed users cache entry for {} / {}, changing entry count from {} to {}", route, clientRoute, cacheSizeBefore, usersCache.size());
         if (clientRoute == null) {
             Lock lockA = anonymousUsersCache.getLock(address);
             lockA.lock();

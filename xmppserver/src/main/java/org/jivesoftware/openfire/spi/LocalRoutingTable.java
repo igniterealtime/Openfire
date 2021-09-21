@@ -16,21 +16,26 @@
 
 package org.jivesoftware.openfire.spi;
 
+import org.jivesoftware.openfire.RoutableChannelHandler;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.jivesoftware.openfire.RoutableChannelHandler;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.session.*;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.TaskEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
 
 /**
  * Internal component used by the RoutingTable to keep references to routes hosted by this JVM. When
@@ -124,7 +129,7 @@ class LocalRoutingTable {
      */
     void removeRoute(DomainPair pair) {
         final RoutableChannelHandler removed = routes.remove(pair);
-        Log.trace( "Route '{}' (for pair: '{}') {}", removed == null ? "(null)" : removed.getAddress(), pair, removed != null ? "removed" : "not removed (was not present)." );
+        Log.debug( "Remove local route '{}' (for pair: '{}') {}", removed == null ? "(null)" : removed.getAddress(), pair, removed != null ? "removed" : "not removed (was not present).");
     }
 
     public void start() {

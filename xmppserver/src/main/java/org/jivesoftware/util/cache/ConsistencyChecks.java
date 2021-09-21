@@ -219,7 +219,10 @@ public class ConsistencyChecks {
             result.put("fail", String.format("componentsByClusterNode tracks data for cluster nodes that are not recognized. All cluster nodeIDs as recognized: %s All cluster nodeIDs for which data is tracked: %s.", clusterNodeIDs.stream().map(NodeID::toString).collect(Collectors.joining(", ")), componentsByClusterNode.keySet().stream().map(NodeID::toString).collect(Collectors.joining(", "))));
         }
 
-        final Set<String> nonCachedLocalComponentRouteAddressing = localComponentRoutesAddressing.stream().filter(v -> !cache.containsKey(v)).filter(v -> !cache.get(v).contains(XMPPServer.getInstance().getNodeID())).collect(Collectors.toSet());
+        final Set<String> nonCachedLocalComponentRouteAddressing = localComponentRoutesAddressing
+            .stream()
+            .filter(v -> !cache.containsKey(v) || !cache.get(v).contains(XMPPServer.getInstance().getNodeID()))
+            .collect(Collectors.toSet());
         if (nonCachedLocalComponentRouteAddressing.isEmpty()) {
             result.put("pass", String.format("All elements in LocalRoutingTable's getComponentRoute() response exist in %s.", componentsCache.getName()));
         } else {

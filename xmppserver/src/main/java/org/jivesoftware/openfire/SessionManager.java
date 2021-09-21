@@ -1766,6 +1766,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         if (removedSessionInfo != null) {
             removedSessionInfo.forEach(fullJID -> {
                 // TODO Can we really rely on the item still being in the sessionInfoCache?
+                // NO!
+//                14:48:19,509 [1;31mERROR[m [             63]: o.jive0.open0.clus0.ClusterManager - null
+//                java.lang.NullPointerException: null
+//                at org.jivesoftware.openfire.SessionManager.lambda$leftCluster$6(SessionManager.java:1771) ~[xmppserver-4.7.0-SNAPSHOT.jar:4.7.0-SNAPSHOT]
+//                at java.lang.Iterable.forEach(Unknown Source) ~[?:?]
+//                at org.jivesoftware.openfire.SessionManager.leftCluster(SessionManager.java:1767) ~[xmppserver-4.7.0-SNAPSHOT.jar:4.7.0-SNAPSHOT]
+//                at org.jivesoftware.openfire.cluster.ClusterManager$2.run(ClusterManager.java:135) [xmppserver-4.7.0-SNAPSHOT.jar:4.7.0-SNAPSHOT]
                 final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.get(fullJID);
                 final JID offlineJID = new JID(fullJID);
                 removeSession(null, offlineJID, clientSessionInfoAboutToBeRemoved.isAnonymous(), true);

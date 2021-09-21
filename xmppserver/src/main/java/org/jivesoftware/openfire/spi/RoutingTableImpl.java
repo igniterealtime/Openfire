@@ -1118,7 +1118,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         } finally {
             lock.unlock();
         }
-        localRoutingTable.removeRoute(new DomainPair("", address));
+
+        if (removed || XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+            localRoutingTable.removeRoute(new DomainPair("", address));
+        }
+
         return removed;
     }
 
@@ -1369,6 +1373,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void leftCluster(byte[] nodeID)
     {
         final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
+
+        Log.trace("Left cluster --- {} --- component cache content {}", nodeIDOfLostNode, componentsCache);
+        Log.trace("Left cluster --- {} --- tracking data content {}", nodeIDOfLostNode, componentsByClusterNode);
 
         // Another node left the cluster.
 

@@ -1745,27 +1745,32 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
 
         // Remove incoming server sessions hosted in node that left the cluster
-        incomingServerSessionsByClusterNode.remove(nodeIDOfLostNode)
-            .stream()
-            .forEach(streamID -> {
-                try {
-                    final IncomingServerSession session = XMPPServer.getInstance().getRemoteSessionLocator().getIncomingServerSession(nodeID, streamID);
-                    // Remove all the hostnames that were registered for this server session
-                    for (final String hostname : session.getValidatedDomains()) {
-                        unregisterIncomingServerSession(hostname, session); // Will also remove it from the cache if that didn't happen before
+        final Set<StreamID> removedServerSessions = incomingServerSessionsByClusterNode.remove(nodeIDOfLostNode);
+        if (removedServerSessions != null) {
+            removedServerSessions.stream()
+                .forEach(streamID -> {
+                    try {
+                        final IncomingServerSession session = XMPPServer.getInstance().getRemoteSessionLocator().getIncomingServerSession(nodeID, streamID);
+                        // Remove all the hostnames that were registered for this server session
+                        for (final String hostname : session.getValidatedDomains()) {
+                            unregisterIncomingServerSession(hostname, session); // Will also remove it from the cache if that didn't happen before
+                        }
+                    } catch (Exception e) {
+                        Log.error("Node {} left the cluster. Incoming server sessions on that node are no longer available. To reflect this, we're deleting these sessions. While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, streamID, e);
                     }
-                } catch (Exception e) {
-                    Log.error("Node {} left the cluster. Incoming server sessions on that node are no longer available. To reflect this, we're deleting these sessions. While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, streamID, e);
-                }
-            });
+                });
+        }
 
         // Remove client sessions hosted in node that left the cluster
-        sessionInfoKeysByClusterNode.remove(nodeIDOfLostNode).forEach(fullJID -> {
-            // TODO Can we really rely on the item still being in the sessionInfoCache?
-            final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.get(fullJID);
-            final JID offlineJID = new JID(fullJID);
-            removeSession(null, offlineJID, clientSessionInfoAboutToBeRemoved.isAnonymous(), true);
-        });
+        final Set<String> removedSessionInfo = sessionInfoKeysByClusterNode.remove(nodeIDOfLostNode);
+        if (removedSessionInfo != null) {
+            removedSessionInfo.forEach(fullJID -> {
+                // TODO Can we really rely on the item still being in the sessionInfoCache?
+                final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.get(fullJID);
+                final JID offlineJID = new JID(fullJID);
+                removeSession(null, offlineJID, clientSessionInfoAboutToBeRemoved.isAnonymous(), true);
+            });
+        }
 
         // For componentSessionsCache and multiplexerSessionsCache there is no clean up to be done, except for removing
         // the value from the cache. Therefore it is unnecessary to create a reverse lookup tracking state per (remote)

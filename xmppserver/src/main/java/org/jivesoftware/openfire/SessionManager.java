@@ -1761,35 +1761,37 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 });
         }
 
-        // Remove client sessions hosted in node that left the cluster
-        final Set<String> removedSessionInfo = sessionInfoKeysByClusterNode.remove(nodeIDOfLostNode);
-        if (removedSessionInfo != null) {
-            removedSessionInfo.forEach(fullJID -> {
-                // TODO Can we really rely on the item still being in the sessionInfoCache?
-                // NO!
-//                14:48:19,509 [1;31mERROR[m [             63]: o.jive0.open0.clus0.ClusterManager - null
-//                java.lang.NullPointerException: null
-//                at org.jivesoftware.openfire.SessionManager.lambda$leftCluster$6(SessionManager.java:1771) ~[xmppserver-4.7.0-SNAPSHOT.jar:4.7.0-SNAPSHOT]
-//                at java.lang.Iterable.forEach(Unknown Source) ~[?:?]
-//                at org.jivesoftware.openfire.SessionManager.leftCluster(SessionManager.java:1767) ~[xmppserver-4.7.0-SNAPSHOT.jar:4.7.0-SNAPSHOT]
-//                at org.jivesoftware.openfire.cluster.ClusterManager$2.run(ClusterManager.java:135) [xmppserver-4.7.0-SNAPSHOT.jar:4.7.0-SNAPSHOT]
-                final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.get(fullJID);
-                final JID offlineJID = new JID(fullJID);
-                removeSession(null, offlineJID, clientSessionInfoAboutToBeRemoved.isAnonymous(), true);
-            });
-        }
-
         // For componentSessionsCache and multiplexerSessionsCache there is no clean up to be done, except for removing
         // the value from the cache. Therefore it is unnecessary to create a reverse lookup tracking state per (remote)
         // node.
         CacheUtil.removeValueFromMultiValuedCache(componentSessionsCache, NodeID.getInstance(nodeID));
         CacheUtil.removeValueFromCache(multiplexerSessionsCache, NodeID.getInstance(nodeID));
 
+        // Remove client sessions hosted in node that left the cluster
+        final Set<String> removedSessionInfo = sessionInfoKeysByClusterNode.remove(nodeIDOfLostNode);
+        if (removedSessionInfo != null) {
+            removedSessionInfo.forEach(fullJID -> {
+                final JID offlineJID = new JID(fullJID);
+                boolean sessionIsAnonymous = false;
+                final ClientSessionInfo clientSessionInfoAboutToBeRemoved = sessionInfoCache.remove(fullJID);
+                if (clientSessionInfoAboutToBeRemoved != null) {
+                    sessionIsAnonymous = clientSessionInfoAboutToBeRemoved.isAnonymous();
+                } else {
+                    // Apparently there is an inconsistency between sessionInfoKeysByClusterNode and sessionInfoCache.
+                    // That's troublesome, so log a warning. For the session removal we can't do more than just assume
+                    // the session was not anonymous (which has the highest probability for most use cases).
+                    Log.warn("Session information for {} is not available from sessionInfoCache, while it was still expected to be there", fullJID);
+                }
+                removeSession(null, offlineJID, sessionIsAnonymous, true);
+            });
+        }
+
         // In some cache implementations, the entry-set is unmodifiable. To guard against potential
         // future changes of this implementation (that would make the implementation incompatible with
         // these cache implementations), the entry-set that's operated on in this implementation is
         // explicitly wrapped in an unmodifiable collection. That forces this implementation to be
         // compatible with the 'lowest common denominator'.
+        // TODO Move this to new opruimcode
         final Set<Map.Entry<String, ClientSessionInfo>> entries = Collections.unmodifiableSet(sessionInfoCache.entrySet() );
         for ( final Map.Entry<String, ClientSessionInfo> entry : entries )
         {
@@ -1797,6 +1799,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 sessionInfoCache.remove(entry.getKey());
             }
         }
+
+
     }
 
     @Override

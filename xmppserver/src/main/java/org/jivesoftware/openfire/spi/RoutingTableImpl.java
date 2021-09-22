@@ -206,7 +206,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Note: unlike the other caches in this implementation, this cache does not explicitly have supporting data
      * structures. Instead, it implicitly uses the supporting data structures of {@link #usersCache} and {@link #anonymousUsersCache}.
      */
-    private final Cache<String, HashSet<String>> usersSessions;
+    private final Cache<String, HashSet<String>> usersSessionsCache;
 
     private String serverName;
     private XMPPServer server;
@@ -223,7 +223,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         componentsCache = CacheFactory.createCache(COMPONENT_CACHE_NAME);
         usersCache = CacheFactory.createCache(C2S_CACHE_NAME);
         anonymousUsersCache = CacheFactory.createCache(ANONYMOUS_C2S_CACHE_NAME);
-        usersSessions = CacheFactory.createCache(C2S_SESSION_NAME);
+        usersSessionsCache = CacheFactory.createCache(C2S_SESSION_NAME);
         localRoutingTable = new LocalRoutingTable();
     }
 
@@ -282,10 +282,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
-                Lock lock = usersSessions.getLock(route.toBareJID());
+                Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock();
                 try {
-                    usersSessions.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
+                    usersSessionsCache.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
                 }
                 finally {
                     lock.unlock();
@@ -304,15 +304,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             // Add the session to the list of user sessions
             if (route.getResource() != null && (!available || added)) {
-                Lock lock = usersSessions.getLock(route.toBareJID());
+                Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock();
                 try {
-                    HashSet<String> jids = usersSessions.get(route.toBareJID());
+                    HashSet<String> jids = usersSessionsCache.get(route.toBareJID());
                     if (jids == null) {
                         jids = new HashSet<>();
                     }
                     jids.add(route.toString());
-                    usersSessions.put(route.toBareJID(), jids);
+                    usersSessionsCache.put(route.toBareJID(), jids);
                 }
                 finally {
                     lock.unlock();
@@ -993,17 +993,22 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
-                Lock lock = usersSessions.getLock(route.toBareJID());
+                Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock(); // temporarily block new sessions for this JID
                 try {
-                    Collection<String> sessions = usersSessions.get(route.toBareJID());
+                    Log.debug("20210922 Fetching {} from users session cache, which currently contains {}", route.toBareJID(), usersSessionsCache);
+                    Collection<String> sessions = usersSessionsCache.get(route.toBareJID());
                     if (sessions != null) {
                         // Select only available sessions
                         for (String jid : sessions) {
+                            Log.debug("20210922 User session {} found from users sessions cache, now determining route", jid);
+                            Log.debug("20210922 Current content of usersCache: {}", usersCache);
+                            Log.debug("20210922 Current content of anonymousUsersCache: {}", anonymousUsersCache);
                             ClientRoute clientRoute = usersCache.get(jid);
                             if (clientRoute == null) {
                                 clientRoute = anonymousUsersCache.get(jid);
                             }
+                            Log.debug("20210922 Found client route {} for user session {}", clientRoute, jid);
                             if (clientRoute != null && (clientRoute.isAvailable() ||
                                     presenceUpdateHandler.hasDirectPresence(new JID(jid), requester))) {
                                 jids.add(new JID(jid));
@@ -1031,7 +1036,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean removeClientRoute(JID route) {
+
+        if (route.getResource() == null) {
+            throw new IllegalArgumentException("For removing a client route, the argument 'route' must be a full JID, but was " + route);
+        }
+
         boolean anonymous = false;
+        boolean sessionRemoved = false;
         String address = route.toString();
         ClientRoute clientRoute;
         Lock lockU = usersCache.getLock(address);
@@ -1055,33 +1066,34 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 lockA.unlock();
             }
         }
-        if (clientRoute != null && route.getResource() != null) {
-            Lock lock = usersSessions.getLock(route.toBareJID());
-            lock.lock();
-            try {
-                if (anonymous) {
-                    usersSessions.remove(route.toBareJID());
-                }
-                else {
-                    HashSet<String> jids = usersSessions.get(route.toBareJID());
-                    if (jids != null) {
-                        jids.remove(route.toString());
-                        if (!jids.isEmpty()) {
-                            usersSessions.put(route.toBareJID(), jids);
-                        }
-                        else {
-                            usersSessions.remove(route.toBareJID());
-                        }
+
+        Lock lock = usersSessionsCache.getLock(route.toBareJID());
+        lock.lock();
+        try {
+            if (anonymous) {
+                sessionRemoved = usersSessionsCache.remove(route.toBareJID()) != null;
+            }
+            else {
+                HashSet<String> jids = usersSessionsCache.get(route.toBareJID());
+                Log.debug("20210922 Found {} in usersSessionCache for route {}", jids, route.toBareJID());
+                if (jids != null) {
+                    sessionRemoved = jids.remove(route.toString());
+                    if (!jids.isEmpty()) {
+                        usersSessionsCache.put(route.toBareJID(), jids);
+                    }
+                    else {
+                        usersSessionsCache.remove(route.toBareJID());
                     }
                 }
             }
-            finally {
-                lock.unlock();
-            }
         }
+        finally {
+            lock.unlock();
+        }
+
         Log.debug("Removing client route {} from routing table", route);
         localRoutingTable.removeRoute(new DomainPair("", route.toString()));
-        return clientRoute != null;
+        return sessionRemoved;
     }
 
     @Override
@@ -1247,6 +1259,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         return ConsistencyChecks.generateReportForRoutingTableClientRoutes(usersCache, anonymousUsersCache, localRoutingTable.getClientRoutes(), new HashMap<>(routeOwnersByClusterNode));
     }
 
+    /**
+     * Verifies that {@link #usersSessionsCache}, {@link #usersCache} and {@link #anonymousUsersCache} are in a
+     * consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @return A consistency state report.
+     * @see #usersSessionsCache which tracks user sessions.
+     * @see #usersCache which is one of the two caches that is used tho share data with other cluster nodes.
+     * @see #anonymousUsersCache which is one of the two caches that is used tho share data with other cluster nodes.
+     */
+    public Multimap<String, String> clusteringStateConsistencyReportForUsersSessions() {
+        return ConsistencyChecks.generateReportForUserSessions(usersSessionsCache, usersCache, anonymousUsersCache);
+    }
+
+
+
     @Override
     public void joinedCluster()
     {
@@ -1270,6 +1302,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Note that, when #joinedCluster() fired, the cache will _always_ have been replaced, meaning that it won't
         // have old event listeners. When #leaveCluster() fires, the cache will be destroyed. This takes away the need
         // to explicitly deregister the listener in that case.
+        // Ensure that event listeners have been registered with the caches, before starting to simulate 'entryAdded' events,
+        // to prevent the possibility of having entries that are missed by the simulation because of bad timing.
         usersCache.addClusteredCacheEntryListener(userCacheEntryListener, false, false);
         anonymousUsersCache.addClusteredCacheEntryListener(userCacheEntryListener, false, false);
         serversCache.addClusteredCacheEntryListener(serversCacheEntryListener, false, false);
@@ -1277,8 +1311,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // This is not necessary for the usersSessions cache, because its content is being managed while the content
         // of users cache and anonymous users cache is being managed.
 
-        // Ensure that event listeners have been registered with the caches, before starting to simulate 'entryAdded' events,
-        // to prevent the possibility of having entries that are missed by the simulation because of bad timing.
         Log.debug("Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.");
         Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream())
             // this filter isn't needed if we do this before restoreCacheContent.
@@ -1509,7 +1541,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Log.debug( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
         localRoutingTable.getComponentRoute().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));
 
-        Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessions.getName() );
+        Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessionsCache.getName() );
 
         // Add client sessions hosted locally to the cache (using new nodeID)
         for (LocalClientSession session : localRoutingTable.getClientRoutes()) {

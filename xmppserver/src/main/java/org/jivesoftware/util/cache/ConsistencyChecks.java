@@ -616,4 +616,79 @@ public class ConsistencyChecks {
 
         return result;
     }
+
+    public static Multimap<String, String> generateReportForUserSessions(
+        @Nonnull final Cache<String, HashSet<String>> usersSessionsCache,
+        @Nonnull final Cache<String, ClientRoute> usersCache,
+        @Nonnull final Cache<String, ClientRoute> anonymousUsersCache
+    ) {
+        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
+
+        // Take snapshots of all data structures at as much the same time as possible.
+        final ConcurrentMap<String, HashSet<String>> cache = new ConcurrentHashMap<>(usersSessionsCache);
+        final Set<String> usersCacheKeys = usersCache.keySet();
+        final Set<String> anonymousUsersCacheKeys = anonymousUsersCache.keySet();
+
+        final Set<String> userCacheKeysNotInSessionsCache = usersCacheKeys.stream()
+            .filter(fullJid -> {
+                HashSet<String> fullJids = cache.get(new JID(fullJid).toBareJID());
+                return fullJids == null || !fullJids.contains(fullJid);
+            })
+            .collect(Collectors.toSet());
+
+        final Set<String> anonymousUserCacheKeysNotInSessionsCache = anonymousUsersCacheKeys.stream()
+            .filter(fullJid -> {
+                HashSet<String> fullJids = cache.get(new JID(fullJid).toBareJID());
+                return fullJids == null || !fullJids.contains(fullJid);
+            })
+            .collect(Collectors.toSet());
+
+        final Set<String> sessionCacheItemsNotInUserCaches = cache.values().stream()
+            .flatMap(HashSet::stream)
+            .filter(fullJid -> !usersCacheKeys.contains(fullJid) && !anonymousUsersCacheKeys.contains(fullJid))
+            .collect(Collectors.toSet());
+
+        final Set<String> duplicatesBetweenAnonAndNonAnonUsers = CollectionUtils.findDuplicates(usersCacheKeys, anonymousUsersCacheKeys);
+
+        // Generate report
+        final Multimap<String, String> result = HashMultimap.create();
+
+        result.put("info", String.format("The cache named %s is used to share data in the cluster, which contains %d session infos.", usersSessionsCache.getName(), cache.size()));
+
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", usersSessionsCache.getName(), cache.entrySet()
+            .stream()
+            .map(e -> e.getKey() + " -> " + e.getValue())
+            .sorted()
+            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", usersCache.getName(), usersCacheKeys.stream().sorted()
+            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", anonymousUsersCache.getName(), anonymousUsersCacheKeys.stream().sorted()
+            .collect(Collectors.joining("\n"))));
+
+        if (userCacheKeysNotInSessionsCache.isEmpty()) {
+            result.put("pass", "All user cache entries exist in the user sessions cache.");
+        } else {
+            result.put("fail", String.format("User sessions cache is missing entries that are present in the user cache. These %d entries are missing: %s", userCacheKeysNotInSessionsCache.size(), String.join(", ", userCacheKeysNotInSessionsCache)));
+        }
+
+        if (anonymousUserCacheKeysNotInSessionsCache.isEmpty()) {
+            result.put("pass", "All anonymous user cache entries exist in the user sessions cache.");
+        } else {
+            result.put("fail", String.format("User sessions cache is missing entries that are present in the anonymous user cache. These %d entries are missing: %s", anonymousUserCacheKeysNotInSessionsCache.size(), String.join(", ", anonymousUserCacheKeysNotInSessionsCache)));
+        }
+
+        if (sessionCacheItemsNotInUserCaches.isEmpty()) {
+            result.put("pass", "All user sessions cache entries exist in either the user cache or the anonymous user cache.");
+        } else {
+            result.put("fail", String.format("User cache and/or anonymous user cache is missing entries that are present in the user sessions cache. These %d entries are missing: %s", sessionCacheItemsNotInUserCaches.size(), String.join(", ", sessionCacheItemsNotInUserCaches)));
+        }
+
+        if (duplicatesBetweenAnonAndNonAnonUsers.isEmpty()) {
+            result.put("pass", "There are no duplicates between non-anonymous users cache and anonymous users cache.");
+        } else {
+            result.put("fail", String.format("There are users both present in non-anonymous users cache and anonymous users cache. These %d entries are duplicates: %s", duplicatesBetweenAnonAndNonAnonUsers.size(), String.join(", ", duplicatesBetweenAnonAndNonAnonUsers)));
+        }
+
+        return result;
+    }
 }

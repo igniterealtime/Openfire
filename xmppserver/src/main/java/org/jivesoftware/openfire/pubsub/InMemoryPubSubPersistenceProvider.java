@@ -323,7 +323,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     {
         log.debug( "Getting published items for node {} (max: {}).", node.getUniqueIdentifier(), maxRows );
         List<PublishedItem> publishedItems = getPublishedItems( node );
-        if ( publishedItems.size() > maxRows )
+        if ( maxRows >= 0 && publishedItems.size() > maxRows )
         {
             publishedItems = publishedItems.subList( publishedItems.size() - maxRows, publishedItems.size() );
         }

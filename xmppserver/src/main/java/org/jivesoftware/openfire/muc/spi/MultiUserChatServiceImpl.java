@@ -566,8 +566,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return;
         }
 
-        Log.trace("User '{}' is sending a packet to room '{}'", packet.getFrom(), roomName);
-
         StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getTo().asBareJID());
 
         final Lock lock = getChatRoomLock(roomName);
@@ -2935,7 +2933,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void joinedCluster() {
-        LocalTime start = LocalTime.now();
         final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Log.debug("Cluster event: service {} joined a cluster - going to restore {} rooms", fullServiceName, localMUCRoomManager.size());
 
@@ -2951,18 +2948,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Let the other nodes know about our local occupants, as they need this information when it might leave the
         // cluster (OF-2224) and should tell its local users that new occupants have joined (OF-2233).
         CacheFactory.doClusterTask( new SyncLocalOccupantsAndSendJoinPresenceTask(this.chatServiceName, localOccupants) );
-
-        occupantManager.logOccupantData("This node joined a cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
-
-        // MUCRoom chatroom, String nickname,
-        //                   MUCRole.Role role, MUCRole.Affiliation affiliation, JID userJid, Presence presence
         // TODO does this work properly when the rooms are not known on the other nodes?
     }
 
     @Override
     public void joinedCluster(byte[] nodeID) {
 
-        LocalTime start = LocalTime.now();
         final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Log.debug("Cluster event: service {} got notified that node {} joined a cluster", fullServiceName, new String(nodeID));
 
@@ -2976,13 +2967,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // has finished execution), we can be sure that the cache already holds data as provided by _us_.
         final Set<OccupantManager.Occupant> localOccupants = occupantManager.getLocalOccupants();
         CacheFactory.doClusterTask( new SyncLocalOccupantsAndSendJoinPresenceTask(this.chatServiceName, localOccupants), nodeID );
-
-        occupantManager.logOccupantData("Other node " + new String(nodeID) + " joined our cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
     }
 
     @Override
     public void leftCluster() {
-        LocalTime start = LocalTime.now();
         final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Log.debug("Cluster event: service {} left a cluster - going to restore {} rooms", fullServiceName, localMUCRoomManager.size());
 
@@ -3004,13 +2992,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
         makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNodes, null);
-
-        occupantManager.logOccupantData("This node left a cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
     }
 
     @Override
     public void leftCluster(byte[] nodeID) {
-        LocalTime start = LocalTime.now();
         final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Log.debug("Cluster event: service {} got notified that node {} left a cluster", fullServiceName, new String(nodeID));
 
@@ -3062,18 +3047,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         // Send presence 'leave' for all of these users to the users that remain in the chatroom (on this node)
         makeOccupantsOnDisconnectedClusterNodesLeave(occupantsOnRemovedNode, NodeID.getInstance(nodeID));
-
-        occupantManager.logOccupantData("Other node " + new String(nodeID) + " left our cluster (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
     }
 
     @Override
     public void markedAsSeniorClusterMember() {
-        LocalTime start = LocalTime.now();
         final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         Log.debug("Cluster event: service {} got notified that it is now the senior cluster member", fullServiceName);
         // Do nothing
-
-        occupantManager.logOccupantData("This node became senior cluster member (cluster event received)", start, localMUCRoomManager.getROOM_CACHE());
         // TODO: Check if all occupants are still reachable
     }
 
@@ -3086,11 +3066,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * @param task
      */
     public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task) {
-        LocalTime start = LocalTime.now();
         occupantManager.process(task);
         makeOccupantsOnConnectedClusterNodeJoin(task.getOccupants(), task.getOriginator());
-
-        occupantManager.logOccupantData("This node processed a SyncLocalOccupantsAndSendJoinPresenceTask from node " + task.getOriginator() + " containing " + task.getOccupants().size() + " occupants", start, localMUCRoomManager.getROOM_CACHE());
     }
 
     /**

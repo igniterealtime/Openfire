@@ -37,7 +37,14 @@ import javax.annotation.Nullable;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -170,55 +177,6 @@ public class OccupantManager implements MUCEventListener
         }
     }
 
-    public void logOccupantData(String reasonForLogging, LocalTime start, Map<String, MUCRoom> roomCache) {
-        LocalTime end = LocalTime.now();
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        List<String> callStack = Arrays.stream(elements).skip(2L).limit(10L).map(StackTraceElement::toString).collect(Collectors.toList());
-        Log.debug("================== OCCUPANT MANAGER DATA ==================");
-        Log.debug("===                         TIME                        ===");
-        Log.debug(
-            "=                   {} - {}                   =",
-            start.withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME),
-            end.withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME)
-        );
-        Log.debug("===                        REASON                       ===");
-        Log.debug("= {}", reasonForLogging);
-        Log.debug("===                  OCCUPANTS BY NODE                  ===");
-        Log.debug("=                        COUNT: {}", occupantsByNode.size());
-        occupantsByNode.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(occupant -> Log.debug("= - {}", occupant));
-        });
-        Log.debug("===                  NODES BY OCCUPANT                  ===");
-        Log.debug("=                        COUNT: {}", nodesByOccupant.size());
-        nodesByOccupant.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(nodeID -> Log.debug("= - {}", nodeID));
-        });
-        Log.debug("===                  OCCUPANTS BY JID                   ===");
-        Log.debug("=                        COUNT: {}", occupantsByRealJid.size());
-        occupantsByRealJid.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(occupant -> Log.debug("= - {}", occupant));
-        });
-        Log.debug("===                  ROOM CACHE CONTENTS                ===");
-        if (roomCache == null) {
-            Log.debug("===                     NOT SPECIFIED                   ===");
-        } else {
-            roomCache
-                .values()
-                .forEach(room -> Log.debug("= " + room.getName() + " ---> " + room
-                    .getOccupants()
-                    .stream()
-                    .map(MUCRole::getNickname)
-                    .collect(Collectors.joining("/"))
-                ));
-        }
-        Log.debug("===                  TOP OF CALL STACK                  ===");
-        callStack.forEach(se -> Log.debug("= {}", se));
-        Log.debug("================ END OCCUPANT MANAGER DATA ================");
-    }
-
     /**
      * Verifies that a JID relates to the service for which this instance is operating, by comparing its domain part.
      *
@@ -322,11 +280,11 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantAddedTask task)
     {
-        LocalTime start = LocalTime.now();
+//        LocalTime start = LocalTime.now();
         final Occupant newOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         replaceOccupant(null, newOccupant, task.getOriginator());
 
-        logOccupantData("A new occupant was added on node " + task.getOriginator(), start, null);
+//        logOccupantData("A new occupant was added on node " + task.getOriginator(), start, null);
     }
 
     /**
@@ -337,12 +295,12 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantUpdatedTask task)
     {
-        LocalTime start = LocalTime.now();
+//        LocalTime start = LocalTime.now();
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getOldNickname(), task.getRealJID());
         final Occupant newOccupant = new Occupant(task.getRoomName(), task.getNewNickname(), task.getRealJID());
         replaceOccupant(oldOccupant, newOccupant, task.getOriginator());
 
-        logOccupantData("An occupant was updated on node " + task.getOriginator(), start, null);
+//        logOccupantData("An occupant was updated on node " + task.getOriginator(), start, null);
     }
 
     /**
@@ -353,11 +311,11 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantRemovedTask task)
     {
-        LocalTime start = LocalTime.now();
+//        LocalTime start = LocalTime.now();
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         replaceOccupant(oldOccupant, null, task.getOriginator());
 
-        logOccupantData("An occupant was removed on node " + task.getOriginator(), start, null);
+//        logOccupantData("An occupant was removed on node " + task.getOriginator(), start, null);
     }
 
     /**
@@ -612,5 +570,61 @@ public class OccupantManager implements MUCEventListener
                 ", lastActive=" + lastActive +
                 '}';
         }
+    }
+
+    /**
+     * Logs key data about rooms and occupants.
+     * Use only when needed, it clouds up the log.
+     * @param reasonForLogging Will be logged to provide context for why this is being logged.
+     * @param start Start time of the operation for which this log is created.
+     * @param roomCache The room cache.
+     */
+    public void logOccupantData(String reasonForLogging, LocalTime start, Map<String, MUCRoom> roomCache) {
+        LocalTime end = LocalTime.now();
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        List<String> callStack = Arrays.stream(elements).skip(2L).limit(10L).map(StackTraceElement::toString).collect(Collectors.toList());
+        Log.debug("================== OCCUPANT MANAGER DATA ==================");
+        Log.debug("===                         TIME                        ===");
+        Log.debug(
+            "=                   {} - {}                   =",
+            start.withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME),
+            end.withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME)
+        );
+        Log.debug("===                        REASON                       ===");
+        Log.debug("= {}", reasonForLogging);
+        Log.debug("===                  OCCUPANTS BY NODE                  ===");
+        Log.debug("=                        COUNT: {}", occupantsByNode.size());
+        occupantsByNode.forEach((key, value) -> {
+            Log.debug("= {}", key);
+            value.forEach(occupant -> Log.debug("= - {}", occupant));
+        });
+        Log.debug("===                  NODES BY OCCUPANT                  ===");
+        Log.debug("=                        COUNT: {}", nodesByOccupant.size());
+        nodesByOccupant.forEach((key, value) -> {
+            Log.debug("= {}", key);
+            value.forEach(nodeID -> Log.debug("= - {}", nodeID));
+        });
+        Log.debug("===                  OCCUPANTS BY JID                   ===");
+        Log.debug("=                        COUNT: {}", occupantsByRealJid.size());
+        occupantsByRealJid.forEach((key, value) -> {
+            Log.debug("= {}", key);
+            value.forEach(occupant -> Log.debug("= - {}", occupant));
+        });
+        Log.debug("===                  ROOM CACHE CONTENTS                ===");
+        if (roomCache == null) {
+            Log.debug("===                     NOT SPECIFIED                   ===");
+        } else {
+            roomCache
+                .values()
+                .forEach(room -> Log.debug("= " + room.getName() + " ---> " + room
+                    .getOccupants()
+                    .stream()
+                    .map(MUCRole::getNickname)
+                    .collect(Collectors.joining("/"))
+                ));
+        }
+        Log.debug("===                  TOP OF CALL STACK                  ===");
+        callStack.forEach(se -> Log.debug("= {}", se));
+        Log.debug("================ END OCCUPANT MANAGER DATA ================");
     }
 }

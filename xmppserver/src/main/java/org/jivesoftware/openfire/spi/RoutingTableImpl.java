@@ -996,19 +996,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock(); // temporarily block new sessions for this JID
                 try {
-                    Log.debug("20210922 Fetching {} from users session cache, which currently contains {}", route.toBareJID(), usersSessionsCache);
                     Collection<String> sessions = usersSessionsCache.get(route.toBareJID());
                     if (sessions != null) {
                         // Select only available sessions
                         for (String jid : sessions) {
-                            Log.debug("20210922 User session {} found from users sessions cache, now determining route", jid);
-                            Log.debug("20210922 Current content of usersCache: {}", usersCache);
-                            Log.debug("20210922 Current content of anonymousUsersCache: {}", anonymousUsersCache);
                             ClientRoute clientRoute = usersCache.get(jid);
                             if (clientRoute == null) {
                                 clientRoute = anonymousUsersCache.get(jid);
                             }
-                            Log.debug("20210922 Found client route {} for user session {}", clientRoute, jid);
                             if (clientRoute != null && (clientRoute.isAvailable() ||
                                     presenceUpdateHandler.hasDirectPresence(new JID(jid), requester))) {
                                 jids.add(new JID(jid));
@@ -1067,31 +1062,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
 
-        Lock lock = usersSessionsCache.getLock(route.toBareJID());
-        lock.lock();
-        try {
-            if (anonymous) {
-                sessionRemoved = usersSessionsCache.remove(route.toBareJID()) != null;
+        final String bareJID = route.toBareJID();
+
+        if (usersSessionsCache.containsKey(bareJID)) {
+            // The user session still needs to be removed
+            if (clientRoute == null) {
+                Log.warn("Client route not found for route {}, while user session still exists, Current content of users cache is {}", bareJID, usersCache);
             }
-            else {
-                HashSet<String> jids = usersSessionsCache.get(route.toBareJID());
-                Log.debug("20210922 Found {} in usersSessionCache for route {}", jids, route.toBareJID());
-                if (jids != null) {
-                    sessionRemoved = jids.remove(route.toString());
-                    if (!jids.isEmpty()) {
-                        usersSessionsCache.put(route.toBareJID(), jids);
-                    }
-                    else {
-                        usersSessionsCache.remove(route.toBareJID());
+
+            Lock lock = usersSessionsCache.getLock(bareJID);
+            lock.lock();
+            try {
+                if (anonymous) {
+                    sessionRemoved = usersSessionsCache.remove(bareJID) != null;
+                } else {
+                    HashSet<String> jids = usersSessionsCache.get(bareJID);
+                    if (jids != null) {
+                        sessionRemoved = jids.remove(route.toString());
+                        if (!jids.isEmpty()) {
+                            usersSessionsCache.put(bareJID, jids);
+                        } else {
+                            usersSessionsCache.remove(bareJID);
+                        }
                     }
                 }
+            } finally {
+                lock.unlock();
             }
         }
-        finally {
-            lock.unlock();
-        }
 
-        Log.debug("Removing client route {} from routing table", route);
+        Log.debug("Removing client route {} from local routing table", route);
         localRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return sessionRemoved;
     }
@@ -1374,20 +1374,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // All clients on all other nodes are now unavailable! Simulate an unavailable presence for sessions that were
         // being hosted in other cluster nodes.
-        // TODO this code is ported from the hazelcast plugin. It, however, explicitly stated to do this only in #leftCluster(). Why isn't this needed in #leftCluster(NodeID)?
+        Set<JID> removedRoutes = new HashSet<>();
         routeOwnersByClusterNode.values().stream().flatMap(Collection::stream).forEach( fullJID -> {
             final JID offlineJID = new JID(fullJID);
-
             removeClientRoute(offlineJID);
-
-            try {
-                final Presence presence = new Presence(Presence.Type.unavailable);
-                presence.setFrom(offlineJID);
-                XMPPServer.getInstance().getPresenceRouter().route(presence);
-            }
-            catch (final PacketException e) {
-                Log.error("We have left the cluster. Users on other cluster nodes are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf. While doing this for '{}', this caused an exception to occur.", fullJID, e);
-            }
+            removedRoutes.add(offlineJID);
         });
         routeOwnersByClusterNode.clear();
 
@@ -1410,12 +1401,24 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             for (String componentJid : entry.getValue()) {
                 removeComponentRoute(new JID(componentJid), nodeId);
             }
-        };
+        }
+
+        restoreUsersSessionsCache();
+
+        removedRoutes.forEach(offlineJID -> {
+            try {
+                final Presence presence = new Presence(Presence.Type.unavailable);
+                presence.setFrom(offlineJID);
+                XMPPServer.getInstance().getPresenceRouter().route(presence);
+            }
+            catch (final PacketException e) {
+                Log.error("We have left the cluster. Users on other cluster nodes are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf. While doing this for '{}', this caused an exception to occur.", offlineJID, e);
+            }
+        });
     }
 
     @Override
-    public void leftCluster(byte[] nodeID)
-    {
+    public void leftCluster(byte[] nodeID) {
         final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
 
         // Another node left the cluster.
@@ -1432,49 +1435,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // hosted on that node.
         final Set<String> removed = routeOwnersByClusterNode.remove(nodeIDOfLostNode);
         if (removed != null) {
-            removed.stream().forEach( fullJID -> {
+            removed.forEach(fullJID -> {
                 final JID offlineJID = new JID(fullJID);
-
                 removeClientRoute(offlineJID);
-
-                try {
-                    final Presence presence = new Presence(Presence.Type.unavailable);
-                    presence.setFrom(offlineJID);
-                    XMPPServer.getInstance().getPresenceRouter().route(presence);
-                    // TODO This broadcasts the presence over the entire (remaining) cluster, which is too much because it
-                    // is done by all remaining nodes
-                    // TODO This should only be done for routes that were previously 'available'. See commented out code below.
-                }
-                catch (final PacketException e) {
-                    Log.error("Remote node {} left the cluster. Users on that node are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf.  While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, fullJID, e);
-                }
             });
         }
 
-
-//        final Map<JID, Boolean> clientRoutesToRemove = Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream() )
-//            .filter(entry -> entry.getValue().getNodeID().equals(nodeIDOfLostNode))
-//            .collect(Collectors.toMap(e -> new JID(e.getKey()), e -> e.getValue().isAvailable()));
-//
-//        clientRoutesToRemove.entrySet().forEach( entry -> {
-//                try {
-//                    removedSessionCount.getAndIncrement();
-//                    removeClientRoute(entry.getKey());
-//                    if ( entry.getValue() )
-//                    {
-//                        // Simulate that the session has just gone offline
-//                        final Presence offline = new Presence();
-//                        offline.setFrom(entry.getKey());
-//                        offline.setTo(new JID(null, serverName, null, true));
-//                        offline.setType(Presence.Type.unavailable);
-//                        XMPPServer.getInstance().getPacketRouter().route(offline);
-//                    }
-//                } catch (Exception e) {
-//                    Log.warn("Unable to route presence update when processing cluster leave, entry={}", entry, e);
-//                }
-//            });
-
-        Log.debug( "Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", nodeIDOfLostNode, removedSessionCount.get() );
+        Log.debug("Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", nodeIDOfLostNode, removedSessionCount.get());
 
         // Remove outgoing server sessions hosted in node that left the cluster
         final Set<DomainPair> remoteServers = s2sDomainPairsByClusterNode.remove(nodeIDOfLostNode);
@@ -1509,16 +1476,58 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         // Remove routes for server domains that were accessed through the defunct node.
-        final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache( serversCache, nodeIDOfLostNode);
-        removedServers.forEach( removedServer -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route was removed.", nodeIDOfLostNode, removedServer.getRemote() );
-        } );
+        final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache(serversCache, nodeIDOfLostNode);
+        removedServers.forEach(removedServer -> {
+            Log.debug("Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route was removed.", nodeIDOfLostNode, removedServer.getRemote());
+        });
 
         // Remove component routes for the defunct node.
-        final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache( componentsCache, nodeIDOfLostNode);
-        modifiedComponents.get( false ).keySet().forEach( removedComponentDomain -> {
-            Log.debug( "Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route was removed", nodeIDOfLostNode, removedComponentDomain );
-        } );
+        final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache(componentsCache, nodeIDOfLostNode);
+        modifiedComponents.get(false).keySet().forEach(removedComponentDomain -> {
+            Log.debug("Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route was removed", nodeIDOfLostNode, removedComponentDomain);
+        });
+
+        restoreUsersSessionsCache();
+
+        // Now that the users sessions cache is restored, we can proceed sending presence updates for all removed users
+        if (removed != null) {
+            removed.stream().forEach(fullJID -> {
+                final JID offlineJID = new JID(fullJID);
+                try {
+                    final Presence presence = new Presence(Presence.Type.unavailable);
+                    presence.setFrom(offlineJID);
+                    XMPPServer.getInstance().getPresenceRouter().route(presence);
+                    // TODO This broadcasts the presence over the entire (remaining) cluster, which is too much because it
+                    // is done by all remaining nodes
+                    // TODO This should only be done for routes that were previously 'available'. See commented out code below.
+                } catch (final PacketException e) {
+                    Log.error("Remote node {} left the cluster. Users on that node are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf.  While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, fullJID, e);
+                }
+            });
+        }
+    }
+
+    /**
+     * When the users sessions cache is (potentially) inconsistent, it can be rebuilt from routeOwnersByClusterNode and
+     * routingTable.
+     * This method relies on the routeOwnersByClusterNode and routingTable being stable and reflecting the actual
+     * reality. So run this restore method <em>after or at the end of</em> cleanup on a cluster leave.
+     */
+    private void restoreUsersSessionsCache() {
+
+        // First remove all elements from users sessions cache that are not present in user caches
+        final Set<String> existingUserRoutes = routeOwnersByClusterNode.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+        existingUserRoutes.addAll(localRoutingTable.getClientRoutes().stream().map(LocalClientSession::getAddress).map(JID::toFullJID).collect(Collectors.toSet()));
+        final Set<String> entriesToRemove = usersSessionsCache.values().stream()
+            .flatMap(Collection::stream)
+            .filter(fullJid -> !existingUserRoutes.contains(fullJid))
+            .collect(Collectors.toSet());
+        entriesToRemove.forEach(fullJid -> CacheUtil.removeValueFromMultiValuedCache(usersSessionsCache, new JID(fullJid).toBareJID(), fullJid));
+
+        // Add elements from users caches that are not present in users sessions cache
+        existingUserRoutes.forEach(fullJid -> {
+            CacheUtil.addValueToMultiValuedCache(usersSessionsCache, new JID(fullJid).toBareJID(), fullJid, HashSet::new);
+        });
     }
 
     @Override

@@ -16,6 +16,10 @@
   - limitations under the License.
 --%>
 
+<%--
+    TODO This page was created for debugging during OF-2219 development. It should probably be ported to the system-clustering-data-consistency-check.jsp model.
+--%>
+
 <%@ page import="org.jivesoftware.util.*,
                  java.util.*,
                  org.jivesoftware.openfire.muc.MultiUserChatService"

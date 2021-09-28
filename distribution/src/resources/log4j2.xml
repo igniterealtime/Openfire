@@ -79,10 +79,6 @@
 
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
-        <Logger name="com.hazelcast.internal.partition.impl.MigrationManager" level="info"/>
-        <Logger name="com.hazelcast.spi.impl.operationservice.impl.InvocationMonitor" level="info"/>
-        <Logger name="com.hazelcast.internal.partition.InternalPartitionService" level="info"/>
-        <Logger name="com.hazelcast.nio.tcp" level="info"/>
 
         <Root level="all">
             <AppenderRef ref="all-out"/>

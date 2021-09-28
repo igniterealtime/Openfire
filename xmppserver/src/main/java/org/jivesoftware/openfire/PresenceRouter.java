@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -115,7 +114,7 @@ public class PresenceRouter extends BasicModule {
         JID senderJID = packet.getFrom();
         // Check if the packet was sent to the server hostname
         if (recipientJID != null && recipientJID.getNode() == null &&
-                recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
+            recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
             if (packet.getElement().element("addresses") != null) {
                 // Presence includes multicast processing instructions. Ask the multicastRouter
                 // to route this packet
@@ -126,7 +125,7 @@ public class PresenceRouter extends BasicModule {
         try {
             // Presences sent between components are just routed to the component
             if (recipientJID != null && !XMPPServer.getInstance().isLocal(recipientJID) &&
-                    !XMPPServer.getInstance().isLocal(senderJID)) {
+                !XMPPServer.getInstance().isLocal(senderJID)) {
                 // Route the packet
                 routingTable.routePacket(recipientJID, packet, false);
                 return;
@@ -137,19 +136,19 @@ public class PresenceRouter extends BasicModule {
             if (type == null || Presence.Type.unavailable == type) {
                 // check for local server target
                 if (recipientJID == null || recipientJID.getDomain() == null ||
-                        "".equals(recipientJID.getDomain()) || (recipientJID.getNode() == null &&
-                        recipientJID.getResource() == null) &&
-                        serverName.equals(recipientJID.getDomain())) {
+                    "".equals(recipientJID.getDomain()) || (recipientJID.getNode() == null &&
+                    recipientJID.getResource() == null) &&
+                    serverName.equals(recipientJID.getDomain())) {
                     entityCapsManager.process(packet);
                     updateHandler.process(packet);
                 }
                 else {
                     // Trigger events for presences of remote users
                     if (senderJID != null && !serverName.equals(senderJID.getDomain()) &&
-                            !routingTable.hasComponentRoute(senderJID)) {
+                        !routingTable.hasComponentRoute(senderJID)) {
                         entityCapsManager.process(packet);
                     }
-                    
+
                     // Check that sender session is still active (let unavailable presence go through)
                     Session session = sessionManager.getSession(packet.getFrom());
                     if (session != null && session.getStatus() == Session.STATUS_CLOSED && type == null) {
@@ -159,11 +158,7 @@ public class PresenceRouter extends BasicModule {
 
                     // The user sent a directed presence to an entity
                     // Broadcast it to all connected resources
-                    final List<JID> routes = routingTable.getRoutes(recipientJID, senderJID);
-                    Log.debug("Going to route packet with recipientJID={} and senderJID={} to {} routes", recipientJID, senderJID, routes.size());
-
-                    for (JID jid : routes) {
-                        Log.debug("Broadcasting to route {}", jid);
+                    for (JID jid : routingTable.getRoutes(recipientJID, senderJID)) {
                         // Register the sent directed presence
                         updateHandler.directedPresenceSent(packet, jid, recipientJID.toString());
                         // Route the packet
@@ -173,9 +168,9 @@ public class PresenceRouter extends BasicModule {
 
             }
             else if (Presence.Type.subscribe == type // presence subscriptions
-                    || Presence.Type.unsubscribe == type
-                    || Presence.Type.subscribed == type
-                    || Presence.Type.unsubscribed == type)
+                || Presence.Type.unsubscribe == type
+                || Presence.Type.subscribed == type
+                || Presence.Type.unsubscribed == type)
             {
                 subscribeHandler.process(packet);
             }

@@ -129,7 +129,7 @@ class LocalRoutingTable {
      */
     void removeRoute(DomainPair pair) {
         final RoutableChannelHandler removed = routes.remove(pair);
-        Log.debug( "Remove local route '{}' (for pair: '{}') {}", removed == null ? "(null)" : removed.getAddress(), pair, removed != null ? "removed" : "not removed (was not present).");
+        Log.trace( "Remove local route '{}' (for pair: '{}') {}", removed == null ? "(null)" : removed.getAddress(), pair, removed != null ? "removed" : "not removed (was not present).");
     }
 
     public void start() {

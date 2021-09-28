@@ -293,6 +293,10 @@ public class CacheFactory {
         } );
     }
 
+    // this field is unused, but retains a reference that intends to prevent the monitor from being garbage collected.
+    @SuppressWarnings("unused")
+    private static ConsistencyMonitor consistencyMonitor;
+
     private CacheFactory() {
     }
 
@@ -772,6 +776,8 @@ public class CacheFactory {
             log.error("Failed to instantiate local cache factory strategy: " + localCacheFactoryClass, e);
              throw new InitializationException(e);
         }
+
+        consistencyMonitor = ConsistencyMonitor.getInstance();
     }
 
     private static ClassLoader getClusteredCacheStrategyClassLoader() {

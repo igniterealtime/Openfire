@@ -1904,7 +1904,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @see LocalSessionManager#getIncomingServerSessions() which holds content added to the caches by the local cluster node.
      * @see #incomingServerSessionsByClusterNode which holds content added to the caches by cluster nodes other than the local node.
      */
-    public Multimap<String, String> clusteringStateConsistencyReportForClientRoutes() {
+    public Multimap<String, String> clusteringStateConsistencyReportForIncomingServerSessions() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.

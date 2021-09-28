@@ -570,8 +570,6 @@ public class Roster implements Cacheable, Externalizable {
      * @param packet The presence packet to broadcast
      */
     public void broadcastPresence(Presence packet) {
-        Log.debug("20210922 Going to send presence {} to {}", packet, rosterItems.keySet());
-
         final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
         if (routingTable == null) {
@@ -595,22 +593,16 @@ public class Roster implements Cacheable, Externalizable {
         }
         // Broadcast presence to subscribed entities
         for (RosterItem item : rosterItems.values()) {
-            Log.debug("20210922 Considering roster item {}", item.getJid());
             if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_FROM) {
-                Log.debug("20210922 Roster item has subStatus {}", item.getSubStatus());
                 packet.setTo(item.getJid());
                 if (list != null && list.shouldBlockPacket(packet)) {
-                    Log.debug("20210922 Outgoing presence notifications are blocked for this contact");
                     // Outgoing presence notifications are blocked for this contact
                     continue;
                 }
                 JID searchNode = new JID(item.getJid().getNode(), item.getJid().getDomain(), null, true);
-                Log.debug("20210922 Search node is {}", searchNode);
                 final List<JID> routingTableRoutes = routingTable.getRoutes(searchNode, null);
-                Log.debug("20210922 Found routing table routes {}", routingTableRoutes);
                 for (JID jid : routingTableRoutes) {
                     try {
-                        Log.debug("20210922 Actually routing packet {} to subscribed entity {}", packet, jid);
                         routingTable.routePacket(jid, packet, false);
                     } catch (Exception e) {
                         // Theoretically only happens if session has been closed.
@@ -621,7 +613,6 @@ public class Roster implements Cacheable, Externalizable {
         }
         // Broadcast presence to shared contacts whose subscription status is FROM
         final Set<String> implicitFroms = implicitFrom.keySet();
-        Log.debug("20210922 Implicit froms {}", implicitFroms);
         for (String contact : implicitFroms) {
             if (contact.contains("@")) {
                 String node = contact.substring(0, contact.lastIndexOf("@"));
@@ -633,15 +624,12 @@ public class Roster implements Cacheable, Externalizable {
             packet.setTo(contact);
             if (list != null && list.shouldBlockPacket(packet)) {
                 // Outgoing presence notifications are blocked for this contact
-                Log.debug("20210922 Outgoing presence notifications are blocked for this contact");
                 continue;
             }
 
             final List<JID> routingTableRoutes = routingTable.getRoutes(new JID(contact), null);
-            Log.debug("20210922 Found routing table routes {}", routingTableRoutes);
             for (JID jid : routingTableRoutes) {
                 try {
-                    Log.debug("20210922 Actually routing packet {} to shared contact with subscription status FROM {}", packet, jid);
                     routingTable.routePacket(jid, packet, false);
                 } catch (Exception e) {
                     // Theoretically only happens if session has been closed.

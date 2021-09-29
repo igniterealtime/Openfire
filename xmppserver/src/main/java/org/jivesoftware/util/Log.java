@@ -93,13 +93,17 @@ public final class Log {
     }
 
     public static void setDebugEnabled(final boolean enabled) {
-        debugEnabled = enabled;
-        setLogLevel();
+        if (enabled != debugEnabled) {
+            debugEnabled = enabled;
+            setLogLevel();
+        }
     }
 
     public static void setTraceEnabled(final boolean enabled) {
-        traceEnabled = enabled;
-        setLogLevel();
+        if (enabled != traceEnabled) {
+            traceEnabled = enabled;
+            setLogLevel();
+        }
     }
 
     private static void setLogLevel() {

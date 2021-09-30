@@ -20,6 +20,8 @@
 <%@ page import="org.jivesoftware.openfire.spi.RoutingTableImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.SessionManager" %>
+<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -31,6 +33,8 @@
 <%
     webManager.init(pageContext);
 
+    String mucServiceName = ParamUtils.getParameter(request, "mucServiceName");
+
     // Calculations for RoutingTableImpl
     pageContext.setAttribute("clusteringStateConsistencyReportForServerRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForServerRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForComponentRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForComponentRoutes());
@@ -38,6 +42,15 @@
     pageContext.setAttribute("clusteringStateConsistencyReportForIncomingServerSessions", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForIncomingServerSessions());
     pageContext.setAttribute("clusteringStateConsistencyReportForSessionInfos", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForSessionInfos());
     pageContext.setAttribute("clusteringStateConsistencyReportForUsersSession", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForUsersSessions());
+
+    boolean mustIncludeMucCheck = false;
+    if (mucServiceName != null) {
+        final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(mucServiceName);
+        if (multiUserChatService != null) {
+            pageContext.setAttribute("clusteringStateConsistencyReportForMuc", multiUserChatService.getOccupantManager().clusteringStateConsistencyReportForMucRoomsAndOccupants(mucServiceName));
+            mustIncludeMucCheck = true;
+        }
+    }
 
     pageContext.setAttribute("newLineChar", "\n");
 %>
@@ -256,6 +269,39 @@
             </ul>
         </c:forEach>
 
+        <c:when test="${mustIncludeMucCheck}">
+            <h4>MUC and occupants Cache</h4>
+            <p>The cache describes ...</p>
+
+            <c:forEach items="${clusteringStateConsistencyReportForMuc.asMap()}" var="messageGroup">
+                <ul>
+                    <c:forEach items="${messageGroup.value}" var="line">
+                        <li>
+                            <c:choose>
+                                <c:when test="${messageGroup.key eq 'info'}"><img src="images/info-16x16.gif" alt="informational"></c:when>
+                                <c:when test="${messageGroup.key eq 'pass'}"><img src="images/check.gif" alt="consistent"></c:when>
+                                <c:when test="${messageGroup.key eq 'fail'}"><img src="images/x.gif" alt="inconsistency"></c:when>
+                            </c:choose>
+                            <c:choose>
+                                <c:when test='${fn:contains(line, newLineChar)}'>
+                                    <c:forTokens items="${line}" delims="${newLineChar}" var="descr" begin="0" end="0">
+                                        <c:out value="${descr}"/>
+                                    </c:forTokens>
+                                    <ul>
+                                        <c:forTokens items="${line}" delims="${newLineChar}" var="item" begin="1">
+                                            <li><c:out value="${item}"/></li>
+                                        </c:forTokens>
+                                    </ul>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:out value="${line}"/>
+                                </c:otherwise>
+                            </c:choose>
+                        </li>
+                    </c:forEach>
+                </ul>
+            </c:forEach>
+        </c:when>
     </admin:contentBox>
 </body>
 </html>

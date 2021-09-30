@@ -20,8 +20,10 @@ import org.jivesoftware.database.JiveID;
 import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.muc.spi.LocalMUCRoomManager;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MUCRoomSearchInfo;
+import org.jivesoftware.openfire.muc.spi.OccupantManager;
 import org.jivesoftware.util.JiveConstants;
 import org.xmpp.component.Component;
 import org.xmpp.packet.JID;
@@ -575,6 +577,9 @@ public interface MultiUserChatService extends Component {
      */
     boolean isHidden();
 
+    @Nonnull
+    OccupantManager getOccupantManager();
+
     /**
      * Add a IQHandler to MUC rooms and services. If the IQHandler only supports one or
      * other, it should quietly ignore it.
@@ -623,4 +628,7 @@ public interface MultiUserChatService extends Component {
      * @return Handler for MUC events (delegate)
      */
     MUCEventDelegate getMUCDelegate();
+
+    @Nonnull
+    LocalMUCRoomManager getLocalMUCRoomManager();
 }

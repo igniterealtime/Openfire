@@ -24,6 +24,9 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.spi.OccupantManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ClientSessionInfo;
 import org.jivesoftware.openfire.session.DomainPair;
@@ -35,13 +38,7 @@ import org.jivesoftware.util.CollectionUtils;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -687,6 +684,111 @@ public class ConsistencyChecks {
             result.put("pass", "There are no duplicates between non-anonymous users cache and anonymous users cache.");
         } else {
             result.put("fail", String.format("There are users both present in non-anonymous users cache and anonymous users cache. These %d entries are duplicates: %s", duplicatesBetweenAnonAndNonAnonUsers.size(), String.join(", ", duplicatesBetweenAnonAndNonAnonUsers)));
+        }
+
+        return result;
+    }
+
+    public static Multimap<String, String> generateReportForMucRooms(
+        @Nonnull final Cache<String, MUCRoom> clusteredRoomCacheInput,
+        @Nonnull final Map<String, MUCRoom> localRoomsInput,
+        @Nonnull final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeInput,
+        @Nonnull final ConcurrentMap<OccupantManager.Occupant, Set<NodeID>> nodesByOccupantInput
+    ) {
+//        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
+
+        // Take snapshots of all data structures at as much the same time as possible.
+        final ConcurrentMap<String, MUCRoom> cache = new ConcurrentHashMap<>(clusteredRoomCacheInput);
+        final ConcurrentMap<String, MUCRoom> localRoomsCache = new ConcurrentHashMap<>(localRoomsInput);
+        final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = new ConcurrentHashMap<>(occupantsByNodeInput);
+        final ConcurrentMap<OccupantManager.Occupant, Set<NodeID>> nodesByOccupant = new ConcurrentHashMap<>(nodesByOccupantInput);
+
+        final Map<String, MUCRoom> allRooms = new HashMap<>();
+        allRooms.putAll(cache);
+        allRooms.putAll(localRoomsCache);
+        final List<String> allRoomNames = new ArrayList<>(allRooms.keySet());
+        Collections.sort(allRoomNames);
+
+        final Set<String> roomsOnlyInLocalCache = localRoomsCache.keySet().stream().filter(jid -> !cache.containsKey(jid)).collect(Collectors.toSet());
+
+        final Set<OccupantManager.Occupant> allOccupantsFromOccupantsByNode = occupantsByNode.values().stream()
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
+        final Set<OccupantManager.Occupant> allOccupantsFromNodesByOccupant = nodesByOccupant.keySet();
+
+        final Set<OccupantManager.Occupant> occupantsByNodeNotPresentInNodesByOccupant = allOccupantsFromOccupantsByNode.stream()
+            .filter(o -> !allOccupantsFromNodesByOccupant.contains(o))
+            .collect(Collectors.toSet());
+        final Set<OccupantManager.Occupant> occupantsNotPresentInOccupantsByNode = allOccupantsFromNodesByOccupant.stream()
+            .filter(o -> !allOccupantsFromOccupantsByNode.contains(o))
+            .collect(Collectors.toSet());
+
+        final List<OccupantManager.Occupant> allOccupants = allOccupantsFromOccupantsByNode.stream()
+            .sorted(Comparator.comparing(OccupantManager.Occupant::toString))
+            .collect(Collectors.toList());
+        final List<String> allOccupantsJids = allOccupants
+            .stream()
+            .map(OccupantManager.Occupant::getRealJID)
+            .map(JID::toFullJID)
+            .sorted()
+            .collect(Collectors.toList());
+//        final Map<String, List<OccupantManager.Occupant>> occupantsPerRoom = allOccupantsFromOccupantsByNode.stream()
+//            .collect(Collectors.groupingBy(OccupantManager.Occupant::getRoomName));
+
+        final List<MUCRole> allMucRoles = allRooms.values().stream()
+            .flatMap(room -> room.getOccupants().stream())
+            .sorted(Comparator.comparing(MUCRole::toString))
+            .collect(Collectors.toList());
+        final List<String> allMucRolesOccupantsJids = allMucRoles
+            .stream()
+            .map(MUCRole::getUserAddress)
+            .map(JID::toFullJID)
+            .sorted()
+            .collect(Collectors.toList());
+//        final Map<String, Collection<MUCRole>> mucRolesPerRoom = allRooms.entrySet()
+//            .stream()
+//            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getOccupants()));
+
+        // Generate report
+        final Multimap<String, String> result = HashMultimap.create();
+
+        result.put("info", String.format("The cache named %s is used to share data in the cluster, which contains %d muc rooms.", clusteredRoomCacheInput.getName(), cache.size()));
+
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", clusteredRoomCacheInput.getName(), cache.entrySet()
+            .stream()
+            .map(e -> e.getKey() + " -> " + e.getValue().getName())
+            .sorted()
+            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("Local rooms cache contains these entries :\n%s", localRoomsCache.entrySet()
+            .stream()
+            .map(e -> e.getKey() + " -> " + e.getValue().getName())
+            .sorted()
+            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("All occupants from occupant registration :\n%s", String.join("\n", allOccupantsJids)));
+        result.put("data", String.format("All occupants from rooms in cache :\n%s", String.join("\n", allMucRolesOccupantsJids)));
+
+        if (roomsOnlyInLocalCache.isEmpty()) {
+            result.put("pass", "All locally known rooms exist in clustered room cache.");
+        } else {
+            result.put("fail", String.format("Clustered room cache is missing entries that are present in the local room cache. These %d entries are missing: %s", roomsOnlyInLocalCache.size(), String.join(", ", roomsOnlyInLocalCache)));
+        }
+
+        if (occupantsByNodeNotPresentInNodesByOccupant.isEmpty()) {
+            result.put("pass", "All occupants registered by node exist in the nodes registered by occupant.");
+        } else {
+            result.put("fail", String.format("The registration of nodes by occupant is missing entries that are present in the registration of occupants by node. These %d entries are missing: %s", occupantsByNodeNotPresentInNodesByOccupant.size(), occupantsByNodeNotPresentInNodesByOccupant.stream().map(OccupantManager.Occupant::getNickname).collect(Collectors.joining(", "))));
+        }
+
+        if (occupantsNotPresentInOccupantsByNode.isEmpty()) {
+            result.put("pass", "All occupants in the nodes registered by occupant exist in the occupants registered by node.");
+        } else {
+            result.put("fail", String.format("The registration of occupants by node is missing entries that are present in the registration of nodes by occupant. These %d entries are missing: %s", occupantsNotPresentInOccupantsByNode.size(), occupantsNotPresentInOccupantsByNode.stream().map(OccupantManager.Occupant::getNickname).collect(Collectors.joining(", "))));
+        }
+
+        if (allOccupantsJids.size() == allMucRolesOccupantsJids.size()) {
+            result.put("pass", "The total number of occupants registered by node equals total number of occupants seen in rooms.");
+        } else {
+            result.put("fail", String.format("The total number of registered by node equals %d, while the total number of occupants seen in rooms equals %d", allOccupantsJids.size(), allMucRolesOccupantsJids.size()));
         }
 
         return result;

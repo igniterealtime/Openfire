@@ -28,19 +28,44 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.disco.*;
+import org.jivesoftware.openfire.disco.DiscoInfoProvider;
+import org.jivesoftware.openfire.disco.DiscoItem;
+import org.jivesoftware.openfire.disco.DiscoItemsProvider;
+import org.jivesoftware.openfire.disco.DiscoServerItem;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.muc.CannotBeInvitedException;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.HistoryRequest;
+import org.jivesoftware.openfire.muc.HistoryStrategy;
+import org.jivesoftware.openfire.muc.MUCEventDelegate;
+import org.jivesoftware.openfire.muc.MUCEventDispatcher;
+import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAcceptableException;
+import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.RegistrationRequiredException;
+import org.jivesoftware.openfire.muc.RoomLockedException;
+import org.jivesoftware.openfire.muc.ServiceUnavailableException;
 import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
 import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.AutoCloseableReentrantLock;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,15 +74,31 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.DataForm.Type;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.*;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 import org.xmpp.resultsetmanagement.ResultSet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -304,6 +345,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         occupantManager = new OccupantManager(this);
     }
 
+    @Override
     @Nonnull
     public OccupantManager getOccupantManager() {
         return occupantManager;
@@ -3083,6 +3125,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // TODO: Check if all occupants are still reachable
     }
 
+    @Override
     public LocalMUCRoomManager getLocalMUCRoomManager() {
         return localMUCRoomManager;
     }

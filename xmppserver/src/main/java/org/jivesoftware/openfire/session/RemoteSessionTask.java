@@ -78,6 +78,9 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         else if (operation == Operation.getPeerCertificates) {
             result = getSession().getPeerCertificates();
         }
+        else if (operation == Operation.getSoftwareVersion) {
+            result = getSession().getSoftwareVersion();
+        }
         else if (operation == Operation.close) {
             // Run in another thread so we avoid blocking calls (in hazelcast) 
             final Session session = getSession();
@@ -142,6 +145,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         getNumServerPackets,
         getCipherSuiteName,
         getPeerCertificates,
+        getSoftwareVersion,
         close,
         isClosed,
         isSecure,

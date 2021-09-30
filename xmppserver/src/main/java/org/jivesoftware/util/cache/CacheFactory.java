@@ -20,9 +20,11 @@ import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
+import org.jivesoftware.openfire.cluster.ClusterPacketRouter;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.session.RemoteSessionLocatorImpl;
 import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
@@ -810,6 +812,10 @@ public class CacheFactory {
     public static void startClustering() {
         if (isClusteringAvailable()) {
             clusteringStarting = true;
+            // Set session locator to use when in a cluster
+            XMPPServer.getInstance().setRemoteSessionLocator(new RemoteSessionLocatorImpl());
+            // Set packet router to use to deliver packets to remote cluster nodes
+            XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(new ClusterPacketRouter());
             clusteringStarted = clusteredCacheFactoryStrategy.startCluster();
             clusteringStarting = false;
         }
@@ -883,6 +889,8 @@ public class CacheFactory {
         // Stop the cluster
         clusteredCacheFactoryStrategy.stopCluster();
         clusteredCacheFactoryStrategy = null;
+        XMPPServer.getInstance().setRemoteSessionLocator(null);
+        XMPPServer.getInstance().getRoutingTable().setRemotePacketRouter(null);
         // Set the strategy to local
         cacheFactoryStrategy = localCacheFactoryStrategy;
     }

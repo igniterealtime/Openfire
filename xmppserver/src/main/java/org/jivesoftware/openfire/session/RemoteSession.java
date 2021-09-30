@@ -28,6 +28,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Base class for sessions being hosted in other cluster nodes. Almost all
@@ -121,6 +122,11 @@ public abstract class RemoteSession implements Session {
     public Certificate[] getPeerCertificates() {
         ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getPeerCertificates);
         return (Certificate[]) doSynchronousClusterTask(task);
+    }
+
+    public Map<String,String> getSoftwareVersion() {
+        ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getSoftwareVersion);
+        return (Map<String,String>) doSynchronousClusterTask(task);
     }
 
     public void process(Packet packet) {

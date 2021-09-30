@@ -15,16 +15,18 @@
  */
 package org.jivesoftware.openfire.muc;
 
+import com.google.common.collect.Multimap;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
-import org.jivesoftware.openfire.muc.cluster.*;
+import org.jivesoftware.openfire.muc.cluster.ServiceAddedEvent;
+import org.jivesoftware.openfire.muc.cluster.ServiceRemovedEvent;
+import org.jivesoftware.openfire.muc.cluster.ServiceUpdatedEvent;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventListener;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
@@ -36,6 +38,7 @@ import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.ConsistencyChecks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.component.ComponentException;
@@ -44,12 +47,17 @@ import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Provides centralized management of all configured Multi User Chat (MUC) services.
@@ -947,4 +955,24 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         }
     }
 
+    /**
+     * Verifies that caches and supporting structures around rooms and occupants are in a consistent state.
+     *
+     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
+     *
+     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
+     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
+     *
+     * @return A consistency state report.
+     */
+    public static List<Multimap<String, String>> clusteringStateConsistencyReportForMucRoomsAndOccupant() {
+        return XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().stream()
+            .map(mucService -> ConsistencyChecks.generateReportForMucRooms(
+                mucService.getLocalMUCRoomManager().getROOM_CACHE(),
+                mucService.getLocalMUCRoomManager().getLocalRooms(),
+                mucService.getOccupantManager().getOccupantsByNode(),
+                mucService.getOccupantManager().getNodesByOccupant(),
+                mucService.getServiceName()
+            )).collect(Collectors.toList());
+    }
 }

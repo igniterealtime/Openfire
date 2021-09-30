@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.muc.spi;
 
-import com.google.common.collect.Multimap;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCEventListener;
@@ -28,7 +27,6 @@ import org.jivesoftware.openfire.muc.cluster.OccupantUpdatedTask;
 import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.cache.ConsistencyChecks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -477,6 +475,11 @@ public class OccupantManager implements MUCEventListener
         return Collections.unmodifiableMap(occupantsByNode);
     }
 
+    @Nonnull
+    public Map<Occupant, Set<NodeID>> getNodesByOccupant() {
+        return Collections.unmodifiableMap(nodesByOccupant);
+    }
+
     @Override
     public void roomCreated(JID roomJID) {
         // Not used.
@@ -628,27 +631,5 @@ public class OccupantManager implements MUCEventListener
         Log.debug("===                  TOP OF CALL STACK                  ===");
         callStack.forEach(se -> Log.debug("= {}", se));
         Log.debug("================ END OCCUPANT MANAGER DATA ================");
-    }
-
-    /**
-     * Verifies that caches and supporting structures around rooms and occupants are in a consistent state.
-     *
-     * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
-     *
-     * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
-     * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
-     *
-     * @return A consistency state report.
-     * @param mucServiceName The name of the MUC service.
-     */
-    public Multimap<String, String> clusteringStateConsistencyReportForMucRoomsAndOccupants(final String mucServiceName) {
-        final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(mucServiceName);
-        final LocalMUCRoomManager localMUCRoomManager = multiUserChatService.getLocalMUCRoomManager();
-        return ConsistencyChecks.generateReportForMucRooms(
-            localMUCRoomManager.getROOM_CACHE(),
-            localMUCRoomManager.getLocalRooms(),
-            occupantsByNode,
-            nodesByOccupant
-        );
     }
 }

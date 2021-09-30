@@ -22,6 +22,7 @@
 <%@ page import="org.jivesoftware.openfire.SessionManager" %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatManager" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -42,15 +43,7 @@
     pageContext.setAttribute("clusteringStateConsistencyReportForIncomingServerSessions", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForIncomingServerSessions());
     pageContext.setAttribute("clusteringStateConsistencyReportForSessionInfos", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForSessionInfos());
     pageContext.setAttribute("clusteringStateConsistencyReportForUsersSession", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForUsersSessions());
-
-    boolean mustIncludeMucCheck = false;
-    if (mucServiceName != null) {
-        final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(mucServiceName);
-        if (multiUserChatService != null) {
-            pageContext.setAttribute("clusteringStateConsistencyReportForMuc", multiUserChatService.getOccupantManager().clusteringStateConsistencyReportForMucRoomsAndOccupants(mucServiceName));
-            mustIncludeMucCheck = true;
-        }
-    }
+    pageContext.setAttribute("clusteringStateConsistencyReportForMucRoomsAndOccupant", MultiUserChatManager.clusteringStateConsistencyReportForMucRoomsAndOccupant());
 
     pageContext.setAttribute("newLineChar", "\n");
 %>
@@ -174,7 +167,6 @@
         </c:forEach>
 
         <h4>Incoming Server Sessions Cache</h4>
-        <p>The cache describes ...</p>
 
         <c:forEach items="${clusteringStateConsistencyReportForIncomingServerSessions.asMap()}" var="messageGroup">
             <ul>
@@ -206,7 +198,6 @@
         </c:forEach>
 
         <h4>Tracked sessions Cache</h4>
-        <p>The cache describes ...</p>
 
         <c:forEach items="${clusteringStateConsistencyReportForSessionInfos.asMap()}" var="messageGroup">
             <ul>
@@ -238,7 +229,6 @@
         </c:forEach>
 
         <h4>Users sessions Cache</h4>
-        <p>The cache describes ...</p>
 
         <c:forEach items="${clusteringStateConsistencyReportForUsersSession.asMap()}" var="messageGroup">
             <ul>
@@ -269,39 +259,50 @@
             </ul>
         </c:forEach>
 
-        <c:when test="${mustIncludeMucCheck}">
-            <h4>MUC and occupants Cache</h4>
-            <p>The cache describes ...</p>
+        <c:forEach items="${clusteringStateConsistencyReportForMucRoomsAndOccupant}" var="mucServiceReport">
 
-            <c:forEach items="${clusteringStateConsistencyReportForMuc.asMap()}" var="messageGroup">
+            <h4>MUC and occupants Cache</h4>
+            <c:if test="${mucServiceReport.containsKey(\"intro\")}">
                 <ul>
-                    <c:forEach items="${messageGroup.value}" var="line">
+                    <c:forEach items="${mucServiceReport.asMap().get(\"intro\")}" var="introItem">
                         <li>
-                            <c:choose>
-                                <c:when test="${messageGroup.key eq 'info'}"><img src="images/info-16x16.gif" alt="informational"></c:when>
-                                <c:when test="${messageGroup.key eq 'pass'}"><img src="images/check.gif" alt="consistent"></c:when>
-                                <c:when test="${messageGroup.key eq 'fail'}"><img src="images/x.gif" alt="inconsistency"></c:when>
-                            </c:choose>
-                            <c:choose>
-                                <c:when test='${fn:contains(line, newLineChar)}'>
-                                    <c:forTokens items="${line}" delims="${newLineChar}" var="descr" begin="0" end="0">
-                                        <c:out value="${descr}"/>
-                                    </c:forTokens>
-                                    <ul>
-                                        <c:forTokens items="${line}" delims="${newLineChar}" var="item" begin="1">
-                                            <li><c:out value="${item}"/></li>
-                                        </c:forTokens>
-                                    </ul>
-                                </c:when>
-                                <c:otherwise>
-                                    <c:out value="${line}"/>
-                                </c:otherwise>
-                            </c:choose>
+                            <em><c:out value="${introItem}"/></em>
                         </li>
                     </c:forEach>
                 </ul>
+            </c:if>
+
+            <c:forEach items="${mucServiceReport.asMap()}" var="messageGroup">
+                <c:if test="${messageGroup.key ne 'intro'}">
+                    <ul>
+                        <c:forEach items="${messageGroup.value}" var="line">
+                            <li>
+                                <c:choose>
+                                    <c:when test="${messageGroup.key eq 'info'}"><img src="images/info-16x16.gif" alt="informational"></c:when>
+                                    <c:when test="${messageGroup.key eq 'pass'}"><img src="images/check.gif" alt="consistent"></c:when>
+                                    <c:when test="${messageGroup.key eq 'fail'}"><img src="images/x.gif" alt="inconsistency"></c:when>
+                                </c:choose>
+                                <c:choose>
+                                    <c:when test='${fn:contains(line, newLineChar)}'>
+                                        <c:forTokens items="${line}" delims="${newLineChar}" var="descr" begin="0" end="0">
+                                            <c:out value="${descr}"/>
+                                        </c:forTokens>
+                                        <ul>
+                                            <c:forTokens items="${line}" delims="${newLineChar}" var="item" begin="1">
+                                                <li><c:out value="${item}"/></li>
+                                            </c:forTokens>
+                                        </ul>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:out value="${line}"/>
+                                    </c:otherwise>
+                                </c:choose>
+                            </li>
+                        </c:forEach>
+                    </ul>
+                </c:if>
             </c:forEach>
-        </c:when>
+        </c:forEach>
     </admin:contentBox>
 </body>
 </html>

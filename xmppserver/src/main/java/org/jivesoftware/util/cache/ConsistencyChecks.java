@@ -692,8 +692,9 @@ public class ConsistencyChecks {
     public static Multimap<String, String> generateReportForMucRooms(
         @Nonnull final Cache<String, MUCRoom> clusteredRoomCacheInput,
         @Nonnull final Map<String, MUCRoom> localRoomsInput,
-        @Nonnull final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeInput,
-        @Nonnull final ConcurrentMap<OccupantManager.Occupant, Set<NodeID>> nodesByOccupantInput
+        @Nonnull final Map<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeInput,
+        @Nonnull final Map<OccupantManager.Occupant, Set<NodeID>> nodesByOccupantInput,
+        @Nonnull final String mucServiceName
     ) {
 //        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
 
@@ -752,16 +753,17 @@ public class ConsistencyChecks {
         // Generate report
         final Multimap<String, String> result = HashMultimap.create();
 
+        result.put("intro", String.format("This section concerns the '%s' muc service.", mucServiceName));
         result.put("info", String.format("The cache named %s is used to share data in the cluster, which contains %d muc rooms.", clusteredRoomCacheInput.getName(), cache.size()));
 
         result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", clusteredRoomCacheInput.getName(), cache.entrySet()
             .stream()
-            .map(e -> e.getKey() + " -> " + e.getValue().getName())
+            .map(Map.Entry::getKey)
             .sorted()
             .collect(Collectors.joining("\n"))));
         result.put("data", String.format("Local rooms cache contains these entries :\n%s", localRoomsCache.entrySet()
             .stream()
-            .map(e -> e.getKey() + " -> " + e.getValue().getName())
+            .map(Map.Entry::getKey)
             .sorted()
             .collect(Collectors.joining("\n"))));
         result.put("data", String.format("All occupants from occupant registration :\n%s", String.join("\n", allOccupantsJids)));

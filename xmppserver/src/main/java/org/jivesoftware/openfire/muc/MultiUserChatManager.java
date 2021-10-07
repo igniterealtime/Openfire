@@ -46,6 +46,7 @@ import org.jivesoftware.openfire.muc.cluster.ServiceRemovedEvent;
 import org.jivesoftware.openfire.muc.cluster.ServiceUpdatedEvent;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoom;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventDispatcher;
 import org.jivesoftware.openfire.muc.spi.MUCServicePropertyEventListener;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.stats.Statistic;
@@ -76,6 +77,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatManager.class);
 
     private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM ofMucService";
+    private static final String LOAD_SERVICE = "SELECT description,isHidden FROM ofMucService WHERE subdomain =?";
     private static final String CREATE_SERVICE = "INSERT INTO ofMucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
     private static final String UPDATE_SERVICE = "UPDATE ofMucService SET subdomain=?,description=? WHERE serviceID=?";
     private static final String DELETE_SERVICE = "DELETE FROM ofMucService WHERE serviceID=?";
@@ -123,6 +125,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
         ClusterManager.addListener(this);
         UserEventDispatcher.addListener(this);
+        MUCServicePropertyEventDispatcher.addListener(this);
     }
 
     /**
@@ -134,6 +137,7 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
 
         ClusterManager.removeListener(this);
         UserEventDispatcher.removeListener(this);
+        MUCServicePropertyEventDispatcher.removeListener(this);
 
         // Remove the statistics.
         StatisticsManager.getInstance().removeStatistic(roomsStatKey);
@@ -327,7 +331,8 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             updateService(serviceID, subdomain, description);
             // Update the existing service's description.
             muc.setDescription(description);
-            // TODO broadcast change to other cluster nodes (OF-2164)
+            // Broadcast change to other cluster nodes (OF-2164)
+            CacheFactory.doSynchronousClusterTask(new ServiceUpdatedEvent(subdomain), false);
         }
         else {
             // Changing the subdomain, here's where it   gets complex.
@@ -344,7 +349,9 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
             // Register to new service
             registerMultiUserChatService(replacement, false);
 
-            // TODO broadcast change(s) to other cluster nodes (OF-2164)
+            // Broadcast change(s) to other cluster nodes (OF-2164)
+            CacheFactory.doSynchronousClusterTask(new ServiceAddedEvent(subdomain, description, muc.isHidden()), false);
+            CacheFactory.doSynchronousClusterTask(new ServiceRemovedEvent(oldSubdomain), false);
         }
     }
 
@@ -534,6 +541,52 @@ public class MultiUserChatManager extends BasicModule implements ClusterEventLis
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+    }
+
+    /**
+     * Updates the in-memory representation of a previously loaded services from the database.
+     *
+     * This call will modify database-stored characteristics for a service previously loaded to memory on the local
+     * cluster node. An exception will be thrown if used for a service that's not in memory.
+     *
+     * Note that this method will not cause MUCServiceProperties to be reloaded. It only operates on fields like the
+     * service description.
+     *
+     * This method is primarily useful to cause a service to reload its state from the database after it was changed on
+     * another cluster node.
+     *
+     * @param subdomain the domain of the service to refresh
+     */
+    public void refreshService(String subdomain) {
+        Log.debug("Refreshing MUC service {} from the database.", subdomain);
+        if (!mucServices.containsKey(subdomain)) {
+            throw new IllegalArgumentException("Cannot refresh a MUC service that is not loaded: " + subdomain);
+        }
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_SERVICE);
+            pstmt.setString(1, subdomain);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                String description = rs.getString(1);
+                Boolean isHidden = Boolean.valueOf(rs.getString(2));
+                ((MultiUserChatServiceImpl)mucServices.get(subdomain)).setDescription(description);
+                ((MultiUserChatServiceImpl)mucServices.get(subdomain)).setHidden(isHidden);
+            }
+            else {
+                throw new Exception("Unable to locate database row for subdomain " + subdomain);
+            }
+        }
+        catch (Exception e) {
+            Log.error("A database exception occurred while trying to refresh MUC service '{}' from the database.", subdomain, e);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        Log.trace("Refreshed MUC service '{}'", subdomain);
     }
 
     /**

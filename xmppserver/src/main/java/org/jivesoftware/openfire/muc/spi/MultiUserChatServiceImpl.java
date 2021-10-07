@@ -283,7 +283,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Flag that indicates if MUC service is hidden from services views.
      */
-    private final boolean isHidden;
+    private boolean isHidden;
 
     /**
      * Delegate responds to events for the MUC service.
@@ -2106,6 +2106,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         final int endPos = buf.length() > 1 ? buf.length() - 1 : 0;
         return buf.substring(0, endPos);
+    }
+
+    public void setHidden(boolean isHidden) {
+        this.isHidden = isHidden;
     }
 
     @Override

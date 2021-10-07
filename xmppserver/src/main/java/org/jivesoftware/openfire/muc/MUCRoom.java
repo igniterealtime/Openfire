@@ -975,7 +975,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void checkJoinRoomPreconditionNicknameInUse(@Nonnull final JID realAddress, @Nonnull String nickname ) throws UserAlreadyExistsException
     {
-        occupants.forEach(occupant -> Log.trace( "Occupant already in room: {}", occupant));
         final JID bareJID = realAddress.asBareJID();
         final boolean canJoin = occupants == null || occupants.stream().noneMatch(mucRole -> !mucRole.getUserAddress().asBareJID().equals(bareJID) && mucRole.getNickname().equalsIgnoreCase(nickname));
         Log.trace( "{} Room join precondition 'nickname in use': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );

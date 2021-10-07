@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
@@ -58,17 +59,20 @@ public class ServiceUpdatedEvent implements ClusterTask<Void> {
     public void run() {
         MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
         if (service != null) {
+            // Reload properties from database (OF-2164)
+            XMPPServer.getInstance().getMultiUserChatManager().refreshService(subdomain);
             if (service instanceof MultiUserChatServiceImpl) {
                 MUCPersistenceManager.refreshProperties(subdomain);
                 ((MultiUserChatServiceImpl)service).initializeSettings();
             }
             else {
                 // Ok.  We don't handle non default implementations for this.  Why are we seeing it?
+                Log.warn("Processing an update event for service '{}' that is of an unknown implementation: {}", subdomain, service.getClass());
             }
         }
         else {
             // Hrm.  We got an update for something that we don't have.
-            Log.warn("ServiceUpdatedEvent: Received update for service we are not running: "+subdomain);
+            Log.warn("ServiceUpdatedEvent: Received update for service we are not running: {}", subdomain);
         }
     }
 

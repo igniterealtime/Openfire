@@ -15,9 +15,13 @@
  */
 package org.jivesoftware.openfire.muc.spi;
 
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -66,6 +70,8 @@ public class LocalMUCRoomManager
 
     /**
      * Chat rooms for this service, mapped by their name.
+     *
+     * @see #getLocalRooms() which holds content that needs to remain accessible to the local cluster node.
      */
     private final Cache<String, MUCRoom> ROOM_CACHE;
 
@@ -309,6 +315,43 @@ public class LocalMUCRoomManager
                 lock.unlock();
             }
         }
+
+        // Add a cluster listener to clean up locally stored data when another cluster node removes it from the cache.
+        ROOM_CACHE.addClusteredCacheEntryListener(new ClusteredCacheEntryListener<String, MUCRoom>() {
+            @Override
+            public void entryAdded(@Nonnull String key, @Nullable MUCRoom newValue, @Nonnull NodeID nodeID) {
+            }
+
+            @Override
+            public void entryRemoved(@Nonnull String key, @Nullable MUCRoom oldValue, @Nonnull NodeID nodeID) {
+                localRooms.remove(key);
+                final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+                if (service != null) {
+                    service.getOccupantManager().roomDestroyed(new JID(key, service.getServiceDomain(), null));
+                }
+            }
+
+            @Override
+            public void entryUpdated(@Nonnull String key, @Nullable MUCRoom oldValue, @Nullable MUCRoom newValue, @Nonnull NodeID nodeID) {
+            }
+
+            @Override
+            public void entryEvicted(@Nonnull String key, @Nullable MUCRoom oldValue, @Nonnull NodeID nodeID) {
+                localRooms.remove(key);
+                final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
+                if (service != null) {
+                    service.getOccupantManager().roomDestroyed(new JID(key, service.getServiceDomain(), null));
+                }
+            }
+
+            @Override
+            public void mapCleared(@Nonnull NodeID nodeID) {
+            }
+
+            @Override
+            public void mapEvicted(@Nonnull NodeID nodeID) {
+            }
+        }, false, false);
     }
 
     /**

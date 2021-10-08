@@ -487,7 +487,10 @@ public class OccupantManager implements MUCEventListener
 
     @Override
     public void roomDestroyed(JID roomJID) {
-        // Not used.
+        // When a room is destroyed, remove all registered occupants for that room.
+        getNodesByOccupant().entrySet().stream()
+            .filter(entry -> entry.getKey().getRoomName().equals(roomJID.getNode()))
+            .forEach(entry -> entry.getValue().forEach(nodeID -> replaceOccupant(entry.getKey(), null, nodeID)));
     }
 
     @Override

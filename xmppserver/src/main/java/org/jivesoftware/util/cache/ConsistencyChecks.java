@@ -790,7 +790,7 @@ public class ConsistencyChecks {
         if (allOccupantsJids.size() == allMucRolesOccupantsJids.size()) {
             result.put("pass", "The total number of occupants registered by node equals total number of occupants seen in rooms.");
         } else {
-            result.put("fail", String.format("The total number of registered by node equals %d, while the total number of occupants seen in rooms equals %d", allOccupantsJids.size(), allMucRolesOccupantsJids.size()));
+            result.put("fail", String.format("The total number of registered occupants by node equals %d, while the total number of occupants seen in rooms equals %d", allOccupantsJids.size(), allMucRolesOccupantsJids.size()));
         }
 
         return result;

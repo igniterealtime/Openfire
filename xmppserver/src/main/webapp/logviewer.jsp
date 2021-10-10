@@ -16,7 +16,6 @@
   - limitations under the License.
 
 --%>
-
 <%@ page import="java.io.*,
                  org.jivesoftware.util.*,
                  java.text.*,
@@ -149,7 +148,18 @@
         }
     }
     else if (saveLog) {
-        response.sendRedirect(request.getContextPath() + "/servlet/JiveServlet/");
+        saveLog = false;
+        File logDir = new File(Log.getLogDirectory());
+        String filename = "openfire.log";
+        response.setContentType("text/plain");
+        response.setHeader("Content-Disposition","attachment; filename=\"" + filename + "\"");
+        try (final FileInputStream fileInputStream =new FileInputStream(new File(logDir, filename)))
+        {
+            int i;
+            while((i=fileInputStream.read())!=-1) {
+                out.write(i);
+            }
+        }
         return;
     }
     else if (emailLog) {
@@ -257,7 +267,7 @@ IFRAME {
             <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tr>
                 <td nowrap><fmt:message key="logviewer.log" /></td>
-                <td nowrap><b><%= StringUtils.escapeHTMLTags(logFile.getName()) %></b> (<%= byteFormatter.format(logFile.length()) %>)</td>
+                <td nowrap><b><%= StringUtils.escapeHTMLTags(logFile.getName()) %></b> (<%= byteFormatter.format(logFile.length()) %>) (<a href="logviewer.jsp?saveLog=true"><fmt:message key="logviewer.download" /></a>)</td>
                 <td width="96%" rowspan="3">&nbsp;</td>
                 <td nowrap><fmt:message key="logviewer.order" /></td>
                 <td nowrap>

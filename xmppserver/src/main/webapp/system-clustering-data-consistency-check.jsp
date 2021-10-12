@@ -20,9 +20,6 @@
 <%@ page import="org.jivesoftware.openfire.spi.RoutingTableImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.SessionManager" %>
-<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatManager" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -34,8 +31,6 @@
 <%
     webManager.init(pageContext);
 
-    String mucServiceName = ParamUtils.getParameter(request, "mucServiceName");
-
     // Calculations for RoutingTableImpl
     pageContext.setAttribute("clusteringStateConsistencyReportForServerRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForServerRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForComponentRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForComponentRoutes());
@@ -43,7 +38,7 @@
     pageContext.setAttribute("clusteringStateConsistencyReportForIncomingServerSessions", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForIncomingServerSessions());
     pageContext.setAttribute("clusteringStateConsistencyReportForSessionInfos", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForSessionInfos());
     pageContext.setAttribute("clusteringStateConsistencyReportForUsersSession", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForUsersSessions());
-    pageContext.setAttribute("clusteringStateConsistencyReportForMucRoomsAndOccupant", MultiUserChatManager.clusteringStateConsistencyReportForMucRoomsAndOccupant());
+    pageContext.setAttribute("clusteringStateConsistencyReportForMucRoomsAndOccupant", XMPPServer.getInstance().getMultiUserChatManager().clusteringStateConsistencyReportForMucRoomsAndOccupant());
 
     pageContext.setAttribute("newLineChar", "\n");
 %>

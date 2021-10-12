@@ -26,6 +26,9 @@
                  org.jivesoftware.util.StringUtils"
     errorPage="error.jsp"
 %>
+<%@ page import="org.fusesource.jansi.HtmlAnsiOutputStream" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="java.util.Arrays" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -50,7 +53,7 @@
                         .append("\">");
             }
             buf.append(d).append("</span>");
-            buf.append(input.substring(19,input.length()));
+            buf.append(input.substring(19));
             return buf.toString();
         }
         catch (ParseException pe) {
@@ -58,19 +61,46 @@
         }
     }
 
+    /**
+     * Formats ANSI control characters as HTML. Also escapes basic HTML characters.
+     */
+    private static String ansiToHtml(String input) {
+        try (
+            final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            final HtmlAnsiOutputStream hos = new HtmlAnsiOutputStream(bos);
+        ) {
+            hos.write(input.getBytes(StandardCharsets.UTF_8));
+            return new String(bos.toByteArray(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            // ANSI-parsing issue? At least escape HTML.
+            return StringUtils.escapeHTMLTags(input);
+        }
+    }
+
+    private static String leadingWhitespaceNonBreaking(String input) {
+        if (input == null || "".equals(input)) {
+            return input;
+        }
+        int i = 0;
+        while (i < input.length() && Character.isWhitespace(input.charAt(i))) {
+            i++;
+        }
+        if (i>0) {
+            // Replace leading whitespace with non-breaking characters (to simulate indentation).
+            input = "&nbsp;&nbsp;&nbsp;&nbsp;" + input.substring(i);
+        }
+        return input;
+    }
+
     private static String hilite(String input) {
         if (input == null || "".equals(input)) {
             return input;
         }
-        if (input.indexOf("org.jivesoftware.") > -1) {
-            StringBuffer buf = new StringBuffer();
-            buf.append("<span class=\"hilite\">").append(input).append("</span>");
-            return buf.toString();
+        if (input.contains("org.jivesoftware.")) {
+            return "<span class=\"hilite\">" + input + "</span>";
         }
         else if (input.trim().startsWith("---") && input.trim().endsWith("---")) {
-            StringBuffer buf = new StringBuffer();
-            buf.append("<span class=\"hilite-marker\">").append(input).append("</span>");
-            return buf.toString();
+            return "<span class=\"hilite-marker\">" + input + "</span>";
         }
         return input;
     }
@@ -84,14 +114,11 @@
     String mode = ParamUtils.getParameter(request,"mode");
 
     // Only allow requests for valid log file names.
-    if (!("debug".equals(log) || "warn".equals(log) || "info".equals(log) || "error".equals(log) || "all".equals(log))) {
+    if (!Arrays.asList("trace","debug","warn","info","error").contains(log)) {
         log = null;
     }
 
     // Set defaults
-    if (log == null) {
-        log = "all";
-    }
     if (mode == null) {
         mode = "asc";
     }
@@ -101,19 +128,21 @@
 
     // Other vars
     File logDir = new File(Log.getLogDirectory());
-    String filename = log + ".log";
+    String filename = "openfire.log";
     File logFile = new File(logDir, filename);
     
-    String lines[] = new String[0];
+    String[] lines = new String[0];
     int start = 0;
     try {
         String line;
         int totalNumLines = 0;
         try(FileInputStream fileInputStream = new FileInputStream(logFile);
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
             BufferedReader in = new BufferedReader(inputStreamReader);){
             while ((line=in.readLine()) != null) {
-                totalNumLines++;
+                if (shouldPrintLine(log, line)) {
+                    totalNumLines++;
+                }
         	}
         }
         // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
@@ -122,44 +151,90 @@
         }
         lines = new String[numLines];
         try(FileInputStream fileInputStream = new FileInputStream(logFile);
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, "UTF-8");
+            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
             BufferedReader in = new BufferedReader(inputStreamReader);){
             // skip lines
             start = totalNumLines - numLines;
             if (start < 0) { start = 0; }
-            for (int i=0; i<start; i++) {
-                in.readLine();
-            }
             int i = 0;
-            if ("asc".equals(mode)) {
-                while ((line=in.readLine()) != null && i<numLines) {
-                    line = StringUtils.escapeHTMLTags(line);
-                    line = parseDate(line);
-                    line = hilite(line);
+            int j = 0;
+            int end = lines.length-1;
+            while ((line=in.readLine()) != null && i<numLines) {
+                if (!shouldPrintLine(log, line)) {
+                    continue;
+                }
+                j++;
+                if (j<start) {
+                    continue;
+                }
+                //line = StringUtils.escapeHTMLTags(line);
+                line = ansiToHtml(line);
+                line = leadingWhitespaceNonBreaking(line);
+                line = parseDate(line);
+                line = hilite(line);
+                if ("asc".equals(mode)) {
                     lines[i] = line;
-                    i++;
-                }
-            }
-            else {
-                int end = lines.length-1;
-                while ((line=in.readLine()) != null && i<numLines) {
-                    line = StringUtils.escapeHTMLTags(line);
-                    line = parseDate(line);
-                    line = hilite(line);
+                } else {
                     lines[end-i] = line;
-                    i++;
                 }
+                i++;
             }
             numLines = start + i;
         }
     } catch (FileNotFoundException ex) {
-        Log.info("Could not open (log)file.", ex);
+        System.err.println("Openfire admin console could not open (log)file.");
+        ex.printStackTrace();
+    }
+%>
+<%!
+    String lastLevel = null;
+    boolean shouldPrintLine(String level, final String line) {
+        if (level == null) {
+            return true;
+        }
+        // If the line doesn't start with the date/time pattern as defined in log4j2.xml, do not skip (probably a stack trace)
+        final boolean startsWithDateTime =  line.matches("^\\d{4}.\\d{2}.\\d{2} \\d{2}:\\d{2}:\\d{2}.*");
+        // The third 'word' (space-separated sequence of characters) should include the log level (possibly surrounded with ANSI escape characters).
+        final String[] words = line.split(" ");
+        final boolean hasAtLeastThreeWords = words.length >= 3;
+
+        // Determine what the log level of this line is.
+        String detectedLevel = null;
+        if (startsWithDateTime && hasAtLeastThreeWords) {
+            if (words[2].contains("ERROR")) {
+                detectedLevel = "error";
+            } else if (words[2].contains("WARN")) {
+                detectedLevel = "warn";
+            } else if (words[2].contains("INFO")) {
+                detectedLevel = "info";
+            } else if (words[2].contains("DEBUG")) {
+                detectedLevel = "debug";
+            } else if (words[2].contains("TRACE")) {
+                detectedLevel = "trace";
+            }
+        }
+
+        final boolean result;
+        if (detectedLevel != null && detectedLevel.equalsIgnoreCase(level)) {
+            result = true;
+        } else if (detectedLevel == null && level.equalsIgnoreCase(lastLevel)) {
+            // Assume that this line belongs to the last line that defined a level (eg: stacktrace)
+            result = true;
+        } else {
+            result = false;
+        }
+
+        if (detectedLevel != null) {
+            lastLevel = detectedLevel;
+        }
+
+        return result;
     }
 %>
 
 <html>
 <head>
-    <title><%= StringUtils.escapeHTMLTags(log) %></title>
+    <title>openfire.log</title>
     <meta name="decorator" content="none"/>
     <style type="text/css">
     .log TABLE {
@@ -169,9 +244,10 @@
         font-family : verdana, arial, sans-serif;
         font-weight : bold;
         font-size : 8pt;
+        color: #eee;
     }
     .log TR TH {
-        background-color : #ddd;
+        background-color : #333;
         border-bottom : 1px #ccc solid;
         padding-left : 2px;
         padding-right : 2px;
@@ -183,11 +259,12 @@
     .log TD {
         font-family : courier new,monospace;
         font-size : 9pt;
-        background-color : #ffe;
+        color: #eee;
+        background-color : #333;
     }
     .log .num {
         width : 1%;
-        background-color : #eee !important;
+        background-color : #333 !important;
         border-right : 1px #ccc solid;
         padding-left : 2px;
         padding-right : 2px;
@@ -196,19 +273,19 @@
         padding-left : 10px;
     }
     .hilite {
-        color : #900;
+        color : #fff;
     }
     .hilite-marker {
-        background-color : #ff0;
-        color : #000;
+        color : #cc0000;
         font-weight : bold;
+        text-decoration-style: double;
     }
     </style>
 </head>
 <body>
 
 <div class="log">
-<table cellpadding="1" cellspacing="0" border="0" width="100%">
+<table cellpadding="1" cellspacing="0" border="0" width="100%" style="line-height: 100%;">
 <tr>
     <th class="head-num"><fmt:message key="log.line" /></th>
     <th>&nbsp;</th>
@@ -225,12 +302,11 @@
             <%  } %>
         <%  } %>
     </td>
-    <td width="99%" class="line">
+    <td width="99%" class="line" style="white-space: nowrap">
         <% for (String line1 : lines) {
             if (line1 != null) {
         %>
-        <nobr><%= line1 %>
-        </nobr>
+        <%= line1 %>
         <br>
 
         <% }

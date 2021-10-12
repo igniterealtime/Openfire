@@ -2,60 +2,13 @@
 
 <Configuration monitorInterval="30">
     <Appenders>
-        <RollingFile name="debug-out" fileName="${sys:openfireHome}/logs/debug.log" filePattern="${sys:openfireHome}/logs/debug.log-%i">
+        <!-- Modifying this appender is likely to break the log viewer that is part of the Openfire admin console.
+           - If you'd like to have a differently formatted log file, it is advisable to create a new log file, by
+           - duplicating this configuration, instead of changing it.
+          -->
+        <RollingFile name="openfire" fileName="${sys:openfireHome}/logs/openfire.log" filePattern="${sys:openfireHome}/logs/openfire.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
-            </PatternLayout>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="1 MB"/>
-            </Policies>
-            <Filters>
-                <ThresholdFilter level="DEBUG"/>
-                <ThresholdFilter level="INFO" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </Filters>
-        </RollingFile>
-
-        <RollingFile name="info-out" fileName="${sys:openfireHome}/logs/info.log" filePattern="${sys:openfireHome}/logs/info.log-%i">
-            <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
-            </PatternLayout>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="1 MB"/>
-            </Policies>
-            <Filters>
-                <ThresholdFilter level="INFO"/>
-                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </Filters>
-        </RollingFile>
-
-        <RollingFile name="warn-out" fileName="${sys:openfireHome}/logs/warn.log" filePattern="${sys:openfireHome}/logs/warn.log-%i">
-            <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
-            </PatternLayout>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="1 MB"/>
-            </Policies>
-            <Filters>
-                <ThresholdFilter level="WARN"/>
-                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
-            </Filters>
-        </RollingFile>
-
-        <RollingFile name="error-out" fileName="${sys:openfireHome}/logs/error.log" filePattern="${sys:openfireHome}/logs/error.log-%i">
-            <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
-            </PatternLayout>
-            <Policies>
-                <SizeBasedTriggeringPolicy size="1 MB"/>
-            </Policies>
-            <Filters>
-                <ThresholdFilter level="ERROR"/>
-            </Filters>
-        </RollingFile>
-
-        <RollingFile name="all-out" fileName="${sys:openfireHome}/logs/all.log" filePattern="${sys:openfireHome}/logs/all.log-%i">
-            <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %msg%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %highlight{%-5p} [%t]: %c - %msg%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="100 MB"/>
@@ -81,11 +34,7 @@
         <Logger name="org.eclipse.jetty" level="warn"/>
 
         <Root level="all">
-            <AppenderRef ref="all-out"/>
-            <AppenderRef ref="debug-out"/>
-            <AppenderRef ref="info-out"/>
-            <AppenderRef ref="warn-out"/>
-            <AppenderRef ref="error-out"/>
+            <AppenderRef ref="openfire"/>
         </Root>
     </Loggers>
 </Configuration>

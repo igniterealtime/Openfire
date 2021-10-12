@@ -59,7 +59,7 @@
       <executable name="${compiler:PRODUCT_NAME}-service" iconSet="true" iconFile="./images/service.ico" executableDir="bin" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="service" singleInstance="true" serviceDescription="${compiler:APP_NAME}" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME}" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -75,7 +75,7 @@
       <executable name="${compiler:PRODUCT_NAME}" iconSet="true" iconFile="./images/openfire.ico" executableDir="bin" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="gui" singleInstance="true" executionLevel="highestAvailable" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME} Launcher" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dappdir=&quot;${launcher:sys.launcherDirectory}&quot; -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;">
+      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j.skipJansi=false -Dappdir=&quot;${launcher:sys.launcherDirectory}&quot; -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
@@ -91,7 +91,7 @@
       <executable name="${compiler:PRODUCT_NAME}d" iconSet="true" iconFile="./images/openfired.ico" executableDir="bin" redirectStderr="false" executableMode="console" singleInstance="true" executionLevel="highestAvailable" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME} Server" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>

@@ -16,7 +16,6 @@
   - limitations under the License.
 
 --%>
-
 <%@ page import="java.io.*,
                  org.jivesoftware.util.*,
                  java.text.*,
@@ -36,15 +35,7 @@
 <%!
     static final String NONE = LocaleUtils.getLocalizedString("global.none");
 
-    static final String ALL = "all";
-    static final String ERROR = "error";
-    static final String INFO = "info";
-    static final String WARN = "warn";
-    static final String DEBUG = "debug";
-    static final String DEFAULT = ALL;
-
     static final String ASCENDING = "asc";
-    static final String DESCENDING = "desc";
 
     static final String[] LINES = {"50","100","250","500"};
 
@@ -84,35 +75,27 @@
         response.addCookie(newCookie);
     }
 
-    private static HashMap getLogUpdate(HttpServletRequest request, HttpServletResponse response,
-            File logDir)
+    private static boolean hasLogfileChanged(HttpServletRequest request, HttpServletResponse response, File logDir)
     {
         // Get the cookie associated with the log files
         HashMap cookie = parseCookie(CookieUtils.getCookie(request,"jiveforums.admin.logviewer"));
-        String[] logs = {"all", "error", "info", "warn", "debug"};
         HashMap<String,String> newCookie = new HashMap<String,String>();
-        HashMap<String,String> updates = new HashMap<String,String>();
-        for (String log : logs) {
-            // Check for the value in the cookie:
-            String key = log + ".size";
-            long savedSize = 0L;
-            if (cookie.containsKey(key)) {
-                try {
-                    savedSize = Long.parseLong((String) cookie.get(key));
-                }
-                catch (NumberFormatException nfe) {
-                }
+        // Check for the value in the cookie:
+        String key = "logfile.size";
+        long savedSize = 0L;
+        if (cookie.containsKey(key)) {
+            try {
+                savedSize = Long.parseLong((String) cookie.get(key));
             }
-            // Update the size in the Map:
-            File logFile = new File(logDir, log + ".log");
-            long currentSize = logFile.length();
-            newCookie.put(key, "" + currentSize);
-            if (currentSize != savedSize) {
-                updates.put(log, "true");
+            catch (NumberFormatException nfe) {
             }
         }
+        // Update the size in the Map:
+        File logFile = new File(logDir, "openfire.log");
+        long currentSize = logFile.length();
+        newCookie.put(key, "" + currentSize);
         saveCookie(response, newCookie);
-        return updates;
+        return currentSize != savedSize;
     }
 %>
 
@@ -121,7 +104,6 @@
     String log = ParamUtils.getParameter(request, "log");
     String numLinesParam = ParamUtils.getParameter(request,"lines");
     int numLines = ParamUtils.getIntParameter(request,"lines",50);
-    int refresh = ParamUtils.getIntParameter(request,"refresh",10);
     String refreshParam = ParamUtils.getParameter(request,"refresh");
     String mode = ParamUtils.getParameter(request,"mode");
     boolean clearLog = ParamUtils.getBooleanParameter(request,"clearLog");
@@ -136,73 +118,58 @@
     // Enable/disable debugging
     if (request.getParameter("debugEnabled") != null && debugEnabled != Log.isDebugEnabled()) {
         if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
-            Log.DEBUG_ENABLED.setValue(debugEnabled);
+            Log.TRACE_ENABLED.setValue(debugEnabled);
             // Log the event
             admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
-            response.sendRedirect("logviewer.jsp?log=debug");
+            response.sendRedirect("logviewer.jsp");
             return;
         }
     }
 
-    // Santize variables to prevent vulnerabilities
+    // Sanitize variables to prevent vulnerabilities
     if (log != null) {
         log = StringUtils.escapeHTMLTags(log);
     }
-    debugEnabled = Log.isDebugEnabled();
+    debugEnabled = Log.isTraceEnabled();
     User pageUser = admin.getUser();
 
-    if (clearLog && log != null) {
+    if (clearLog) {
         if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
-            if ("all".equals(log)) {
-                Log.rotateAllLogFile();
-            }
-            else if ("error".equals(log)) {
-                Log.rotateErrorLogFile();
-            }
-            else if ("warn".equals(log)) {
-                Log.rotateWarnLogFile();
-            }
-            else if ("info".equals(log)) {
-                Log.rotateInfoLogFile();
-            }
-            else if ("debug".equals(log)) {
-                Log.rotateDebugLogFile();
-            }
-            response.sendRedirect("logviewer.jsp?log=" + log);
+            Log.rotateOpenfireLogFile();
+            response.sendRedirect("logviewer.jsp");
             return;
         }
     }
-    else if (markLog && log != null) {
+    else if (markLog) {
         if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
-            if ("error".equals(log)) {
-                Log.markErrorLogFile(pageUser.getUsername());
-            }
-            else if ("warn".equals(log)) {
-                Log.markWarnLogFile(pageUser.getUsername());
-            }
-            else if ("info".equals(log)) {
-                Log.markInfoLogFile(pageUser.getUsername());
-            }
-            else if ("debug".equals(log)) {
-                Log.markDebugLogFile(pageUser.getUsername());
-            }
-            response.sendRedirect("logviewer.jsp?log=" + log);
+            Log.markOpenfireLogFile(pageUser.getUsername());
+            response.sendRedirect("logviewer.jsp");
             return;
         }
     }
-    else if (saveLog && log != null) {
+    else if (saveLog) {
         saveLog = false;
-        response.sendRedirect(request.getContextPath() + "/servlet/JiveServlet/?log=" + log);
+        File logDir = new File(Log.getLogDirectory());
+        String filename = "openfire.log";
+        response.setContentType("text/plain");
+        response.setHeader("Content-Disposition","attachment; filename=\"" + filename + "\"");
+        try (final FileInputStream fileInputStream =new FileInputStream(new File(logDir, filename)))
+        {
+            int i;
+            while((i=fileInputStream.read())!=-1) {
+                out.write(i);
+            }
+        }
         return;
     }
-    else if (emailLog && log != null) {
-        response.sendRedirect("emaillog.jsp?log=" + log);
+    else if (emailLog) {
+        response.sendRedirect("emaillog.jsp");
         return;
     }
 
     // Set defaults
     if (log == null) {
-        log = DEFAULT;
+        log = "all";
     }
     if (mode == null) {
         mode = ASCENDING;
@@ -213,11 +180,11 @@
 
     // Other vars
     File logDir = new File(Log.getLogDirectory());
-    String filename = log + ".log";
+    String filename = "openfire.log";
     File logFile = new File(logDir, filename);
 
     // Determine if any of the log files contents have been updated:
-    HashMap newlogs = getLogUpdate(request, response, logDir);
+    boolean hasLogfileChanged = hasLogfileChanged(request, response, logDir);
     csrfParam = StringUtils.randomString(16);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
@@ -233,7 +200,7 @@
     <body>
 
 <%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>
-    <meta http-equiv="refresh" content="<%= refresh %>">
+    <meta http-equiv="refresh" content="<%= ParamUtils.getIntParameter(request,"refresh",10) %>">
 <%  } %>
 
 <div id="logviewer">
@@ -266,53 +233,20 @@ IFRAME {
 </style>
 
 <form action="logviewer.jsp" name="logViewer" method="get">
-<input type="hidden" name="log" value="<%= StringUtils.escapeForXML(log) %>">
 
 <div class="logviewer">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tbody>
     <tr>
         <td class="jive-spacer" width="1%">&nbsp;</td>
-        <td class="jive-tab<%= (("all".equals(log))?"-active":"") %>" width="1%">
-            <a href="logviewer.jsp?log=all"
-            ><fmt:message key="logviewer.all" /></a>
+        <td class="jive-tab-active" width="1%">
+            <a href="logviewer.jsp"
+            ><fmt:message key="logviewer.openfire" /></a>
             <span class="new">
-            <%= ((newlogs.containsKey("all"))?"*":"") %>
+            <%= (hasLogfileChanged?"*":"") %>
             </span>
         </td>
-        <td class="jive-spacer" width="1%">&nbsp;</td>
-        <td class="jive-tab<%= (("error".equals(log))?"-active":"") %>" width="1%">
-            <a href="logviewer.jsp?log=error"
-            ><fmt:message key="logviewer.error" /></a>
-            <span class="new">
-            <%= ((newlogs.containsKey("error"))?"*":"") %>
-            </span>
-        </td>
-        <td class="jive-spacer" width="1%">&nbsp;</td>
-        <td class="jive-tab<%= (("warn".equals(log))?"-active":"") %>" width="1%">
-            <a href="logviewer.jsp?log=warn"
-            ><fmt:message key="logviewer.warn" /></a>
-            <span class="new">
-            <%= ((newlogs.containsKey("warn"))?"*":"") %>
-            </span>
-        </td>
-        <td class="jive-spacer" width="1%">&nbsp;</td>
-        <td class="jive-tab<%= (("info".equals(log))?"-active":"") %>" width="1%">
-            <a href="logviewer.jsp?log=info"
-            ><fmt:message key="logviewer.info" /></a>
-            <span class="new">
-            <%= ((newlogs.containsKey("info"))?"*":"") %>
-            </span>
-        </td>
-        <td class="jive-spacer" width="1%">&nbsp;</td>
-        <td class="jive-tab<%= (("debug".equals(log))?"-active":"") %>" width="1%">
-            <a href="logviewer.jsp?log=debug"
-            ><fmt:message key="logviewer.debug" /></a>
-            <span class="new">
-            <%= ((newlogs.containsKey("debug"))?"*":"") %>
-            </span>
-        </td>
-        <td class="jive-stretch" width="92%" align="right" nowrap>
+        <td class="jive-stretch" width="98%" align="right" nowrap>
             &nbsp;
         </td>
     </tr>
@@ -333,7 +267,7 @@ IFRAME {
             <table cellpadding="3" cellspacing="0" border="0" width="100%">
             <tr>
                 <td nowrap><fmt:message key="logviewer.log" /></td>
-                <td nowrap><b><%= StringUtils.escapeHTMLTags(logFile.getName()) %></b> (<%= byteFormatter.format(logFile.length()) %>)</td>
+                <td nowrap><b><%= StringUtils.escapeHTMLTags(logFile.getName()) %></b> (<%= byteFormatter.format(logFile.length()) %>) (<a href="logviewer.jsp?saveLog=true"><fmt:message key="logviewer.download" /></a>)</td>
                 <td width="96%" rowspan="3">&nbsp;</td>
                 <td nowrap><fmt:message key="logviewer.order" /></td>
                 <td nowrap>
@@ -396,7 +330,6 @@ IFRAME {
                                 <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
                                  ><fmt:message key="logviewer.clear" /></a>
                             </td>
-                            <%  if (! "all".equals(log)) { %>
                             <td class="icon">
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_mark" />"></a>
                             </td>
@@ -404,58 +337,64 @@ IFRAME {
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"
                                  ><fmt:message key="logviewer.mark" /></a>
                             </td>
-                            <% } %>
                         </tr>
                     </tbody>
                     </table>
                     </div>
                 </td>
+                <td nowrap><fmt:message key="logviewer.show"/></td>
+                <td nowrap>
+                    <select size="1" name="log" onchange="this.form.submit();">
+                        <option value="all" <%=log.equals("all") ?"selected":""%>><fmt:message key="logviewer.all"/></option>
+                        <option value="trace" <%=log.equals("trace") ?"selected":""%>><fmt:message key="logviewer.trace"/></option>
+                        <option value="debug" <%=log.equals("debug") ?"selected":""%>><fmt:message key="logviewer.debug"/></option>
+                        <option value="info" <%=log.equals("info") ?"selected":""%>><fmt:message key="logviewer.info"/></option>
+                        <option value="warn" <%=log.equals("warn") ?"selected":""%>><fmt:message key="logviewer.warn"/></option>
+                        <option value="error" <%=log.equals("error") ?"selected":""%>><fmt:message key="logviewer.error"/></option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="3">
+
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <tr>
+                        <td width="1%" nowrap>
+                            <fmt:message key="logviewer.debug_log" />: &nbsp;
+                        </td>
+                        <td width="1%">
+                            <input id="de01" type="radio" name="debugEnabled" value="true" <%= debugEnabled ? " checked" : "" %>>
+                        </td>
+                        <td width="1%" nowrap>
+                            <label for="de01"><fmt:message key="logviewer.enabled" /></label> &nbsp;
+                        </td>
+                        <td width="1%">
+                            <input id="de02" type="radio" name="debugEnabled" value="false" <%= debugEnabled ? "" : " checked" %>>
+                        </td>
+                        <td width="1%" nowrap>
+                            <label for="de02"><fmt:message key="logviewer.disabled" /></label> &nbsp;
+                        </td>
+                        <td width="1%">
+                            <input type="submit" name="" value="<fmt:message key="global.save_changes" />">
+                        </td>
+                        <td width="94%">&nbsp;</td>
+                    </tr>
+                    </table>
+                </td>
                 <td nowrap><fmt:message key="global.refresh" />:</td>
                 <td nowrap>
                     <select size="1" name="refresh" onchange="this.form.submit();">
-                    <% for (String aREFRESHES : REFRESHES) {
-                        String selected = aREFRESHES.equals(refreshParam) ? " selected" : "";
-                    %>
+                        <% for (String aREFRESHES : REFRESHES) {
+                            String selected = aREFRESHES.equals(refreshParam) ? " selected" : "";
+                        %>
                         <option value="<%= aREFRESHES %>"<%= selected %>><%= aREFRESHES %>
 
-                    <%  } %>
+                                <%  } %>
                     </select>
                     (<fmt:message key="global.seconds" />)
                 </td>
             </tr>
-
-            <%  if ("debug".equals(log)) { %>
-
-                <tr>
-                    <td colspan="5">
-
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                        <tr>
-                            <td width="1%" nowrap>
-                                <fmt:message key="logviewer.debug_log" />: &nbsp;
-                            </td>
-                            <td width="1%">
-                                <input id="de01" type="radio" name="debugEnabled" value="true" <%= debugEnabled ? " checked" : "" %>>
-                            </td>
-                            <td width="1%" nowrap>
-                                <label for="de01"><fmt:message key="logviewer.enabled" /></label> &nbsp;
-                            </td>
-                            <td width="1%">
-                                <input id="de02" type="radio" name="debugEnabled" value="false" <%= debugEnabled ? "" : " checked" %>>
-                            </td>
-                            <td width="1%" nowrap>
-                                <label for="de02"><fmt:message key="logviewer.disabled" /></label> &nbsp;
-                            </td>
-                            <td width="1%">
-                                <input type="submit" name="" value="<fmt:message key="global.save_changes" />">
-                            </td>
-                            <td width="94%">&nbsp;</td>
-                        </tr>
-                        </table>
-                    </td>
-                </tr>
-
-            <%  } %>
 
             </table>
         </td>
@@ -473,7 +412,7 @@ IFRAME {
 <br><br>
 
 <iframe src="log.jsp?log=<%= URLEncoder.encode(log) %>&mode=<%= URLEncoder.encode(mode) %>&lines=<%= ("All".equals(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
-    frameborder="0" height="400" width="100%" marginheight="0" marginwidth="0" scrolling="auto"></iframe>
+    frameborder="0" height="600" width="100%" marginheight="0" marginwidth="0" scrolling="auto"></iframe>
 
 </form>
 

@@ -167,7 +167,7 @@ public class ElementUtil {
     public String[] getProperties(Element element, String name) {
         String[] propName = parsePropertyName(name);
 
-        // Search for this property by traversing down the XML heirarchy, stopping one short.
+        // Search for this property by traversing down the XML hierarchy, stopping one short.
         int i = propName[0].equals(element.getName()) ? 1 : 0;
         for (; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
@@ -212,7 +212,7 @@ public class ElementUtil {
         String[] propName = parsePropertyName(name);
         setProperty(element, name, values[0]);
 
-        // Search for this property by traversing down the XML heirarchy, stopping one short.
+        // Search for this property by traversing down the XML hierarchy, stopping one short.
         int i = propName[0].equals(element.getName()) ? 1 : 0;
         for (; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
@@ -250,7 +250,7 @@ public class ElementUtil {
     public static String[] getChildrenProperties(Element element, String parent) {
         String[] propName = parsePropertyName(parent);
 
-        // Search for this property by traversing down the XML heirarchy.
+        // Search for this property by traversing down the XML hierarchy.
         int i = propName[0].equals(element.getName()) ? 1 : 0;
         for (; i < propName.length; i++) {
             element = element.element(propName[i]);
@@ -310,10 +310,10 @@ public class ElementUtil {
 
         String[] propName = parsePropertyName(name);
 
-        // Search for this property by traversing down the XML heirarchy.
+        // Search for this property by traversing down the XML hierarchy.
         int i = propName[0].equals(element.getName()) ? 1 : 0;
         for (; i < propName.length - 1; i++) {
-            // If we don't find this part of the property in the XML heirarchy
+            // If we don't find this part of the property in the XML hierarchy
             // we add it as a new node
             if (element.element(propName[i]) == null) {
                 element.addElement(propName[i]);
@@ -325,7 +325,7 @@ public class ElementUtil {
         if (attributeIndex >= 0) {
             String eleName = lastName.substring(0, attributeIndex);
             String attName = lastName.substring(attributeIndex + 1);
-            // If we don't find this part of the property in the XML heirarchy
+            // If we don't find this part of the property in the XML hierarchy
             // we add it as a new node
             if (element.element(eleName) == null) {
                 element.addElement(eleName);
@@ -333,7 +333,7 @@ public class ElementUtil {
             element.element(eleName).addAttribute(attName, value);
         }
         else {
-            // If we don't find this part of the property in the XML heirarchy
+            // If we don't find this part of the property in the XML hierarchy
             // we add it as a new node
             if (element.element(lastName) == null) {
                 element.addElement(lastName);
@@ -357,7 +357,7 @@ public class ElementUtil {
         // Remove property from cache.
         String[] propName = parsePropertyName(name);
 
-        // Search for this property by traversing down the XML heirarchy.
+        // Search for this property by traversing down the XML hierarchy.
         for (int i = 0; i < propName.length - 1; i++) {
             element = element.element(propName[i]);
             // Can't find the property so return.

@@ -14,7 +14,7 @@
  * data with custom providers to integrate Openfire with a CRM or ERP
  * user system, while leaving roster storage in Jive's standard JDBC
  * database tables. (Note: Openfire comes with JDBC and LDAP user account
- * providers 'out of the box'. It is expected that LDAP will accomodate
+ * providers 'out of the box'. It is expected that LDAP will accommodate
  * many enterprise integration needs).</p>
  */
 package org.jivesoftware.openfire.user;

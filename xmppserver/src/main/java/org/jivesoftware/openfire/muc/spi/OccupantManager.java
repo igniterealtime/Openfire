@@ -436,7 +436,7 @@ public class OccupantManager implements MUCEventListener
         // Defensive copy to prevent modifying the returned set
         Set<Occupant> returnValue = new HashSet<>(occupantsBeingRemoved);
 
-        occupantsBeingRemoved.forEach(o -> replaceOccupant(o, null, nodeID));
+        returnValue.forEach(o -> replaceOccupant(o, null, nodeID));
 
         return returnValue;
     }

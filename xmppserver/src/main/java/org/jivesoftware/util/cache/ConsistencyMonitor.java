@@ -15,8 +15,10 @@
  */
 package org.jivesoftware.util.cache;
 
+import com.google.common.collect.Multimap;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -113,6 +115,7 @@ public class ConsistencyMonitor
 
             final RoutingTableImpl routingTable = (RoutingTableImpl) XMPPServer.getInstance().getRoutingTable();
             final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+            final MultiUserChatManager multiUserChatManager = XMPPServer.getInstance().getMultiUserChatManager();
 
             final Set<String> offenders = new HashSet<>();
 
@@ -146,6 +149,15 @@ public class ConsistencyMonitor
             final Collection<String> sessionInfosFailures = sessionManager.clusteringStateConsistencyReportForSessionInfos().get("fail");
             if (sessionInfosFailures != null && !sessionInfosFailures.isEmpty()) {
                 offenders.add(SessionManager.C2S_INFO_CACHE_NAME);
+            }
+
+            final List<Multimap<String, String>> mucReportsList = multiUserChatManager.clusteringStateConsistencyReportForMucRoomsAndOccupant();
+            final Collection<String> mucOccupantFailures = new ArrayList<>();
+            for (Multimap<String, String> mucReport : mucReportsList) {
+                mucReport.get("fail").addAll(mucOccupantFailures);
+            }
+            if (!mucOccupantFailures.isEmpty()) {
+                offenders.add("MUC Service");
             }
 
             if (offenders.isEmpty()) {

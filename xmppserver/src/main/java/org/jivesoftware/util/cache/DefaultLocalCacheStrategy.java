@@ -16,12 +16,15 @@
 
 package org.jivesoftware.util.cache;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -40,7 +43,9 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     /**
      * Keep track of the locks that are currently being used.
      */
-    private Map<Object, LockAndCount> locks = new ConcurrentHashMap<>();
+    private Map<CacheKey, LockAndCount> locks = new ConcurrentHashMap<>();
+
+    private Interner<CacheKey> interner = Interners.newWeakInterner();
 
     public DefaultLocalCacheStrategy() {
     }
@@ -128,32 +133,28 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
     @Override
     public Lock getLock(Object key, Cache cache) {
-        Object lockKey = key;
-        if (key instanceof String) {
-            lockKey = ((String) key).intern();
-        }
-
-        return new LocalLock(lockKey);
+        return new LocalLock(new CacheKey(cache, key));
     }
 
     @SuppressWarnings( "LockAcquiredButNotSafelyReleased" )
-    private void acquireLock( Object key) {
+    private void acquireLock(CacheKey key) {
         ReentrantLock lock = lookupLockForAcquire(key);
         lock.lock();
     }
 
-    private void releaseLock(Object key) {
+    private void releaseLock(CacheKey key) {
         ReentrantLock lock = lookupLockForRelease(key);
         lock.unlock();
     }
 
-    private ReentrantLock lookupLockForAcquire(Object key) {
-        synchronized(key) {
-            LockAndCount lac = locks.get(key);
+    private ReentrantLock lookupLockForAcquire(CacheKey cacheKey) {
+        CacheKey mutex = interner.intern(cacheKey); // Ensure that the mutex used in the next line is the same for objects that are equal.
+        synchronized(mutex) {
+            LockAndCount lac = locks.get(mutex);
             if (lac == null) {
                 lac = new LockAndCount(new ReentrantLock());
                 lac.count = 1;
-                locks.put(key, lac);
+                locks.put(mutex, lac);
             }
             else {
                 lac.count++;
@@ -163,15 +164,16 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         }
     }
 
-    private ReentrantLock lookupLockForRelease(Object key) {
-        synchronized(key) {
-            LockAndCount lac = locks.get(key);
+    private ReentrantLock lookupLockForRelease(CacheKey cacheKey) {
+        CacheKey mutex = interner.intern(cacheKey); // Ensure that the mutex used in the next line is the same for objects that are equal.
+        synchronized(mutex) {
+            LockAndCount lac = locks.get(mutex);
             if (lac == null) {
-                throw new IllegalStateException("No lock found for object " + key);
+                throw new IllegalStateException("No lock found for object " + mutex);
             }
 
             if (lac.count <= 1) {
-                locks.remove(key);
+                locks.remove(mutex);
             }
             else {
                 lac.count--;
@@ -183,9 +185,9 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
 
 
     private class LocalLock implements Lock {
-        private final Object key;
+        private final CacheKey key;
 
-        LocalLock(Object key) {
+        LocalLock(CacheKey key) {
             this.key = key;
         }
 
@@ -210,12 +212,12 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         }
 
         @Override
-        public boolean 	tryLock() {
+        public boolean tryLock() {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean 	tryLock(long time, TimeUnit unit) {
+        public boolean tryLock(long time, TimeUnit unit) {
             throw new UnsupportedOperationException();
         }
 
@@ -234,5 +236,31 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
         // not clustered
         return null;
+    }
+
+    /**
+     * A key of a cache, namespaced by the cache that it belongs to.
+     */
+    private static class CacheKey {
+        final String cacheName;
+        final Object key;
+
+        private CacheKey(Cache cache, Object key) {
+            this.cacheName = cache.getName();
+            this.key = key;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CacheKey cacheKey = (CacheKey) o;
+            return cacheName.equals(cacheKey.cacheName) && key.equals(cacheKey.key);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(cacheName, key);
+        }
     }
 }

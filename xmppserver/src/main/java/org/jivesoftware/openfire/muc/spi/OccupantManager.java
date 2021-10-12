@@ -324,7 +324,11 @@ public class OccupantManager implements MUCEventListener
      * @param task Cluster task that informs of occupants on a remote node.
      */
     public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task) {
-        final Set<Occupant> oldOccupants = occupantsByNode.get(task.getOriginator());
+        Set<Occupant> oldOccupants = occupantsByNode.get(task.getOriginator());
+        if (oldOccupants != null) {
+            // Use defensive copy to prevent concurrent modification exceptions.
+            oldOccupants = new HashSet<>(oldOccupants);
+        }
         if (oldOccupants != null) {
             oldOccupants.forEach(oldOccupant -> replaceOccupant(oldOccupant, null, task.getOriginator()));
         }

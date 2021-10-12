@@ -985,7 +985,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
      *
      * @return A consistency state report.
      */
-    public static List<Multimap<String, String>> clusteringStateConsistencyReportForMucRoomsAndOccupant() {
+    public List<Multimap<String, String>> clusteringStateConsistencyReportForMucRoomsAndOccupant() {
         return XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().stream()
             .map(mucService -> ConsistencyChecks.generateReportForMucRooms(
                 mucService.getLocalMUCRoomManager().getROOM_CACHE(),

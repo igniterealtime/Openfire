@@ -696,7 +696,6 @@ public class ConsistencyChecks {
         @Nonnull final Map<OccupantManager.Occupant, Set<NodeID>> nodesByOccupantInput,
         @Nonnull final String mucServiceName
     ) {
-//        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
 
         // Take snapshots of all data structures at as much the same time as possible.
         final ConcurrentMap<String, MUCRoom> cache = new ConcurrentHashMap<>(clusteredRoomCacheInput);
@@ -704,10 +703,7 @@ public class ConsistencyChecks {
         final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = new ConcurrentHashMap<>(occupantsByNodeInput);
         final ConcurrentMap<OccupantManager.Occupant, Set<NodeID>> nodesByOccupant = new ConcurrentHashMap<>(nodesByOccupantInput);
 
-        final Map<String, MUCRoom> allRooms = new HashMap<>();
-        allRooms.putAll(cache);
-        allRooms.putAll(localRoomsCache);
-        final List<String> allRoomNames = new ArrayList<>(allRooms.keySet());
+        final List<String> allRoomNames = new ArrayList<>(cache.keySet());
         Collections.sort(allRoomNames);
 
         final Set<String> roomsOnlyInLocalCache = localRoomsCache.keySet().stream().filter(jid -> !cache.containsKey(jid)).collect(Collectors.toSet());
@@ -733,10 +729,8 @@ public class ConsistencyChecks {
             .map(JID::toFullJID)
             .sorted()
             .collect(Collectors.toList());
-//        final Map<String, List<OccupantManager.Occupant>> occupantsPerRoom = allOccupantsFromOccupantsByNode.stream()
-//            .collect(Collectors.groupingBy(OccupantManager.Occupant::getRoomName));
 
-        final List<MUCRole> allMucRoles = allRooms.values().stream()
+        final List<MUCRole> allMucRoles = cache.values().stream()
             .flatMap(room -> room.getOccupants().stream())
             .sorted(Comparator.comparing(MUCRole::toString))
             .collect(Collectors.toList());
@@ -746,9 +740,6 @@ public class ConsistencyChecks {
             .map(JID::toFullJID)
             .sorted()
             .collect(Collectors.toList());
-//        final Map<String, Collection<MUCRole>> mucRolesPerRoom = allRooms.entrySet()
-//            .stream()
-//            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getOccupants()));
 
         // Generate report
         final Multimap<String, String> result = HashMultimap.create();

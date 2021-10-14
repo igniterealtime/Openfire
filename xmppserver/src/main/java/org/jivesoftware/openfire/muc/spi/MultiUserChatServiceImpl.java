@@ -343,8 +343,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         localMUCRoomManager = new LocalMUCRoomManager(this);
         occupantManager = new OccupantManager(this);
-
-        ClusterManager.addListener(this);
     }
 
     @Override

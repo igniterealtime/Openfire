@@ -778,10 +778,10 @@ public class ConsistencyChecks {
             result.put("fail", String.format("The registration of occupants by node is missing entries that are present in the registration of nodes by occupant. These %d entries are missing: %s", occupantsNotPresentInOccupantsByNode.size(), occupantsNotPresentInOccupantsByNode.stream().map(OccupantManager.Occupant::getNickname).collect(Collectors.joining(", "))));
         }
 
-        if (allOccupantsJids.size() == allMucRolesOccupantsJids.size()) {
-            result.put("pass", "The total number of occupants registered by node equals total number of occupants seen in rooms.");
+        if (allOccupantsJids.equals(allMucRolesOccupantsJids)) {
+            result.put("pass", "The list of occupants registered by node equals the list of occupants seen in rooms.");
         } else {
-            result.put("fail", String.format("The total number of registered occupants by node equals %d, while the total number of occupants seen in rooms equals %d", allOccupantsJids.size(), allMucRolesOccupantsJids.size()));
+            result.put("fail", String.format("The list of occupants by node has %d elements, and does not equal the list of occupants seen in rooms, which has %d elements", allOccupantsJids.size(), allMucRolesOccupantsJids.size()));
         }
 
         return result;

@@ -1147,6 +1147,12 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public void addOccupantRole(@Nonnull final MUCRole role)
     {
+        if (occupants.contains(role)) {
+            // Ignore a data consistency problem. This indicates that a bug exists somewhere, so log it verbosely.
+            Log.warn("Not re-adding an occupant {} that already exists in room {}!", role, this.getJID(), new IllegalStateException("Duplicate occupant: " + role));
+            return;
+        }
+
         Log.trace( "Add occupant to room {}: {}", this.getJID(), role );
         occupants.add(role);
 

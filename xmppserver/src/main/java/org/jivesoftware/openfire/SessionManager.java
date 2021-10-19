@@ -1743,6 +1743,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // a small moment we may not have a senior cluster member.
 
         final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
+        Log.debug("Cluster node {} just left the cluster.", nodeIDOfLostNode);
 
         // Remove incoming server sessions hosted in node that left the cluster
         final Set<StreamID> removedServerSessions = incomingServerSessionsByClusterNode.remove(nodeIDOfLostNode);

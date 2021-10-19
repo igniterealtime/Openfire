@@ -3035,53 +3035,97 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public void leftCluster(byte[] nodeID) {
-        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-        Log.debug("Cluster event: service {} got notified that node {} left a cluster", fullServiceName, new String(nodeID));
-
+    public void leftCluster(byte[] nodeID)
+    {
         // Another node left the cluster.
         //
         // If the cluster node leaves in an orderly fashion, it might have broadcast
         // the necessary events itself. This cannot be depended on, as the cluster node
         // might have disconnected unexpectedly (as a result of a crash or network issue).
         //
-
         // All chatroom occupants that were connected to the now disconnected node are no longer 'in the room'. The
         // remaining occupants should receive 'occupant left' stanzas to reflect this.
+
+        final String fullServiceName = chatServiceName + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        Log.debug("Cluster event: service {} got notified that node {} left a cluster", fullServiceName, new String(nodeID));
+
+
+        // We can't be certain if the room cache is fully intact at this point, as described in OF-2297. It is not always
+        // feasible to maintain enough 'local data' to be able to recover from this. Here, we check the cache for
+        // consistency, and remove occupants from rooms (citing 'technical difficulties') where we find such inconsistency.
+        final Set<String> lostRoomNames = localMUCRoomManager.detectAndRemoveLostRooms();
+        for (final String lostRoomName : lostRoomNames) {
+            try {
+                Log.info("Room '{}' was lost from the data structure that's shared in the cluster (the cache). This room is now considered 'gone' for this cluster node. Occupants will be informed.", lostRoomName);
+                final Set<OccupantManager.Occupant> occupants = occupantManager.occupantsForRoomByNode(lostRoomName, XMPPServer.getInstance().getNodeID());
+                final JID roomJID = new JID(lostRoomName, fullServiceName, null);
+                for (final OccupantManager.Occupant occupant : occupants) {
+                    try {
+                        // Send a presence stanza of type "unavailable" to the occupant
+                        final Presence presence = new Presence(Presence.Type.unavailable);
+                        presence.setTo(occupant.getRealJID());
+                        assert lostRoomName.equals(occupant.getRoomName());
+                        presence.setFrom(new JID(lostRoomName, fullServiceName, occupant.getNickname()));
+
+                        // A fragment containing the x-extension.
+                        final Element fragment = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
+                        final Element item = fragment.addElement("item");
+                        item.addAttribute("affiliation", "none");
+                        item.addAttribute("role", "none");
+                        fragment.addElement("status").addAttribute("code", "110"); // Inform user that presence refers to itself.
+                        fragment.addElement("status").addAttribute("code", "333"); // Inform users that a user was removed because of an error reply.
+
+                        Log.debug("Informing local occupant '{}' on local cluster node that it is being removed from room '{}' because of a (cluster) error.", occupant.getRealJID(), lostRoomName);
+                        XMPPServer.getInstance().getPacketRouter().route(presence);
+                        XMPPServer.getInstance().getPresenceUpdateHandler().removeDirectPresence(occupant.getRealJID(), roomJID);
+                    } catch (Exception e) {
+                        Log.warn("Unable to inform local occupant '{}' on local cluster node that it is being removed from room '{}' because of a (cluster) error.", occupant.getRealJID(), lostRoomName, e);
+                    }
+                }
+                // Clean up the locally maintained bookkeeping.
+                occupantManager.roomDestroyed(roomJID);
+                removeChatRoom(lostRoomName);
+            } catch (Exception e) {
+                Log.warn("Unable to inform occupants on local cluster node that they are being removed from room '{}' because of a (cluster) error.", lostRoomName, e);
+            }
+        }
+
+        // From this point onwards, the remainder of what's in the cache can be considered 'consistent' (as we've dealt with the inconsistencies).
+        // We now need to inform these occupants that occupants of the same room, that exist on other cluster nodes (which are now unreachable)
+        // are no longer in the room.
+
 
         // Get all room occupants that lived on the node that disconnected
         final Set<OccupantManager.Occupant> occupantsOnRemovedNode = occupantManager.leftCluster(NodeID.getInstance(nodeID));
 
         // The content of the room cache can still hold (some) of these occupants. They should be removed from there!
-        if (occupantsOnRemovedNode != null) {
-            // The state of the rooms in the clustered cache should be modified to remove all but our local occupants.
-            for (Iterator<OccupantManager.Occupant> i = occupantsOnRemovedNode.iterator(); i.hasNext(); ) {
-                OccupantManager.Occupant occupant = i.next();
-                final Lock lock = this.getChatRoomLock(occupant.getRoomName());
-                lock.lock();
-                try {
-                    final MUCRoom room = this.getChatRoom(occupant.getRoomName());
-                    if (room == null) {
-                        continue;
-                    }
-                    final MUCRole occupantRole = room.getOccupantByFullJID(occupant.getRealJID());
-
-                    // When leaving a cluster, the routing table will also detect that some clients are no
-                    // longer available. And send presence unavailable stanzas accordingly. Because of that,
-                    // the occupant may already have been removed from the room. This may however not happen
-                    // at all if federated users are in play. Hence the null check here: if the occupant is
-                    // no longer in the room, we don't need to remove it.
-                    if (occupantRole != null) {
-                        room.removeOccupantRole(occupantRole);
-                        this.syncChatRoom(room);
-                        Log.debug("Removed occupant role {} from room {}.", occupantRole, room.getJID());
-                    } else {
-                        // Occupant already removed, so we don't need to send 'leave' presence
-                        i.remove();
-                    }
-                } finally {
-                    lock.unlock();
+        // The state of the rooms in the clustered cache should be modified to remove all but our local occupants.
+        for (Iterator<OccupantManager.Occupant> i = occupantsOnRemovedNode.iterator(); i.hasNext(); ) {
+            OccupantManager.Occupant occupant = i.next();
+            final Lock lock = this.getChatRoomLock(occupant.getRoomName());
+            lock.lock();
+            try {
+                final MUCRoom room = this.getChatRoom(occupant.getRoomName());
+                if (room == null) {
+                    continue;
                 }
+                final MUCRole occupantRole = room.getOccupantByFullJID(occupant.getRealJID());
+
+                // When leaving a cluster, the routing table will also detect that some clients are no
+                // longer available. And send presence unavailable stanzas accordingly. Because of that,
+                // the occupant may already have been removed from the room. This may however not happen
+                // at all if federated users are in play. Hence the null check here: if the occupant is
+                // no longer in the room, we don't need to remove it.
+                if (occupantRole != null) {
+                    room.removeOccupantRole(occupantRole);
+                    this.syncChatRoom(room);
+                    Log.debug("Removed occupant role {} from room {}.", occupantRole, room.getJID());
+                } else {
+                    Log.debug("Occupant '{}' already removed, so we don't need to send 'leave' presence in room {}", occupant, room.getJID());
+                    i.remove();
+                }
+            } finally {
+                lock.unlock();
             }
         }
 

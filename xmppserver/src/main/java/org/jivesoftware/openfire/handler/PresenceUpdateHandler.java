@@ -536,6 +536,19 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         return false;
     }
 
+    public void removeDirectPresence(JID ownerJID, JID recipientJID) {
+        if (recipientJID == null) {
+            return;
+        }
+        Collection<DirectedPresence> directedPresences = directedPresencesCache.get(ownerJID.toString());
+        if (directedPresences != null) {
+            String recipient = recipientJID.toBareJID();
+            for (DirectedPresence directedPresence : directedPresences) {
+                directedPresence.removeReceiver(recipient);
+            }
+        }
+    }
+
     /**
      * Removes directed presences sent to entities that are no longer available.
      */

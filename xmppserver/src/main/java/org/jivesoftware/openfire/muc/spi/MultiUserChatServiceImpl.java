@@ -3295,6 +3295,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         // Send non-anonymous - add JID.
                         item.addAttribute("jid", occupant.getRealJID().toString());
                     }
+                    childElement.addElement( "status" ).addAttribute( "code", "333" );
 
                     // We _need_ to go through the MUCRole for sending this stanza, as that has some additional logic (eg: FMUC).
                     final MUCRole recipientRole = chatRoom.getOccupantByFullJID(recipient.getRealJID());

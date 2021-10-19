@@ -772,7 +772,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         @Override
         public void entryRemoved(@Nonnull final String sender, @Nullable final ConcurrentLinkedQueue<DirectedPresence> oldValue, @Nonnull final NodeID nodeID) {
             if (oldValue != null) { // Otherwise there is nothing to remove
-                directedPresenceAddressingByClusterNode.get(nodeID).remove(sender);
+                final Map<String, Collection<String>> entry = directedPresenceAddressingByClusterNode.get(nodeID);
+                if (entry != null) {
+                    entry.remove(sender);
+                }
             }
         }
 
@@ -783,7 +786,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
         @Override
         public void mapEvicted(@Nonnull final NodeID nodeID) {
-            directedPresenceAddressingByClusterNode.get(nodeID).clear();
+            final Map<String, Collection<String>> entry = directedPresenceAddressingByClusterNode.get(nodeID);
+            if (entry != null) {
+                entry.clear();
+            }
         }
 
         @Override

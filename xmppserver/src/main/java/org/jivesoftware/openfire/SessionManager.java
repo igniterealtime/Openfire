@@ -1464,7 +1464,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
 
         // Listen to cluster events
-        ClusterManager.addListener(this);
+        ClusterManager.addListener(this, 15);
     }
 
 

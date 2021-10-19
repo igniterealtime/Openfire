@@ -1169,8 +1169,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         messageRouter = server.getMessageRouter();
         presenceRouter = server.getPresenceRouter();
         presenceUpdateHandler = server.getPresenceUpdateHandler();
-        // Listen to cluster events, and be one of the first listeners to handle events
-        ClusterManager.addListener(this, -10);
+        // Listen to cluster events, and be one of the last listeners to handle events
+        ClusterManager.addListener(this, 10);
     }
 
     @Override

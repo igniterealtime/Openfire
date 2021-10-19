@@ -580,7 +580,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         directedPresencesCache = CacheFactory.createCache(PRESENCE_CACHE_NAME);
         // TODO Add as route listener (to remove direct presences info for removed routes). Mainly for c2s sessions which is uncommon.
         // Listen to cluster events
-        ClusterManager.addListener(this);
+        ClusterManager.addListener(this, 20);
     }
 
     @Override

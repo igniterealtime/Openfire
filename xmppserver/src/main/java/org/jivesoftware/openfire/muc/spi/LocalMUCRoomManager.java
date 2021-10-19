@@ -32,13 +32,7 @@ import org.xmpp.packet.JID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -402,6 +396,38 @@ public class LocalMUCRoomManager
                 lock.unlock();
             }
         }
+    }
+
+    /**
+     * This method detects rooms that we know of 'locally' (in the data structure that supports the room cache), but which
+     * are not (no longer) in the cache.
+     *
+     * When a cluster node crashes out of the cluster (eg: network interruption), it has been observed that the cache can
+     * 'break'. Presumably, the affected cache entry wasn't "physically" stored on the server, and as the network connection
+     * is gone, a backup cannot be obtained either.
+     *
+     * This method attempts to identify, remove and return rooms that are lost in these cases, which is intended to be
+     * used (only) when processing a "cluster break" event.
+     *
+     * @return room names that were known to the local server, but not (any more) in the clustered cache.
+     */
+    @Nonnull
+    public synchronized Set<String> detectAndRemoveLostRooms()
+    {
+        Log.debug("Looking for rooms that have 'dropped out' of the cache (likely as a result of a network failure).");
+
+        final Set<String> localRoomNames = localRooms.keySet();
+        final Set<String> cachedRoomNames = ROOM_CACHE.keySet();
+        final Set<String> roomNamesNotInCache = new HashSet<>(localRoomNames);
+        roomNamesNotInCache.removeAll(cachedRoomNames);
+
+        if (roomNamesNotInCache.isEmpty()) {
+            Log.debug("Found no rooms that are missing from the cache.");
+        } else {
+            Log.info("Found {} rooms that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise. Missing rooms: {}", roomNamesNotInCache.size(), String.join(", ", roomNamesNotInCache));
+            localRooms.keySet().removeAll(roomNamesNotInCache);
+        }
+        return roomNamesNotInCache;
     }
 
     public Cache<String, MUCRoom> getROOM_CACHE() {

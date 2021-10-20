@@ -324,15 +324,21 @@ public class OccupantManager implements MUCEventListener
      * @param task Cluster task that informs of occupants on a remote node.
      */
     public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task) {
+
         Set<Occupant> oldOccupants = occupantsByNode.get(task.getOriginator());
+
+        Log.debug("We received a copy of {} local MUC occupants from node {}. We already had {} occupants in local registration for that node.", task.getOccupants().size(), task.getOriginator(), oldOccupants == null ? 0 : oldOccupants.size());
+
         if (oldOccupants != null) {
             // Use defensive copy to prevent concurrent modification exceptions.
             oldOccupants = new HashSet<>(oldOccupants);
         }
         if (oldOccupants != null) {
+            Log.debug("Removing {} old occupants", oldOccupants.size());
             oldOccupants.forEach(oldOccupant -> replaceOccupant(oldOccupant, null, task.getOriginator()));
         }
         if (task.getOccupants() != null) {
+            Log.debug("Adding {} new occupants", task.getOccupants().size());
             task.getOccupants().forEach(newOccupant -> replaceOccupant(null, newOccupant, task.getOriginator()));
         }
         if (oldOccupants != null) {
@@ -342,6 +348,9 @@ public class OccupantManager implements MUCEventListener
                 Log.warn("We received a copy of local MUC occupants from node {}, but we already had occupants for this node. However, the new data is different from the old data!", task.getOriginator());
             }
         }
+
+        final Set<Occupant> occupantsAfterSync = occupantsByNode.get(task.getOriginator());
+        Log.debug("After processing the sync occupants from node {}, we now have {} occupants in local registration for that node.", task.getOriginator(), occupantsAfterSync == null ? 0 : occupantsAfterSync.size());
     }
 
     /**
@@ -454,6 +463,8 @@ public class OccupantManager implements MUCEventListener
 
         synchronized (ownNodeID) {
             final Set<Occupant> occupantsLeftOnThisNode = occupantsByNode.getOrDefault(ownNodeID, new HashSet<>());
+
+
             final Set<Occupant> occupantsRemoved = occupantsByNode.entrySet().stream()
                 .filter(e -> !e.getKey().equals(ownNodeID))
                 .flatMap(e -> e.getValue().stream())
@@ -463,6 +474,8 @@ public class OccupantManager implements MUCEventListener
             // Now actually remove what needs to be removed
             // TODO Somehow perform a lock or synchronize so no other thread can access the lookup tables while we are reorganising
             occupantsByNode.entrySet().removeIf(e -> !e.getKey().equals(ownNodeID));
+
+
             nodesByOccupant.clear();
             occupantsLeftOnThisNode.forEach(o -> nodesByOccupant.computeIfAbsent(o, (n) -> new HashSet<>()).add(ownNodeID));
             occupantsByRealJid.clear();
@@ -472,6 +485,10 @@ public class OccupantManager implements MUCEventListener
 
             return occupantsRemoved;
         }
+
+
+
+
     }
 
     @Nonnull

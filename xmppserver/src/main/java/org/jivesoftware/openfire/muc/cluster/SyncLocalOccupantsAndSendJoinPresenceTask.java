@@ -22,6 +22,8 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.muc.spi.OccupantManager;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
@@ -40,6 +42,8 @@ import java.util.Set;
  */
 public class SyncLocalOccupantsAndSendJoinPresenceTask implements ClusterTask<Void>
 {
+    private static final Logger Log = LoggerFactory.getLogger(SyncLocalOccupantsAndSendJoinPresenceTask.class);
+
     private String subdomain;
     private Set<OccupantManager.Occupant> occupants = new HashSet<>();
     private NodeID originator;
@@ -67,8 +71,10 @@ public class SyncLocalOccupantsAndSendJoinPresenceTask implements ClusterTask<Vo
 
     @Override
     public void run() {
+        Log.debug("Going to execute sync occupants task for {} occupants from node {}", occupants.size(), originator);
         final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
         ((MultiUserChatServiceImpl) multiUserChatService).process(this);
+        Log.trace("Finished executing sync occupants task for occupants {} from node {}", occupants.size(), originator);
     }
 
     @Override

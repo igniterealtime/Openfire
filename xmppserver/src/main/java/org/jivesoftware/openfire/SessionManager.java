@@ -51,7 +51,6 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.cache.ReverseLookupUpdatingCacheEntryListener;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.SystemProperty;
@@ -115,7 +114,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private PacketRouter router;
     private String serverName;
     private JID serverAddress;
-    private UserManager userManager;
     private int conflictLimit;
 
     /**
@@ -1443,7 +1441,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         super.initialize(server);
         this.server = server;
         router = server.getPacketRouter();
-        userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
         serverName = server.getServerInfo().getXMPPDomain();
         serverAddress = new JID(serverName);

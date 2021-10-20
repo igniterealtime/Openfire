@@ -62,19 +62,12 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -111,6 +104,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @see LocalRoutingTable#getServerRoutes() which holds content added by the local cluster node.
      * @see #s2sDomainPairsByClusterNode which holds content added by cluster nodes other than the local node.
      */
+    // TODO OF-2301: having a DomainPair point to only a singular node implies that only one cluster node can have an outgoing server session.
+    //               Allowing multiple cluster nodes to establish an outgoing session to the same domain would be better for performance.
     private final Cache<DomainPair, NodeID> serversCache;
 
     /**
@@ -1418,92 +1413,171 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public void leftCluster(byte[] nodeID) {
-        final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
-
+    public void leftCluster(byte[] nodeID)
+    {
         // Another node left the cluster.
+        final NodeID nodeIDOfLostNode = NodeID.getInstance(nodeID);
+        Log.debug("Cluster node {} just left the cluster.", nodeIDOfLostNode);
 
-        // When a peer server leaves the cluster, any remote routes that were
-        // associated with the defunct node must be dropped from the routing
-        // caches that are shared by the remaining cluster member(s).
+        // When the local node drops out of the cluster (for example, due to a network failure), then from the perspective
+        // of that node, all other nodes leave the cluster. This method is invoked for each of them. In certain
+        // circumstances, this can mean that the local node no longer has access to all data (or its backups) that is
+        // maintained in the clustered caches. From the perspective of the remaining node, this data is lost. (OF-2297/OF-2300).
+        // To prevent this being an issue, most caches have supporting local data structures that maintain a copy of the most
+        // critical bits of the data stored in the clustered cache, which is to be used to detect and/or correct such a
+        // loss in data. This is done in the next few lines of this method.
+        detectAndFixBrokenCaches(); // This excludes Users Sessions Cache, which is a bit of an odd duckling. This one is processed later in this method.
 
-        // Drop routes for all client sessions connected via the defunct cluster node.
-        final AtomicLong removedSessionCount = new AtomicLong();
+        // When a peer server leaves the cluster, any remote routes that were associated with the defunct node must be
+        // dropped from the routing caches (and supporting data structures) that are shared by the remaining cluster member(s).
 
+        // Note: All remaining cluster nodes will be in a race to clean up the same data. We can not depend on cluster
+        // seniority to appoint a 'single' cleanup node, because for a small moment we may not have a senior cluster member.
 
-        // Clients on leaving node are now unavailable! Simulate an unavailable presence for sessions that were being
-        // hosted on that node.
-        final Set<String> removed = routeOwnersByClusterNode.remove(nodeIDOfLostNode);
-        if (removed != null) {
-            removed.forEach(fullJID -> {
-                final JID offlineJID = new JID(fullJID);
-                removeClientRoute(offlineJID);
-            });
-        }
-
-        Log.debug("Cluster node {} just left the cluster. A total of {} client sessions was living there, and are no longer available.", nodeIDOfLostNode, removedSessionCount.get());
-
-        // Remove outgoing server sessions hosted in node that left the cluster
+        // Remove outgoing server routes accessed through the node that left the cluster.
         final Set<DomainPair> remoteServers = s2sDomainPairsByClusterNode.remove(nodeIDOfLostNode);
+        CacheUtil.removeValueFromCache(serversCache, nodeIDOfLostNode); // Clean up remote data from the cache, but note that the return value can't be guaranteed to be correct/complete (do not use it)!
         if (remoteServers != null) {
             for (final DomainPair domainPair : remoteServers) {
+                Log.debug("Removing server route for {} that is no longer available because cluster node {} left the cluster.", domainPair, nodeIDOfLostNode);
                 removeServerRoute(domainPair);
             }
         }
+        Log.info("Cluster node {} just left the cluster. A total of {} outgoing server sessions was living there, and are no longer available.", nodeIDOfLostNode, remoteServers == null ? 0 : remoteServers.size());
 
-        // Potentially the cache is broken now. Because at cluster break we don't know which data was present on the
-        // disconnected cluster node. The component route cache is special in the sense that an entry is not directly
-        // related to a single cluster node. Therefor we need to ensure that all entries are in there, before surgically
-        // removing those that really need to be removed.
-        // Restore cache from 'remote' data structure
-        componentsByClusterNode.entrySet().forEach(e -> {
-            for (String componentDomain : e.getValue()) {
-                if (!e.getKey().equals(nodeIDOfLostNode)) {
-                    CacheUtil.addValueToMultiValuedCache(componentsCache, componentDomain, e.getKey(), HashSet::new);
-                }
-            }
-        });
-        // Restore cache from 'local' data structure
-        localRoutingTable.getComponentRoute().forEach(route -> CacheUtil.addValueToMultiValuedCache(componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new));
-
-        // Remove component connections hosted in node that left the cluster
+        // Remove component routes hosted in node that left the cluster.
         final Set<String> componentJids = componentsByClusterNode.remove(nodeIDOfLostNode);
+        CacheUtil.removeValueFromMultiValuedCache(componentsCache, nodeIDOfLostNode); // Clean up remote data from the cache, but note that the return value can't be guaranteed to be correct/complete (do not use it)!
+        int lostComponentsCount = 0;
         if (componentJids != null) {
             Log.debug("Removing node '{}' from componentsByClusteredNode: {}", nodeIDOfLostNode, componentJids);
             for (final String componentJid : componentJids) {
-                removeComponentRoute(new JID(componentJid), nodeIDOfLostNode);
+                if (removeComponentRoute(new JID(componentJid), nodeIDOfLostNode)) {
+                    Log.debug("Removing component route for {} that is no longer available because cluster node {} left the cluster.", componentJid, nodeIDOfLostNode);
+                    lostComponentsCount++;;
+                }
             }
         }
+        Log.info("Cluster node {} just left the cluster. A total of {} component sessions is now no longer available as a result.", nodeIDOfLostNode, lostComponentsCount);
 
-        // Remove routes for server domains that were accessed through the defunct node.
-        final Set<DomainPair> removedServers = CacheUtil.removeValueFromCache(serversCache, nodeIDOfLostNode);
-        removedServers.forEach(removedServer -> {
-            Log.debug("Cluster node {} just left the cluster, and was the only node on which the outgoing server route to '{}' was living. This route was removed.", nodeIDOfLostNode, removedServer.getRemote());
-        });
+        // Remove client routes hosted in node that left the cluster.
+        final Set<String> removed = routeOwnersByClusterNode.remove(nodeIDOfLostNode);
+        final AtomicLong removedSessionCount = new AtomicLong();
+        if (removed != null) {
+            removed.forEach(fullJID -> {
+                Log.debug("Removing client route for {} that is no longer available because cluster node {} left the cluster.", fullJID, nodeIDOfLostNode);
+                final JID offlineJID = new JID(fullJID);
+                removeClientRoute(offlineJID);
+                removedSessionCount.incrementAndGet();
+            });
+        }
+        Log.debug("Cluster node {} just left the cluster. A total of {} client routes was living there, and are no longer available.", nodeIDOfLostNode, removedSessionCount.get());
 
-        // Remove component routes for the defunct node.
-        final Map<Boolean, Map<String, HashSet<NodeID>>> modifiedComponents = CacheUtil.removeValueFromMultiValuedCache(componentsCache, nodeIDOfLostNode);
-        modifiedComponents.get(false).keySet().forEach(removedComponentDomain -> {
-            Log.debug("Cluster node {} just left the cluster, and was the only node on which the external component session for '{}' was living. This route was removed", nodeIDOfLostNode, removedComponentDomain);
-        });
-
+        // With all of the other caches fixed and adjusted, process the Users Sessions Cache.
         restoreUsersSessionsCache();
 
-        // Now that the users sessions cache is restored, we can proceed sending presence updates for all removed users
+        // Now that the users sessions cache is restored, we can proceed sending presence updates for all removed users.
         if (removed != null) {
-            removed.stream().forEach(fullJID -> {
+            removed.forEach(fullJID -> {
                 final JID offlineJID = new JID(fullJID);
                 try {
                     final Presence presence = new Presence(Presence.Type.unavailable);
                     presence.setFrom(offlineJID);
                     XMPPServer.getInstance().getPresenceRouter().route(presence);
-                    // TODO This broadcasts the presence over the entire (remaining) cluster, which is too much because it
-                    // is done by all remaining nodes
-                    // TODO This should only be done for routes that were previously 'available'. See commented out code below.
+                    // TODO: OF-2302 This broadcasts the presence over the entire (remaining) cluster, which is too much because it is done by each remaining cluster node.
                 } catch (final PacketException e) {
                     Log.error("Remote node {} left the cluster. Users on that node are no longer available. To reflect this, we're broadcasting presence unavailable on their behalf.  While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, fullJID, e);
                 }
             });
+        }
+    }
+
+    /**
+     * When the local node drops out of the cluster (for example, due to a network failure), then from the perspective
+     * of that node, all other nodes leave the cluster. Under certain circumstances, this can mean that the local node
+     * no longer has access to all data (or its backups) that is maintained in the clustered caches. From the
+     * perspective of the remaining node, this data is lost. (OF-2297/OF-2300). To prevent this being an issue, most
+     * caches have supporting local data structures that maintain a copy of the most critical bits of the data stored in
+     * the clustered cache. This local copy can be used to detect and/or correct such a loss in data. This is performed
+     * by this method.
+     *
+     * Note that this method is expected to be called as part of {@link #leftCluster(byte[])} only. It will therefor
+     * mostly restore data that is considered local to the server node, and won't bother with data that's considered
+     * to be pertinent to other cluster nodes only (as that data will be removed directly after invocation of this
+     * method anyway).
+     *
+     * Note that this method does <em>not</em> process the users sessions cache, as that's a bit of an odd one out. This
+     * cache is being processed in {@link #restoreUsersSessionsCache()}.
+     */
+    private void detectAndFixBrokenCaches()
+    {
+        // Ensure that 'serversCache' has content that reflects the locally available s2s connections (we do not need to
+        // restore the s2s connections on other nodes, as those will be dropped right after invoking this method anyway).
+        Log.info("Looking for local server routes that have 'dropped out' of the cache (likely as a result of a network failure).");
+        final Collection<LocalOutgoingServerSession> localServerRoutes = localRoutingTable.getServerRoutes();
+        final Set<DomainPair> cachesServerRoutes = serversCache.keySet();
+        final Set<DomainPair> serverRoutesNotInCache = localServerRoutes.stream().map(LocalOutgoingServerSession::getOutgoingDomainPairs).flatMap(Collection::stream).collect(Collectors.toSet());
+        serverRoutesNotInCache.removeAll(cachesServerRoutes);
+        if (serverRoutesNotInCache.isEmpty()) {
+            Log.info("Found no local server routes that are missing from the cache.");
+        } else {
+            Log.warn("Found {} server routes that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise. Missing server routes: {}", serverRoutesNotInCache.size(), serverRoutesNotInCache.stream().map(DomainPair::toString).collect(Collectors.joining(", ")));
+            for (final DomainPair missing : serverRoutesNotInCache) {
+                Log.info("Restoring server route: {}", missing);
+                serversCache.put(missing, XMPPServer.getInstance().getNodeID());
+            }
+        }
+
+        // Ensure that 'componentsCache' has content that reflects the locally available components. The component route
+        // cache is special in the sense that an entry is not directly related to a single cluster node. Therefor we
+        // need to ensure that all entries are in there, before surgically removing those that really need to be removed.
+        // Restore cache from 'remote' data structure
+        Log.info("Looking for and restoring component routes that have 'dropped out' of the cache (likely as a result of a network failure).");
+        componentsByClusterNode.forEach((key, value) -> {
+            for (final String componentDomain : value) {
+                CacheUtil.addValueToMultiValuedCache(componentsCache, componentDomain, key, HashSet::new);
+            }
+        });
+        // Restore cache from 'local' data structure
+        localRoutingTable.getComponentRoute().forEach(route -> CacheUtil.addValueToMultiValuedCache(componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new));
+
+        // Ensure that 'usersCache' has content that reflects the locally available client connections (we do not need
+        // to restore the client connections on other nodes, as those will be dropped right after invoking this method anyway).
+        Log.info("Looking for local (non-anonymous) client routes that have 'dropped out' of the cache (likely as a result of a network failure).");
+        final Collection<LocalClientSession> localClientRoutes = localRoutingTable.getClientRoutes();
+        final Map<String, LocalClientSession> localUserRoutes = localClientRoutes.stream().filter(r -> !r.isAnonymousUser()).collect(Collectors.toMap((LocalClientSession localClientSession) -> localClientSession.getAddress().toString(), Function.identity()));
+        final Set<String> cachedUsersRoutes = usersCache.keySet();
+        final Set<String> userRoutesNotInCache = localUserRoutes.values().stream().map(LocalClientSession::getAddress).map(JID::toString).collect(Collectors.toSet());
+        userRoutesNotInCache.removeAll(cachedUsersRoutes);
+        if (userRoutesNotInCache.isEmpty()) {
+            Log.info("Found no local (non-anonymous) user routes that are missing from the cache.");
+        } else {
+            Log.warn("Found {} (non-anonymous) user routes that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", userRoutesNotInCache.size());
+            for (String missing : userRoutesNotInCache) {
+                Log.info("Restoring (non-anonymous) user routes: {}", missing);
+                final LocalClientSession localClientSession = localUserRoutes.get(missing);
+                assert localClientSession != null; // We've established this with the filtering above.
+                addClientRoute(localClientSession.getAddress(), localClientSession);
+            }
+        }
+
+        // Ensure that 'anonymousUsersCache' has content that reflects the locally available client connections (we do not need
+        // to restore the client connections on other nodes, as those will be dropped right after invoking this method anyway).
+        Log.info("Looking for local (non-anonymous) client routes that have 'dropped out' of the cache (likely as a result of a network failure).");
+        final Map<String, LocalClientSession> localAnonymousUserRoutes = localClientRoutes.stream().filter(LocalClientSession::isAnonymousUser).collect(Collectors.toMap((LocalClientSession localClientSession) -> localClientSession.getAddress().toString(), Function.identity()));
+        final Set<String> cachedAnonymousUsersRoutes = anonymousUsersCache.keySet();
+        final Set<String> anonymousUserRoutesNotInCache = new HashSet<>(localAnonymousUserRoutes.keySet()); // defensive copy - we should not modify localAnonymousUserRoutes!
+        anonymousUserRoutesNotInCache.removeAll(cachedAnonymousUsersRoutes);
+        if (anonymousUserRoutesNotInCache.isEmpty()) {
+            Log.info("Found no local anonymous user routes that are missing from the cache.");
+        } else {
+            Log.warn("Found {} anonymous user routes that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", anonymousUserRoutesNotInCache.size());
+            for (String missing : anonymousUserRoutesNotInCache) {
+                Log.info("Restoring (non-anonymous) user route: {}", missing);
+                final LocalClientSession localClientSession = localAnonymousUserRoutes.get(missing);
+                assert localClientSession != null; // We've established this with the filtering above.
+                addClientRoute(localClientSession.getAddress(), localClientSession);
+            }
         }
     }
 
@@ -1513,7 +1587,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * This method relies on the routeOwnersByClusterNode and routingTable being stable and reflecting the actual
      * reality. So run this restore method <em>after or at the end of</em> cleanup on a cluster leave.
      */
-    private void restoreUsersSessionsCache() {
+    private void restoreUsersSessionsCache()
+    {
+        Log.info("Restoring Users Sessions Cache");
 
         // First remove all elements from users sessions cache that are not present in user caches
         final Set<String> existingUserRoutes = routeOwnersByClusterNode.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());

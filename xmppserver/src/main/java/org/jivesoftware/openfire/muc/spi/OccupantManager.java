@@ -485,10 +485,6 @@ public class OccupantManager implements MUCEventListener
 
             return occupantsRemoved;
         }
-
-
-
-
     }
 
     @Nonnull

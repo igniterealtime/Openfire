@@ -1124,7 +1124,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.debug("NOT silently ignoring user {} leaving a room. Sending 'unavailable' presence for room {} because the occupant was still present in the local room cache", packet.getFrom(), roomName);
             }
         }
-        if ( preExistingRole == null || mucInfo != null )
+        if ( preExistingRole == null || (mucInfo != null && preExistingRole.getNickname().equalsIgnoreCase(nickname) ) )
         {
             // If we're not already in a room (role == null), we either are joining it or it's not properly addressed and we drop it silently.
             // Alternative is that mucInfo is not null, in which case the client thinks it isn't in the room, so we should join anyway.

@@ -1363,6 +1363,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return;
         }
 
+        final JID memberBareJID = room.getMemberForReservedNickname(nickname);
+        if (memberBareJID != null && !memberBareJID.equals(preExistingRole.getUserAddress().asBareJID()))
+        {
+            Log.trace("Nickname change request denied: the requested nickname '{}' is reserved by a member of the room.", nickname);
+            sendErrorPacket(packet, PacketError.Condition.conflict, "This nickname is taken.");
+            return;
+        }
+
         // Send "unavailable" presence for the old nickname
         final Presence presence = preExistingRole.getPresence().createCopy();
         // Switch the presence to OFFLINE

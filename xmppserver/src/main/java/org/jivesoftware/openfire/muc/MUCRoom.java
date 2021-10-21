@@ -649,6 +649,22 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     }
 
     /**
+     * Returns the bare JID of the member for which a nickname is reserved. Returns null if no member registered the
+     * nickname.
+     *
+     * @param nickname The nickname for which to lookup a member. Cannot be {@code null}.
+     * @return the bare JID of the member that has registered this nickname, or null if none.
+     */
+    public JID getMemberForReservedNickname(String nickname) {
+        for (final Map.Entry<JID, String> entry : members.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(nickname)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns the affiliation state of the user in the room. Possible affiliations are
      * MUCRole.OWNER, MUCRole.ADMINISTRATOR, MUCRole.MEMBER, MUCRole.OUTCAST and MUCRole.NONE.<p>
      *
@@ -1016,13 +1032,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     private void checkJoinRoomPreconditionNicknameReserved(@Nonnull final JID realAddress, @Nonnull final String nickname ) throws ConflictException
     {
-        boolean canJoin = true;
         final JID bareJID = realAddress.asBareJID();
-        if (members.containsValue(nickname.toLowerCase())) {
-            if (!nickname.toLowerCase().equals(members.get(bareJID))) {
-                canJoin = false;
-            }
-        }
+        final JID bareMemberJid = getMemberForReservedNickname(nickname);
+        final boolean canJoin = bareMemberJid == null || bareMemberJid.equals(bareJID);
         Log.trace( "{} Room join precondition 'nickname reserved': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new ConflictException( "Someone else in the room has reserved the nickname that you want to use." );

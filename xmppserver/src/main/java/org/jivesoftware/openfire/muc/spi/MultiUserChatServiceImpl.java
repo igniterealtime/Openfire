@@ -1349,7 +1349,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return;
         }
 
-        if ( room.hasOccupant(nickname) )
+        List<MUCRole> existingOccupants;
+        try {
+            existingOccupants = room.getOccupantsByNickname(nickname);
+        } catch (UserNotFoundException e) {
+            existingOccupants = Collections.emptyList();
+        }
+
+        if ( !existingOccupants.isEmpty() && !existingOccupants.stream().allMatch(r->r.getUserAddress().asBareJID().equals(preExistingRole.getUserAddress().asBareJID())) )
         {
             Log.trace("Nickname change request denied: the requested nickname '{}' is used by another occupant of the room.", nickname);
             sendErrorPacket(packet, PacketError.Condition.conflict, "This nickname is taken.");

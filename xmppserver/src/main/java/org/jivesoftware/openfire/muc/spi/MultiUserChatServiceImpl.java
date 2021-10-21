@@ -1335,7 +1335,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     {
         Log.trace("Occupant '{}' of room '{}' tries to change its nickname to '{}'.", preExistingRole.getUserAddress(), room.getName(), nickname);
 
-        if ( room.getOccupantsByBareJID(packet.getFrom().asBareJID()).size() > 1 )
+        if ( room.getOccupantsByBareJID(packet.getFrom().asBareJID()).isEmpty() )
         {
             Log.trace("Nickname change request denied: requestor '{}' is not an occupant of the room.", packet.getFrom().asBareJID());
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not an occupant of this chatroom.");

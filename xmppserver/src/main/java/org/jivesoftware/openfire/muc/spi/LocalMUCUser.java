@@ -701,8 +701,8 @@ public class LocalMUCUser implements MUCUser
                     hasPermission = hasPermissionToRetrieveList(packet);
                 }
                 catch (Exception e) {
-                    Log.error("An unexpected exception occurred while checking permission to load memberlist of mucroom: {}", packet.toXML(), e);
-                    sendErrorPacket(packet, PacketError.Condition.internal_server_error, "An unexpected exception occurred while checking permission to load memberlist.");
+                    Log.warn("Room not found while checking permission to load memberlist of mucroom: {}");
+                    sendErrorPacket(packet, PacketError.Condition.item_not_found, "Room not found while checking permission to load memberlist.");
                     return;
                 }
 

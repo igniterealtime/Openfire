@@ -131,10 +131,9 @@ public class IQBindHandler extends IQHandler {
                         Log.debug( "Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession );
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         oldSession.deliverRawText(error.toXML());
-                        oldSession.close();
+                        oldSession.close(); // When living on a remote cluster node, this will prevent that session from becoming 'resumable'.
 
                         // OF-1923: As the session is now replaced, the old session will never be resumed.
-                        // TODO remove detached session if it lives on a remote cluster node. Not doing this should not have functional consequences (but could lead to these warnings in the logs: "Not removing detached session 'foo@example.org/bar' that appears to have been replaced by another session.")
                         if ( oldSession instanceof LocalClientSession ) {
                             // As the new session has already replaced the old session, we're not explicitly closing
                             // the old session again, as that would cause the state of the new session to be affected.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software and Ignite Realtime Community 2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.xmpp.packet.JID;
@@ -33,6 +32,7 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
 
     private String localDomain;
     private long usingServerDialback = -1;
+    private Collection<String> validatedDomains;
 
     public RemoteIncomingServerSession(byte[] nodeID, StreamID streamID) {
         super(nodeID, null);
@@ -56,10 +56,11 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
     }
 
     public Collection<String> getValidatedDomains() {
-        // Content is stored in a clustered cache so that even in the case of the node hosting
-        // the sessions is lost we can still have access to this info to be able to perform
-        // proper clean up logic {@link ClusterListener#cleanupNode(NodeCacheKey)
-        return SessionManager.getInstance().getValidatedDomains(streamID);
+        if (validatedDomains == null) {
+            RemoteSessionTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getValidatedDomains);
+            validatedDomains = (Collection<String>) doSynchronousClusterTask(task);
+        }
+        return validatedDomains;
     }
 
     public String getLocalDomain() {

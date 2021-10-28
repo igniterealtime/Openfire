@@ -141,7 +141,7 @@ public class ConsistencyMonitor
                 offenders.add(RoutingTableImpl.C2S_SESSION_NAME);
             }
 
-            final Collection<String> incomingServerSessionsFailures = sessionManager.clusteringStateConsistencyReportForIncomingServerSessions().get("fail");
+            final Collection<String> incomingServerSessionsFailures = sessionManager.clusteringStateConsistencyReportForIncomingServerSessionInfos().get("fail");
             if (incomingServerSessionsFailures != null && !incomingServerSessionsFailures.isEmpty()) {
                 offenders.add(SessionManager.ISS_CACHE_NAME);
             }

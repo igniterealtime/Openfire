@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software and Ignite Realtime Community 2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,14 +50,22 @@ public class IncomingServerSessionTask extends RemoteSessionTask {
     public void run() {
         super.run();
 
-        if (operation == Operation.getLocalDomain) {
-            result = ((IncomingServerSession) getSession()).getLocalDomain();
-        }
-        else if (operation == Operation.getAddress) {
-            result = getSession().getAddress();
-        }
-        else if (operation == Operation.isUsingServerDialback) {
-            result = ((IncomingServerSession) getSession()).isUsingServerDialback();
+        switch (operation) {
+            case getLocalDomain:
+                result = ((IncomingServerSession) getSession()).getLocalDomain();
+                break;
+
+            case getAddress:
+                result = getSession().getAddress();
+                break;
+
+            case isUsingServerDialback:
+                result = ((IncomingServerSession) getSession()).isUsingServerDialback();
+                break;
+
+            case getValidatedDomains:
+                result = ((IncomingServerSession) getSession()).getValidatedDomains();
+                break;
         }
     }
 

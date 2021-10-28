@@ -32,22 +32,7 @@ import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ClientSessionInfo;
-import org.jivesoftware.openfire.session.ComponentSession;
-import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.GetSessionsCountTask;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalComponentSession;
-import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.RemoteSessionLocator;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.cache.ReverseLookupUpdatingCacheEntryListener;
@@ -66,6 +51,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -105,11 +91,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
-    public static final String ISS_CACHE_NAME = "Incoming Server Sessions";
+    public static final String ISS_CACHE_NAME = "Incoming Server Session Info Cache";
     public static final String DOMAIN_SESSIONS_CACHE_NAME = "Sessions by Domain";
     @Deprecated
     public static final String HOSTNAME_SESSIONS_CACHE_NAME = DOMAIN_SESSIONS_CACHE_NAME;
-    public static final String VALIDATED_DOMAINS_CACHE_NAME = "Validated Domains";
     public static final String C2S_INFO_CACHE_NAME = "Client Session Info Cache";
 
     public static final int NEVER_KICK = -1;
@@ -182,12 +167,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     /**
      * Cache (unlimited, never expire) that holds incoming sessions of remote servers.
      *
-     * Key: stream ID that identifies the socket/session, Value: nodeID
+     * Key: stream ID that identifies the socket/session, Value: IncomingServerSesssionInfo
      *
      * @see localSessionManager.getIncomingServerSessions() which holds content added by the local cluster node.
-     * @see #incomingServerSessionsByClusterNode which holds content added by cluster nodes other than the local node.
+     * @see #incomingServerSessionInfoByClusterNode which holds content added by cluster nodes other than the local node.
      */
-    private Cache<StreamID, NodeID> incomingServerSessionsCache;
+    private Cache<StreamID, IncomingServerSessionInfo> incomingServerSessionInfoCache;
 
     /**
      * A map that, for all nodes in the cluster except for the local one, tracks stream ids of incoming server sessions.
@@ -203,9 +188,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
      * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
      *
-     * @see #incomingServerSessionsCache which is the cache for which this field is a supporting data structure.
+     * @see #incomingServerSessionInfoCache which is the cache for which this field is a supporting data structure.
      */
-    private final ConcurrentMap<NodeID, Set<StreamID>> incomingServerSessionsByClusterNode = new ConcurrentHashMap<>();
+    private final ConcurrentMap<NodeID, Set<StreamID>> incomingServerSessionInfoByClusterNode = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds list of incoming sessions originated from the same remote server
@@ -217,20 +202,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @see localSessionManager.getIncomingServerSessions() which holds content added by the local cluster node.
      */
     private Cache<String, ArrayList<StreamID>> domainSessionsCache;
-
-    /**
-     * Cache (unlimited, never expire) that holds domains, subdomains and virtual hostnames of the remote server that
-     * were validated with this server for each incoming server session.
-     *
-     * Key: stream ID, Value: Domains and subdomains of the remote server that were validated with this server.
-     *
-     * This same information is stored in {@link LocalIncomingServerSession} but the reason for this duplication is that
-     * when running in a cluster other nodes will have access to this clustered cache even in the case of this node going
-     * down.
-     *
-     * @see localSessionManager.getIncomingServerSessions() which holds content added by the local cluster node.
-     */
-    private Cache<StreamID, HashSet<String>> validatedDomainsCache;
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private IncomingServerSessionListener incomingServerListener = new IncomingServerSessionListener();
@@ -591,7 +562,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     /**
      * Registers that a server session originated by a remote server is hosting a given domain.
      * Notice that the remote server may be hosting several subdomains as well as virtual hosts so
-     * the same IncomingServerSession may be associated with many keys. If the remote server
+     * the same IncomingServerSession may be associated with many domains. If the remote server
      * creates many sessions to this server (eg. one for each subdomain) then associate all
      * the sessions with the originating server that created all the sessions.
      *
@@ -601,110 +572,78 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public void registerIncomingServerSession(String domain, LocalIncomingServerSession session) {
         // Keep local track of the incoming server session connected to this JVM
         StreamID streamID = session.getStreamID();
-        localSessionManager.addIncomingServerSessions(streamID, session);
-        // Keep track of the nodeID hosting the incoming server session
-        incomingServerSessionsCache.put(streamID, server.getNodeID());
+
+        Lock lock = incomingServerSessionInfoCache.getLock(streamID);
+        lock.lock();
+        try {
+            // Add this instance (possibly replacing an older version, if the session already existed but now has an additional validated domain).
+            localSessionManager.addIncomingServerSessions(streamID, session);
+            incomingServerSessionInfoCache.put(streamID, new IncomingServerSessionInfo(session));
+        } finally {
+            lock.unlock();
+        }
+
         // Update list of sockets/sessions coming from the same remote domain
-        Lock lock = domainSessionsCache.getLock(domain);
-        lock.lock();
-        try {
-            ArrayList<StreamID> streamIDs = domainSessionsCache.get(domain);
-            if (streamIDs == null) {
-                streamIDs = new ArrayList<>();
-            }
-            streamIDs.add(streamID);
-            domainSessionsCache.put(domain, streamIDs);
-        }
-        finally {
-            lock.unlock();
-        }
-        // Add to clustered cache
-        lock = validatedDomainsCache.getLock(streamID);
-        lock.lock();
-        try {
-            HashSet<String> validatedDomains = validatedDomainsCache.get(streamID);
-            if (validatedDomains == null) {
-                validatedDomains = new HashSet<>();
-            }
-            boolean added = validatedDomains.add(domain);
-            if (added) {
-                validatedDomainsCache.put(streamID, validatedDomains);
-            }
-        } finally {
-            lock.unlock();
-        }
+        CacheUtil.addValueToMultiValuedCache(domainSessionsCache, domain, streamID, ArrayList::new);
     }
 
     /**
-     * Unregisters the specified remote server session originated by the specified remote server.
+     * Unregisters the specified remote domain that previously originated from the specified session of a remote server.
+     * This will retain a cache entry for the session as long as there is one or more validated domains remain
+     * associated with the session.
      *
-     * @param domain the domain that is being served by the remote server.
-     * @param session the session to unregister.
+     * @param domain the domain that is no longer being served by the remote server.
+     * @param session the session from which to unregister the domain.
      */
-    public void unregisterIncomingServerSession(String domain, IncomingServerSession session) {
-        // Remove local track of the incoming server session connected to this JVM
-        StreamID streamID = session.getStreamID();
-        localSessionManager.removeIncomingServerSessions(streamID);
-        // Remove track of the nodeID hosting the incoming server session
-        incomingServerSessionsCache.remove(streamID);
-
-        unregisterIncomingServerSession( Collections.singleton( streamID ) );
-    }
-
-    /**
-     * One or more incoming server session can become unavailable for a number of reasons:
-     * <ul>
-     *     <li>It's connection got terminated.</li>
-     *     <li>The cluster node on which it is connected become disconnected</li>
-     * </ul>
-     *
-     * When a incoming server session is unavailable, a cleanup of associated
-     * metadata is needed.
-     *
-     * This method removes metadata from the following caches, based on the
-     * stream identifiers of incoming server sessions:
-     * <ul>
-     *     <li>'sockets/sessions coming from the same remote domain'</li>
-     *     <li>'validated domains'</li>
-     * </ul>
-     *
-     * @param streamIDs References to incoming server sessions that are no longer available (cannot be null, can be empty).
-     */
-    private void unregisterIncomingServerSession( final Collection<StreamID> streamIDs )
+    public void unregisterIncomingServerSession(@Nonnull final String domain, @Nonnull final LocalIncomingServerSession session)
     {
-        // Update the collection of 'sockets/sessions coming from the same remote domain' as well as the collection of 'validated domains' to reflect the loss of incoming server sessions.
-        for ( final StreamID streamID : streamIDs )
-        {
-            final Map<Boolean, Map<String, ArrayList<StreamID>>> modifiedDomainSessions = CacheUtil.removeValueFromMultiValuedCache(domainSessionsCache, streamID );
-            final Set<String> removedDomainSessions = modifiedDomainSessions.get( false ).keySet();
-            removedDomainSessions.forEach( removedDomain -> CacheUtil.removeValueFromMultiValuedCache( validatedDomainsCache, removedDomain ) );
-        }
-    }
-
-    /**
-     * Returns a collection with all the domains, subdomains and virtual hosts that where
-     * validated. The remote server is allowed to send packets from any of these domains,
-     * subdomains and virtual hosts.<p>
-     *
-     * Content is stored in a clustered cache so that even in the case of the node hosting
-     * the sessions is lost we can still have access to this info to be able to perform
-     * proper clean up logic.
-     *
-     * @param streamID id that uniquely identifies the session.
-     * @return domains, subdomains and virtual hosts that where validated.
-     */
-    public Collection<String> getValidatedDomains(StreamID streamID) {
-        Lock lock = validatedDomainsCache.getLock(streamID);
+        final StreamID streamID = session.getStreamID();
+        final Lock lock = incomingServerSessionInfoCache.getLock(streamID);
         lock.lock();
         try {
-            Set<String> validatedDomains = validatedDomainsCache.get(streamID);
-            if (validatedDomains == null) {
-                return Collections.emptyList();
+            if (session.getValidatedDomains().stream().anyMatch(d->!d.equals(domain))) {
+                // Another validated domain remains. Replace the cache entry with an updated entry.
+                localSessionManager.addIncomingServerSessions(streamID, session);
+                incomingServerSessionInfoCache.put(streamID, new IncomingServerSessionInfo(session));
+            } else {
+                // This session does not have any validated domains anymore. Remove it completely.
+                localSessionManager.removeIncomingServerSessions(streamID);
+                incomingServerSessionInfoCache.remove(streamID);
             }
-            return Collections.unmodifiableCollection(validatedDomains);
         } finally {
             lock.unlock();
         }
+
+        // Update list of sockets/sessions coming from the same remote domain
+        CacheUtil.removeValueFromMultiValuedCache(domainSessionsCache, domain, streamID);
+    }
+
+    /**
+     * Unregisters a remote server session identified by a stream ID, and disassociates all associated domains.
+     *
+     * @param streamID identifier for the session to unregister.
+     */
+    public void unregisterIncomingServerSession(@Nonnull final StreamID streamID)
+    {
+        final Set<String> domainsToRemove = new HashSet<>();
+        final Lock lock = incomingServerSessionInfoCache.getLock(streamID);
+        lock.lock();
+        try {
+            final LocalIncomingServerSession local = localSessionManager.getIncomingServerSession(streamID);
+            if (local != null) {
+                localSessionManager.removeIncomingServerSessions(streamID);
+                domainsToRemove.addAll(local.getValidatedDomains());
+            }
+            final IncomingServerSessionInfo cached = incomingServerSessionInfoCache.remove(streamID);
+            if (cached != null) {
+                domainsToRemove.addAll(cached.getValidatedDomains());
+            }
+        } finally {
+            lock.unlock();
+        }
+
+        // Update list of sockets/sessions coming from the same remote domain
+        domainsToRemove.forEach(domain -> CacheUtil.removeValueFromMultiValuedCache(domainSessionsCache, domain, streamID));
     }
 
     /**
@@ -1029,9 +968,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 RemoteSessionLocator locator = server.getRemoteSessionLocator();
                 if (session == null && locator != null) {
                     // Get the node hosting this session
-                    NodeID nodeID = incomingServerSessionsCache.get(streamID);
-                    if (nodeID != null) {
-                        session = locator.getIncomingServerSession(nodeID.toByteArray(), streamID);
+                    final IncomingServerSessionInfo incomingServerSessionInfo = incomingServerSessionInfoCache.get(streamID);
+                    if (incomingServerSessionInfo != null) {
+                        session = locator.getIncomingServerSession(incomingServerSessionInfo.getNodeID().toByteArray(), streamID);
                     }
                 }
                 if (session != null) {
@@ -1417,7 +1356,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
          */
         @Override
         public void onConnectionClose(Object handback) {
-            IncomingServerSession session = (IncomingServerSession)handback;
+            LocalIncomingServerSession session = (LocalIncomingServerSession)handback;
             // Remove all the domains that were registered for this server session.
             for (String domain : session.getValidatedDomains()) {
                 unregisterIncomingServerSession(domain, session);
@@ -1483,9 +1422,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Initialize caches.
         componentSessionsCache = CacheFactory.createCache(COMPONENT_SESSION_CACHE_NAME);
         multiplexerSessionsCache = CacheFactory.createCache(CM_CACHE_NAME);
-        incomingServerSessionsCache = CacheFactory.createCache(ISS_CACHE_NAME);
+        incomingServerSessionInfoCache = CacheFactory.createCache(ISS_CACHE_NAME);
         domainSessionsCache = CacheFactory.createCache(DOMAIN_SESSIONS_CACHE_NAME);
-        validatedDomainsCache = CacheFactory.createCache(VALIDATED_DOMAINS_CACHE_NAME);
         sessionInfoCache = CacheFactory.createCache(C2S_INFO_CACHE_NAME);
 
         // Listen to cluster events
@@ -1697,13 +1635,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<StreamID, NodeID> incomingServerSessionsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(incomingServerSessionsByClusterNode);
+        final ClusteredCacheEntryListener<StreamID, IncomingServerSessionInfo> incomingServerSessionsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(incomingServerSessionInfoByClusterNode);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
-        incomingServerSessionsCache.entrySet().stream()
+        incomingServerSessionInfoCache.entrySet().stream()
             // this filter isn't needed if we do this before restoreCacheContent.
-            .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
-            .forEach(entry -> incomingServerSessionsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
+            .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
+            .forEach(entry -> incomingServerSessionsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
@@ -1719,7 +1657,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // _always_ have been replaced, meaning that it won't have old event listeners. When #leaveCluster() fires, the
         // cache will be destroyed. This takes away the need to explicitly deregister the listener in that case.
         final boolean includeValues = false; // we're only interested in keys from these caches. Reduce overhead by suppressing value transmission.
-        incomingServerSessionsCache.addClusteredCacheEntryListener(incomingServerSessionsCacheEntryListener, includeValues, false);
+        incomingServerSessionInfoCache.addClusteredCacheEntryListener(incomingServerSessionsCacheEntryListener, includeValues, false);
         sessionInfoCache.addClusteredCacheEntryListener(sessionInfoKeysClusterNodeCacheEntryListener, includeValues, false);
     }
 
@@ -1744,7 +1682,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // has been created). Data that's available on the local node needs to be added again.
         restoreCacheContent();
 
-        incomingServerSessionsByClusterNode.clear();
+        incomingServerSessionInfoByClusterNode.clear();
 
         // It does not appear to be needed to invoke any kind of event listeners for the data that was lost by leaving
         // the cluster (eg: sessions connected to other cluster nodes, now unavailable to the local cluster node):
@@ -1777,16 +1715,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // seniority to appoint a 'single' cleanup node, because for a small moment we may not have a senior cluster member.
 
         // Remove incoming server sessions hosted in node that left the cluster
-        final Set<StreamID> removedServerSessions = incomingServerSessionsByClusterNode.remove(nodeIDOfLostNode);
+        final Set<StreamID> removedServerSessions = incomingServerSessionInfoByClusterNode.remove(nodeIDOfLostNode);
         if (removedServerSessions != null) {
-            removedServerSessions.stream()
+            removedServerSessions
                 .forEach(streamID -> {
                     try {
-                        final IncomingServerSession session = XMPPServer.getInstance().getRemoteSessionLocator().getIncomingServerSession(nodeID, streamID);
                         // Remove all the domains that were registered for this server session.
-                        for (final String domain : session.getValidatedDomains()) {
-                            unregisterIncomingServerSession(domain, session); // Will also remove it from the cache if that didn't happen before
-                        }
+                        unregisterIncomingServerSession(streamID);
                     } catch (Exception e) {
                         Log.error("Node {} left the cluster. Incoming server sessions on that node are no longer available. To reflect this, we're deleting these sessions. While doing this for '{}', this caused an exception to occur.", nodeIDOfLostNode, streamID, e);
                     }
@@ -1896,7 +1831,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // (we do not need to restore the info for sessions on other nodes, as those will be dropped right after invoking this method anyway).
         Log.info("Looking for local incoming server sessions that have 'dropped out' of the cache (likely as a result of a network failure).");
         final Map<StreamID, LocalIncomingServerSession> localIncomingServerSessions = localSessionManager.getIncomingServerSessions().stream().collect(Collectors.toMap(LocalSession::getStreamID, Function.identity()));
-        final Set<StreamID> cachedIncomingServerSessions = incomingServerSessionsCache.keySet();
+        final Set<StreamID> cachedIncomingServerSessions = incomingServerSessionInfoCache.keySet();
         final Set<StreamID> incomingServerSessionsNotInCache = new HashSet<>(localIncomingServerSessions.keySet()); // defensive copy - we should not modify localClientSessionInfos!
         incomingServerSessionsNotInCache.removeAll(cachedIncomingServerSessions);
         if (incomingServerSessionsNotInCache.isEmpty()) {
@@ -1905,7 +1840,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             Log.warn("Found {} incoming server sessions that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", incomingServerSessionsNotInCache.size());
             for (final StreamID missing : incomingServerSessionsNotInCache) {
                 Log.info("Restoring incoming server session for: {}", missing);
-                incomingServerSessionsCache.put(missing, XMPPServer.getInstance().getNodeID());
+                incomingServerSessionInfoCache.put(missing, new IncomingServerSessionInfo(localIncomingServerSessions.get(missing)));
             }
         }
 
@@ -1923,23 +1858,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             for (final String missing : domainSessionsNotInCache) {
                 Log.info("Restoring domain session for: {}", missing);
                 CacheUtil.addValueToMultiValuedCache(domainSessionsCache, missing, localDomainSessions.get(missing), ArrayList::new);
-            }
-        }
-
-        // Ensure that 'validatedDomainsCache' has content that reflects the locally available incoming server sessions
-        // (we do not need to restore the info for sessions on other nodes, as those will be dropped right after invoking this method anyway).
-        Log.info("Looking for local validated domains that have 'dropped out' of the cache (likely as a result of a network failure).");
-        final Map<StreamID, Collection<String>> localValidatedDomains = localSessionManager.getIncomingServerSessions().stream().collect(Collectors.toMap(LocalSession::getStreamID, LocalIncomingServerSession::getValidatedDomains));
-        final Set<StreamID> cachedValidatedDomains = validatedDomainsCache.keySet();
-        final Set<StreamID> validatedDomainsNotInCache = new HashSet<>(localValidatedDomains.keySet()); // defensive copy - we should not modify localValidatedDomains!
-        validatedDomainsNotInCache.removeAll(cachedValidatedDomains);
-        if (validatedDomainsNotInCache.isEmpty()) {
-            Log.info("Found no local validated domains that are missing from the cache.");
-        } else {
-            Log.warn("Found {} validated domains that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", validatedDomainsNotInCache.size());
-            for (final StreamID missing : validatedDomainsNotInCache) {
-                Log.info("Restoring validated domains for: {}", missing);
-                validatedDomainsCache.put(missing, new HashSet<>(localValidatedDomains.get(missing)));
             }
         }
     }
@@ -1964,7 +1882,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         Log.trace( "Restoring cache content for cache '{}' by adding all connection manager sessions that are connected to the local cluster node.", multiplexerSessionsCache.getName() );
         localSessionManager.getConnnectionManagerSessions().forEach( (address, session) -> multiplexerSessionsCache.put( address, server.getNodeID() ) );
 
-        Log.trace( "Restoring cache content for cache '{}', '{}' and '{}' by adding all incoming server sessions that are connected to the local cluster node.", incomingServerSessionsCache.getName(), domainSessionsCache.getName(), validatedDomainsCache.getName());
+        Log.trace( "Restoring cache content for cache '{}' and '{}' by adding all incoming server sessions that are connected to the local cluster node.", incomingServerSessionInfoCache.getName(), domainSessionsCache.getName());
         localSessionManager.getIncomingServerSessions().forEach( session -> registerIncomingServerSession( session.getAddress().getDomain(), session ) );
     }
 
@@ -2027,8 +1945,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Verifies that {@link #incomingServerSessionsCache}, {@link #localSessionManager#getIncomingServerSessions()}
-     * and {@link #incomingServerSessionsByClusterNode} are in a consistent state.
+     * Verifies that {@link #incomingServerSessionInfoCache}, {@link #localSessionManager#getIncomingServerSessions()}
+     * and {@link #incomingServerSessionInfoByClusterNode} are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
      *
@@ -2036,16 +1954,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
      *
      * @return A consistency state report.
-     * @see #incomingServerSessionsCache which is the cache that is used tho share data with other cluster nodes.
+     * @see #incomingServerSessionInfoCache which is the cache that is used tho share data with other cluster nodes.
      * @see LocalSessionManager#getIncomingServerSessions() which holds content added to the caches by the local cluster node.
-     * @see #incomingServerSessionsByClusterNode which holds content added to the caches by cluster nodes other than the local node.
+     * @see #incomingServerSessionInfoByClusterNode which holds content added to the caches by cluster nodes other than the local node.
      */
-    public Multimap<String, String> clusteringStateConsistencyReportForIncomingServerSessions() {
+    public Multimap<String, String> clusteringStateConsistencyReportForIncomingServerSessionInfos() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.
 
-        return ConsistencyChecks.generateReportForSessionManagerIncomingServerSessions(incomingServerSessionsCache, localSessionManager.getIncomingServerSessions(), incomingServerSessionsByClusterNode);
+        return ConsistencyChecks.generateReportForSessionManagerIncomingServerSessions(incomingServerSessionInfoCache, localSessionManager.getIncomingServerSessions(), incomingServerSessionInfoByClusterNode);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software and Ignite Realtime Community 2021. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -196,6 +194,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
          * Operations of incoming server sessions
          */
         getLocalDomain,
-        getAddress
+        getAddress,
+        getValidatedDomains
     }
 }

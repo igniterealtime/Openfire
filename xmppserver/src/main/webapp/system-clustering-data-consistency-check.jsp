@@ -35,7 +35,7 @@
     pageContext.setAttribute("clusteringStateConsistencyReportForServerRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForServerRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForComponentRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForComponentRoutes());
     pageContext.setAttribute("clusteringStateConsistencyReportForClientRoutes", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForClientRoutes());
-    pageContext.setAttribute("clusteringStateConsistencyReportForIncomingServerSessions", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForIncomingServerSessions());
+    pageContext.setAttribute("clusteringStateConsistencyReportForIncomingServerSessions", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForIncomingServerSessionInfos());
     pageContext.setAttribute("clusteringStateConsistencyReportForSessionInfos", ((SessionManager) XMPPServer.getInstance().getSessionManager()).clusteringStateConsistencyReportForSessionInfos());
     pageContext.setAttribute("clusteringStateConsistencyReportForUsersSession", ((RoutingTableImpl) XMPPServer.getInstance().getRoutingTable()).clusteringStateConsistencyReportForUsersSessions());
     pageContext.setAttribute("clusteringStateConsistencyReportForMucRoomsAndOccupant", XMPPServer.getInstance().getMultiUserChatManager().clusteringStateConsistencyReportForMucRoomsAndOccupant());

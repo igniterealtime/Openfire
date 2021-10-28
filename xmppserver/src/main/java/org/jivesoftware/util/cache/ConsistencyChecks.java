@@ -27,12 +27,7 @@ import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.spi.OccupantManager;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ClientSessionInfo;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.util.CollectionUtils;
 import org.xmpp.packet.JID;
@@ -403,14 +398,14 @@ public class ConsistencyChecks {
      * @return A consistency state report.
      */
     public static Multimap<String, String> generateReportForSessionManagerIncomingServerSessions(
-        @Nonnull final Cache<StreamID, NodeID> incomingServerSessionsCache,
+        @Nonnull final Cache<StreamID, IncomingServerSessionInfo> incomingServerSessionsCache,
         @Nonnull final Collection<LocalIncomingServerSession> localIncomingServerSessions,
         @Nonnull final Map<NodeID, Set<StreamID>> incomingServerSessionsByClusterNode
     ) {
         final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
 
         // Take snapshots of all data structures at as much the same time as possible.
-        final ConcurrentMap<StreamID, NodeID> cache = new ConcurrentHashMap<>(incomingServerSessionsCache);
+        final ConcurrentMap<StreamID, IncomingServerSessionInfo> cache = new ConcurrentHashMap<>(incomingServerSessionsCache);
         final List<StreamID> localIncomingServerSessionsStreamIDs = localIncomingServerSessions.stream().map(LocalIncomingServerSession::getStreamID).collect(Collectors.toList());
         final List<StreamID> remoteIncomingServerSessions = incomingServerSessionsByClusterNode.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         final List<String> remoteIncomingServerSessionsWithNodeId = new ArrayList<>();

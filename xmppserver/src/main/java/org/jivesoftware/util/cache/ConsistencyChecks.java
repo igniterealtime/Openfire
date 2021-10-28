@@ -150,7 +150,7 @@ public class ConsistencyChecks {
         if (nonLocallyStoredCachedServerRouteAddressing.isEmpty()) {
             result.put("pass", String.format("All cache entries of %s exist in s2sDomainPairsByClusterNode and/or LocalRoutingTable's getServerRoutes() response.", serversCache.getName()));
         } else {
-            result.put("fail", String.format("Not cache entries of %s exist in s2sDomainPairsByClusterNode and/or LocalRoutingTable's getServerRoutes() response. These %d entries do not: %s", serversCache.getName(), nonLocallyStoredCachedServerRouteAddressing.size(), nonLocallyStoredCachedServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))));
+            result.put("fail", String.format("Not all cache entries of %s exist in s2sDomainPairsByClusterNode and/or LocalRoutingTable's getServerRoutes() response. These %d entries do not: %s", serversCache.getName(), nonLocallyStoredCachedServerRouteAddressing.size(), nonLocallyStoredCachedServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))));
         }
 
         return result;
@@ -496,7 +496,7 @@ public class ConsistencyChecks {
         if (nonLocallyStoredCachedIncomingServerSessions.isEmpty()) {
             result.put("pass", String.format("All cache entries of %s exist in incomingServerSessionsByClusterNode and/or SessionManager's localSessionManager.", incomingServerSessionsCache.getName()));
         } else {
-            result.put("fail", String.format("Not cache entries of %s exist in incomingServerSessionsByClusterNode and/or SessionManager's localSessionManager. These %d entries do not: %s", incomingServerSessionsCache.getName(), nonLocallyStoredCachedIncomingServerSessions.size(), nonLocallyStoredCachedIncomingServerSessions.stream().map(StreamID::getID).collect(Collectors.joining(", "))));
+            result.put("fail", String.format("Not all cache entries of %s exist in incomingServerSessionsByClusterNode and/or SessionManager's localSessionManager. These %d entries do not: %s", incomingServerSessionsCache.getName(), nonLocallyStoredCachedIncomingServerSessions.size(), nonLocallyStoredCachedIncomingServerSessions.stream().map(StreamID::getID).collect(Collectors.joining(", "))));
         }
 
         return result;
@@ -608,7 +608,7 @@ public class ConsistencyChecks {
         if (nonLocallyStoredCachedSessionInfos.isEmpty()) {
             result.put("pass", String.format("All cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes.", sessionInfoCache.getName()));
         } else {
-            result.put("fail", String.format("Not cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes. These %d entries do not: %s", sessionInfoCache.getName(), nonLocallyStoredCachedSessionInfos.size(), nonLocallyStoredCachedSessionInfos.stream().collect(Collectors.joining(", "))));
+            result.put("fail", String.format("Not all cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes. These %d entries do not: %s", sessionInfoCache.getName(), nonLocallyStoredCachedSessionInfos.size(), nonLocallyStoredCachedSessionInfos.stream().collect(Collectors.joining(", "))));
         }
 
         return result;

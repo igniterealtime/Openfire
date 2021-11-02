@@ -1621,7 +1621,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private void restoreCacheContent()
     {
         Log.debug( "Restoring cache content for cache '{}' by adding all outgoing server routes that are connected to the local cluster node.", serversCache.getName() );
-        localRoutingTable.getServerRoutes().forEach( route -> route.getOutgoingDomainPairs().forEach( address -> serversCache.put( address, server.getNodeID()) ) );
+
+        // Check if there are local s2s connections that are already in the cache for remote nodes
+        Set<DomainPair> localServerRoutesToRemove = new HashSet<>();
+        localRoutingTable.getServerRoutes().forEach(
+            route -> route.getOutgoingDomainPairs().forEach(
+                address -> {
+                    final Lock lock = serversCache.getLock(address);
+                    lock.lock();
+                    try {
+                        if (serversCache.containsKey(address)) {
+                            Log.info("We have an s2s connection to {}, but this connection also exists on other nodes. They are not allowed to both exist, so this local s2s connection will be terminated.", address);
+                            localServerRoutesToRemove.add(address);
+                        } else {
+                            serversCache.put(address, server.getNodeID());
+                        }
+                    } finally {
+                        lock.unlock();
+                    }
+                })
+        );
+        for (DomainPair localServerRouteToRemove : localServerRoutesToRemove) {
+            final RoutableChannelHandler route = localRoutingTable.getRoute(localServerRouteToRemove);
+            if (route instanceof LocalOutgoingServerSession) {
+                // Terminating the connection should also trigger the OutgoingServerSessionListener#onConnectionClose in SessionManagerImpl.
+                // That will result in the s2s connection actually being removed from the LocalRoutingTable.
+                LocalOutgoingServerSession.class.cast(route).close();
+            } else {
+                Log.warn("We can't terminate the local s2s connection for {} because it is a {} instead of a LocalOutgoingServerSession.", localServerRouteToRemove, route.getClass());
+            }
+        }
 
         Log.debug( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
         localRoutingTable.getComponentRoute().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));

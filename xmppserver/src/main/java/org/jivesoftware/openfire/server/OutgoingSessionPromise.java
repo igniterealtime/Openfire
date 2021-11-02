@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.server;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
@@ -35,6 +38,7 @@ import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -61,6 +65,13 @@ import org.xmpp.packet.Presence;
 public class OutgoingSessionPromise implements RoutableChannelHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
+
+    public static final SystemProperty<Duration> FAST_DISCARD_DURATION = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.outgoing.fastdiscard.duration")
+        .setDynamic(true)
+        .setDefaultValue(Duration.ofSeconds(5))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .build();
 
     private static final Interner<String> domainBasedMutex = Interners.newWeakInterner();
 
@@ -201,19 +212,19 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     {
         private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );
 
-        private OutgoingSessionPromise promise;
-        private String domain;
-        private Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
+        private final OutgoingSessionPromise promise;
+        private final String domain;
+        private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
 
         /**
          * Keep track of the last time s2s failed. Once a packet failed to be sent to a
-         * remote server this stamp will be used so that for the next 5 seconds future packets
-         * for the same domain will automatically fail. After 5 seconds a new attempt to
+         * remote server this stamp will be used so that for the next few moments future packets
+         * for the same domain will automatically fail. After this timeout, a new attempt to
          * establish a s2s connection and deliver pending packets will be performed.
          * This optimization is good when the server is receiving many packets per second for the
          * same domain. This will help reduce high CPU consumption.
          */
-        private long failureTimestamp = -1;
+        private Instant failureTimestamp = null;
 
         public PacketsProcessor(OutgoingSessionPromise promise, String domain) {
             this.promise = promise;
@@ -226,16 +237,16 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 Packet packet = packetQueue.poll();
                 if (packet != null) {
                     // Check if s2s already failed
-                    if (failureTimestamp > 0) {
+                    if (failureTimestamp != null) {
                         // Check if enough time has passed to attempt a new s2s
-                        if (System.currentTimeMillis() - failureTimestamp < 5000) {
+                        if (Duration.between(failureTimestamp, Instant.now()).compareTo(FAST_DISCARD_DURATION.getValue()) < 0) {
                             Log.debug( "Error sending packet to domain '{}' (fast discard): {}", domain, packet );
                             returnErrorToSender(packet);
                             continue;
                         }
                         else {
                             // Reset timestamp of last failure since we are ready to try again doing a s2s
-                            failureTimestamp = -1;
+                            failureTimestamp = null;
                         }
                     }
                     try {
@@ -243,7 +254,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     }
                     catch (Exception e) {
                         // Mark the time when s2s failed
-                        failureTimestamp = System.currentTimeMillis();
+                        failureTimestamp = Instant.now();
                         Log.debug( "Error sending packet to domain '{}': {}", domain, packet, e );
                         returnErrorToSender(packet);
                     }

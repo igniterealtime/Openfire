@@ -70,7 +70,8 @@ public class UserManagerTest {
         userManager = new UserManager(xmppServer);
         userManager.createUser(USER_ID, "change me", "Test User Name", "test-email@example.com");
         userManager.createUser(USER_ID_2, "change me", "Test User Name 2", "test-email-2@example.com");
-        
+
+        XMPPServer.setInstance(xmppServer);
     }
     
     @Test

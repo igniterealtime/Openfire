@@ -59,7 +59,7 @@ import javax.annotation.Nonnull;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class UserManager {
 
-    private static final Interner<String> userBaseMutex = Interners.newWeakInterner();
+    private static final Interner<JID> userBaseMutex = Interners.newWeakInterner();
 
     public static final SystemProperty<Class> USER_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.user.className")
@@ -271,7 +271,7 @@ public final class UserManager {
         username = username.trim().toLowerCase();
         User user = userCache.get(username);
         if (user == null) {
-            synchronized (userBaseMutex.intern(username)) {
+            synchronized (userBaseMutex.intern(XMPPServer.getInstance().createJID(username, null))) {
                 user = userCache.get(username);
                 if (user == null) {
                     user = provider.loadUser(username);

@@ -76,7 +76,7 @@ public class WebManager extends WebBean {
      * @return the auth token; redirect to the login page if an auth token is not found.
      */
     public AuthToken getAuthToken() {
-        return (AuthToken)session.getAttribute("jive.admin.authToken");
+        return session == null ? null : (AuthToken)session.getAttribute("jive.admin.authToken");
     }
 
     /**
@@ -160,9 +160,9 @@ public class WebManager extends WebBean {
         User pageUser = null;
         try {
             final AuthToken authToken = getAuthToken();
-            if (authToken == null )
+            if (authToken == null)
             {
-                Log.debug( "Unable to get user: no auth token on session." );
+                Log.debug( "Unable to get user: no session or no auth token on session." );
                 return null;
             }
             if (authToken instanceof AuthToken.OneTimeAuthToken) {

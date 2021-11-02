@@ -229,8 +229,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     if (failureTimestamp > 0) {
                         // Check if enough time has passed to attempt a new s2s
                         if (System.currentTimeMillis() - failureTimestamp < 5000) {
-                            returnErrorToSender(packet);
                             Log.debug( "Error sending packet to domain '{}' (fast discard): {}", domain, packet );
+                            returnErrorToSender(packet);
                             continue;
                         }
                         else {
@@ -242,10 +242,10 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         sendPacket(packet);
                     }
                     catch (Exception e) {
-                        returnErrorToSender(packet);
-                        Log.debug( "Error sending packet to domain '{}': {}", domain, packet, e );
                         // Mark the time when s2s failed
                         failureTimestamp = System.currentTimeMillis();
+                        Log.debug( "Error sending packet to domain '{}': {}", domain, packet, e );
+                        returnErrorToSender(packet);
                     }
                 }
             }
@@ -361,8 +361,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         {
             if ( !packetQueue.offer( packet ) )
             {
-                returnErrorToSender(packet);
                 Log.debug( "Error sending packet to domain '{}' (outbound queue full): {}", domain, packet );
+                returnErrorToSender(packet);
             }
         }
 

@@ -21,8 +21,8 @@ import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatManager;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -32,7 +32,15 @@ import org.xmpp.packet.JID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -289,6 +297,29 @@ public class LocalMUCRoomManager
                                 Log.trace("Trying to add occupant '{}' but no role for that occupant exists in the local room. Data inconsistency?", localOccupantToRestore.getRealJID());
                                 continue;
                             }
+
+                            // Check if the nickname of this occupant already existed elsewhere in the cluster.
+                            // If it did, we should actually kick the user out. With sincere apologies.
+                            String nickBeingAddedToRoom = localOccupantRole.getNickname();
+                            try {
+                                final List<MUCRole> existingOccupantsWithSameNick = roomInCluster.getOccupantsByNickname(nickBeingAddedToRoom);
+                                final Optional<JID> otherUserWithSameNick = existingOccupantsWithSameNick.stream().map(MUCRole::getUserAddress).filter(bareJid -> !bareJid.equals(localOccupantRole.getUserAddress())).findFirst();
+                                if (otherUserWithSameNick.isPresent()) {
+                                    // There is at least one remote occupant, being a different user, with the same nick
+                                    Log.info(
+                                        "Local occupant {} of room {} with nickname {} has to be kicked out because the nickname is already in use by user {} on node {}.",
+                                        localOccupantRole.getUserAddress(),
+                                        localRoom.getName(),
+                                        nickBeingAddedToRoom,
+                                        otherUserWithSameNick.get().toFullJID(),
+                                        otherUserWithSameNick.get().getNode()
+                                    );
+                                    // TODO actually kick
+                                }
+                            } catch (UserNotFoundException e) {
+                                // This is actually the happy path. There is no remote occupant in the room with the same nick. Proceed.
+                            }
+
                             roomInCluster.addOccupantRole(localOccupantRole);
                         }
                     }

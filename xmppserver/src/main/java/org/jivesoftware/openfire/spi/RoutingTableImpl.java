@@ -1646,9 +1646,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             if (route instanceof LocalOutgoingServerSession) {
                 // Terminating the connection should also trigger the OutgoingServerSessionListener#onConnectionClose in SessionManagerImpl.
                 // That will result in the s2s connection actually being removed from the LocalRoutingTable.
-                LocalOutgoingServerSession.class.cast(route).close();
+                try {
+                    LocalOutgoingServerSession.class.cast(route).close();
+                } catch (Exception e) {
+                    Log.warn("Failed to terminate the local s2s connection for " + localServerRouteToRemove + ".", e);
+                }
             } else {
-                Log.warn("We can't terminate the local s2s connection for {} because it is a {} instead of a LocalOutgoingServerSession.", localServerRouteToRemove, route.getClass());
+                Log.warn("Failed to terminate the local s2s connection for {} because it is a {} instead of a LocalOutgoingServerSession.", localServerRouteToRemove, route.getClass());
             }
         }
 

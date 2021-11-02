@@ -73,7 +73,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         .setChronoUnit(ChronoUnit.MILLIS)
         .build();
 
-    private static final Interner<String> domainBasedMutex = Interners.newWeakInterner();
+    private static final Interner<JID> domainBasedMutex = Interners.newWeakInterner();
 
     private static OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
@@ -88,7 +88,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      */
     private ThreadPoolExecutor threadPool;
 
-    private Map<String, PacketsProcessor> packetsProcessors = new HashMap<>();
+    private Map<JID, PacketsProcessor> packetsProcessors = new HashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
@@ -136,7 +136,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
                             boolean newProcessor = false;
                             PacketsProcessor packetsProcessor;
-                            String domain = packet.getTo().getDomain();
+                            JID domain = new JID(packet.getTo().getDomain());
                             synchronized (domainBasedMutex.intern(domain)) {
                                 packetsProcessor = packetsProcessors.get(domain);
                                 if (packetsProcessor == null) {
@@ -213,7 +213,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );
 
         private final OutgoingSessionPromise promise;
-        private final String domain;
+        private final JID domain;
         private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
 
         /**
@@ -226,7 +226,10 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
          */
         private Instant failureTimestamp = null;
 
-        public PacketsProcessor(OutgoingSessionPromise promise, String domain) {
+        public PacketsProcessor(OutgoingSessionPromise promise, JID domain) {
+            if (domain.getResource() != null || domain.getNode() != null) {
+                throw new IllegalArgumentException("Argument 'domain' needs to be a JID that does not have a resource-part and does not have a node-part. Provided value: " + domain);
+            }
             this.promise = promise;
             this.domain = domain;
         }
@@ -268,7 +271,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
             // TODO: Evaluate why removing the oss part causes nasty s2s and lockup issues.
-            Lock lock = serversCache.getLock(domain+"oss");
+            Lock lock = serversCache.getLock(domain.getDomain()+"oss");
             lock.lock();
             try {
                 created = LocalOutgoingServerSession
@@ -384,7 +387,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             }
         }
 
-        public String getDomain() {
+        public JID getDomain() {
             return domain;
         }
 

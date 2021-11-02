@@ -19,11 +19,13 @@ import java.util.Date;
 
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 /**
  * The LockOutManager manages the LockOutProvider configured for this server, caches knowledge of
@@ -40,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LockOutManager {
 
-    private static final Interner<String> userBaseMutex = Interners.newWeakInterner();
+    private static final Interner<JID> userBaseMutex = Interners.newWeakInterner();
 
     public static final SystemProperty<Class> LOCKOUT_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.lockout.className")
@@ -219,7 +221,7 @@ public class LockOutManager {
         LockOutFlag flag = lockOutCache.get(username);
         // If ID wan't found in cache, load it up and put it there.
         if (flag == null) {
-            synchronized (userBaseMutex.intern(username)) {
+            synchronized (userBaseMutex.intern(XMPPServer.getInstance().createJID(username, null))) {
                 flag = lockOutCache.get(username);
                 // If group wan't found in cache, load it up and put it there.
                 if (flag == null) {

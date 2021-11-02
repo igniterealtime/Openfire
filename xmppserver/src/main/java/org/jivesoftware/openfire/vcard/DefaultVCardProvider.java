@@ -20,12 +20,14 @@ import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -42,7 +44,7 @@ public class DefaultVCardProvider implements VCardProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultVCardProvider.class);
 
-    private static final Interner<String> userBaseMutex = Interners.newWeakInterner();
+    private static final Interner<JID> userBaseMutex = Interners.newWeakInterner();
     
     private static final String LOAD_PROPERTIES =
         "SELECT vcard FROM ofVCard WHERE username=?";
@@ -55,7 +57,7 @@ public class DefaultVCardProvider implements VCardProvider {
 
     @Override
     public Element loadVCard(String username) {
-        synchronized (userBaseMutex.intern(username)) {
+        synchronized (userBaseMutex.intern(XMPPServer.getInstance().createJID(username, null))) {
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;

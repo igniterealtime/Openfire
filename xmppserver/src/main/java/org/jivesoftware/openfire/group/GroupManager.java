@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.group;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
@@ -58,9 +59,7 @@ public class GroupManager {
         private static final GroupManager instance = new GroupManager();
     }
 
-    private static final Interner<String> groupBasedMutex = Interners.newWeakInterner();
-    private static final Interner<String> userBasedMutex = Interners.newWeakInterner();
-    private static final Interner<String> keyBasedMutex = Interners.newWeakInterner();
+    private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
 
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
@@ -289,7 +288,9 @@ public class GroupManager {
      * @throws GroupAlreadyExistsException if the group name already exists in the system.
      */
     public Group createGroup(String name) throws GroupAlreadyExistsException {
-        synchronized (groupBasedMutex.intern(name)) {
+        final Lock lock = groupCache.getLock(name);
+        lock.lock();
+        try {
             Group newGroup;
             try {
                 getGroup(name);
@@ -309,6 +310,8 @@ public class GroupManager {
                         GroupEventDispatcher.EventType.group_created, Collections.emptyMap());
             }
             return newGroup;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -357,7 +360,9 @@ public class GroupManager {
             return toGroup(name, firstCachedGroup);
         }
 
-        synchronized (groupBasedMutex.intern(name)) {
+        final Lock lock = groupCache.getLock(name);
+        lock.lock();
+        try {
             final CacheableOptional<Group> secondCachedGroup = groupCache.get(name);
             if (secondCachedGroup != null) {
                 return toGroup(name, secondCachedGroup);
@@ -371,6 +376,8 @@ public class GroupManager {
                 groupCache.put(name, CacheableOptional.of(null));
                 throw e;
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -500,7 +507,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups(String userName) {
         HashSet<String> groupNames = getSharedGroupsForUserFromCache(userName);
         if (groupNames == null) {
-            synchronized (userBasedMutex.intern(userName)) {
+            synchronized (userBasedMutex.intern(XMPPServer.getInstance().createJID(userName, null))) {
                 groupNames = getSharedGroupsForUserFromCache(userName);
                 if (groupNames == null) {
                     // assume this is a local user
@@ -582,7 +589,8 @@ public class GroupManager {
     public Collection<Group> getGroups(int startIndex, int numResults) {
         HashSet<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
         if (groupNames == null) {
-            synchronized (keyBasedMutex.intern(getPagedGroupNameKey(startIndex, numResults))) {
+            // synchronizing on intern'ed string isn't great, but this value is deemed sufficiently unique for this to be safe here.
+            synchronized (getPagedGroupNameKey(startIndex, numResults).intern()) {
                 groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getGroupNames(startIndex, numResults));
@@ -612,7 +620,7 @@ public class GroupManager {
     public Collection<Group> getGroups(JID user) {
         HashSet<String> groupNames = getUserGroupsFromCache(user);
         if (groupNames == null) {
-            synchronized (userBasedMutex.intern(user.getNode())) {
+            synchronized (userBasedMutex.intern(user)) {
                 groupNames = getUserGroupsFromCache(user);
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getGroupNames(user));

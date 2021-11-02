@@ -1,6 +1,7 @@
 package org.jivesoftware;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -28,6 +29,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -80,6 +83,10 @@ public final class Fixtures {
             return jid.getDomain().equals(XMPP_DOMAIN);
         }).when(xmppServer).isLocal(any(JID.class));
 
+        doAnswer(invocationOnMock -> new JID(invocationOnMock.getArgument(0), XMPP_DOMAIN, invocationOnMock.getArgument(1)))
+            .when(xmppServer).createJID(any(String.class), nullable(String.class));
+        doAnswer(invocationOnMock -> new JID(invocationOnMock.getArgument(0), XMPP_DOMAIN, invocationOnMock.getArgument(1), invocationOnMock.getArgument(2)))
+            .when(xmppServer).createJID(any(String.class), nullable(String.class), any(Boolean.class));
         doReturn(mockXMPPServerInfo()).when(xmppServer).getServerInfo();
         doReturn(mockIQRouter()).when(xmppServer).getIQRouter();
 

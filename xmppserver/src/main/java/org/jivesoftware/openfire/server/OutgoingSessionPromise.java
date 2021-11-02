@@ -209,7 +209,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
          * Keep track of the last time s2s failed. Once a packet failed to be sent to a
          * remote server this stamp will be used so that for the next 5 seconds future packets
          * for the same domain will automatically fail. After 5 seconds a new attempt to
-         * establish a s2s connection and deliver pendings packets will be performed.
+         * establish a s2s connection and deliver pending packets will be performed.
          * This optimization is good when the server is receiving many packets per second for the
          * same domain. This will help reduce high CPU consumption.
          */
@@ -277,6 +277,12 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             }
         }
 
+        /**
+         * Processes stanzas that could not be delivered to a remote domain, by generating error responses where
+         * appropriate.
+         *
+         * @param packet The stanza that could not be delivered.
+         */
         private void returnErrorToSender(Packet packet) {
             XMPPServer server = XMPPServer.getInstance();
             JID from = packet.getFrom();
@@ -294,14 +300,15 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             // TODO Send correct error condition: timeout or not_found depending on the real error
             try {
                 if (packet instanceof IQ) {
-                    IQ reply = new IQ();
-                    reply.setID(packet.getID());
-                    reply.setTo(from);
-                    reply.setFrom(to);
-                    reply.setChildElement(((IQ) packet).getChildElement().createCopy());
-                    reply.setError(PacketError.Condition.remote_server_not_found);
-
-                    replies.add( reply );
+                    if (((IQ) packet).isRequest()) {
+                        IQ reply = new IQ();
+                        reply.setID(packet.getID());
+                        reply.setTo(from);
+                        reply.setFrom(to);
+                        reply.setChildElement(((IQ) packet).getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.remote_server_not_found);
+                        replies.add( reply );
+                    }
                 }
                 else if (packet instanceof Presence) {
                     // workaround for OF-23. "undo" the 'setFrom' to a bare JID 

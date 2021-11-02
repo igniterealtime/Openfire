@@ -89,10 +89,10 @@ function setUpAioxmppEnvironment {
     	git clone -b devel https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     	pushd "${AIOXMPPDIR}"
 	fi
-    which pip3
-	pip3 install setuptools
-    pip3 install nose
-    pip3 install -e .
+	python3.9 -m pip install setuptools
+	python3.9 -m pip install pytest
+	python3.9 -m pip install pytest-cov
+	python3.9 -m pip install -e .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]
 provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
@@ -141,7 +141,7 @@ function runTests {
     which python3.9
 	if [ -d output ]; then rm -Rf output; fi
     mkdir output
-    python3.9 -m aioxmpp.e2etest --e2etest-config="${AIOXMPPCONFIG}" --e2etest-only -e 'test_set_topic' -e 'test_publish_and_purge' -e 'test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
+    python3.9 -m pytest -p aioxmpp.e2etest --e2etest-config="${AIOXMPPCONFIG}" --e2etest-only -k 'not test_set_topic and not test_publish_and_purge and not test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
 	if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
     popd
 }

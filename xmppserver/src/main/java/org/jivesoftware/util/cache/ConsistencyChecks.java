@@ -720,8 +720,7 @@ public class ConsistencyChecks {
             .collect(Collectors.toList());
         final List<String> allOccupantsJids = allOccupants
             .stream()
-            .map(OccupantManager.Occupant::getRealJID)
-            .map(JID::toFullJID)
+            .map(occupant -> occupant.getRealJID().toFullJID() + "/" + occupant.getNickname())
             .sorted()
             .collect(Collectors.toList());
 
@@ -731,8 +730,7 @@ public class ConsistencyChecks {
             .collect(Collectors.toList());
         final List<String> allMucRolesOccupantsJids = allMucRoles
             .stream()
-            .map(MUCRole::getUserAddress)
-            .map(JID::toFullJID)
+            .map(mucRole -> mucRole.getUserAddress().toFullJID() + "/" + mucRole.getNickname())
             .sorted()
             .collect(Collectors.toList());
 

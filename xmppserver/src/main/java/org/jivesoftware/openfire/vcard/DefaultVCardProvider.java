@@ -57,7 +57,14 @@ public class DefaultVCardProvider implements VCardProvider {
 
     @Override
     public Element loadVCard(String username) {
-        synchronized (userBaseMutex.intern(XMPPServer.getInstance().createJID(username, null))) {
+        final JID mutex;
+        if (username.contains("@")) {
+            // OF-2320: VCards are used for MUC rooms, to store their avatar. For this usecase, the 'username' is actually a (bare) JID value representing the room.
+            mutex = new JID(username);
+        } else {
+            mutex = XMPPServer.getInstance().createJID(username, null);
+        }
+        synchronized (userBaseMutex.intern(mutex)) {
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;

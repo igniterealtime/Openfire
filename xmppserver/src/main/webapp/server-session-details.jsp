@@ -31,6 +31,7 @@
 <%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="java.util.*" %>
+<%@ page import="java.net.InetAddress" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -55,7 +56,7 @@
     // Sort them by remote peer.
     final Map<String, Set<IncomingServerSession>> inByHost = inSessions.stream().collect(Collectors.groupingBy(e -> {
         try {
-            return e.getHostAddress() + " / " + e.getHostName();
+            return e.getHostAddress();
         } catch (Exception t) {
             return "Invalid session/connection";
         }
@@ -63,18 +64,24 @@
 
     final Map<String, Set<OutgoingServerSession>> outByHost = outSessions.stream().collect(Collectors.groupingBy(e -> {
         try {
-            return e.getHostAddress() + " / " + e.getHostName();
+            return e.getHostAddress();
         } catch (Exception t) {
             return "Invalid session/connection";
         }
     }, Collectors.mapping(e -> e, Collectors.toSet())));
 
-    final Set<String> allHosts = new HashSet<>();
+    Set<String> allHosts = new HashSet<>();
     allHosts.addAll(inByHost.keySet());
     allHosts.addAll(outByHost.keySet());
+    allHosts = allHosts.stream().map(address -> {
+        try {
+            return address + " / " + InetAddress.getByName(address).getCanonicalHostName();
+        } catch (Exception e) {
+            return address;
+        }
+    }).collect(Collectors.toSet());
 
     final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
-    final Logger Log = LoggerFactory.getLogger("server-session-details.jsp");
 
     pageContext.setAttribute("domainname", domainname);
     pageContext.setAttribute("allHosts", allHosts);

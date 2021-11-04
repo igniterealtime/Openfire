@@ -1558,7 +1558,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return the collection node that is containing this node.
      */
     public CollectionNode getParent() {
-        if ( parentIdentifier == null ) {
+        if ( parentIdentifier == null && parent==null) {
             return null;
         }
         if ( parent == null )

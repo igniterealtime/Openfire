@@ -208,6 +208,19 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         }
     }
 
+    /**
+     * Checks if an outgoing session is in process of being created, which includes both establishment of the (possibly
+     * authenticated) connection as well as delivery of all queued stanzas.
+     *
+     * @param domain The domain to check
+     * @return true if an outgoing session is currently being created, otherwise false.
+     */
+    public boolean isPending(JID domain) {
+        synchronized (domainBasedMutex.intern(domain)) {
+            return packetsProcessors.containsKey(domain) && !packetsProcessors.get(domain).isDone();
+        }
+    }
+
     private class PacketsProcessor implements Runnable
     {
         private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );

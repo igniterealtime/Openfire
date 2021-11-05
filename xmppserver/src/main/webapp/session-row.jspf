@@ -41,10 +41,11 @@
         <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
     </td>
     <td width="15%" nowrap>
-        <% String version = sess.getSoftwareVersion().get("version");
-           if (version != null) { %>
-                <%= version %>
-        <% } %>
+        <% if (sess.getSoftwareVersion() != null) {
+            String version = sess.getSoftwareVersion().get("version");
+            if (version != null) { %>
+        <%= StringUtils.escapeHTMLTags(version) %>
+        <% } } %>
     </td>
     <% if (ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting()) { %>
     <td nowrap>

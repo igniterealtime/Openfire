@@ -409,21 +409,7 @@ public class AdminConsolePlugin implements Plugin {
 
         contexts = new ContextHandlerCollection();
 
-        WebAppContext context;
-        // Add web-app. Check to see if we're in development mode. If so, we don't
-        // add the normal web-app location, but the web-app in the project directory.
-        boolean developmentMode = Boolean.getBoolean("developmentMode");
-        if( developmentMode )
-        {
-            System.out.println(LocaleUtils.getLocalizedString("admin.console.devmode"));
-
-            context = new WebAppContext(contexts, pluginDir.getParentFile().getParentFile().getParentFile().getParent() +
-                    File.separator + "src" + File.separator + "web", "/");
-        }
-        else {
-            context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp",
-                    "/");
-        }
+        WebAppContext context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp", "/");
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
         final List<ContainerInitializer> initializers = new ArrayList<>();
@@ -446,12 +432,6 @@ public class AdminConsolePlugin implements Plugin {
         // The index.html includes a redirect to the index.jsp and doesn't bypass
         // the context security when in development mode
         context.setWelcomeFiles(new String[]{"index.html"});
-
-        // Make sure the context initialization is done when in development mode
-        if( developmentMode )
-        {
-            context.addBean( new ServletContainerInitializersStarter( context ), true );
-        }
     }
 
     private void log(String string) {

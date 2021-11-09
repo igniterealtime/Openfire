@@ -36,7 +36,7 @@ public class GraphicsUtilsTest
     public void testIsImageWithImage() throws Exception
     {
         // Setup test fixture.
-        final InputStream input = getClass().getResourceAsStream( "/images/ant_logo_large.gif" );
+        final InputStream input = getClass().getResourceAsStream( "/check.gif" );
 
         // Execute system under test.
         final boolean result = GraphicsUtils.isImage( input );

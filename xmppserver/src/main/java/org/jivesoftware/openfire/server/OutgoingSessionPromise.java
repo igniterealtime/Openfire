@@ -266,7 +266,11 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         }
                     }
                     try {
-                        sendPacket(packet);
+                        establishConnection(packet.getFrom().getDomain(), packet.getTo().getDomain());
+                        do {
+                            // A connection to the remote server was created so get the route and purge the packet queue
+                            routingTable.routePacket(packet.getTo(), packet, false);
+                        } while ((packet = packetQueue.poll()) != null);
                     }
                     catch (Exception e) {
                         // Mark the time when s2s failed
@@ -279,7 +283,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             promise.processorDone(this);
         }
 
-        private void sendPacket(Packet packet) throws Exception {
+        private void establishConnection(String localDomain, String remoteDomain) throws Exception {
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
@@ -287,17 +291,14 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             Lock lock = serversCache.getLock(domain.getDomain()+"oss");
             lock.lock();
             try {
-                created = LocalOutgoingServerSession
-                        .authenticateDomain(packet.getFrom().getDomain(), packet.getTo().getDomain());
+                created = LocalOutgoingServerSession.authenticateDomain(localDomain, remoteDomain);
             } finally {
                 lock.unlock();
             }
             if (created) {
-                if (!routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain()))) {
+                if (!routingTable.hasServerRoute(new DomainPair(localDomain, remoteDomain))) {
                     throw new Exception("Route created but not found!!!");
                 }
-                // A connection to the remote server was created so get the route and send the packet
-                routingTable.routePacket(packet.getTo(), packet, false);
             }
             else {
                 throw new Exception("Failed to create connection to remote server");

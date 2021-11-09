@@ -53,11 +53,8 @@ public class PluginClassLoader extends URLClassLoader {
      * Adds a directory to the class loader.
      *
      * @param directory the directory.
-     * @param developmentMode true if the plugin is running in development mode. This
-     *      resolves classloader conflicts between the deployed plugin
-     * and development classes.
      */
-    public void addDirectory(File directory, boolean developmentMode) {
+    public void addDirectory(File directory) {
         try {
             // Add classes directory to classpath.
             File classesDir = new File(directory, "classes");
@@ -94,14 +91,7 @@ public class PluginClassLoader extends URLClassLoader {
                 for (int i = 0; i < jars.length; i++) {
                     if (jars[i] != null && jars[i].isFile()) {
                         String jarFileUri = jars[i].toURI().toString()  + "!/";
-                        if (developmentMode) {
-                            // Do not add plugin-pluginName.jar to classpath.
-                            if (!jars[i].getName().equals("plugin-" + directory.getName() + ".jar")) {
-                                addURLFile(new URL("jar", "", -1, jarFileUri));
-                            }
-                        } else {
-                            addURLFile(new URL("jar", "", -1, jarFileUri));
-                        }
+                        addURLFile(new URL("jar", "", -1, jarFileUri));
                     }
                 }
             }

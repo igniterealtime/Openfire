@@ -86,8 +86,7 @@ public class PluginManager
      * The directory in which a plugin is extracted, mapped by canonical name. This collection contains loaded plugins,
      * as well as extracted (but not loaded) plugins.
      *
-     * Note that typically these directories are subdirectories of {@code plugins}, but a 'dev-plugin' could live
-     * elsewhere.
+     * Typically, these directories are subdirectories of {@code plugins}.
      */
     @GuardedBy("this")
     private final Map<String, Path> pluginDirs = new HashMap<>();
@@ -97,9 +96,6 @@ public class PluginManager
      */
     @GuardedBy("this")
     private final Map<String, PluginMetadata> pluginMetadata = Collections.synchronizedMap(new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
-
-    @GuardedBy("this")
-    private final Map<Plugin, PluginDevEnvironment> pluginDevelopment = new HashMap<>();
 
     @GuardedBy("this")
     private final Map<Plugin, List<String>> parentPluginMap = new HashMap<>();
@@ -165,7 +161,6 @@ public class PluginManager
         pluginDirs.clear();
         pluginMetadata.clear();
         classloaders.clear();
-        pluginDevelopment.clear();
         childPluginMap.clear();
         failureToLoadCount.clear();
     }
@@ -528,12 +523,6 @@ public class PluginManager
                 }
             }
 
-            // Properties to be used to load external resources. When set, plugin is considered to run in DEV mode.
-            final String devModeClassesDir = System.getProperty( canonicalName + ".classes" );
-            final String devModewebRoot = System.getProperty( canonicalName + ".webRoot" );
-            final boolean devMode = devModewebRoot != null || devModeClassesDir != null;
-            final PluginDevEnvironment dev = ( devMode ? configurePluginDevEnvironment( pluginDir, devModeClassesDir, devModewebRoot ) : null );
-
             // Initialize the plugin class loader, which is either a new instance, or a the loader from a parent plugin.
             final PluginClassLoader pluginLoader;
 
@@ -576,13 +565,7 @@ public class PluginManager
             }
 
             // Add the plugin sources to the classloaded.
-            pluginLoader.addDirectory( pluginDir.toFile(), devMode );
-
-            // When running in DEV mode, add optional other sources too.
-            if ( dev != null && dev.getClassesDir() != null )
-            {
-                pluginLoader.addURLFile( dev.getClassesDir().toURI().toURL() );
-            }
+            pluginLoader.addDirectory( pluginDir.toFile() );
 
             // Initialise a logging context, if necessary
             final Path path = pluginDir.resolve("classes/log4j2.xml");
@@ -609,10 +592,6 @@ public class PluginManager
             classloaders.put( plugin, pluginLoader );
             pluginsLoaded.put( canonicalName, plugin );
             pluginDirs.put( canonicalName, pluginDir );
-            if ( dev != null )
-            {
-                pluginDevelopment.put( plugin, dev );
-            }
 
             // If this is a child plugin, register it as such.
             if ( parentPlugin != null )
@@ -731,52 +710,6 @@ public class PluginManager
         }
     }
 
-    private PluginDevEnvironment configurePluginDevEnvironment( final Path pluginDir, String classesDir, String webRoot ) throws IOException
-    {
-        final String pluginName = pluginDir.getFileName().toString();
-
-        final Path compilationClassesDir = pluginDir.resolve( "classes" );
-        if ( Files.notExists( compilationClassesDir ) )
-        {
-            Files.createDirectory( compilationClassesDir );
-        }
-        compilationClassesDir.toFile().deleteOnExit();
-
-        final PluginDevEnvironment dev = new PluginDevEnvironment();
-        Log.info( "Plugin '{}' is running in development mode.", pluginName );
-        if ( webRoot != null )
-        {
-            Path webRootDir = Paths.get( webRoot );
-            if ( Files.notExists( webRootDir ) )
-            {
-                // Ok, let's try it relative from this plugin dir?
-                webRootDir = pluginDir.resolve( webRoot );
-            }
-
-            if ( Files.exists( webRootDir ) )
-            {
-                dev.setWebRoot( webRootDir.toFile() );
-            }
-        }
-
-        if ( classesDir != null )
-        {
-            Path classes = Paths.get( classesDir );
-            if ( Files.notExists( classes ) )
-            {
-                // ok, let's try it relative from this plugin dir?
-                classes = pluginDir.resolve( classesDir );
-            }
-
-            if ( Files.exists( classes ) )
-            {
-                dev.setClassesDir( classes.toFile() );
-            }
-        }
-
-        return dev;
-    }
-
     private void configureCaches( Path pluginDir, String pluginName )
     {
         Path cacheConfig = pluginDir.resolve( "cache-config.xml" );
@@ -891,9 +824,6 @@ public class PluginManager
         Plugin plugin = pluginsLoaded.get( canonicalName );
         if ( plugin != null )
         {
-            // Remove from dev mode if it exists.
-            pluginDevelopment.remove( plugin );
-
             // See if any child plugins are defined.
             if ( parentPluginMap.containsKey( plugin ) )
             {
@@ -1036,19 +966,6 @@ public class PluginManager
             loader = classloaders.get( plugin );
         }
         return loader.loadClass( className );
-    }
-
-    /**
-     * Returns a plugin's dev environment if development mode is enabled for
-     * the plugin.
-     *
-     * @param plugin the plugin.
-     * @return the plugin dev environment, or {@code null} if development
-     *         mode is not enabled for the plugin.
-     */
-    public synchronized PluginDevEnvironment getDevEnvironment( Plugin plugin )
-    {
-        return pluginDevelopment.get( plugin );
     }
 
     /**

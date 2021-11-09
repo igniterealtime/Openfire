@@ -237,7 +237,7 @@ public class TLSStreamHandler {
                     throw ex;
                 }
 
-                return initialHSComplete;
+                throw new SSLHandshakeException( "The peer closed the connection during the TLS handshake." );
             }
 
             needIO: while (initialHSStatus == HandshakeStatus.NEED_UNWRAP) {

@@ -50,6 +50,9 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
  * When looking for a route to a remote server that does not have an existing connection, a session
@@ -73,14 +76,14 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         .setChronoUnit(ChronoUnit.MILLIS)
         .build();
 
-    private static final Interner<JID> domainBasedMutex = Interners.newWeakInterner();
+    private static final Interner<DomainPair> domainPairBasedMutex = Interners.newWeakInterner();
 
-    private static OutgoingSessionPromise instance = new OutgoingSessionPromise();
+    private static final OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
     /**
      * Queue that holds the packets pending to be sent to remote servers.
      */
-    private BlockingQueue<Packet> packets = new LinkedBlockingQueue<>(10000);
+    private final BlockingQueue<Packet> packets = new LinkedBlockingQueue<>(10000);
 
     /**
      * Pool of threads that will create outgoing sessions to remote servers and send
@@ -88,13 +91,13 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      */
     private ThreadPoolExecutor threadPool;
 
-    private Map<JID, PacketsProcessor> packetsProcessors = new HashMap<>();
+    private final Map<DomainPair, PacketsProcessor> packetsProcessors = new HashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      * Key: server domain, Value: nodeID
      */
-    private Cache<String, NodeID> serversCache;
+    private Cache<DomainPair, NodeID> serversCache;
     /**
      * Flag that indicates if the process that consumed the queued packets should stop.
      */
@@ -125,45 +128,42 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         // be actually processed by a thread of the pool (when available). If an error occurs
         // while creating the remote session or sending the packet then a packet with error 502
         // will be sent to the sender of the packet
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (!shutdown) {
-                    try {
-                        if (threadPool.getActiveCount() < threadPool.getMaximumPoolSize()) {
-                            // Wait until a packet is available
-                            final Packet packet = packets.take();
+        Thread thread = new Thread(() -> {
+            while (!shutdown) {
+                try {
+                    if (threadPool.getActiveCount() < threadPool.getMaximumPoolSize()) {
+                        // Wait until a packet is available
+                        final Packet packet = packets.take();
 
-                            boolean newProcessor = false;
-                            PacketsProcessor packetsProcessor;
-                            JID domain = new JID(packet.getTo().getDomain());
-                            synchronized (domainBasedMutex.intern(domain)) {
-                                packetsProcessor = packetsProcessors.get(domain);
-                                if (packetsProcessor == null) {
-                                    packetsProcessor =
-                                            new PacketsProcessor(OutgoingSessionPromise.this, domain);
-                                    packetsProcessors.put(domain, packetsProcessor);
-                                    newProcessor = true;
-                                }
-                                packetsProcessor.addPacket(packet);
+                        boolean newProcessor = false;
+                        PacketsProcessor packetsProcessor;
+                        final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
+                        synchronized (domainPairBasedMutex.intern(domainPair)) {
+                            packetsProcessor = packetsProcessors.get(domainPair);
+                            if (packetsProcessor == null) {
+                                packetsProcessor =
+                                        new PacketsProcessor(OutgoingSessionPromise.this, domainPair);
+                                packetsProcessors.put(domainPair, packetsProcessor);
+                                newProcessor = true;
                             }
-
-                            if (newProcessor) {
-                                // Process the packet in another thread
-                                threadPool.execute(packetsProcessor);
-                            }
+                            packetsProcessor.addPacket(packet);
                         }
-                        else {
-                            // No threads are available so take a nap :)
-                            Thread.sleep(200);
+
+                        if (newProcessor) {
+                            // Process the packet in another thread
+                            threadPool.execute(packetsProcessor);
                         }
                     }
-                    catch (InterruptedException e) {
-                        // Do nothing
+                    else {
+                        // No threads are available so take a nap :)
+                        Thread.sleep(200);
                     }
-                    catch (Exception e) {
-                        Log.error(e.getMessage(), e);
-                    }
+                }
+                catch (InterruptedException e) {
+                    // Do nothing
+                }
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
                 }
             }
         }, "Queued Packets Processor");
@@ -192,15 +192,15 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     }
 
     @Override
-    public void process(Packet packet) {
+    public void process(@Nonnull final Packet packet) {
         // Queue the packet. Another process will process the queued packets.
         packets.add(packet.createCopy());
     }
 
-    private void processorDone(PacketsProcessor packetsProcessor) {
-        synchronized(domainBasedMutex.intern(packetsProcessor.getDomain())) {
+    private void processorDone(@Nonnull final PacketsProcessor packetsProcessor) {
+        synchronized(domainPairBasedMutex.intern(packetsProcessor.getDomainPair())) {
             if (packetsProcessor.isDone()) {
-                packetsProcessors.remove(packetsProcessor.getDomain());
+                packetsProcessors.remove(packetsProcessor.getDomainPair());
             }
             else {
                 threadPool.execute(packetsProcessor);
@@ -212,12 +212,12 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      * Checks if an outgoing session is in process of being created, which includes both establishment of the (possibly
      * authenticated) connection as well as delivery of all queued stanzas.
      *
-     * @param domain The domain to check
+     * @param domainPair The connection to check.
      * @return true if an outgoing session is currently being created, otherwise false.
      */
-    public boolean isPending(JID domain) {
-        synchronized (domainBasedMutex.intern(domain)) {
-            return packetsProcessors.containsKey(domain) && !packetsProcessors.get(domain).isDone();
+    public boolean isPending(@Nonnull final DomainPair domainPair) {
+        synchronized (domainPairBasedMutex.intern(domainPair)) {
+            return packetsProcessors.containsKey(domainPair) && !packetsProcessors.get(domainPair).isDone();
         }
     }
 
@@ -225,8 +225,13 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     {
         private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );
 
+        @Nonnull
         private final OutgoingSessionPromise promise;
-        private final JID domain;
+
+        @Nonnull
+        private final DomainPair domainPair;
+
+        @Nonnull
         private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
 
         /**
@@ -237,14 +242,12 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
          * This optimization is good when the server is receiving many packets per second for the
          * same domain. This will help reduce high CPU consumption.
          */
+        @Nullable
         private Instant failureTimestamp = null;
 
-        public PacketsProcessor(OutgoingSessionPromise promise, JID domain) {
-            if (domain.getResource() != null || domain.getNode() != null) {
-                throw new IllegalArgumentException("Argument 'domain' needs to be a JID that does not have a resource-part and does not have a node-part. Provided value: " + domain);
-            }
+        public PacketsProcessor(@Nonnull final OutgoingSessionPromise promise, @Nonnull final DomainPair domainPair) {
             this.promise = promise;
-            this.domain = domain;
+            this.domainPair = domainPair;
         }
 
         @Override
@@ -256,7 +259,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     if (failureTimestamp != null) {
                         // Check if enough time has passed to attempt a new s2s
                         if (Duration.between(failureTimestamp, Instant.now()).compareTo(FAST_DISCARD_DURATION.getValue()) < 0) {
-                            Log.debug( "Error sending packet to domain '{}' (fast discard): {}", domain, packet );
+                            Log.debug( "Error sending packet to domain '{}' (fast discard): {}", domainPair.getRemote(), packet );
                             returnErrorToSender(packet);
                             continue;
                         }
@@ -266,7 +269,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         }
                     }
                     try {
-                        establishConnection(packet.getFrom().getDomain(), packet.getTo().getDomain());
+                        establishConnection();
                         do {
                             // A connection to the remote server was created so get the route and purge the packet queue
                             routingTable.routePacket(packet.getTo(), packet, false);
@@ -275,7 +278,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     catch (Exception e) {
                         // Mark the time when s2s failed
                         failureTimestamp = Instant.now();
-                        Log.debug( "Error sending packet to domain '{}': {}", domain, packet, e );
+                        Log.debug( "Error sending packet to domain '{}': {}", domainPair.getRemote(), packet, e );
                         returnErrorToSender(packet);
                     }
                 }
@@ -283,20 +286,19 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
             promise.processorDone(this);
         }
 
-        private void establishConnection(String localDomain, String remoteDomain) throws Exception {
+        private void establishConnection() throws Exception {
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
-            // TODO: Evaluate why removing the oss part causes nasty s2s and lockup issues.
-            Lock lock = serversCache.getLock(domain.getDomain()+"oss");
+            final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
-                created = LocalOutgoingServerSession.authenticateDomain(localDomain, remoteDomain);
+                created = LocalOutgoingServerSession.authenticateDomain(domainPair);
             } finally {
                 lock.unlock();
             }
             if (created) {
-                if (!routingTable.hasServerRoute(new DomainPair(localDomain, remoteDomain))) {
+                if (!routingTable.hasServerRoute(domainPair)) {
                     throw new Exception("Route created but not found!!!");
                 }
             }
@@ -311,7 +313,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
          *
          * @param packet The stanza that could not be delivered.
          */
-        private void returnErrorToSender(Packet packet) {
+        private void returnErrorToSender(@Nonnull final Packet packet) {
             XMPPServer server = XMPPServer.getInstance();
             JID from = packet.getFrom();
             JID to = packet.getTo();
@@ -388,21 +390,28 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 }
             }
             catch (Exception e) {
-                Log.warn( "An exception occurred while trying to returning a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domain, packet, e );
+                Log.warn( "An exception occurred while trying to returning a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domainPair.getRemote(), packet, e );
             }
         }
 
-        void addPacket( Packet packet )
+        void addPacket( @Nonnull final Packet packet )
         {
-            if ( !packetQueue.offer( packet ) )
+            if (!packet.getFrom().getDomain().equals(domainPair.getLocal())) {
+                throw new IllegalArgumentException("Cannot queue packet from sender '" + packet.getFrom() + "' in the outgoing session promise for " + domainPair + ". Local domain does not match!");
+            }
+            if (!packet.getTo().getDomain().equals(domainPair.getRemote())) {
+                throw new IllegalArgumentException("Cannot queue packet to intended recipient '" + packet.getTo() + "' in the outgoing session promise to domain " + domainPair + ". Remote domain does not match!");
+            }
+            if (!packetQueue.offer(packet))
             {
-                Log.debug( "Error sending packet to domain '{}' (outbound queue full): {}", domain, packet );
+                Log.debug("Error sending packet in the outgoing session promise for {}. (outbound queue full): {}", domainPair, packet);
                 returnErrorToSender(packet);
             }
         }
 
-        public JID getDomain() {
-            return domain;
+        @Nonnull
+        public DomainPair getDomainPair() {
+            return domainPair;
         }
 
         public boolean isDone() {

@@ -242,7 +242,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @return true if the requested domain was valid.
      */
     public boolean validateSubsequentDomain(Element dbResult) {
-        ServerDialback method = new ServerDialback(getConnection(), getServerName());
+        final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
+        ServerDialback method = new ServerDialback(getConnection(), domainPair);
         if (method.validateRemoteDomain(dbResult, getStreamID())) {
             // Add the validated domain as a valid domain
             addValidatedDomain(dbResult.attributeValue("from"));

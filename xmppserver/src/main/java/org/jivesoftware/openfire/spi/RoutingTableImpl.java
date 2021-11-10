@@ -604,7 +604,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         boolean routed = false;
         DomainPair pair = new DomainPair(packet.getFrom().getDomain(), jid.getDomain());
         NodeID nodeID = serversCache.get(pair);
-        if (nodeID != null && !OutgoingSessionPromise.getInstance().isPending(new JID(jid.getDomain()))) {
+        if (nodeID != null && !OutgoingSessionPromise.getInstance().isPending(pair)) {
             if (server.getNodeID().equals(nodeID)) {
                 // This is a route to a remote server connected from this node
                 try {

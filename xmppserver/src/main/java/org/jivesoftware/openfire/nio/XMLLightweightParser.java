@@ -350,7 +350,7 @@ class XMLLightweightParser {
                     status = XMLLightweightParser.VERIFY_CLOSE_TAG;
                 }
             } else if (status == XMLLightweightParser.HEAD) {
-                if (ch == ' ' || ch == '>') {
+                if (Character.isWhitespace(ch) || ch == '>') {
                     // Append > to head to allow searching </tag>
                     head.append('>');
                     if(ch == '>')

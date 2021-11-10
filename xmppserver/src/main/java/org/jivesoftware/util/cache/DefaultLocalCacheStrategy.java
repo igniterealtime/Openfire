@@ -21,6 +21,7 @@ import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -202,25 +203,29 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
         }
 
         @Override
-        public void	lockInterruptibly(){
-            throw new UnsupportedOperationException();
+        public void lockInterruptibly() throws InterruptedException {
+            ReentrantLock lock = lookupLockForAcquire(key);
+            lock.lockInterruptibly();
         }
 
+        @Nonnull
         @Override
         public Condition newCondition(){
-            throw new UnsupportedOperationException();
+            ReentrantLock lock = lookupLockForAcquire(key);
+            return lock.newCondition();
         }
 
         @Override
         public boolean tryLock() {
-            throw new UnsupportedOperationException();
+            ReentrantLock lock = lookupLockForAcquire(key);
+            return lock.tryLock();
         }
 
         @Override
-        public boolean tryLock(long time, TimeUnit unit) {
-            throw new UnsupportedOperationException();
+        public boolean tryLock(long time, @Nonnull TimeUnit unit) throws InterruptedException {
+            ReentrantLock lock = lookupLockForAcquire(key);
+            return lock.tryLock(time, unit);
         }
-
     }
 
     private static class LockAndCount {

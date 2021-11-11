@@ -16,28 +16,30 @@
 
 package org.jivesoftware.openfire.server;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
+import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.DefaultLocalCacheStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -48,7 +50,6 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
@@ -95,15 +96,9 @@ public class OutgoingSessionPromise {
         .setMinValue(Duration.ZERO)
         .build();
 
-    public static final SystemProperty<Duration> FAST_DISCARD_DURATION = SystemProperty.Builder.ofType(Duration.class)
-        .setKey("xmpp.server.outgoing.fastdiscard.duration")
-        .setDynamic(true)
-        .setDefaultValue(Duration.ofSeconds(5))
-        .setChronoUnit(ChronoUnit.MILLIS)
-        .setMinValue(Duration.ZERO)
-        .build();
-
     private static final OutgoingSessionPromise instance = new OutgoingSessionPromise();
+
+    private final Interner<DomainPair> interner = Interners.newWeakInterner();
 
     /**
      * Pool of threads that will create outgoing sessions to remote servers and send
@@ -149,30 +144,77 @@ public class OutgoingSessionPromise {
         threadPool.shutdown();
     }
 
-    public void process(@Nonnull final Packet packet) {
-        final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
-        final PacketsProcessor newProc = new PacketsProcessor(OutgoingSessionPromise.this, domainPair);
-        final PacketsProcessor oldProc = packetsProcessors.putIfAbsent(domainPair, newProc);
-        if (oldProc == null) {
-            // There's not a processor for this packet yet.
-            newProc.addPacket(packet);
-            threadPool.execute(newProc);
+    /**
+     * Start a new process to establish a new outgoing connection, queuing the stanza that's addressed to the remote
+     * domain for delivery after that has occurred.
+     *
+     * Only one process can exist for any given domainPair. This method will throw an exception when it is invoked for
+     * a DomainPair for which a process already exists.
+     *
+     * The returned value of {@link #hasProcess(DomainPair)} can be used to determine if a process exists. The
+     * invocations of that method and this method should be guarded by the mutex returned by {@link #getMutex(DomainPair)}
+     * to ensure thread safety, as holding that mutex will prevent other threads from starting a new process.
+     *
+     * @param domainPair The domainPair that describes the local and remote domain between which the stanza is to be sent
+     * @param packet the stanza to send to the remote domain (addressing must correspond with the domainPair argument)
+     * @throws IllegalStateException when a process already exists for this domainPair
+     */
+    public void createProcess(@Nonnull final DomainPair domainPair, @Nonnull final Packet packet)
+    {
+        if (!packet.getFrom().getDomain().equals(domainPair.getLocal())) {
+            throw new IllegalArgumentException("Packet's 'from' domain ("+packet.getFrom().getDomain()+") does not match domainPair's local ("+domainPair.getLocal()+")");
+        }
+        if (!packet.getTo().getDomain().equals(domainPair.getRemote())) {
+            throw new IllegalArgumentException("Packet's 'to' domain ("+packet.getTo().getDomain()+") does not match domainPair's remote ("+domainPair.getRemote()+")");
+        }
+
+        final PacketsProcessor packetsProcessor = new PacketsProcessor(domainPair);
+        if (packetsProcessors.putIfAbsent(domainPair, packetsProcessor) != null) {
+            throw new IllegalStateException("Attempted to create a new PacketProcessor for " + domainPair + " but one already exists.");
         } else {
-            // There's already a processor for this packet. Add the packet to that one.
-            oldProc.addPacket(packet);
+            Log.debug("Created new PacketProcessor for {}", domainPair);
+            packetsProcessor.addPacket(packet);
+            threadPool.execute(packetsProcessor);
         }
     }
 
-    private void processorDone(@Nonnull final DomainPair domainPair)
+    /**
+     * Queues a stanza for delivery to a remote domain after an ongoing process to establish that connection has finished.
+     *
+     * A process for the target DomainPair must exist. This method will throw an exception when it does not.
+     *
+     * The returned value of {@link #hasProcess(DomainPair)} can be used to determine if a process exists. The
+     * invocations of that method and this method should be guarded by the mutex returned by {@link #getMutex(DomainPair)}
+     * to ensure thread safety, as holding that mutex will prevent other threads to finish the running process.
+     *
+     * @param domainPair The domainPair that describes the local and remote domain between which the stanza is to be sent
+     * @param packet the stanza to send to the remote domain (addressing must correspond with the domainPair argument)
+     * @throws IllegalStateException when a process does not exist for the domainPair
+     */
+    public void queue(@Nonnull final DomainPair domainPair, @Nonnull final Packet packet)
     {
-        final PacketsProcessor processor = packetsProcessors.computeIfPresent(
-            domainPair,
-            (pair, preExistingProcessor) -> preExistingProcessor.isDone() ? null : preExistingProcessor
-        );
-        if (processor != null) {
-            // Not done yet. Re-schedule
-            threadPool.execute(processor);
+        if (!packet.getFrom().getDomain().equals(domainPair.getLocal())) {
+            throw new IllegalArgumentException("Packet's 'from' domain ("+packet.getFrom().getDomain()+") does not match domainPair's local ("+domainPair.getLocal()+")");
         }
+        if (!packet.getTo().getDomain().equals(domainPair.getRemote())) {
+            throw new IllegalArgumentException("Packet's 'to' domain ("+packet.getTo().getDomain()+") does not match domainPair's remote ("+domainPair.getRemote()+")");
+        }
+        final PacketsProcessor processor = packetsProcessors.get(domainPair);
+        if (processor == null) {
+            throw new IllegalStateException("Attempt to queue stanza for " + domainPair + " while no processor exists for that domain pair.");
+        }
+        Log.trace("Queuing stanza for {}", domainPair);
+        processor.addPacket(packet);
+    }
+
+    /**
+     * Generates an object that is suitable as a mutex for operations that involve the provided DomainPair instance.
+     *
+     * @param domainPair The DomainPair for which the mutex is issued
+     * @return An object suitable to be a mutex.
+     */
+    public Object getMutex(@Nonnull final DomainPair domainPair) {
+        return interner.intern(domainPair);
     }
 
     /**
@@ -182,7 +224,7 @@ public class OutgoingSessionPromise {
      * @param domainPair The connection to check.
      * @return true if an outgoing session is currently being created, otherwise false.
      */
-    public boolean isPending(@Nonnull final DomainPair domainPair) {
+    public boolean hasProcess(@Nonnull final DomainPair domainPair) {
         final PacketsProcessor processor = packetsProcessors.get(domainPair);
         return processor != null && !processor.isDone();
     }
@@ -192,67 +234,58 @@ public class OutgoingSessionPromise {
         private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );
 
         @Nonnull
-        private final OutgoingSessionPromise promise;
-
-        @Nonnull
         private final DomainPair domainPair;
 
         @Nonnull
         private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
 
-        /**
-         * Keep track of the last time s2s failed. Once a packet failed to be sent to a
-         * remote server this stamp will be used so that for the next few moments future packets
-         * for the same domain will automatically fail. After this timeout, a new attempt to
-         * establish a s2s connection and deliver pending packets will be performed.
-         * This optimization is good when the server is receiving many packets per second for the
-         * same domain. This will help reduce high CPU consumption.
-         */
-        @Nullable
-        private Instant failureTimestamp = null;
-
-        public PacketsProcessor(@Nonnull final OutgoingSessionPromise promise, @Nonnull final DomainPair domainPair) {
-            this.promise = promise;
+        public PacketsProcessor(@Nonnull final DomainPair domainPair) {
             this.domainPair = domainPair;
         }
 
         @Override
         public void run() {
-            while (!isDone()) {
-                Packet packet = packetQueue.poll();
-                if (packet != null) {
-                    // Check if s2s already failed
-                    if (failureTimestamp != null) {
-                        // Check if enough time has passed to attempt a new s2s
-                        if (Duration.between(failureTimestamp, Instant.now()).compareTo(FAST_DISCARD_DURATION.getValue()) < 0) {
-                            Log.debug( "Error sending packet to domain '{}' (fast discard): {}", domainPair.getRemote(), packet );
+            Log.debug("Start for {}", domainPair);
+            RoutableChannelHandler channel;
+            try {
+                channel = establishConnection();
+            } catch (Exception e) {
+                Log.warn("An exception occurred while trying to establish a connection for {}", domainPair, e);
+                channel = null;
+            }
+
+            // After the connection has been established (or failed), process all queued stanzas. Ensure that no more
+            // stanzas are queued while we process the queue, by first synchronizing on the same mutex that should be
+            // used to guards #queue(). That will cause to-be-queued stanzas to be sent directly over the now
+            // established connection after we've finished processing all queued stanzas below.
+            synchronized (getMutex(domainPair)) {
+                Log.trace("Purging queue for {}", domainPair);
+                Packet packet;
+                while ((packet = packetQueue.poll()) != null) {
+                    if (channel != null) {
+                        // A connection to the remote server was created so get the route and purge the packet queue.
+                        try {
+                            Log.trace("Routing queued stanza: {}", packet);
+                            channel.process(packet);
+                        } catch (Exception e) {
+                            Log.debug("Error sending packet to domain '{}': {}", domainPair.getRemote(), packet, e);
                             returnErrorToSender(packet);
-                            continue;
                         }
-                        else {
-                            // Reset timestamp of last failure since we are ready to try again doing a s2s
-                            failureTimestamp = null;
-                        }
-                    }
-                    try {
-                        establishConnection();
-                        do {
-                            // A connection to the remote server was created so get the route and purge the packet queue
-                            routingTable.routePacket(packet.getTo(), packet, false);
-                        } while ((packet = packetQueue.poll()) != null);
-                    }
-                    catch (Exception e) {
-                        // Mark the time when s2s failed
-                        failureTimestamp = Instant.now();
-                        Log.debug( "Error sending packet to domain '{}': {}", domainPair.getRemote(), packet, e );
+                    } else {
+                        // A connection to the remote server failed. Return an error for all queued stanzas.
+                        Log.trace("Bouncing queued stanza: {}", packet);
                         returnErrorToSender(packet);
                     }
                 }
+
+                // Remove the processor to ensure that it cannot accept new stanzas to be queued.
+                packetsProcessors.remove(domainPair);
             }
-            promise.processorDone(domainPair);
+            Log.trace("Finished processing {}", domainPair);
         }
 
-        private void establishConnection() throws Exception {
+        private RoutableChannelHandler establishConnection() throws Exception {
+            Log.debug("Start establishing a connection for {}", domainPair);
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
             // Make sure that only one cluster node is creating the outgoing connection
@@ -264,8 +297,11 @@ public class OutgoingSessionPromise {
                 lock.unlock();
             }
             if (created) {
-                if (!routingTable.hasServerRoute(domainPair)) {
+                final OutgoingServerSession serverRoute = routingTable.getServerRoute(domainPair);
+                if (serverRoute == null || !(serverRoute instanceof LocalOutgoingServerSession)) {
                     throw new Exception("Route created but not found!!!");
+                } else {
+                    return serverRoute;
                 }
             }
             else {

@@ -21,6 +21,7 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -41,22 +42,26 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
         this.pair = address;
     }
 
+    @Override
     public Collection<DomainPair> getOutgoingDomainPairs()
     {
         ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getOutgoingDomainPairs);
         return (Collection<DomainPair>) doSynchronousClusterTask(task);
     }
 
-    public void addOutgoingDomainPair( String local, String remote )
+    @Override
+    public void addOutgoingDomainPair(@Nonnull final DomainPair domainPair)
     {
-        doClusterTask(new AddOutgoingDomainPair(pair, local, remote ));
+        doClusterTask(new AddOutgoingDomainPair(domainPair));
     }
 
-    public boolean authenticateSubdomain(String domain, String hostname) {
-        ClusterTask task = new AuthenticateSubdomainTask(pair, domain, hostname);
+    @Override
+    public boolean authenticateSubdomain(@Nonnull final DomainPair domainPair) {
+        ClusterTask task = new AuthenticateSubdomainTask(domainPair);
         return (Boolean) doSynchronousClusterTask(task);
     }
 
+    @Override
     public boolean isUsingServerDialback() {
         if (usingServerDialback == -1) {
             ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isUsingServerDialback);
@@ -65,19 +70,23 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
         return usingServerDialback == 1;
     }
 
-    public boolean checkOutgoingDomainPair(String localDomain, String remoteDomain) {
-        ClusterTask task = new CheckOutgoingDomainPairTask(pair, localDomain, remoteDomain);
+    @Override
+    public boolean checkOutgoingDomainPair(@Nonnull final DomainPair domainPair) {
+        ClusterTask task = new CheckOutgoingDomainPairTask(domainPair);
         return (Boolean)doSynchronousClusterTask(task);
     }
 
+    @Override
     RemoteSessionTask getRemoteSessionTask(RemoteSessionTask.Operation operation) {
         return new OutgoingServerSessionTask(pair, operation);
     }
 
+    @Override
     ClusterTask getDeliverRawTextTask(String text) {
         return new DeliverRawTextServerTask(pair, text);
     }
 
+    @Override
     ClusterTask getProcessPacketTask(Packet packet) {
         return new ProcessPacketTask(this, address, packet);
     }
@@ -94,15 +103,18 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
             this.text = text;
         }
 
+        @Override
         public void run() {
             getSession().deliverRawText(text);
         }
 
+        @Override
         public void writeExternal(ObjectOutput out) throws IOException {
             super.writeExternal(out);
             ExternalizableUtil.getInstance().writeSafeUTF(out, text);
         }
 
+        @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             super.readExternal(in);
             text = ExternalizableUtil.getInstance().readSafeUTF(in);
@@ -110,95 +122,50 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
     }
 
     private static class AddOutgoingDomainPair extends OutgoingServerSessionTask {
-        private String local;
-        private String remote;
 
         public AddOutgoingDomainPair() {
             super();
         }
 
-        protected AddOutgoingDomainPair(DomainPair address, String local, String remote) {
+        protected AddOutgoingDomainPair(DomainPair address) {
             super(address, null);
-            this.local = local;
-            this.remote = remote;
         }
 
+        @Override
         public void run() {
-            ((OutgoingServerSession) getSession()).addOutgoingDomainPair(local, remote);
-        }
-
-        public void writeExternal(ObjectOutput out) throws IOException {
-            super.writeExternal(out);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, local);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, remote);
-        }
-
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            super.readExternal(in);
-            local = ExternalizableUtil.getInstance().readSafeUTF(in);
-            remote = ExternalizableUtil.getInstance().readSafeUTF(in);
+            ((OutgoingServerSession) getSession()).addOutgoingDomainPair(domainPair);
         }
     }
 
     private static class AuthenticateSubdomainTask extends OutgoingServerSessionTask {
-        private String domain;
-        private String hostname;
 
         public AuthenticateSubdomainTask() {
             super();
         }
 
-        protected AuthenticateSubdomainTask(DomainPair address, String domain, String hostname) {
+        protected AuthenticateSubdomainTask(DomainPair address) {
             super(address, null);
-            this.domain = domain;
-            this.hostname = hostname;
         }
 
+        @Override
         public void run() {
-            result = ((OutgoingServerSession) getSession()).authenticateSubdomain(domain, hostname);
-        }
-
-        public void writeExternal(ObjectOutput out) throws IOException {
-            super.writeExternal(out);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, domain);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, hostname);
-        }
-
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            super.readExternal(in);
-            domain = ExternalizableUtil.getInstance().readSafeUTF(in);
-            hostname = ExternalizableUtil.getInstance().readSafeUTF(in);
+            result = ((OutgoingServerSession) getSession()).authenticateSubdomain(domainPair);
         }
     }
 
     private static class CheckOutgoingDomainPairTask extends OutgoingServerSessionTask {
-        private String local;
-        private String remote;
 
         public CheckOutgoingDomainPairTask() {
             super();
         }
 
-        protected CheckOutgoingDomainPairTask(DomainPair address, String local, String remote) {
+        protected CheckOutgoingDomainPairTask(DomainPair address) {
             super(address, null);
-            this.local = local;
-            this.remote = remote;
         }
 
+        @Override
         public void run() {
-            result = ((OutgoingServerSession) getSession()).checkOutgoingDomainPair(local, remote);
-        }
-
-        public void writeExternal(ObjectOutput out) throws IOException {
-            super.writeExternal(out);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, local);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, remote);
-        }
-
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            super.readExternal(in);
-            local = ExternalizableUtil.getInstance().readSafeUTF(in);
-            remote = ExternalizableUtil.getInstance().readSafeUTF(in);
+            result = ((OutgoingServerSession) getSession()).checkOutgoingDomainPair(this.domainPair);
         }
     }
 }

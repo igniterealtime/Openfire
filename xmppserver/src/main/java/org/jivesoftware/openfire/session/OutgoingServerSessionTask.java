@@ -30,18 +30,18 @@ import java.io.ObjectOutput;
  * @author Gaston Dombiak
  */
 public class OutgoingServerSessionTask extends RemoteSessionTask {
-    private DomainPair address;
+    protected DomainPair domainPair;
 
     public OutgoingServerSessionTask() {
     }
 
-    protected OutgoingServerSessionTask(DomainPair address, Operation operation) {
+    protected OutgoingServerSessionTask(DomainPair domainPair, Operation operation) {
         super(operation);
-        this.address = address;
+        this.domainPair = domainPair;
     }
 
     Session getSession() {
-        return SessionManager.getInstance().getOutgoingServerSession(address);
+        return SessionManager.getInstance().getOutgoingServerSession(domainPair);
     }
 
     public void run() {
@@ -56,15 +56,15 @@ public class OutgoingServerSessionTask extends RemoteSessionTask {
 
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
-        ExternalizableUtil.getInstance().writeSerializable(out, address);
+        ExternalizableUtil.getInstance().writeSerializable(out, domainPair);
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        address = (DomainPair) ExternalizableUtil.getInstance().readSerializable(in);
+        domainPair = (DomainPair) ExternalizableUtil.getInstance().readSerializable(in);
     }
 
     public String toString() {
-        return super.toString() + " operation: " + operation + " address: " + address;
+        return super.toString() + " operation: " + operation + " domain pair: " + domainPair;
     }
 }

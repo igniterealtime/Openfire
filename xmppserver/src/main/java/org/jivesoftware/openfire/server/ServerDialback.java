@@ -31,10 +31,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.*;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -109,9 +106,9 @@ public class ServerDialback {
     }
 
     private Connection connection;
-    private String serverName;
-    private SessionManager sessionManager = SessionManager.getInstance();
-    private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+    private DomainPair domainPair;
+    private final SessionManager sessionManager = SessionManager.getInstance();
+    private final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
     /**
      * Returns true if server dialback is enabled. When enabled remote servers may connect to this
@@ -161,12 +158,12 @@ public class ServerDialback {
 
     /**
      * Creates a new instance that will be used for creating {@link IncomingServerSession},
-     * validating subsequent domains or authenticatig new domains. Use
+     * validating subsequent domains or authenticating new domains. Use
      * {@link #createIncomingSession(org.dom4j.io.XMPPPacketReader)} for creating a new server
      * session used for receiving packets from the remote server. Use
      * {@link #validateRemoteDomain(org.dom4j.Element, org.jivesoftware.openfire.StreamID)} for
      * validating subsequent domains and use
-     * {@link #authenticateDomain(OutgoingServerSocketReader, String, String, String)} for
+     * {@link #authenticateDomain(OutgoingServerSocketReader, String)} for
      * registering new domains that are allowed to send packets to the remote server.<p>
      *
      * For validating domains a new TCP connection will be established to the Authoritative Server.
@@ -178,27 +175,26 @@ public class ServerDialback {
      * server domain/s and for sending packets to the Originating Server.
      *
      * @param connection the connection created by the remote server.
-     * @param serverName the name of the local server.
+     * @param domainPair the local and remote domain for which authentication is to be established.
      */
-    public ServerDialback(Connection connection, String serverName) {
+    public ServerDialback(Connection connection, DomainPair domainPair) {
         this.connection = connection;
-        this.serverName = serverName;
+        this.domainPair = domainPair;
     }
 
-    public ServerDialback() {
+    public ServerDialback(DomainPair domainPair) {
+        this.domainPair = domainPair;
     }
 
     /**
-     * Creates a new connection from the Originating Server to the Receiving Server for
-     * authenticating the specified domain.
+     * Creates a new connection for the domain pair, where the local domain acts as the Originating Server and the
+     * remote domain as the Receiving Server.
      *
-     * @param localDomain domain of the Originating Server to authenticate with the Receiving Server.
-     * @param remoteDomain IP address or hostname of the Receiving Server.
      * @param port port of the Receiving Server.
      * @return an OutgoingServerSession if the domain was authenticated or {@code null} if none.
      */
-    public LocalOutgoingServerSession createOutgoingSession(String localDomain, String remoteDomain, int port) {
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Create Outgoing Session from: " + localDomain + " to RS at: " + remoteDomain + " (port: " + port+ ")]" );
+    public LocalOutgoingServerSession createOutgoingSession(int port) {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Create Outgoing Session from: " + domainPair.getLocal() + " to a RS in the domain of: " + domainPair.getRemote() + " (port: " + port+ ")]" );
 
         log.debug( "Creating new outgoing session..." );
 
@@ -206,7 +202,7 @@ public class ServerDialback {
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
-            final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain( remoteDomain, port );
+            final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port );
             if ( socketToXmppDomain  == null ) {
                 log.info( "Unable to create new outgoing session: Cannot create a plain socket connection with any applicable remote host." );
                 return null;
@@ -224,8 +220,8 @@ public class ServerDialback {
             stream.append("<stream:stream");
             stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             stream.append(" xmlns=\"jabber:server\"");
-            stream.append(" to=\"").append(remoteDomain).append("\"");
-            stream.append(" from=\"").append(localDomain).append("\"");
+            stream.append(" to=\"").append(domainPair.getRemote()).append("\"");
+            stream.append(" from=\"").append(domainPair.getLocal()).append("\"");
             stream.append(" xmlns:db=\"jabber:server:dialback\"");
             stream.append(">");
             connection.deliverRawText(stream.toString());
@@ -259,14 +255,14 @@ public class ServerDialback {
                 socket.setSoTimeout(soTimeout);
                 String id = xpp.getAttributeValue("", "id");
                 OutgoingServerSocketReader socketReader = new OutgoingServerSocketReader(reader);
-                if (authenticateDomain(socketReader, localDomain, remoteDomain, id)) {
+                if (authenticateDomain(socketReader, id)) {
                     log.debug( "Successfully authenticated the connection with dialback." );
                     // Domain was validated so create a new OutgoingServerSession
                     StreamID streamID = BasicStreamIDFactory.createStreamID(id);
-                    LocalOutgoingServerSession session = new LocalOutgoingServerSession(localDomain, connection, socketReader, streamID);
+                    LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, socketReader, streamID);
                     connection.init(session);
-                    // Set the hostname as the address of the session
-                    session.setAddress(new JID(null, remoteDomain, null));
+                    // Set the remote domain as the address of the session.
+                    session.setAddress(new JID(null, domainPair.getRemote(), null));
                     log.debug( "Successfully created new outgoing session!" );
                     return session;
                 }
@@ -286,7 +282,7 @@ public class ServerDialback {
             }
         }
         catch (Exception e) {
-            log.error( "An exception occurred while creating outgoing session to remote server:", e );
+            log.error( "An exception occurred while creating outgoing session to remote server: ", e );
             // Close the connection
             if (connection != null) {
                 connection.close();
@@ -305,14 +301,12 @@ public class ServerDialback {
      * Most probably the Originating Server machine will be the Authoritative Server too.
      *
      * @param socketReader the reader to use for reading the answer from the Receiving Server.
-     * @param localDomain the domain to authenticate.
-     * @param remoteDomain the domain of the remote server (i.e. Receiving Server).
      * @param id the stream id to be used for creating the dialback key.
      * @return true if the Receiving Server authenticated the domain with the Authoritative Server.
      */
-    public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String localDomain, String remoteDomain, String id) {
+    public boolean authenticateDomain(OutgoingServerSocketReader socketReader, String id) {
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Authenticate domain: " + localDomain + " with RS: " + remoteDomain + " (id: " + id + ")]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + id + ")]" );
 
         log.debug( "Authenticating domain ..." );
 
@@ -322,8 +316,8 @@ public class ServerDialback {
             log.debug( "Sending dialback key and wait for the validation response..." );
             StringBuilder sb = new StringBuilder();
             sb.append("<db:result");
-            sb.append(" from=\"").append(localDomain).append("\"");
-            sb.append(" to=\"").append(remoteDomain).append("\">");
+            sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
+            sb.append(" to=\"").append(domainPair.getRemote()).append("\">");
             sb.append(key);
             sb.append("</db:result>");
             connection.deliverRawText(sb.toString());
@@ -485,7 +479,7 @@ public class ServerDialback {
         String recipient = doc.attributeValue("to");
         String remoteDomain = doc.attributeValue("from");
 
-        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Validate domain:" + recipient + "(id " + streamID + ") for OS: " + remoteDomain + "]" );
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Validate domain: " + recipient + "(id " + streamID + ") for OS: " + remoteDomain + "]" );
 
         log.debug( "Validating domain...");
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
@@ -642,11 +636,11 @@ public class ServerDialback {
     }
 
     private boolean isHostUnknown(String recipient) {
-        boolean host_unknown = !serverName.equals(recipient);
-        // If the recipient does not match the serverName then check if it matches a subdomain. This
+        boolean host_unknown = !domainPair.getLocal().equals(recipient);
+        // If the recipient does not match the local domain then check if it matches a subdomain. This
         // trick is useful when subdomains of this server are registered in the DNS so remote
         // servers may establish connections directly to a subdomain of this server
-        if (host_unknown && recipient.contains(serverName)) {
+        if (host_unknown && recipient.contains(domainPair.getLocal())) {
             host_unknown = !routingTable.hasComponentRoute(new JID(recipient));
         }
         return host_unknown;
@@ -799,7 +793,7 @@ public class ServerDialback {
                 }
             }
             catch (DocumentException | RuntimeException e) {
-                log.error("An error occurred while connecting to the Authoritative Server:", e);
+                log.error("An error occurred while connecting to the Authoritative Server: ", e);
                 // Thrown an error so <remote-connection-failed/> stream error condition is
                 // sent to the Originating Server
                 writer.write("</stream:stream>");

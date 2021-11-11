@@ -61,7 +61,7 @@ import javax.annotation.Nullable;
  * to connect to remote servers and deliver the packets. If an error occurred while establishing
  * the connection or sending the packet an error will be returned to the sender of the packet.
  *
- * @author Gaston Dombiak
+ * @author Gaston Dombiak, Dave Cridland, Guus der Kinderen
  */
 public class OutgoingSessionPromise implements RoutableChannelHandler {
 
@@ -77,11 +77,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
     private static final OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
     /**
-     * Queue that holds the packets pending to be sent to remote servers.
-     */
-    private final BlockingQueue<Packet> packets = new LinkedBlockingQueue<>(10000);
-
-    /**
      * Pool of threads that will create outgoing sessions to remote servers and send
      * the queued packets.
      */
@@ -94,10 +89,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      * Key: server domain, Value: nodeID
      */
     private Cache<DomainPair, NodeID> serversCache;
-    /**
-     * Flag that indicates if the process that consumed the queued packets should stop.
-     */
-    private boolean shutdown = false;
+
     private RoutingTable routingTable;
 
     private OutgoingSessionPromise() {
@@ -119,45 +111,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                 new ThreadPoolExecutor(maxThreads/4, maxThreads, 60, TimeUnit.SECONDS,
                         new LinkedBlockingQueue<Runnable>(queueSize),
                         new ThreadPoolExecutor.CallerRunsPolicy());
-
-        // Start the thread that will consume the queued packets. Each pending packet will
-        // be actually processed by a thread of the pool (when available). If an error occurs
-        // while creating the remote session or sending the packet then a packet with error 502
-        // will be sent to the sender of the packet
-        Thread thread = new Thread(() -> {
-            while (!shutdown) {
-                try {
-                    if (threadPool.getActiveCount() < threadPool.getMaximumPoolSize()) {
-                        // Wait until a packet is available
-                        final Packet packet = packets.take();
-
-                        final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
-                        final PacketsProcessor newProc = new PacketsProcessor(OutgoingSessionPromise.this, domainPair);
-                        final PacketsProcessor oldProc = packetsProcessors.putIfAbsent(domainPair, newProc);
-                        if (oldProc == null) {
-                            // The processor was successfully put (there was no earlier processor).
-                            newProc.addPacket(packet);
-                            threadPool.execute(newProc);
-                        } else {
-                            oldProc.addPacket(packet);
-                        }
-                    }
-                    else {
-                        // No threads are available so take a nap :)
-                        Thread.sleep(200);
-                    }
-                }
-                catch (InterruptedException e) {
-                    // Do nothing
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-            }
-        }, "Queued Packets Processor");
-        thread.setDaemon(true);
-        thread.start();
-
     }
 
     public static OutgoingSessionPromise getInstance() {
@@ -170,7 +123,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      */
     public void shutdown() {
         threadPool.shutdown();
-        shutdown = true;
     }
 
     @Override
@@ -181,8 +133,17 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
 
     @Override
     public void process(@Nonnull final Packet packet) {
-        // Queue the packet. Another process will process the queued packets.
-        packets.add(packet.createCopy());
+        final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
+        final PacketsProcessor newProc = new PacketsProcessor(OutgoingSessionPromise.this, domainPair);
+        final PacketsProcessor oldProc = packetsProcessors.putIfAbsent(domainPair, newProc);
+        if (oldProc == null) {
+            // There's not a processor for this packet yet.
+            newProc.addPacket(packet);
+            threadPool.execute(newProc);
+        } else {
+            // There's already a processor for this packet. Add the packet to that one.
+            oldProc.addPacket(packet);
+        }
     }
 
     private void processorDone(@Nonnull final DomainPair domainPair)

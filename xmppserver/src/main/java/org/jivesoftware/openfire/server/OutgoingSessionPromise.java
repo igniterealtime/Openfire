@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2015-2021 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
-import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -63,7 +62,7 @@ import javax.annotation.Nullable;
  *
  * @author Gaston Dombiak, Dave Cridland, Guus der Kinderen
  */
-public class OutgoingSessionPromise implements RoutableChannelHandler {
+public class OutgoingSessionPromise {
 
     private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
 
@@ -125,13 +124,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         threadPool.shutdown();
     }
 
-    @Override
-    public JID getAddress() {
-        // TODO Will somebody send this message to me????
-        return null;
-    }
-
-    @Override
     public void process(@Nonnull final Packet packet) {
         final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
         final PacketsProcessor newProc = new PacketsProcessor(OutgoingSessionPromise.this, domainPair);

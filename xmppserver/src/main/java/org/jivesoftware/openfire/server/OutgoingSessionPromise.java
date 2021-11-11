@@ -66,11 +66,41 @@ public class OutgoingSessionPromise {
 
     private static final Logger Log = LoggerFactory.getLogger(OutgoingSessionPromise.class);
 
+    public static final SystemProperty<Integer> QUEUE_MAX_THREADS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey(ConnectionSettings.Server.QUEUE_MAX_THREADS)
+        .setDynamic(false)
+        .setDefaultValue(20)
+        .setMinValue(0) // RejectedExecutionHandler is CallerRunsPolicy, meaning that the calling thread would execute the task.
+        .build();
+
+    public static final SystemProperty<Integer> QUEUE_MIN_THREADS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey(ConnectionSettings.Server.QUEUE_MIN_THREADS)
+        .setDynamic(false)
+        .setDefaultValue(0)
+        .setMinValue(0)
+        .build();
+
+    public static final SystemProperty<Integer> QUEUE_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey(ConnectionSettings.Server.QUEUE_SIZE)
+        .setDynamic(false)
+        .setDefaultValue(50)
+        .setMinValue(0)
+        .build();
+
+    public static final SystemProperty<Duration> QUEUE_THREAD_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.outgoing.threads-timeout")
+        .setDynamic(false)
+        .setDefaultValue(Duration.ofSeconds(60))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setMinValue(Duration.ZERO)
+        .build();
+
     public static final SystemProperty<Duration> FAST_DISCARD_DURATION = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.server.outgoing.fastdiscard.duration")
         .setDynamic(true)
         .setDefaultValue(Duration.ofSeconds(5))
         .setChronoUnit(ChronoUnit.MILLIS)
+        .setMinValue(Duration.ZERO)
         .build();
 
     private static final OutgoingSessionPromise instance = new OutgoingSessionPromise();
@@ -99,16 +129,11 @@ public class OutgoingSessionPromise {
     private void init() {
         serversCache = CacheFactory.createCache(RoutingTableImpl.S2S_CACHE_NAME);
         routingTable = XMPPServer.getInstance().getRoutingTable();
+
         // Create a pool of threads that will process queued packets.
-        int maxThreads = JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_MAX_THREADS, 20);
-        int queueSize = JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50);
-        if (maxThreads < 10) {
-            // Ensure that the max number of threads in the pool is at least 10
-            maxThreads = 10;
-        }
-        threadPool =
-                new ThreadPoolExecutor(maxThreads/4, maxThreads, 60, TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(queueSize),
+        threadPool = new ThreadPoolExecutor(QUEUE_MIN_THREADS.getValue(), QUEUE_MAX_THREADS.getValue(),
+                        QUEUE_THREAD_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS,
+                        new LinkedBlockingQueue<>(QUEUE_SIZE.getValue()),
                         new ThreadPoolExecutor.CallerRunsPolicy());
     }
 

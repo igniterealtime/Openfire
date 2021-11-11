@@ -23,8 +23,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
@@ -76,8 +74,6 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         .setChronoUnit(ChronoUnit.MILLIS)
         .build();
 
-    private static final Interner<DomainPair> domainPairBasedMutex = Interners.newWeakInterner();
-
     private static final OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
     /**
@@ -91,7 +87,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      */
     private ThreadPoolExecutor threadPool;
 
-    private final Map<DomainPair, PacketsProcessor> packetsProcessors = new HashMap<>();
+    private final ConcurrentMap<DomainPair, PacketsProcessor> packetsProcessors = new ConcurrentHashMap<>();
 
     /**
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
@@ -135,23 +131,15 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                         // Wait until a packet is available
                         final Packet packet = packets.take();
 
-                        boolean newProcessor = false;
-                        PacketsProcessor packetsProcessor;
                         final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
-                        synchronized (domainPairBasedMutex.intern(domainPair)) {
-                            packetsProcessor = packetsProcessors.get(domainPair);
-                            if (packetsProcessor == null) {
-                                packetsProcessor =
-                                        new PacketsProcessor(OutgoingSessionPromise.this, domainPair);
-                                packetsProcessors.put(domainPair, packetsProcessor);
-                                newProcessor = true;
-                            }
-                            packetsProcessor.addPacket(packet);
-                        }
-
-                        if (newProcessor) {
-                            // Process the packet in another thread
-                            threadPool.execute(packetsProcessor);
+                        final PacketsProcessor newProc = new PacketsProcessor(OutgoingSessionPromise.this, domainPair);
+                        final PacketsProcessor oldProc = packetsProcessors.putIfAbsent(domainPair, newProc);
+                        if (oldProc == null) {
+                            // The processor was successfully put (there was no earlier processor).
+                            newProc.addPacket(packet);
+                            threadPool.execute(newProc);
+                        } else {
+                            oldProc.addPacket(packet);
                         }
                     }
                     else {
@@ -197,14 +185,15 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
         packets.add(packet.createCopy());
     }
 
-    private void processorDone(@Nonnull final PacketsProcessor packetsProcessor) {
-        synchronized(domainPairBasedMutex.intern(packetsProcessor.getDomainPair())) {
-            if (packetsProcessor.isDone()) {
-                packetsProcessors.remove(packetsProcessor.getDomainPair());
-            }
-            else {
-                threadPool.execute(packetsProcessor);
-            }
+    private void processorDone(@Nonnull final DomainPair domainPair)
+    {
+        final PacketsProcessor processor = packetsProcessors.computeIfPresent(
+            domainPair,
+            (pair, preExistingProcessor) -> preExistingProcessor.isDone() ? null : preExistingProcessor
+        );
+        if (processor != null) {
+            // Not done yet. Re-schedule
+            threadPool.execute(processor);
         }
     }
 
@@ -216,9 +205,8 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
      * @return true if an outgoing session is currently being created, otherwise false.
      */
     public boolean isPending(@Nonnull final DomainPair domainPair) {
-        synchronized (domainPairBasedMutex.intern(domainPair)) {
-            return packetsProcessors.containsKey(domainPair) && !packetsProcessors.get(domainPair).isDone();
-        }
+        final PacketsProcessor processor = packetsProcessors.get(domainPair);
+        return processor != null && !processor.isDone();
     }
 
     private class PacketsProcessor implements Runnable
@@ -283,7 +271,7 @@ public class OutgoingSessionPromise implements RoutableChannelHandler {
                     }
                 }
             }
-            promise.processorDone(this);
+            promise.processorDone(domainPair);
         }
 
         private void establishConnection() throws Exception {

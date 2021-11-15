@@ -102,12 +102,12 @@ public class Blowfish implements Encryptor {
         }
 
         // return the binhex string
-        byte[] newCBCIV = new byte[BlowfishCBC.BLOCKSIZE];
+        byte[] newCBCIV = new byte[BlowfishECB.BLOCKSIZE];
         longToByteArray(lNewCBCIV,
                 newCBCIV,
                 0);
 
-        return bytesToBinHex(newCBCIV, 0, BlowfishCBC.BLOCKSIZE) +
+        return bytesToBinHex(newCBCIV, 0, BlowfishECB.BLOCKSIZE) +
                 bytesToBinHex(buf, 0, buf.length);
     }
 
@@ -127,17 +127,17 @@ public class Blowfish implements Encryptor {
             return null;
 
         // get the CBC IV
-        byte[] cbciv = new byte[BlowfishCBC.BLOCKSIZE];
+        byte[] cbciv = new byte[BlowfishECB.BLOCKSIZE];
         int nNumOfBytes = binHexToBytes(sCipherText,
                 cbciv,
                 0,
                 0,
-                BlowfishCBC.BLOCKSIZE);
-        if (nNumOfBytes < BlowfishCBC.BLOCKSIZE)
+                BlowfishECB.BLOCKSIZE);
+        if (nNumOfBytes < BlowfishECB.BLOCKSIZE)
             return null;
 
         // something left to decrypt?
-        nLen -= BlowfishCBC.BLOCKSIZE;
+        nLen -= BlowfishECB.BLOCKSIZE;
         if (nLen == 0)
         {
             return "";
@@ -148,8 +148,8 @@ public class Blowfish implements Encryptor {
 
         nNumOfBytes = binHexToBytes(sCipherText,
                 buf,
-                BlowfishCBC.BLOCKSIZE * 2,
-                0,
+            BlowfishECB.BLOCKSIZE * 2,
+            0,
                 nLen);
 
         // we cannot accept broken binhex sequences due to padding

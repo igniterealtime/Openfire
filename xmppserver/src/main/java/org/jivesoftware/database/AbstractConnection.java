@@ -30,7 +30,7 @@ public abstract class AbstractConnection implements Connection {
 
     protected Connection connection;
 
-    public AbstractConnection(Connection connection) {
+    protected AbstractConnection(Connection connection) {
         this.connection = connection;
     }
 

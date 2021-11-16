@@ -60,6 +60,16 @@ public interface MUCEventListener {
     void occupantLeft(JID roomJID, JID user, String nickname);
 
     /**
+     * When an XMPP entity / user is kicked out of a room because of nickname collision, this event handler will ensure
+     * that this instance of OccupantManager, as well as all instances for the same server on every other cluster node,
+     * updates the relevant data that it maintains to perform post-cluster event maintenance.
+     *
+     * @param roomJID the JID of the room where the occupant is kicked out.
+     * @param nickname nickname that the user used in the room.
+     */
+    void occupantNickKicked(JID roomJID, String nickname);
+
+    /**
      * Event triggered when an occupant changed his nickname in a room.
      *
      * @param roomJID the JID of the room where the user changed his nickname.

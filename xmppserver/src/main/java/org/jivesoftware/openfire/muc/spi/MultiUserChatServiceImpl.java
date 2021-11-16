@@ -2997,12 +2997,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // cache implementation to the clustered cache implementation that's done in the implementation of
         // org.jivesoftware.util.cache.CacheFactory.joinedCluster). This means that they now hold data that's
         // available on all other cluster nodes. Data that's available on the local node needs to be added again.
-        final Set<OccupantManager.Occupant> localOccupants = occupantManager.getLocalOccupants();
-        localMUCRoomManager.restoreCacheContentAfterJoin(localOccupants);
+        final Set<OccupantManager.Occupant> occupantsToSync = localMUCRoomManager.restoreCacheContentAfterJoin(occupantManager);
+
+        Log.debug("Occupants to sync: {}", occupantsToSync);
 
         // Let the other nodes know about our local occupants, as they need this information when it might leave the
         // cluster (OF-2224) and should tell its local users that new occupants have joined (OF-2233).
-        CacheFactory.doClusterTask( new SyncLocalOccupantsAndSendJoinPresenceTask(this.chatServiceName, localOccupants) );
+        if (!occupantsToSync.isEmpty()) {
+            CacheFactory.doClusterTask(new SyncLocalOccupantsAndSendJoinPresenceTask(this.chatServiceName, occupantsToSync));
+        }
         // TODO does this work properly when the rooms are not known on the other nodes?
     }
 

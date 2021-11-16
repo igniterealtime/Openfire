@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedTask;
+import org.jivesoftware.openfire.muc.cluster.OccupantKickedForNicknameTask;
 import org.jivesoftware.openfire.muc.cluster.OccupantRemovedTask;
 import org.jivesoftware.openfire.muc.cluster.OccupantUpdatedTask;
 import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
@@ -114,11 +115,6 @@ public class OccupantManager implements MUCEventListener
     private final ConcurrentMap<Occupant, Set<NodeID>> nodesByOccupant = new ConcurrentHashMap<>();
 
     /**
-     * Lookup table for finding occupants by real jid.
-     */
-    private final ConcurrentMap<JID, Set<Occupant>> occupantsByRealJid = new ConcurrentHashMap<>();
-
-    /**
      * Creates a new instance, specific for the provided MUC service.
      *
      * @param service The service for which the new instance will be operating.
@@ -137,43 +133,51 @@ public class OccupantManager implements MUCEventListener
      *
      * @param oldOccupant An occupant that is to be removed from the registration of the referred node (nullable)
      * @param newOccupant An occupant that is to be added to the registration of the referred node (nullable)
-     * @param nodeID The id of the node that the old/new occupant need to be (de)registered under
+     * @param nodeIDToReplaceOccupantFor The id of the node that the old/new occupant need to be (de)registered under. If null then the occupant is (de)registered for each node.
      */
-    private void replaceOccupant(Occupant oldOccupant, Occupant newOccupant, NodeID nodeID) {
-        synchronized (nodeID) {
-            // Step 1: remove old occupant, if there is any
-            if (oldOccupant != null) {
-                if (occupantsByNode.containsKey(nodeID)) {
-                    occupantsByNode.get(nodeID).remove(oldOccupant);
-                    if (occupantsByNode.get(nodeID).isEmpty()) {
-                        // Clean up, don't leave behind empty set
-                        occupantsByNode.remove(nodeID);
-                    }
+    private void replaceOccupant(Occupant oldOccupant, Occupant newOccupant, NodeID nodeIDToReplaceOccupantFor) {
+
+        Set<NodeID> nodeIDsToReplaceOccupantFor = new HashSet<>();
+        if (nodeIDToReplaceOccupantFor == null) {
+            nodeIDsToReplaceOccupantFor = occupantsByNode.keySet(); // all node ids
+        } else {
+            nodeIDsToReplaceOccupantFor.add(nodeIDToReplaceOccupantFor); // just the one
+        }
+
+        for (NodeID nodeID : nodeIDsToReplaceOccupantFor) {
+            synchronized (nodeID) {
+                // Step 1: remove old occupant, if there is any
+                deleteOccupantFromNode(oldOccupant, nodeID);
+
+                // Step 2: add new occupant, if there is any
+                if (newOccupant != null) {
+                    occupantsByNode.computeIfAbsent(nodeID, (n) -> new HashSet<>()).add(newOccupant);
+                    nodesByOccupant.computeIfAbsent(newOccupant, (n) -> new HashSet<>()).add(nodeID);
                 }
-                if (nodesByOccupant.containsKey(oldOccupant)) {
-                    nodesByOccupant.get(oldOccupant).remove(nodeID);
-                    if (nodesByOccupant.get(oldOccupant).isEmpty()) {
-                        // Clean up, don't leave behind empty set
-                        nodesByOccupant.remove(oldOccupant);
-                    }
-                }
-                if (occupantsByRealJid.containsKey(oldOccupant.getRealJID())) {
-                    occupantsByRealJid.get(oldOccupant.getRealJID()).remove(oldOccupant);
-                    if (occupantsByRealJid.get(oldOccupant.getRealJID()).isEmpty()) {
-                        // Clean up, don't leave behind empty set
-                        occupantsByRealJid.remove(oldOccupant.getRealJID());
-                    }
+
+                Log.debug("Replaced occupant {} with {} for node {}", oldOccupant, newOccupant, nodeID);
+            }
+        }
+
+        Log.debug("Occupants remaining after replace: {}", nodesByOccupant);
+    }
+
+    private void deleteOccupantFromNode(Occupant oldOccupant, NodeID nodeID) {
+        if (oldOccupant != null) {
+            if (occupantsByNode.containsKey(nodeID)) {
+                occupantsByNode.get(nodeID).remove(oldOccupant);
+                if (occupantsByNode.get(nodeID).isEmpty()) {
+                    // Clean up, don't leave behind empty set
+                    occupantsByNode.remove(nodeID);
                 }
             }
-
-            // Step 2: add new occupant, if there is any
-            if (newOccupant != null) {
-                occupantsByNode.computeIfAbsent(nodeID, (n) -> new HashSet<>()).add(newOccupant);
-                nodesByOccupant.computeIfAbsent(newOccupant, (n) -> new HashSet<>()).add(nodeID);
-                occupantsByRealJid.computeIfAbsent(newOccupant.getRealJID(), (n) -> new HashSet<>()).add(newOccupant);
+            if (nodesByOccupant.containsKey(oldOccupant)) {
+                nodesByOccupant.get(oldOccupant).remove(nodeID);
+                if (nodesByOccupant.get(oldOccupant).isEmpty()) {
+                    // Clean up, don't leave behind empty set
+                    nodesByOccupant.remove(oldOccupant);
+                }
             }
-
-            Log.debug("Replaced occupants with arguments {} {} {}", oldOccupant, newOccupant, nodeID);
         }
     }
 
@@ -260,8 +264,30 @@ public class OccupantManager implements MUCEventListener
             return;
         }
 
-        Log.debug("Removed local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, nickname, userJID);
+        Log.debug("Removed local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, userJID, nickname);
         final OccupantRemovedTask task = new OccupantRemovedTask(serviceName, roomJID.getNode(), nickname, userJID, XMPPServer.getInstance().getNodeID());
+        process(task); // On this cluster node.
+
+        // On all other cluster nodes
+        if (PROPERTY_USE_NONBLOCKING_CLUSTERTASKS.getValue()) {
+            CacheFactory.doClusterTask(task);
+        } else {
+            CacheFactory.doSynchronousClusterTask(task, false);
+        }
+    }
+
+    /**
+     * When an XMPP entity / user is kicked out of a room because of nickname collision, this event handler will ensure
+     * that this instance of OccupantManager, as well as all instances for the same server on every other cluster node,
+     * updates the relevant data that it maintains to perform post-cluster event maintenance.
+     *
+     * @param roomJID the JID of the room where the occupant is kicked out.
+     * @param nickname nickname that the user used in the room.
+     */
+    @Override
+    public void occupantNickKicked(JID roomJID, String nickname) {
+        Log.debug("Informing nodes about kicking occupant with nick {} from room {} of service {}", nickname, roomJID.getNode(), serviceName);
+        final OccupantKickedForNicknameTask task = new OccupantKickedForNicknameTask(serviceName, roomJID.getNode(), nickname, XMPPServer.getInstance().getNodeID());
         process(task); // On this cluster node.
 
         // On all other cluster nodes
@@ -311,11 +337,36 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantRemovedTask task)
     {
+        Log.debug("Processing task to remove occupant {} - {}", task.getRealJID(), task.getNickname());
+
 //        LocalTime start = LocalTime.now();
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         replaceOccupant(oldOccupant, null, task.getOriginator());
 
+        Log.debug("Done processing task to remove occupant {} - {}", task.getRealJID(), task.getNickname());
 //        logOccupantData("An occupant was removed on node " + task.getOriginator(), start, null);
+    }
+
+    /**
+     * Updates the data maintained by this instance to perform post-cluster event maintenance, based on the data from
+     * the clustered task.
+     *
+     * @param task Cluster task that informs of an occupant nickname that needs to be kicked out
+     */
+    public void process(@Nonnull final OccupantKickedForNicknameTask task)
+    {
+        Log.debug("Processing task to remove everyone with nick {}", task.getNickname());
+
+        logOccupantData("Almost processing task to remove everyone with nick " + task.getNickname(), LocalTime.now(), null);
+        final Set<Occupant> occupantsToKick = occupantsByNode.values().stream()
+            .flatMap(Collection::stream)
+            .map(o -> {Log.debug("--- {}", o); return o;})
+            .filter(o -> o.getNickname().equals(task.getNickname()))
+            .collect(Collectors.toSet());
+
+        occupantsToKick.forEach(o -> replaceOccupant(o, null, null));
+
+        Log.debug("Done processing task to remove everyone with nick {}", task.getNickname());
     }
 
     /**
@@ -361,7 +412,8 @@ public class OccupantManager implements MUCEventListener
      */
     @Nonnull
     public Set<String> roomNamesForAddress(@Nonnull final JID realJID) {
-        return occupantsByRealJid.getOrDefault(realJID, new HashSet<>()).stream()
+        return nodesByOccupant.keySet().stream()
+            .filter(occupant -> realJID.equals(occupant.getRealJID()))
             .map(occupant -> occupant.roomName)
             .collect(Collectors.toSet());
     }
@@ -385,9 +437,9 @@ public class OccupantManager implements MUCEventListener
      */
     public void registerActivity(@Nonnull final JID userJid) {
 
-        occupantsByRealJid.getOrDefault(userJid, new HashSet<>()).stream()
-            // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
-            .filter(o -> nodesByOccupant.getOrDefault(o, new HashSet<>()).contains(XMPPServer.getInstance().getNodeID()))
+        // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
+        occupantsByNode.get(XMPPServer.getInstance().getNodeID()).stream()
+            .filter(occupant -> userJid.equals(occupant.getRealJID()))
             .forEach(o -> o.setLastActive(Instant.now()));
     }
 
@@ -397,7 +449,7 @@ public class OccupantManager implements MUCEventListener
      * @return a user count
      */
     public int numberOfUniqueUsers() {
-        return occupantsByRealJid.size();
+        return nodesByOccupant.size();
     }
 
     /**
@@ -478,8 +530,6 @@ public class OccupantManager implements MUCEventListener
 
             nodesByOccupant.clear();
             occupantsLeftOnThisNode.forEach(o -> nodesByOccupant.computeIfAbsent(o, (n) -> new HashSet<>()).add(ownNodeID));
-            occupantsByRealJid.clear();
-            occupantsLeftOnThisNode.forEach(o -> occupantsByRealJid.computeIfAbsent(o.getRealJID(), (n) -> new HashSet<>()).add(o));
 
             Log.debug("Reset occupants because we left the cluster");
 
@@ -628,12 +678,6 @@ public class OccupantManager implements MUCEventListener
         nodesByOccupant.forEach((key, value) -> {
             Log.debug("= {}", key);
             value.forEach(nodeID -> Log.debug("= - {}", nodeID));
-        });
-        Log.debug("===                  OCCUPANTS BY JID                   ===");
-        Log.debug("=                        COUNT: {}", occupantsByRealJid.size());
-        occupantsByRealJid.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(occupant -> Log.debug("= - {}", occupant));
         });
         Log.debug("===                  ROOM CACHE CONTENTS                ===");
         if (roomCache == null) {

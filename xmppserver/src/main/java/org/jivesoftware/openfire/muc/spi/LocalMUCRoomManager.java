@@ -22,12 +22,14 @@ import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.muc.NotAllowedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -39,7 +41,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -256,18 +257,22 @@ public class LocalMUCRoomManager
      * contain the data that's provided by the local node. This method restores data that's provided by the local node
      * in the cache. It is expected to be invoked right after joining the cluster.
      *
+     * This method checks whether local occupant nicknames clash with remote ones. If a clash is detected, both
+     * occupants are kicked out of the room.
+     *
      * ({@link org.jivesoftware.openfire.cluster.ClusterEventListener#joinedCluster()} or leaving
+     *
+     * @param occupantManager The occupant manager that contains local occupant registration.
+     * @return The set of local occupants that is in the room after processing. This is the original set of local occupants of the room minus any occupants that were kicked out.
      */
-    void restoreCacheContentAfterJoin(@Nullable final Set<OccupantManager.Occupant> localOccupants)
+    public Set<OccupantManager.Occupant> restoreCacheContentAfterJoin(@Nonnull final OccupantManager occupantManager)
     {
         Log.debug( "Restoring cache content for cache '{}' after we joined the cluster, by adding all MUC Rooms that are known to the local node.", ROOM_CACHE.getName() );
 
-        final Map<String, List<OccupantManager.Occupant>> localOccupantByRoom;
-        if (localOccupants == null) {
-            localOccupantByRoom = Collections.emptyMap();
-        } else {
-            localOccupantByRoom = localOccupants.stream().collect(Collectors.groupingBy(OccupantManager.Occupant::getRoomName));
-        }
+        final Set<OccupantManager.Occupant> localOccupants = occupantManager.getLocalOccupants();
+        final Set<OccupantManager.Occupant> occupantsToRetain = new HashSet<>(localOccupants);
+
+        final Map<String, List<OccupantManager.Occupant>> localOccupantByRoom = localOccupants.stream().collect(Collectors.groupingBy(OccupantManager.Occupant::getRoomName));
 
         // The state of the rooms in the clustered cache should be modified to include our local occupants.
         for (Map.Entry<String, MUCRoom> localRoomEntry : localRooms.entrySet())
@@ -298,29 +303,38 @@ public class LocalMUCRoomManager
                                 continue;
                             }
 
-                            // Check if the nickname of this occupant already existed elsewhere in the cluster.
-                            // If it did, we should actually kick the user out. With sincere apologies.
+                            // OF-2165
+                            // Check if the nickname of this occupant already existed for another user in the room.
+                            // If it did, we need to kick the users out. With sincere apologies.
                             String nickBeingAddedToRoom = localOccupantRole.getNickname();
+                            boolean occupantWasKicked = false;
                             try {
                                 final List<MUCRole> existingOccupantsWithSameNick = roomInCluster.getOccupantsByNickname(nickBeingAddedToRoom);
-                                final Optional<JID> otherUserWithSameNick = existingOccupantsWithSameNick.stream().map(MUCRole::getUserAddress).filter(bareJid -> !bareJid.equals(localOccupantRole.getUserAddress())).findFirst();
-                                if (otherUserWithSameNick.isPresent()) {
-                                    // There is at least one remote occupant, being a different user, with the same nick
-                                    Log.info(
-                                        "Local occupant {} of room {} with nickname {} has to be kicked out because the nickname is already in use by user {} on node {}.",
-                                        localOccupantRole.getUserAddress(),
-                                        localRoom.getName(),
-                                        nickBeingAddedToRoom,
-                                        otherUserWithSameNick.get().toFullJID(),
-                                        otherUserWithSameNick.get().getNode()
-                                    );
-                                    // TODO actually kick
+                                final List<JID> otherUsersWithSameNick = existingOccupantsWithSameNick.stream().map(MUCRole::getUserAddress).filter(bareJid -> !bareJid.equals(localOccupantRole.getUserAddress())).collect(Collectors.toList());
+                                Log.debug("Current cluster room occupants: {}", roomInCluster.getOccupants());
+                                Log.debug("Current cluster room occupants with same nick: {}", existingOccupantsWithSameNick);
+                                Log.debug("Current 'other' cluster room occupants with same nick: {}", otherUsersWithSameNick);
+                                Log.debug("Current local room occupants: {}", localRoom.getOccupants());
+                                if (!otherUsersWithSameNick.isEmpty()) {
+                                    // There is at least one remote occupant, being a different user, with the same nick.
+                                    // Kick all.
+                                    otherUsersWithSameNick.forEach(jid -> kickOccupantBecauseOfNicknameCollision(roomInCluster, nickBeingAddedToRoom, jid, occupantManager));
+                                    final JID localUserToBeKickedFullJid = localOccupantToRestore.getRealJID();
+
+                                    // Now kick the local user. It has to be added to the room for a short instant so that it can actually be kicked out.
+                                    roomInCluster.addOccupantRole(localOccupantRole);
+                                    kickOccupantBecauseOfNicknameCollision(roomInCluster, nickBeingAddedToRoom, localUserToBeKickedFullJid, occupantManager);
+                                    occupantWasKicked = true;
                                 }
                             } catch (UserNotFoundException e) {
                                 // This is actually the happy path. There is no remote occupant in the room with the same nick. Proceed.
                             }
 
-                            roomInCluster.addOccupantRole(localOccupantRole);
+                            if (!occupantWasKicked) {
+                                roomInCluster.addOccupantRole(localOccupantRole);
+                            } else {
+                                occupantsToRetain.remove(localOccupantToRestore);
+                            }
                         }
                     }
 
@@ -331,7 +345,7 @@ public class LocalMUCRoomManager
                     }
 
                     // Sync room back to make cluster aware of changes.
-                    Log.trace("Re-added local room '{}' to cache, with occupants: {}", roomName, roomInCluster.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
+                    Log.debug("Re-added local room '{}' to cache, with occupants: {}", roomName, roomInCluster.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
                     ROOM_CACHE.put(roomName, roomInCluster);
 
                     // TODO: update the local copy of the room with occupants, maybe?
@@ -377,6 +391,39 @@ public class LocalMUCRoomManager
             public void mapEvicted(@Nonnull NodeID nodeID) {
             }
         }, false, false);
+
+        return occupantsToRetain;
+    }
+
+    /**
+     * Kick a user out of a room for reason of nickname collision.
+     * @param room The room to kick the user out of.
+     * @param nickBeingAddedToRoom The nickname that is the cause of the problem.
+     * @param userToBeKicked The full jid of the user to be kicked.
+     * @param occupantManager The occupant manager that contains local occupant registration.
+     */
+    private void kickOccupantBecauseOfNicknameCollision(MUCRoom room, String nickBeingAddedToRoom, JID userToBeKicked, @Nonnull OccupantManager occupantManager) {
+        Log.info(
+            "Occupant {} of room {} with nickname {} has to be kicked out because the nickname clashes with another user in the same room.",
+            userToBeKicked,
+            room.getName(),
+            nickBeingAddedToRoom
+        );
+
+        // Kick the user from all the rooms that he/she had previously joined.
+        try {
+            final Presence kickedPresence = room.kickOccupant(userToBeKicked, null, null, "Nickname clash with other user in the same room.");
+            // Send the updated presence to the room occupants, but only those on this local node.
+            room.send(kickedPresence, room.getRole());
+
+            // Inform other nodes of the kick, so they can remove the occupants from their occupant registration
+            occupantManager.occupantNickKicked(room.getJID(), nickBeingAddedToRoom);
+
+            Log.debug("Kicked occupant '{}' out of room '{}'.", userToBeKicked, room.getName());
+        } catch (final NotAllowedException e) {
+            // Do nothing since we cannot kick owners or admins
+            Log.debug("Occupant '{}' not kicked out of room '{}' because of '{}'.", userToBeKicked, room.getName(), e.getMessage());
+        }
     }
 
     /**

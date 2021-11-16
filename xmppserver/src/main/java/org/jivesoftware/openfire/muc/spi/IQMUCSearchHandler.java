@@ -152,7 +152,10 @@ public class IQMUCSearchHandler
         {
             if (field.getVariable().equals("name"))
             {
-                names.add(field.getFirstValue());
+                if (field.getFirstValue()!=null&&field.getFirstValue().trim().length()>0)
+                {
+                    names.add(field.getFirstValue());
+                }
             }
         }
 

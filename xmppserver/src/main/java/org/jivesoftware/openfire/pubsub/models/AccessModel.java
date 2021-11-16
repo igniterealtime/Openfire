@@ -30,11 +30,11 @@ import java.io.Serializable;
  */
 public abstract class AccessModel implements Serializable {
 
-    public final static AccessModel whitelist = new WhitelistAccess();
-    public final static AccessModel open = new OpenAccess();
-    public final static AccessModel authorize = new AuthorizeAccess();
-    public final static AccessModel presence = new PresenceAccess();
-    public final static AccessModel roster = new RosterAccess();
+    public static final AccessModel whitelist = new WhitelistAccess();
+    public static final AccessModel open = new OpenAccess();
+    public static final AccessModel authorize = new AuthorizeAccess();
+    public static final AccessModel presence = new PresenceAccess();
+    public static final AccessModel roster = new RosterAccess();
 
     /**
      * Returns the specific subclass of AccessModel as specified by the access

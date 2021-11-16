@@ -598,9 +598,9 @@ public class UpdateManager extends BasicModule {
 
         // Parse response and keep info as AvailablePlugin objects
         Element xmlResponse = SAXReaderUtil.readRootElement(response);
-        Iterator plugins = xmlResponse.elementIterator("plugin");
+        Iterator<Element> plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
-            Element plugin = (Element) plugins.next();
+            Element plugin = plugins.next();
             AvailablePlugin available = AvailablePlugin.getInstance( plugin );
             // Add plugin to the list of available plugins at js.org
             availablePlugins.put(available.getName(), available);
@@ -612,9 +612,8 @@ public class UpdateManager extends BasicModule {
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && !pluginUpdates.isEmpty()) {
             for (Update update : pluginUpdates) {
-                XMPPServer.getInstance().sendMessageToAdmins(getNotificationMessage() +
-                    " " + update.getComponentName() +
-                    " " + update.getLatestVersion());
+                XMPPServer.getInstance().sendMessageToAdmins(String.format("%s %s %s, on node %s", getNotificationMessage(),
+                    update.getComponentName(), update.getLatestVersion(), XMPPServer.getInstance().getServerInfo().getHostname()));
             }
         }
 

@@ -160,7 +160,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         if (maxCacheSize > 0 && objectSize > maxCacheSize * .90) {
             Log.warn("Cache: " + name + " -- object with key " + key +
                     " is too large to fit in cache. Size is " + objectSize);
-            return value;
+            return answer;
         }
         cacheSize += objectSize;
         final DefaultCache.CacheObject<V> cacheObject = new DefaultCache.CacheObject<>(value, objectSize);

@@ -492,6 +492,40 @@ public class CacheFactory {
     }
 
     /**
+     * Returns the serializing cache, creating it as necessary. Unlike the caches returned by
+     * {@link #createCache(String)}, the caches returned by this method store data in serialized form (without a
+     * reference to their class).
+     *
+     * The primary benefit of usage of this cache is that the cached data is stored without any references to their
+     * classes. This allows cache content to remain usable after the classes that instantiate the data get reloaded.
+     * This is of particular interest when the cache is used to store data provided by Openfire plugins (as these
+     * classes get loaded by a class loader that is replaced when a plugin gets reloaded or upgraded).
+     *
+     * As compared to other caches, usage of this cache will require more system resources, as the serialized
+     * representation of an object typically is (much) larger than its original (unserialized) form.
+     *
+     * @param name       The name of the cache to create.
+     * @param keyClass   The class of instances used as keys.
+     * @param valueClass The class of instances used as values.
+     * @return the named cache, creating it as necessary.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2239">Issue OF-2239: Make it easier to cache plugin class instances</a>
+     */
+    @SuppressWarnings("unchecked")
+    public static synchronized SerializingCache createSerializingCache(String name, Class keyClass, Class valueClass) {
+        SerializingCache cache = (SerializingCache) caches.get(name);
+        if (cache != null) {
+            return cache;
+        }
+
+        final Cache<String, String> delegate = (Cache<String, String>) cacheFactoryStrategy.createCache(name);
+        cache = new SerializingCache(delegate, keyClass, valueClass);
+
+        log.info("Created serializing cache [" + cacheFactoryStrategy.getClass().getName() + "] for " + name);
+
+        return wrapCache(cache, name);
+    }
+
+    /**
      * Returns the named local cache, creating it as necessary.
      *
      * @param name         the name of the cache to create.

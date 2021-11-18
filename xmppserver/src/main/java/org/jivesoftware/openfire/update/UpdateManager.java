@@ -34,6 +34,7 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginMetadata;
@@ -612,8 +613,14 @@ public class UpdateManager extends BasicModule {
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && !pluginUpdates.isEmpty()) {
             for (Update update : pluginUpdates) {
-                XMPPServer.getInstance().sendMessageToAdmins(String.format("%s %s %s, on node %s", getNotificationMessage(),
-                    update.getComponentName(), update.getLatestVersion(), XMPPServer.getInstance().getServerInfo().getHostname()));
+                //Send hostname of server only if clustering is enabled
+                if(ClusterManager.isClusteringStarted()){
+                    XMPPServer.getInstance().sendMessageToAdmins(String.format("%s %s %s, on node %s", getNotificationMessage(),
+                        update.getComponentName(), update.getLatestVersion(), XMPPServer.getInstance().getServerInfo().getHostname()));
+                } else{
+                    XMPPServer.getInstance().sendMessageToAdmins(String.format("%s %s %s", getNotificationMessage(),
+                        update.getComponentName(), update.getLatestVersion()));
+                }
             }
         }
 

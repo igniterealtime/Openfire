@@ -16,10 +16,16 @@
 
 package org.jivesoftware.util.cache;
 
+import org.directwebremoting.json.parse.JsonParser;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 
 import javax.annotation.Nonnull;
-import java.io.Serializable;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import java.beans.XMLEncoder;
+import java.io.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;

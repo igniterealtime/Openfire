@@ -60,10 +60,10 @@ import java.util.stream.Collectors;
  */
 public class DefaultCache<K extends Serializable, V extends Serializable> implements Cache<K, V> {
 
-    private static final String NULL_KEY_IS_NOT_ALLOWED = "Null key is not allowed!";
-    private static final String NULL_VALUE_IS_NOT_ALLOWED = "Null value is not allowed!";
-    private static final boolean allowNull = JiveGlobals.getBooleanProperty("cache.allow.null", false);
-    private static final long MAX_CULL_COUNT_PERIOD = Duration.ofHours(12).toMillis();
+    protected static final String NULL_KEY_IS_NOT_ALLOWED = "Null key is not allowed!";
+    protected static final String NULL_VALUE_IS_NOT_ALLOWED = "Null value is not allowed!";
+    protected static final boolean allowNull = JiveGlobals.getBooleanProperty("cache.allow.null", false);
+    protected static final long MAX_CULL_COUNT_PERIOD = Duration.ofHours(12).toMillis();
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
     // Contains the set of times when the Cache was last culled
@@ -271,6 +271,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
+    @Nonnull
     public Collection<V> values() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -317,6 +318,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
+    @Nonnull
     public Set<Entry<K, V>> entrySet() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.
@@ -330,6 +332,7 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
+    @Nonnull
     public Set<K> keySet() {
         // First, clear all entries that have been in cache longer than the
         // maximum defined age.

@@ -294,6 +294,8 @@
                 (<fmt:message key="user.create.admin_info"/>)
             </td>
         </tr>
+        <% } %>
+        <% if (!webManager.getGroupManager().getGroups().isEmpty()){%>
         <tr>
             <td class="c1">
                 <label for="grouptf"><fmt:message key="user.create.group"/>:</label>
@@ -303,7 +305,7 @@
                        id="grouptf">
             </td>
         </tr>
-        <% } %>
+        <%} %>
         <tr>
 
             <td colspan="2" style="padding-top: 10px;">

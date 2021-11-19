@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.muc.spi;
 
+import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -23,6 +24,7 @@ import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -298,9 +300,12 @@ public class LocalMUCRoomManager
                         for (OccupantManager.Occupant localOccupantToRestore : localOccupantsToRestore ) {
                             // Get the Role for the local occupant from the local representation of the room, and add that to the cluster room.
                             final MUCRole localOccupantRole = localRoom.getOccupantByFullJID(localOccupantToRestore.getRealJID());
+
                             if (localOccupantRole == null) {
                                 Log.trace("Trying to add occupant '{}' but no role for that occupant exists in the local room. Data inconsistency?", localOccupantToRestore.getRealJID());
                                 continue;
+                            } else {
+                                Log.trace("Found localOccupantRole {} for localOccupantToRestore {}, client route = {}", localOccupantRole, localOccupantToRestore.getRealJID(), XMPPServer.getInstance().getRoutingTable().getClientRoute(localOccupantToRestore.getRealJID()));
                             }
 
                             // OF-2165
@@ -316,14 +321,35 @@ public class LocalMUCRoomManager
                                 Log.debug("Current 'other' cluster room occupants with same nick: {}", otherUsersWithSameNick);
                                 Log.debug("Current local room occupants: {}", localRoom.getOccupants());
                                 if (!otherUsersWithSameNick.isEmpty()) {
+
+                                    // We will be routing presences to several users. The routing table may not have
+                                    // finished updating the client routes. However those are needed for routing the
+                                    // stanzas, specifically the local client route. So do that first.
+                                    RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+                                    if (routingTable instanceof RoutingTableImpl) {
+                                        RoutingTableImpl.class.cast(routingTable).addLocalClientRoutesToCache();
+                                    }
+
                                     // There is at least one remote occupant, being a different user, with the same nick.
                                     // Kick all.
                                     otherUsersWithSameNick.forEach(jid -> kickOccupantBecauseOfNicknameCollision(roomInCluster, nickBeingAddedToRoom, jid, occupantManager));
                                     final JID localUserToBeKickedFullJid = localOccupantToRestore.getRealJID();
 
                                     // Now kick the local user. It has to be added to the room for a short instant so that it can actually be kicked out.
-                                    roomInCluster.addOccupantRole(localOccupantRole);
+                                    // Normally we would do this with:
+//                                          roomInCluster.addOccupantRole(localOccupantRole);
+                                    // But that notifies other nodes as well about the new occupant. We don't want that, this is
+                                    // entirely a local affair. Therefore perform two separate steps instead, without invoking
+                                    // occupant joined events.
+                                    roomInCluster.occupants.add(localOccupantRole);
+                                    occupantManager.registerOccupantJoinedLocally(localOccupantRole.getRoleAddress().asBareJID(), localOccupantRole.getUserAddress(), localOccupantRole.getNickname());
+
+                                    // Just added. Now kick out.
                                     kickOccupantBecauseOfNicknameCollision(roomInCluster, nickBeingAddedToRoom, localUserToBeKickedFullJid, occupantManager);
+
+                                    // Inform other nodes of the kick, so they can remove the occupants from their occupant registration
+                                    occupantManager.occupantNickKicked(roomInCluster.getJID(), nickBeingAddedToRoom);
+
                                     occupantWasKicked = true;
                                 }
                             } catch (UserNotFoundException e) {
@@ -413,11 +439,11 @@ public class LocalMUCRoomManager
         // Kick the user from all the rooms that he/she had previously joined.
         try {
             final Presence kickedPresence = room.kickOccupant(userToBeKicked, null, null, "Nickname clash with other user in the same room.");
+
+            Log.trace("Kick presence to be sent to room: {}", kickedPresence);
+
             // Send the updated presence to the room occupants, but only those on this local node.
             room.send(kickedPresence, room.getRole());
-
-            // Inform other nodes of the kick, so they can remove the occupants from their occupant registration
-            occupantManager.occupantNickKicked(room.getJID(), nickBeingAddedToRoom);
 
             Log.debug("Kicked occupant '{}' out of room '{}'.", userToBeKicked, room.getName());
         } catch (final NotAllowedException e) {

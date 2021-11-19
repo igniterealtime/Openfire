@@ -207,9 +207,7 @@ public class OccupantManager implements MUCEventListener
             return;
         }
 
-        Log.debug("New local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, userJID, nickname);
-        final OccupantAddedTask task = new OccupantAddedTask(serviceName, roomJID.getNode(), nickname, userJID, XMPPServer.getInstance().getNodeID());
-        process(task); // On this cluster node.
+        final OccupantAddedTask task = registerOccupantJoinedLocally(roomJID, userJID, nickname);
 
         // On all other cluster nodes
         if (PROPERTY_USE_NONBLOCKING_CLUSTERTASKS.getValue()) {
@@ -217,6 +215,15 @@ public class OccupantManager implements MUCEventListener
         } else {
             CacheFactory.doSynchronousClusterTask(task, false);
         }
+    }
+
+    public OccupantAddedTask registerOccupantJoinedLocally(JID roomJID, JID userJID, String nickname) {
+        Log.debug("New local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, userJID, nickname);
+
+        final OccupantAddedTask task = new OccupantAddedTask(serviceName, roomJID.getNode(), nickname, userJID, XMPPServer.getInstance().getNodeID());
+        process(task); // On this cluster node.
+
+        return task;
     }
 
     /**
@@ -351,17 +358,17 @@ public class OccupantManager implements MUCEventListener
      * Updates the data maintained by this instance to perform post-cluster event maintenance, based on the data from
      * the clustered task.
      *
-     * @param task Cluster task that informs of an occupant nickname that needs to be kicked out
+     * @param task Cluster task that informs of an occupant nickname that has been kicked out of a room
      */
     public void process(@Nonnull final OccupantKickedForNicknameTask task)
     {
-        Log.debug("Processing task to remove everyone with nick {}", task.getNickname());
+        Log.debug("Processing task to remove everyone with nick {} from room {}", task.getNickname(), task.getRoomName());
 
-        logOccupantData("Almost processing task to remove everyone with nick " + task.getNickname(), LocalTime.now(), null);
+//        logOccupantData("Almost processing task to remove everyone with nick " + task.getNickname(), LocalTime.now(), null);
         final Set<Occupant> occupantsToKick = occupantsByNode.values().stream()
             .flatMap(Collection::stream)
-            .map(o -> {Log.debug("--- {}", o); return o;})
             .filter(o -> o.getNickname().equals(task.getNickname()))
+            .filter(o -> o.getRoomName().equals(task.getRoomName()))
             .collect(Collectors.toSet());
 
         occupantsToKick.forEach(o -> replaceOccupant(o, null, null));
@@ -438,7 +445,7 @@ public class OccupantManager implements MUCEventListener
     public void registerActivity(@Nonnull final JID userJid) {
 
         // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
-        occupantsByNode.get(XMPPServer.getInstance().getNodeID()).stream()
+        getLocalOccupants().stream()
             .filter(occupant -> userJid.equals(occupant.getRealJID()))
             .forEach(o -> o.setLastActive(Instant.now()));
     }

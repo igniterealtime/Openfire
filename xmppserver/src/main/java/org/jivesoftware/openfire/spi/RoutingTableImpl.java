@@ -401,6 +401,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      */
     private boolean routeToLocalDomain(JID jid, Packet packet,
             boolean fromServer) {
+
+
         boolean routed = false;
         Element privateElement = packet.getElement().element(QName.get("private", Received.NAMESPACE));
         boolean isPrivate = privateElement != null;
@@ -998,8 +1000,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public List<JID> getRoutes(JID route, JID requester) {
+
         List<JID> jids = new ArrayList<>();
         if (serverName.equals(route.getDomain())) {
+
             // Address belongs to local user
             if (route.getResource() != null) {
                 // Address is a full JID of a user
@@ -1682,8 +1686,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Log.debug( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
         localRoutingTable.getComponentRoute().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));
 
-        Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessionsCache.getName() );
+        addLocalClientRoutesToCache();
+    }
 
+    public void addLocalClientRoutesToCache() {
+        Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessionsCache.getName() );
         // Add client sessions hosted locally to the cache (using new nodeID)
         for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
             addClientRoute(session.getAddress(), session);

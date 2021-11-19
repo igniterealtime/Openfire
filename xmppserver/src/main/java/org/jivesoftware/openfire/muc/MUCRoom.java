@@ -1554,6 +1554,8 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         {
             try
             {
+                Log.trace("Broadcasting presence update in room {} for occupant {} to occupant {}", this.getName(), presence.getFrom(), occupant );
+
                 // Do not send broadcast presence to occupants hosted in other FMUC nodes.
                 if (occupant.isRemoteFmuc()) {
                     Log.trace( "Not sending presence update of '{}' to {}: This occupant is on another FMUC node.", presence.getFrom(), occupant.getUserAddress() );

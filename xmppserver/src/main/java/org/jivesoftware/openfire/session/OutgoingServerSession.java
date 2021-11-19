@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 
 /**
@@ -34,16 +35,15 @@ import java.util.Collection;
  */
 public interface OutgoingServerSession extends ServerSession {
     /**
-     * Authenticates a subdomain of this server with the specified remote server over an exsiting
+     * Authenticates a subdomain of this server with the specified remote server over an existing
      * outgoing connection. If the existing session was using server dialback then a new db:result
      * is going to be sent to the remote server. But if the existing session was TLS+SASL based
      * then just assume that the subdomain was authenticated by the remote server.
      *
-     * @param domain the locally domain to authenticate with the remote server.
-     * @param hostname the domain of the remote server.
+     * @param domainPair the local (sub) and remote domain for which authentication is to be established.
      * @return True if the domain was authenticated by the remote server.
      */
-    boolean authenticateSubdomain(String domain, String hostname);
+    boolean authenticateSubdomain(@Nonnull final DomainPair domainPair);
 
     /**
      * Checks to see if a pair of domains has previously been authenticated.
@@ -51,19 +51,17 @@ public interface OutgoingServerSession extends ServerSession {
      * Since domains are authenticated as pairs, authenticating A-&gt;B does
      *  not imply anything about A--&gt;C or D-&gt;B.
      *
-     * @param local the local domain (previously: authenticated domain)
-     * @param remote the remote domain (previous: hostname)
+     * @param domainPair the local and remote domain for which the check is executed.
      * @return True if the pair of domains has been authenticated.
      */
-    boolean checkOutgoingDomainPair(String local, String remote);
+    boolean checkOutgoingDomainPair(@Nonnull final DomainPair domainPair);
 
     /**
      * Marks a domain pair as being authenticated.
      *
-     * @param local the locally hosted domain.
-     * @param remote the remote domain.
+     * @param domainPair the local and remote domain for which authentication has been established.
      */
-    void addOutgoingDomainPair(String local, String remote);
+    void addOutgoingDomainPair(@Nonnull final DomainPair domainPair);
 
     /**
      * Obtains all authenticated domain pairs.

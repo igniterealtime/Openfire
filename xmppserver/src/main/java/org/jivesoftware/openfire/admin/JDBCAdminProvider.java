@@ -99,7 +99,7 @@ public class JDBCAdminProvider implements AdminProvider {
         if (!useConnectionProvider) {
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
             try {
-                Class.forName(jdbcDriver).newInstance();
+                Class.forName(jdbcDriver).getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
                 return;

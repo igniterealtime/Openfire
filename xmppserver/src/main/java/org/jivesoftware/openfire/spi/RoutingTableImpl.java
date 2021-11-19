@@ -603,37 +603,60 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
 
-        boolean routed = false;
-        DomainPair pair = new DomainPair(packet.getFrom().getDomain(), jid.getDomain());
-        NodeID nodeID = serversCache.get(pair);
-        if (nodeID != null && !OutgoingSessionPromise.getInstance().isPending(new JID(jid.getDomain()))) {
-            if (server.getNodeID().equals(nodeID)) {
-                // This is a route to a remote server connected from this node
-                try {
-                    localRoutingTable.getRoute(pair).process(packet);
-                    routed = true;
-                } catch (UnauthorizedException e) {
-                    Log.error("Unable to route packet " + packet.toXML(), e);
-                }
-            }
-            else {
-                // This is a route to a remote server connected from other node
-                if (remotePacketRouter != null) {
-                    routed = remotePacketRouter.routePacket(nodeID.toByteArray(), jid, packet);
-                }
-            }
-        }
-        else if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
+        if (!RemoteServerManager.canAccess(jid.getDomain())) { // Check if the remote domain is in the blacklist
             Log.info( "Will not route: Remote domain {} is not accessible according to our configuration (typical causes: server federation is disabled, or domain is blacklisted).", jid.getDomain() );
-            routed = false;
+            return false;
         }
-        else {
-            // Return a promise of a remote session. This object will queue packets pending
-            // to be sent to remote servers
-            OutgoingSessionPromise.getInstance().process(packet);
-            routed = true;
+
+        DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), jid.getDomain());
+
+        Log.trace("Routing to remote domain: {}", packet);
+
+        // It is possible that serversCache has an entry for this domain, while the OutgoingSessionPromise is
+        // still processing it's queue. Stanzas must be delivered in order, so delivery of this stanza needs to
+        // be postponed until after the queue is empty (OF-2321).
+        //
+        // The code block below is guarded by the mutex that also guards:
+        // - sending queued stanzas _after_ a connection has been established (but not the connection establishment itself),
+        // - changes to the response of OutgoingServerSession#isPending() for the domainPair that is used to create the mutex
+        // This will ensure that a new stanza:
+        // - is supplied to OutgoingSessionPromise before queue processing is started / can start.
+        // - is not supplied to OutgoingSessionPromise after queue processing has started. In that case, this code will
+        //   block until until the OutgoingSessionPromise is done processing, and will then route the stanza through the localRoutingTable.
+        synchronized (OutgoingSessionPromise.getInstance().getMutex(domainPair))
+        {
+            if (OutgoingSessionPromise.getInstance().hasProcess(domainPair)) {
+                Log.trace("An outgoing session for {} is in process of being established. Queuing stanza for delivery when that's done.", domainPair);
+                OutgoingSessionPromise.getInstance().queue(domainPair, packet);
+                return true;
+            } else {
+                NodeID nodeID = serversCache.get(domainPair);
+                if (nodeID != null) {
+                    if (server.getNodeID().equals(nodeID)) {
+                        Log.trace("An outgoing session for {} is available on the local cluster node. Delivering stanza.", domainPair);
+                        try {
+                            localRoutingTable.getRoute(domainPair).process(packet);
+                            return true;
+                        } catch (UnauthorizedException e) {
+                            Log.error("Unable to route packet " + packet.toXML(), e);
+                            return false;
+                        }
+                    } else {
+                        if (remotePacketRouter != null) {
+                            Log.trace("An outgoing session for {} is available on a remote cluster node. Asking that node to deliver stanza.", domainPair);
+                            return remotePacketRouter.routePacket(nodeID.toByteArray(), jid, packet);
+                        } else {
+                            Log.error("An outgoing session for {} is available on a remote cluster node, but no RemotePacketRouter exists!", domainPair);
+                            return false;
+                        }
+                    }
+                } else {
+                    Log.trace("A new outgoing session for {} is needed. Instantiating a new queue stanza for delivery when that's done.", domainPair);
+                    OutgoingSessionPromise.getInstance().createProcess(domainPair, packet);
+                    return true;
+                }
+            }
         }
-        return routed;
     }
     
     /**

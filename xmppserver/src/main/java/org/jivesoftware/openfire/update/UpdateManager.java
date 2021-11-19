@@ -34,6 +34,7 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.container.PluginMetadata;
@@ -598,9 +599,9 @@ public class UpdateManager extends BasicModule {
 
         // Parse response and keep info as AvailablePlugin objects
         Element xmlResponse = SAXReaderUtil.readRootElement(response);
-        Iterator plugins = xmlResponse.elementIterator("plugin");
+        Iterator<Element> plugins = xmlResponse.elementIterator("plugin");
         while (plugins.hasNext()) {
-            Element plugin = (Element) plugins.next();
+            Element plugin = plugins.next();
             AvailablePlugin available = AvailablePlugin.getInstance( plugin );
             // Add plugin to the list of available plugins at js.org
             availablePlugins.put(available.getName(), available);
@@ -612,9 +613,14 @@ public class UpdateManager extends BasicModule {
         // Check if we need to send notifications to admins
         if (notificationsEnabled && isNotificationEnabled() && !pluginUpdates.isEmpty()) {
             for (Update update : pluginUpdates) {
-                XMPPServer.getInstance().sendMessageToAdmins(getNotificationMessage() +
-                    " " + update.getComponentName() +
-                    " " + update.getLatestVersion());
+                //Send hostname of server only if clustering is enabled
+                if(ClusterManager.isClusteringStarted()){
+                    XMPPServer.getInstance().sendMessageToAdmins(String.format("%s %s %s, on node %s", getNotificationMessage(),
+                        update.getComponentName(), update.getLatestVersion(), XMPPServer.getInstance().getServerInfo().getHostname()));
+                } else{
+                    XMPPServer.getInstance().sendMessageToAdmins(String.format("%s %s %s", getNotificationMessage(),
+                        update.getComponentName(), update.getLatestVersion()));
+                }
             }
         }
 

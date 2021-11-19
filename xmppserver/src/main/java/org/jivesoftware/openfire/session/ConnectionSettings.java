@@ -74,6 +74,7 @@ public final class ConnectionSettings {
         public static final String SOCKET_READ_TIMEOUT = "xmpp.server.read.timeout";
 
         public static final String QUEUE_MAX_THREADS = "xmpp.server.outgoing.max.threads";
+        public static final String QUEUE_MIN_THREADS = "xmpp.server.outgoing.min.threads";
         public static final String QUEUE_SIZE = "xmpp.server.outgoing.queue";
 
         public static final String DIALBACK_ENABLED = "xmpp.server.dialback.enabled";

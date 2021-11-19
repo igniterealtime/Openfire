@@ -215,7 +215,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
     }
 
     @Override
-    public Iterator getXPathFilters() {
+    public Iterator<String> getXPathFilters() {
         return xpath.iterator();
     }
 
@@ -357,7 +357,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
                 break;
             case "xmpp.audit.logdir":
                 File d = null;
-                if (value != null && !"".equals(value.trim())) {
+                if (!"".equals(value.trim())) {
                     d = new File(value);
                 }
                 logDir = (d == null || !d.exists() || !d.canRead() || !d.canWrite() || !d
@@ -381,7 +381,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
     
     @Override
     public void propertyDeleted(String property, Map<String, Object> params) {
-        propertySet(property, Collections.<String, Object>emptyMap());
+        propertySet(property, Collections.emptyMap());
     }
 
     @Override

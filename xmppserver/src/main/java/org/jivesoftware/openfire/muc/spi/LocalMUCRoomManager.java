@@ -316,10 +316,6 @@ public class LocalMUCRoomManager
                             try {
                                 final List<MUCRole> existingOccupantsWithSameNick = roomInCluster.getOccupantsByNickname(nickBeingAddedToRoom);
                                 final List<JID> otherUsersWithSameNick = existingOccupantsWithSameNick.stream().map(MUCRole::getUserAddress).filter(bareJid -> !bareJid.equals(localOccupantRole.getUserAddress())).collect(Collectors.toList());
-                                Log.debug("Current cluster room occupants: {}", roomInCluster.getOccupants());
-                                Log.debug("Current cluster room occupants with same nick: {}", existingOccupantsWithSameNick);
-                                Log.debug("Current 'other' cluster room occupants with same nick: {}", otherUsersWithSameNick);
-                                Log.debug("Current local room occupants: {}", localRoom.getOccupants());
                                 if (!otherUsersWithSameNick.isEmpty()) {
 
                                     // We will be routing presences to several users. The routing table may not have

@@ -4,9 +4,6 @@ Version: %{OPENFIRE_VERSION}
 Release: %{OPENFIRE_RELEASE}
 BuildRoot: %{_builddir}/%{name}-root
 Source0: %{OPENFIRE_SOURCE}
-%ifnarch noarch
-Source1: %{JRE_BUNDLE}
-%endif
 %ifarch noarch
 # Note that epoch is set here to 1, this appears to be consistent with non-Redhat
 # jres as well due to an ancient problem with java-1.5.0-ibm jpackage RPM

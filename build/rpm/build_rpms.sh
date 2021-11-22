@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
-# See how we are called
-if [ "$#" -ne 2 ]; then
-    echo "USAGE: sh build/rpm/build_rpms.sh <rpmarch> <fullpath_to_jrefile>"
-    echo "  in the case of noarch, second argument is ignored"
-    exit 2
-fi
-export RPMARCH=$1
-export JRE_BUNDLE=$2
+export RPMARCH=noarch
 export RPMBUILD_HOME=$PWD/rpmbuild
 
 # Remove previous rpmbuild folder
@@ -22,10 +15,6 @@ mkdir -p ${RPMBUILD_HOME}/SOURCES
 mkdir -p ${RPMBUILD_HOME}/BUILD
 mkdir -p ${RPMBUILD_HOME}/SRPMS
 mkdir -p ${RPMBUILD_HOME}/RPMS
-
-if [ -f $JRE_BUNDLE ]; then
-    cp -f $JRE_BUNDLE ${RPMBUILD_HOME}/SOURCES/
-fi
 
 # Define some variables
 export RPM_BUILDDATE=$(date +'%a %b %d %Y')
@@ -59,7 +48,6 @@ cd ../..
 rpmbuild -bb \
   --target ${RPMARCH} \
   --define "_topdir ${RPMBUILD_HOME}" \
-  --define "JRE_BUNDLE ${JRE_BUNDLE}" \
   --define "OPENFIRE_BUILDDATE ${RPM_BUILDDATE}" \
   --define "OPENFIRE_VERSION ${OPENFIRE_VERSION}" \
   --define "OPENFIRE_RELEASE ${OPENFIRE_RELEASE}" \

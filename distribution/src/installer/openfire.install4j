@@ -796,38 +796,6 @@ return console.askYesNo(message, true);
       </exclude>
       <jreBundle jreBundleSource="none" />
     </windows>
-    <windows name="Windows Bundled JRE x86" id="1394" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_bundledJRE" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32">
-      <excludedLaunchers>
-        <launcher id="22" />
-      </excludedLaunchers>
-      <exclude>
-        <entry rootId="1568" />
-        <entry location="bin/extra/redhat" />
-        <entry location="bin/extra/embedded-db-viewer.sh" />
-        <entry location="bin/extra/openfired" />
-        <entry location="bin/extra/openfire-launchd-wrapper.sh" />
-        <entry location="bin/extra/redhat-postinstall.sh" />
-        <entry location="bin/openfire.sh" />
-        <entry location="bin/openfirectl" />
-      </exclude>
-      <jreBundle jreBundleSource="preCreated" includedJre="windows-x86-1.8.0_202" />
-    </windows>
-    <windows name="Windows Bundled JRE x64" id="1396" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_bundledJRE_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true">
-      <excludedLaunchers>
-        <launcher id="22" />
-      </excludedLaunchers>
-      <exclude>
-        <entry rootId="1568" />
-        <entry location="bin/extra/redhat" />
-        <entry location="bin/extra/embedded-db-viewer.sh" />
-        <entry location="bin/extra/openfired" />
-        <entry location="bin/extra/openfire-launchd-wrapper.sh" />
-        <entry location="bin/extra/redhat-postinstall.sh" />
-        <entry location="bin/openfire.sh" />
-        <entry location="bin/openfirectl" />
-      </exclude>
-      <jreBundle jreBundleSource="preCreated" includedJre="windows-amd64-1.8.0_202" />
-    </windows>
   </mediaSets>
   <buildIds>
     <mediaSet refId="18" />

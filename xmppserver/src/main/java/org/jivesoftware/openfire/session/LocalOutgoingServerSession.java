@@ -713,7 +713,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 }
                 else if (packet instanceof Presence) {
                     if (((Presence)packet).getType() == Presence.Type.error) {
-                        Log.debug("Double-bounce of presence: {}", packet.toXML());
+                        Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.remote_server_not_found, packet);
                         return;
                     }
                     Presence reply = new Presence();
@@ -726,7 +726,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 }
                 else if (packet instanceof Message) {
                     if (((Message)packet).getType() == Message.Type.error){
-                        Log.debug("Double-bounce of message: {}", packet.toXML());
+                        Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.remote_server_not_found, packet);
                         return;
                     }
                     Message reply = new Message();

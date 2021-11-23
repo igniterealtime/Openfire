@@ -96,7 +96,8 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
                 result.setTo(message.getFrom());
                 result.setFrom(message.getTo());
                 result.setError(PacketError.Condition.service_unavailable);
-                XMPPServer.getInstance().getRoutingTable().routePacket(message.getFrom(), result, true);
+
+                XMPPServer.getInstance().getPacketRouter().route(result);
                 return;
             }
 

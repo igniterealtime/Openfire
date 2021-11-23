@@ -386,16 +386,9 @@ public class OutgoingSessionPromise {
                 TaskEngine.getInstance().submit(() -> {
                     try
                     {
-                        final ClientSession session = SessionManager.getInstance().getSession( reply.getTo() );
-                        InterceptorManager.getInstance().invokeInterceptors( reply, session, false, false );
-                        routingTable.routePacket( reply.getTo(), reply, true );
-                        InterceptorManager.getInstance().invokeInterceptors( reply, session, false, true );
+                        XMPPServer.getInstance().getPacketRouter().route( reply );
                     }
-                    catch ( PacketRejectedException ex )
-                    {
-                        Log.debug( "Reply got rejected by an interceptor: {}", reply, ex );
-                    }
-                    catch ( Exception e )
+                    catch (Exception e)
                     {
                         Log.warn( "An exception occurred while trying to returning a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domainPair.getRemote(), packet, e );
                     }

@@ -692,7 +692,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private void returnErrorToSenderAsync(Packet packet) {
         TaskEngine.getInstance().submit(() -> {
-            RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+            final PacketRouter packetRouter = XMPPServer.getInstance().getPacketRouter();
             if (packet.getError() != null) {
                 Log.debug("Possible double bounce: {}", packet.toXML());
             }
@@ -709,7 +709,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     reply.setChildElement(((IQ) packet).getChildElement().createCopy());
                     reply.setType(IQ.Type.error);
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply, true);
+                    packetRouter.route(reply);
                 }
                 else if (packet instanceof Presence) {
                     if (((Presence)packet).getType() == Presence.Type.error) {
@@ -722,7 +722,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     reply.setFrom(packet.getTo());
                     reply.setType(Presence.Type.error);
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply, true);
+                    packetRouter.route(reply);
                 }
                 else if (packet instanceof Message) {
                     if (((Message)packet).getType() == Message.Type.error){
@@ -736,7 +736,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                     reply.setType(Message.Type.error);
                     reply.setThread(((Message)packet).getThread());
                     reply.setError(PacketError.Condition.remote_server_not_found);
-                    routingTable.routePacket(reply.getTo(), reply, true);
+                    packetRouter.route(reply);
                 }
             }
             catch (Exception e) {

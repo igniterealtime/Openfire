@@ -92,6 +92,10 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
             PrivacyList list =
                     PrivacyListManager.getInstance().getDefaultPrivacyList(recipientJID.getNode());
             if (list != null && list.shouldBlockPacket(message)) {
+                if (message.getType() == Message.Type.error){
+                    Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.service_unavailable, message);
+                    return;
+                }
                 Message result = message.createCopy();
                 result.setTo(message.getFrom());
                 result.setFrom(message.getTo());
@@ -207,16 +211,21 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
         if (message.getFrom() == null || message.getFrom().equals( serverAddress )) {
             return;
         }
+
         try {
-            // Generate a rejection response to the sender
-            Message errorResponse = message.createCopy();
-            // return an error stanza to the sender, which SHOULD be <service-unavailable/>
-            errorResponse.setError(PacketError.Condition.service_unavailable);
-            errorResponse.setFrom(message.getTo());
-            errorResponse.setTo(message.getFrom());
-            // Send the response
-            router.route(errorResponse);
-            // Inform listeners that an offline message was bounced
+            if (message.getType() == Message.Type.error){
+                Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.service_unavailable, message);
+            } else {
+                // Generate a rejection response to the sender
+                Message errorResponse = message.createCopy();
+                // return an error stanza to the sender, which SHOULD be <service-unavailable/>
+                errorResponse.setError(PacketError.Condition.service_unavailable);
+                errorResponse.setFrom(message.getTo());
+                errorResponse.setTo(message.getFrom());
+                // Send the response
+                router.route(errorResponse);
+                // Inform listeners that an offline message was bounced
+            }
             if (!listeners.isEmpty()) {
                 for (OfflineMessageListener listener : listeners) {
                     try {

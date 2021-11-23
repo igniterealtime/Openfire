@@ -422,6 +422,10 @@ public abstract class LocalSession implements Session {
             // http://xmpp.org/extensions/xep-0016.html#protocol-error
             if (packet instanceof Message) {
                 // For message stanzas, the server SHOULD return an error, which SHOULD be <service-unavailable/>.
+                if (((Message)packet).getType() == Message.Type.error){
+                    Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.service_unavailable, packet);
+                    return;
+                }
                 Message message = (Message) packet;
                 Message result = message.createCopy();
                 result.setTo(message.getFrom());

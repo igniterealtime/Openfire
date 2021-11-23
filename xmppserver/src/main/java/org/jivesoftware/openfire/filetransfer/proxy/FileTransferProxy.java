@@ -404,12 +404,10 @@ public class FileTransferProxy extends BasicModule
     public void process(Packet packet) throws UnauthorizedException, PacketException {
         // Check if the packet is a disco request or a packet with namespace iq:register
         if (packet instanceof IQ) {
-            if (handleIQ((IQ) packet)) {
-                // Do nothing
-            }
-            else {
-                IQ reply = IQ.createResultIQ((IQ) packet);
-                reply.setChildElement(((IQ) packet).getChildElement().createCopy());
+            final IQ iq = (IQ) packet;
+            if (!handleIQ(iq) && iq.isRequest()) {
+                IQ reply = IQ.createResultIQ(iq);
+                reply.setChildElement(iq.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.feature_not_implemented);
                 router.route(reply);
             }

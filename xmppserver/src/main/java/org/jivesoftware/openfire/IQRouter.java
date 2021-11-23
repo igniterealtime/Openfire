@@ -458,7 +458,7 @@ public class IQRouter extends BasicModule {
             return;
         }
         // Route the error packet to the original sender of the IQ.
-        routingTable.routePacket(reply.getTo(), reply, true);
+        XMPPServer.getInstance().getPacketRouter().route(reply);
     }
 
     /**

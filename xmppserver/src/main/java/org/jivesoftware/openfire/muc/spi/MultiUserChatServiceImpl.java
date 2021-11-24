@@ -1789,11 +1789,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return new ArrayList<>(localMUCRoomManager.getAll());
     }
 
+    /**
+     *  Combine names of all rooms in the database (to catch any rooms that aren't currently in memory) with all
+     *  names of rooms currently in memory (to include rooms that are non-persistent / never saved in the database).
+     *  Duplicates will be removed by virtue of using a Set.
+     *
+     * @return Names of all rooms that are known to this service.
+     */
     @Override
     public Set<String> getAllRoomNames() {
-        // Combine names of all rooms in the database (to catch any rooms that aren't currently in memory) with all
-        // names of rooms currently in memory (to include rooms that are non-persistent / never saved in the database).
-        // Duplicates will be removed by virtue of using a Set.
         final Set<String> result = new HashSet<>();
         result.addAll( MUCPersistenceManager.loadRoomNamesFromDB(this) );
         result.addAll( localMUCRoomManager.getAll().stream().map(MUCRoom::getName).collect(Collectors.toSet()) );
@@ -1807,13 +1811,24 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     public Collection<MUCRoomSearchInfo> getAllRoomSearchInfo() {
         // Base the result for all rooms that are in memory, then complement with rooms in the database that haven't
         // been added yet (to catch all non-active rooms);
-        final List<MUCRoomSearchInfo> result = getActiveChatRooms().stream().map(MUCRoomSearchInfo::new).collect(Collectors.toList());
+        return getActiveAndInactiveRooms().stream().map(MUCRoomSearchInfo::new).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns all rooms serviced by this service. This includes rooms designated as non-active, which are loaded from
+     * the database if necessary. This method can also be used solely for that 'side' effect of ensuring that all rooms
+     * are loaded.
+     *
+     * @return All rooms serviced by this service.
+     */
+    public List<MUCRoom> getActiveAndInactiveRooms() {
+        final List<MUCRoom> result = getActiveChatRooms();
 
         if (JiveGlobals.getBooleanProperty("xmpp.muc.search.skip-unloaded-rooms", false)) {
             return result;
         }
 
-        final Set<String> loadedNames = result.stream().map(MUCRoomSearchInfo::getName).collect(Collectors.toSet());
+        final Set<String> loadedNames = result.stream().map(MUCRoom::getName).collect(Collectors.toSet());
         final Collection<String> dbNames = MUCPersistenceManager.loadRoomNamesFromDB(this);
         dbNames.removeAll(loadedNames); // what remains needs to be loaded from the database;
 
@@ -1821,7 +1836,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // TODO improve scalability instead of loading every room that wasn't loaded before.
             final MUCRoom chatRoom = this.getChatRoom(name);
             if (chatRoom != null) {
-                result.add(new MUCRoomSearchInfo(chatRoom));
+                result.add(chatRoom);
             }
         }
         return result;
@@ -2903,6 +2918,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         final Set<DiscoItem> answer = new HashSet<>();
         if (name == null && node == null)
         {
+            // Before returning the items, ensure that all rooms are properly loaded in memory
+            getActiveAndInactiveRooms();
+
             // Answer all the public rooms as items
             for (final MUCRoom room : localMUCRoomManager.getAll())
             {
@@ -3107,6 +3125,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.warn("Unable to inform occupants on local cluster node that they are being removed from room '{}' because of a (cluster) error.", lostRoomName, e);
             }
         }
+
+        // Now that occupants have been properly ousted from the lost rooms, we can make an effort to restore the rooms
+        // from the database. Calling getActiveAndInactiveRooms() will do just that.
+        getActiveAndInactiveRooms();
 
         // From this point onwards, the remainder of what's in the cache can be considered 'consistent' (as we've dealt with the inconsistencies).
         // We now need to inform these occupants that occupants of the same room, that exist on other cluster nodes (which are now unreachable)

@@ -160,8 +160,8 @@ does exist called <tt>&lt;autosetup&gt;</tt> with a <tt>&lt;run&gt;true&lt;/run&
             &lt;key&gt;some-key&lt;/key&gt;
         &lt;/encryption&gt;
         &lt;database&gt;
-            &lt;mode&gt;standard&lt;/mode&gt;
-            &lt;defaultProvider&gt;
+            &lt;mode&gt;standard&lt;/mode&gt; &lt;!-- Possible values: "standard" or "embedded" --&gt;
+            &lt;defaultProvider&gt; &lt;!-- Unnessary in embedded mode --&gt;
                 &lt;driver&gt;org.postgresql.Driver&lt;/driver&gt;
                 &lt;serverURL&gt;jdbc:postgresql://localhost:5432/a-database&lt;/serverURL&gt;
                 &lt;username&gt;a-database&lt;/username&gt;

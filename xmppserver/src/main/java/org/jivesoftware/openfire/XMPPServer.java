@@ -38,8 +38,9 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
-import org.dom4j.Document;
+import org.jivesoftware.database.ConnectionProvider;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.EmbeddedConnectionProvider;
 import org.jivesoftware.database.JNDIDataSourceProvider;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.audit.AuditManager;
@@ -502,6 +503,15 @@ public class XMPPServer {
                 Integer.toString(maxConnections));
             JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
+        } else if ("embedded".equals(JiveGlobals.getXMLProperty("autosetup.database.mode"))) {
+            JiveGlobals.setXMLProperty("connectionProvider.className",
+                "org.jivesoftware.database.EmbeddedConnectionProvider");
+            ConnectionProvider conProvider = new EmbeddedConnectionProvider();
+            DbConnectionManager.setConnectionProvider(conProvider);
+            if (!DbConnectionManager.testConnection(new HashMap<>())) {
+                logger.error("Unable to create embedded DB");
+                return;
+            }
         }
 
         // mark setup as done, so that other things can be written to the DB

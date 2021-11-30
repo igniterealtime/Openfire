@@ -398,7 +398,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             } else if (packet instanceof Message) {
                 final Message msg = (Message) packet;
                 if (msg.getType() == Message.Type.error) {
-                    // Bounced message, drop user.
+                    Log.info("Received a message stanza of type error from {}. Removing this user from all chat rooms.", packet.getFrom());
                     removeChatUser(packet.getFrom());
                     Log.trace( "Done processing Message stanza." );
                     return;
@@ -406,7 +406,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             } else if (packet instanceof Presence) {
                 final Presence pres = (Presence) packet;
                 if (pres.getType() == Presence.Type.error) {
-                    // Bounced presence, drop user.
+                    Log.info("Received a presence stanza of type error from {}. Removing this user from all chat rooms.", packet.getFrom());
                     removeChatUser(packet.getFrom());
                     Log.trace( "Done processing Presence stanza." );
                     return;

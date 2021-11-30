@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.DefaultLocalCacheStrategy;
@@ -373,14 +374,19 @@ public class OutgoingSessionPromise {
 
                     replies.add( reply );
                 }
+            }
+            catch (Exception e)
+            {
+                Log.warn( "An exception occurred while trying to generate a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domainPair.getRemote(), packet, e );
+            }
 
-                // Send all replies.
-                final SessionManager sessionManager = SessionManager.getInstance();
-                for ( final Packet reply : replies )
-                {
+            // Send all replies.
+            for ( final Packet reply : replies )
+            {
+                TaskEngine.getInstance().submit(() -> {
                     try
                     {
-                        final ClientSession session = sessionManager.getSession( reply.getTo() );
+                        final ClientSession session = SessionManager.getInstance().getSession( reply.getTo() );
                         InterceptorManager.getInstance().invokeInterceptors( reply, session, false, false );
                         routingTable.routePacket( reply.getTo(), reply, true );
                         InterceptorManager.getInstance().invokeInterceptors( reply, session, false, true );
@@ -389,10 +395,11 @@ public class OutgoingSessionPromise {
                     {
                         Log.debug( "Reply got rejected by an interceptor: {}", reply, ex );
                     }
-                }
-            }
-            catch (Exception e) {
-                Log.warn( "An exception occurred while trying to returning a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domainPair.getRemote(), packet, e );
+                    catch ( Exception e )
+                    {
+                        Log.warn( "An exception occurred while trying to returning a remote-server-not-found error (for domain '{}') to the original sender. Original packet: {}", domainPair.getRemote(), packet, e );
+                    }
+                });
             }
         }
 

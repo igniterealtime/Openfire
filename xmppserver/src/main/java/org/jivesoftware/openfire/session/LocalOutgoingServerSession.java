@@ -32,6 +32,7 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -660,7 +661,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
         }
         if (!processed) {
-            returnErrorToSender(packet);
+            returnErrorToSenderAsync(packet);
         }
         return processed;
     }
@@ -689,57 +690,59 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         return false;
     }
 
-    private void returnErrorToSender(Packet packet) {
-        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-        if (packet.getError() != null) {
-            Log.debug("Possible double bounce: " + packet.toXML());
-        }
-        try {
-            if (packet instanceof IQ) {
-                if (((IQ) packet).isResponse()) {
-                    Log.debug("XMPP specs forbid us to respond with an IQ error to: " + packet.toXML());
-                    return;
-                }
-                IQ reply = new IQ();
-                reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
-                reply.setChildElement(((IQ) packet).getChildElement().createCopy());
-                reply.setType(IQ.Type.error);
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply, true);
+    private void returnErrorToSenderAsync(Packet packet) {
+        TaskEngine.getInstance().submit(() -> {
+            RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+            if (packet.getError() != null) {
+                Log.debug("Possible double bounce: {}", packet.toXML());
             }
-            else if (packet instanceof Presence) {
-                if (((Presence)packet).getType() == Presence.Type.error) {
-                    Log.debug("Double-bounce of presence: " + packet.toXML());
-                    return;
+            try {
+                if (packet instanceof IQ) {
+                    if (((IQ) packet).isResponse()) {
+                        Log.debug("XMPP specs forbid us to respond with an IQ error to: {}", packet.toXML());
+                        return;
+                    }
+                    IQ reply = new IQ();
+                    reply.setID(packet.getID());
+                    reply.setTo(packet.getFrom());
+                    reply.setFrom(packet.getTo());
+                    reply.setChildElement(((IQ) packet).getChildElement().createCopy());
+                    reply.setType(IQ.Type.error);
+                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    routingTable.routePacket(reply.getTo(), reply, true);
                 }
-                Presence reply = new Presence();
-                reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
-                reply.setType(Presence.Type.error);
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply, true);
-            }
-            else if (packet instanceof Message) {
-                if (((Message)packet).getType() == Message.Type.error){
-                    Log.debug("Double-bounce of message: " + packet.toXML());
-                    return;
+                else if (packet instanceof Presence) {
+                    if (((Presence)packet).getType() == Presence.Type.error) {
+                        Log.debug("Double-bounce of presence: {}", packet.toXML());
+                        return;
+                    }
+                    Presence reply = new Presence();
+                    reply.setID(packet.getID());
+                    reply.setTo(packet.getFrom());
+                    reply.setFrom(packet.getTo());
+                    reply.setType(Presence.Type.error);
+                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    routingTable.routePacket(reply.getTo(), reply, true);
                 }
-                Message reply = new Message();
-                reply.setID(packet.getID());
-                reply.setTo(packet.getFrom());
-                reply.setFrom(packet.getTo());
-                reply.setType(Message.Type.error);
-                reply.setThread(((Message)packet).getThread());
-                reply.setError(PacketError.Condition.remote_server_not_found);
-                routingTable.routePacket(reply.getTo(), reply, true);
+                else if (packet instanceof Message) {
+                    if (((Message)packet).getType() == Message.Type.error){
+                        Log.debug("Double-bounce of message: {}", packet.toXML());
+                        return;
+                    }
+                    Message reply = new Message();
+                    reply.setID(packet.getID());
+                    reply.setTo(packet.getFrom());
+                    reply.setFrom(packet.getTo());
+                    reply.setType(Message.Type.error);
+                    reply.setThread(((Message)packet).getThread());
+                    reply.setError(PacketError.Condition.remote_server_not_found);
+                    routingTable.routePacket(reply.getTo(), reply, true);
+                }
             }
-        }
-        catch (Exception e) {
-            Log.error("Error returning error to sender. Original packet: " + packet, e);
-        }
+            catch (Exception e) {
+                Log.error("Error returning error to sender. Original packet: {}", packet, e);
+            }
+        });
     }
 
     @Override

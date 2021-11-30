@@ -1173,7 +1173,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     }
 
     /**
-     * Sends presence of a leaving occupant to other occupants.
+     * Sends presence of a leaving occupant to applicable occupants of the room that is being left.
      *
      * @param leaveRole the role of the occupant that is leaving.
      */
@@ -1196,18 +1196,17 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             }
             item.addAttribute("role", "none");
 
-            // Check to see if the user's original role is one we should broadcast a leave packet for.
-            if(!canBroadcastPresence(leaveRole.getRole())){
+            // Check to see if the user's original role is one we should broadcast a leave packet for,
+            // or if the leaving role is using multi-session nick (in which case _only_ the leaving client should be informed).
+            if(!canBroadcastPresence(leaveRole.getRole()) || getOccupantsByNickname(leaveRole.getNickname()).size() > 1){
                 // Inform the leaving user that he/she has left the room
                 leaveRole.send(presence);
                 return CompletableFuture.completedFuture(null);
             }
             else {
-                if (getOccupantsByNickname(leaveRole.getNickname()).size() <= 1) {
-                    // Inform the rest of the room occupants that the user has left the room
-                    if (JOIN_PRESENCE_ENABLE.getValue()) {
-                        return broadcastPresence(presence, false, leaveRole);
-                    }
+                // Inform all room occupants that the user has left the room
+                if (JOIN_PRESENCE_ENABLE.getValue()) {
+                    return broadcastPresence(presence, false, leaveRole);
                 }
             }
         }

@@ -1200,7 +1200,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             // or if the leaving role is using multi-session nick (in which case _only_ the leaving client should be informed).
             if(!canBroadcastPresence(leaveRole.getRole()) || getOccupantsByNickname(leaveRole.getNickname()).size() > 1){
                 // Inform the leaving user that he/she has left the room
-                leaveRole.send(presence);
+                leaveRole.send(createSelfPresenceCopy(presence, false));
                 return CompletableFuture.completedFuture(null);
             }
             else {

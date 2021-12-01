@@ -328,7 +328,8 @@ public class XMPPServer {
     }
 
     /**
-     * Returns true if the given address matches a component service JID.
+     * Returns true if the domain-part of the given address matches a component service JID for a component that is
+     * connected to the local XMPP domain.
      *
      * @param jid the JID to check.
      * @return true if the given address matches a component service JID.
@@ -337,7 +338,7 @@ public class XMPPServer {
     {
         return jid != null
                 && !jid.getDomain().equals( xmppServerInfo.getXMPPDomain() )
-                && componentManager.hasComponent( jid );
+                && componentManager.hasComponent( new JID(null, jid.getDomain(), null, true) );
     }
 
     /**

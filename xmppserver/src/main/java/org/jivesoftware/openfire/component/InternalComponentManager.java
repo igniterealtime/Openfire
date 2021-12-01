@@ -470,6 +470,10 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
      * Returns true if a component is associated to the specified address. Components
      * registered with this JVM or other cluster nodes are going to be considered.
      *
+     * Note that this method will return true only if the full JID exactly matches a
+     * component address, meaning that it returns 'false' for any argument that contains
+     * either a node-part or a resource-part.
+     *
      * @param componentJID the address of the component. This is the complete domain.
      * @return true if a component is associated to the specified address.
      */

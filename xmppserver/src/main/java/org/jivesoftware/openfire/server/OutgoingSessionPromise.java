@@ -411,7 +411,12 @@ public class OutgoingSessionPromise {
             if (!packet.getTo().getDomain().equals(domainPair.getRemote())) {
                 throw new IllegalArgumentException("Cannot queue packet to intended recipient '" + packet.getTo() + "' in the outgoing session promise to domain " + domainPair + ". Remote domain does not match!");
             }
-            if (!packetQueue.offer(packet))
+            Log.trace("Queuing stanza to intended recipient '{}' in the outgoing session promise to domain '{}': {}", packet.getTo(), domainPair, packet.toXML());
+
+            // When queuing for async processing, ensure that the queued stanza is not modified by reference, by queuing
+            // a defensive copy rather than the original. Modifications of the original can be expected in broadcast-like
+            // scenarios (eg: MUC) where the same stanza is re-addressed for each intended recipient. See OF-2344.
+            if (!packetQueue.offer(packet.createCopy()))
             {
                 Log.debug("Error sending packet in the outgoing session promise for {}. (outbound queue full): {}", domainPair, packet);
                 returnErrorToSender(packet);

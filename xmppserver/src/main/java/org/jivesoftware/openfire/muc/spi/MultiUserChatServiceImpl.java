@@ -553,6 +553,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     {
         if (packet.getError() != null) {
             Log.debug("Avoid generating an error in response to a stanza that itself has an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error (with message '{}') in response to: {}", error, message, packet);
+            return;
         }
         if ( packet instanceof IQ )
         {

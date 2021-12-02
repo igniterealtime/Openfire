@@ -11,12 +11,12 @@
 <%@ page import="org.jivesoftware.util.Base64" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
-<%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.net.URL" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -121,7 +121,7 @@
                 return;
             }
         } catch (UnauthorizedException ue) {
-            Log.debug(ue);
+            LoggerFactory.getLogger("loginToken.jsp").debug("Login failed.", ue);
             LoginLimitManager.getInstance().recordFailedAttempt(token, request.getRemoteAddr());
             // Provide a special message if the user provided something containing @
             errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.wrongtoken"));
@@ -163,7 +163,7 @@
     <input type="hidden" name="url" value="<%= StringUtils.escapeForXML(url) %>">
 
     <% } catch (Exception e) {
-        Log.error(e);
+        LoggerFactory.getLogger("loginToken.jsp").error("An exception occurred.", e);
     }
     } %>
 

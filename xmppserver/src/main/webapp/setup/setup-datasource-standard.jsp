@@ -13,6 +13,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -118,7 +119,7 @@
             catch (Exception e) {
                 errors.put("general","Setting connection properties failed - please see the error "
                         + "log located in home/logs for more details.");
-                Log.error(e);
+                LoggerFactory.getLogger("setup-datasource-standard.jsp").error("Setting connection properties failed.", e);
             }
             // No errors setting the properties, so test the connection
             DbConnectionManager.setConnectionProvider(conProvider);

@@ -69,7 +69,6 @@
             }
             catch ( IllegalArgumentException ex )
             {
-                Log.warn( ex );
                 errors.put( "connectionType", ex.getMessage() );
             }
         }
@@ -142,7 +141,6 @@
                 }
                 catch ( Exception ex )
                 {
-                    Log.warn( ex );
                     errors.put( "update", ex.getMessage() );
                 }
             }

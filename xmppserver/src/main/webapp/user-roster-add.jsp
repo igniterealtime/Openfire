@@ -21,12 +21,14 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.util.HashMap"%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.roster.Roster" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.jivesoftware.openfire.user.UserAlreadyExistsException" %>
 <%@ page import="org.jivesoftware.openfire.SharedGroupException" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -102,7 +104,7 @@
             }
             catch (Exception e) {
                 errors.put("general","");
-                Log.error(e);
+                LoggerFactory.getLogger("user-roster-add.jsp").error("Unexpected error while adding JID '{}' to roster of user '{}' in admin console.", jid, username, e);
             }
         }
     }

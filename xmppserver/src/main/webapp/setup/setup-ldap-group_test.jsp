@@ -6,6 +6,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -35,7 +36,7 @@
         catch (Exception e) {
             // Inform user that an error occurred while trying to get users data
             errorDetail = LocaleUtils.getLocalizedString("setup.ldap.test.error-loading-sample");
-            Log.error("Error occurred while trying to get users data from LDAP", e);
+            LoggerFactory.getLogger("setup-ldap-group_test.jsp").error("Error occurred while trying to get a sample of group data from LDAP.", e);
         }
         if (groups.isEmpty()) {
             // Inform user that no users were found

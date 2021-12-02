@@ -26,6 +26,7 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -77,7 +78,7 @@
             }
             catch ( Exception e )
             {
-                Log.error( "An error has occured configuring the HTTP binding ports", e );
+                LoggerFactory.getLogger("http-bind.jsp").debug("An error has occurred configuring the HTTP binding ports.", e);
                 errorMap.put( "port", e.getMessage() );
             }
             boolean isScriptSyntaxEnabled = ParamUtils.getBooleanParameter( request, "scriptSyntaxEnabled", serverManager.isScriptSyntaxEnabled() );

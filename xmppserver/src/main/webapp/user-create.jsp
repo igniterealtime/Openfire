@@ -28,6 +28,7 @@
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 <%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 <%@ page import="org.jivesoftware.openfire.group.GroupNotFoundException" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -160,7 +161,7 @@
             }
             catch (Exception e) {
                 errors.put("general","");
-                Log.error(e);
+                LoggerFactory.getLogger("user-create.jsp").error("Unexpected error while creating user '{}' in admin console.", username, e);
             }
         }
     }

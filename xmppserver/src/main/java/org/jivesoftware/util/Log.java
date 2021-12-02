@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
@@ -53,261 +54,51 @@ public final class Log {
         .setDynamic(true)
         .addListener(Log::setDebugEnabled)
         .build();
-    /**
-     * @deprecated in favour of {@link #DEBUG_ENABLED}
-     */
-    @Deprecated
-    public static final String LOG_DEBUG_ENABLED = DEBUG_ENABLED.getKey();
+
     public static final SystemProperty<Boolean> TRACE_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("log.trace.enabled")
         .setDefaultValue(false)
         .setDynamic(true)
         .addListener(Log::setTraceEnabled)
         .build();
-    /**
-     * @deprecated in favour of {@link #TRACE_ENABLED}
-     */
-    @Deprecated
-    public static final String LOG_TRACE_ENABLED = TRACE_ENABLED.getKey();
-    private static boolean debugEnabled = false;
-    private static boolean traceEnabled = false;
 
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#isErrorEnabled()}.
-     *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabled, otherwise {@code false}
-     */
-    @Deprecated
-    public static boolean isErrorEnabled() {
-        return Logger.isErrorEnabled();
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#isDebugEnabled()}.
-     *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabled, otherwise {@code false}
-     */
-    @Deprecated
-    public static boolean isDebugEnabled() {
-        return Logger.isDebugEnabled();
-    }
+    private static Level lastLogLevel = getRootLogLevel();
 
     public static void setDebugEnabled(final boolean enabled) {
-        if (enabled != debugEnabled) {
-            debugEnabled = enabled;
-            setLogLevel();
+        if (enabled && getRootLogLevel().isMoreSpecificThan(Level.DEBUG)) {
+            lastLogLevel = getRootLogLevel();
+            setLogLevel(Level.DEBUG);
+        } else if (!enabled && getRootLogLevel().isLessSpecificThan(Level.DEBUG)) {
+            setLogLevel(lastLogLevel != Level.DEBUG ? lastLogLevel : Level.INFO);
+            lastLogLevel = Level.DEBUG;
         }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#isTraceEnabled()}.
-     *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabled, otherwise {@code false}
-     */
-    @Deprecated
-    public static boolean isTraceEnabled() {
-        return Logger.isTraceEnabled();
     }
     
     public static void setTraceEnabled(final boolean enabled) {
-        if (enabled != traceEnabled) {
-            traceEnabled = enabled;
-            setLogLevel();
+        if (enabled && getRootLogLevel().isMoreSpecificThan(Level.TRACE)) {
+            lastLogLevel = getRootLogLevel();
+            setLogLevel(Level.TRACE);
+        } else if (!enabled && getRootLogLevel().isLessSpecificThan(Level.TRACE)) {
+            setLogLevel(lastLogLevel != Level.TRACE ? lastLogLevel : Level.INFO);
+            lastLogLevel = Level.TRACE;
         }
     }
 
-    private static void setLogLevel() {
+    public static Level getRootLogLevel() {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
-        final org.apache.logging.log4j.Level newLevel;
-        if (traceEnabled) {
-            newLevel = org.apache.logging.log4j.Level.TRACE;
-        } else if (debugEnabled) {
-            newLevel = org.apache.logging.log4j.Level.DEBUG;
-        } else {
-            newLevel = org.apache.logging.log4j.Level.INFO;
-        }
         final LoggerContext ctx = (LoggerContext) LogManager.getContext( false );
         final Configuration config = ctx.getConfiguration();
-        final LoggerConfig loggerConfig = config.getLoggerConfig( LogManager.ROOT_LOGGER_NAME );
+        final LoggerConfig loggerConfig = config.getRootLogger();
+        return loggerConfig.getLevel();
+    }
+
+    private static void setLogLevel(Level newLevel) {
+        // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
+        final LoggerContext ctx = (LoggerContext) LogManager.getContext( false );
+        final Configuration config = ctx.getConfiguration();
+        final LoggerConfig loggerConfig = config.getRootLogger();
         loggerConfig.setLevel( newLevel );
         ctx.updateLoggers();  // This causes all Loggers to refetch information from their LoggerConfig.
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#isInfoEnabled()}.
-     *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabled, otherwise {@code false}
-     */
-    @Deprecated
-    public static boolean isInfoEnabled() {
-        return Logger.isInfoEnabled();
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#isWarnEnabled()}.
-     *             Functionality of this method is delegated there.
-     * @return {@code true} if logging is enabled, otherwise {@code false}
-     */
-    @Deprecated
-    public static boolean isWarnEnabled() {
-        return Logger.isWarnEnabled();
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#debug(String)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     */
-    @Deprecated
-    public static void debug(String s) {
-        if (isDebugEnabled()) {
-            Logger.debug(s);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void debug(Throwable throwable) {
-        if (isDebugEnabled()) {
-            Logger.debug("", throwable);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void debug(String s, Throwable throwable) {
-        if (isDebugEnabled()) {
-            Logger.debug(s, throwable);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#info(String)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     */
-    @Deprecated
-    public static void info(String s) {
-        if (isInfoEnabled()) {
-            Logger.info(s);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void info(Throwable throwable) {
-        if (isInfoEnabled()) {
-            Logger.info("", throwable);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#info(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void info(String s, Throwable throwable) {
-        if (isInfoEnabled()) {
-            Logger.info(s, throwable);
-        }
-    }
-    
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#warn(String)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     */
-    @Deprecated
-    public static void warn(String s) {
-        if (isWarnEnabled()) {
-            Logger.warn(s);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#warn(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void warn(Throwable throwable) {
-        if (isWarnEnabled()) {
-            Logger.warn("", throwable);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#debug(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void warn(String s, Throwable throwable) {
-        if (isWarnEnabled()) {
-            Logger.warn(s, throwable);
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#error(String)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     */
-    @Deprecated
-    public static void error(String s) {
-        if (isErrorEnabled()) {
-            Logger.error(s);
-            if (isDebugEnabled()) {
-                printToStdErr(s, null);
-            }
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void error(Throwable throwable) {
-        if (isErrorEnabled()) {
-            Logger.error("", throwable);
-            if (isDebugEnabled()) {
-                printToStdErr(null, throwable);
-            }
-        }
-    }
-
-    /**
-     * @deprecated replaced by {@link org.slf4j.Logger#error(String, Throwable)}.
-     *             Functionality of this method is delegated there.
-     * @param s the string to log
-     * @param throwable the throwable to log
-     */
-    @Deprecated
-    public static void error(String s, Throwable throwable) {
-        if (isErrorEnabled()) {
-            Logger.error(s, throwable);
-            if (isDebugEnabled()) {
-                printToStdErr(s, throwable);
-            }
-        }
     }
 
     public static void rotateOpenfireLogFile() {
@@ -373,13 +164,13 @@ public final class Log {
             out = new BufferedWriter(new FileWriter(logFile));
             out.write("");
         } catch (IOException ex) {
-            Log.warn("Could not empty file " + logFile.getName(), ex);
+            Logger.warn("Could not empty file " + logFile.getName(), ex);
         } finally {
             if (out != null) {
                 try {
                     out.close();
                 } catch (IOException ex) {
-                    Log.warn("Could not close file.", ex);
+                    Logger.warn("Could not close file.", ex);
                 }
             }
         }

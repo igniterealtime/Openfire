@@ -314,6 +314,16 @@ ${listPager.jumpToPageForm}
         </tr>
         <tr valign="top">
             <td>
+                <label for="defaultPropertyValue">
+                    <fmt:message key="server.properties.default"/>:
+                </label>
+            </td>
+            <td>
+                <span id="defaultPropertyValue"></span>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td>
                 <fmt:message key="server.properties.encryption"/>:
             </td>
             <td>
@@ -368,6 +378,10 @@ ${listPager.jumpToPageForm}
         } else {
             valueField.value = imgObject.parentNode.parentNode.childNodes[3].childNodes[1].textContent;
         }
+
+        var defaultValueField = document.getElementById("defaultPropertyValue");
+        defaultValueField.innerText = imgObject.parentNode.parentNode.childNodes[5].childNodes[0].textContent.trim();
+
         document.getElementById(encrypted ? "editPropertyEncryptTrue" : "editPropertyEncryptFalse").checked = true;
         document.getElementById("newPropertyTitle").style.display = "none";
         document.getElementById("editPropertyTitle").style.display = "";

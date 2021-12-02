@@ -33,7 +33,7 @@
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
 
-        <Root level="all">
+        <Root level="info">
             <AppenderRef ref="openfire"/>
         </Root>
     </Loggers>

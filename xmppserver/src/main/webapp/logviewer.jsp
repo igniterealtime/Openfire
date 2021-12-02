@@ -24,6 +24,7 @@
                  org.jivesoftware.openfire.user.*,
                  java.util.*"
 %>
+<%@ page import="org.apache.logging.log4j.Level" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -110,17 +111,17 @@
     boolean markLog = ParamUtils.getBooleanParameter(request,"markLog");
     boolean saveLog = ParamUtils.getBooleanParameter(request,"saveLog");
     boolean emailLog = ParamUtils.getBooleanParameter(request,"emailLog");
-    boolean debugEnabled = ParamUtils.getBooleanParameter(request,"debugEnabled");
+    boolean traceEnabled = ParamUtils.getBooleanParameter(request,"traceEnabled");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
 
-    // Enable/disable debugging
-    if (request.getParameter("debugEnabled") != null && debugEnabled != Log.isDebugEnabled()) {
+    // Enable/disable trace logging
+    if (request.getParameter("traceEnabled") != null && traceEnabled != Log.getRootLogLevel().isLessSpecificThan(Level.TRACE)) {
         if (!(csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam))) {
-            Log.TRACE_ENABLED.setValue(debugEnabled);
+            Log.TRACE_ENABLED.setValue(traceEnabled);
             // Log the event
-            admin.logEvent((debugEnabled ? "enabled" : "disabled")+" debug logging", null);
+            admin.logEvent((traceEnabled ? "enabled" : "disabled")+" trace logging", null);
             response.sendRedirect("logviewer.jsp");
             return;
         }
@@ -130,7 +131,7 @@
     if (log != null) {
         log = StringUtils.escapeHTMLTags(log);
     }
-    debugEnabled = Log.isTraceEnabled();
+    traceEnabled = Log.getRootLogLevel().isLessSpecificThan(Level.TRACE);
     User pageUser = admin.getUser();
 
     if (clearLog) {
@@ -361,16 +362,16 @@ IFRAME {
                     <table cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
                         <td width="1%" nowrap>
-                            <fmt:message key="logviewer.debug_log" />: &nbsp;
+                            <fmt:message key="logviewer.trace_log" />: &nbsp;
                         </td>
                         <td width="1%">
-                            <input id="de01" type="radio" name="debugEnabled" value="true" <%= debugEnabled ? " checked" : "" %>>
+                            <input id="de01" type="radio" name="traceEnabled" value="true" <%= traceEnabled ? " checked" : "" %>>
                         </td>
                         <td width="1%" nowrap>
                             <label for="de01"><fmt:message key="logviewer.enabled" /></label> &nbsp;
                         </td>
                         <td width="1%">
-                            <input id="de02" type="radio" name="debugEnabled" value="false" <%= debugEnabled ? "" : " checked" %>>
+                            <input id="de02" type="radio" name="traceEnabled" value="false" <%= traceEnabled ? "" : " checked" %>>
                         </td>
                         <td width="1%" nowrap>
                             <label for="de02"><fmt:message key="logviewer.disabled" /></label> &nbsp;

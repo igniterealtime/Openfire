@@ -421,8 +421,12 @@ public class XMPPServer {
         JiveGlobals.migrateProperty(XMPPServerInfo.XMPP_DOMAIN.getKey());
 
         JiveGlobals.migrateProperty(Log.DEBUG_ENABLED.getKey());
-        Log.setDebugEnabled(Log.DEBUG_ENABLED.getValue());
-        Log.setTraceEnabled(Log.TRACE_ENABLED.getValue());
+        if (Log.DEBUG_ENABLED.getValue()) {
+            Log.setDebugEnabled(true);
+        }
+        if (Log.TRACE_ENABLED.getValue()) {
+            Log.setTraceEnabled(true);
+        }
 
         // Update server info
         xmppServerInfo = new XMPPServerInfoImpl(new Date());

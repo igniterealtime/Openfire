@@ -28,6 +28,7 @@
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -97,7 +98,7 @@
             }
             catch (Exception e) {
                 errors.put("general", "");
-                Log.error(e);
+                LoggerFactory.getLogger("group-create.jsp").warn("Problem creating group '{}' in admin console.", groupName, e);
             }
         }
     }
@@ -127,7 +128,7 @@
             }
             catch (Exception e) {
                 errors.put("general", "");
-                Log.error(e);
+                LoggerFactory.getLogger("group-create.jsp").warn("Problem editing group '{}' in admin console.", groupName, e);
             }
         }
     }

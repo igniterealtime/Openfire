@@ -34,6 +34,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.util.function.Predicate" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -285,7 +286,7 @@
             catch ( Exception e )
             {
                 errors.put( "general", e.getMessage() );
-                Log.warn("Problem adding new user to existing group", e);
+                LoggerFactory.getLogger("group-edit.jsp").warn("Problem adding new user '{}' to existing group '{}' in admin console.", groupName, username, e);
             }
 
             if ( memberAdded )

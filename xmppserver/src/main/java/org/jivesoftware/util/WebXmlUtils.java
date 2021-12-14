@@ -72,6 +72,7 @@ public class WebXmlUtils
 
     private static List<String> getNames( String type, Document webXml )
     {
+        Log.trace("Looking for {} names", type);
         final List<String> result = new ArrayList<>();
         final List<Element> elements = webXml.getRootElement().elements( type ); // all elements of 'type' (filter or servlet).
         for ( final Element element : elements )
@@ -83,6 +84,7 @@ public class WebXmlUtils
             }
         }
 
+        Log.debug("Found {} {} name(s): {}", result.size(), type, String.join(", ", result));
         return result;
     }
 
@@ -128,6 +130,8 @@ public class WebXmlUtils
 
     private static String getClassName( String type, Document webXml, String typeName )
     {
+        Log.trace("Looking for class name for {} '{}'", type, typeName);
+
         String className = null;
         final List<Element> elements = webXml.getRootElement().elements( type ); // all elements of 'type' (filter or servlet).
         for ( final Element element : elements )
@@ -142,10 +146,14 @@ public class WebXmlUtils
 
         if (className == null || className.isEmpty() )
         {
+            Log.debug("Found no class name for {} '{}'", type, typeName);
             return null;
         }
-
-        return className;
+        else
+        {
+            Log.debug("Found class name for {} '{}': {}", type, typeName, className);
+            return className;
+        }
     }
 
     /**
@@ -208,6 +216,7 @@ public class WebXmlUtils
 
     private static Map<String, String> getInitParams( String type, Document webXml, String typeName )
     {
+        Log.trace("Looking for init params for {} '{}'", type, typeName);
         final Map<String, String> result = new HashMap<>();
         final List<Element> elements = webXml.getRootElement().elements( type ); // all elements of 'type' (filter or servlet).
         for ( final Element element : elements )
@@ -231,6 +240,7 @@ public class WebXmlUtils
             }
         }
 
+        Log.debug("Found {} init-params(s) for {} '{}'", result.size(), type, typeName);
         return result;
     }
 
@@ -260,6 +270,7 @@ public class WebXmlUtils
 
     private static Set<String> getUrlPatterns( String type, Document webXml, String typeName )
     {
+        Log.trace("Looking for URL patterns for {} '{}'", type, typeName);
         final Set<String> result = new HashSet<>();
         final List<Element> elements = webXml.getRootElement().elements( type + "-mapping" ); // all elements of 'type'-mapping (filter-mapping or servlet-mapping).
         for ( final Element element : elements )
@@ -294,6 +305,7 @@ public class WebXmlUtils
             }
         }
 
+        Log.debug("Found {} URL pattern(s) for {} '{}': {}", result.size(), type, typeName, String.join(",", result));
         return result;
     }
 }

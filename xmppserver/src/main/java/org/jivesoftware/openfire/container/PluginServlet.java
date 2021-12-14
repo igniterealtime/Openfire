@@ -84,7 +84,7 @@ public class PluginServlet extends HttpServlet {
         .setDefaultValue( false )
         .build();
 
-    private static Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
+    private static final Map<String, GenericServlet> servlets;  // mapped using lowercase path (OF-1105)
     private static PluginManager pluginManager;
     private static ServletConfig servletConfig;
 
@@ -196,7 +196,7 @@ public class PluginServlet extends HttpServlet {
                 }
 
                 try {
-                    final Class theClass = manager.loadClass(plugin, className);
+                    final Class<?> theClass = manager.loadClass(plugin, className);
 
                     final Object instance = theClass.newInstance();
                     if (!(instance instanceof GenericServlet)) {
@@ -205,12 +205,44 @@ public class PluginServlet extends HttpServlet {
                     }
 
                     Log.debug("Initializing servlet '{}' of plugin '{}'...", servletName, pluginName);
-                    ((GenericServlet) instance).init(servletConfig);
+                    ((GenericServlet) instance).init(new ServletConfig() {
+                        @Override
+                        public String getServletName() {
+                            return servletName;
+                        }
+
+                        @Override
+                        public ServletContext getServletContext() {
+                            return new PluginServletContext( servletConfig.getServletContext(), pluginManager, plugin );
+                        }
+
+                        @Override
+                        public String getInitParameter( String s )
+                        {
+                            final Map<String, String> params = WebXmlUtils.getServletInitParams( webXmlDoc, servletName );
+                            if (params.isEmpty()) {
+                                return null;
+                            }
+                            return params.get( s );
+                        }
+
+                        @Override
+                        public Enumeration<String> getInitParameterNames()
+                        {
+                            final Map<String, String> params = WebXmlUtils.getServletInitParams( webXmlDoc, servletName );
+                            if (params.isEmpty()) {
+                                return Collections.emptyEnumeration();
+                            }
+                            return Collections.enumeration( params.keySet() );
+                        }
+                    });
 
                     Log.debug("Registering servlet '{}' of plugin '{}' URL patterns.", servletName, pluginName);
                     final Set<String> urlPatterns = WebXmlUtils.getServletUrlPatterns(webXmlDoc, servletName);
                     for (final String urlPattern : urlPatterns) {
-                        servlets.put((pluginName + urlPattern).toLowerCase(), (GenericServlet) instance);
+                        final String path = (pluginName + urlPattern).toLowerCase();
+                        servlets.put(path, (GenericServlet) instance);
+                        Log.debug("Servlet '{}' registered on path: {}", servletName, path);
                     }
                     Log.debug("Servlet '{}' of plugin '{}' loaded successfully.", servletName, pluginName);
                 } catch (final Exception e) {
@@ -229,7 +261,7 @@ public class PluginServlet extends HttpServlet {
                     Log.warn( "Could not load filter '{}' of plugin '{}'. web-xml does not define a class name for this filter.", filterName, pluginName );
                     continue;
                 }
-                final Class theClass = manager.loadClass( plugin, className );
+                final Class<?> theClass = manager.loadClass( plugin, className );
 
                 final Object instance = theClass.newInstance();
                 if ( !(instance instanceof Filter) )
@@ -257,8 +289,7 @@ public class PluginServlet extends HttpServlet {
                     public String getInitParameter( String s )
                     {
                         final Map<String, String> params = WebXmlUtils.getFilterInitParams( webXmlDoc, filterName );
-                        if ( params == null || params.isEmpty() )
-                        {
+                        if (params.isEmpty()) {
                             return null;
                         }
                         return params.get( s );
@@ -268,8 +299,7 @@ public class PluginServlet extends HttpServlet {
                     public Enumeration<String> getInitParameterNames()
                     {
                         final Map<String, String> params = WebXmlUtils.getFilterInitParams( webXmlDoc, filterName );
-                        if ( params == null || params.isEmpty() )
-                        {
+                        if (params.isEmpty()) {
                             return Collections.emptyEnumeration();
                         }
                         return Collections.enumeration( params.keySet() );
@@ -426,12 +456,13 @@ public class PluginServlet extends HttpServlet {
                            HttpServletResponse response) throws ServletException, IOException {
         // Strip the starting "/" from the path to find the JSP URL.
         String jspURL = pathInfo.substring(1);
-
         GenericServlet servlet = servlets.get(jspURL.toLowerCase());
         if (servlet != null) {
+            Log.trace("Handling JSP at: {}", jspURL);
             servlet.service(request, response);
         }
         else {
+            Log.trace("Unable to handle JSP. No registration for: {}", jspURL);
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
     }
@@ -451,9 +482,11 @@ public class PluginServlet extends HttpServlet {
         // Strip the starting "/" from the path to find the JSP URL.
         GenericServlet servlet = getServlet(pathInfo);
         if (servlet != null) {
+            Log.trace("Handling servlet at: {}", pathInfo);
             servlet.service(request, response);
         }
         else {
+            Log.trace("Unable to handle servlet. No registration for: {}", pathInfo);
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
     }
@@ -481,6 +514,7 @@ public class PluginServlet extends HttpServlet {
                 }
             }
         }
+        Log.trace("Found servlet {} for path {}", servlet != null ? servlet.getServletName() : "(none)", pathInfo);
         return servlet;
     }
 
@@ -496,6 +530,7 @@ public class PluginServlet extends HttpServlet {
         String[] parts = pathInfo.split("/");
         // Image request must be in correct format.
         if (parts.length < 3) {
+            Log.trace("Unable to handle 'other' request (not enough path parts): {}", pathInfo);
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
@@ -516,12 +551,14 @@ public class PluginServlet extends HttpServlet {
             final Path absoluteLookup = file.toPath().normalize().toAbsolutePath();
             if ( !absoluteLookup.startsWith( absoluteHome ) )
             {
+                Log.trace("Unable to handle 'other' request (forbidden path): {}", pathInfo);
                 response.setStatus( HttpServletResponse.SC_FORBIDDEN );
                 return;
             }
         }
 
         if (!file.exists()) {
+            Log.trace("Unable to handle 'other' request (not found): {}", pathInfo);
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
@@ -532,6 +569,7 @@ public class PluginServlet extends HttpServlet {
         }
         response.setContentType(contentType);
         // Write out the resource to the user.
+        Log.trace("Handling 'other' request with a response content type of {}: {}", contentType, pathInfo);
         try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
             try (ServletOutputStream out = response.getOutputStream()) {
 

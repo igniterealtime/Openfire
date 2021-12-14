@@ -4,7 +4,7 @@
     <Appenders>
         <RollingFile name="debug-out" fileName="${sys:openfireHome}/logs/debug.log" filePattern="${sys:openfireHome}/logs/debug.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg{nolookups}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="1 MB"/>
@@ -17,7 +17,7 @@
 
         <RollingFile name="info-out" fileName="${sys:openfireHome}/logs/info.log" filePattern="${sys:openfireHome}/logs/info.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg{nolookups}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="1 MB"/>
@@ -30,7 +30,7 @@
 
         <RollingFile name="warn-out" fileName="${sys:openfireHome}/logs/warn.log" filePattern="${sys:openfireHome}/logs/warn.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg{nolookups}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="1 MB"/>
@@ -43,7 +43,7 @@
 
         <RollingFile name="error-out" fileName="${sys:openfireHome}/logs/error.log" filePattern="${sys:openfireHome}/logs/error.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %c - %msg{nolookups}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="1 MB"/>
@@ -55,7 +55,7 @@
 
         <RollingFile name="all-out" fileName="${sys:openfireHome}/logs/all.log" filePattern="${sys:openfireHome}/logs/all.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %msg%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %-5p [%t]: %c - %msg{nolookups}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="1 MB"/>
@@ -63,7 +63,7 @@
         </RollingFile>
 
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%msg%n%throwable{0}"/>
+            <PatternLayout pattern="%msg{nolookups}%n%throwable{0}"/>
             <Filters>
                 <ThresholdFilter level="INFO"/>
             </Filters>

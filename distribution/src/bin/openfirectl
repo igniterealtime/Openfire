@@ -107,7 +107,7 @@ else
 	LOCALCLASSPATH="${OPENFIRE_LIB}/startup.jar:${LOCALCLASSPATH}"
 fi
 
-JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml"
+JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true"
 
 # Export any necessary variables
 export JAVA_HOME JAVACMD

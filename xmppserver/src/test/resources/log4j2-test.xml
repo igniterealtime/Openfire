@@ -3,7 +3,7 @@
 <Configuration>
     <Appenders>
         <Console name="console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%msg%n%throwable{0}"/>
+            <PatternLayout pattern="%msg{nolookups}%n%throwable{0}"/>
         </Console>
     </Appenders>
 

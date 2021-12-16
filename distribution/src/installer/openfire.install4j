@@ -59,7 +59,7 @@
       <executable name="${compiler:PRODUCT_NAME}-service" iconSet="true" iconFile="./images/service.ico" executableDir="bin" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="service" singleInstance="true" serviceDescription="${compiler:APP_NAME}" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME}" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true; -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>

@@ -119,7 +119,7 @@ public final class SystemProperty<T> {
         if (StringUtils.isEmpty(value)) {
             return Stream.empty();
         }
-        final List<String> strings = Arrays.asList(value.split(","));
+        final List<String> strings = Arrays.asList(value.trim().split("[\\s,]+"));
         Stream<Object> stream = strings.stream()
             .map(singleValue -> FROM_STRING.get(systemProperty.collectionType).apply(singleValue, systemProperty))
             .filter(Objects::nonNull);

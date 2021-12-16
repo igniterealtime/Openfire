@@ -526,6 +526,48 @@ public class SystemPropertyTest {
     }
 
     @Test
+    public void willCreateAListOfCommaSeparatedString() {
+        final String key = "a csv list property";
+
+        final SystemProperty<List<String>> property = SystemProperty.Builder.ofType(List.class)
+            .setKey(key)
+            .setDefaultValue(Collections.emptyList())
+            .setDynamic(true)
+            .buildList(String.class);
+
+        JiveGlobals.setProperty(key, "3,2,1");
+        assertThat(property.getValue(), is(Arrays.asList("3", "2", "1")));
+    }
+
+    @Test
+    public void willCreateAListOfCommaWhitespaceSeparatedString() {
+        final String key = "a whitespace csv list property";
+
+        final SystemProperty<List<String>> property = SystemProperty.Builder.ofType(List.class)
+            .setKey(key)
+            .setDefaultValue(Collections.emptyList())
+            .setDynamic(true)
+            .buildList(String.class);
+
+        JiveGlobals.setProperty(key, " 3, 2, 1 ");
+        assertThat(property.getValue(), is(Arrays.asList("3", "2", "1")));
+    }
+
+    @Test
+    public void willCreateAListOfCommaWhitespaceSeparatedString2() {
+        final String key = "another whitespace csv list property";
+
+        final SystemProperty<List<String>> property = SystemProperty.Builder.ofType(List.class)
+            .setKey(key)
+            .setDefaultValue(Collections.emptyList())
+            .setDynamic(true)
+            .buildList(String.class);
+
+        JiveGlobals.setProperty(key, "1 , 2 , 3");
+        assertThat(property.getValue(), is(Arrays.asList("1", "2", "3")));
+    }
+
+    @Test
     public void willCreateASetOfStringProperties() {
         final String key = "a set property";
 

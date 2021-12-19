@@ -33,6 +33,9 @@
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
 
+        <!-- Added for debug purposes. Should not be merged. Remove if it is... -->
+        <Logger name="org.jivesoftware.openfire.muc" level="all"/>
+
         <Root level="info">
             <AppenderRef ref="openfire"/>
         </Root>

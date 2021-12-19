@@ -89,6 +89,13 @@ function setUpAioxmppEnvironment {
     	git clone -b devel https://github.com/horazont/aioxmpp "${AIOXMPPDIR}"
     	pushd "${AIOXMPPDIR}"
 	fi
+
+        ## Fixating on specific commit to try and find the commit that broke our build. This should not be merged.
+        # XX git reset --hard 31b9c417ed7c93ad591a7d31108f45075eb93caf
+        # XX git reset --hard 95569da4a860deedaf7b2056ec66c5b85cd47476
+	git reset --hard f24900c1d8a124c9812d68d22991687652072cea
+        # OK git reset --hard 6eb6d81491671e4c09fd104486c510f66a2f6f60
+
 	python3.9 -m pip install setuptools
 	python3.9 -m pip install pytest
 	python3.9 -m pip install pytest-cov

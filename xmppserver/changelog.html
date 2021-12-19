@@ -164,6 +164,11 @@ hr {
 
 <h2>4.7.0 Beta -- <span style="font-weight: normal;">December 3, 2021</span></h2>
 
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2244">OF-2244</a>] - Offline presence subscription loses details</li>
+</ul>
+
 <h2>Improvement</h2>
 <ul>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2349">OF-2349</a>] - Admin console should show \(full\) default value for system property</li>
@@ -179,6 +184,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2276">OF-2276</a>] - Broadcast status codes when privacy settings of a MUC room change</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2275">OF-2275</a>] - When joining a MUC room that has logging enabled, status 170 should be returned.</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2256">OF-2256</a>] - Add CORS headers to websockets</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2254">OF-2254</a>] - Distinguish between property values that are set to the default value, or are just defaults.</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2252">OF-2252</a>] - Reduce log level for BOSH request that time out</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2251">OF-2251</a>] - Threadpool for BOSH network-IO should be configurable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2248">OF-2248</a>] - BOSH configuration should go into SystemProperty instances</li>
@@ -768,7 +774,11 @@ hr {
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1809'>OF-1809</a>] -         DiscoInfoProvider should allow for more than one &quot;Extended Info&quot; form.
 </li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1815'>OF-1815</a>] -         Add MUC search 'muclumbus' support.
+</li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1821'>OF-1821</a>] -         Set ldap.pagedResultsSize to 1000 by default when AD integration is used
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1832'>OF-1832</a>] -         Show more client session data
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1839'>OF-1839</a>] -         XEP-0411: Add or improve support for Bookmarks Conversion
 </li>
@@ -1009,6 +1019,8 @@ hr {
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1685'>OF-1685</a>] -         Group sorting is incorrect
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1686'>OF-1686</a>] -         Problems with groups creation
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1689'>OF-1689</a>] -         Some messages are not delivered (to all resources)
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1691'>OF-1691</a>] -         XEP-0133&#39;s &quot;Delete User&quot; should use jid-multi
 </li>
@@ -1475,6 +1487,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1300'>OF-1300</a>] -         Debugger plugin should display remote address.
 </li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1337'>OF-1337</a>] -         Privacy list concurrency
+</li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1404'>OF-1404</a>] -         Migrate to use Microsoft JDBC Driver
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1419'>OF-1419</a>] -         Replace Proxool with Apache Commons DBCP
@@ -1715,6 +1729,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1329'>OF-1329</a>] -         Session fixation in admin web console
 </li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1331'>OF-1331</a>] -         HTTP console access does not work after HTTPS console access
+</li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1335'>OF-1335</a>] -         Forwarded messages rewritten to default namespace over S2S
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1356'>OF-1356</a>] -         Add a section about upgrading from x86 to x64 to Upgrade guide (Windows)
@@ -1748,6 +1764,8 @@ to <code>true</code> now means that anyone can create PubSub nodes.</p>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1431'>OF-1431</a>] -         XMPP Ping without type= set causes a NPE
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1436'>OF-1436</a>] -         Sharing BOSH context should not prevent context restart.
+</li>
+<li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1437'>OF-1437</a>] -         Detached sessions sometimes vanish
 </li>
 <li>[<a href='https://igniterealtime.atlassian.net/browse/OF-1441'>OF-1441</a>] -         &lt;scope&gt;test&lt;/scope&gt; Maven dependencies being included in distribution
 </li>

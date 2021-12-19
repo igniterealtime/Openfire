@@ -1119,7 +1119,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // This is for clustering scenarios where one node could already have cleaned up the clustered cache,
             // but the local node still needs to process the 'unavailable' presence of the leaving occupant.
-            preExistingRole = localMUCRoomManager.getLocalRooms().get(roomName).getOccupantByFullJID(packet.getFrom());
+            final MUCRoom localRoom = localMUCRoomManager.getLocalRooms().get(roomName);
+            if (localRoom != null) {
+                preExistingRole = localRoom.getOccupantByFullJID(packet.getFrom());
+            }
 
             if (preExistingRole == null) {
                 Log.debug("Silently ignoring user '{}' leaving a room that it has no role in '{}' (was the room just destroyed)?", packet.getFrom(), roomName);

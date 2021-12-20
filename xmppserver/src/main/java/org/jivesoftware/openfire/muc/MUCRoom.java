@@ -1401,23 +1401,31 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * conversation between room occupants or IQ packets when an occupant wants to send IQ packets
      * to other room occupants.
      *
+     * If the system property xmpp.muc.allowpm.blockall is set to true, this will block all private packets
+     * However, if this property is false (by default) then it will allow non-message private packets.
+     *
      * @param packet The packet to send.
      * @param senderRole the role of the user that is trying to send a public message.
      * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
      * @throws ForbiddenException If a user of this role is not permitted to send private messages in this room.
      */
     public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException, ForbiddenException {
-        switch (senderRole.getRole()) { // intended fall-through
-            case none:
-                throw new ForbiddenException();
-            default:
-            case visitor:
-                if (canSendPrivateMessage().equals( "participants" )) throw new ForbiddenException();
-            case participant:
-                if (canSendPrivateMessage().equals( "moderators" )) throw new ForbiddenException();
-            case moderator:
-                if (canSendPrivateMessage().equals( "none" )) throw new ForbiddenException();
+
+        if (packet instanceof Message || JiveProperties.getInstance().getBooleanProperty("xmpp.muc.allowpm.blockall", false)){
+            //If the packet is a message, check that the user has permissions to send
+            switch (senderRole.getRole()) { // intended fall-through
+                case none:
+                    throw new ForbiddenException();
+                default:
+                case visitor:
+                    if (canSendPrivateMessage().equals( "participants" )) throw new ForbiddenException();
+                case participant:
+                    if (canSendPrivateMessage().equals( "moderators" )) throw new ForbiddenException();
+                case moderator:
+                    if (canSendPrivateMessage().equals( "none" )) throw new ForbiddenException();
+            }
         }
+
         String resource = packet.getTo().getResource();
 
         List<MUCRole> occupants;

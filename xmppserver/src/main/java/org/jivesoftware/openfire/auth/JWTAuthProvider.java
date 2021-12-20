@@ -71,6 +71,12 @@ public class JWTAuthProvider implements AuthProvider {
             .setDynamic(false)
             .build();
 
+    public static final SystemProperty<Integer> JWT_ALLOED_CLOCK_SKEW_SECONDS= SystemProperty.Builder.ofType(Integer.class)
+            .setKey("xmpp.auth.allowedclockskewseconds")
+            .setDefaultValue(60)
+            .setDynamic(false)
+            .build();
+
     public PublicKey getPublicKeyFromFile()
     {
         try
@@ -134,6 +140,9 @@ public class JWTAuthProvider implements AuthProvider {
         {
             //Parse the JWT and validate with libs build in checks
             JwtParserBuilder parserBuilder=Jwts.parserBuilder();
+            //add a tolerance for unsynchronoues clocks between this server and the one which creates the jwt,
+            //if nbf is creation date
+            parserBuilder.setAllowedClockSkewSeconds(JWT_ALLOED_CLOCK_SKEW_SECONDS.getValue());
 
             Jwt<?, ?> jwt=null;
             Claims claims = null;

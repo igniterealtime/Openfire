@@ -77,6 +77,12 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         .setChronoUnit(ChronoUnit.MILLIS)
         .build();
 
+    public static SystemProperty<Boolean> ALLOWPM_BLOCKALL = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("xmpp.muc.allowpm.blockall")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
     /**
      * The service hosting the room.
      */
@@ -1411,7 +1417,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException, ForbiddenException {
 
-        if (packet instanceof Message || JiveProperties.getInstance().getBooleanProperty("xmpp.muc.allowpm.blockall", false)){
+        if (packet instanceof Message || ALLOWPM_BLOCKALL.getValue()){
             //If the packet is a message, check that the user has permissions to send
             switch (senderRole.getRole()) { // intended fall-through
                 case none:

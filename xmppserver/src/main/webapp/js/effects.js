@@ -946,8 +946,8 @@ Effect.Fold = function(element) {
 }
 
 Element.Methods.visualEffect = function(element, effect, options) {
-  s = effect.gsub(/_/, '-').camelize();
-  effect_class = s.charAt(0).toUpperCase() + s.substring(1);
+  const s = effect.gsub(/_/, '-').camelize();
+  let effect_class = s.charAt(0).toUpperCase() + s.substring(1);
   new Effect[effect_class](element, options);
   return $(element);
 };

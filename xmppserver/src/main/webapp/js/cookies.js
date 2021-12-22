@@ -54,11 +54,11 @@ var Cookies = {
         var CookieString = document.cookie            
         var result = null                               
         if (CookieString.length > 0) {                
-            offset = CookieString.indexOf(search)       
-            if (offset != -1) {                         
+            let offset = CookieString.indexOf(search)
+            if (offset !== -1) {
                 offset += search.length                   
-                end = CookieString.indexOf(";", offset)   
-                if (end == -1)                            
+                let end = CookieString.indexOf(";", offset)
+                if (end === -1)
                     end = CookieString.length               
                 result = unescape(CookieString.substring(offset, end))         
                                                 

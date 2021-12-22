@@ -60,6 +60,7 @@ public class GroupManager {
     }
 
     private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
+    private static final Interner<PagedGroupNameKey> pagedGroupNameKeyInterner = Interners.newWeakInterner();
 
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
@@ -67,6 +68,13 @@ public class GroupManager {
     private static final String PUBLIC_GROUPS = "PUBLIC_GROUPS";
     private static final String USER_SHARED_GROUPS_KEY = "USER_SHARED_GROUPS";
     private static final String USER_GROUPS_KEY = "USER_GROUPS";
+
+    private static final Object GROUP_COUNT_LOCK = new Object();
+    private static final Object SHARED_GROUPS_LOCK = new Object();
+    private static final Object GROUP_NAMES_LOCK = new Object();
+    private static final Object PUBLIC_GROUPS_LOCK = new Object();
+    private static final Object USER_SHARED_GROUPS_LOCK = new Object();
+    private static final Object USER_GROUPS_LOCK = new Object();
 
     /**
      * Returns a singleton instance of GroupManager.
@@ -439,7 +447,7 @@ public class GroupManager {
     public int getGroupCount() {
             Integer count = getGroupCountFromCache();
         if (count == null) {
-            synchronized(GROUP_COUNT_KEY) {
+            synchronized(GROUP_COUNT_LOCK) {
                 count = getGroupCountFromCache();
                 if (count == null) {
                     count = provider.getGroupCount();
@@ -463,7 +471,7 @@ public class GroupManager {
     public Collection<Group> getGroups() {
         HashSet<String> groupNames = getGroupNamesFromCache();
         if (groupNames == null) {
-            synchronized(GROUP_NAMES_KEY) {
+            synchronized(GROUP_NAMES_LOCK) {
                 groupNames = getGroupNamesFromCache();
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getGroupNames());
@@ -487,7 +495,7 @@ public class GroupManager {
     public Collection<Group> getSharedGroups() {
         HashSet<String> groupNames = getSharedGroupsFromCache();
         if (groupNames == null) {
-            synchronized(SHARED_GROUPS_KEY) {
+            synchronized(SHARED_GROUPS_LOCK) {
                 groupNames = getSharedGroupsFromCache();
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getSharedGroupNames());
@@ -530,7 +538,7 @@ public class GroupManager {
         // Get all the public shared groups.
         HashSet<String> groupNames = getPublicGroupsFromCache();
         if (groupNames == null) {
-            synchronized(PUBLIC_GROUPS) {
+            synchronized(PUBLIC_GROUPS_LOCK) {
                 groupNames = getPublicGroupsFromCache();
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
@@ -551,7 +559,7 @@ public class GroupManager {
     public Collection<Group> getPublicSharedGroups() {
         HashSet<String> groupNames = getPublicGroupsFromCache();
         if (groupNames == null) {
-            synchronized(PUBLIC_GROUPS) {
+            synchronized(PUBLIC_GROUPS_LOCK) {
                 groupNames = getPublicGroupsFromCache();
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
@@ -590,7 +598,7 @@ public class GroupManager {
         HashSet<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
         if (groupNames == null) {
             // synchronizing on intern'ed string isn't great, but this value is deemed sufficiently unique for this to be safe here.
-            synchronized (getPagedGroupNameKey(startIndex, numResults).intern()) {
+            synchronized (pagedGroupNameKeyInterner.intern(getPagedGroupNameKey(startIndex, numResults))) {
                 groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
                 if (groupNames == null) {
                     groupNames = new HashSet<>(provider.getGroupNames(startIndex, numResults));
@@ -701,13 +709,13 @@ public class GroupManager {
             JID user = new JID(userJid);
 
             // remove cache for getGroups
-            synchronized (USER_GROUPS_KEY) {
+            synchronized (USER_GROUPS_LOCK) {
                 clearUserGroupsCache(user);
             }
 
             // remove cache for getSharedGroups
             if (XMPPServer.getInstance().isLocal(user)) {
-                synchronized (USER_SHARED_GROUPS_KEY) {
+                synchronized (USER_SHARED_GROUPS_LOCK) {
                     clearSharedGroupsForUserCache(user.getNode());
                 }
             }
@@ -772,7 +780,7 @@ public class GroupManager {
         result.put( group.getName(), group );
 
         final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-        if ( "onlygroup".equals(showInRoster.toLowerCase()) )
+        if ( "onlygroup".equalsIgnoreCase(showInRoster) )
         {
             final Set<String> groupNames = new HashSet<>();
             final String groupList = group.getProperties().get("sharedRoster.groupList");
@@ -825,7 +833,7 @@ public class GroupManager {
     }
 
     private void evictCachedUserSharedGroups() {
-        synchronized (USER_SHARED_GROUPS_KEY) {
+        synchronized (USER_SHARED_GROUPS_LOCK) {
             groupMetaCache.keySet().stream()
                 .filter(key -> key.startsWith(USER_SHARED_GROUPS_KEY) || key.startsWith(GROUP_NAMES_KEY))
                 .forEach(key -> groupMetaCache.remove(key));
@@ -849,17 +857,47 @@ public class GroupManager {
         groupMetaCache.put(GROUP_NAMES_KEY, groupNames);
     }
 
-    private String getPagedGroupNameKey(final int startIndex, final int numResults) {
-        return GROUP_NAMES_KEY + startIndex + "," + numResults;
+    private PagedGroupNameKey getPagedGroupNameKey(final int startIndex, final int numResults) {
+        return new PagedGroupNameKey(startIndex, numResults);
+    }
+
+    private static final class PagedGroupNameKey {
+
+        public final int startIndex;
+
+        public final int numResults;
+
+        public PagedGroupNameKey( int startIndex, int numResults){
+            this.startIndex = startIndex;
+            this.numResults = numResults;
+        }
+
+        @Override
+        public String toString() {
+            return GROUP_NAMES_KEY + startIndex + "," + numResults;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PagedGroupNameKey that = (PagedGroupNameKey) o;
+            return startIndex == that.startIndex && numResults == that.numResults;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(startIndex, numResults);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private HashSet<String> getPagedGroupNamesFromCache(final int startIndex, final int numResults) {
-        return (HashSet<String>)groupMetaCache.get(getPagedGroupNameKey(startIndex, numResults));
+        return (HashSet<String>)groupMetaCache.get(getPagedGroupNameKey(startIndex, numResults).toString());
     }
 
     private void savePagedGroupNamesFromCache(final HashSet<String> groupNames, final int startIndex, final int numResults) {
-        groupMetaCache.put(getPagedGroupNameKey(startIndex, numResults), groupNames);
+        groupMetaCache.put(getPagedGroupNameKey(startIndex, numResults).toString(), groupNames);
 
     }
 

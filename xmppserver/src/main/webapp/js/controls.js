@@ -304,8 +304,8 @@ Autocompleter.Base.prototype = {
   findLastToken: function() {
     var lastTokenPos = -1;
 
-    for (var i=0; i<this.options.tokens.length; i++) {
-      var thisTokenPos = this.element.value.lastIndexOf(this.options.tokens[i]);
+    for (const token of tokens) {
+      let thisTokenPos = this.element.value.lastIndexOf(token);
       if (thisTokenPos > lastTokenPos)
         lastTokenPos = thisTokenPos;
     }
@@ -324,7 +324,7 @@ Object.extend(Object.extend(Ajax.Autocompleter.prototype, Autocompleter.Base.pro
   },
 
   getUpdatedChoices: function() {
-    entry = encodeURIComponent(this.options.paramName) + '=' + 
+    let entry = encodeURIComponent(this.options.paramName) + '=' +
       encodeURIComponent(this.getToken());
 
     this.options.parameters = this.options.callback ?
@@ -552,7 +552,7 @@ Ajax.InPlaceEditor.prototype = {
     }
 
     if (this.options.okButton) {
-      okButton = document.createElement("input");
+      let okButton = document.createElement("input");
       okButton.type = "submit";
       okButton.value = this.options.okText;
       okButton.className = 'editor_ok_button';
@@ -560,7 +560,7 @@ Ajax.InPlaceEditor.prototype = {
     }
 
     if (this.options.cancelLink) {
-      cancelLink = document.createElement("a");
+      let cancelLink = document.createElement("a");
       cancelLink.href = "#";
       cancelLink.appendChild(document.createTextNode(this.options.cancelText));
       cancelLink.onclick = this.onclickCancel.bind(this);

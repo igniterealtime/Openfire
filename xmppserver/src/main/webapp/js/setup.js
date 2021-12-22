@@ -6,7 +6,7 @@ This toggles toggles an individual panel (slides up and down).
 
 function togglePanel(thisID) {
 
-activeLink = thisID.id+"Link";
+let activeLink = thisID.id+"Link";
 
     if ($(thisID).style.display != 'none') {
         Effect.toggle($(thisID),'slide', {duration: .4});

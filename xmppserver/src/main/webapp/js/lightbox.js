@@ -9,11 +9,11 @@ Inspired by the lightbox implementation found at http://www.huddletogether.com/p
 /*-------------------------------GLOBAL VARIABLES------------------------------------*/
 
 var detect = navigator.userAgent.toLowerCase();
-var OS,browser,version,total,thestring;
+var OS,browser,version,total,thestring, place;
 
 /*-----------------------------------------------------------------------------------------------*/
 
-//Browser detect script origionally created by Peter Paul Koch at http://www.quirksmode.org/
+//Browser detect script originally created by Peter Paul Koch at http://www.quirksmode.org/
 
 function getBrowserInfo() {
     if (checkIt('konqueror')) {
@@ -70,7 +70,7 @@ lightbox.prototype = {
 
     // Turn everything on - mainly the IE fixes
     activate: function(){
-        if (browser == 'Internet Explorer'){
+        if (browser === 'Internet Explorer'){
             this.getScroll();
             this.prepareIE('100%', 'hidden');
             this.setScroll(0,0);
@@ -81,20 +81,20 @@ lightbox.prototype = {
 
     // Ie requires height to 100% and overflow hidden or else you can scroll down past the lightbox
     prepareIE: function(height, overflow){
-        bod = document.getElementsByTagName('body')[0];
+        let bod = document.getElementsByTagName('body')[0];
         bod.style.height = height;
         bod.style.overflow = overflow;
 
-        htm = document.getElementsByTagName('html')[0];
+        let htm = document.getElementsByTagName('html')[0];
         htm.style.height = height;
         htm.style.overflow = overflow;
     },
 
     // In IE, select elements hover on top of the lightbox
     hideSelects: function(visibility){
-        selects = document.getElementsByTagName('select');
-        for(i = 0; i < selects.length; i++) {
-            selects[i].style.visibility = visibility;
+        let selects = document.getElementsByTagName('select');
+        for(const element of selects) {
+            element.style.visibility = visibility;
         }
     },
 
@@ -116,7 +116,7 @@ lightbox.prototype = {
     displayLightbox: function(display){
         $('overlay').style.display = display;
         $('lightbox').style.display = display;
-        if(display != 'none') this.loadInfo();
+        if(display !== 'none') this.loadInfo();
     },
 
     // Begin Ajax request based off of the href of the clicked linked
@@ -130,7 +130,7 @@ lightbox.prototype = {
 
     // Display Ajax response
     processInfo: function(response){
-        info = "<div id='lbContent'>" + response.responseText + "</div>";
+        let info = "<div id='lbContent'>" + response.responseText + "</div>";
         new Insertion.Before($('lbLoadMessage'), info)
         $('lightbox').className = "done";
         this.actions();
@@ -138,18 +138,18 @@ lightbox.prototype = {
 
     // Search through new links within the lightbox, and attach click event
     actions: function(){
-        lbActions = document.getElementsByClassName('lbAction');
+        let lbActions = document.getElementsByClassName('lbAction');
 
-        for(i = 0; i < lbActions.length; i++) {
-            Event.observe(lbActions[i], 'click', this[lbActions[i].rel].bindAsEventListener(this), false);
-            lbActions[i].onclick = function(){return false;};
+        for(const action of lbActions) {
+            Event.observe(action, 'click', this[action.rel].bindAsEventListener(this), false);
+            action.onclick = function(){return false;};
         }
 
     },
 
     // Example of creating your own functionality once lightbox is initiated
     insert: function(e){
-       link = Event.element(e).parentNode;
+       let link = Event.element(e).parentNode;
        Element.remove($('lbContent'));
 
        var myAjax = new Ajax.Request(
@@ -163,7 +163,7 @@ lightbox.prototype = {
     deactivate: function(){
         Element.remove($('lbContent'));
 
-        if (browser == "Internet Explorer"){
+        if (browser === "Internet Explorer"){
             this.setScroll(0,this.yPos);
             this.prepareIE("auto", "auto");
             this.hideSelects("visible");
@@ -178,9 +178,10 @@ lightbox.prototype = {
 // Onload, make all links that need to trigger a lightbox active
 function initialize(){
     addLightboxMarkup();
-    lbox = document.getElementsByClassName('lbOn');
-    for(i = 0; i < lbox.length; i++) {
-        valid = new lightbox(lbox[i]);
+    let lbox = document.getElementsByClassName('lbOn');
+
+    for (const element in lbox) {
+        let valid = new lightbox(element);
     }
 }
 
@@ -188,10 +189,10 @@ function initialize(){
 // Overlay holds the shadow
 // Lightbox is the centered square that the content is put into.
 function addLightboxMarkup() {
-    bod 				= document.getElementsByTagName('body')[0];
-    overlay 			= document.createElement('div');
+    let bod 				= document.getElementsByTagName('body')[0];
+    let overlay 			= document.createElement('div');
     overlay.id		= 'overlay';
-    lb					= document.createElement('div');
+    let lb					= document.createElement('div');
     lb.id				= 'lightbox';
     lb.className 	= 'loading';
     lb.innerHTML	= '<div id="lbLoadMessage">' +

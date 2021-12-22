@@ -76,6 +76,8 @@ public class JDBCAdminProvider implements AdminProvider {
     private final String xmppDomain;
     private final boolean useConnectionProvider;
 
+    private static final Object ADMIN_LOCK = new Object();
+
     private String connectionString;
 
     /**
@@ -129,7 +131,7 @@ public class JDBCAdminProvider implements AdminProvider {
         ResultSet rs = null;
 
         List<JID> jids = new ArrayList<>();
-        synchronized (getAdminsSQL) {
+        synchronized (ADMIN_LOCK) {
         try {
             con = getConnection();
             pstmt = con.prepareStatement(getAdminsSQL);
@@ -173,7 +175,7 @@ public class JDBCAdminProvider implements AdminProvider {
             throw new UnsupportedOperationException();
         }
 
-        synchronized (getAdminsSQL) {
+        synchronized (ADMIN_LOCK) {
             final List<JID> currentAdmins = getAdmins();
             // Get a list of everyone in the new list not in the current list
             final List<JID> adminsToAdd = new ArrayList<>(newAdmins);

@@ -510,7 +510,7 @@ public class ClusterManager {
     public static Map<NodeID, String> findRemotePluginsWithDifferentVersion(final String pluginName) {
         final Map<String, Map<NodeID, String>> allPluginVersions = getPluginAndOpenfireVersions();
 
-        if (allPluginVersions.containsKey(pluginName)) {
+        if (!allPluginVersions.containsKey(pluginName)) {
             return null;
         }
 

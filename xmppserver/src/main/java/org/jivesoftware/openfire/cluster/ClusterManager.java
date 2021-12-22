@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.cluster;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginMetadata;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.JiveProperties;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -31,10 +32,12 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -452,6 +455,76 @@ public class ClusterManager {
         return CacheFactory.getClusterNodesInfo().stream()
             .filter(nodeInfo -> nodeInfo.getNodeID().equals(nodeID))
             .findAny();
+    }
+
+
+    /**
+     * Returns the versions of plugins installed on all nodes in the cluster.
+     *
+     * The output is limited to plugins that are installed on the local node. If some remote node does not have the same
+     * plugin installed, that node will be included in the returned map, but with a null value. If, on the other hand,
+     * a plugin is installed on some remote node but not on this node, it will not appear in the result.
+     *
+     * If, for some reason, the version information can not be retrieved from some remote node, that node will be
+     * missing entirely from the result.
+     *
+     * The openfire version is included in the result as well, under the key "Openfire".
+     *
+     * @return A map of maps, containing pluginName -> (nodeId -> pluginVersion)
+     */
+    public static Map<String, Map<NodeID, String>> getPluginAndOpenfireVersions() {
+        final Set<String> allPluginNames = XMPPServer.getInstance().getPluginManager().getMetadataExtractedPlugins().values().stream().map(PluginMetadata::getName).collect(Collectors.toSet());
+        allPluginNames.remove("admin"); // No need for this highly internal plugin to be included, as we will include the OF version
+        final Map<String, Map<NodeID, String>> result = allPluginNames.stream().collect(Collectors.toMap(pluginName -> pluginName, pluginName -> new HashMap<>()));
+        result.put("Openfire", new HashMap<>()); // Include openfire version
+
+        for (ClusterNodeInfo cni : ClusterManager.getNodesInfo()) {
+            final NodeID nodeID = cni.getNodeID();
+
+            // Note; if any one node in the cluster does not have the GetClusterVersions task, running
+            // CacheFactory.doSynchronousClusterTask() on all nodes will return an empty collection. For
+            // that reason, run the task on each node individually.
+            final GetClusteredVersions clusteredVersions = CacheFactory.doSynchronousClusterTask(
+                new GetClusteredVersions(), nodeID.toByteArray());
+            if (clusteredVersions == null) {
+                // Something went wrong fetching the versions
+                Log.warn("Plugin versions on node {} could not be verified because GetClusteredVersions task returned null.", nodeID);
+            } else {
+                result.get("Openfire").put(nodeID, clusteredVersions.getOpenfireVersion());
+                allPluginNames.forEach(pluginName ->
+                    result.get(pluginName).put(nodeID, clusteredVersions.getPluginVersions().get(pluginName))
+                );
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Inspects whether the version of a specific plugin on remote nodes differs from the version installed locally.
+     *
+     * @param pluginName The (full) name of the plugin to check.
+     * @return A map containing only plugin versions on remote nodes that are different from the local version, or null
+     * if the referenced plugin is not installed on the local node.
+     */
+    public static Map<NodeID, String> findRemotePluginsWithDifferentVersion(final String pluginName) {
+        final Map<String, Map<NodeID, String>> allPluginVersions = getPluginAndOpenfireVersions();
+
+        if (allPluginVersions.containsKey(pluginName)) {
+            return null;
+        }
+
+        final String localPluginVersion = allPluginVersions.get(pluginName).get(XMPPServer.getInstance().getNodeID());
+
+        final Map<NodeID, String> result = new HashMap<>();
+        for (Map.Entry<NodeID, String> versionOfThisPlugin : allPluginVersions.get(pluginName).entrySet()) {
+            if (versionOfThisPlugin.getValue() == null || !versionOfThisPlugin.getValue().equals(localPluginVersion)) {
+                // Apparently this plugin is either not installed on that node, or it has a different version
+                result.put(versionOfThisPlugin.getKey(), versionOfThisPlugin.getValue());
+            }
+        }
+
+        return result;
     }
 
     /**

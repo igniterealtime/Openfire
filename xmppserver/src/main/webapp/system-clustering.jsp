@@ -200,21 +200,22 @@
         statsMap.put(GetBasicStatistics.OUTGOING, current + " (" + Math.round(percentage) + "%)");
     }
 
-    final Map<String, Map<NodeID, String>> pluginVersions = ClusterManager.getPluginAndOpenfireVersions();
-    final Table<String, NodeID, String> pluginVersionsTable = HashBasedTable.create();
+    final Map<String, Map<NodeID, String>> allPluginVersions = ClusterManager.getPluginAndOpenfireVersions();
+    final Table<String, NodeID, String> pluginVersions = HashBasedTable.create();
     final Set<String> plugins = new TreeSet<>();
     clusterNodesInfo.forEach(clusterNodeInfo -> {
         final NodeID nodeID = clusterNodeInfo.getNodeID();
-        pluginVersionsTable.put("Openfire", nodeID, pluginVersions.get("Openfire").get(nodeID));
-        pluginVersions.entrySet().forEach(pluginToNodeVersion -> {
-            plugins.add(pluginToNodeVersion.getKey());
-            pluginToNodeVersion.getValue().entrySet().forEach(nodeToVersion -> {
-                pluginVersionsTable.put(pluginToNodeVersion.getKey(), nodeID, nodeToVersion.getValue() == null ? "-" : nodeToVersion.getValue());
-            });
+        pluginVersions.put("Openfire", nodeID, allPluginVersions.get("Openfire").get(nodeID));
+        allPluginVersions.entrySet().forEach(pluginToNodeVersion -> {
+            final String pluginName = pluginToNodeVersion.getKey();
+            final String pluginVersion = pluginToNodeVersion.getValue().get(nodeID);
+            plugins.add(pluginName);
+            pluginVersions.put(pluginName, nodeID, pluginVersion == null ? "-" : pluginVersion);
         });
     });
+
     pageContext.setAttribute("localNodeID", XMPPServer.getInstance().getNodeID());
-    pageContext.setAttribute("pluginVersions", pluginVersionsTable);
+    pageContext.setAttribute("pluginVersions", pluginVersions);
     pageContext.setAttribute("plugins", plugins);
     pageContext.setAttribute("clusteringStarted", CacheFactory.isClusteringStarted());
     pageContext.setAttribute("clusterNodesInfo", clusterNodesInfo);

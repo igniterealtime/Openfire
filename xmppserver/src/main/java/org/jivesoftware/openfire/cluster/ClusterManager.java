@@ -461,10 +461,6 @@ public class ClusterManager {
     /**
      * Returns the versions of plugins installed on all nodes in the cluster.
      *
-     * The output is limited to plugins that are installed on the local node. If some remote node does not have the same
-     * plugin installed, that node will be included in the returned map, but with a null value. If, on the other hand,
-     * a plugin is installed on some remote node but not on this node, it will not appear in the result.
-     *
      * If, for some reason, the version information can not be retrieved from some remote node, that node will be
      * missing entirely from the result.
      *
@@ -491,9 +487,13 @@ public class ClusterManager {
                 Log.warn("Plugin versions on node {} could not be verified because GetClusteredVersions task returned null.", nodeID);
             } else {
                 result.get("Openfire").put(nodeID, clusteredVersions.getOpenfireVersion());
-                allPluginNames.forEach(pluginName ->
-                    result.get(pluginName).put(nodeID, clusteredVersions.getPluginVersions().get(pluginName))
-                );
+                for(Map.Entry<String, String> pluginVersion : clusteredVersions.getPluginVersions().entrySet()) {
+                    final String name = pluginVersion.getKey();
+                    final String version = pluginVersion.getValue();
+
+                    result.computeIfAbsent(name, k -> (new HashMap<>()))
+                        .put(nodeID, version);
+                }
             }
         }
 
@@ -503,24 +503,34 @@ public class ClusterManager {
     /**
      * Inspects whether the version of a specific plugin on remote nodes differs from the version installed locally.
      *
+     * When the remote node has the same version of the plugin installed, the returned map will not include the NodeID
+     * of that node. When the remote node has a different version of the plugin installed, the returned map will include
+     * a NodeID entry that maps to the version identifier of the plugin that is installed on that node. When the remote
+     * node does not have the plugin installed, the returned map will contain an entry that has a null value.
+     *
      * @param pluginName The (full) name of the plugin to check.
-     * @return A map containing only plugin versions on remote nodes that are different from the local version, or null
-     * if the referenced plugin is not installed on the local node.
+     * @return A map containing the nodeID that has a different version of this plugin.
      */
     public static Map<NodeID, String> findRemotePluginsWithDifferentVersion(final String pluginName) {
         final Map<String, Map<NodeID, String>> allPluginVersions = getPluginAndOpenfireVersions();
+        final Set<NodeID> allNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
 
         if (!allPluginVersions.containsKey(pluginName)) {
             return null;
         }
 
-        final String localPluginVersion = allPluginVersions.get(pluginName).get(XMPPServer.getInstance().getNodeID());
+        final Map<NodeID, String> pluginVersion = allPluginVersions.get(pluginName);
+        final String localPluginVersion = pluginVersion.get(XMPPServer.getInstance().getNodeID());
 
         final Map<NodeID, String> result = new HashMap<>();
-        for (Map.Entry<NodeID, String> versionOfThisPlugin : allPluginVersions.get(pluginName).entrySet()) {
-            if (versionOfThisPlugin.getValue() == null || !versionOfThisPlugin.getValue().equals(localPluginVersion)) {
-                // Apparently this plugin is either not installed on that node, or it has a different version
-                result.put(versionOfThisPlugin.getKey(), versionOfThisPlugin.getValue());
+        for (final NodeID nodeID : allNodeIDs) {
+            final String remoteVersion = pluginVersion.get(nodeID);
+            if (remoteVersion == null && localPluginVersion != null) {
+                // Not installed remotely.
+                result.put(nodeID, null);
+            } else if (remoteVersion != null && !remoteVersion.equals(localPluginVersion)) {
+                // Remote has a version that is different from the local version (or locally, this plugin isn't installed).
+                result.put(nodeID, remoteVersion);
             }
         }
 

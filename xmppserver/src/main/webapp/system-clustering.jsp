@@ -206,9 +206,8 @@
     clusterNodesInfo.forEach(clusterNodeInfo -> {
         final NodeID nodeID = clusterNodeInfo.getNodeID();
         pluginVersions.put("Openfire", nodeID, allPluginVersions.get("Openfire").get(nodeID));
-        allPluginVersions.entrySet().forEach(pluginToNodeVersion -> {
-            final String pluginName = pluginToNodeVersion.getKey();
-            final String pluginVersion = pluginToNodeVersion.getValue().get(nodeID);
+        allPluginVersions.forEach((pluginName, value) -> {
+            final String pluginVersion = value.get(nodeID);
             plugins.add(pluginName);
             pluginVersions.put(pluginName, nodeID, pluginVersion == null ? "-" : pluginVersion);
         });

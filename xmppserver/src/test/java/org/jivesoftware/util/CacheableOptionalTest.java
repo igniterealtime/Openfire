@@ -1,7 +1,5 @@
 package org.jivesoftware.util;
 
-import org.apache.commons.io.output.NullOutputStream;
-import org.jivesoftware.util.cache.CacheSizes;
 import org.junit.Ignore;
 import org.junit.Test;
 

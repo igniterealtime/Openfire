@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.spi.LoggerContext;
 import org.dom4j.Attribute;
@@ -1094,8 +1093,16 @@ public class PluginManager
             try
             {
                 final byte[] magicBytes = new byte[validMagicBytes.length];
-                final int bytesRead = IOUtils.read( bin, magicBytes );
-                if ( bytesRead == validMagicBytes.length && Arrays.equals( validMagicBytes, magicBytes ) )
+                int remaining = validMagicBytes.length;
+                while (remaining > 0) {
+                    final int location = validMagicBytes.length - remaining;
+                    final int count = bin.read(magicBytes, location, remaining);
+                    if (count == -1) {
+                        break;
+                    }
+                    remaining -= count;
+                }
+                if ( remaining <= 0 && Arrays.equals( validMagicBytes, magicBytes ) )
                 {
                     return true;
                 }

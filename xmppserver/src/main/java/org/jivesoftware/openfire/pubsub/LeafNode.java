@@ -282,7 +282,12 @@ public class LeafNode extends Node {
         // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
         for (CollectionNode parentNode : getParents()) {
             for (NodeSubscription subscription : parentNode.getSubscriptions()) {
-                affiliatesToNotify.add(subscription.getAffiliate());
+                // OF-2365: Prevent sending notifications to subscribers that are not allowed to access this node.
+                if (parentNode.getAccessModel().canAccessItems(this, subscription.getOwner(), subscription.getJID() )
+                    && accessModel.canAccessItems(this, subscription.getOwner(), subscription.getJID()))
+                {
+                    affiliatesToNotify.add(subscription.getAffiliate());
+                }
             }
         }
 

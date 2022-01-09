@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.server.RemoteServerManager;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,11 @@ public class SocketUtil
 {
     private final static Logger Log = LoggerFactory.getLogger( SocketUtil.class );
 
+    public static final SystemProperty<Boolean> USE_FALLBACK = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.dns.usefallback")
+            .setDefaultValue(false)
+            .setDynamic(true)
+            .build();
     /**
      * Creates a socket connection to an XMPP domain.
      *
@@ -34,10 +40,11 @@ public class SocketUtil
      *
      * @param xmppDomain The XMPP domain to connect to.
      * @param port The port to connect to when DNS resolution fails.
+     * @param tryparent try parent domain, if no connection could be established and fallback is enabled.
      * @return a Socket instance that is connected, or null.
      * @see DNSUtil#resolveXMPPDomain(String, int)
      */
-    public static Map.Entry<Socket, Boolean> createSocketToXmppDomain( String xmppDomain, int port )
+    public static Map.Entry<Socket, Boolean> createSocketToXmppDomain( String xmppDomain, int port, boolean tryparent)
     {
         Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
 
@@ -80,10 +87,25 @@ public class SocketUtil
                 {
                     Log.debug( "An additional exception occurred while trying to close a socket when creating a connection to {}:{} failed.", realHostname, realPort, ex );
                 }
+
+                /*
+                 * Fallback: If no dns entry was found for xmpp service subdomain, try the xmpp (parent) domain itself.
+                 * */
+                if (USE_FALLBACK.getValue()&&tryparent&&xmppDomain.contains("."))
+                {
+                    String xmppDomainWithoutSubdomain = xmppDomain.substring(xmppDomain.indexOf(".")+1);
+                    Log.info("Try to connect to parent domain {}:{}",xmppDomainWithoutSubdomain,port);
+                    return createSocketToXmppDomain(xmppDomainWithoutSubdomain,port,false);
+                }
             }
         }
 
         Log.warn( "Unable to create a socket connection to XMPP domain '{}': Unable to connect to any of its remote hosts.", xmppDomain );
         return null;
+    }
+
+    public static Map.Entry<Socket, Boolean> createSocketToXmppDomain( String xmppDomain, int port )
+    {
+        return createSocketToXmppDomain(xmppDomain,port,true);
     }
 }

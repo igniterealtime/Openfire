@@ -33,6 +33,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -86,8 +87,9 @@
             // wait one second
             Thread.sleep(1000L);
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
             // Session might have disappeared on its own
+            LoggerFactory.getLogger("session-summary.jsp").warn("Unable to manually close session for address: {}", address, e);
         }
         // Redirect back to this page
         response.sendRedirect("session-summary.jsp?close=success");

@@ -181,13 +181,12 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         // Let the stanza handler process the received stanza
         try {
             handler.process((String) message, parser);
-        } catch (Exception e) {
-            Log.error("Closing connection due to error while processing message: " + message, e);
+        } catch (Throwable e) { // Make sure to catch Throwable, not (only) Exception! See OF-2367
+            Log.error("Closing connection due to error while processing message: {}", message, e);
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
             if ( connection != null ) {
                 connection.close();
             }
-
         }
     }
 

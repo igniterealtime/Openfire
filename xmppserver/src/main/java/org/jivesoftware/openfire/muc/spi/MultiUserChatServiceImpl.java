@@ -66,6 +66,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,19 +87,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -313,6 +302,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private final List<Element> extraDiscoIdentities = new ArrayList<>();
 
     /**
+     * Briefly holds stanza IDs and recipients of IQ ping requests, sent to determine if an occupant is still present in
+     * the room ('ghost user' detection). Maps a stanza ID to the JID that has been pinged. Note that the stanza ID
+     * value should be unique, to not overwrite others.
+     *
+     * The eviction time of entries is short, so that we do not need to bother with manual cache evictions.
+     *
+     * The same cache can be used for all MUC services as there is no service or room-specific data in the cache.
+     */
+    private static final Cache<String, JID> PINGS_SENT = CacheFactory.createCache("MUC Service Pings Sent");
+
+    /**
      * Create a new group chat server.
      *
      * @param subdomain
@@ -389,26 +389,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // service. This means that, for instance, a disco request should be responded by the
         // service itself instead of relying on the server to handle the request.
         try {
+            // Check for 'ghost' users (OF-910 / OF-2209 / OF-2369)
+            if (isDeliveryRelatedErrorResponse(packet)) {
+                Log.info("Received a stanza that contained a delivery-related error response from {}. This is indicative of a 'ghost' user. Removing this user from all chat rooms.", packet.getFrom());
+                removeChatUser(packet.getFrom());
+                return;
+            }
             // Check if the packet is a disco request or a packet with namespace iq:register
             if (packet instanceof IQ) {
                 if (process((IQ)packet)) {
                     Log.trace( "Done processing IQ stanza." );
-                    return;
-                }
-            } else if (packet instanceof Message) {
-                final Message msg = (Message) packet;
-                if (msg.getType() == Message.Type.error) {
-                    Log.info("Received a message stanza of type error from {}. Removing this user from all chat rooms.", packet.getFrom());
-                    removeChatUser(packet.getFrom());
-                    Log.trace( "Done processing Message stanza." );
-                    return;
-                }
-            } else if (packet instanceof Presence) {
-                final Presence pres = (Presence) packet;
-                if (pres.getType() == Presence.Type.error) {
-                    Log.info("Received a presence stanza of type error from {}. Removing this user from all chat rooms.", packet.getFrom());
-                    removeChatUser(packet.getFrom());
-                    Log.trace( "Done processing Presence stanza." );
                     return;
                 }
             }
@@ -626,16 +616,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 preExistingRole = room.getOccupantByFullJID(packet.getFrom());
             }
             Log.debug("Preexisting role for user {} in room {} (that currently {} exist): {}", packet.getFrom(), roomName, room == null ? "does not" : "does", preExistingRole == null ? "(none)" : preExistingRole);
-
-            // Determine if the stanza is an error response to a stanza that we've previously sent out, that indicates that
-            // the intended recipient is no longer available (eg: "ghost user").
-            if (preExistingRole != null && getIdleUserPingThreshold() != null && isDeliveryRelatedErrorResponse(packet)) {
-                Log.info("Removing {} (nickname '{}') from room {} as we've received an indication (logged at debug level) that this is now a ghost user.", preExistingRole.getUserAddress(), preExistingRole.getNickname(), roomName);
-                Log.debug("Stanza indicative of a ghost user: {}", packet);
-                room.leaveRoom(preExistingRole);
-                syncChatRoom(room);
-                return;
-            }
 
             if ( packet instanceof IQ )
             {
@@ -1394,8 +1374,47 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         room.nicknameChanged(preExistingRole, packet, oldNick, nickname);
     }
 
-    public static boolean isDeliveryRelatedErrorResponse(@Nonnull final Packet stanza)
+    /**
+     * Determines if a stanza is sent by (on behalf of) an entity that MUC room believes to be an occupant
+     * when they've left: a 'ghost' occupant
+     *
+     * For message and presence stanzas, the delivery errors as defined in section 18.1.2 of XEP-0045 are used.
+     *
+     * For IQ stanzas, these errors may be due to lack of client support rather than a vanished occupant. Therefore,
+     * IQ stanzas will only return 'true' when they are an error response to an IQ Ping request, sent by this server.
+     *
+     * @param stanza The stanza to check
+     * @return true if the stanza is a delivery related error response (from a 'ghost user'), otherwise false.
+     * @see <a href="https://xmpp.org/extensions/xep-0045.html#impl-service-ghosts">XEP-0045, section 'ghost users'</a>
+     */
+    public boolean isDeliveryRelatedErrorResponse(@Nonnull final Packet stanza)
     {
+        if (stanza instanceof IQ) {
+            final IQ iq = ((IQ)stanza);
+            if (iq.getType() != IQ.Type.error) {
+                return false;
+            }
+
+            // Check if this is an error to a ghost-detection ping that we've sent out. Note that clients that are
+            // connected but do not support XEP-0199 should send back a 'service-unavailable' error per the XEP, but
+            // some clients are known to send 'feature-not-available'. Treat these as indications that the client is
+            // still connected.
+            final Collection<PacketError.Condition> pingErrorsIndicatingClientConnectivity = Arrays.asList(
+                PacketError.Condition.service_unavailable,
+                PacketError.Condition.feature_not_implemented
+            );
+
+            if (stanza.getError() != null && pingErrorsIndicatingClientConnectivity.contains(stanza.getError().getCondition())) {
+                return false;
+            }
+
+            final JID jid = PINGS_SENT.remove(iq.getID());
+            return jid != null && iq.getFrom().equals(jid) && stanza.getError() != null;
+        }
+
+        // The remainder of this implementation applies to Message and Presence stanzas.
+
+        // Conditions as defined in XEP-0045, section 'ghost users'.
         final Collection<PacketError.Condition> deliveryRelatedErrorConditions = Arrays.asList(
             PacketError.Condition.gone,
             PacketError.Condition.item_not_found,
@@ -1547,10 +1566,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 // Kick users if 'user_idle' feature is enabled and the user has been idle for too long.
                 final boolean doKick = userIdleKick != null && user.getLastActive().isBefore(Instant.now().minus(userIdleKick));
 
-                // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
-                final boolean doPing = !doKick && userIdlePing != null && user.getLastActive().isBefore(Instant.now().minus(userIdlePing));
+                // Kick users when the 'user_ping' feature is enabled, and the user has been idle for twice the ping interval.
+                final boolean doPingKick = userIdlePing != null && user.getLastActive().isBefore(Instant.now().minus(userIdlePing).minus(userIdlePing));
 
-                if (doKick || doPing) {
+                // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
+                final boolean doPing = !doKick && !doPingKick && userIdlePing != null && user.getLastActive().isBefore(Instant.now().minus(userIdlePing));
+
+                if (doKick || doPingKick || doPing) {
                     final String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User exceeded idle time limit.");
                     final Lock lock = getChatRoomLock(user.getRoomName());
                     if (!lock.tryLock()) { // Don't block on locked rooms, as we're processing many of them. We'll get them in the next round.
@@ -1564,7 +1586,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                             Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getRealJID(), user.getRoomName(), chatServiceName);
                             continue;
                         }
-                        if (doKick) {
+                        if (doKick || doPingKick) {
                             // Kick the user from all the rooms that he/she had previously joined.
                             try {
                                 final Presence kickedPresence = room.kickOccupant(user.getRealJID(), null, null, timeoutKickReason);
@@ -1579,12 +1601,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         if (doPing) {
                             // Send a ping 'from the room' to the user, from all the rooms that he/she had previously joined.
                             // If this ping results in a connectivity error, that will be picked up by MucRoom's process
-                            // method, that detects 'ghost users', which will kick the user.
+                            // method, that detects 'ghost users', which will kick the user. If the ping is not responded to
+                            // at all (if the session remains inactive), then that's picked up by the 'pingKick' boolean above.
                             final IQ pingRequest = new IQ( IQ.Type.get );
                             pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
                             pingRequest.setFrom( room.getJID() );
                             pingRequest.setTo( user.getRealJID() );
+                            pingRequest.setID( UUID.randomUUID().toString() ); // Generate unique ID, to prevent duplicate cache entries.
                             XMPPServer.getInstance().getPacketRouter().route(pingRequest);
+                            PINGS_SENT.put(pingRequest.getID(), pingRequest.getTo());
                             Log.debug("Pinged occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getRealJID(), user.getRoomName(), chatServiceName);
                         }
 

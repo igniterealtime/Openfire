@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import java.net.URL;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -155,6 +156,7 @@ public class CacheFactory {
         cacheNames.put("JID Domain-parts", "jidDomainprep");
         cacheNames.put("JID Resource-parts", "jidResourceprep");
         cacheNames.put("Sequences", "sequences");
+        cacheNames.put("MUC Service Pings Sent", "mucPings");
 
         cacheProps.put(PROPERTY_PREFIX_CACHE + "dnsRecords" + PROPERTY_SUFFIX_SIZE, 128 * 1024L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "dnsRecords" + PROPERTY_SUFFIX_MAX_LIFE_TIME, 1000 * 60L);
@@ -238,7 +240,8 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "publishedItems" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "sequences" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "sequences" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
-
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "mucPings" + PROPERTY_SUFFIX_SIZE, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "mucPings" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 10);
 
         // The JID-based classes (wrappers for Caffeine caches) take their default values from whatever is hardcoded in the JID implementation.
         cacheProps.put(PROPERTY_PREFIX_CACHE + "jidNodeprep" + PROPERTY_SUFFIX_SIZE, JID.NODEPREP_CACHE.policy().eviction().get().getMaximum() );

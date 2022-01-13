@@ -1,6 +1,8 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.server.RemoteServerManager;
+import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,16 @@ public class SocketUtil
             final String realHostname = remoteHost.getHost();
             final int realPort = remoteHost.getPort();
             final boolean directTLS = remoteHost.isDirectTLS();
+
+            if (!JiveGlobals.getBooleanProperty(ConnectionSettings.Server.ENABLE_OLD_SSLPORT, true) && directTLS) {
+                Log.debug("Skipping directTLS host, as we're ourselves not accepting directTLS S2S");
+                continue;
+            }
+
+            if (!JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true) && !directTLS) {
+                Log.debug("Skipping non direct TLS host, as we're ourselves not accepting non direct S2S");
+                continue;
+            }
 
             try
             {

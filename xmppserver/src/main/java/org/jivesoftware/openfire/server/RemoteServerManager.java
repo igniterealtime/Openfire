@@ -114,7 +114,8 @@ public class RemoteServerManager {
     public static boolean canAccess(String domain) {
         // If s2s is disabled then it is not possible to send packets to remote servers or
         // receive packets from remote servers
-        if (!JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true)) {
+        if (!JiveGlobals.getBooleanProperty(ConnectionSettings.Server.SOCKET_ACTIVE, true)
+            && !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.ENABLE_OLD_SSLPORT, true)) {
             return false;
         }
 

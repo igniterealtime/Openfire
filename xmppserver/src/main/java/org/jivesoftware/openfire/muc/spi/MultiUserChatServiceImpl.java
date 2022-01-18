@@ -389,6 +389,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // service. This means that, for instance, a disco request should be responded by the
         // service itself instead of relying on the server to handle the request.
         try {
+            // Check for IQ Ping responses
+            if (isPendingPingResponse(packet)) {
+                Log.debug("Ping response received from occupant '{}', addressed to: '{}'", packet.getFrom(), packet.getTo());
+                occupantManager.registerActivity(packet.getFrom());
+                return;
+            }
             // Check for 'ghost' users (OF-910 / OF-2209 / OF-2369)
             if (isDeliveryRelatedErrorResponse(packet)) {
                 Log.info("Received a stanza that contained a delivery-related error response from {}. This is indicative of a 'ghost' user. Removing this user from all chat rooms.", packet.getFrom());
@@ -1375,13 +1381,50 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
+     * Determines if a stanza is a client-generated response to an IQ Ping request sent by this server.
+     *
+     * A 'true' result of this method indicates that the client sending the IQ response is currently reachable.
+     *
+     * @param stanza The stanza to check
+     * @return true if the stanza is a response to an IQ Ping request sent by the server, otherwise false.
+     */
+    public boolean isPendingPingResponse(@Nonnull final Packet stanza) {
+        if (!(stanza instanceof IQ)) {
+            return false;
+        }
+        final IQ iq = (IQ) stanza;
+        if (iq.isRequest()) {
+            return false;
+        }
+
+        // Check if this is an error to a ghost-detection ping that we've sent out. Note that clients that are
+        // connected but do not support XEP-0199 should send back a 'service-unavailable' error per the XEP, but
+        // some clients are known to send 'feature-not-available'. Treat these as indications that the client is
+        // still connected.
+        final Collection<PacketError.Condition> pingErrorsIndicatingClientConnectivity = Arrays.asList(
+            PacketError.Condition.service_unavailable,
+            PacketError.Condition.feature_not_implemented
+        );
+
+        final JID jid = PINGS_SENT.get(iq.getID());
+        final boolean result = jid != null && iq.getFrom().equals(jid)
+            && (iq.getError() == null || pingErrorsIndicatingClientConnectivity.contains(iq.getError().getCondition()));
+
+        if (result) {
+            // If this is _not_ a valid response, 'isDeliveryRelatedErrorResponse' might want to process this. Otherwise, remove.
+            PINGS_SENT.remove(iq.getID());
+        }
+        return result;
+    }
+
+    /**
      * Determines if a stanza is sent by (on behalf of) an entity that MUC room believes to be an occupant
      * when they've left: a 'ghost' occupant
      *
      * For message and presence stanzas, the delivery errors as defined in section 18.1.2 of XEP-0045 are used.
      *
      * For IQ stanzas, these errors may be due to lack of client support rather than a vanished occupant. Therefore,
-     * IQ stanzas will only return 'true' when they are an error response to an IQ Ping request, sent by this server.
+     * IQ stanzas will only return 'true' when they are an error response to an IQ Ping request sent by this server.
      *
      * @param stanza The stanza to check
      * @return true if the stanza is a delivery related error response (from a 'ghost user'), otherwise false.
@@ -1408,7 +1451,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return false;
             }
 
-            final JID jid = PINGS_SENT.remove(iq.getID());
+            final JID jid = PINGS_SENT.get(iq.getID());
             return jid != null && iq.getFrom().equals(jid) && stanza.getError() != null;
         }
 

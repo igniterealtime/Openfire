@@ -85,7 +85,7 @@ public class OutgoingSessionPromise {
     public static final SystemProperty<Integer> QUEUE_SIZE = SystemProperty.Builder.ofType(Integer.class)
         .setKey(ConnectionSettings.Server.QUEUE_SIZE)
         .setDynamic(false)
-        .setDefaultValue(50)
+        .setDefaultValue(2000)
         .setMinValue(0)
         .build();
 
@@ -238,7 +238,7 @@ public class OutgoingSessionPromise {
         private final DomainPair domainPair;
 
         @Nonnull
-        private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 50) );
+        private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 2000) );
 
         public PacketsProcessor(@Nonnull final DomainPair domainPair) {
             this.domainPair = domainPair;

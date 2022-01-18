@@ -33,17 +33,11 @@ import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
+import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.plus.webapp.EnvConfiguration;
 import org.eclipse.jetty.plus.webapp.PlusConfiguration;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
@@ -78,6 +72,56 @@ import org.slf4j.LoggerFactory;
 public class AdminConsolePlugin implements Plugin {
 
     private static final Logger Log = LoggerFactory.getLogger(AdminConsolePlugin.class);
+
+    /**
+     * Enable / Disable parsing a 'X-Forwarded-For' style HTTP header of BOSH requests.
+     */
+    public static final SystemProperty<Boolean> ADMIN_CONSOLE_FORWARDED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("adminConsole.forwarded.enabled")
+        .setDynamic(false)
+        .setDefaultValue(false)
+        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .build();
+
+    /**
+     * The HTTP header name for 'forwarded for'
+     */
+    public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_FOR = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.forwarded.for.header")
+        .setDynamic(false)
+        .setDefaultValue(HttpHeader.X_FORWARDED_FOR.toString())
+        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .build();
+
+    /**
+     * The HTTP header name for 'forwarded server'.
+     */
+    public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_SERVER = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.forwarded.server.header")
+        .setDynamic(false)
+        .setDefaultValue(HttpHeader.X_FORWARDED_SERVER.toString())
+        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .build();
+
+    /**
+     * The HTTP header name for 'forwarded hosts'.
+     */
+    public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_HOST = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.forwarded.host.header")
+        .setDynamic(false)
+        .setDefaultValue(HttpHeader.X_FORWARDED_HOST.toString())
+        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .build();
+
+    /**
+     * Sets a forced valued for the host header.
+     */
+    public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_HOST_NAME = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.forwarded.host.name")
+        .setDynamic(false)
+        .setDefaultValue(null)
+        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .build();
 
     /**
      * Random secret used by JVM to allow SSO. Only other cluster nodes can use this secret
@@ -138,6 +182,7 @@ public class AdminConsolePlugin implements Plugin {
 
             // Do not send Jetty info in HTTP headers
             httpConfig.setSendServerVersion( false );
+            configureProxiedConnector(httpConfig);
 
             final ServerConnector httpConnector = new ServerConnector(adminServer, null, null, null, -1, serverThreads, new HttpConnectionFactory(httpConfig));
 
@@ -179,6 +224,7 @@ public class AdminConsolePlugin implements Plugin {
                     httpsConfig.setSecureScheme( "https" );
                     httpsConfig.setSecurePort( adminSecurePort );
                     httpsConfig.addCustomizer( new SecureRequestCustomizer() );
+                    configureProxiedConnector(httpsConfig);
 
                     final HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );
                     final SslConnectionFactory sslConnectionFactory = new SslConnectionFactory( sslContextFactory, org.eclipse.jetty.http.HttpVersion.HTTP_1_1.toString() );
@@ -329,6 +375,36 @@ public class AdminConsolePlugin implements Plugin {
      */
     public boolean isRestartNeeded() {
         return restartNeeded;
+    }
+
+    private void configureProxiedConnector(HttpConfiguration httpConfig) {
+        // Check to see if we are deployed behind a proxy
+        // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
+        if (ADMIN_CONSOLE_FORWARDED.getValue()) {
+            ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
+            // default: "X-Forwarded-For"
+            String forwardedForHeader = ADMIN_CONSOLE_FORWARDED_FOR.getValue();
+            if (forwardedForHeader != null) {
+                customizer.setForwardedForHeader(forwardedForHeader);
+            }
+            // default: "X-Forwarded-Server"
+            String forwardedServerHeader = ADMIN_CONSOLE_FORWARDED_SERVER.getValue();
+            if (forwardedServerHeader != null) {
+                customizer.setForwardedServerHeader(forwardedServerHeader);
+            }
+            // default: "X-Forwarded-Host"
+            String forwardedHostHeader = ADMIN_CONSOLE_FORWARDED_HOST.getValue();
+            if (forwardedHostHeader != null) {
+                customizer.setForwardedHostHeader(forwardedHostHeader);
+            }
+            // default: none
+            String hostName = ADMIN_CONSOLE_FORWARDED_HOST_NAME.getValue();
+            if (hostName != null) {
+                customizer.setHostHeader(hostName);
+            }
+
+            httpConfig.addCustomizer(customizer);
+        }
     }
 
     /**

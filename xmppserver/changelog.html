@@ -162,18 +162,83 @@ hr {
     
     <div id="pageBody">
 
-<h2>4.7.0 Beta -- <span style="font-weight: normal;">December 3, 2021</span></h2>
+<h2>4.7.0 -- <span style="font-weight: normal;">January 19, 2022</span></h2>
 
 <h2>Bug</h2>
 <ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2368">OF-2368</a>] - Ghost detection shouldn't kick non-ghost occupants</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2367">OF-2367</a>] - TCP clients are suddenly unable to log into the server</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2365">OF-2365</a>] - Parent node subscribers shouldn't always get pubsub node notifications</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2358">OF-2358</a>] - When a room is destroyed, the room instance might be non-existent</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2350">OF-2350</a>] - DefaultExternalizableUtil ignores provided ClassLoader instances</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2348">OF-2348</a>] - Plugin JAR can't unload on Windows with newer versions of Java</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2346">OF-2346</a>] - XMPPServer#matchesComponent shouldn't require full-JID match</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2345">OF-2345</a>] - component-based address incorrectly identified as remote</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2343">OF-2343</a>] - Inconsistent leave presence sending to leaving occupant</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2341">OF-2341</a>] - Apparent thread lock \(deadlock?\) in MUC after clustering reimplementation</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2339">OF-2339</a>] - Incomplete room list following a cluster split</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2338">OF-2338</a>] - NullPointerException on MUC search if name is empty</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2337">OF-2337</a>] - PEP publishing fails after reboot</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2336">OF-2336</a>] - DefaultCache put returns wrong value when to big value is added</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2329">OF-2329</a>] - XML parsing bug when tag-name is not followed by space or '>'</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2328">OF-2328</a>] - Error when standalone Openfire checks for timed out users</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2325">OF-2325</a>] - 100% CPU from never-ending Dialback</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2324">OF-2324</a>] - NullPointerException in client sessions page on admin console</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2322">OF-2322</a>] - Outbound S2S stanzas can be delivered out-of-order</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2321">OF-2321</a>] - Concurrency issue with sending/establishing outbound S2S connection.</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2315">OF-2315</a>] - NPE when setting up S2S</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2314">OF-2314</a>] - Cache data inconsistency: outgoing server sessions</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2313">OF-2313</a>] - Cache data inconsistency: incoming server sessions</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2312">OF-2312</a>] - Not all admins are warned when cache inconsistencies occur</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2311">OF-2311</a>] - Cache data inconsistency: Sessions</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2308">OF-2308</a>] - MUC should disallow nickname change to reserved nickname</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2305">OF-2305</a>] - MUC nickname change processed as new join</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2304">OF-2304</a>] - MUC nickname changes should not be possible for non-occupants</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2300">OF-2300</a>] - Clustered caches can loose 'local' data upon cluster breakage.</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2299">OF-2299</a>] - NullPointerException when cleaning up directed presences in 3-node cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2297">OF-2297</a>] - Cluster leave can result in lost data MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2296">OF-2296</a>] - Cluster join/leave events are processed twice in MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2294">OF-2294</a>] - MUC consistency check failure</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2293">OF-2293</a>] - Duplicate occupant in MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2292">OF-2292</a>] - ConcurrentModificationException in new MUC cluster code</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2291">OF-2291</a>] - ConcurrentModificationException in new MUC cluster code</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2290">OF-2290</a>] - Cache locking with Strings has problems equal to using a String as a mutex</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2289">OF-2289</a>] - String-based Interners still can cause deadlocks</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2282">OF-2282</a>] - Log4j config is ignored at boot time.</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2281">OF-2281</a>] - Admin console error when using In-Memory datastore for pubsub</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2278">OF-2278</a>] - Cache locking does not always work with primitive types</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2250">OF-2250</a>] - Multiplexer backup deliverer should be used</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2249">OF-2249</a>] - Backup delivery for BOSH should be 'offline'</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2245">OF-2245</a>] - Prevent needlessly scheduled tasks after Http Session closure</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2244">OF-2244</a>] - Offline presence subscription loses details</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2213">OF-2213</a>] - Update dependencies identified by Snyk</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2206">OF-2206</a>] - BOSH session disconnect through server should inform client</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2167">OF-2167</a>] - Federated users should be able to query a MUC room in a cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2165">OF-2165</a>] - Prevent potential nickname clashes when occupants of clustered MUC room are merged.</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2164">OF-2164</a>] - Updating A MUC service should propagate in the cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2156">OF-2156</a>] - BOSH Concurrency issue</li>
 </ul>
 
 <h2>Improvement</h2>
 <ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2371">OF-2371</a>] - Outbound S2S stanza queue should be larger</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2370">OF-2370</a>] - RemoteServerManager's canAccess should evaluate both Direct and nonDirect TLS</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2369">OF-2369</a>] - Do not establish S2S when not accepting S2S of the same type</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2363">OF-2363</a>] - Improve LGTM score for xmppserver/webapp/javascript</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2362">OF-2362</a>] - JDBCAdminProvider LGTM synchronising on a string</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2361">OF-2361</a>] - GroupManager LGTM String Synchronisation Changes</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2360">OF-2360</a>] - Create API to check for availability of plugins/versions on each cluster node</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2357">OF-2357</a>] - Update SLF4J to 1.7.32</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2356">OF-2356</a>] - Update Bouncy Castle to 1.70</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2355">OF-2355</a>] - Update Log4j to 2.17.1</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2354">OF-2354</a>] - String-based SystemProperty lists should allow for whitespace comma separation</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2353">OF-2353</a>] - Update Log4j dependency to 2.16.0 to address Log4Shell/LogJam</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2352">OF-2352</a>] - Use plugin-provided servlet context</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2351">OF-2351</a>] - Update Log4j dependency to 2.15.0 to address Log4Shell/LogJam</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2349">OF-2349</a>] - Admin console should show \(full\) default value for system property</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2340">OF-2340</a>] - send stanzas that are 'responses' through PacketRouter, not RoutingTable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2320">OF-2320</a>] - MUC room avatars fail</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2319">OF-2319</a>] - muc#roomconfig\_allowpm should only affect Message stanzas</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2317">OF-2317</a>] - Prevent NPE when admin page obtained without session</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2316">OF-2316</a>] - Make S2S fast-discard timeout configurable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2307">OF-2307</a>] - Changing MUC nickname to one that's already used by your other resource</li>
@@ -209,14 +274,19 @@ hr {
 <h2>Sub-task</h2>
 <ul>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2272">OF-2272</a>] - Remove notion of 'remote' and 'local' MUC entities</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2236">OF-2236</a>] - Test appropriate join/leave presences are sent to occupants when joining & leaving cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2233">OF-2233</a>] - On joining a cluster, generate appropriate join presences to reconcile the MUC participant visibility</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2232">OF-2232</a>] - On reconciling the membership of a particular MUC, reconcile any nickname conflicts</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2230">OF-2230</a>] - On witnessing another node leaving a cluster, generate leave presence about all MUC participants from that node to all node-local MUC participants</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2228">OF-2228</a>] - On Cluster Join, repopulate the newly acquired clustered cache with the local copy of items</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2227">OF-2227</a>] - On Cluster Leave, repopulate the new blank local cache with the local copy of items contributed to the clustered cache</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2223">OF-2223</a>] - Test the local list of cache items to ensure it contains the expected state of items given various conditions and operations in/on the MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2220">OF-2220</a>] - Ensure that caches are updated every time a item from the cache is modified locally</li>
 </ul>
 
 <h2>Task</h2>
-
 <ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2366">OF-2366</a>] - Drop barely-used commons-io library</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2333">OF-2333</a>] - Update dependency-check from 6.0.4 to 6.2.2</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2332">OF-2332</a>] - Update commons-dbcp2 from 2.6.0 to 2.9.0</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2331">OF-2331</a>] - Update mysql-connector from 8.0.21 to 8.0.27</li>
@@ -229,14 +299,14 @@ hr {
 
 
 <h2>4.6.7 -- <span style="font-weight: normal;">January 3, 2022</span></h2>
-<h3>Bug</h3>
+<h2>Bug</h2>
 <ul>
         <li><a href="https://igniterealtime.atlassian.net/browse/OF-2355">[OF-2355]</a> - Update Log4j to 2.17.1.</li>
 </ul>
 
 
 <h2>4.6.6 -- <span style="font-weight: normal;">December 16, 2021</span></h2>
-<h3>Bug</h3>
+<h2>Bug</h2>
 <ul>
         <li><a href="https://igniterealtime.atlassian.net/browse/OF-2353">[OF-2353]</a> - Update Log4j dependency to 2.16.0 to address Log4Shell/LogJam.</li>
 </ul>
@@ -244,7 +314,7 @@ hr {
 
 <h2>4.6.5 -- <span style="font-weight: normal;">December 10, 2021</span></h2>
 
-<h3>Bug</h3>
+<h2>Bug</h2>
 <ul>
 	<li><a href="https://igniterealtime.atlassian.net/browse/OF-2277">[OF-2277]</a> - Numbering in room enumeration is off by one.</li>
 	<li><a href="https://igniterealtime.atlassian.net/browse/OF-2273">[OF-2273]</a> - Disabling presence broadcast will cause MUC join failure</li>
@@ -252,7 +322,7 @@ hr {
 	<li><a href="https://igniterealtime.atlassian.net/browse/OF-2267">[OF-2267]</a> - Cannot browse MUC rooms of services other than the first one.</li>
 </ul>
 
-<h3>Improvement</h3>
+<h2>Improvement</h2>
 <ul>
 	<li><a href="https://igniterealtime.atlassian.net/browse/OF-2351">[OF-2351]</a> - Update Log4j dependency to address LogJam</li>
 	<li><a href="https://igniterealtime.atlassian.net/browse/OF-2271">[OF-2271]</a> - Add field type returned data form fields</li>

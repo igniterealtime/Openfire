@@ -70,7 +70,7 @@
                 success = false;
                 errors.put("general","A connection to the database could not be "
                     + "made. View the error message by opening the "
-                    + "\"" + File.separator + "logs" + File.separator + "error.log\" log "
+                    + "\"" + File.separator + "logs" + File.separator + "openfire.log\" log "
                     + "file, then go back to fix the problem.");
             }
             else {

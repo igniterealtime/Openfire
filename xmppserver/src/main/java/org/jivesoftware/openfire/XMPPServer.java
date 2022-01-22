@@ -1057,7 +1057,7 @@ public class XMPPServer {
         catch (Exception e) {
             System.err.println("Database setup or configuration error: " +
                     "Please verify your database settings and check the " +
-                    "logs/error.log file for detailed error messages.");
+                    "logs/openfire.log file for detailed error messages.");
             logger.error("Database could not be accessed", e);
             throw new IllegalArgumentException(e);
         }

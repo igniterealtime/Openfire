@@ -108,7 +108,7 @@ public class Launcher {
             tray = SystemTray.getSystemTray();
         }
         catch (Throwable e) {
-            // Log to System error instead of standard error log.
+            // Log to System error instead of standard Openfire log.
             System.err.println("Error loading system tray library, system tray support disabled.");
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,17 @@
 
 package org.jivesoftware.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.apache.commons.text.StringEscapeUtils;
-import org.dom4j.Attribute;
-import org.dom4j.CDATA;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Node;
+import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -78,7 +57,7 @@ public class XMLProperties {
      * Parsing the XML file every time we need a property is slow. Therefore,
      * we use a Map to cache property values that are accessed more than once.
      */
-    private Map<String, String> propertyCache = new HashMap<>();
+    private Map<String, Optional<String>> propertyCache = new HashMap<>();
 
     /**
      * Creates a new empty XMLPropertiesTest object.
@@ -182,9 +161,9 @@ public class XMLProperties {
      * @return the value of the specified property.
      */
     public synchronized String getProperty(String name, boolean ignoreEmpty) {
-        String value = propertyCache.get(name);
-        if (value != null) {
-            return value;
+        final Optional<String> optionalValue = propertyCache.get(name);
+        if (optionalValue != null) {
+            return optionalValue.orElse(null);
         }
 
         String[] propName = parsePropertyName(name);
@@ -195,13 +174,15 @@ public class XMLProperties {
             if (element == null) {
                 // This node doesn't match this part of the property name which
                 // indicates this property doesn't exist so return null.
+                propertyCache.put(name, Optional.empty());
                 return null;
             }
         }
         // At this point, we found a matching property, so return its value.
         // Empty strings are returned as null.
-        value = element.getTextTrim();
+        String value = element.getTextTrim();
         if (ignoreEmpty && "".equals(value)) {
+            propertyCache.put(name, Optional.empty());
             return null;
         }
         else {
@@ -217,7 +198,7 @@ public class XMLProperties {
                 }
             }
             // Add to cache so that getting property next time is fast.
-            propertyCache.put(name, value);
+            propertyCache.put(name, Optional.ofNullable(value));
             return value;
         }
     }
@@ -619,7 +600,7 @@ public class XMLProperties {
         }
 
         // Set cache correctly with prop name and value.
-        propertyCache.put(name, value);
+        propertyCache.put(name, Optional.of(value));
 
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML hierarchy.

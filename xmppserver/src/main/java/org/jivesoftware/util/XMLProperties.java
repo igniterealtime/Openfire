@@ -55,14 +55,14 @@ public class XMLProperties {
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    private Path file;
-    private Document document;
+    private final Path file;
+    private final Document document;
 
     /**
      * Parsing the XML file every time we need a property is slow. Therefore,
      * we use a Map to cache property values that are accessed more than once.
      */
-    private Map<String, Optional<String>> propertyCache = new HashMap<>();
+    private final Map<String, Optional<String>> propertyCache = new HashMap<>();
 
     /**
      * Creates a new empty XMLPropertiesTest object.
@@ -70,7 +70,8 @@ public class XMLProperties {
      * @throws IOException if an error occurs loading the properties.
      */
     public XMLProperties() throws IOException {
-       buildDoc(new StringReader("<root />"));
+        file = null;
+        document = buildDoc(new StringReader("<root />"));
     }
 
     /**
@@ -91,8 +92,9 @@ public class XMLProperties {
      * @throws IOException if an exception occurs when reading the stream.
      */
     public XMLProperties(InputStream in) throws IOException {
+        file = null;
         try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-            buildDoc(reader);
+            document = buildDoc(reader);
         }
     }
 
@@ -144,7 +146,7 @@ public class XMLProperties {
         }
 
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-             buildDoc(reader);
+             document = buildDoc(reader);
         }
     }
 
@@ -814,7 +816,7 @@ public class XMLProperties {
      * @param in the input stream used to build the xml document
      * @throws java.io.IOException thrown when an error occurs reading the input stream.
      */
-    private void buildDoc(Reader in) throws IOException {
+    private Document buildDoc(Reader in) throws IOException {
         final Lock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
@@ -823,7 +825,7 @@ public class XMLProperties {
             xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             xmlReader.setFeature("http://xml.org/sax/features/external-general-entities", false);
             xmlReader.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            document = xmlReader.read(in);
+            return xmlReader.read(in);
         }
         catch (Exception e) {
             Log.error("Error reading XML properties", e);

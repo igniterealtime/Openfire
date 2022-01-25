@@ -328,8 +328,9 @@ public class XMLProperties {
      * @param name the name of the property to retrieve
      * @return all child property values for the given node name.
      */
+    @Deprecated
     public String[] getProperties(String name) {
-        return (String[]) getProperties(name, false).toArray();
+        return getProperties(name, false).toArray(new String[0]);
     }
 
     /**

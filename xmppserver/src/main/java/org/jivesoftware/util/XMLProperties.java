@@ -799,7 +799,7 @@ public class XMLProperties {
                         JiveGlobals.setPropertyEncrypted(name, true);
                     }
                     deleteProperty(name);
-                } else if (!databasePropertyValue.equals(xmlPropertyValue)) {
+                } else {
                     Log.warn("XML Property '" + name + "' differs from what is stored in the database.  Please make property changes in the database instead of the configuration file.");
                 }
             }

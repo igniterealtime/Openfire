@@ -354,7 +354,7 @@ public class XMLProperties {
      * @param name the name of the property to retrieve
      * @return all child property values for the given node name.
      */
-    public Iterator getChildProperties(String name) {
+    public Iterator<String> getChildProperties(String name) {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML hierarchy,
         // stopping one short.
@@ -368,7 +368,7 @@ public class XMLProperties {
                 if (element == null) {
                     // This node doesn't match this part of the property name which
                     // indicates this property doesn't exist so return empty array.
-                    return Collections.EMPTY_LIST.iterator();
+                    return Collections.emptyIterator();
                 }
             }
             // We found matching property, return values of the children.
@@ -653,13 +653,9 @@ public class XMLProperties {
                 }
             }
             // We found matching property, return names of children.
-            List children = element.elements();
-            int childCount = children.size();
-            String[] childrenNames = new String[childCount];
-            for (int i = 0; i < childCount; i++) {
-                childrenNames[i] = ((Element) children.get(i)).getName();
-            }
-            return childrenNames;
+            return element.elements().stream()
+                .map(Node::getName)
+                .toArray(String[]::new);
         } finally {
             readLock.unlock();
         }
@@ -705,9 +701,9 @@ public class XMLProperties {
             }
             // Set the value of the property in this node.
             if (value.startsWith("<![CDATA[")) {
-                Iterator it = element.nodeIterator();
+                Iterator<Node> it = element.nodeIterator();
                 while (it.hasNext()) {
-                    Node node = (Node) it.next();
+                    Node node = it.next();
                     if (node instanceof CDATA) {
                         element.remove(node);
                         break;

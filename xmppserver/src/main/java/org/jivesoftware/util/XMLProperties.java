@@ -167,7 +167,7 @@ public class XMLProperties {
      * @param ignoreEmpty Ignore empty property values (return null)
      * @return the value of the specified property.
      */
-    public synchronized String getProperty(String name, boolean ignoreEmpty) {
+    public String getProperty(String name, boolean ignoreEmpty) {
         String value = null;
         boolean mustRewrite = false;
 

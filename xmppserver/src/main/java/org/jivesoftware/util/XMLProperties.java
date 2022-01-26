@@ -168,11 +168,11 @@ public class XMLProperties {
      * @return the value of the specified property.
      */
     public synchronized String getProperty(String name, boolean ignoreEmpty) {
-        final Lock readLock = readWriteLock.readLock();
-        readLock.lock();
-
         String value = null;
         boolean mustRewrite = false;
+
+        final Lock readLock = readWriteLock.readLock();
+        readLock.lock();
         try {
             if (propertyCache.containsKey(name)) {
                 return propertyCache.get(name).orElse(null);

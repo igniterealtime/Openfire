@@ -47,12 +47,12 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     /**
      * Cache that holds all nodes (mapped by service ID).
      */
-    private final Cache<PubSubService.UniqueIdentifier, ArrayList<Node>> serviceIdToNodesCache;
+    private final Cache<PubSubService.UniqueIdentifier, HashSet<Node>> serviceIdToNodesCache;
 
     /**
      * Cache that holds all published items (mapped by node ID).
      */
-    private final Cache<Node.UniqueIdentifier, LinkedList<PublishedItem>> itemsCache;
+    private final Cache<Node.UniqueIdentifier, HashSet<PublishedItem>> itemsCache;
 
     public InMemoryPubSubPersistenceProvider()
     {
@@ -86,7 +86,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public void createNode( Node node )
     {
         log.debug( "Creating node: {}", node.getUniqueIdentifier() );
-        CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, node.getUniqueIdentifier().getServiceIdentifier(), node, ArrayList::new );
+        CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, node.getUniqueIdentifier().getServiceIdentifier(), node, HashSet::new );
     }
 
     @Override
@@ -99,7 +99,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         lock.lock();
         try {
             CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node );
-            CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node, ArrayList::new );
+            CacheUtil.addValueToMultiValuedCache( serviceIdToNodesCache, serviceIdentifier, node, HashSet::new );
         } finally {
             lock.unlock();
         }
@@ -114,9 +114,9 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         final Lock lock = serviceIdToNodesCache.getLock( serviceIdentifier );
         lock.lock();
         try {
-            serviceIdToNodesCache.computeIfPresent( serviceIdentifier, ( s, list ) -> {
-                list.remove( node );
-                return list.isEmpty() ? null : list;
+            serviceIdToNodesCache.computeIfPresent( serviceIdentifier, ( s, collection ) -> {
+                collection.remove( node );
+                return collection.isEmpty() ? null : collection;
             } );
             if ( node instanceof LeafNode )
             {
@@ -145,7 +145,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
         lock.lock();
         try {
-            final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
+            final Set<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
             if ( nodes != null )
             {
                 nodes.forEach(service::addNode);
@@ -163,7 +163,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         final Lock lock = serviceIdToNodesCache.getLock( service.getUniqueIdentifier() );
         lock.lock();
         try {
-            final List<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
+            final Set<Node> nodes = serviceIdToNodesCache.get(service.getUniqueIdentifier());
             if ( nodes != null )
             {
                 final Optional<Node> optionalNode = nodes.stream().filter(node -> node.getUniqueIdentifier().equals(nodeIdentifier)).findAny();
@@ -186,7 +186,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public Set<Node.UniqueIdentifier> findDirectlySubscribedNodes(@Nonnull JID address) {
         log.debug( "Finding all nodes to which {} is subscribed", address );
         final Set<Node.UniqueIdentifier> result = new HashSet<>();
-        for ( final List<Node> nodes : serviceIdToNodesCache.values() ) {
+        for ( final Set<Node> nodes : serviceIdToNodesCache.values() ) {
             for ( final Node node : nodes ) {
                 if ( node.getSubscriptions().stream().anyMatch( s ->
                         s.isActive() &&
@@ -280,14 +280,14 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         try {
 
             // Find and remove an item with the same ID, if one is present.
-            final LinkedList<PublishedItem> allNodeItems = itemsCache.get(item.getNode().getUniqueIdentifier());
+            final HashSet<PublishedItem> allNodeItems = itemsCache.get(item.getNode().getUniqueIdentifier());
             if (allNodeItems != null) {
                 final Optional<PublishedItem> oldItem = allNodeItems.stream().filter(i -> i.getUniqueIdentifier().equals(item.getUniqueIdentifier())).findAny();
                 oldItem.ifPresent(publishedItem -> CacheUtil.removeValueFromMultiValuedCache(itemsCache, item.getNode().getUniqueIdentifier(), publishedItem));
             }
 
             // Add the new item.
-            CacheUtil.addValueToMultiValuedCache( itemsCache, item.getNode().getUniqueIdentifier(), item, LinkedList::new );
+            CacheUtil.addValueToMultiValuedCache( itemsCache, item.getNode().getUniqueIdentifier(), item, HashSet::new );
         } finally {
             lock.unlock();
         }
@@ -304,12 +304,12 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     public List<PublishedItem> getPublishedItems( LeafNode node )
     {
         log.debug( "Getting published items for node {}", node.getUniqueIdentifier() );
-        List<PublishedItem> publishedItems;
+        Set<PublishedItem> publishedItems;
         final Lock lock = itemsCache.getLock( node.getUniqueIdentifier() );
         lock.lock();
         try {
-            final List<PublishedItem> items = itemsCache.get( node.getUniqueIdentifier() );
-            publishedItems = items != null ? items : new ArrayList<>();
+            final Set<PublishedItem> items = itemsCache.get( node.getUniqueIdentifier() );
+            publishedItems = items != null ? items : new HashSet<>();
         } finally {
             lock.unlock();
         }
@@ -349,7 +349,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Getting published item {} for node {}", itemIdentifier.getItemId(), node.getUniqueIdentifier() );
 
         PublishedItem lastPublishedItem = null;
-        List<PublishedItem> publishedItems;
+        Set<PublishedItem> publishedItems;
         final Lock lock = itemsCache.getLock( node.getUniqueIdentifier() );
         lock.lock();
         try {

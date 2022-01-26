@@ -229,6 +229,8 @@ public interface PubSubPersistenceProvider
     /**
      * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
      *
+     * Results are ordered by creation date.
+     *
      * @param node the leaf node to load its published items.
      */
     List<PublishedItem> getPublishedItems(LeafNode node);
@@ -236,12 +238,14 @@ public interface PubSubPersistenceProvider
     /**
      * Fetches all the results for the specified node, limited by {@link LeafNode#getMaxPublishedItems()}.
      *
+     * Results are ordered by creation date.
+     *
      * @param node the leaf node to load its published items.
      */
     List<PublishedItem> getPublishedItems(LeafNode node, int maxRows);
 
     /**
-     * Fetches the last published item for the specified node.
+     * Fetches the last published item (by creation date) for the specified node.
      *
      * @param node the leaf node to load its last published items.
      */

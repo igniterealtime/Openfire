@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -315,7 +314,9 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
             lock.unlock();
         }
 
-        return publishedItems;
+        return publishedItems.stream()
+            .sorted(Comparator.comparing(PublishedItem::getCreationDate))
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -348,7 +349,15 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         log.debug( "Getting published item {} for node {}", itemIdentifier.getItemId(), node.getUniqueIdentifier() );
 
         PublishedItem lastPublishedItem = null;
-        final List<PublishedItem> publishedItems = getPublishedItems( node );
+        List<PublishedItem> publishedItems;
+        final Lock lock = itemsCache.getLock( node.getUniqueIdentifier() );
+        lock.lock();
+        try {
+            publishedItems = itemsCache.get( node.getUniqueIdentifier() );
+        } finally {
+            lock.unlock();
+        }
+
         if ( publishedItems != null )
         {
             final List<PublishedItem> collect = publishedItems.stream().filter( publishedItem -> publishedItem.getID().equals( itemIdentifier.getItemId() ) ).collect( Collectors.toList() );

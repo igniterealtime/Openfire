@@ -645,12 +645,12 @@ public class OccupantManager implements MUCEventListener
 
         @Override
         public String toString() {
-            return "Occupant{" +
-                "roomName='" + roomName + '\'' +
-                ", nickname='" + nickname + '\'' +
-                ", realJID=" + realJID +
-                ", lastActive=" + lastActive +
-                '}';
+            return "Occupant " +
+                "'" + nickname + '\'' +
+                " of room '" + roomName + '\'' +
+                " (real JID '" + realJID +
+                "', last active " + lastActive +
+                ")";
         }
     }
 

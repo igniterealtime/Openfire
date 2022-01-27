@@ -95,6 +95,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -120,7 +121,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * The time to elapse between clearing of idle chat users.
      */
-    private Duration userIdleTaskInterval = Duration.ofMinutes(5);
+    private Duration userIdleTaskInterval;
 
     /**
      * The period that a user must be idle before he/she gets kicked from all the rooms. Null to disable the feature.
@@ -392,7 +393,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Check for IQ Ping responses
             if (isPendingPingResponse(packet)) {
                 Log.debug("Ping response received from occupant '{}', addressed to: '{}'", packet.getFrom(), packet.getTo());
-                occupantManager.registerActivity(packet.getFrom());
                 return;
             }
             // Check for 'ghost' users (OF-910 / OF-2209 / OF-2369)
@@ -1600,72 +1600,127 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         service.shutdownNow();
     }
 
+    /**
+     * Iterates over the local occupants of MUC rooms (users connected to the local cluster node), to determine if an
+     * action needs to be taken based on their (lack of) activity. Depending on the configuration of Openfire, inactive
+     * users (users that are connected, but have not typed anything) are kicked from the room, and/or are explicitly
+     * asked for a proof of life (connectivity), removing them if this proof is not given.
+     */
     private void checkForTimedOutUsers()
     {
-        for (final OccupantManager.Occupant user : occupantManager.getLocalOccupants())
+        for (final OccupantManager.Occupant occupant : occupantManager.getLocalOccupants())
         {
             try
             {
-                // Kick users if 'user_idle' feature is enabled and the user has been idle for too long.
-                final boolean doKick = userIdleKick != null && user.getLastActive().isBefore(Instant.now().minus(userIdleKick));
-
-                // Kick users when the 'user_ping' feature is enabled, and the user has been idle for twice the ping interval.
-                final boolean doPingKick = userIdlePing != null && user.getLastActive().isBefore(Instant.now().minus(userIdlePing).minus(userIdlePing));
-
-                // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
-                final boolean doPing = !doKick && !doPingKick && userIdlePing != null && user.getLastActive().isBefore(Instant.now().minus(userIdlePing));
-
-                if (doKick || doPingKick || doPing) {
-                    final String timeoutKickReason = JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User exceeded idle time limit.");
-                    final Lock lock = getChatRoomLock(user.getRoomName());
-                    if (!lock.tryLock()) { // Don't block on locked rooms, as we're processing many of them. We'll get them in the next round.
-                        Log.info("Skip ping/kick check for idle users in room '{}' of service '{}' as a cluster-wide mutex for the room could not immediately be obtained.'", user.getRoomName(), chatServiceName);
-                        continue;
-                    }
-                    try {
-                        final MUCRoom room = getChatRoom(user.getRoomName());
-                        if (room == null) {
-                            // Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager ?
-                            Log.warn("User '{}' appears to have had a role in room '{}' of service '{}' that does not seem to exist.", user.getRealJID(), user.getRoomName(), chatServiceName);
-                            continue;
-                        }
-                        if (doKick || doPingKick) {
-                            // Kick the user from all the rooms that he/she had previously joined.
-                            try {
-                                final Presence kickedPresence = room.kickOccupant(user.getRealJID(), null, null, timeoutKickReason);
-                                // Send the updated presence to the room occupants
-                                room.send(kickedPresence, room.getRole());
-                                Log.debug("Kicked occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getRealJID(), user.getRoomName(), chatServiceName);
-                            } catch (final NotAllowedException e) {
-                                // Do nothing since we cannot kick owners or admins
-                            }
-                        }
-
-                        if (doPing) {
-                            // Send a ping 'from the room' to the user, from all the rooms that he/she had previously joined.
-                            // If this ping results in a connectivity error, that will be picked up by MucRoom's process
-                            // method, that detects 'ghost users', which will kick the user. If the ping is not responded to
-                            // at all (if the session remains inactive), then that's picked up by the 'pingKick' boolean above.
-                            final IQ pingRequest = new IQ( IQ.Type.get );
-                            pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
-                            pingRequest.setFrom( room.getJID() );
-                            pingRequest.setTo( user.getRealJID() );
-                            pingRequest.setID( UUID.randomUUID().toString() ); // Generate unique ID, to prevent duplicate cache entries.
-                            XMPPServer.getInstance().getPacketRouter().route(pingRequest);
-                            PINGS_SENT.put(pingRequest.getID(), pingRequest.getTo());
-                            Log.debug("Pinged occupant '{}' of room '{}' of service '{}' due to exceeding idle time limit.", user.getRealJID(), user.getRoomName(), chatServiceName);
-                        }
-
-                        // Ensure that other cluster nodes see any changes that might have been applied.
-                        syncChatRoom(room);
-                    } finally {
-                        lock.unlock();
-                    }
+                if (userIdleKick != null && occupant.getLastActive().isBefore(Instant.now().minus(userIdleKick)))
+                {
+                    // Kick users if 'user_idle' feature is enabled and the user has been idle for too long.
+                    tryRemoveOccupantFromRoom(occupant, JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User was inactive for longer than the allowed maximum duration of " + userIdleKick.toString().substring(2).replaceAll("(\\d[HMS])(?!$)", "$1 ").toLowerCase()) + "." );
+                }
+                else if (userIdlePing != null && occupant.getLastActive().isBefore(Instant.now().minus(userIdlePing)))
+                {
+                    // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
+                    pingOccupant(occupant);
                 }
             }
             catch (final Throwable e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
+        }
+    }
+
+    /**
+     * Removes an occupant from a room.
+     *
+     * When the system is 'busy', the occupant will not be removed to prevent threads blocking. In such cases, a message
+     * is added to the log files, but the occupant remains in the room.
+     *
+     * @param occupant The occupant to be removed
+     * @param reason A human-readable reason for the removal (to be shared with the occupant as well as other occupants of the room).
+     */
+    private void tryRemoveOccupantFromRoom(@Nonnull final OccupantManager.Occupant occupant, @Nonnull final String reason)
+    {
+        final Lock lock = getChatRoomLock(occupant.getRoomName());
+        if (!lock.tryLock()) { // Don't block on locked rooms, as we're processing many of them. We'll get them in the next round.
+            Log.info("Skip removing as a cluster-wide mutex for the room could not immediately be obtained: {}, should have been removed, because: {}", occupant, reason);
+            return;
+        }
+        try {
+            final MUCRoom room = getChatRoom(occupant.getRoomName());
+            if (room == null) {
+                // Room was recently removed? Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager?
+                Log.info("Skip removing {} as the room no longer exists.", occupant);
+                return;
+            }
+
+            if (!room.hasOccupant(occupant.getRealJID())) {
+                // Room was recently removed? Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager?
+                Log.debug("Skip removing {} as this occupant no longer is in the room.", occupant);
+                return;
+            }
+
+            // Kick the user from the room that he/she had previously joined.
+            Log.debug("Removing/kicking {}: {}", occupant, reason);
+            room.kickOccupant(occupant.getRealJID(), null, null, reason);
+
+            // Ensure that other cluster nodes see any changes that might have been applied.
+            syncChatRoom(room);
+        } catch (final NotAllowedException e) {
+            // Do nothing since we cannot kick owners or admins
+            Log.debug("Skip removing {}, because it's not allowed (this user likely is an owner of admin of the room).", occupant, e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Sends an IQ Ping request to an occupant, and schedules a check that determines if a response to that request
+     * was received (removing the occupant if it is not).
+     *
+     * @param occupant The occupant to ping.
+     */
+    private void pingOccupant(@Nonnull final OccupantManager.Occupant occupant)
+    {
+        Log.debug("Pinging {} as the occupant is exceeding the idle time limit.", occupant);
+        final IQ pingRequest = new IQ( IQ.Type.get );
+        pingRequest.setChildElement( IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE );
+        pingRequest.setFrom( occupant.getRoomName() + "@" + getServiceDomain() );
+        pingRequest.setTo( occupant.getRealJID() );
+        pingRequest.setID( UUID.randomUUID().toString() ); // Generate unique ID, to prevent duplicate cache entries.
+        XMPPServer.getInstance().getPacketRouter().route(pingRequest);
+        PINGS_SENT.put(pingRequest.getID(), pingRequest.getTo());
+
+        // Schedule a check to see if the ping was answered, kicking the occupant if it wasn't.
+        // The check should be done _before_ the next ping would be sent (to prevent a backlog of ping requests forming)
+        long timeoutMs = userIdlePing.dividedBy(4).toMillis();
+        TaskEngine.getInstance().schedule(new CheckPingResponseTask(occupant, pingRequest.getID()), timeoutMs);
+    }
+
+    /**
+     * A task that verifies if a response to a certain IQ Ping stanza (identified by stanza ID) was received, kicking
+     * an occupant of a MUC room if it is not.
+     */
+    private class CheckPingResponseTask extends TimerTask {
+        final OccupantManager.Occupant occupant;
+        final String stanzaID;
+
+        public CheckPingResponseTask(@Nonnull final OccupantManager.Occupant occupant, @Nonnull final String stanzaID) {
+            this.occupant = occupant;
+            this.stanzaID = stanzaID;
+        }
+
+        @Override
+        public void run()
+        {
+            Log.trace("Checking if {} has responded to a ping request that we sent earlier (with stanza ID '{}').", occupant, stanzaID);
+            if (!occupant.getRealJID().equals(PINGS_SENT.remove(stanzaID)))  // A null-check should be enough. Check against recipient for extra safety.
+            {
+                Log.trace("The ping request that we sent earlier to {} seems to have been answered.", occupant);
+                return;
+            }
+
+            Log.debug("{} has not responded to a ping that we sent earlier. Occupant should be kicked from the room.", occupant);
+            tryRemoveOccupantFromRoom(occupant, JiveGlobals.getProperty("admin.mucRoom.noPingResponseKickReason", "User seems to be unreachable (didn't respond to a ping request).") );
         }
     }
 
@@ -2019,22 +2074,48 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     @Override
     public void setIdleUserTaskInterval(final @Nonnull Duration duration) {
-        if (Objects.equals(duration, this.userIdleTaskInterval)) {
+        // Set the new property value
+        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Long.toString(userIdleTaskInterval.toMillis()));
+
+        rescheduleUserIdleTask();
+    }
+
+    private void rescheduleUserIdleTask()
+    {
+        // Use the 25% of the smallest of 'userIdleKick' or 'userIdlePing', or 5 minutes if both are unset.
+        Duration recalculated = Stream.of(userIdleKick, userIdlePing)
+            .filter(Objects::nonNull)
+            .filter(duration -> duration.compareTo(Duration.ofSeconds(30)) > 0) // Not faster than every so often.
+            .sorted()
+            .findFirst()
+            .orElse(Duration.ofMinutes(5*4))
+            .dividedBy(4);
+
+        // But if the property is set, use that.
+        String value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.timeout");
+        if (value != null) {
+            try {
+                recalculated = Duration.ofMillis(Long.parseLong(value));
+            }
+            catch (final NumberFormatException e) {
+                Log.error("Wrong number format of property tasks.user.timeout for service "+chatServiceName, e);
+            }
+        }
+
+        if (Objects.equals(recalculated, this.userIdleTaskInterval)) {
             return;
         }
+        Log.info("Rescheduling user idle task, recurring every {}", recalculated);
 
         // Cancel the existing task because the timeout has changed
         if (userTimeoutTask != null) {
             userTimeoutTask.cancel();
         }
-        this.userIdleTaskInterval = duration;
+        this.userIdleTaskInterval = recalculated;
 
         // Create a new task and schedule it with the new timeout
         userTimeoutTask = new UserTimeoutTask();
         TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
-
-        // Set the new property value
-        MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Long.toString(userIdleTaskInterval.toMillis()));
     }
 
     @Override
@@ -2054,6 +2135,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.idle", userIdleKick == null ? "-1" : Long.toString(userIdleKick.toMillis()));
+
+        rescheduleUserIdleTask();
     }
 
     @Override
@@ -2071,8 +2154,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         this.userIdlePing = duration;
 
+        if (userIdlePing != null && PINGS_SENT.getMaxLifetime() < userIdlePing.dividedBy(4).toMillis()) {
+            Log.warn("The cache that tracks Ping requests ({}) has a maximum entry lifetime ({}) that is shorter than the time that we wait for responses ({}). This will result in (some) occupants not being removed when they fail to respond to Pings. An Openfire admin should adjust the configuration.", PINGS_SENT.getName(), Duration.ofMillis(PINGS_SENT.getMaxLifetime()), userIdlePing.dividedBy(4));
+        }
+
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.ping", userIdlePing == null ? "-1" : Long.toString(userIdlePing.toMillis()));
+
+        rescheduleUserIdleTask();
     }
 
     @Override
@@ -2325,17 +2414,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
             }
         }
-        String value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.timeout");
-        userIdleTaskInterval = Duration.ofMinutes(5);
-        if (value != null) {
-            try {
-                userIdleTaskInterval = Duration.ofMillis(Long.parseLong(value));
-            }
-            catch (final NumberFormatException e) {
-                Log.error("Wrong number format of property tasks.user.timeout for service "+chatServiceName, e);
-            }
-        }
-        value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.idle");
+        String value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.idle");
         userIdleKick = null;
         if (value != null) {
             try {
@@ -2365,6 +2444,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error("Wrong number format of property tasks.user.ping for service "+chatServiceName, e);
             }
         }
+        if (userIdlePing != null && PINGS_SENT.getMaxLifetime() < userIdlePing.dividedBy(4).toMillis()) {
+            Log.warn("The cache that tracks Ping requests ({}) has a maximum entry lifetime ({}) that is shorter than the time that we wait for responses ({}). This will result in (some) occupants not being removed when they fail to respond to Pings. An Openfire admin should adjust the configuration.", PINGS_SENT.getName(), Duration.ofMillis(PINGS_SENT.getMaxLifetime()), userIdlePing.dividedBy(4));
+        }
+
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.log.maxbatchsize");
         logMaxConversationBatchSize = 500;
         if (value != null) {
@@ -2408,6 +2491,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error("Wrong number format of property unload.empty_days for service "+chatServiceName, e);
             }
         }
+        rescheduleUserIdleTask();
     }
 
     /**
@@ -2545,10 +2629,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public void start() {
         XMPPServer.getInstance().addServerListener( this );
-
-        // Run through the users every 5 minutes after a 5 minutes server startup delay (default values)
-        userTimeoutTask = new UserTimeoutTask();
-        TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
 
         // Remove unused rooms from memory
         long cleanupFreq = JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;

@@ -182,9 +182,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     @Override
     public Collection<String> getSharedGroupNames(JID user) {
         Set<String> answer = new HashSet<>();
-        Collection<String> userGroups = getGroupNames(user);
-        answer.addAll(userGroups);
-        for (String userGroup : userGroups) {
+        for (String userGroup : getGroupNames(user)) {
             answer.addAll(getVisibleGroupNames(userGroup));
         }
         answer.addAll(getPublicSharedGroupNames());

@@ -1,0 +1,17 @@
+<!DOCTYPE dataset SYSTEM "dataset.dtd">
+<dataset>
+    <table name="ofGroup">
+        <column>groupName</column>
+        <column>description</column>
+    </table>
+    <table name="ofGroupProp">
+        <column>groupName</column>
+        <column>name</column>
+        <column>propValue</column>
+    </table>
+    <table name="ofGroupUser">
+        <column>groupName</column>
+        <column>username</column>
+        <column>administrator</column>
+    </table>
+</dataset>

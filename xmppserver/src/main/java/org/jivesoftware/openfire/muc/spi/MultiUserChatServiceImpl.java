@@ -2077,10 +2077,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.timeout", Long.toString(userIdleTaskInterval.toMillis()));
 
-        rescheduleUserIdleTask();
+        rescheduleUserTimeoutTask();
     }
 
-    private void rescheduleUserIdleTask()
+    private void rescheduleUserTimeoutTask()
     {
         // Use the 25% of the smallest of 'userIdleKick' or 'userIdlePing', or 5 minutes if both are unset.
         Duration recalculated = Stream.of(userIdleKick, userIdlePing)
@@ -2106,16 +2106,18 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return;
         }
         Log.info("Rescheduling user idle task, recurring every {}", recalculated);
-
-        // Cancel the existing task because the timeout has changed
-        if (userTimeoutTask != null) {
-            userTimeoutTask.cancel();
-        }
         this.userIdleTaskInterval = recalculated;
 
-        // Create a new task and schedule it with the new timeout
-        userTimeoutTask = new UserTimeoutTask();
-        TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
+        synchronized (this) {
+            // Cancel the existing task because the timeout has changed
+            if (userTimeoutTask != null) {
+                userTimeoutTask.cancel();
+            }
+
+            // Create a new task and schedule it with the new timeout
+            userTimeoutTask = new UserTimeoutTask();
+            TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
+        }
     }
 
     @Override
@@ -2136,7 +2138,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.idle", userIdleKick == null ? "-1" : Long.toString(userIdleKick.toMillis()));
 
-        rescheduleUserIdleTask();
+        rescheduleUserTimeoutTask();
     }
 
     @Override
@@ -2161,7 +2163,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Set the new property value
         MUCPersistenceManager.setProperty(chatServiceName, "tasks.user.ping", userIdlePing == null ? "-1" : Long.toString(userIdlePing.toMillis()));
 
-        rescheduleUserIdleTask();
+        rescheduleUserTimeoutTask();
     }
 
     @Override
@@ -2491,7 +2493,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.error("Wrong number format of property unload.empty_days for service "+chatServiceName, e);
             }
         }
-        rescheduleUserIdleTask();
+        rescheduleUserTimeoutTask();
     }
 
     /**

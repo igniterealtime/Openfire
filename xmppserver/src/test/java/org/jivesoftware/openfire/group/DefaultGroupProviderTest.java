@@ -129,6 +129,18 @@ public class DefaultGroupProviderTest extends DBTestCase
     }
 
     /**
+     * Asserts that two groups with the same name cannot be created
+     */
+    @Test
+    public void testCreateGroupWithDuplicateNameThrows() throws Exception
+    {
+        final String GROUP_NAME = "Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup(GROUP_NAME);
+        assertThrows(GroupAlreadyExistsException.class, ()-> provider.createGroup(GROUP_NAME));
+    }
+
+    /**
      * Verifies that a group can be retrieved based on the name that it was created with.
      */
     @Test

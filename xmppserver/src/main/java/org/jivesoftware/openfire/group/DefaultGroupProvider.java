@@ -77,9 +77,15 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     private XMPPServer server = XMPPServer.getInstance();
 
     @Override
-    public Group createGroup(String name) throws GroupNameInvalidException {
+    public Group createGroup(String name) throws GroupNameInvalidException, GroupAlreadyExistsException {
         if(name.trim().isEmpty()){
             throw new GroupNameInvalidException("Group name cannot be empty");
+        }
+        try {
+            this.getGroup(name);
+            throw new GroupAlreadyExistsException("A group with the same name already exists");
+        } catch (GroupNotFoundException e) {
+            //Expected, do nothing
         }
         Connection con = null;
         PreparedStatement pstmt = null;

@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNameInvalidException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -114,6 +115,11 @@ public class AddGroup extends AdHocCommand {
             // Group not found
             note.addAttribute("type", "error");
             note.setText("Group already exists");
+            return;
+        } catch (GroupNameInvalidException e) {
+            // Group name not valid
+            note.addAttribute("type", "error");
+            note.setText("Group name is not valid");
             return;
         }
 

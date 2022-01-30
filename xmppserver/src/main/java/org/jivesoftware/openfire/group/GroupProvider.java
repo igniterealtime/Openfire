@@ -55,7 +55,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    Group createGroup(String name) throws GroupAlreadyExistsException;
+    Group createGroup(String name) throws GroupAlreadyExistsException, GroupNameInvalidException;
 
     /**
      * Deletes the group (optional operation).

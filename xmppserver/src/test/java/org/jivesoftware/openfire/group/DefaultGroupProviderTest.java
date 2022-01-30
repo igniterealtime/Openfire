@@ -19,7 +19,6 @@ import org.dbunit.DBTestCase;
 import org.dbunit.PropertiesBasedJdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.XmlDataSet;
-import org.dbunit.operation.DatabaseOperation;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DefaultConnectionProvider;
@@ -31,6 +30,8 @@ import org.xmpp.packet.JID;
 
 import java.net.URL;
 import java.util.Collection;
+
+import static org.junit.Assert.assertThrows;
 
 /**
  * Unit tests that verify the functionality of {@link DefaultGroupProvider}.
@@ -114,6 +115,17 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.getAll().contains(new JID("john@example.org")));
         assertTrue(result.getAll().contains(new JID("jack@example.org")));
         assertTrue(result.getAll().contains(new JID("jane@example.org")));
+    }
+
+    /**
+     * Asserts that a with no name cannot be created
+     */
+    @Test
+    public void testCreateGroupWithEmptyNameThrows() throws Exception
+    {
+        final String GROUP_NAME = "";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        assertThrows(GroupNameInvalidException.class, ()-> provider.createGroup(GROUP_NAME));
     }
 
     /**

@@ -1006,4 +1006,43 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         assertThrows(GroupNotFoundException.class,() -> provider.deleteGroup("Test Group C"));
     }
+
+    @Test
+    public void testSetName() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.setName("Test Group A", "Test Group B");
+        final Collection<String> result = provider.getGroupNames();
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group B"));
+    }
+
+    @Test
+    public void testSetNameWithEmptyStringThrows() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        assertThrows(GroupNameInvalidException.class, () -> provider.setName("Test Group A", ""));
+    }
+
+    @Test
+    public void testSetNameToExistingGroupThrows() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.createGroup("Test Group B");
+
+        final Collection<String> result = provider.getGroupNames();
+
+        assertThrows(GroupAlreadyExistsException.class, () -> provider.setName("Test Group A", "Test Group B"));
+    }
+
+    @Test
+    public void testSetNameOnNonExistentGroupThrows() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        assertThrows(GroupNotFoundException.class, () -> provider.setName("Test Group B", "Test Group C"));
+    }
 }

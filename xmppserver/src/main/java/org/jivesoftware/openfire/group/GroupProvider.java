@@ -85,7 +85,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void setName(String oldName, String newName) throws GroupAlreadyExistsException;
+    void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException;
 
     /**
      * Updates the group's description.

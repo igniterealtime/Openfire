@@ -158,7 +158,7 @@ public class GroupManagerTest {
         }
 
         @Override
-        public void setName(final String oldName, final String newName) throws GroupAlreadyExistsException {
+        public void setName(final String oldName, final String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException {
             mockGroupProvider.setName(oldName, newName);
         }
 

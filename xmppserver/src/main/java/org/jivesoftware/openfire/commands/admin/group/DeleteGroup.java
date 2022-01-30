@@ -70,14 +70,13 @@ public class DeleteGroup extends AdHocCommand {
         Group group;
         try {
             group = GroupManager.getInstance().getGroup(data.getData().get("group").get(0));
+            GroupManager.getInstance().deleteGroup(group);
         } catch (GroupNotFoundException e) {
             // Group not found
             note.addAttribute("type", "error");
             note.setText("Group name does not exist");
             return;
         }
-
-        GroupManager.getInstance().deleteGroup(group);
 
         note.addAttribute("type", "info");
         note.setText("Operation finished successfully");

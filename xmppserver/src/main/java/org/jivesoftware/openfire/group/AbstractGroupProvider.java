@@ -98,7 +98,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
-    public void deleteGroup(String name) {
+    public void deleteGroup(String name) throws GroupNotFoundException {
         throw new UnsupportedOperationException("Cannot remove groups via read-only provider");
     }
 

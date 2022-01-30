@@ -1045,4 +1045,35 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         assertThrows(GroupNotFoundException.class, () -> provider.setName("Test Group B", "Test Group C"));
     }
+
+    @Test
+    public void testSetDescription() throws Exception {
+        final String DESC = "The description of Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.setDescription("Test Group A", DESC);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertEquals(DESC, result.getDescription());
+    }
+
+    @Test
+    public void testSetDescriptionWithEmptyString() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A").setDescription("The description of Test Group A");
+
+        provider.setDescription("Test Group A", "");
+        final Group result = provider.getGroup("Test Group A");
+
+        assertEquals("", result.getDescription());
+    }
+
+    @Test
+    public void testSetDescriptionOnNonExistentGroupThrows() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        assertThrows(GroupNotFoundException.class, () -> provider.setDescription("Test Group B", "Some Description"));
+    }
 }

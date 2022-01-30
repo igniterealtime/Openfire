@@ -138,6 +138,12 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void setDescription(String name, String description) throws GroupNotFoundException {
+        try {
+            this.getGroup(name);
+        } catch (GroupNotFoundException e) {
+            throw new GroupNotFoundException("A group with this name cannot be found");
+        }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -149,7 +155,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);
-            throw new GroupNotFoundException();
+            throw new GroupNotFoundException(e); //We wrap using this, even though it probably isn't...
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -174,7 +180,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         } catch (GroupNotFoundException e) {
             //Expected, do nothing
         }
-        
+
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;

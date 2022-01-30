@@ -143,7 +143,7 @@ public class GroupManagerTest {
         private static GroupProvider mockGroupProvider;
 
         @Override
-        public Group createGroup(final String name) throws GroupAlreadyExistsException {
+        public Group createGroup(final String name) throws GroupAlreadyExistsException, GroupNameInvalidException {
             return mockGroupProvider.createGroup(name);
         }
 

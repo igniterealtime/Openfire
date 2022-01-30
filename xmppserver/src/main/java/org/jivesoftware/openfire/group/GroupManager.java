@@ -295,7 +295,7 @@ public class GroupManager {
      * @return a new Group.
      * @throws GroupAlreadyExistsException if the group name already exists in the system.
      */
-    public Group createGroup(String name) throws GroupAlreadyExistsException {
+    public Group createGroup(String name) throws GroupAlreadyExistsException, GroupNameInvalidException {
         final Lock lock = groupCache.getLock(name);
         lock.lock();
         try {

@@ -148,7 +148,7 @@ public class GroupManagerTest {
         }
 
         @Override
-        public void deleteGroup(final String name) {
+        public void deleteGroup(final String name) throws GroupNotFoundException {
             mockGroupProvider.deleteGroup(name);
         }
 

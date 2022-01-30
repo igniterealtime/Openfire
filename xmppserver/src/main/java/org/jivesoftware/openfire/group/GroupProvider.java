@@ -64,7 +64,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void deleteGroup(String name);
+    void deleteGroup(String name) throws GroupNotFoundException;
 
     /**
      * Returns a group based on it's name.

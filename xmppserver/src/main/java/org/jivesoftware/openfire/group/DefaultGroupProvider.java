@@ -192,7 +192,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     }
 
     @Override
-    public void deleteGroup(String groupName) {
+    public void deleteGroup(String groupName) throws GroupNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -213,7 +213,10 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             // Remove the group entry.
             pstmt = con.prepareStatement(DELETE_GROUP);
             pstmt.setString(1, groupName);
-            pstmt.executeUpdate();
+            int groupsDeleted = pstmt.executeUpdate();
+            if (groupsDeleted == 0){
+                throw new GroupNotFoundException("Did not find group to delete");
+            }
         }
         catch (SQLException e) {
             Log.error(e.getMessage(), e);

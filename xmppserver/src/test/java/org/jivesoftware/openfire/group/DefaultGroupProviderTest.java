@@ -970,4 +970,40 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals(1, result.size());
         assertTrue(result.contains("Test Group A"));
     }
+
+    @Test
+    public void testDeleteGroup() throws Exception{
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.createGroup("Test Group B");
+
+        provider.deleteGroup("Test Group A");
+        final Collection<String> result = provider.getGroupNames();
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group B"));
+    }
+
+    @Test
+    public void testDeleteGroupShared() throws Exception {
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
+        properties.put("sharedRoster.showInRoster", "everyone");
+        provider.createGroup("Test Group B");
+
+        provider.deleteGroup("Test Group A");
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testDeleteGroupWithNonExistentGroupThrows() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.createGroup("Test Group B");
+
+        assertThrows(GroupNotFoundException.class,() -> provider.deleteGroup("Test Group C"));
+    }
 }

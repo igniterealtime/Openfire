@@ -400,7 +400,7 @@ public class GroupManager {
      *
      * @param group the group to delete.
      */
-    public void deleteGroup(Group group) {
+    public void deleteGroup(Group group) throws GroupNotFoundException {
         // Fire event.
         GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_deleting,
                 Collections.emptyMap());

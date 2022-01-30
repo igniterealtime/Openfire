@@ -107,7 +107,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
-    public void setName(String oldName, String newName) throws GroupAlreadyExistsException {
+    public void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException {
         throw new UnsupportedOperationException("Cannot modify read-only groups");
     }
 

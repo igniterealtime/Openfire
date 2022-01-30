@@ -157,8 +157,24 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     }
 
     @Override
-    public void setName(String oldName, String newName) throws GroupAlreadyExistsException
-    {
+    public void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException {
+        if(newName.trim().isEmpty()){
+            throw new GroupNameInvalidException("Group name cannot be empty");
+        }
+
+        try {
+            this.getGroup(oldName);
+        } catch (GroupNotFoundException e) {
+            throw new GroupNotFoundException("A group with this name cannot be found");
+        }
+
+        try {
+            this.getGroup(newName);
+            throw new GroupAlreadyExistsException("A group with the same name already exists");
+        } catch (GroupNotFoundException e) {
+            //Expected, do nothing
+        }
+        
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;

@@ -186,6 +186,10 @@ public class Group implements Cacheable, Externalizable {
         }
         catch (GroupAlreadyExistsException e) {
             Log.error("Failed to change group name; group already exists");
+        } catch (GroupNameInvalidException e) {
+            Log.error("Failed to change group name; new group name is not valid");
+        } catch (GroupNotFoundException e) {
+            Log.error("Failed to change group name; the provided group name cannot be found");
         }
     }
 

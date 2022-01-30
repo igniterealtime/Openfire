@@ -879,7 +879,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A");
         final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
         properties.put("sharedRoster.showInRoster", "onlyGroup");
         properties.put("sharedRoster.groupList", "Test Group A");
@@ -904,7 +903,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A");
         final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
         properties.put("sharedRoster.showInRoster", "onlyGroup");
         properties.put("sharedRoster.groupList", "Test Group A");
@@ -929,7 +927,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A");
         final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
         properties.put("sharedRoster.showInRoster", "onlyGroup");
         properties.put("sharedRoster.groupList", "Test Group B"); // Group A is shared with users of group B!
@@ -955,7 +952,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A");
         final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
         properties.put("sharedRoster.showInRoster", "onlyGroup");
         properties.put("sharedRoster.groupList", "Test Group B"); // Group A is shared with users of group B!

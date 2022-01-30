@@ -441,8 +441,13 @@ public class Group implements Cacheable, Externalizable {
                     provider.updateMember(name, user, adminCollection);
                 }
                 else {
-                    // Add the group user to the backend store.
-                    provider.addMember(name, user, adminCollection);
+                    try {
+                        // Add the group user to the backend store.
+                        provider.addMember(name, user, adminCollection);
+                    } catch (Exception e) {
+                        Log.error("Failed to add group member", e);
+                    }
+
                 }
 
                 // Fire event.

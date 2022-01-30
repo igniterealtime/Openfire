@@ -213,7 +213,7 @@ public class GroupManagerTest {
         }
 
         @Override
-        public void addMember(final String groupName, final JID user, final boolean administrator) {
+        public void addMember(final String groupName, final JID user, final boolean administrator) throws GroupNotFoundException {
             mockGroupProvider.addMember(groupName, user, administrator);
         }
 

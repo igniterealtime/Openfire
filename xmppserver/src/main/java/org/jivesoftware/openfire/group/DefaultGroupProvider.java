@@ -346,7 +346,13 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     }
 
     @Override
-    public void addMember(String groupName, JID user, boolean administrator) {
+    public void addMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException {
+        try {
+            this.getGroup(groupName);
+        } catch (GroupNotFoundException e) {
+            throw new GroupNotFoundException("A group with this name cannot be found");
+        }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

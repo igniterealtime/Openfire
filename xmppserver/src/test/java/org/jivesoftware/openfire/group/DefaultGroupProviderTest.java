@@ -1076,4 +1076,37 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         assertThrows(GroupNotFoundException.class, () -> provider.setDescription("Test Group B", "Some Description"));
     }
+
+    @Test
+    public void testAddMember() throws Exception {
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.addMember("Test Group A", needle, false);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertTrue(result.getMembers().contains(needle));
+    }
+
+    @Test
+    public void testAddAdminMember() throws Exception {
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.addMember("Test Group A", needle, true);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertTrue(result.getAdmins().contains(needle));
+    }
+
+    @Test
+    public void testAddMemberOnNonExistentGroupThrows() throws Exception {
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        assertThrows(GroupNotFoundException.class, () -> provider.addMember("Test Group B", needle, false));
+    }
 }

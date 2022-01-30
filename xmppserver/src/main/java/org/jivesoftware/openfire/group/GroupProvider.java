@@ -177,7 +177,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void addMember(String groupName, JID user, boolean administrator);
+    void addMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException;
 
     /**
      * Updates the privileges of an entity in a group.

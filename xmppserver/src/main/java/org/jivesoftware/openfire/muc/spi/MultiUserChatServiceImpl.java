@@ -2111,7 +2111,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         synchronized (this) {
             // Cancel the existing task because the timeout has changed
             if (userTimeoutTask != null) {
-                userTimeoutTask.cancel();
+                TaskEngine.getInstance().cancelScheduledTask(userTimeoutTask);
             }
 
             // Create a new task and schedule it with the new timeout

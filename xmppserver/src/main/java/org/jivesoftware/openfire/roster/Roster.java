@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -538,7 +538,7 @@ public class Roster implements Cacheable, Externalizable {
                         getUsername());
             }
             for (Group sharedGroup : item.getSharedGroups()) {
-                String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
+                String displayName = sharedGroup.getSharedDisplayName();
                 if (displayName != null) {
                     groups.add(displayName);
                 } else {
@@ -707,7 +707,7 @@ public class Roster implements Cacheable, Externalizable {
         // Set the groups to broadcast (include personal and shared groups)
         List<String> groups = new ArrayList<>(item.getGroups());
         for (Group sharedGroup : item.getSharedGroups()) {
-            String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
+            String displayName = sharedGroup.getSharedDisplayName();
             if (displayName != null) {
                 groups.add(displayName);
             }

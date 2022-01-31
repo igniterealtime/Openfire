@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class IQSharedGroupHandler extends IQHandler {
         Element sharedGroups = result.setChildElement("sharedgroup",
                 "http://www.jivesoftware.org/protocol/sharedgroup");
         for (Group sharedGroup : groups) {
-            String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
+            String displayName = sharedGroup.getSharedDisplayName();
             if (displayName != null) {
                 sharedGroups.addElement("group").setText(displayName);
             }

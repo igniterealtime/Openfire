@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,9 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * Command that allows to update a given group.
@@ -105,16 +102,16 @@ public class UpdateGroup extends AdHocCommand {
             field.addOption("Show group in group members' rosters", "onlyGroup");
             field.addOption("Show group to members' rosters of these groups", "spefgroups");
             field.setRequired(true);
-            String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-            if (showInRoster != null) {
-                if ("onlyGroup".equals(showInRoster) &&
-                        group.getProperties().get("sharedRoster.groupList").trim().length() > 0) {
-                    // Show shared group to other groups
-                    showInRoster = "spefgroups";
+            if (group.getSharedWith() != null) {
+                final String showInRoster;
+                switch (group.getSharedWith()) {
+                    case nobody: showInRoster = "nobody"; break;
+                    case everybody: showInRoster = "everybody"; break;
+                    case usersOfGroups: showInRoster = group.getSharedWithUsersInGroupNames().isEmpty() ? "onlyGroup" : "spefgroups"; break;
+                    default: showInRoster = group.getSharedWith().toString(); break;
                 }
                 field.addValue(showInRoster);
             }
-
 
             field = form.addField();
             field.setType(FormField.Type.list_multi);
@@ -122,24 +119,16 @@ public class UpdateGroup extends AdHocCommand {
             for (Group otherGroup : GroupManager.getInstance().getGroups()) {
                 field.addOption(otherGroup.getName(), otherGroup.getName());
             }
-            String groupList = group.getProperties().get("sharedRoster.groupList");
-            if (groupList != null) {
-                Collection<String> groups = new ArrayList<>();
-                StringTokenizer tokenizer = new StringTokenizer(groupList,",\t\n\r\f");
-                while (tokenizer.hasMoreTokens()) {
-                    String tok = tokenizer.nextToken().trim();
-                    groups.add(tok.trim());
-                }
-                for (String othergroup : groups) {
-                    field.addValue(othergroup);
-                }
+            final List<String> groupList = group.getSharedWithUsersInGroupNames();
+            for (final String othergroup : groupList) {
+                field.addValue(othergroup);
             }
 
             field = form.addField();
             field.setType(FormField.Type.text_single);
             field.setLabel("Group Display Name");
             field.setVariable("displayName");
-            String displayName = group.getProperties().get("sharedRoster.displayName");
+            String displayName = group.getSharedDisplayName();
             if (displayName != null) {
                 field.addValue(displayName);
             }
@@ -169,33 +158,37 @@ public class UpdateGroup extends AdHocCommand {
         }
 
         String showInRoster = data.getData().get("showInRoster").get(0);
-        if ("nobody".equals(showInRoster)) {
-            // New group is not a shared group
-            group.getProperties().put("sharedRoster.showInRoster", "nobody");
-            group.getProperties().put("sharedRoster.displayName", " ");
-            group.getProperties().put("sharedRoster.groupList", " ");
+        String displayName;
+        if (data.getData().get("displayName") != null && !data.getData().get("displayName").isEmpty()) {
+            displayName = data.getData().get("displayName").get(0);
+        } else {
+            displayName = group.getSharedDisplayName();
         }
-        else {
-            // New group is configured as a shared group
-            if ("spefgroups".equals(showInRoster)) {
-                // Show shared group to other groups
-                showInRoster = "onlyGroup";
-            }
-            List<String> displayName = data.getData().get("displayName");
-            List<String> groupList = data.getData().get("groupList");
-            if (displayName != null) {
-                group.getProperties().put("sharedRoster.showInRoster", showInRoster);
-                group.getProperties().put("sharedRoster.displayName", displayName.get(0));
-                if (groupList != null) {
-                    StringBuilder buf = new StringBuilder();
-                    String sep = "";
-                    for (String groupName : groupList) {
-                        buf.append(sep).append(groupName);
-                        sep = ",";
-                    }
-                    group.getProperties().put("sharedRoster.groupList", buf.toString());
+        List<String> groupList = data.getData().get("groupList");
+
+        switch (showInRoster) {
+            case "nobody":
+                // New group is not a shared group
+                group.shareWithNobody();
+                break;
+
+            case "everybody":
+                if (displayName != null ) {
+                    group.shareWithEverybody(displayName);
                 }
-            }
+                break;
+
+            case "spefgroups":
+                if (displayName != null ) {
+                    group.shareWithUsersInGroups(groupList, displayName);
+                }
+                break;
+
+            case "onlyGroup":
+                if (displayName != null ) {
+                    group.shareWithUsersInSameGroup(displayName);
+                }
+                break;
         }
 
         note.addAttribute("type", "info");

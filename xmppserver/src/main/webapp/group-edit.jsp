@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 <%@ page import="java.util.*" %>
 <%@ page import="java.util.function.Predicate" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.openfire.group.SharedGroupVisibility" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -156,21 +157,20 @@
             {
                 if ( !"spefgroups".equals( showGroup ) )
                 {
-                    // not spefgroups? Either 'everybody' or 'onlyGroups' - in any case, no 'groupList' should be empty.
+                    // not spefgroups? Either 'everybody' or 'onlyGroup' - in any case, no 'groupList' should be empty.
                     groupNames = new ArrayList<>();
                 }
 
-                // The stored value for 'showInRoster' is either 'onlyGroups' or 'everybody', when sharing is enabled
-                // 'spefgroups' isn't actually saved. That's represented by 'onlyGroups' combined with a 'groupList'.
-                if ( !"everybody".equals( showGroup ) )
-                {
+                if ("everybody".equals(showGroup)) {
+                    group.shareWithEverybody(groupDisplayName.trim());
+                } else if ("spefgroups".equals(showGroup)) {
+                    // The stored value for 'showInRoster' is either 'onlyGroup' or 'everybody', when sharing is enabled
+                    // 'spefgroups' isn't actually saved. That's represented by 'onlyGroup' combined with a 'groupList'.
+                    group.shareWithUsersInGroups(toList( groupNames.toArray( new String[]{} ) ), groupDisplayName.trim());
                     showGroup = "onlyGroup";
+                } else {
+                    group.shareWithUsersInSameGroup(groupDisplayName.trim());
                 }
-
-                // update
-                group.getProperties().put( "sharedRoster.showInRoster", showGroup );
-                group.getProperties().put( "sharedRoster.displayName", groupDisplayName.trim() );
-                group.getProperties().put( "sharedRoster.groupList", toList( groupNames.toArray( new String[]{} ) ) );
 
                 if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
                     // Log the event
@@ -179,9 +179,7 @@
             }
             else
             {
-                group.getProperties().put("sharedRoster.showInRoster", "nobody");
-                group.getProperties().put("sharedRoster.displayName", "");
-                group.getProperties().put("sharedRoster.groupList", "");
+                group.shareWithNobody();
 
                 if (!SecurityAuditManager.getSecurityAuditProvider().blockGroupEvents()) {
                     // Log the event
@@ -315,21 +313,9 @@
             "true".equals(request.getParameter("updatesuccess")) ||
             "true".equals(request.getParameter("creategroupsuccess"));
 
-    showGroup = group.getProperties().get( "sharedRoster.showInRoster" );
-    if ( "onlyGroup".equals( showGroup ) )
-    {
-        String glist = group.getProperties().get( "sharedRoster.groupList" );
-        List<String> l = new ArrayList<>();
-        if ( glist != null )
-        {
-            StringTokenizer tokenizer = new StringTokenizer( glist, ",\t\n\r\f" );
-            while ( tokenizer.hasMoreTokens() )
-            {
-                String tok = tokenizer.nextToken().trim();
-                l.add( tok.trim() );
-            }
-        }
-        groupNames = l;
+    SharedGroupVisibility visibility = group.getSharedWith();
+    if ( SharedGroupVisibility.usersOfGroups == visibility ) {
+        groupNames = group.getSharedWithUsersInGroupNames();
     }
 
     pageContext.setAttribute( "success", success );
@@ -510,7 +496,7 @@
                         <table cellpadding="2" cellspacing="0" border="0" width="100%">
                             <tr>
                                 <td width="1%" nowrap>
-                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.properties["sharedRoster.showInRoster"] eq "nobody" ) or ( group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and empty groupNames ) ? "checked" : "" }>
+                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.sharedWith eq "nobody" ) or ( group.sharedWith eq "usersOfGroups" and empty groupNames ) ? "checked" : "" }>
                                 </td>
                                 <td width="99%">
                                     <label for="rb001"><fmt:message key="group.edit.share_group_only" /></label>
@@ -518,7 +504,7 @@
                             </tr>
                             <tr>
                                 <td width="1%" nowrap>
-                                    <input type="radio" name="showGroup" value="everybody" id="rb002" ${group.properties["sharedRoster.showInRoster"] eq "everybody" ? "checked" : ""}>
+                                    <input type="radio" name="showGroup" value="everybody" id="rb002" ${group.sharedWith eq "everybody" ? "checked" : ""}>
                                 </td>
                                 <td width="99%">
                                     <label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
@@ -526,7 +512,7 @@
                             </tr>
                             <tr>
                                 <td width="1%" nowrap>
-                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.properties["sharedRoster.showInRoster"] eq "onlyGroup" and not empty groupNames ? "checked" : ""}>
+                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.sharedWith eq "usersOfGroups" and not empty groupNames ? "checked" : ""}>
                                 </td>
                                 <td width="99%">
                                     <label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
@@ -781,12 +767,11 @@
 
 
 <%!
-    private static String toList( String[] array ) {
+    private static List<String> toList( String[] array ) {
+        List<String> result = new ArrayList<>();
         if (array == null || array.length == 0) {
-            return "";
+            return result;
         }
-        StringBuffer buf = new StringBuffer();
-        String sep = "";
         for (String anArray : array) {
             String item;
             try {
@@ -795,9 +780,8 @@
             catch (UnsupportedEncodingException e) {
                 item = anArray;
             }
-            buf.append(sep).append(item);
-            sep = ",";
+            result.add(item);
         }
-        return buf.toString();
+        return result;
     }
 %>

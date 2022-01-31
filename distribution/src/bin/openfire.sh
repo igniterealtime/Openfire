@@ -116,9 +116,15 @@ for arguments in "$@"
 do
 case $arguments in
     -debug)
+    echo "Starting debug mode"
     JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
     ;;
+    -remotedebug)
+    echo "Starting remote debug mode"
+    JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    ;;
     -demoboot)
+    echo "Starting demoboot"
     cp $OPENFIRE_HOME/conf/openfire-demoboot.xml $OPENFIRE_HOME/conf/openfire.xml
     ;;
     -devboot)

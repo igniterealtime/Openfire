@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,36 +143,42 @@ public class AddGroup extends AdHocCommand {
         }
 
         String showInRoster = data.getData().get("showInRoster").get(0);
-        if ("nobody".equals(showInRoster)) {
-            // New group is not a shared group
-            group.getProperties().put("sharedRoster.showInRoster", "nobody");
-            group.getProperties().put("sharedRoster.displayName", " ");
-            group.getProperties().put("sharedRoster.groupList", " ");
-        }
-        else {
-            // New group is configured as a shared group
-            if ("spefgroups".equals(showInRoster)) {
-                // Show shared group to other groups
-                showInRoster = "onlyGroup";
-            }
-            List<String> displayName = data.getData().get("displayName");
-            List<String> groupList = data.getData().get("groupList");
-            if (displayName != null) {
-                group.getProperties().put("sharedRoster.showInRoster", showInRoster);
-                group.getProperties().put("sharedRoster.displayName", displayName.get(0));
-                if (groupList != null) {
-                    StringBuilder buf = new StringBuilder();
-                    String sep = "";
-                    for (String groupName : groupList) {
-                        buf.append(sep).append(groupName);
-                        sep = ",";
-                    }
-                    group.getProperties().put("sharedRoster.groupList", buf.toString());
+        List<String> displayName = data.getData().get("displayName");
+        List<String> groupList = data.getData().get("groupList");
+
+        // New group is configured as a shared group
+        switch (showInRoster) {
+            case "nobody":
+                // New group is not a shared group
+                group.shareWithNobody();
+                break;
+
+            case "everybody":
+                if (displayName == null) {
+                    withErrors = true;
+                } else {
+                    group.shareWithEverybody(displayName.get(0));
                 }
-            }
-            else {
+                break;
+
+            case "spefgroups":
+                if (displayName == null) {
+                    withErrors = true;
+                } else {
+                    group.shareWithUsersInGroups(groupList, displayName.get(0));
+                }
+                break;
+
+            case "onlyGroup":
+                if (displayName == null) {
+                    withErrors = true;
+                } else {
+                    group.shareWithUsersInSameGroup(displayName.get(0));
+                }
+                break;
+
+            default:
                 withErrors = true;
-            }
         }
 
         note.addAttribute("type", "info");

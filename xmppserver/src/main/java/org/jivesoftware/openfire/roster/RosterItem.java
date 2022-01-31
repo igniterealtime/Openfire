@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
@@ -30,7 +29,6 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
 
-import javax.xml.bind.Element;
 import java.io.*;
 import java.util.*;
 
@@ -434,7 +432,7 @@ public class RosterItem implements Cacheable, Externalizable {
             // Raise an error if the user is trying to remove the item from a shared group
             for (Group group: getSharedGroups()) {
                 // Get the display name of the group
-                String groupName = group.getProperties().get("sharedRoster.displayName");
+                String groupName = group.getSharedDisplayName();
                 // Check if the group has been removed from the new groups list
                 if (!groups.contains(groupName)) {
                     throw new SharedGroupException("Cannot remove item from shared group");

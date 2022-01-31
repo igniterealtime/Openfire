@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,17 +124,20 @@ public class GetListGroups extends AdHocCommand {
             fields.put("desc", group.getDescription());
             fields.put("count", group.getMembers().size() + group.getAdmins().size());
             fields.put("shared", isSharedGroup);
-            fields.put("display",
-                    (isSharedGroup ? properties.get("sharedRoster.displayName") : ""));
-            String showInRoster =
-                    (isSharedGroup ? properties.get("sharedRoster.showInRoster") : "");
-            if ("onlyGroup".equals(showInRoster) &&
-                    properties.get("sharedRoster.groupList").trim().length() > 0) {
-                // Show shared group to other groups
-                showInRoster = "spefgroups";
+            fields.put("display", (isSharedGroup ? group.getSharedDisplayName() : ""));
+            final String showInRoster;
+            if (!isSharedGroup || group.getSharedWith() == null) {
+                showInRoster = "";
+            } else {
+                switch (group.getSharedWith()) {
+                    case nobody: showInRoster = "nobody"; break;
+                    case everybody: showInRoster = "everybody"; break;
+                    case usersOfGroups: showInRoster = group.getSharedWithUsersInGroupNames().isEmpty() ? "onlyGroup" : "spefgroups"; break;
+                    default: showInRoster = group.getSharedWith().toString(); break;
+                }
             }
             fields.put("visibility", showInRoster);
-            fields.put("groups", (isSharedGroup ? properties.get("sharedRoster.groupList") : ""));
+            fields.put("groups", (isSharedGroup ? String.join(",", group.getSharedWithUsersInGroupNames()) : ""));
             form.addItemFields(fields);
         }
         command.add(form.getElement());

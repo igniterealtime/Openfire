@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.jivesoftware.openfire.XMPPServer;
@@ -40,6 +33,9 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Groups organize users into a single entity for easier management.<p>
@@ -253,6 +249,119 @@ public class Group implements Cacheable, Externalizable {
         }
         // Return a wrapper that will intercept add and remove commands.
         return properties;
+    }
+
+    /**
+     * Disable contact list group sharing for this group.
+     */
+    public void shareWithNobody() {
+        final PersistableMap<String, String> properties = getProperties();
+        properties.put("sharedRoster.showInRoster", "nobody");
+        properties.put("sharedRoster.displayName", "");
+        properties.put("sharedRoster.groupList", "");
+    }
+
+    /**
+     * Enable contact list group sharing for this group. The group is shared on the contact list of all users defined in
+     * Openfire: every user in this group is added to the contact list of every user in Openfire, grouped by the
+     * provided display name.
+     *
+     * @param displayName The name of the group that as shown in the contact lists of users.
+     */
+    public void shareWithEverybody(@Nonnull final String displayName) {
+        final PersistableMap<String, String> properties = getProperties();
+        properties.put("sharedRoster.showInRoster", "everybody");
+        properties.put("sharedRoster.displayName", displayName);
+        properties.remove("sharedRoster.groupList");
+    }
+
+    /**
+     * Enable contact list group sharing for this group. The group is shared on the contact list of all users in the
+     * same group: every user in this group is added to the contact list of every other user in the group, grouped by
+     * the provided display name.
+     *
+     * @param displayName The name of the group that as shown in the contact lists of users.
+     */
+    public void shareWithUsersInSameGroup(@Nonnull final String displayName) {
+        final PersistableMap<String, String> properties = getProperties();
+        properties.put("sharedRoster.showInRoster", "onlyGroup");
+        properties.put("sharedRoster.displayName", displayName);
+        properties.put("sharedRoster.groupList", " ");
+    }
+
+    /**
+     * Enable contact list group sharing for this group. The group is shared on the contact list of all users in each of
+     * the provided group: every user in this group is added to the contact list of every user in each of the provided
+     * other groups, grouped by the provided display name.
+     *
+     * @param groupNames Name of groups for which all users should
+     * @param displayName The name of the group that as shown in the contact lists of users.
+     */
+    public void shareWithUsersInGroups(@Nonnull final List<String> groupNames, @Nonnull final String displayName) {
+        final PersistableMap<String, String> properties = getProperties();
+        properties.put("sharedRoster.showInRoster", "onlyGroup");
+        properties.put("sharedRoster.displayName", displayName);
+        properties.put("sharedRoster.groupList", String.join(",", groupNames));
+    }
+
+    /**
+     * When contact list group sharing has been enabled, the users in his group will be added to the contact list of
+     * every entity that the group is shared with. On their contact lists, the users from this group will be added
+     * to a group by a name that is equal to the return value of this method.
+     *
+     * This method may return a null value when contact list sharing has not yet been configured, or an empty string
+     * when it has explicitly been configured to be disabled ("share with nobody").
+     *
+     * @return A name to be used for a contact list group when sharing is enabled.
+     */
+    @Nullable
+    public String getSharedDisplayName() {
+        return getProperties().get("sharedRoster.displayName");
+    }
+
+    /**
+     * Defines to which entities this group is shared, using the contact list group sharing. This method can return
+     * 'nobody', which differs from a 'null' value, which is returned when contact list sharing has not yet been
+     * configured.
+     *
+     * When 'usersOfGroups' is returned, {@link #getSharedWithUsersInGroupNames()} should be used to determine which to
+     * which groups this group is shared.
+     *
+     * @return To which users this group is shared with.
+     */
+    @Nullable
+    public SharedGroupVisibility getSharedWith() {
+        final String value = getProperties().get("sharedRoster.showInRoster");
+        if (value == null) {
+            return null;
+        }
+        switch (value) {
+            case "nobody": return SharedGroupVisibility.nobody;
+            case "everybody": return SharedGroupVisibility.everybody;
+            case "onlyGroup": return SharedGroupVisibility.usersOfGroups;
+            default: return SharedGroupVisibility.nobody;
+        }
+    }
+
+    /**
+     * Defines the groups of users with which this group is shared if contact list group sharing is enabled and this
+     * group is shared with (other) groups (as defined by {@link #getSharedWith()}.
+     *
+     * When an empty collection is returned, then this group is shared with users of itself.
+     *
+     * @return A collection of group names, possibly empty.
+     */
+    @Nonnull
+    public List<String> getSharedWithUsersInGroupNames() {
+        final List<String> result = new ArrayList<>();
+        final String value = properties.get("sharedRoster.groupList");
+        if (value != null) {
+            final StringTokenizer tokenizer = new StringTokenizer(value, ",\t\n\r\f");
+            while (tokenizer.hasMoreTokens()) {
+                result.add(tokenizer.nextToken().trim());
+            }
+        }
+        return result;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software. 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import javax.annotation.Nonnull;
 
 /**
  * Manages groups.
@@ -103,12 +105,10 @@ public class GroupManager {
             @Override
             public void groupCreated(Group group, Map params) {
 
-                // Adds default properties if they don't exists, since the creator of
+                // Adds default properties if they don't exist, since the creator of
                 // the group could set them.
-                if (group.getProperties().get("sharedRoster.showInRoster") == null) {
-                    group.getProperties().put("sharedRoster.showInRoster", "nobody");
-                    group.getProperties().put("sharedRoster.displayName", "");
-                    group.getProperties().put("sharedRoster.groupList", "");
+                if (group.getSharedWith() == null) {
+                    group.shareWithNobody();
                 }
                 
                 // Since the group could be created by the provider, add it possible again
@@ -755,10 +755,7 @@ public class GroupManager {
         });
 
         // If any of the groups is shared with everybody, evict all cached groups.
-        if ( groups.stream().anyMatch( g -> {
-            final String showInRoster = g.getProperties().get("sharedRoster.showInRoster");
-            return "everybody".equalsIgnoreCase( showInRoster );
-        } )) {
+        if ( groups.stream().anyMatch( g -> g.getSharedWith() == SharedGroupVisibility.everybody)) {
             evictCachedUserSharedGroups();
         }
     }
@@ -766,7 +763,7 @@ public class GroupManager {
     /**
      * Find the unique set of groups with which the provided group is shared,
      * directly or indirectly. An indirect share is defined as a scenario where
-     * the group is shared by a group that's shared with another group).
+     * the group is shared by a group that's shared with another group.
      *
      * This method is designed to allow for cyclic group sharing dependencies.
      *
@@ -777,16 +774,10 @@ public class GroupManager {
      * @return A set of groups with which all members of 'group' are shared with (never null, will at least contain 'group').
      */
     private Set<Group> getSharedGroups( final Group group, final Map<String, Group> result ) {
-        result.put( group.getName(), group );
+        result.put( group.getName(), group ); // FIXME this implies that a group cannot be shared with other groups, instead of itself. That probably is incorrect.
 
-        final String showInRoster = group.getProperties().get("sharedRoster.showInRoster");
-        if ( "onlygroup".equalsIgnoreCase(showInRoster) )
-        {
-            final Set<String> groupNames = new HashSet<>();
-            final String groupList = group.getProperties().get("sharedRoster.groupList");
-            if ( groupList != null ) {
-                groupNames.addAll( splitGroupList( groupList ) );
-            }
+        if (group.getSharedWith() == SharedGroupVisibility.usersOfGroups) {
+            final Set<String> groupNames = new HashSet<>(group.getSharedWithUsersInGroupNames());
 
             for ( String groupName : groupNames )
             {

@@ -65,4 +65,15 @@ public class XMLPropertiesTest {
         XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
         assertEquals("foo&bar", props.getProperty("foo"));
     }
+
+    @Test
+    public void testGetPropertiesByName() throws Exception {
+        String xml = "<root><foo><bar><prop>some value</prop><prop>other value</prop><prop>last value</prop></bar></foo></root>";
+        XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
+        String[] result = props.getProperties("foo.bar.prop");
+        assertEquals(3, result.length);
+        assertEquals("some value", result[0]);
+        assertEquals("other value", result[1]);
+        assertEquals("last value", result[2]);
+    }
 }

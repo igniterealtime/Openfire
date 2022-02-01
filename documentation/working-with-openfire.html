@@ -37,7 +37,7 @@
                     <h4>Running an Openfire container image</h4>
                     <p>There are quite a lot of ports involved, or there can be, depending on what you're doing. This list includes pretty much everything. Some of them may conflict with things already running, in which case you'll either need remap, or switch port and reconfigure Openfire accordingly</p>
                     <p class="code">
-                        docker run --rm -it -p 3478:3478/tcp -p 3479:3479/tcp -p 5222:5222/tcp -p 5223:5223/tcp -p 5229:5229/tcp -p 5262:5262/tcp -p 5263:5263/tcp -p 5275:5275/tcp -p 5276:5276/tcp -p 7070:7070/tcp -p 7443:7443/tcp -p 7777:7777/tcp -p 9090:9090/tcp -p 9091:9091/tcp openfire:mything
+                        docker run --rm -it -p 3478:3478/tcp -p 3479:3479/tcp -p 5222:5222/tcp -p 5223:5223/tcp -p 5229:5229/tcp -p 5262:5262/tcp -p 5263:5263/tcp -p 5275:5275/tcp -p 5276:5276/tcp -p 7070:7070/tcp -p 7443:7443/tcp -p 7777:7777/tcp -p 9090:9090/tcp -p 9091:9091/tcp -p 5005:5005/tcp openfire:mything
                     </p>
         
                     <p>In fact, I've used this so often, I have it as a Bash alias</p>
@@ -48,15 +48,20 @@ function ofdocker(){
     DOCKERCMD="${DOCKERCMD} -p 3478:3478/tcp -p 3479:3479/tcp -p 5222:5222/tcp -p 5223:5223/tcp"
     DOCKERCMD="${DOCKERCMD} -p 5229:5229/tcp -p 5262:5262/tcp -p 5263:5263/tcp -p 5275:5275/tcp"
     DOCKERCMD="${DOCKERCMD} -p 5276:5276/tcp -p 7070:7070/tcp -p 7443:7443/tcp -p 7777:7777/tcp"
-    DOCKERCMD="${DOCKERCMD} -p 9090:9090/tcp -p 9091:9091/tcp"
+    DOCKERCMD="${DOCKERCMD} -p 9090:9090/tcp -p 9091:9091/tcp -p 5005:5005/tcp"
     DOCKERCMD="${DOCKERCMD} openfire:$1 $2"
     
     ${DOCKERCMD}
-}
-                    </pre>
+}</pre>
                     <p>The 2nd parameter is passed as CMD params through to Openfire's launch script, so you can do:</p>
                     <p class="code">
                         ofdocker mything -demoboot
+                    </p>
+
+                    <h4>Debugging an Openfire container</h4>
+                    <p>Running a Java process in a docker container makes it a bit harder to perform debugging. Openfire's launch script has an argument ("remotedebug") that can be used to enable debugging over the network, using TCP port 5005. Make sure that this port is mapped!</p>
+                    <p class="code">
+                        ofdocker mything -remotedebug
                     </p>
                 </div>
                 

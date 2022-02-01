@@ -493,13 +493,18 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> getSharedGroups() {
-        HashSet<String> groupNames = getSharedGroupsFromCache();
-        if (groupNames == null) {
-            synchronized(SHARED_GROUPS_LOCK) {
-                groupNames = getSharedGroupsFromCache();
-                if (groupNames == null) {
-                    groupNames = new HashSet<>(provider.getSharedGroupNames());
-                    saveSharedGroupsInCache(groupNames);
+        HashSet<String> groupNames;
+        if (!provider.isSharingSupported()) {
+            groupNames = new HashSet<>();
+        } else {
+            groupNames = getSharedGroupsFromCache();
+            if (groupNames == null) {
+                synchronized (SHARED_GROUPS_LOCK) {
+                    groupNames = getSharedGroupsFromCache();
+                    if (groupNames == null) {
+                        groupNames = new HashSet<>(provider.getSharedGroupNames());
+                        saveSharedGroupsInCache(groupNames);
+                    }
                 }
             }
         }
@@ -513,15 +518,20 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups for the given userName.
      */
     public Collection<Group> getSharedGroups(String userName) {
-        HashSet<String> groupNames = getSharedGroupsForUserFromCache(userName);
-        if (groupNames == null) {
-            synchronized (userBasedMutex.intern(XMPPServer.getInstance().createJID(userName, null))) {
-                groupNames = getSharedGroupsForUserFromCache(userName);
-                if (groupNames == null) {
-                    // assume this is a local user
-                    groupNames = new HashSet<>(provider.getSharedGroupNames(new JID(userName,
-                            XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null)));
-                    saveSharedGroupsForUserInCache(userName, groupNames);
+        HashSet<String> groupNames;
+        if (!provider.isSharingSupported()) {
+            groupNames = new HashSet<>();
+        } else {
+            groupNames = getSharedGroupsForUserFromCache(userName);
+            if (groupNames == null) {
+                synchronized (userBasedMutex.intern(XMPPServer.getInstance().createJID(userName, null))) {
+                    groupNames = getSharedGroupsForUserFromCache(userName);
+                    if (groupNames == null) {
+                        // assume this is a local user
+                        groupNames = new HashSet<>(provider.getSharedGroupNames(new JID(userName,
+                                XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null)));
+                        saveSharedGroupsForUserInCache(userName, groupNames);
+                    }
                 }
             }
         }
@@ -535,19 +545,24 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups for the given userName.
      */
     public Collection<Group> getVisibleGroups(Group groupToCheck) {
-        // Get all the public shared groups.
-        HashSet<String> groupNames = getPublicGroupsFromCache();
-        if (groupNames == null) {
-            synchronized(PUBLIC_GROUPS_LOCK) {
-                groupNames = getPublicGroupsFromCache();
-                if (groupNames == null) {
-                    groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
-                    savePublicGroupsInCache(groupNames);
+        HashSet<String> groupNames;
+        if (!provider.isSharingSupported()) {
+            groupNames = new HashSet<>();
+        } else {
+            // Get all the public shared groups.
+            groupNames = getPublicGroupsFromCache();
+            if (groupNames == null) {
+                synchronized (PUBLIC_GROUPS_LOCK) {
+                    groupNames = getPublicGroupsFromCache();
+                    if (groupNames == null) {
+                        groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
+                        savePublicGroupsInCache(groupNames);
+                    }
                 }
             }
+            // Now get all visible groups to the given group.
+            groupNames.addAll(provider.getVisibleGroupNames(groupToCheck.getName()));
         }
-        // Now get all visible groups to the given group.
-        groupNames.addAll(provider.getVisibleGroupNames(groupToCheck.getName()));
         return new GroupCollection(groupNames);
     }
     
@@ -557,13 +572,18 @@ public class GroupManager {
      * @return an unmodifiable Collection of all shared groups.
      */
     public Collection<Group> getPublicSharedGroups() {
-        HashSet<String> groupNames = getPublicGroupsFromCache();
-        if (groupNames == null) {
-            synchronized(PUBLIC_GROUPS_LOCK) {
-                groupNames = getPublicGroupsFromCache();
-                if (groupNames == null) {
-                    groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
-                    savePublicGroupsInCache(groupNames);
+        HashSet<String> groupNames;
+        if (!provider.isSharingSupported()) {
+            groupNames = new HashSet<>();
+        } else {
+            groupNames = getPublicGroupsFromCache();
+            if (groupNames == null) {
+                synchronized (PUBLIC_GROUPS_LOCK) {
+                    groupNames = getPublicGroupsFromCache();
+                    if (groupNames == null) {
+                        groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
+                        savePublicGroupsInCache(groupNames);
+                    }
                 }
             }
         }
@@ -576,7 +596,7 @@ public class GroupManager {
      *
      * @param propName the property name to search for
      * @param propValue the property value to search for
-     * @return an unmodifiable Collection of all shared groups.
+     * @return an unmodifiable Collection of all matching groups.
      */
     public Collection<Group> search(String propName, String propValue) {
         Collection<String> groupsWithProps = provider.search(propName, propValue);
@@ -769,29 +789,31 @@ public class GroupManager {
      *
      * The returned set will include the original group itself.
      *
-     * @param group The group for which to return all groups that its shared with (cannot be null).
+     * @param group The group for which to return all groups that it is shared with (cannot be null).
      * @param result An intermediate result, used in recursive calls. Cannot be null. Use an empty group when invoking this.
      * @return A set of groups with which all members of 'group' are shared with (never null, will at least contain 'group').
      */
     private Set<Group> getSharedGroups( final Group group, final Map<String, Group> result ) {
-        result.put( group.getName(), group ); // FIXME this implies that a group cannot be shared with other groups, instead of itself. That probably is incorrect.
+        if (provider.isSharingSupported()) {
+            result.put( group.getName(), group ); // FIXME this implies that a group cannot be shared with other groups, instead of itself. That probably is incorrect.
 
-        if (group.getSharedWith() == SharedGroupVisibility.usersOfGroups) {
-            final Set<String> groupNames = new HashSet<>(group.getSharedWithUsersInGroupNames());
+            if (group.getSharedWith() == SharedGroupVisibility.usersOfGroups) {
+                final Set<String> groupNames = new HashSet<>(group.getSharedWithUsersInGroupNames());
 
-            for ( String groupName : groupNames )
-            {
-                // When this group is shared with groups that we haven't visited yet, recurse.
-                if ( !result.containsKey(groupName) )
+                for ( String groupName : groupNames )
                 {
-                    try
+                    // When this group is shared with groups that we haven't visited yet, recurse.
+                    if ( !result.containsKey(groupName) )
                     {
-                        final Group nested = getGroup(groupName);
-                        getSharedGroups(nested, result);
-                    }
-                    catch ( GroupNotFoundException e )
-                    {
-                        Log.debug("While iterating over subgroups of group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), groupName, e);
+                        try
+                        {
+                            final Group nested = getGroup(groupName);
+                            getSharedGroups(nested, result);
+                        }
+                        catch ( GroupNotFoundException e )
+                        {
+                            Log.debug("While iterating over subgroups of group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), groupName, e);
+                        }
                     }
                 }
             }

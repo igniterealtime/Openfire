@@ -286,7 +286,7 @@ public class Group implements Cacheable, Externalizable {
         final PersistableMap<String, String> properties = getProperties();
         properties.put("sharedRoster.showInRoster", "onlyGroup");
         properties.put("sharedRoster.displayName", displayName);
-        properties.put("sharedRoster.groupList", " ");
+        properties.put("sharedRoster.groupList", "");
     }
 
     /**
@@ -345,22 +345,18 @@ public class Group implements Cacheable, Externalizable {
 
     /**
      * Defines the groups of users with which this group is shared if contact list group sharing is enabled and this
-     * group is shared with (other) groups (as defined by {@link #getSharedWith()}.
-     *
-     * When an empty collection is returned, then this group is shared with users of itself.
+     * group is shared with (other) groups (as defined by {@link #getSharedWith()}).
      *
      * @return A collection of group names, possibly empty.
      */
     @Nonnull
     public List<String> getSharedWithUsersInGroupNames() {
         final List<String> result = new ArrayList<>();
-        final String value = properties.get("sharedRoster.groupList");
-        if (value != null) {
-            final StringTokenizer tokenizer = new StringTokenizer(value, ",\t\n\r\f");
-            while (tokenizer.hasMoreTokens()) {
-                result.add(tokenizer.nextToken().trim());
-            }
+        if (getSharedWith() != SharedGroupVisibility.usersOfGroups) {
+            return result;
         }
+
+        result.addAll(provider.getVisibleGroupNames(this.name));
         return result;
     }
 

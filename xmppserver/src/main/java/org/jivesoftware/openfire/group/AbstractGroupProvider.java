@@ -20,12 +20,15 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.util.CacheableOptional;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jivesoftware.util.PersistableMap;
 import org.xmpp.packet.JID;
+
+import javax.annotation.Nonnull;
 
 /**
  * Shared base class for Openfire GroupProvider implementations. By default
@@ -43,8 +46,8 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
     private static final String GROUPLIST_CONTAINERS =
             "SELECT groupName from ofGroupProp " +
-            "where name='sharedRoster.groupList' " +
-            "AND propValue LIKE ?";
+            "WHERE name='sharedRoster.groupList' " +
+            "AND (propValue LIKE ? OR (groupName = ? AND (propValue IS NULL OR LTRIM(propValue) = '') ))"; // using Ltrim instead of trim, as the latter wasn't supported in SQL Server prior to 2017.
     private static final String PUBLIC_GROUPS_SQL =
             "SELECT groupName from ofGroupProp " +
             "WHERE name='sharedRoster.showInRoster' " +
@@ -59,14 +62,19 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     private static final String LOAD_PROPERTIES =
             "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
 
-    private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
-
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
     private static final String PUBLIC_GROUPS = "PUBLIC_GROUPS";
     private static final String USER_SHARED_GROUPS_KEY = "USER_SHARED_GROUPS";
     private static final String GROUP_SHARED_GROUPS_KEY = "GROUP_SHARED_GROUPS";
 
-    private final Cache<String, Serializable> sharedGroupMetaCache = CacheFactory.createLocalCache("Group (Shared) Metadata Cache");
+    private final static Cache<String, Serializable> sharedGroupMetaCache = CacheFactory.createLocalCache("Group (Shared) Metadata Cache");
+
+    public static final SystemProperty<Boolean> SHARED_GROUP_RECURSIVE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("abstractGroupProvider.shared.recursive")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .addListener(enabled -> sharedGroupMetaCache.clear() )
+        .build();
 
     protected AbstractGroupProvider() {
 
@@ -287,29 +295,48 @@ public abstract class AbstractGroupProvider implements GroupProvider {
                 return groupNames;
             }
 
-            groupNames = new HashSet<>();
-            Connection con = null;
-            PreparedStatement pstmt = null;
-            ResultSet rs = null;
-            try {
-                con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(GROUPLIST_CONTAINERS);
-                pstmt.setString(1, "%" + userGroup + "%");
-                rs = pstmt.executeQuery();
-                while (rs.next()) {
-                    groupNames.add(rs.getString(1));
-                }
-
-                saveSharedGroupsForGroupInCache(userGroup, groupNames);
-            } catch (SQLException sqle) {
-                Log.error(sqle.getMessage(), sqle);
-            } finally {
-                DbConnectionManager.closeConnection(rs, pstmt, con);
-            }
+            groupNames = getVisibleGroupNames(userGroup, new HashSet<>());
+            saveSharedGroupsForGroupInCache(userGroup, groupNames);
         }
         return groupNames;
     }
-    
+
+    @Nonnull
+    private HashSet<String> getVisibleGroupNames(@Nonnull final String userGroup, @Nonnull final Set<String> visited) {
+        HashSet<String> results = new HashSet<>();
+
+        // Ensure that recursive calls won't cause duplicate (or cyclic) queries.
+        if (!visited.add(userGroup)) {
+            return results;
+        }
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GROUPLIST_CONTAINERS);
+            pstmt.setString(1, "%" + userGroup + "%");
+            pstmt.setString(2, userGroup);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                results.add(rs.getString(1));
+            }
+
+        } catch (SQLException sqle) {
+            Log.error(sqle.getMessage(), sqle);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+
+        if (SHARED_GROUP_RECURSIVE.getValue()) {
+            for (final String result : results) {
+                results.addAll(getVisibleGroupNames(result, visited));
+            }
+        }
+        return results;
+    }
+
     @Override
     public Collection<String> search(String key, String value) {
         Set<String> groupNames = new HashSet<>();

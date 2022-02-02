@@ -715,7 +715,7 @@ public class GroupManager {
     private void evictCachedUsersForGroup(Group group)
     {
         // Get all nested groups, removing any cyclic dependency.
-        final Set<Group> groups = getSharedGroups( group, new HashMap<>() );
+        final Set<Group> groups = getSharedGroups( group );
 
         // Evict cached information for affected users.
         groups.forEach( g -> {
@@ -734,41 +734,30 @@ public class GroupManager {
      * directly or indirectly. An indirect share is defined as a scenario where
      * the group is shared by a group that's shared with another group.
      *
-     * This method is designed to allow for cyclic group sharing dependencies.
-     *
-     * The returned set will include the original group itself.
-     *
      * @param group The group for which to return all groups that it is shared with (cannot be null).
-     * @param result An intermediate result, used in recursive calls. Cannot be null. Use an empty group when invoking this.
-     * @return A set of groups with which all members of 'group' are shared with (never null, will at least contain 'group').
+     * @return A set of groups with which all members of 'group' are shared with (never null).
      */
-    private Set<Group> getSharedGroups( final Group group, final Map<String, Group> result ) {
+    @Nonnull
+    private Set<Group> getSharedGroups(@Nonnull final Group group) {
+        final HashSet<Group> result = new HashSet<>();
         if (provider.isSharingSupported()) {
-            result.put( group.getName(), group ); // FIXME this implies that a group cannot be shared with other groups, instead of itself. That probably is incorrect.
-
             if (group.getSharedWith() == SharedGroupVisibility.usersOfGroups) {
                 final Set<String> groupNames = new HashSet<>(group.getSharedWithUsersInGroupNames());
 
                 for ( String groupName : groupNames )
                 {
-                    // When this group is shared with groups that we haven't visited yet, recurse.
-                    if ( !result.containsKey(groupName) )
+                    try {
+                        result.add(getGroup(groupName));
+                    }
+                    catch ( GroupNotFoundException e )
                     {
-                        try
-                        {
-                            final Group nested = getGroup(groupName);
-                            getSharedGroups(nested, result);
-                        }
-                        catch ( GroupNotFoundException e )
-                        {
-                            Log.debug("While iterating over subgroups of group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), groupName, e);
-                        }
+                        Log.debug("While iterating over subgroups of group '{}', an unrecognized spefgroup was found: '{}'", group.getName(), groupName, e);
                     }
                 }
             }
         }
 
-        return new HashSet<>(result.values());
+        return result;
     }
 
     /**

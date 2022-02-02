@@ -105,10 +105,23 @@ public class UpdateGroup extends AdHocCommand {
             if (group.getSharedWith() != null) {
                 final String showInRoster;
                 switch (group.getSharedWith()) {
-                    case nobody: showInRoster = "nobody"; break;
-                    case everybody: showInRoster = "everybody"; break;
-                    case usersOfGroups: showInRoster = group.getSharedWithUsersInGroupNames().isEmpty() ? "onlyGroup" : "spefgroups"; break;
-                    default: showInRoster = group.getSharedWith().toString(); break;
+                    case nobody:
+                        showInRoster = "nobody";
+                        break;
+                    case everybody:
+                        showInRoster = "everybody";
+                        break;
+                    case usersOfGroups:
+                        final List<String> sharedWith = group.getSharedWithUsersInGroupNames();
+                        if (sharedWith.isEmpty() || (sharedWith.size() == 1 && sharedWith.contains(group.getName()))) {
+                            showInRoster = "onlyGroup";
+                        } else {
+                            showInRoster = "spefgroups";
+                        }
+                        break;
+                    default:
+                        showInRoster = group.getSharedWith().toString();
+                        break;
                 }
                 field.addValue(showInRoster);
             }

@@ -891,7 +891,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A") // Group A is shared with users of group B!
+        provider.createGroup("Test Group A") // Group A is shared with users in group B!
             .shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
 
         final Group input = provider.createGroup("Test Group B");
@@ -914,7 +914,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A") // Group A is shared with users of group B!
+        provider.createGroup("Test Group A") // Group A is shared with users in group B!
             .shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
 
         final Group input = provider.createGroup("Test Group B");
@@ -925,6 +925,71 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         // Verify result.
         assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns only groups that are configured to
+     * be directly visible to the (group of) the provided user, when recursion is disabled.
+     */
+    public void testSharedGroupNamesByNameRecursionDisabled() throws Exception
+    {
+        // Setup test fixture.
+        DefaultGroupProvider.SHARED_GROUP_RECURSIVE.setValue(false);
+
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A") // Group A is shared with users in group B!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+
+        provider.createGroup("Test Group B") // Group B is shared with users in group C!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group C"), "Users in group B");
+
+        provider.createGroup("Test Group C") // Group C is shared with users in group D!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group D"), "Users in group C");
+
+        final Group input = provider.createGroup("Test Group D");
+        input.getAdmins().add(needle);
+
+        // Execute system under test.
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group C"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns groups that are configured to be
+     * directly visible to the (group of) the provided user, but also groups that are configured to be visible to
+     * members of those groups (etc), when recursion is enabled.
+     */
+    public void testSharedGroupNamesByNameRecursionEnabled() throws Exception
+    {
+        // Setup test fixture.
+        DefaultGroupProvider.SHARED_GROUP_RECURSIVE.setValue(true);
+
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A") // Group A is shared with users in group B!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+
+        provider.createGroup("Test Group B") // Group B is shared with users in group C!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group C"), "Users in group B");
+
+        provider.createGroup("Test Group C") // Group C is shared with users in group D!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group D"), "Users in group C");
+
+        final Group input = provider.createGroup("Test Group D");
+        input.getAdmins().add(needle);
+
+        // Execute system under test.
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        // Verify result.
+        assertEquals(3, result.size());
+        assertTrue(result.contains("Test Group C"));
+        assertTrue(result.contains("Test Group B"));
         assertTrue(result.contains("Test Group A"));
     }
 

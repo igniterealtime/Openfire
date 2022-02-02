@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.group;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,8 +10,18 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
+import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.event.GroupEventListener;
+import org.jivesoftware.util.CacheableOptional;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jivesoftware.util.PersistableMap;
@@ -34,7 +45,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             "SELECT groupName from ofGroupProp " +
             "where name='sharedRoster.groupList' " +
             "AND propValue LIKE ?";
-    private static final String PUBLIC_GROUPS = 
+    private static final String PUBLIC_GROUPS_SQL =
             "SELECT groupName from ofGroupProp " +
             "WHERE name='sharedRoster.showInRoster' " +
             "AND propValue='everybody'";
@@ -46,9 +57,70 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
             "AND propValue IS NOT NULL AND propValue <> 'nobody'";
     private static final String LOAD_PROPERTIES =
-            "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";    	
+            "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
 
+    private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
 
+    private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
+    private static final String PUBLIC_GROUPS = "PUBLIC_GROUPS";
+    private static final String USER_SHARED_GROUPS_KEY = "USER_SHARED_GROUPS";
+    private static final String GROUP_SHARED_GROUPS_KEY = "GROUP_SHARED_GROUPS";
+
+    private final Cache<String, Serializable> sharedGroupMetaCache = CacheFactory.createLocalCache("Group (Shared) Metadata Cache");
+
+    protected AbstractGroupProvider() {
+
+        GroupEventDispatcher.addListener(new GroupEventListener() {
+            @Override
+            public void groupCreated(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+
+            @Override
+            public void groupDeleting(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+
+            @Override
+            public void groupModified(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+
+            @Override
+            public void memberAdded(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+
+            @Override
+            public void memberRemoved(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+
+            @Override
+            public void adminAdded(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+
+            @Override
+            public void adminRemoved(Group group, Map params) {
+                synchronized (sharedGroupMetaCache) {
+                    sharedGroupMetaCache.clear();
+                }
+            }
+        });
+    }
     // Mutator methods disabled for read-only group providers
 
     /**
@@ -157,57 +229,83 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public Collection<String> getSharedGroupNames() {
-        Collection<String> groupNames = new HashSet<>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
+        HashSet<String> groupNames;
+        synchronized (sharedGroupMetaCache) {
+            groupNames = getSharedGroupsFromCache();
+            if (groupNames != null) {
+                return groupNames;
             }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+
+            groupNames = new HashSet<>();
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
+                rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    groupNames.add(rs.getString(1));
+                }
+                saveSharedGroupsInCache(groupNames);
+            } catch (SQLException sqle) {
+                Log.error(sqle.getMessage(), sqle);
+            } finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
+            }
         }
         return groupNames;
     }
 
     @Override
     public Collection<String> getSharedGroupNames(JID user) {
-        Set<String> answer = new HashSet<>();
-        for (String userGroup : getGroupNames(user)) {
-            answer.addAll(getVisibleGroupNames(userGroup));
+        HashSet<String> groupNames;
+        synchronized (sharedGroupMetaCache) {
+            groupNames = getSharedGroupsForUserFromCache(user.getNode());
+            if (groupNames == null) {
+                groupNames = new HashSet<>();
+                if (!getSharedGroupNames().isEmpty()) {
+                    for (String userGroup : getGroupNames(user)) {
+                        groupNames.addAll(getVisibleGroupNames(userGroup));
+                    }
+                    groupNames.addAll(getPublicSharedGroupNames());
+                }
+                saveSharedGroupsForUserInCache(user.getNode(), groupNames);
+            }
         }
-        answer.addAll(getPublicSharedGroupNames());
-        return answer;
+
+        return groupNames;
     }
 
     @Override
     public Collection<String> getVisibleGroupNames(String userGroup) {
-        Set<String> groupNames = new HashSet<>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(GROUPLIST_CONTAINERS);
-            pstmt.setString(1, "%" + userGroup + "%");
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
+        HashSet<String> groupNames;
+
+        synchronized (sharedGroupMetaCache) {
+            groupNames = getSharedGroupsForGroupFromCache(userGroup);
+            if (groupNames != null) {
+                return groupNames;
             }
-        }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+
+            groupNames = new HashSet<>();
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(GROUPLIST_CONTAINERS);
+                pstmt.setString(1, "%" + userGroup + "%");
+                rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    groupNames.add(rs.getString(1));
+                }
+
+                saveSharedGroupsForGroupInCache(userGroup, groupNames);
+            } catch (SQLException sqle) {
+                Log.error(sqle.getMessage(), sqle);
+            } finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
+            }
         }
         return groupNames;
     }
@@ -239,25 +337,32 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
     @Override
     public Collection<String> getPublicSharedGroupNames() {
-        Set<String> groupNames = new HashSet<>();
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(PUBLIC_GROUPS);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                groupNames.add(rs.getString(1));
+        HashSet<String> groupNames;
+        synchronized (sharedGroupMetaCache) {
+            groupNames = getPublicGroupsFromCache();
+            if (groupNames != null) {
+                return groupNames;
             }
+
+            groupNames = new HashSet<>();
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(PUBLIC_GROUPS_SQL);
+                rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    groupNames.add(rs.getString(1));
+                }
+                savePublicGroupsInCache(groupNames);
+            } catch (SQLException sqle) {
+                Log.error(sqle.getMessage(), sqle);
+            } finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
+            }
+            return groupNames;
         }
-        catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return groupNames;
     }
 
     @Override
@@ -309,5 +414,64 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return result;
-    }	
+    }
+
+    @SuppressWarnings("unchecked")
+    private HashSet<String> getSharedGroupsFromCache() {
+        synchronized (sharedGroupMetaCache) {
+            return (HashSet<String>) sharedGroupMetaCache.get(SHARED_GROUPS_KEY);
+        }
+    }
+
+    private void saveSharedGroupsInCache(final HashSet<String> groupNames) {
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
+        }
+    }
+
+    private String getSharedGroupsForUserKey(final String userName) {
+        return USER_SHARED_GROUPS_KEY + userName;
+    }
+
+    @SuppressWarnings("unchecked")
+    private HashSet<String> getSharedGroupsForUserFromCache(final String userName) {
+        synchronized (sharedGroupMetaCache) {
+            return (HashSet<String>) sharedGroupMetaCache.get(getSharedGroupsForUserKey(userName));
+        }
+    }
+
+    private void saveSharedGroupsForUserInCache(final String userName, final HashSet<String> groupNames) {
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.put(getSharedGroupsForUserKey(userName), groupNames);
+        }
+    }
+
+    static String getSharedGroupsForGroupKey(final String groupName) {
+        return GROUP_SHARED_GROUPS_KEY + groupName;
+    }
+
+    private HashSet<String> getSharedGroupsForGroupFromCache(final String groupName) {
+        synchronized (sharedGroupMetaCache) {
+            return (HashSet<String>) sharedGroupMetaCache.get(getSharedGroupsForGroupKey(groupName));
+        }
+    }
+
+    private void saveSharedGroupsForGroupInCache(final String groupName, final HashSet<String> groupNames) {
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.put(getSharedGroupsForGroupKey(groupName), groupNames);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private HashSet<String> getPublicGroupsFromCache() {
+        synchronized (sharedGroupMetaCache) {
+            return (HashSet<String>) sharedGroupMetaCache.get(PUBLIC_GROUPS);
+        }
+    }
+
+    private void savePublicGroupsInCache(final HashSet<String> groupNames) {
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.put(PUBLIC_GROUPS, groupNames);
+        }
+    }
 }

@@ -23,18 +23,24 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.InitializationException;
 import org.jivesoftware.util.PersistableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
+import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 
 import static org.junit.Assert.assertThrows;
 
 /**
  * Unit tests that verify the functionality of {@link DefaultGroupProvider}.
+ *
+ * Implementation-wise, this class extends for DBTestCase, which is as JUnit 3 derivative. Practically, this means that
+ * Junit 4 annotations in this class will be ignored.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -49,25 +55,28 @@ public class DefaultGroupProviderTest extends DBTestCase
         final URL location = AbstractGroupProvider.class.getResource("/datasets/openfire.script");
         final String fileLocation = location.toString().substring(0, location.toString().lastIndexOf("/")+1) + "openfire";
         URL = "jdbc:hsqldb:"+fileLocation+";ifexists=true";
-    }
 
-    public DefaultGroupProviderTest(String name) {
-        super( name );
-
+        // Setup database configuration of DBUnit.
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_DRIVER_CLASS, DRIVER );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL, URL );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_USERNAME, USERNAME );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, PASSWORD );
     }
 
-    @Before
     public void setUp() throws Exception
     {
         // Ensure that DB-Unit's setUp is called!
         super.setUp();
 
+        // Initialize Openfire's cache framework.
+        CacheFactory.initialize();
+
+        // Mock the XMPPServer implementation that's used internally.
         Fixtures.clearExistingProperties();
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
+
+        // Ensure that Openfire caches are reset before each test to avoid tests to affect each-other.
+        Arrays.stream(CacheFactory.getAllCaches()).forEach(Map::clear);
 
         // Wire the database connection provider used by the GroupProvider.
         final DefaultConnectionProvider conProvider = new DefaultConnectionProvider();
@@ -76,6 +85,19 @@ public class DefaultGroupProviderTest extends DBTestCase
         conProvider.setUsername(USERNAME);
         conProvider.setPassword(PASSWORD);
         DbConnectionManager.setConnectionProvider(conProvider);
+    }
+
+    public void tearDown() throws Exception {
+        super.tearDown();
+
+        // Reset static fields after use (to not confuse other test classes).
+        // TODO: this ideally goes in a static @AfterClass method, but that's not supported in JUnit 3.
+        for (String fieldName : Arrays.asList("INSTANCE", "provider")) {
+            Field field = GroupManager.class.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(null, null);
+            field.setAccessible(false);
+        }
     }
 
     @Override
@@ -88,7 +110,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Asserts that a simple test group that is created by the provider can be retrieved again in good order.
      */
-    @Test
     public void testCreateGroup() throws Exception
     {
         // Setup test fixture.
@@ -120,7 +141,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Asserts that a with no name cannot be created
      */
-    @Test
     public void testCreateGroupWithEmptyNameThrows() throws Exception
     {
         final String GROUP_NAME = "";
@@ -131,7 +151,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Asserts that two groups with the same name cannot be created
      */
-    @Test
     public void testCreateGroupWithDuplicateNameThrows() throws Exception
     {
         final String GROUP_NAME = "Test Group A";
@@ -143,7 +162,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Verifies that a group can be retrieved based on the name that it was created with.
      */
-    @Test
     public void testGetGroupByName() throws Exception
     {
         // Setup test fixture.
@@ -162,7 +180,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupCount()} returns the correct count of groups when no groups
      * are present.
      */
-    @Test
     public void testGroupCountEmpty() throws Exception
     {
         // Setup test fixture.
@@ -179,7 +196,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupCount()} returns the correct count of groups when one group
      * is present.
      */
-    @Test
     public void testGroupCountOne() throws Exception
     {
         // Setup test fixture.
@@ -197,7 +213,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupCount()} returns the correct count of groups when multiple
      * groups are present.
      */
-    @Test
     public void testGroupCountMultiple() throws Exception
     {
         // Setup test fixture.
@@ -216,7 +231,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupNames()} returns an empty collection when no groups
      * are present.
      */
-    @Test
     public void testGroupNamesEmpty() throws Exception
     {
         // Setup test fixture.
@@ -233,7 +247,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupNames()} returns a collection containing one group name
      * when one groups is present.
      */
-    @Test
     public void testGroupNamesOne() throws Exception
     {
         // Setup test fixture.
@@ -252,7 +265,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupNames()} returns a collection containing all group name
      * when multiple groups are present.
      */
-    @Test
     public void testGroupNamesMultiple() throws Exception
     {
         // Setup test fixture.
@@ -273,7 +285,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupNames(JID)} returns an empty collection when the provided
      * user is not a member or admin of any group.
      */
-    @Test
     public void testGroupNamesByJIDNone() throws Exception
     {
         // Setup test fixture.
@@ -293,7 +304,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Verifies that a {@link DefaultGroupProvider#getGroupNames(JID)} returns a group in which the user is a member.
      */
-    @Test
     public void testGroupNamesByJIDOneMember() throws Exception
     {
         // Setup test fixture.
@@ -314,7 +324,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Verifies that a {@link DefaultGroupProvider#getGroupNames(JID)} returns all group in which the user is a member.
      */
-    @Test
     public void testGroupNamesByJIDTwoMember() throws Exception
     {
         // Setup test fixture.
@@ -336,7 +345,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Verifies that a {@link DefaultGroupProvider#getGroupNames(JID)} returns a group in which the user is an admin.
      */
-    @Test
     public void testGroupNamesByJIDOneAdmin() throws Exception
     {
         // Setup test fixture.
@@ -357,7 +365,6 @@ public class DefaultGroupProviderTest extends DBTestCase
     /**
      * Verifies that a {@link DefaultGroupProvider#getGroupNames(JID)} returns all group in which the user is an admin.
      */
-    @Test
     public void testGroupNamesByJIDTwoAdmin() throws Exception
     {
         // Setup test fixture.
@@ -380,7 +387,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getGroupNames(JID)} returns all group in which the user is either
      * a member or an admin.
      */
-    @Test
     public void testGroupNamesByJIDMemberAndAdmin() throws Exception
     {
         // Setup test fixture.
@@ -403,7 +409,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getPublicSharedGroupNames()} returns nothing when there
      * are no groups that are shared with everyone.
      */
-    @Test
     public void testPublicSharedGroupNamesNone() throws Exception
     {
         // Setup test fixture.
@@ -422,7 +427,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getPublicSharedGroupNames()} returns one group when there
      * is one groups that is shared with everyone.
      */
-    @Test
     public void testPublicSharedGroupNamesOne() throws Exception
     {
         // Setup test fixture.
@@ -442,7 +446,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getPublicSharedGroupNames()} returns all group names when
      * there are multiple groups that are shared with everyone.
      */
-    @Test
     public void testPublicSharedGroupNamesMultiple() throws Exception
     {
         // Setup test fixture.
@@ -463,7 +466,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getPublicSharedGroupNames()} returns nothing when there
      * are no groups that are shared with everyone, but when there is a group that is shared explicitly with 'nobody'.
      */
-    @Test
     public void testPublicSharedGroupNamesWithNobody() throws Exception
     {
         // Setup test fixture.
@@ -483,7 +485,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * are no groups that are shared with everyone, but when there is a group that is shared explicitly with members
      * of that group.
      */
-    @Test
     public void testPublicSharedGroupNamesWithOnlyGroup() throws Exception
     {
         // Setup test fixture.
@@ -504,7 +505,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} returns nothing when there are no groups
      * that are shared.
      */
-    @Test
     public void testSharedGroupNamesNone() throws Exception
     {
         // Setup test fixture.
@@ -523,7 +523,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} returns nothing when there are no groups
      * that are shared, but one that's explicitly shared with 'nobody'.
      */
-    @Test
     public void testSharedGroupNamesNobody() throws Exception
     {
         // Setup test fixture.
@@ -542,7 +541,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} returns nothing a group that is shared with
      * everyone.
      */
-    @Test
     public void testSharedGroupNamesOneWithEveryone() throws Exception
     {
         // Setup test fixture.
@@ -562,7 +560,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} returns nothing a group that is shared with
      * members of that group.
      */
-    @Test
     public void testSharedGroupNamesOneWithGroup() throws Exception
     {
         // Setup test fixture.
@@ -584,7 +581,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} returns nothing a group that is shared with
      * everyone and another group that is shared explicitly with members of that group.
      */
-    @Test
     public void testSharedGroupNamesOneWithMix() throws Exception
     {
         // Setup test fixture.
@@ -607,7 +603,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, without the user being in any of the groups.
      */
-    @Test
     public void testSharedGroupNamesByNameNone() throws Exception
     {
         // Setup test fixture.
@@ -627,7 +622,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, with the user being in a member of one of the groups.
      */
-    @Test
     public void testSharedGroupNamesByNameNoneButMember() throws Exception
     {
         // Setup test fixture.
@@ -647,7 +641,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, with the user being in an admin of one of the groups.
      */
-    @Test
     public void testSharedGroupNamesByNameNoneButAdmin() throws Exception
     {
         // Setup test fixture.
@@ -667,7 +660,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, but one that is explicitly shared with 'nobody', without the user being in any of the groups.
      */
-    @Test
     public void testSharedGroupNamesByNameNobody() throws Exception
     {
         // Setup test fixture.
@@ -687,7 +679,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, but one that is explicitly shared with 'nobody', with the user being in a member of that group.
      */
-    @Test
     public void testSharedGroupNamesByNameNobodyButMember() throws Exception
     {
         // Setup test fixture.
@@ -709,7 +700,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, but one that is explicitly shared with 'nobody', with the user being in an admin of that group.
      */
-    @Test
     public void testSharedGroupNamesByNameNobodyButAdmin() throws Exception
     {
         // Setup test fixture.
@@ -731,7 +721,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group that is shared with everybody, without the user being in that group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithEveryoneNoAssociation() throws Exception
     {
         // Setup test fixture.
@@ -752,7 +741,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group that is shared with everybody, with the user being in a member of that group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithEveryoneMember() throws Exception
     {
         // Setup test fixture.
@@ -775,7 +763,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group that is shared with everybody, with the user being in an admin of that group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithEveryoneAdmin() throws Exception
     {
         // Setup test fixture.
@@ -801,7 +788,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there's a group
      * shared with users in the group, without the user being in that group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithGroupNoAssociation() throws Exception
     {
         // Setup test fixture.
@@ -823,7 +809,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group shared with users in the group, with the user being in a member of that group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithGroupMember() throws Exception
     {
         // Setup test fixture.
@@ -848,7 +833,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group shared with users in the group, with the user being in an admin of that group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithGroupAdmin() throws Exception
     {
         // Setup test fixture.
@@ -873,7 +857,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns no group when there are is one
      * group that is shared with users in the group, with the user being in a member of another group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithGroupMemberOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -897,7 +880,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns no group when there are is one
      * group that is shared with users in the group, with the user being in an admin of another group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithGroupAdminOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -921,7 +903,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns a group when there is one
      * group that is shared with users in another group, with the user being in a member of that other group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithOtherGroupMemberOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -946,7 +927,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns no group when there are is one
      * group that is shared with users in the group, with the user being in an admin of another group.
      */
-    @Test
     public void testSharedGroupNamesByNameWithOtherGroupAdminOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -967,7 +947,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group A"));
     }
 
-    @Test
     public void testDeleteGroup() throws Exception{
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -980,7 +959,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group B"));
     }
 
-    @Test
     public void testDeleteGroupShared() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -994,7 +972,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals(0, result.size());
     }
 
-    @Test
     public void testDeleteGroupWithNonExistentGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1003,7 +980,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNotFoundException.class,() -> provider.deleteGroup("Test Group C"));
     }
 
-    @Test
     public void testSetName() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1015,7 +991,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group B"));
     }
 
-    @Test
     public void testSetNameWithEmptyStringThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1023,7 +998,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNameInvalidException.class, () -> provider.setName("Test Group A", ""));
     }
 
-    @Test
     public void testSetNameToExistingGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1034,7 +1008,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupAlreadyExistsException.class, () -> provider.setName("Test Group A", "Test Group B"));
     }
 
-    @Test
     public void testSetNameOnNonExistentGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1042,7 +1015,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNotFoundException.class, () -> provider.setName("Test Group B", "Test Group C"));
     }
 
-    @Test
     public void testSetDescription() throws Exception {
         final String DESC = "The description of Test Group A";
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1054,7 +1026,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals(DESC, result.getDescription());
     }
 
-    @Test
     public void testSetDescriptionWithEmptyString() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").setDescription("The description of Test Group A");
@@ -1065,7 +1036,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals("", result.getDescription());
     }
 
-    @Test
     public void testSetDescriptionOnNonExistentGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1073,7 +1043,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNotFoundException.class, () -> provider.setDescription("Test Group B", "Some Description"));
     }
 
-    @Test
     public void testAddMember() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1085,7 +1054,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.getMembers().contains(needle));
     }
 
-    @Test
     public void testAddAdminMember() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1097,7 +1065,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.getAdmins().contains(needle));
     }
 
-    @Test
     public void testAddMemberOnNonExistentGroupThrows() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();

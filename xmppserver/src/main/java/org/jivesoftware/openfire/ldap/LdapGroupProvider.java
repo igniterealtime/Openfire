@@ -73,6 +73,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
      * Constructs a new LDAP group provider.
      */
     public LdapGroupProvider() {
+        super();
         manager = LdapManager.getInstance();
         userManager = UserManager.getInstance();
         standardAttributes = new String[3];

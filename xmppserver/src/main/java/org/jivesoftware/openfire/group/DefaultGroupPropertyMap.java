@@ -477,6 +477,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+
+        DefaultGroupProvider.sharedGroupMetaCache.clear();
+
         Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
         event.put("type", "propertyAdded");
@@ -508,6 +511,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+
+        DefaultGroupProvider.sharedGroupMetaCache.clear();
+
         Map<String, Object> event = new HashMap<>();
         event.put("propertyKey", key);
         event.put("type", "propertyModified");
@@ -537,6 +543,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+
+        DefaultGroupProvider.sharedGroupMetaCache.clear();
+
         Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", key);
@@ -562,6 +571,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+
+        DefaultGroupProvider.sharedGroupMetaCache.clear();
+
         Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", "*");

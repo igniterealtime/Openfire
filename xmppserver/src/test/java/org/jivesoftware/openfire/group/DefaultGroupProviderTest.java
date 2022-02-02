@@ -23,8 +23,6 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.InitializationException;
-import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
@@ -32,6 +30,7 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.Assert.assertThrows;
@@ -431,7 +430,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "everybody");
+        provider.createGroup("Test Group A").shareWithEverybody("Users in group A");
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -450,8 +449,8 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "everybody");
-        provider.createGroup("Test Group B").getProperties().put("sharedRoster.showInRoster", "everybody");
+        provider.createGroup("Test Group A").shareWithEverybody("Users in group A");
+        provider.createGroup("Test Group B").shareWithEverybody("Users in group B");
 
         // Execute system under test.
         final Collection<String> result = provider.getPublicSharedGroupNames();
@@ -470,7 +469,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "nobody");
+        provider.createGroup("Test Group A").shareWithNobody();
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -489,9 +488,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -527,7 +524,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "nobody");
+        provider.createGroup("Test Group A").shareWithNobody();
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -545,7 +542,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "everybody");
+        provider.createGroup("Test Group A").shareWithEverybody("Users in group A");
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -564,9 +561,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -585,10 +580,8 @@ public class DefaultGroupProviderTest extends DBTestCase
     {
         // Setup test fixture.
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
-        provider.createGroup("Test Group B").getProperties().put("sharedRoster.showInRoster", "everybody");
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
+        provider.createGroup("Test Group B").shareWithEverybody("Users in group B");
 
         // Execute system under test.
         final Collection<String> result = provider.getSharedGroupNames();
@@ -665,7 +658,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "nobody");
+        provider.createGroup("Test Group A").shareWithNobody();
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -686,7 +679,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
         final Group input = provider.createGroup("Test Group B");
-        input.getProperties().put("sharedRoster.showInRoster", "nobody");
+        input.shareWithNobody();
         input.getMembers().add(needle);
 
         // Execute system under test.
@@ -707,7 +700,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
         final Group input = provider.createGroup("Test Group B");
-        input.getProperties().put("sharedRoster.showInRoster", "nobody");
+        input.shareWithNobody();
         input.getAdmins().add(needle);
 
         // Execute system under test.
@@ -726,7 +719,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").getProperties().put("sharedRoster.showInRoster", "everybody");
+        provider.createGroup("Test Group A").shareWithEverybody("Users in group A");
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -748,7 +741,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
         final Group input = provider.createGroup("Test Group B");
-        input.getProperties().put("sharedRoster.showInRoster", "everybody");
+        input.shareWithEverybody("Users in group B");
         input.getMembers().add(needle);
 
         // Execute system under test.
@@ -770,7 +763,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
         final Group input = provider.createGroup("Test Group B");
-        input.getProperties().put("sharedRoster.showInRoster", "everybody");
+        input.shareWithEverybody("Users in group B");
         input.getAdmins().add(needle);
 
         // Execute system under test.
@@ -781,9 +774,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group B"));
     }
 
-
-
-
     /**
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there's a group
      * shared with users in the group, without the user being in that group.
@@ -793,9 +783,8 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
+
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -815,10 +804,9 @@ public class DefaultGroupProviderTest extends DBTestCase
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         final Group input = provider.createGroup("Test Group A");
+        input.shareWithUsersInSameGroup("Users in group A");
         input.getMembers().add(needle);
-        final PersistableMap<String, String> properties = input.getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -839,10 +827,9 @@ public class DefaultGroupProviderTest extends DBTestCase
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         final Group input = provider.createGroup("Test Group A");
+        input.shareWithUsersInSameGroup("Users in group A");
         input.getAdmins().add(needle);
-        final PersistableMap<String, String> properties = input.getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+
         provider.createGroup("Test Group B");
 
         // Execute system under test.
@@ -862,9 +849,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
 
         final Group input = provider.createGroup("Test Group B");
         input.getMembers().add(needle);
@@ -885,9 +870,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group A");
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
 
         final Group input = provider.createGroup("Test Group B");
         input.getAdmins().add(needle);
@@ -908,9 +891,8 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group B"); // Group A is shared with users of group B!
+        provider.createGroup("Test Group A") // Group A is shared with users of group B!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
 
         final Group input = provider.createGroup("Test Group B");
         input.getMembers().add(needle);
@@ -932,9 +914,8 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.groupList", "Test Group B"); // Group A is shared with users of group B!
+        provider.createGroup("Test Group A") // Group A is shared with users of group B!
+            .shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
 
         final Group input = provider.createGroup("Test Group B");
         input.getAdmins().add(needle);
@@ -962,8 +943,7 @@ public class DefaultGroupProviderTest extends DBTestCase
     public void testDeleteGroupShared() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        final PersistableMap<String, String> properties = provider.createGroup("Test Group A").getProperties();
-        properties.put("sharedRoster.showInRoster", "everyone");
+        provider.createGroup("Test Group A").shareWithEverybody("Users in group A");
         provider.createGroup("Test Group B");
 
         provider.deleteGroup("Test Group A");
@@ -1002,8 +982,6 @@ public class DefaultGroupProviderTest extends DBTestCase
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
         provider.createGroup("Test Group B");
-
-        final Collection<String> result = provider.getGroupNames();
 
         assertThrows(GroupAlreadyExistsException.class, () -> provider.setName("Test Group A", "Test Group B"));
     }

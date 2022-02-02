@@ -41,7 +41,7 @@ import javax.annotation.Nonnull;
  * @author Tom Evans
  */
 public abstract class AbstractGroupProvider implements GroupProvider {
-    
+
     private static final Logger Log = LoggerFactory.getLogger(AbstractGroupProvider.class);
 
     private static final String GROUPLIST_CONTAINERS =
@@ -52,7 +52,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             "SELECT groupName from ofGroupProp " +
             "WHERE name='sharedRoster.showInRoster' " +
             "AND propValue='everybody'";
-    private static final String GROUPS_FOR_PROP = 
+    private static final String GROUPS_FOR_PROP =
             "SELECT groupName from ofGroupProp " +
             "WHERE name=? " +
             "AND propValue=?";
@@ -67,7 +67,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     private static final String USER_SHARED_GROUPS_KEY = "USER_SHARED_GROUPS";
     private static final String GROUP_SHARED_GROUPS_KEY = "GROUP_SHARED_GROUPS";
 
-    private final static Cache<String, Serializable> sharedGroupMetaCache = CacheFactory.createLocalCache("Group (Shared) Metadata Cache");
+    protected final static Cache<String, Serializable> sharedGroupMetaCache = CacheFactory.createLocalCache("Group (Shared) Metadata Cache");
 
     public static final SystemProperty<Boolean> SHARED_GROUP_RECURSIVE = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("abstractGroupProvider.shared.recursive")
@@ -76,59 +76,6 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         .addListener(enabled -> sharedGroupMetaCache.clear() )
         .build();
 
-    protected AbstractGroupProvider() {
-
-        GroupEventDispatcher.addListener(new GroupEventListener() {
-            @Override
-            public void groupCreated(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-
-            @Override
-            public void groupDeleting(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-
-            @Override
-            public void groupModified(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-
-            @Override
-            public void memberAdded(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-
-            @Override
-            public void memberRemoved(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-
-            @Override
-            public void adminAdded(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-
-            @Override
-            public void adminRemoved(Group group, Map params) {
-                synchronized (sharedGroupMetaCache) {
-                    sharedGroupMetaCache.clear();
-                }
-            }
-        });
-    }
     // Mutator methods disabled for read-only group providers
 
     /**
@@ -136,7 +83,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public void addMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException {
-        throw new UnsupportedOperationException("Cannot add members to read-only groups");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot add members to read-only groups");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
     }
 
     /**
@@ -145,7 +97,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     @Override
     public void updateMember(String groupName, JID user, boolean administrator)
     {
-        throw new UnsupportedOperationException("Cannot update members for read-only groups");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot update members for read-only groups");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
     }
 
     /**
@@ -154,7 +111,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     @Override
     public void deleteMember(String groupName, JID user)
     {
-        throw new UnsupportedOperationException("Cannot remove members from read-only groups");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot remove members from read-only groups");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
     }
 
     /**
@@ -170,7 +132,14 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public Group createGroup(String name) throws GroupAlreadyExistsException, GroupNameInvalidException {
-        throw new UnsupportedOperationException("Cannot create groups via read-only provider");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot create groups via read-only provider");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
+
+        return null; // aught to be overridden.
     }
 
     /**
@@ -178,7 +147,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public void deleteGroup(String name) throws GroupNotFoundException {
-        throw new UnsupportedOperationException("Cannot remove groups via read-only provider");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot remove groups via read-only provider");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
     }
 
     /**
@@ -187,7 +161,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException {
-        throw new UnsupportedOperationException("Cannot modify read-only groups");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot modify read-only groups");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
     }
 
     /**
@@ -196,7 +175,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      */
     @Override
     public void setDescription(String name, String description) throws GroupNotFoundException {
-        throw new UnsupportedOperationException("Cannot modify read-only groups");
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException("Cannot modify read-only groups");
+        }
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.clear();
+        }
     }
 
     // Search methods may be overridden by read-only group providers

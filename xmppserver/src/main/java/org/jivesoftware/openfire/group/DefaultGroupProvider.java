@@ -78,6 +78,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Group createGroup(String name) throws GroupNameInvalidException, GroupAlreadyExistsException {
+        super.createGroup(name);
+
         if(name.trim().isEmpty()){
             throw new GroupNameInvalidException("Group name cannot be empty");
         }
@@ -138,6 +140,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void setDescription(String name, String description) throws GroupNotFoundException {
+        super.setDescription(name, description);
+
         try {
             this.getGroup(name);
         } catch (GroupNotFoundException e) {
@@ -164,6 +168,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException {
+        super.setName(oldName, newName);
+
         if(newName.trim().isEmpty()){
             throw new GroupNameInvalidException("Group name cannot be empty");
         }
@@ -215,6 +221,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void deleteGroup(String groupName) throws GroupNotFoundException {
+        super.deleteGroup(groupName);
+
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
@@ -347,6 +355,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void addMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException {
+        super.addMember(groupName, user, administrator);
+
         try {
             this.getGroup(groupName);
         } catch (GroupNotFoundException e) {
@@ -373,6 +383,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void updateMember(String groupName, JID user, boolean administrator) {
+        super.updateMember(groupName, user, administrator);
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -393,6 +405,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public void deleteMember(String groupName, JID user) {
+        super.deleteMember(groupName, user);
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

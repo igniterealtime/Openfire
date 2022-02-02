@@ -593,6 +593,527 @@ public class DefaultGroupProviderTest extends DBTestCase
     }
 
     /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToEverybody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithEverybody("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithEverybody("Users in group A"); // Technically not a 'change' - but should not generate false results anyway!
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToEverybodyRename() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithEverybody("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithEverybody("Users in group A RENAMED"); // Different name
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToSameGroup() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithEverybody("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInSameGroup("Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToOtherGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithEverybody("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to no longer be shared.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodytoSharedWithNobody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithEverybody("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithNobody();
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupToEverybody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithEverybody("Test Group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupToSameGroup() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInSameGroup("Users in group A"); // Technically not a 'change' - but should not generate false results anyway!
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupRenamed() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInSameGroup("Users in group A RENAMED"); // Different name
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupToOtherGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to no longer be shared.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSameGrouptoSharedWithNobody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithNobody();
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherGroupToEverybody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithEverybody("Test Group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherGroupToSameGroup() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInSameGroup("Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherRename() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A RENAMED"); // Different name
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherToOtherGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A"); // Technically not a 'change' - but should not generate false results anyway!
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherToAdditionalGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        provider.createGroup("Test Group B");
+        provider.createGroup("Test Group C");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Arrays.asList("Test Group B", "Test Group C"), "Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherToFewerGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Arrays.asList("Test Group B", "Test Group C"), "Users in group A");
+        provider.createGroup("Test Group B");
+        provider.createGroup("Test Group C");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to no longer be shared.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationOtherGrouptoSharedWithNobody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithNobody();
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has been removed.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterGroupRemoval() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithEverybody("Users in group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        provider.deleteGroup(group.getName());
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedToEverybody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithEverybody("Test Group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedToSameGroup() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInSameGroup("Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedToOtherGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to no longer be shared.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedSharedWithNobody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithNobody();
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodyToEverybody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithNobody();
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithEverybody("Test Group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodyToSameGroup() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithNobody();
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInSameGroup("Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to be shared with a different set of users.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodyToOtherGroups() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithNobody();
+        provider.createGroup("Test Group B");
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithUsersInGroups(Collections.singletonList("Test Group B"), "Users in group A");
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
+     * previously obtained group has reconfigured to no longer be shared.
+     */
+    public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodytoSharedWithNobody() throws Exception
+    {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithNobody();
+
+        // Execute system under test;
+        provider.getSharedGroupNames(); // populate cache.
+        group.shareWithNobody(); // Technically not a 'change' - but should not generate false results anyway!
+        final Collection<String> result = provider.getSharedGroupNames();
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
      * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, without the user being in any of the groups.
      */
@@ -991,6 +1512,94 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group C"));
         assertTrue(result.contains("Test Group B"));
         assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
+     * a member is added to a shared group after the group as already loaded in a cache.
+     */
+    public void testSharedGroupNamesByNameStaleCacheTestMemberAdded() throws Exception
+    {
+        // Setup test fixture.
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in Group A");
+
+        // Execute system under test.
+        provider.getSharedGroupNames(needle); // populate cache
+        group.getMembers().add(needle);
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
+     * a member is removed from a shared group after the group as already loaded in a cache.
+     */
+    public void testSharedGroupNamesByNameStaleCacheTestMemberRemoved() throws Exception
+    {
+        // Setup test fixture.
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.shareWithUsersInSameGroup("Users in Group A");
+        group.getMembers().add(needle);
+
+        // Execute system under test.
+        provider.getSharedGroupNames(needle); // populate cache
+        group.getMembers().remove(needle);
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        // Verify result.
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
+     * sharing is enabled after the group as already loaded in a cache.
+     */
+    public void testSharedGroupNamesByNameStaleCacheTestSharingEnabled() throws Exception
+    {
+        // Setup test fixture.
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.getMembers().add(needle);
+
+        // Execute system under test.
+        provider.getSharedGroupNames(needle); // populate cache
+        group.shareWithUsersInSameGroup("Users in Group A");
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        // Verify result.
+        assertEquals(1, result.size());
+        assertTrue(result.contains("Test Group A"));
+    }
+
+    /**
+     * Verifies that a {@link DefaultGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
+     * sharing is disabled after the group as already loaded in a cache.
+     */
+    public void testSharedGroupNamesByNameStaleCacheTestSharingDisabled() throws Exception
+    {
+        // Setup test fixture.
+        final JID needle = new JID("jane@example.org");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        final Group group = provider.createGroup("Test Group A");
+        group.getMembers().add(needle);
+        group.shareWithUsersInSameGroup("Users in Group A");
+
+        // Execute system under test.
+        provider.getSharedGroupNames(needle); // populate cache
+        group.shareWithNobody();
+        final Collection<String> result = provider.getSharedGroupNames(needle);
+
+        // Verify result.
+        assertEquals(0, result.size());
     }
 
     public void testDeleteGroup() throws Exception{

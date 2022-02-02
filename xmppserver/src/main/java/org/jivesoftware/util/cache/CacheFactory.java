@@ -115,6 +115,7 @@ public class CacheFactory {
         cacheNames.put("Favicon Misses", "faviconMisses");
         cacheNames.put("Group", "group");
         cacheNames.put("Group Metadata Cache", "groupMeta");
+        cacheNames.put("Group (Shared) Metadata Cache", "groupSharingMeta");
         cacheNames.put("Javascript Cache", "javascript");
         cacheNames.put("Last Activity Cache", "lastActivity");
         cacheNames.put("Multicast Service", "multicast");
@@ -176,6 +177,8 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "lockOutCache" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "groupMeta" + PROPERTY_SUFFIX_SIZE, 512 * 1024L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "groupMeta" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "groupSharingMeta" + PROPERTY_SUFFIX_SIZE, 512 * 1024L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "groupSharingMeta" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 15);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "username2roster" + PROPERTY_SUFFIX_SIZE, 1024 * 1024L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "username2roster" + PROPERTY_SUFFIX_MAX_LIFE_TIME, JiveConstants.MINUTE * 30);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "username2rosterItems" + PROPERTY_SUFFIX_SIZE, 1024 * 1024L);

@@ -85,6 +85,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
      * Constructor of the JDBCGroupProvider class.
      */
     public JDBCGroupProvider() {
+        super();
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("jdbcProvider.driver");
         JiveGlobals.migrateProperty("jdbcProvider.connectionString");

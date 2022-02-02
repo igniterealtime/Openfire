@@ -57,25 +57,17 @@ public class GroupManager {
 
     private static final Logger Log = LoggerFactory.getLogger(GroupManager.class);
 
-    private static final class GroupManagerContainer {
-        private static final GroupManager instance = new GroupManager();
-    }
+    private static GroupManager INSTANCE;
 
     private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
     private static final Interner<PagedGroupNameKey> pagedGroupNameKeyInterner = Interners.newWeakInterner();
 
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
-    private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
     private static final String GROUP_NAMES_KEY = "GROUP_NAMES";
-    private static final String PUBLIC_GROUPS = "PUBLIC_GROUPS";
-    private static final String USER_SHARED_GROUPS_KEY = "USER_SHARED_GROUPS";
     private static final String USER_GROUPS_KEY = "USER_GROUPS";
 
     private static final Object GROUP_COUNT_LOCK = new Object();
-    private static final Object SHARED_GROUPS_LOCK = new Object();
     private static final Object GROUP_NAMES_LOCK = new Object();
-    private static final Object PUBLIC_GROUPS_LOCK = new Object();
-    private static final Object USER_SHARED_GROUPS_LOCK = new Object();
     private static final Object USER_GROUPS_LOCK = new Object();
 
     /**
@@ -83,8 +75,11 @@ public class GroupManager {
      *
      * @return a GroupManager instance.
      */
-    public static GroupManager getInstance() {
-        return GroupManagerContainer.instance;
+    public static synchronized GroupManager getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new GroupManager();
+        }
+        return INSTANCE;
     }
 
     private Cache<String, CacheableOptional<Group>> groupCache;
@@ -93,11 +88,11 @@ public class GroupManager {
 
     private GroupManager() {
         // Initialize caches.
-        groupCache = CacheFactory.createCache("Group");
+        groupCache = CacheFactory.createCache("Group"); // TODO determine if this works in a cluster (should this be a local cache?)
 
         // A cache for meta-data around groups: count, group names, groups associated with
         // a particular user
-        groupMetaCache = CacheFactory.createCache("Group Metadata Cache");
+        groupMetaCache = CacheFactory.createCache("Group Metadata Cache"); // TODO determine if this works in a cluster (should this be a local cache?)
 
         initProvider(GROUP_PROVIDER.getValue());
 
@@ -118,7 +113,6 @@ public class GroupManager {
                 // Do not evict groups with 'user' as keys.
                 clearGroupCountCache();
                 clearGroupNameCache();
-                clearSharedGroupCache();
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
@@ -136,7 +130,6 @@ public class GroupManager {
                 // Do not evict groups with 'user' as keys.
                 clearGroupCountCache();
                 clearGroupNameCache();
-                clearSharedGroupCache();
 
                 // Evict cached information for affected users
                 evictCachedUsersForGroup(group);
@@ -157,7 +150,6 @@ public class GroupManager {
                         if ("sharedRoster.showInRoster".equals(key) || "*".equals(key))
                         {
                             clearGroupNameCache();
-                            clearSharedGroupCache();
 
                             String originalValue = (String) params.get("originalValue");
                             String newValue = group.getProperties().get("sharedRoster.showInRoster");
@@ -198,8 +190,7 @@ public class GroupManager {
                         }
 
                         clearGroupNameCache();
-                        clearSharedGroupCache();
-                        
+
                         // Evict cached information for affected users
                         evictCachedUsersForGroup(group);
 
@@ -497,16 +488,7 @@ public class GroupManager {
         if (!provider.isSharingSupported()) {
             groupNames = new HashSet<>();
         } else {
-            groupNames = getSharedGroupsFromCache();
-            if (groupNames == null) {
-                synchronized (SHARED_GROUPS_LOCK) {
-                    groupNames = getSharedGroupsFromCache();
-                    if (groupNames == null) {
-                        groupNames = new HashSet<>(provider.getSharedGroupNames());
-                        saveSharedGroupsInCache(groupNames);
-                    }
-                }
-            }
+            groupNames = new HashSet<>(provider.getSharedGroupNames());
         }
         return new GroupCollection(groupNames);
     }
@@ -522,27 +504,18 @@ public class GroupManager {
         if (!provider.isSharingSupported()) {
             groupNames = new HashSet<>();
         } else {
-            groupNames = getSharedGroupsForUserFromCache(userName);
-            if (groupNames == null) {
-                synchronized (userBasedMutex.intern(XMPPServer.getInstance().createJID(userName, null))) {
-                    groupNames = getSharedGroupsForUserFromCache(userName);
-                    if (groupNames == null) {
-                        // assume this is a local user
-                        groupNames = new HashSet<>(provider.getSharedGroupNames(new JID(userName,
-                                XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null)));
-                        saveSharedGroupsForUserInCache(userName, groupNames);
-                    }
-                }
-            }
+            // assume this is a local user
+            groupNames = new HashSet<>(provider.getSharedGroupNames(new JID(userName,
+                XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null)));
         }
         return new GroupCollection(groupNames);
     }
     
     /**
-     * Returns an unmodifiable Collection of all shared groups in the system for a given userName.
+     * Returns an unmodifiable Collection of all shared groups in the system for a given group name.
      *
      * @param groupToCheck The group to check
-     * @return an unmodifiable Collection of all shared groups for the given userName.
+     * @return an unmodifiable Collection of all shared groups for the given group name.
      */
     public Collection<Group> getVisibleGroups(Group groupToCheck) {
         HashSet<String> groupNames;
@@ -550,16 +523,8 @@ public class GroupManager {
             groupNames = new HashSet<>();
         } else {
             // Get all the public shared groups.
-            groupNames = getPublicGroupsFromCache();
-            if (groupNames == null) {
-                synchronized (PUBLIC_GROUPS_LOCK) {
-                    groupNames = getPublicGroupsFromCache();
-                    if (groupNames == null) {
-                        groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
-                        savePublicGroupsInCache(groupNames);
-                    }
-                }
-            }
+            groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
+
             // Now get all visible groups to the given group.
             groupNames.addAll(provider.getVisibleGroupNames(groupToCheck.getName()));
         }
@@ -576,16 +541,7 @@ public class GroupManager {
         if (!provider.isSharingSupported()) {
             groupNames = new HashSet<>();
         } else {
-            groupNames = getPublicGroupsFromCache();
-            if (groupNames == null) {
-                synchronized (PUBLIC_GROUPS_LOCK) {
-                    groupNames = getPublicGroupsFromCache();
-                    if (groupNames == null) {
-                        groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
-                        savePublicGroupsInCache(groupNames);
-                    }
-                }
-            }
+            groupNames = new HashSet<>(provider.getPublicSharedGroupNames());
         }
         return new GroupCollection(groupNames);
     }
@@ -732,13 +688,6 @@ public class GroupManager {
             synchronized (USER_GROUPS_LOCK) {
                 clearUserGroupsCache(user);
             }
-
-            // remove cache for getSharedGroups
-            if (XMPPServer.getInstance().isLocal(user)) {
-                synchronized (USER_SHARED_GROUPS_LOCK) {
-                    clearSharedGroupsForUserCache(user.getNode());
-                }
-            }
         }
     }
 
@@ -846,11 +795,9 @@ public class GroupManager {
     }
 
     private void evictCachedUserSharedGroups() {
-        synchronized (USER_SHARED_GROUPS_LOCK) {
-            groupMetaCache.keySet().stream()
-                .filter(key -> key.startsWith(USER_SHARED_GROUPS_KEY) || key.startsWith(GROUP_NAMES_KEY))
-                .forEach(key -> groupMetaCache.remove(key));
-        }
+        groupMetaCache.keySet().stream()
+            .filter(key -> key.startsWith(GROUP_NAMES_KEY))
+            .forEach(key -> groupMetaCache.remove(key));
     }
 
     /*
@@ -924,50 +871,6 @@ public class GroupManager {
 
     private void clearGroupCountCache() {
         groupMetaCache.remove(GROUP_COUNT_KEY);
-    }
-
-    @SuppressWarnings("unchecked")
-    private HashSet<String> getSharedGroupsFromCache() {
-        return (HashSet<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
-    }
-
-    private void clearSharedGroupCache() {
-        groupMetaCache.remove(SHARED_GROUPS_KEY);
-    }
-
-    private void saveSharedGroupsInCache(final HashSet<String> groupNames) {
-        groupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
-    }
-
-
-    private String getSharedGroupsForUserKey(final String userName) {
-        return USER_SHARED_GROUPS_KEY + userName;
-    }
-
-    @SuppressWarnings("unchecked")
-    private HashSet<String> getSharedGroupsForUserFromCache(final String userName) {
-        return (HashSet<String>)groupMetaCache.get(getSharedGroupsForUserKey(userName));
-    }
-
-    private void clearSharedGroupsForUserCache(final String userName) {
-        groupMetaCache.remove(getSharedGroupsForUserKey(userName));
-    }
-
-    private void saveSharedGroupsForUserInCache(final String userName, final HashSet<String> groupNames) {
-        groupMetaCache.put(getSharedGroupsForUserKey(userName), groupNames);
-    }
-
-    @SuppressWarnings("unchecked")
-    private HashSet<String> getPublicGroupsFromCache() {
-        return (HashSet<String>)groupMetaCache.get(PUBLIC_GROUPS);
-    }
-
-    private void clearPublicGroupsCache() {
-        groupMetaCache.remove(PUBLIC_GROUPS);
-    }
-
-    private void savePublicGroupsInCache(final HashSet<String> groupNames) {
-        groupMetaCache.put(PUBLIC_GROUPS, groupNames);
     }
 
     @SuppressWarnings("unchecked")

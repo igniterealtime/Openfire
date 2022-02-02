@@ -69,6 +69,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     }
     
     public CrowdGroupProvider() {
+        super();
         String propertyValue = JiveGlobals.getProperty(JIVE_CROWD_GROUPS_CACHE_TTL_SECS);
         int ttl = (propertyValue == null || propertyValue.trim().length() == 0) ? CACHE_TTL : Integer.parseInt(propertyValue);
 

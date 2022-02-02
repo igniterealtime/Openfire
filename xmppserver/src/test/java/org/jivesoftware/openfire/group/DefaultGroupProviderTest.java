@@ -1602,6 +1602,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals(0, result.size());
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#deleteGroup(String)} deletes the named group, such that it cannot be
+     * retrieved
+     */
     public void testDeleteGroup() throws Exception{
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1614,6 +1618,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group B"));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#deleteGroup(String)} deletes the named shared group, such that it
+     * cannot be retrieved
+     */
     public void testDeleteGroupShared() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1626,6 +1634,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals(0, result.size());
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#deleteGroup(String)} throws a {@link GroupNotFoundException} when
+     * attempting to delete a group by a name that does not exist
+     */
     public void testDeleteGroupWithNonExistentGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1634,6 +1646,9 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNotFoundException.class,() -> provider.deleteGroup("Test Group C"));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setName(String, String)} changes the name of the group
+     */
     public void testSetName() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1645,6 +1660,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.contains("Test Group B"));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setName(String, String)} throws a {@link GroupNameInvalidException}
+     * when attempting to rename a group to an empty string
+     */
     public void testSetNameWithEmptyStringThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1652,6 +1671,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNameInvalidException.class, () -> provider.setName("Test Group A", ""));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setName(String, String)} throws a {@link GroupAlreadyExistsException}
+     * when attempting to rename a group to name of another existing group
+     */
     public void testSetNameToExistingGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1660,6 +1683,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupAlreadyExistsException.class, () -> provider.setName("Test Group A", "Test Group B"));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setName(String, String)} throws a {@link GroupNotFoundException}
+     * when attempting to rename a group from a name that does not exist
+     */
     public void testSetNameOnNonExistentGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1667,6 +1694,9 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNotFoundException.class, () -> provider.setName("Test Group B", "Test Group C"));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setDescription(String, String)} sets the description of a group
+     */
     public void testSetDescription() throws Exception {
         final String DESC = "The description of Test Group A";
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1678,6 +1708,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals(DESC, result.getDescription());
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setDescription(String, String)} sets the description of a group to an
+     * empty string
+     */
     public void testSetDescriptionWithEmptyString() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").setDescription("The description of Test Group A");
@@ -1688,6 +1722,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertEquals("", result.getDescription());
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#setDescription(String, String)} throws a {@link GroupNotFoundException}
+     * when attempting to set the description of a group by a name that does not exist
+     */
     public void testSetDescriptionOnNonExistentGroupThrows() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1695,6 +1733,9 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertThrows(GroupNotFoundException.class, () -> provider.setDescription("Test Group B", "Some Description"));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds a regular member to a group
+     */
     public void testAddMember() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1706,6 +1747,9 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.getMembers().contains(needle));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds an admin member to a group
+     */
     public void testAddAdminMember() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -1717,6 +1761,10 @@ public class DefaultGroupProviderTest extends DBTestCase
         assertTrue(result.getAdmins().contains(needle));
     }
 
+    /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} throws a
+     * {@link GroupNotFoundException} when attempting to add a member to a group by a name that does not exist
+     */
     public void testAddMemberOnNonExistentGroupThrows() throws Exception {
         final JID needle = new JID("jane@example.org");
         final DefaultGroupProvider provider = new DefaultGroupProvider();

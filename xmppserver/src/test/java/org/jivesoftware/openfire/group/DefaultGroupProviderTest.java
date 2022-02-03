@@ -1855,4 +1855,51 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         assertThrows(GroupNotFoundException.class, () -> provider.addMember("Test Group B", needle, false));
     }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#updateMember(String, JID, boolean)} sets a member to an admin
+     */
+    public void testUpdateMemberToAdmin() throws Exception {
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final String GROUP_NAME = "Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup(GROUP_NAME);
+        provider.addMember(GROUP_NAME, needle, false);
+
+        provider.updateMember(GROUP_NAME, needle, true);
+        final Group result = provider.getGroup(GROUP_NAME);
+
+        assertTrue(result.getAdmins().contains(needle));
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#updateMember(String, JID, boolean)} sets an admin to a member
+     */
+    public void testUpdateMemberFromAdminToMember() throws Exception {
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final String GROUP_NAME = "Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup(GROUP_NAME);
+        provider.addMember(GROUP_NAME, needle, true);
+
+        provider.updateMember(GROUP_NAME, needle, false);
+        final Group result = provider.getGroup(GROUP_NAME);
+
+        assertFalse(result.getAdmins().contains(needle));
+        assertTrue(result.getMembers().contains(needle));
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#updateMember(String, JID, boolean)} throws when trying to update
+     * membership of a non-existent group
+     */
+    public void testUpdateMemberOfNonExistentGroup() throws Exception {
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final String GROUP_NAME = "Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.addMember("Test Group A", needle, false);
+
+        assertThrows(GroupNotFoundException.class, () -> provider.updateMember("Test Group B", needle, false));
+    }
 }

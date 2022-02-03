@@ -542,8 +542,12 @@ public class Group implements Cacheable, Externalizable {
             }
             if (users.add(user)) {
                 if (alreadyGroupUser) {
-                    // Update the group user privileges in the backend store.
-                    provider.updateMember(name, user, adminCollection);
+                    try {
+                        // Update the group user privileges in the backend store.
+                        provider.updateMember(name, user, adminCollection);
+                    } catch (Exception e) {
+                        Log.error("Failed to update group member", e);
+                    }
                 }
                 else {
                     try {

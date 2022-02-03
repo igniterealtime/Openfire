@@ -1693,7 +1693,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Schedule a check to see if the ping was answered, kicking the occupant if it wasn't.
         // The check should be done _before_ the next ping would be sent (to prevent a backlog of ping requests forming)
         long timeoutMs = userIdlePing.dividedBy(4).toMillis();
-        TaskEngine.getInstance().schedule(new CheckPingResponseTask(occupant, pingRequest.getID()), timeoutMs);
+        final CheckPingResponseTask task = new CheckPingResponseTask(occupant, pingRequest.getID());
+        occupant.setPendingPingTask(task);
+        TaskEngine.getInstance().schedule(task, timeoutMs);
     }
 
     /**
@@ -1713,6 +1715,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         @Override
         public void run()
         {
+            occupant.setPendingPingTask(null);
+
             Log.trace("Checking if {} has responded to a ping request that we sent earlier (with stanza ID '{}').", occupant, stanzaID);
             if (!occupant.getRealJID().equals(PINGS_SENT.remove(stanzaID)))  // A null-check should be enough. Check against recipient for extra safety.
             {

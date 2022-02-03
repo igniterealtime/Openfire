@@ -451,6 +451,22 @@ public class OccupantManager implements MUCEventListener
     }
 
     /**
+     * Returns the most recent activity for a particular user that is assumed to be connected to the local cluster node.
+     * This returns a timestamp, that can be used to detect idle-ness.
+     *
+     * @param userJid The address of the user for which to return a timestamp of last activity.
+     * @return A timestamp, or null when there currently is no occupant by that JID on the local node.
+     */
+    @Nullable
+    public Instant lastActivityOnLocalNode(@Nonnull final JID userJid) {
+        return getLocalOccupants().stream()
+            .filter(occupant -> userJid.equals(occupant.getRealJID()))
+            .map(Occupant::getLastActive)
+            .max(java.util.Comparator.naturalOrder())
+            .orElse(null);
+    }
+
+    /**
      * Counts all users that are in at least one room.
      *
      * @return a user count

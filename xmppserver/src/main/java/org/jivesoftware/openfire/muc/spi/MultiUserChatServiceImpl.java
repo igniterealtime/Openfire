@@ -1654,7 +1654,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
 
             if (!room.hasOccupant(occupant.getRealJID())) {
-                // Room was recently removed? Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager?
+                // Occupant no longer in room? Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager?
                 Log.debug("Skip removing {} as this occupant no longer is in the room.", occupant);
                 return;
             }
@@ -1698,11 +1698,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     /**
      * A task that verifies if a response to a certain IQ Ping stanza (identified by stanza ID) was received, kicking
-     * an occupant of a MUC room if it is not.
+     * an occupant of a MUC room if it is not, and if there hasn't been any other activity from the occupant since.
      */
     private class CheckPingResponseTask extends TimerTask {
         final OccupantManager.Occupant occupant;
         final String stanzaID;
+        final Instant pingRequestSent = Instant.now();
 
         public CheckPingResponseTask(@Nonnull final OccupantManager.Occupant occupant, @Nonnull final String stanzaID) {
             this.occupant = occupant;
@@ -1715,11 +1716,23 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             Log.trace("Checking if {} has responded to a ping request that we sent earlier (with stanza ID '{}').", occupant, stanzaID);
             if (!occupant.getRealJID().equals(PINGS_SENT.remove(stanzaID)))  // A null-check should be enough. Check against recipient for extra safety.
             {
-                Log.trace("The ping request that we sent earlier to {} seems to have been answered.", occupant);
+                Log.trace("The ping request that we sent earlier to {} seems to have been answered. No need to remove this occupant.", occupant);
                 return;
             }
 
-            Log.debug("{} has not responded to a ping that we sent earlier. Occupant should be kicked from the room.", occupant);
+            final Instant lastActivity = occupantManager.lastActivityOnLocalNode(occupant.getRealJID());
+            if (lastActivity == null) {
+                // If the occupant is in the room, it likely reconnected to another cluster node. Have that node worry about ghost detection.
+                Log.debug("{} that has been sent a ping request earlier is no longer connected to the local cluster node. No need to remove this occupant.", occupant);
+                return;
+            }
+
+            if (lastActivity.isAfter(pingRequestSent)) {
+                Log.debug("{} has not responded to a ping request that we sent earlier, but has had other activity. No need to remove this occupant.", occupant);
+                return;
+            }
+
+            Log.debug("{} has not responded to a ping request that we sent earlier and didn't have other activity. Occupant should be kicked from the room.", occupant);
             tryRemoveOccupantFromRoom(occupant, JiveGlobals.getProperty("admin.mucRoom.noPingResponseKickReason", "User seems to be unreachable (didn't respond to a ping request).") );
         }
     }

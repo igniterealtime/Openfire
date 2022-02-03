@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2021-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1617,10 +1617,20 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     // Kick users if 'user_idle' feature is enabled and the user has been idle for too long.
                     tryRemoveOccupantFromRoom(occupant, JiveGlobals.getProperty("admin.mucRoom.timeoutKickReason", "User was inactive for longer than the allowed maximum duration of " + userIdleKick.toString().substring(2).replaceAll("(\\d[HMS])(?!$)", "$1 ").toLowerCase()) + "." );
                 }
-                else if (userIdlePing != null && occupant.getLastActive().isBefore(Instant.now().minus(userIdlePing)))
+                else if (userIdlePing != null)
                 {
-                    // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
-                    pingOccupant(occupant);
+                    // Check if the occupant has been inactive for to long.
+                    final Instant lastActive = occupant.getLastActive();
+                    final boolean isInactive = lastActive.isBefore(Instant.now().minus(userIdlePing));
+
+                    // Ensure that we didn't quite recently send a ping already.
+                    final Instant lastPing = occupant.getLastPingRequest();
+                    final boolean isRecentlyPinged = lastPing != null && lastPing.isAfter(Instant.now().minus(userIdlePing));
+
+                    if (isInactive && !isRecentlyPinged) {
+                        // Ping the user if it hasn't been kicked already, the feature is enabled, and the user has been idle for too long.
+                        pingOccupant(occupant);
+                    }
                 }
             }
             catch (final Throwable e) {

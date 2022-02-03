@@ -1895,7 +1895,6 @@ public class DefaultGroupProviderTest extends DBTestCase
      */
     public void testUpdateMemberOfNonExistentGroup() throws Exception {
         final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
-        final String GROUP_NAME = "Test Group A";
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
         provider.addMember("Test Group A", needle, false);
@@ -1977,5 +1976,76 @@ public class DefaultGroupProviderTest extends DBTestCase
      */
     public void testDefaultGroupProviderSupportsSharing() throws Exception {
         assertTrue(new DefaultGroupProvider().isSharingSupported());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#search(String)} returns sensible results
+     */
+    public void testSimpleSearch() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.createGroup("Test Group B");
+
+        final Collection<String> result = provider.search("Group");
+        assertEquals(2, result.size());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#search(String)} returns successfully when finding no results
+     */
+    public void testSimpleUnsuccessfulSearch() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.createGroup("Test Group B");
+
+        final Collection<String> result = provider.search("Something Else");
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#search(String, int, int)} returns a subset of results
+     */
+    public void testPaginatedSearch() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        for(int i=1; i<=9; i++){
+            provider.createGroup("Test Group " + i);
+        }
+
+        final Collection<String> result = provider.search("Group", 4, 2);
+        assertEquals(2, result.size());
+        assertTrue(result.contains("Test Group 5"));
+        assertTrue(result.contains("Test Group 6"));
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#search(String, int, int)} returns no rows when given a start index
+     * higher than the number of possible results
+     */
+    public void testPaginatedSearchWithIndexOOB() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        for(int i=1; i<=9; i++){
+            provider.createGroup("Test Group " + i);
+        }
+
+        final Collection<String> result = provider.search("Group", 11, 1);
+
+        assertEquals(0, result.size());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#search(String, int, int)} returns sensible results when given a start
+     * index and given a number of results higher than the number of possible results
+     */
+    public void testPaginatedSearchWithNumResultsAcrossBoundary() throws Exception {
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        for(int i=1; i<=9; i++){ //Create 9 groups
+            provider.createGroup("Test Group " + i);
+        }
+
+        final Collection<String> result = provider.search("Group", 7, 5); //Index 7 is 8th item
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains("Test Group 8"));
+        assertTrue(result.contains("Test Group 9"));
     }
 }

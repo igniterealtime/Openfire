@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.group;
 
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.dbunit.DBTestCase;
 import org.dbunit.PropertiesBasedJdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
@@ -1752,7 +1753,7 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds a regular member to a group
      */
     public void testAddMember() throws Exception {
-        final JID needle = new JID("jane@example.org");
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
 
@@ -1766,7 +1767,7 @@ public class DefaultGroupProviderTest extends DBTestCase
      * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds an admin member to a group
      */
     public void testAddAdminMember() throws Exception {
-        final JID needle = new JID("jane@example.org");
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
 
@@ -1777,11 +1778,78 @@ public class DefaultGroupProviderTest extends DBTestCase
     }
 
     /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds a remote member to a group
+     */
+    public void testAddRemoteMember() throws Exception {
+        final JID needle = new JID("stranger@remoteexample.com");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.addMember("Test Group A", needle, false);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertTrue(result.getMembers().contains(needle));
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds a regular member to a group by
+     * their full JID
+     */
+    public void testAddMemberByFullJid() throws Exception {
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN + "/laptop");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.addMember("Test Group A", needle, false);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertEquals(1, result.getMembers().size());
+        assertTrue(result.getMembers().contains(needle.asBareJID()));
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} adds a remote member to a group by
+     * their full JID
+     */
+    public void testAddRemoteMemberByFullJid() throws Exception {
+        final JID needle = new JID("stranger@remoteexample.org/pda");
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+
+        provider.addMember("Test Group A", needle, false);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertEquals(1, result.getMembers().size());
+        assertTrue(result.getMembers().contains(needle.asBareJID()));
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} silently completes when attempting
+     * to add a duplicate user to a group, but does not throw
+     */
+    public void testAddMemberDuplicate() throws Exception {
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.addMember("Test Group A", needle, false);
+
+        try {
+            provider.addMember("Test Group A", needle, false);
+        } catch (Throwable t) {
+            throw new Exception("Failed to add a member for a second time. This should succeed as a no-op");
+        }
+        final Group result = provider.getGroup("Test Group A");
+
+        assertEquals(1, result.getMembers().size());
+        assertTrue(result.getMembers().contains(needle));
+    }
+
+    /**
      * Verifies that {@link DefaultGroupProvider#addMember(String, JID, boolean)} throws a
      * {@link GroupNotFoundException} when attempting to add a member to a group by a name that does not exist
      */
     public void testAddMemberOnNonExistentGroupThrows() throws Exception {
-        final JID needle = new JID("jane@example.org");
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
 

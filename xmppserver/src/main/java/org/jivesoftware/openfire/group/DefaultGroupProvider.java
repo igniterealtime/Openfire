@@ -369,7 +369,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_USER);
             pstmt.setString(1, groupName);
-            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.toString());
+            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.asBareJID().toString());
             pstmt.setInt(3, administrator ? 1 : 0);
             pstmt.executeUpdate();
         }

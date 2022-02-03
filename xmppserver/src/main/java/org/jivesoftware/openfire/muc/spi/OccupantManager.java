@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Community. All rights reserved.
+ * Copyright (C) 2021-2022 Ignite Realtime Community. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -608,6 +608,7 @@ public class OccupantManager implements MUCEventListener
         String nickname;
         JID realJID;
         Instant lastActive; // Only used on the local cluster node.
+        Instant lastPingRequest; // Only used on the local cluster node.
         TimerTask pendingPingTask; // Only used on the local cluster node.
 
         public Occupant(String roomName, String nickname, JID realJID) {
@@ -615,6 +616,7 @@ public class OccupantManager implements MUCEventListener
             this.nickname = nickname;
             this.realJID = realJID;
             this.lastActive = Instant.now();
+            this.lastPingRequest = null;
             this.pendingPingTask = null;
         }
 
@@ -651,12 +653,20 @@ public class OccupantManager implements MUCEventListener
         }
 
         @Nullable
+        public Instant getLastPingRequest() {
+            return lastPingRequest;
+        }
+
+        @Nullable
         public TimerTask getPendingPingTask() {
             return pendingPingTask;
         }
 
         public void setPendingPingTask(@Nullable TimerTask pendingPingTask) {
             this.pendingPingTask = pendingPingTask;
+            if (pendingPingTask != null) {
+                this.lastPingRequest = Instant.now();
+            }
         }
 
         @Override

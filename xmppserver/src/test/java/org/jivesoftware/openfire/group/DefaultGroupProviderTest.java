@@ -1957,4 +1957,25 @@ public class DefaultGroupProviderTest extends DBTestCase
         final Collection<String> result = provider.getGroupNames();
         assertEquals(0, result.size());
     }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#isReadOnly()} always returns false
+     */
+    public void testDefaultGroupProviderIsAlwaysWritable() throws Exception {
+        assertFalse(new DefaultGroupProvider().isReadOnly());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#isSearchSupported()} always returns true
+     */
+    public void testDefaultGroupProviderIsSearchable() throws Exception {
+        assertTrue(new DefaultGroupProvider().isSearchSupported());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#isSharingSupported()} ()} always returns true
+     */
+    public void testDefaultGroupProviderSupportsSharing() throws Exception {
+        assertTrue(new DefaultGroupProvider().isSharingSupported());
+    }
 }

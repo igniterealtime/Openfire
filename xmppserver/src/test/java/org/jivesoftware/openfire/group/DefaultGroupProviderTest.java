@@ -1709,6 +1709,21 @@ public class DefaultGroupProviderTest extends DBTestCase
     }
 
     /**
+     * Verifies that {@link DefaultGroupProvider#setDescription(String, String)} changes the description of a group
+     */
+    public void testSetDescriptionReplacesExistingDescription() throws Exception {
+        final String DESC = "The description of Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup("Test Group A");
+        provider.setDescription("Test Group A", "Old Description");
+
+        provider.setDescription("Test Group A", DESC);
+        final Group result = provider.getGroup("Test Group A");
+
+        assertEquals(DESC, result.getDescription());
+    }
+
+    /**
      * Verifies that {@link DefaultGroupProvider#setDescription(String, String)} sets the description of a group to an
      * empty string
      */

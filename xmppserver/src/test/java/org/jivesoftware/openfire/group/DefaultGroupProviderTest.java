@@ -1902,4 +1902,59 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         assertThrows(GroupNotFoundException.class, () -> provider.updateMember("Test Group B", needle, false));
     }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#deleteMember(String, JID)} remove a member from a group
+     */
+    public void testDeleteMember() throws Exception {
+        final String GROUP_NAME = "Test Group A";
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup(GROUP_NAME);
+        provider.addMember(GROUP_NAME, needle, false);
+
+        provider.deleteMember(GROUP_NAME, needle);
+        final Group result = provider.getGroup(GROUP_NAME);
+
+        assertEquals(0, result.getMembers().size());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#deleteMember(String, JID)} fails silently when removing a non-existent
+     * member from a group
+     */
+    public void testDeleteNonExistentMember() throws Exception {
+        final String GROUP_NAME = "Test Group A";
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup(GROUP_NAME);
+
+        try {
+            provider.deleteMember(GROUP_NAME, needle);
+        } catch (Throwable t){
+            throw new Exception("Exception deleting a non-existent group member. This should fail silently as a no-op.");
+        }
+        final Group result = provider.getGroup(GROUP_NAME);
+
+        assertEquals(0, result.getMembers().size());
+    }
+
+    /**
+     * Verifies that {@link DefaultGroupProvider#deleteMember(String, JID)} fails silently when removing a member from
+     * a non-existent group
+     */
+    public void testDeleteMemberFromNonExistentGroup() throws Exception {
+        final String GROUP_NAME = "Test Group A";
+        final JID needle = new JID("jane@" + Fixtures.XMPP_DOMAIN);
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+
+        try {
+            provider.deleteMember(GROUP_NAME, needle);
+        } catch (Throwable t){
+            throw new Exception("Exception deleting a group member from a non-existent group. This should fail silently as a no-op.");
+        }
+
+        final Collection<String> result = provider.getGroupNames();
+        assertEquals(0, result.size());
+    }
 }

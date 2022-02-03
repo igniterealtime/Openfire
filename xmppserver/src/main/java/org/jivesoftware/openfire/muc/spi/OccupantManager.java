@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.muc.cluster.OccupantRemovedTask;
 import org.jivesoftware.openfire.muc.cluster.OccupantUpdatedTask;
 import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
 import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,14 +39,7 @@ import javax.annotation.Nullable;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -177,6 +171,14 @@ public class OccupantManager implements MUCEventListener
                     // Clean up, don't leave behind empty set
                     nodesByOccupant.remove(oldOccupant);
                 }
+            }
+
+            // When an occupant is being pinged, but removed from the node, cancel the ping.
+            final TimerTask pendingPingTask = oldOccupant.getPendingPingTask();
+            if (pendingPingTask != null) {
+                Log.debug("Remove pending ping task for {} that is being deleted.", oldOccupant);
+                TaskEngine.getInstance().cancelScheduledTask(pendingPingTask);
+                oldOccupant.setPendingPingTask(null);
             }
         }
     }
@@ -606,12 +608,14 @@ public class OccupantManager implements MUCEventListener
         String nickname;
         JID realJID;
         Instant lastActive; // Only used on the local cluster node.
+        TimerTask pendingPingTask; // Only used on the local cluster node.
 
         public Occupant(String roomName, String nickname, JID realJID) {
             this.roomName = roomName;
             this.nickname = nickname;
             this.realJID = realJID;
             this.lastActive = Instant.now();
+            this.pendingPingTask = null;
         }
 
         public String getRoomName() {
@@ -644,6 +648,15 @@ public class OccupantManager implements MUCEventListener
 
         public void setLastActive(Instant lastActive) {
             this.lastActive = lastActive;
+        }
+
+        @Nullable
+        public TimerTask getPendingPingTask() {
+            return pendingPingTask;
+        }
+
+        public void setPendingPingTask(@Nullable TimerTask pendingPingTask) {
+            this.pendingPingTask = pendingPingTask;
         }
 
         @Override

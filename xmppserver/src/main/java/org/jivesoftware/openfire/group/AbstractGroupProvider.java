@@ -95,8 +95,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
      * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
-    public void updateMember(String groupName, JID user, boolean administrator)
-    {
+    public void updateMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException {
         if (isReadOnly()) {
             throw new UnsupportedOperationException("Cannot update members for read-only groups");
         }

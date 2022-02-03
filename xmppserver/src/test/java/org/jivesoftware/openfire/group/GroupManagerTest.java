@@ -247,7 +247,7 @@ public class GroupManagerTest {
         }
 
         @Override
-        public void updateMember(final String groupName, final JID user, final boolean administrator) {
+        public void updateMember(final String groupName, final JID user, final boolean administrator) throws GroupNotFoundException {
             mockGroupProvider.updateMember(groupName, user, administrator);
         }
 

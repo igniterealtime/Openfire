@@ -188,7 +188,7 @@ public interface GroupProvider {
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
-    void updateMember(String groupName, JID user, boolean administrator);
+    void updateMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException;
 
     /**
      * Deletes an entity from a group (optional operation).

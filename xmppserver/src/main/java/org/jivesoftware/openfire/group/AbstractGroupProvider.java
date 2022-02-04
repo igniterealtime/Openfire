@@ -59,10 +59,13 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     private static final String LOAD_SHARED_GROUPS =
             "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
             "AND propValue IS NOT NULL AND propValue <> 'nobody'";
+    private static final String HAS_SHARED_GROUPS_PARTIAL =
+            "WHERE EXISTS (SELECT 1 FROM ofGroupProp WHERE name='sharedRoster.showInRoster' AND propValue IS NOT NULL AND propValue <> 'nobody')";
     private static final String LOAD_PROPERTIES =
             "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
 
     private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
+    private static final String HAS_SHARED_GROUPS_KEY = "HAS_SHARED_GROUPS";
     private static final String PUBLIC_GROUPS = "PUBLIC_GROUPS";
     private static final String USER_SHARED_GROUPS_KEY = "USER_SHARED_GROUPS";
     private static final String GROUP_SHARED_GROUPS_KEY = "GROUP_SHARED_GROUPS";
@@ -239,6 +242,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
                     groupNames.add(rs.getString(1));
                 }
                 saveSharedGroupsInCache(groupNames);
+                saveHasSharedGroupsInCache(!groupNames.isEmpty());
             } catch (SQLException sqle) {
                 Log.error(sqle.getMessage(), sqle);
             } finally {
@@ -248,6 +252,46 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         return groupNames;
     }
 
+    /**
+     * Checks if any shared groups exists. No distinction is made between the type of shared group: any group that is
+     * shared (with anything other than 'nobody') qualifies.
+     *
+     * @return true if at least one shared group exists, otherwise false.
+     */
+    public boolean hasSharedGroups() {
+        Boolean result;
+        synchronized (sharedGroupMetaCache) {
+            result = getHasSharedGroupsFromCache();
+            if (result != null) {
+                return result;
+            }
+
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try {
+                con = DbConnectionManager.getConnection();
+                if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.oracle) {
+                    pstmt = con.prepareStatement("SELECT 1 FROM dual " + HAS_SHARED_GROUPS_PARTIAL);
+                } else {
+                    pstmt = con.prepareStatement("SELECT 1 " + HAS_SHARED_GROUPS_PARTIAL);
+                }
+                rs = pstmt.executeQuery();
+                result = rs.next();
+                saveHasSharedGroupsInCache(result);
+                if (!result) {
+                    saveSharedGroupsInCache(new HashSet<>());
+                }
+                return result;
+            } catch (SQLException sqle) {
+                Log.error(sqle.getMessage(), sqle);
+                return true; // If the query above fails, lets not skip shared group lookups.
+            } finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
+            }
+        }
+    }
+
     @Override
     public Collection<String> getSharedGroupNames(JID user) {
         HashSet<String> groupNames;
@@ -255,6 +299,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             groupNames = getSharedGroupsForUserFromCache(user.getNode());
             if (groupNames == null) {
                 groupNames = new HashSet<>();
+
+                if (!hasSharedGroups()) {
+                    // When there are no shared groups in the database at all, don't bother looking up specific ones.
+                    return groupNames;
+                }
+
                 if (!getSharedGroupNames().isEmpty()) {
                     for (String userGroup : getGroupNames(user)) {
                         groupNames.addAll(getVisibleGroupNames(userGroup));
@@ -276,6 +326,11 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             groupNames = getSharedGroupsForGroupFromCache(userGroup);
             if (groupNames != null) {
                 return groupNames;
+            }
+
+            if (!hasSharedGroups()) {
+                // When there are no shared groups in the database at all, don't bother looking up specific ones.
+                return new HashSet<>();
             }
 
             groupNames = getVisibleGroupNames(userGroup, new HashSet<>());
@@ -355,6 +410,12 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             }
 
             groupNames = new HashSet<>();
+
+            if (!hasSharedGroups()) {
+                // When there are no shared groups in the database at all, don't bother looking up specific ones.
+                return groupNames;
+            }
+
             Connection con = null;
             PreparedStatement pstmt = null;
             ResultSet rs = null;
@@ -436,6 +497,24 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     private void saveSharedGroupsInCache(final HashSet<String> groupNames) {
         synchronized (sharedGroupMetaCache) {
             sharedGroupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Boolean getHasSharedGroupsFromCache() {
+        synchronized (sharedGroupMetaCache) {
+            final Object value = sharedGroupMetaCache.get(HAS_SHARED_GROUPS_KEY);
+            if (value == null) {
+                return null;
+            } else {
+                return (Boolean) value;
+            }
+        }
+    }
+
+    private void saveHasSharedGroupsInCache(final boolean value) {
+        synchronized (sharedGroupMetaCache) {
+            sharedGroupMetaCache.put(HAS_SHARED_GROUPS_KEY, value);
         }
     }
 

@@ -23,6 +23,7 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.time.Duration" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -54,7 +55,8 @@
     // Get muc server
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
+    Map<String, String> warnings = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -191,6 +193,11 @@
         }
     }
 
+    if (mucService != null && mucService.getIdleUserPingThreshold() != null && XMPPServer.getInstance().getSessionManager().getSessionDetachTime() > mucService.getIdleUserPingThreshold().dividedBy(4).toMillis()) {
+        warnings.put("pingtime", "shorter-than-sm");
+    }
+
+    pageContext.setAttribute("warnings", warnings);
     pageContext.setAttribute("mucname", mucname);
     pageContext.setAttribute("mucService", mucService);
 %>
@@ -203,11 +210,6 @@
 <meta name="helpPage" content="edit_idle_user_settings.html"/>
 </head>
 <body>
-
-<p>
-<fmt:message key="muc.tasks.info" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
-</p>
 
 <%  if (idleSettingSuccess || logSettingSuccess) { %>
 
@@ -232,28 +234,44 @@
 
 <%  } %>
 
-<% if (errors.size() != 0) {  %>
+<!-- Display all errors -->
+<c:forEach var="err" items="${errors}">
+    <admin:infobox type="error">
+        <c:choose>
+            <c:when test="${err.key eq 'idletime'}"><fmt:message key="muc.tasks.valid_idel_minutes" /></c:when>
+            <c:when test="${err.key eq 'pingtime'}"><fmt:message key="muc.tasks.valid_idel_minutes" /></c:when>
+            <c:when test="${err.key eq 'maxBatchSize'}"><fmt:message key="muc.tasks.valid_batchsize" /></c:when>
+            <c:when test="${err.key eq 'maxBatchInterval'}"><fmt:message key="muc.tasks.valid_batchinterval" /></c:when>
+            <c:when test="${err.key eq 'batchGrace'}"><fmt:message key="muc.tasks.valid_batchgrace"/></c:when>
+            <c:otherwise>
+                <c:if test="${not empty err.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                </c:if>
+                (<c:out value="${err.key}"/>)
+            </c:otherwise>
+        </c:choose>
+    </admin:infobox>
+</c:forEach>
 
-    <table class="jive-error-message" cellpadding="3" cellspacing="0" border="0" width="350"> <tr valign="top">
-    <td width="1%"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-    <td width="99%" class="jive-error-text">
+<!-- Display all warnings -->
+<c:forEach var="warning" items="${warnings}">
+    <admin:infobox type="warning">
+        <c:choose>
+            <c:when test="${warning.key eq 'pingtime' and warning.value eq 'shorter-than-sm' }"><fmt:message key="muc.tasks.pingtime_short" /></c:when>
+            <c:otherwise>
+                <c:if test="${not empty warning.value}">
+                    <fmt:message key="admin.error"/>: <c:out value="${warning.value}"/>
+                </c:if>
+                (<c:out value="${warning.key}"/>)
+            </c:otherwise>
+        </c:choose>
+    </admin:infobox>
+</c:forEach>
 
-        <% if (errors.get("idletime") != null || errors.get("pingtime") != null) { %>
-            <fmt:message key="muc.tasks.valid_idel_minutes" />
-        <% } else if (errors.get("maxBatchSize") != null) { %>
-            <fmt:message key="muc.tasks.valid_batchsize" />
-        <% } else if (errors.get("maxBatchInterval") != null) { %>
-            <fmt:message key="muc.tasks.valid_batchinterval" />
-        <% } else if (errors.get("batchGrace") != null) { %>
-            <fmt:message key="muc.tasks.valid_batchgrace" />
-        <%  } %>
-
-    </td>
-    </tr>
-    </table><br>
-
-<% } %>
-
+<p>
+    <fmt:message key="muc.tasks.info" />
+    <fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
+</p>
 
 <!-- BEGIN 'Idle User Settings' -->
 <form action="muc-tasks.jsp?idleSettings" method="post">

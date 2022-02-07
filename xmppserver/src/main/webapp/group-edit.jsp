@@ -424,7 +424,7 @@
                     <label for="gname"><fmt:message key="group.create.group_name" /></label> *
                 </td>
                 <td width="99%">
-                    <input type="text" name="name" size="75" maxlength="75" value="${fn:escapeXml(group.name)}" id="gname" ${webManager.groupManager.readOnly ? 'readonly' : ''} />
+                    <input type="text" name="name" size="50" maxlength="50" value="${fn:escapeXml(group.name)}" id="gname" ${webManager.groupManager.readOnly ? 'readonly' : ''} />
                 </td>
             </tr>
             <c:if test="${not empty errors['name'] or not empty errors['alreadyExists']}">
@@ -443,7 +443,7 @@
                     <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
                 </td>
                 <td width="99%">
-                    <textarea name="description" cols="75" rows="3" id="gdesc" ${webManager.groupManager.readOnly ? 'readonly' : ''}><c:out value="${group.description}"/></textarea>
+                    <textarea name="description" cols="75" rows="3" maxlength="255" id="gdesc" ${webManager.groupManager.readOnly ? 'readonly' : ''}><c:out value="${group.description}"/></textarea>
                 </td>
             </tr>
             <c:if test="${not empty errors['description']}">

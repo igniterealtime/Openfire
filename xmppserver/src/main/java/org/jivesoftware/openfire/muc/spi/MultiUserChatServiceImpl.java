@@ -2459,7 +2459,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.ping");
-        userIdlePing = Duration.ofMinutes(8);
+        userIdlePing = Duration.ofMinutes(60);
         if (value != null) {
             try {
                 final long millis = Long.parseLong(value);

@@ -228,7 +228,7 @@
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *
         </td>
         <td width="99%">
-            <input type="text" name="name" size="30" maxlength="75"
+            <input type="text" name="name" size="30" maxlength="50"
              value="<%= ((name != null) ? StringUtils.escapeForXML(name) : "") %>" id="gname">
         </td>
     </tr>
@@ -253,7 +253,7 @@
             <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
         </td>
         <td width="99%">
-            <textarea name="description" cols="30" rows="3" id="gdesc"
+            <textarea name="description" cols="30" rows="3" maxlength="255" id="gdesc"
              ><%= ((description != null) ? StringUtils.escapeHTMLTags(description) : "") %></textarea>
         </td>
     </tr>

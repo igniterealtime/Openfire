@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.group;
 
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.dbunit.DBTestCase;
 import org.dbunit.PropertiesBasedJdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;

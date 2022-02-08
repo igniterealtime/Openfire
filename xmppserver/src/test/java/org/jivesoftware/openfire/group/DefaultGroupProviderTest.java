@@ -1835,7 +1835,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         try {
             provider.addMember("Test Group A", needle, false);
         } catch (Throwable t) {
-            throw new Exception("Failed to add a member for a second time. This should succeed as a no-op");
+            fail("Failed to add a member for a second time. This should succeed as a no-op");
         }
         final Group result = provider.getGroup("Test Group A");
 
@@ -1930,7 +1930,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         try {
             provider.deleteMember(GROUP_NAME, needle);
         } catch (Throwable t){
-            throw new Exception("Exception deleting a non-existent group member. This should fail silently as a no-op.");
+            fail("Exception deleting a non-existent group member. This should fail silently as a no-op.");
         }
         final Group result = provider.getGroup(GROUP_NAME);
 
@@ -1949,7 +1949,7 @@ public class DefaultGroupProviderTest extends DBTestCase
         try {
             provider.deleteMember(GROUP_NAME, needle);
         } catch (Throwable t){
-            throw new Exception("Exception deleting a group member from a non-existent group. This should fail silently as a no-op.");
+            fail("Exception deleting a group member from a non-existent group. This should fail silently as a no-op.");
         }
 
         final Collection<String> result = provider.getGroupNames();

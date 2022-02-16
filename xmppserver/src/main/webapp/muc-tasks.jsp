@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software. 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -288,7 +288,7 @@
                 <td width="99%">
                     <label for="cb01"><fmt:message key="muc.tasks.ping_user" /></label>
                     <input type="number" min="1" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
-                           value="${empty mucService.idleUserPingThreshold ? '8' : mucService.idleUserPingThreshold.toMinutes()}">
+                           value="${empty mucService.idleUserPingThreshold ? '60' : mucService.idleUserPingThreshold.toMinutes()}">
                     <fmt:message key="global.minutes" />.
                 </td>
             </tr>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,11 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
@@ -224,7 +224,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     /**
      * Purge timer delay is configurable, but not less than 60 seconds (default: 5 mins)
      */
-    private static long purgeTimerDelay = Math.max(60000, JiveGlobals.getIntProperty("xmpp.pubsub.purge.timer", 300)*1000);
+    private static Duration purgeTimerDelay = Duration.ofSeconds(Math.max(60, JiveGlobals.getIntProperty("xmpp.pubsub.purge.timer", 300)));
 
     /**
      * Maximum number of rows that will be fetched from the published items table.
@@ -249,12 +249,12 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             // increase the timer delay when running in cluster mode
             // because other members are also running the purge task
             if ( ClusterManager.isClusteringEnabled()) {
-                purgeTimerDelay = purgeTimerDelay*2;
+                purgeTimerDelay = purgeTimerDelay.multipliedBy(2);
             }
             TaskEngine.getInstance().schedule(new TimerTask() {
                 @Override
                 public void run() { purgeItems(); }
-            }, Math.abs(prng.nextLong())%purgeTimerDelay, purgeTimerDelay);
+            }, Duration.ofMillis(Math.abs(prng.nextLong())%purgeTimerDelay.toMillis()), purgeTimerDelay);
 
         } catch (Exception ex) {
             log.error("Failed to initialize pubsub maintenance tasks", ex);
@@ -989,23 +989,6 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    /**
-     * Update the DB with the new affiliation of the user in the node.
-     *
-     * @param node      The node where the affiliation of the user was updated.
-     * @param affiliate The new affiliation of the user in the node.
-     * @param create    True if this is a new affiliate.
-     * @deprecated replaced by {@link #createAffiliation(Node, NodeAffiliate)} and {@link #updateAffiliation(Node, NodeAffiliate)}
-     */
-    @Deprecated
-    public void saveAffiliation(Node node, NodeAffiliate affiliate, boolean create) {
-        if (create) {
-            createAffiliation( node, affiliate );
-        } else {
-            updateAffiliation( node, affiliate );
-        }
-    }
-
     @Override
     public void createAffiliation(Node node, NodeAffiliate affiliate)
     {
@@ -1069,23 +1052,6 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
-    /**
-     * Updates the DB with the new subscription of the user to the node.
-     *
-     * @param node      The node where the user has subscribed to.
-     * @param subscription The new subscription of the user to the node.
-     * @param create    True if this is a new affiliate.
-     * @deprecated Replaced by {@link #createSubscription(Node, NodeSubscription)} and {@link #updateSubscription(Node, NodeSubscription)}
-     */
-    @Deprecated
-    public void saveSubscription(Node node, NodeSubscription subscription, boolean create) {
-        if (create) {
-            createSubscription( node, subscription );
-        } else {
-            updateSubscription( node, subscription );
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2021-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -516,26 +516,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      */
     public MUCRole getRole() {
         return role;
-    }
-
-    /**
-     * Obtain the first role of a given user by nickname.
-     *
-     * @param nickname The nickname of the user you'd like to obtain (cannot be {@code null})
-     * @return The user's role in the room
-     * @throws UserNotFoundException If there is no user with the given nickname
-     * @deprecated Prefer {@link #getOccupantsByNickname(String)} instead (a user may be connected more than once)
-     */
-    @Deprecated
-    public MUCRole getOccupant(String nickname) throws UserNotFoundException {
-        if (nickname == null) {
-            throw new UserNotFoundException();
-        }
-        List<MUCRole> roles = getOccupantsByNickname(nickname);
-        if (roles != null && roles.size() > 0) {
-            return roles.get(0);
-        }
-        throw new UserNotFoundException();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 package org.jivesoftware.openfire.session;
-
-import java.io.IOException;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -43,6 +34,15 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+
+import java.io.IOException;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Server-to-server communication is done using two TCP connections between the servers. One
@@ -175,7 +175,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 // Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
                 sb.append("<stream:features>");
 
-                if (!directTLS && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true)) {
+                if (!directTLS && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_POLICY, true)) {
                     sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
                     if (!ServerDialback.isEnabled()) {
                         // Server dialback is disabled so TLS is required

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package org.jivesoftware.openfire.net;
-
-import org.jivesoftware.openfire.ServerPort;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -61,15 +59,6 @@ public class SocketAcceptThread extends Thread {
      */
     public int getPort() {
         return tcpPort;
-    }
-
-    /**
-     * Returns information about the port on which the server is listening for connections.
-     *
-     * @return information about the port on which the server is listening for connections.
-     */
-    public ServerPort getServerPort() {
-        return new ServerPort(tcpPort, null, bindInterface.getHostName(), directTLS, null, ServerPort.Type.server);
     }
 
     /**

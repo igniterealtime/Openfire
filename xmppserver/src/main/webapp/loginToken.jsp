@@ -6,9 +6,6 @@
 <%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
 <%@ page import="org.jivesoftware.openfire.auth.AuthToken" %>
 <%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
-<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
-<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
-<%@ page import="org.jivesoftware.util.Base64" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -98,21 +95,12 @@
 
     if (login) {
         try {
-            if (secret != null && nodeID != null) {
-                if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager
-                    .isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
-                    authToken = new AuthToken(token);
-                } else {
-                    throw new UnauthorizedException("SSO failed. Invalid secret or node ID was provided");
-                }
+            // Check that a token was provided before trying to verify credentials
+            if (token != null) {
+                authToken = AuthFactory.checkOneTimeAccessToken(token);
+                session = admin.invalidateSession();
             } else {
-                // Check that a username was provided before trying to verify credentials
-                if (token != null) {
-                    authToken = AuthFactory.checkOneTimeAccessToken(token);
-                    session = admin.invalidateSession();
-                } else {
-                    errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.wrongtoken"));
-                }
+                errors.put("unauthorized", LocaleUtils.getLocalizedString("login.failed.wrongtoken"));
             }
             if (errors.isEmpty()) {
                 LoginLimitManager.getInstance().recordSuccessfulAttempt(token, request.getRemoteAddr());

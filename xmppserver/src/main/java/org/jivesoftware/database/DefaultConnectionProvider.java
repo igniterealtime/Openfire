@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,17 @@
 
 package org.jivesoftware.database;
 
-import org.apache.commons.dbcp2.ConnectionFactory;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
-import org.apache.commons.dbcp2.PoolingDataSource;
+import org.apache.commons.dbcp2.*;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.time.Duration;
 
 /**
  * Default Jive connection provider, which uses an internal connection pool.<p>
@@ -49,18 +46,18 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     private String testSQL = "";
     private Boolean testBeforeUse = true;
     private Boolean testAfterUse = true;
-    private int testTimeout = (int) JiveConstants.SECOND / 2;
-    private long timeBetweenEvictionRuns = 30 * JiveConstants.SECOND;
-    private long minIdleTime = 15 * JiveConstants.MINUTE;
-    private long maxWaitTime = (int) JiveConstants.SECOND / 2;
+    private Duration testTimeout = Duration.ofMillis(500);
+    private Duration timeBetweenEvictionRuns = Duration.ofSeconds(30);
+    private Duration minIdleTime = Duration.ofMinutes(15);
+    private Duration maxWaitTime = Duration.ofMillis(500);
     private long refusedCount = 0;
     private PoolingDataSource<PoolableConnection> dataSource;
     private GenericObjectPool<PoolableConnection> connectionPool;
 
     /**
-     * Maximum time a connection can be open before it's reopened (in days)
+     * Maximum time a connection can be open before it's reopened.
      */
-    private double connectionTimeout = 0.5;
+    private Duration connectionTimeout = Duration.ofHours(12);
 
     /**
      * MySQL doesn't currently support Unicode. However, a workaround is
@@ -107,8 +104,8 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, username, password);
         final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         poolableConnectionFactory.setValidationQuery(testSQL);
-        poolableConnectionFactory.setValidationQueryTimeout(testTimeout);
-        poolableConnectionFactory.setMaxConnLifetimeMillis((long) (connectionTimeout * JiveConstants.DAY));
+        poolableConnectionFactory.setValidationQueryTimeout((int)testTimeout.getSeconds());
+        poolableConnectionFactory.setMaxConnLifetimeMillis((long) connectionTimeout.toMillis());
 
         final GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
         poolConfig.setTestOnBorrow(testBeforeUse);
@@ -119,9 +116,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             poolConfig.setMaxIdle(minConnections);
         }
         poolConfig.setMaxTotal(maxConnections);
-        poolConfig.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRuns);
-        poolConfig.setSoftMinEvictableIdleTimeMillis(minIdleTime);
-        poolConfig.setMaxWaitMillis(maxWaitTime);
+        poolConfig.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRuns.toMillis());
+        poolConfig.setSoftMinEvictableIdleTimeMillis(minIdleTime.toMillis());
+        poolConfig.setMaxWaitMillis(maxWaitTime.toMillis());
         connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
         poolableConnectionFactory.setPool(connectionPool);
         dataSource = new PoolingDataSource<>(connectionPool);
@@ -273,19 +270,16 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      *
      * @return the amount of time in days between connection recycles.
      */
-    public double getConnectionTimeout() {
+    public Duration getConnectionTimeout() {
         return connectionTimeout;
     }
 
     /**
-     * Sets the amount of time between connection recycles in days. For
-     * example, a value of .5 would correspond to recycling the connections
-     * in the pool once every half day.
+     * Sets the amount of time between connection recycles.
      *
-     * @param connectionTimeout the amount of time in days between connection
-     *                          recycles.
+     * @param connectionTimeout the amount of time between connection recycles.
      */
-    public void setConnectionTimeout(double connectionTimeout) {
+    public void setConnectionTimeout(Duration connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
         saveProperties();
     }
@@ -299,16 +293,16 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         return testSQL;
     }
 
-    public int getTestTimeout() {
+    public Duration getTestTimeout() {
         return testTimeout;
     }
 
-    public long getTimeBetweenEvictionRunsMillis() {
-        return connectionPool.getTimeBetweenEvictionRunsMillis();
+    public Duration getTimeBetweenEvictionRunsMillis() {
+        return Duration.ofMillis(connectionPool.getTimeBetweenEvictionRunsMillis());
     }
 
-    public long getMinIdleTime() {
-        return connectionPool.getSoftMinEvictableIdleTimeMillis();
+    public Duration getMinIdleTime() {
+        return Duration.ofMillis(connectionPool.getSoftMinEvictableIdleTimeMillis());
     }
 
     public int getActiveConnections() {
@@ -327,16 +321,16 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         return refusedCount;
     }
 
-    public long getMaxWaitTime() {
-        return connectionPool.getMaxWaitMillis();
+    public Duration getMaxWaitTime() {
+        return Duration.ofMillis(connectionPool.getMaxWaitMillis());
     }
 
-    public long getMeanBorrowWaitTime() {
-        return connectionPool.getMeanBorrowWaitTimeMillis();
+    public Duration getMeanBorrowWaitTime() {
+        return Duration.ofMillis(connectionPool.getMeanBorrowWaitTimeMillis());
     }
 
-    public long getMaxBorrowWaitTime() {
-        return connectionPool.getMaxBorrowWaitTimeMillis();
+    public Duration getMaxBorrowWaitTime() {
+        return Duration.ofMillis(connectionPool.getMaxBorrowWaitTimeMillis());
     }
 
     /**
@@ -408,10 +402,10 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         testSQL = JiveGlobals.getXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(driver));
         testBeforeUse = JiveGlobals.getXMLProperty("database.defaultProvider.testBeforeUse", false);
         testAfterUse = JiveGlobals.getXMLProperty("database.defaultProvider.testAfterUse", false);
-        testTimeout = JiveGlobals.getXMLProperty("database.defaultProvider.testTimeout", (int) JiveConstants.SECOND / 2);
-        timeBetweenEvictionRuns = JiveGlobals.getXMLProperty("database.defaultProvider.timeBetweenEvictionRuns", (int) (30 * JiveConstants.SECOND));
-        minIdleTime = JiveGlobals.getXMLProperty("database.defaultProvider.minIdleTime", (int) (15 * JiveConstants.MINUTE));
-        maxWaitTime = JiveGlobals.getXMLProperty("database.defaultProvider.maxWaitTime", (int) JiveConstants.SECOND / 2);
+        testTimeout = Duration.ofMillis(JiveGlobals.getXMLProperty("database.defaultProvider.testTimeout", (int) Duration.ofMillis(500).toMillis()));
+        timeBetweenEvictionRuns = Duration.ofMillis(JiveGlobals.getXMLProperty("database.defaultProvider.timeBetweenEvictionRuns", (int) (Duration.ofSeconds(30).toMillis())));
+        minIdleTime = Duration.ofMillis(JiveGlobals.getXMLProperty("database.defaultProvider.minIdleTime", (int) (Duration.ofMinutes(15)).toMillis()));
+        maxWaitTime = Duration.ofMillis(JiveGlobals.getXMLProperty("database.defaultProvider.maxWaitTime", (int) Duration.ofMillis(500).toMillis()));
 
         // See if we should use Unicode under MySQL
         mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));
@@ -423,7 +417,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
                 maxConnections = Integer.parseInt(maxCons);
             }
             if (conTimeout != null) {
-                connectionTimeout = Double.parseDouble(conTimeout);
+                connectionTimeout = Duration.ofMinutes( Math.round(Double.parseDouble(conTimeout) * 24 * 60));
             }
         }
         catch (Exception e) {
@@ -451,6 +445,6 @@ public class DefaultConnectionProvider implements ConnectionProvider {
 
         JiveGlobals.setXMLProperty("database.defaultProvider.minConnections", Integer.toString(minConnections));
         JiveGlobals.setXMLProperty("database.defaultProvider.maxConnections", Integer.toString(maxConnections));
-        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout", Double.toString(connectionTimeout));
+        JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout", new DecimalFormat("#.0").format(connectionTimeout.toMinutes() / 60.0 / 24));
     }
 }

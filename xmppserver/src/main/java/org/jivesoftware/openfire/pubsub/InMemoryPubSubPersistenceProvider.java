@@ -373,32 +373,6 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
         return lastPublishedItem;
     }
 
-    @Deprecated
-    public void saveSubscription( Node node, NodeSubscription subscription, boolean create )
-    {
-        if ( create )
-        {
-            createSubscription( node, subscription );
-        }
-        else
-        {
-            updateSubscription( node, subscription );
-        }
-    }
-
-    @Deprecated
-    public void saveAffiliation( Node node, NodeAffiliate affiliate, boolean create )
-    {
-        if ( create )
-        {
-            createAffiliation( node, affiliate );
-        }
-        else
-        {
-            updateAffiliation( node, affiliate );
-        }
-    }
-
     @Override
     public void purgeNode( LeafNode leafNode )
     {

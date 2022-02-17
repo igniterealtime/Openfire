@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package org.jivesoftware.openfire.cluster;
 
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -93,7 +93,7 @@ public class NodeID implements Externalizable {
     
     @Override
     public String toString() {
-        return StringUtils.getString(nodeID);
+        return new String(nodeID, StandardCharsets.UTF_8);
     }
 
     public byte[] toByteArray() {

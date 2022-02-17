@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, Ignite Realtime Foundation 2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A servlet filter that plugin classes can use to dynamically register and un-register filter logic.
- *
- * The original, now deprecated, filter logic that each plugin can register was fairly limited; instead of having full
- * control over the filter chain, each instance of {@link SimpleFilter} only has the ability to use the ServletRequest
- * and ServletResponse objects and then return {@code true} if further filters in the chain should be run.
- *
- * The new, non-deprecated functionality allows for regular {@link Filter} instances to be registered with this class,
- * which removes much of the limitations that was present in the SimpleFilter approach.
  *
  * This implementation assumes, but does not enforce, that filters installed by plugins are applied to URL patterns that
  * match the plugin. When filters installed by different plugins are applied to the same URL, the behavior of this
@@ -50,22 +42,7 @@ public class PluginFilter implements Filter {
 
     private static final Logger Log = LoggerFactory.getLogger( PluginFilter.class );
 
-    @Deprecated
-    private static List<SimpleFilter> pluginFilters = new CopyOnWriteArrayList<>();
-
-    private static Map<String, List<Filter>> filters = new CopyOnWriteMap<>();
-
-    /**
-     * Adds a filter to the list of filters that will be run on every request.
-     * This method should be called by plugins when starting up.
-     *
-     * @param filter the filter.
-     * @deprecated Replaced by {@link #addPluginFilter(String, Filter)}
-     */
-    @Deprecated
-    public static void addPluginFilter(SimpleFilter filter) {
-        pluginFilters.add(filter);
-    }
+    private static final Map<String, List<Filter>> filters = new CopyOnWriteMap<>();
 
     /**
      * Adds a filter to the list of filters that will be run on every request of which the URL matches the URL that
@@ -88,7 +65,7 @@ public class PluginFilter implements Filter {
         }
         if ( !filters.containsKey( filterUrl ) )
         {
-            filters.put( filterUrl, new ArrayList<Filter>() );
+            filters.put( filterUrl, new ArrayList<>() );
         }
 
         final List<Filter> urlFilters = PluginFilter.filters.get( filterUrl );
@@ -101,18 +78,6 @@ public class PluginFilter implements Filter {
             urlFilters.add( filter );
             Log.debug( "Added filter '{}' for URL '{}'", filter, filterUrl );
         }
-    }
-
-    /**
-     * Removes a filter from the list of filters that will be run on every request.
-     * This method should be called by plugins when shutting down.
-     *
-     * @param filter the filter.
-     * @deprecated
-     */
-    @Deprecated
-    public static void removePluginFilter(SimpleFilter filter) {
-        pluginFilters.remove(filter);
     }
 
     /**
@@ -174,98 +139,46 @@ public class PluginFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
             FilterChain filterChain) throws IOException, ServletException
     {
-        boolean continueChain = true;
-        // Process each of the (deprecated) SimplePlugin filters.
-        for ( SimpleFilter filter : pluginFilters ) {
-            Log.trace( "(deprecated) Executing wrapped simple filter '{}'...", filter );
-            if (!filter.doFilter(servletRequest, servletResponse)) {
-                Log.debug( "The simple filter returned false so no further filters in the chain should be run." );
-                continueChain = false;
-                break;
-            }
-        }
-
-        // Process the 'regular' servlet filters.
-        if ( continueChain )
+        if ( servletRequest instanceof HttpServletRequest )
         {
-            if ( servletRequest instanceof HttpServletRequest )
+            final HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+            final String requestPath = ( httpServletRequest.getContextPath() + httpServletRequest.getServletPath() + httpServletRequest.getPathInfo() ).toLowerCase();
+
+            final List<Filter> applicableFilters = new ArrayList<>();
+            for ( final Map.Entry<String, List<Filter>> entry : filters.entrySet() )
             {
-                final HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
-                final String requestPath = ( httpServletRequest.getContextPath() + httpServletRequest.getServletPath() + httpServletRequest.getPathInfo() ).toLowerCase();
-
-                final List<Filter> applicableFilters = new ArrayList<>();
-                for ( final Map.Entry<String, List<Filter>> entry : filters.entrySet() )
+                String filterUrl = entry.getKey();
+                if ( filterUrl.endsWith( "*" ))
                 {
-                    String filterUrl = entry.getKey();
-                    if ( filterUrl.endsWith( "*" ))
-                    {
-                        filterUrl = filterUrl.substring( 0, filterUrl.length() -1 );
-                    }
-                    filterUrl = filterUrl.toLowerCase();
-
-                    if ( requestPath.startsWith( filterUrl ) )
-                    {
-                        for ( final Filter filter : entry.getValue() )
-                        {
-                            applicableFilters.add( filter );
-                        }
-                    }
+                    filterUrl = filterUrl.substring( 0, filterUrl.length() -1 );
                 }
-                if ( !applicableFilters.isEmpty() )
+                filterUrl = filterUrl.toLowerCase();
+
+                if ( requestPath.startsWith( filterUrl ) )
                 {
-                    Log.debug( "Wrapping filter chain in order to run plugin-specific filters." );
-                    filterChain = new FilterChainInjector( filterChain, applicableFilters );
+                    applicableFilters.addAll(entry.getValue());
                 }
             }
-            else
+            if ( !applicableFilters.isEmpty() )
             {
-                Log.warn( "ServletRequest is not an instance of an HttpServletRequest." );
+                Log.debug( "Wrapping filter chain in order to run plugin-specific filters." );
+                filterChain = new FilterChainInjector( filterChain, applicableFilters );
             }
-
-            // Plugin filtering is done. Progress down the filter chain that was initially provided.
-            filterChain.doFilter(servletRequest, servletResponse);
         }
+        else
+        {
+            Log.warn( "ServletRequest is not an instance of an HttpServletRequest." );
+        }
+
+        // Plugin filtering is done. Progress down the filter chain that was initially provided.
+        filterChain.doFilter(servletRequest, servletResponse);
     }
 
     @Override
     public void destroy() {
         // If the destroy method is being called, the Openfire instance is being shutdown.
         // Therefore, clear out the list of plugin filters.
-        pluginFilters.clear();
         filters.clear();
-    }
-
-    /**
-     * A simplified version of a servlet filter. Instead of having full control
-     * over the filter chain, a simple filter can only control whether further
-     * filters in the chain are run.
-     *
-     * @deprecated Use {@link Filter} instead.
-     */
-    @Deprecated
-    public interface SimpleFilter {
-
-        /**
-         * The doFilter method of the Filter is called by the PluginFilter each time a
-         * request/response pair is passed through the chain due to a client request
-         * for a resource at the end of the chain. This method should return {@code true} if
-         * the additional filters in the chain should be processed or {@code false}
-         * if no additional filters should be run.<p>
-         *
-         * Note that the filter will apply to all requests for JSP pages in the admin console
-         * and not just requests in the respective plugins. To only apply filtering to
-         * individual plugins, examine the context path of the request and only filter
-         * relevant requests.
-         *
-         * @param request the servlet request.
-         * @param response the servlet response
-         * @throws IOException if an IOException occurs.
-         * @throws ServletException if a servlet exception occurs.
-         * @return true if further filters in the chain should be run.
-         */
-        boolean doFilter( ServletRequest request, ServletResponse response )
-                throws IOException, ServletException;
-
     }
 
     /**

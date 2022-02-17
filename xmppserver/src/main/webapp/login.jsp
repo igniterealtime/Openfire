@@ -108,7 +108,7 @@
         try {
             if (secret != null && nodeID != null) {
                 if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
-                    authToken = new AuthToken(loginUsername);
+                    authToken = AuthToken.generateUserToken(loginUsername);
                 }
                 else {
                     throw new UnauthorizedException("SSO failed. Invalid secret or node ID was provided");

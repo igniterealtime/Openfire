@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.List"%>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <%  webManager.init(request, response, session, application, out); %>
@@ -82,13 +83,13 @@
         // If no errors, continue:
         if (errors.isEmpty()) {
             if (!managerEnabled) {
-                connectionManager.enableConnectionManagerListener(false);
+                connectionManager.enable(ConnectionType.CONNECTION_MANAGER, false, false);
                 // Log the event
                 webManager.logEvent("disabled connection manager settings", null);
             }
             else {
-                connectionManager.enableConnectionManagerListener(true);
-                connectionManager.setConnectionManagerListenerPort(port);
+                connectionManager.enable(ConnectionType.CONNECTION_MANAGER, false, true);
+                connectionManager.setPort(ConnectionType.CONNECTION_MANAGER, false, port);
 
                 // Get hash value of existing default secret
                 String existingHashDefaultSecret = "";
@@ -120,13 +121,13 @@
 
     // Set page vars
     if (errors.size() == 0) {
-        managerEnabled = connectionManager.isConnectionManagerListenerEnabled();
-        port = connectionManager.getConnectionManagerListenerPort();
+        managerEnabled = connectionManager.isEnabled(ConnectionType.CONNECTION_MANAGER, false);
+        port = connectionManager.getPort(ConnectionType.CONNECTION_MANAGER, false);
         defaultSecret = ConnectionMultiplexerManager.getDefaultSecret();
     }
     else {
         if (port == 0) {
-            port = connectionManager.getConnectionManagerListenerPort();
+            port = connectionManager.getPort(ConnectionType.CONNECTION_MANAGER, false);
         }
         if (defaultSecret == null) {
             defaultSecret = ConnectionMultiplexerManager.getDefaultSecret();

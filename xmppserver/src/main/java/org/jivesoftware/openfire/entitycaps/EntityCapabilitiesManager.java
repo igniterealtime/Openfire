@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,17 +161,6 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         UserEventDispatcher.removeListener( this );
         allUserCapabilitiesListeners.clear();
         userSpecificCapabilitiesListener.clear();
-    }
-
-    /**
-     * Returns the unique instance of this class.
-     *
-     * @return the unique instance of this class.
-     * @deprecated Replaced by {@link XMPPServer#getEntityCapabilitiesManager}
-     */
-    @Deprecated
-    public static EntityCapabilitiesManager getInstance() {
-        return XMPPServer.getInstance().getEntityCapabilitiesManager();
     }
 
     public void process(Presence packet) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire;
 
-import java.util.Collection;
+import org.jivesoftware.openfire.spi.ConnectionType;
 
 /**
  * Coordinates connections (accept, read, termination) on the server.
@@ -67,190 +67,50 @@ public interface ConnectionManager {
     int DEFAULT_MULTIPLEX_SSL_PORT = 5263;
 
     /**
-     * Returns an array of the ports managed by this connection manager.
+     * Return if the configuration allows this listener to be enabled (but does not verify that the listener is
+     * indeed active)
      *
-     * @return an iterator of the ports managed by this connection manager
-     *      (can be an empty but never null).
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
+     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
+     * is implemented, the parameter value is ignored.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @return true if configuration allows this listener to be enabled, otherwise false.
      */
-    Collection<ServerPort> getPorts();
+    boolean isEnabled(ConnectionType type, boolean startInSslMode);
 
     /**
-     * Sets if the port listener for unsecured clients will be available or not. When disabled
-     * there won't be a port listener active. Therefore, new clients won't be able to connect to
-     * the server.
+     * Enables or disables a connection listener. Does nothing if the particular listener is already in the requested
+     * state.
      *
-     * @param enabled true if new unsecured clients will be able to connect to the server.
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
+     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
+     * is implemented, the parameter value is ignored.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param enabled true if the listener is to be enabled, otherwise false.
      */
-    void enableClientListener( boolean enabled );
+    void enable(ConnectionType type, boolean startInSslMode, boolean enabled);
 
     /**
-     * Returns true if the port listener for unsecured clients is available. When disabled
-     * there won't be a port listener active. Therefore, new clients won't be able to connect to
-     * the server.
+     * Retrieves the configured TCP port on which a listener accepts connections.
      *
-     * @return true if the port listener for unsecured clients is available.
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @return a port number.
      */
-    boolean isClientListenerEnabled();
+    int getPort(ConnectionType type, boolean startInSslMode);
 
     /**
-     * Sets if the port listener for secured clients will be available or not. When disabled
-     * there won't be a port listener active. Therefore, new secured clients won't be able to
-     * connect to the server.
+     * Sets the TCP port on which a listener accepts connections.
      *
-     * @param enabled true if new secured clients will be able to connect to the server.
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param port a port number.
      */
-    void enableClientSSLListener( boolean enabled );
-
-    /**
-     * Returns true if the port listener for secured clients is available. When disabled
-     * there won't be a port listener active. Therefore, new secured clients won't be able to
-     * connect to the server.
-     *
-     * @return true if the port listener for unsecured clients is available.
-     */
-    boolean isClientSSLListenerEnabled();
-
-    /**
-     * Sets if the port listener for external components will be available or not. When disabled
-     * there won't be a port listener active. Therefore, new external components won't be able to
-     * connect to the server.
-     *
-     * @param enabled true if new external components will be able to connect to the server.
-     */
-    void enableComponentListener( boolean enabled );
-
-    /**
-     * Returns true if the port listener for external components is available. When disabled
-     * there won't be a port listener active. Therefore, new external components won't be able to
-     * connect to the server.
-     *
-     * @return true if the port listener for external components is available.
-     */
-    boolean isComponentListenerEnabled();
-
-    /**
-     * Sets if the port listener for remote servers will be available or not. When disabled
-     * there won't be a port listener active. Therefore, new remote servers won't be able to
-     * connect to the server.
-     *
-     * @param enabled true if new remote servers will be able to connect to the server.
-     */
-    void enableServerListener( boolean enabled );
-
-    /**
-     * Returns true if the port listener for remote servers is available. When disabled
-     * there won't be a port listener active. Therefore, new remote servers won't be able to
-     * connect to the server.
-     *
-     * @return true if the port listener for remote servers is available.
-     */
-    boolean isServerListenerEnabled();
-
-    /**
-     * Sets if the port listener for connection managers will be available or not. When disabled
-     * there won't be a port listener active. Therefore, clients will need to connect directly
-     * to the server.
-     *
-     * @param enabled true if new connection managers will be able to connect to the server.
-     */
-    void enableConnectionManagerListener( boolean enabled );
-
-    /**
-     * Returns true if the port listener for connection managers is available. When disabled
-     * there won't be a port listener active. Therefore, clients will need to connect directly
-     * to the server.
-     *
-     * @return true if the port listener for connection managers is available.
-     */
-    boolean isConnectionManagerListenerEnabled();
-
-    /**
-     * Sets the port to use for unsecured clients. Default port: 5222.
-     *
-     * @param port the port to use for unsecured clients.
-     */
-    void setClientListenerPort( int port );
-
-    /**
-     * Returns the port to use for unsecured clients. Default port: 5222.
-     *
-     * @return the port to use for unsecured clients.
-     */
-    int getClientListenerPort();
-
-    /**
-     * Sets the port to use for secured clients. Default port: 5223.
-     *
-     * @param port the port to use for secured clients.
-     */
-    void setClientSSLListenerPort( int port );
-
-    /**
-     * Returns the port to use for secured clients. Default port: 5223.
-     *
-     * @return the port to use for secured clients.
-     */
-    int getClientSSLListenerPort();
-
-    /**
-     * Sets the port to use for external components.
-     *
-     * @param port the port to use for external components.
-     */
-    void setComponentListenerPort( int port );
-
-    /**
-     * Returns the port to use for external components.
-     *
-     * @return the port to use for external components.
-     */
-    int getComponentListenerPort();
-
-    /**
-     * Sets the port to use for remote servers. This port is used for remote servers to connect
-     * to this server. Default port: 5269.
-     *
-     * @param port the port to use for remote servers.
-     */
-    void setServerListenerPort( int port );
-
-    /**
-     * Returns the port to use for remote servers. This port is used for remote servers to connect
-     * to this server. Default port: 5269.
-     *
-     * @return the port to use for remote servers.
-     */
-    int getServerListenerPort();
-
-    /**
-     * Sets the port to use for remote servers. This port is used for remote servers to connect
-     * to this server, using direct TLS. Default port: 5270.
-     *
-     * @param port the port to use for remote servers.
-     */
-    void setServerSslListenerPort( int port );
-
-    /**
-     * Returns the port to use for remote servers. This port is used for remote servers to connect
-     * to this server, using direct TLS. Default port: 5270.
-     *
-     * @return the port to use for remote servers.
-     */
-    int getServerSslListenerPort();
-
-    /**
-     * Sets the port to use for connection managers. This port is used for connection managers
-     * to connect to this server. Default port: 5262.
-     *
-     * @param port the port to use for connection managers.
-     */
-    void setConnectionManagerListenerPort( int port );
-
-    /**
-     * Returns the port to use for remote servers. This port is used for connection managers
-     * to connect to this server. Default port: 5262.
-     *
-     * @return the port to use for connection managers.
-     */
-    int getConnectionManagerListenerPort();
+    void setPort(ConnectionType type, boolean startInSslMode, int port);
 }

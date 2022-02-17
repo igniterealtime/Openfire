@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -19,14 +19,13 @@
 <%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.Connection" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="java.util.*" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -50,7 +49,7 @@
             final int requestedPort = ParamUtils.getIntParameter( request, "port", HttpBindManager.HTTP_BIND_PORT.getValue() );
             final int requestedSecurePort = ParamUtils.getIntParameter( request, "securePort", HttpBindManager.HTTP_BIND_SECURE_PORT.getValue() );
             final boolean isCORSEnabled = ParamUtils.getBooleanParameter( request, "CORSEnabled", HttpBindManager.HTTP_BIND_CORS_ENABLED.getValue() );
-            final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", serverManager.isXFFEnabled() );
+            final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", HttpBindManager.HTTP_BIND_FORWARDED.getValue() );
             final String CORSDomains = ParamUtils.getParameter( request, "CORSDomains", true );
 
             final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
@@ -68,12 +67,44 @@
                 HttpBindManager.HTTP_BIND_PORT.setValue(requestedPort);
                 HttpBindManager.HTTP_BIND_SECURE_PORT.setValue(requestedSecurePort);
                 HttpBindManager.HTTP_BIND_CORS_ENABLED.setValue(isCORSEnabled);
-                serverManager.setCORSAllowOrigin( CORSDomains );
-                serverManager.setXFFEnabled( isXFFEnabled );
-                serverManager.setXFFHeader( ParamUtils.getParameter( request, "XFFHeader" ) );
-                serverManager.setXFFServerHeader( ParamUtils.getParameter( request, "XFFServerHeader" ) );
-                serverManager.setXFFHostHeader( ParamUtils.getParameter( request, "XFFHostHeader" ) );
-                serverManager.setXFFHostName( ParamUtils.getParameter( request, "XFFHostName" ) );
+
+                final Set<String> update = new HashSet<>();
+                if (CORSDomains == null || CORSDomains.trim().length() == 0)
+                    update.add(HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
+                else {
+                    update.addAll(Arrays.asList(CORSDomains.replaceAll("\\s+", "").split(",")));
+                }
+                HttpBindManager.HTTP_BIND_ALLOWED_ORIGINS.setValue(update);
+                HttpBindManager.HTTP_BIND_FORWARDED.setValue( isXFFEnabled );
+
+                final String xffHeader = ParamUtils.getParameter( request, "XFFHeader" );
+                if (xffHeader == null || xffHeader.trim().isEmpty()) {
+                    HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(null);
+                } else {
+                    HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(xffHeader);
+                }
+
+                final String xffServerHeader = ParamUtils.getParameter( request, "XFFServerHeader" );
+                if (xffServerHeader == null || xffServerHeader.trim().isEmpty()) {
+                    HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(null);
+                } else {
+                    HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader);
+                }
+
+                final String xffHostHeader = ParamUtils.getParameter( request, "XFFServerHeader" );
+                if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
+                    HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(null);
+                } else {
+                    HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(xffHostHeader);
+                }
+
+                final String name = ParamUtils.getParameter( request, "XFFHostName" );
+                if (name == null || name.trim().isEmpty()) {
+                    HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(null);
+                } else {
+                    HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(name);
+                }
+
                 manager.getListener( ConnectionType.BOSH_C2S, true ).setClientAuth( mutualAuthentication );
             }
             catch ( Exception e )
@@ -183,12 +214,12 @@
                         <table border="0">
                              <tr>
                                 <td><label for="port"><fmt:message key="httpbind.settings.vanilla_port"/></label></td>
-                                <td><input id="port" type="text" size="5" maxlength="10" name="port" value="${serverManager.httpBindUnsecurePort}" /></td>
+                                <td><input id="port" type="text" size="5" maxlength="10" name="port" value="${HttpBindManager.HTTP_BIND_PORT.value}" /></td>
                                 <td>( <c:out value="${serverManager.httpBindUnsecureAddress}"/> )</td>
                             </tr>
                             <tr>
                                 <td><label for="securePort"><fmt:message key="httpbind.settings.secure_port"/></label></td>
-                                <td><input id="securePort" type="text" size="5" maxlength="10" name="securePort" value="${serverManager.httpBindSecurePort}" /></td>
+                                <td><input id="securePort" type="text" size="5" maxlength="10" name="securePort" value="${HttpBindManager.HTTP_BIND_SECURE_PORT.value}" /></td>
                                 <td>( <c:out value="${serverManager.httpBindSecureAddress}"/> )</td>
                             </tr>
                         </table>
@@ -254,7 +285,7 @@
         <tbody>
             <tr valign="top">
                 <td width="1%" nowrap>
-                    <input type="radio" name="CORSEnabled" value="true" id="rb05" ${serverManager.CORSEnabled ? "checked" : ""}>
+                    <input type="radio" name="CORSEnabled" value="true" id="rb05" ${HttpBindManager.HTTP_BIND_CORS_ENABLED.value ? "checked" : ""}>
                 </td>
                 <td width="99%">
                     <label for="rb05"><b><fmt:message key="httpbind.settings.cors.label_enable"/></b> - <fmt:message key="httpbind.settings.cors.label_enable_info"/></label>
@@ -266,7 +297,7 @@
             </tr>
             <tr valign="top">
                 <td width="1%" nowrap>
-                    <input type="radio" name="CORSEnabled" value="false" id="rb06" ${serverManager.CORSEnabled ? "" : "checked"}>
+                    <input type="radio" name="CORSEnabled" value="false" id="rb06" ${HttpBindManager.HTTP_BIND_CORS_ENABLED.value ? "" : "checked"}>
                 </td>
                 <td width="99%">
                     <label for="rb06"><b><fmt:message key="httpbind.settings.cors.label_disable"/></b> - <fmt:message key="httpbind.settings.cors.label_disable_info"/></label>
@@ -284,33 +315,33 @@
         <tbody>
             <tr valign="top">
                 <td width="1%" nowrap>
-                    <input type="radio" name="XFFEnabled" value="true" id="rb07" ${serverManager.XFFEnabled ? "checked" : ""}>
+                    <input type="radio" name="XFFEnabled" value="true" id="rb07" ${HttpBindManager.HTTP_BIND_FORWARDED.value ? "checked" : ""}>
                 </td>
                 <td width="99%">
                     <label for="rb07"><b><fmt:message key="httpbind.settings.xff.label_enable"/></b> - <fmt:message key="httpbind.settings.xff.label_enable_info"/></label>
                     <table border="0">
                         <tr>
                             <td><label for="XFFHeader"><fmt:message key="httpbind.settings.xff.forwarded_for"/></label></td>
-                            <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(serverManager.XFFHeader == null ? "" : serverManager.XFFHeader)}"></td>
+                            <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_FOR.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_FOR.value)}"></td>
                         </tr>
                         <tr>
                             <td><label for="XFFServerHeader"><fmt:message key="httpbind.settings.xff.forwarded_server"/></label></td>
-                            <td><input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="${fn:escapeXml(serverManager.XFFServerHeader == null ? "" : serverManager.XFFServerHeader)}"></td>
+                            <td><input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_SERVER.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_SERVER.value)}"></td>
                         </tr>
                         <tr>
                             <td><label for="XFFHostHeader"><fmt:message key="httpbind.settings.xff.forwarded_host"/></label></td>
-                            <td><input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="${fn:escapeXml(serverManager.XFFHostHeader == null ? "" : serverManager.XFFHostHeader)}"></td>
+                            <td><input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_HOST.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_HOST.value)}"></td>
                         </tr>
                         <tr>
                             <td><label for="XFFHostName"><fmt:message key="httpbind.settings.xff.host_name"/></label></td>
-                            <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(serverManager.XFFHostName == null ? "" : serverManager.XFFHostName)}"></td>
+                            <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.value)}"></td>
                         </tr>
                     </table>
                 </td>
             </tr>
             <tr valign="top">
                 <td width="1%" nowrap>
-                    <input type="radio" name="XFFEnabled" value="false" id="rb08" ${serverManager.XFFEnabled ? "" : "checked"}>
+                    <input type="radio" name="XFFEnabled" value="false" id="rb08" ${HttpBindManager.HTTP_BIND_FORWARDED.value ? "" : "checked"}>
                 </td>
                 <td width="99%">
                     <label for="rb08"><b><fmt:message key="httpbind.settings.xff.label_disable"/></b> - <fmt:message key="httpbind.settings.xff.label_disable_info"/></label>

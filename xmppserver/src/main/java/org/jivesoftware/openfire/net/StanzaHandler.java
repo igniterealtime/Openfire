@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,12 +102,6 @@ public abstract class StanzaHandler {
      * @param connection the connection being read.
      */
     public StanzaHandler(PacketRouter router, Connection connection) {
-        this.router = router;
-        this.connection = connection;
-    }
-
-    @Deprecated
-    public StanzaHandler(PacketRouter router, String serverName, Connection connection) {
         this.router = router;
         this.connection = connection;
     }

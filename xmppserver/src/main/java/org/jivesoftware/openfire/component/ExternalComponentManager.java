@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,19 @@
 
 package org.jivesoftware.openfire.component;
 
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permission;
+import org.jivesoftware.openfire.session.ComponentSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.ModificationNotAllowedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,18 +37,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permission;
-import org.jivesoftware.openfire.session.ComponentSession;
-import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.ModificationNotAllowedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Manages the connection permissions for external components. When an external component is
@@ -82,7 +83,7 @@ public class ExternalComponentManager {
             }
         }
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        connectionManager.enableComponentListener(enabled);
+        connectionManager.enable(ConnectionType.COMPONENT, false, enabled);
     }
 
     /**
@@ -92,7 +93,7 @@ public class ExternalComponentManager {
     @Deprecated
     public static boolean isServiceEnabled() {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        return connectionManager.isComponentListenerEnabled();
+        return connectionManager.isEnabled(ConnectionType.COMPONENT, false);
     }
 
     /**
@@ -111,7 +112,7 @@ public class ExternalComponentManager {
             }
         }
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        connectionManager.setComponentListenerPort(port);
+        connectionManager.setPort(ConnectionType.COMPONENT, false, port);
     }
 
     /**
@@ -121,7 +122,7 @@ public class ExternalComponentManager {
     @Deprecated
     public static int getServicePort() {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        return connectionManager.getComponentListenerPort();
+        return connectionManager.getPort(ConnectionType.COMPONENT, false);
     }
 
     /**

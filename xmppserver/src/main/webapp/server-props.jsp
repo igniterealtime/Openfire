@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -73,7 +74,7 @@
         sslEnabled = true;
         jmxEnabled = false;
         jmxSecure = true;
-        jmxPort = JMXManager.DEFAULT_PORT;
+        jmxPort = JMXManager.XMPP_JMX_PORT.getDefaultValue();
         save = true;
     }
 
@@ -151,12 +152,12 @@
                 server.getServerInfo().setHostname(serverName);
                 needRestart = true;
             }
-            connectionManager.setClientListenerPort(port);
-            connectionManager.enableClientSSLListener(sslEnabled);
-            connectionManager.setClientSSLListenerPort(sslPort);
-            connectionManager.setComponentListenerPort(componentPort);
-            connectionManager.setServerListenerPort(serverPort);
-            connectionManager.setServerSslListenerPort(serverSslPort);
+            connectionManager.setPort(ConnectionType.SOCKET_C2S, false, port);
+            connectionManager.enable(ConnectionType.SOCKET_C2S, true, sslEnabled);
+            connectionManager.setPort(ConnectionType.SOCKET_C2S, true, sslPort);
+            connectionManager.setPort(ConnectionType.COMPONENT, false, componentPort);
+            connectionManager.setPort(ConnectionType.SOCKET_S2S, false, serverPort);
+            connectionManager.setPort(ConnectionType.SOCKET_S2S, true, serverSslPort);
             if (!String.valueOf(embeddedPort).equals(JiveGlobals.getXMLProperty("adminConsole.port"))) {
                 JiveGlobals.setXMLProperty("adminConsole.port", String.valueOf(embeddedPort));
                 needRestart = true;
@@ -180,12 +181,12 @@
         }
     } else {
         serverName = server.getServerInfo().getHostname();
-        sslEnabled = connectionManager.isClientSSLListenerEnabled();
-        port = connectionManager.getClientListenerPort();
-        sslPort = connectionManager.getClientSSLListenerPort();
-        componentPort = connectionManager.getComponentListenerPort();
-        serverPort = connectionManager.getServerListenerPort();
-        serverSslPort = connectionManager.getServerSslListenerPort();
+        sslEnabled = connectionManager.isEnabled(ConnectionType.SOCKET_C2S, true);
+        port = connectionManager.getPort(ConnectionType.SOCKET_C2S, false);
+        sslPort = connectionManager.getPort(ConnectionType.SOCKET_C2S, true);
+        componentPort = connectionManager.getPort(ConnectionType.COMPONENT, false);
+        serverPort = connectionManager.getPort(ConnectionType.SOCKET_S2S, false);
+        serverSslPort = connectionManager.getPort(ConnectionType.SOCKET_S2S, true);
         try {
             embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port"));
         } catch (Exception ignored) {

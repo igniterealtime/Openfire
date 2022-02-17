@@ -104,17 +104,6 @@ public class XMLProperties {
      * @param file the file that properties should be read from and written to.
      * @throws IOException if an error occurs loading the properties.
      */
-    @Deprecated
-    public XMLProperties(File file) throws IOException {
-        this(file.toPath());
-    }
-
-    /**
-     * Creates a new XMLPropertiesTest object.
-     *
-     * @param file the file that properties should be read from and written to.
-     * @throws IOException if an error occurs loading the properties.
-     */
     public XMLProperties(Path file) throws IOException {
         this.file = file;
         if (Files.notExists(file)) {
@@ -304,33 +293,6 @@ public class XMLProperties {
             }
         }
         return result;
-    }
-    
-    /**
-     * Return all values who's path matches the given property
-     * name as a String array, or an empty array if the if there
-     * are no children. This allows you to retrieve several values
-     * with the same property name. For example, consider the
-     * XML file entry:
-     * <pre>
-     * &lt;foo&gt;
-     *     &lt;bar&gt;
-     *         &lt;prop&gt;some value&lt;/prop&gt;
-     *         &lt;prop&gt;other value&lt;/prop&gt;
-     *         &lt;prop&gt;last value&lt;/prop&gt;
-     *     &lt;/bar&gt;
-     * &lt;/foo&gt;
-     * </pre>
-     * If you call getProperties("foo.bar.prop") will return a string array containing
-     * {"some value", "other value", "last value"}.
-     *
-     * @deprecated Retained for backward compatibility. Prefer getProperties(String, boolean)
-     * @param name the name of the property to retrieve
-     * @return all child property values for the given node name.
-     */
-    @Deprecated
-    public String[] getProperties(String name) {
-        return getProperties(name, false).toArray(new String[0]);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,21 +28,11 @@ public interface SessionListener {
     /**
      * A connection was opened.
      *
-     * @param context The servlet servlet context of the BOSH request that triggered this event.
+     * @param context The servlet context of the BOSH request that triggered this event.
      * @param session the session for which a new connection was opened.
      * @param connection the connection that was just opened.
      */
     default void connectionOpened( AsyncContext context, HttpSession session, HttpConnection connection ) {};
-
-    /**
-     * A connection was opened.
-     *
-     * @param session the session for which a new connection was opened.
-     * @param connection the connection that was just opened.
-     * @deprecated Replaced by {@link #connectionOpened(AsyncContext, HttpSession, HttpConnection)}
-     */
-    @Deprecated // TODO Remove in or after 4.4.0 release.
-    default void connectionOpened( HttpSession session, HttpConnection connection ) {};
 
     /**
      * A connection was closed.
@@ -53,16 +43,6 @@ public interface SessionListener {
      *
      */
     default void connectionClosed( AsyncContext context, HttpSession session, HttpConnection connection ) {};
-
-    /**
-     * A connection was closed.
-     *
-     * @param session The session of which a connection was closed.
-     * @param connection the connection that was closed.
-     * @deprecated Replaced by {@link #connectionClosed(AsyncContext, HttpSession, HttpConnection)}
-     */
-    @Deprecated // TODO Remove in or after 4.4.0 release.
-    default void connectionClosed( HttpSession session, HttpConnection connection ) {};
 
     /**
      * Called before an {@link HttpSession} is created for a given http-bind web request

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package org.jivesoftware.openfire.audit.spi;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.Auditor;
@@ -26,10 +23,14 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
+import org.jivesoftware.util.PropertyEventListener;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -54,18 +55,24 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
      * reached a new audit file will be created.
      */
     private int maxFileSize;
+
     /**
-     * Max number of days to keep audit information. Once the limit has been reached
+     * Max duration to keep audit information. Once the limit has been reached
      * audit files that contain information that exceed the limit will be deleted.
      */
-    private int maxDays;
-    private int logTimeout;
+    private Duration retention;
+
+    /**
+     * the time between successive executions of the task that will save
+     * the queued audited packets to a permanent store.
+     */
+    private Duration logTimeout;
     private String logDir;
     private Collection<String> ignoreList = new ArrayList<>();
     private static final int MAX_TOTAL_SIZE = 1000;
     private static final int MAX_FILE_SIZE = 10;
-    private static final int MAX_DAYS = -1;
-    private static final int DEFAULT_LOG_TIMEOUT = 120000;
+    private static final Duration MAX_DAYS = Duration.ofDays(-1);
+    private static final Duration DEFAULT_LOG_TIMEOUT = Duration.ofMinutes(2);
     private AuditorInterceptor interceptor;
 
     public AuditManagerImpl() {
@@ -100,7 +107,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
     @Override
     public void setMaxTotalSize(int size) {
         maxTotalSize = size;
-        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+        auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
         JiveGlobals.setProperty("xmpp.audit.totalsize", Integer.toString(size));
     }
 
@@ -112,32 +119,32 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
     @Override
     public void setMaxFileSize(int size) {
         maxFileSize = size;
-        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+        auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
         JiveGlobals.setProperty("xmpp.audit.filesize", Integer.toString(size));
     }
 
     @Override
-    public int getMaxDays() {
-        return maxDays;
+    public Duration getRetention() {
+        return retention;
     }
 
     @Override
-    public void setMaxDays(int count) {
-        maxDays = validateMaxDays(count);
-        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
-        JiveGlobals.setProperty("xmpp.audit.days", Integer.toString(count));
+    public void setRetention(Duration duration) {
+        retention = validateDuration(duration);
+        auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
+        JiveGlobals.setProperty("xmpp.audit.days", Long.toString(duration.toDays())); // TODO fix loss of precision while remaining compatible with existing properties.
     }
 
     @Override
-    public int getLogTimeout() {
+    public Duration getLogTimeout() {
         return logTimeout;
     }
 
     @Override
-    public void setLogTimeout(int logTimeout) {
+    public void setLogTimeout(Duration logTimeout) {
         this.logTimeout = logTimeout;
         auditor.setLogTimeout(logTimeout);
-        JiveGlobals.setProperty("xmpp.audit.logtimeout", Integer.toString(logTimeout));
+        JiveGlobals.setProperty("xmpp.audit.logtimeout", String.valueOf(logTimeout.toMillis()));
     }
 
     @Override
@@ -262,14 +269,14 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
 //        }
         maxTotalSize = JiveGlobals.getIntProperty("xmpp.audit.totalsize", MAX_TOTAL_SIZE);
         maxFileSize = JiveGlobals.getIntProperty("xmpp.audit.filesize", MAX_FILE_SIZE);
-        maxDays = JiveGlobals.getIntProperty("xmpp.audit.days", MAX_DAYS);
-        logTimeout = JiveGlobals.getIntProperty("xmpp.audit.logtimeout", DEFAULT_LOG_TIMEOUT);
+        retention = Duration.ofDays(JiveGlobals.getIntProperty("xmpp.audit.days", (int)MAX_DAYS.toDays()));
+        logTimeout = Duration.ofMillis(JiveGlobals.getIntProperty("xmpp.audit.logtimeout", (int)DEFAULT_LOG_TIMEOUT.toMillis()));
         logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
                 File.separator + "logs");
         processIgnoreString(JiveGlobals.getProperty("xmpp.audit.ignore", ""));
 
         auditor = new AuditorImpl(this);
-        auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+        auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
         auditor.setLogDir(logDir);
         auditor.setLogTimeout(logTimeout);
 
@@ -297,14 +304,14 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
         }
     }
 
-    private int validateMaxDays(int count) {
-        if (count < -1) {
-            count = -1;
+    private Duration validateDuration(Duration duration) {
+        if (duration.isNegative()) {
+            return Duration.ofDays(-1);
         }
-        if (count == 0) {
-            count = 1;
+        if (duration.isZero()) {
+            return Duration.ofDays(1);
         }
-        return count;
+        return duration;
     }
     
     @Override
@@ -341,18 +348,18 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
                 break;
             case "xmpp.audit.totalsize":
                 maxTotalSize = parseIntegerOrDefault(value, MAX_TOTAL_SIZE);
-                auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+                auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
                 break;
             case "xmpp.audit.filesize":
                 maxFileSize = parseIntegerOrDefault(value, MAX_FILE_SIZE);
-                auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+                auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
                 break;
             case "xmpp.audit.days":
-                maxDays = validateMaxDays(parseIntegerOrDefault(value, MAX_DAYS));
-                auditor.setMaxValues(maxTotalSize, maxFileSize, maxDays);
+                retention = validateDuration(Duration.ofDays(parseIntegerOrDefault(value, (int)MAX_DAYS.toDays())));
+                auditor.setMaxValues(maxTotalSize, maxFileSize, retention);
                 break;
             case "xmpp.audit.logtimeout":
-                logTimeout = parseIntegerOrDefault(value, DEFAULT_LOG_TIMEOUT);
+                logTimeout = Duration.ofMillis(parseIntegerOrDefault(value, (int)DEFAULT_LOG_TIMEOUT.toMillis()));
                 auditor.setLogTimeout(logTimeout);
                 break;
             case "xmpp.audit.logdir":

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 
 package org.jivesoftware.openfire.session;
-
-import java.net.UnknownHostException;
-import java.util.*;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -42,7 +39,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.*;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.StreamError;
+
+import java.net.UnknownHostException;
+import java.util.*;
 
 /**
  * Represents a session between the server and a client.
@@ -141,28 +144,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     /**
-     * Returns the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server except for anonymous users that are
-     * subject to {@link #getAllowedAnonymIPs()}. This list is used for both anonymous and
-     * non-anonymous users.
-     *
-     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
-     *
-     * @return the list of IP address that are allowed to connect to the server.
-     * @deprecated Use #getWhitelistedIPs instead.
-     */
-    @Deprecated
-    public static Map<String, String> getAllowedIPs()
-    {
-        final Map<String, String> result = new HashMap<>();
-        for ( String item : allowedIPs )
-        {
-            result.put( item, null );
-        }
-        return result;
-    }
-
-    /**
      * Returns the list of IP address that are allowed to connect to the server. If the list is empty then anyone is
      * allowed to connect to the server except for anonymous users that are subject to
      * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
@@ -172,25 +153,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @return the collection of IP address that are allowed to connect to the server. Never null, possibly empty.
      */
     public static Set<String> getWhitelistedIPs() { return allowedIPs; }
-
-    /**
-     * Returns the list of IP address that are allowed to connect to the server for anonymous
-     * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
-     *
-     * Note that the blacklist in {@link #getBlacklistedIPs()} should take precedence!
-     *
-     * @return the list of IP address that are allowed to connect to the server.
-     * @deprecated Use #getWhitelistedAnonymousIPs instead.
-     */
-    public static Map<String, String> getAllowedAnonymIPs()
-    {
-        final Map<String, String> result = new HashMap<>();
-        for ( String item : allowedAnonymIPs )
-        {
-            result.put( item, null );
-        }
-        return result;
-    }
 
     /**
      * Returns the list of IP address that are allowed to connect to the server for anonymous users. If the list is
@@ -429,20 +391,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     /**
-     * Sets the list of IP address that are allowed to connect to the server. If the list is
-     * empty then anyone is allowed to connect to the server except for anonymous users that are
-     * subject to {@link #getAllowedAnonymIPs()}. This list is used for both anonymous and
-     * non-anonymous users.
-     *
-     * @param allowed the list of IP address that are allowed to connect to the server.
-     * @deprecated Use setWhitelistedIPs instead.
-     */
-    @Deprecated
-    public static void setAllowedIPs(Map<String, String> allowed) {
-        setWhitelistedIPs( allowed.keySet() );
-    }
-
-    /**
      * Sets the list of IP address that are allowed to connect to the server. If the list is empty then anyone not on
      * {@link #getBlacklistedIPs()} is  allowed to connect to the server except for anonymous users that are subject to
      * {@link #getWhitelistedAnonymousIPs()}. This list is used for both anonymous and non-anonymous users.
@@ -471,18 +419,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
             JiveGlobals.setProperty(ConnectionSettings.Client.LOGIN_ALLOWED, buf.toString());
         }
-    }
-
-    /**
-     * Sets the list of IP address that are allowed to connect to the server for anonymous
-     * users. If the list is empty then anonymous will be only restricted by {@link #getAllowedIPs()}.
-     *
-     * @param allowed the list of IP address that are allowed to connect to the server.
-     * @deprecated use #setWhitelistedAnonymousIPs instead.
-     */
-    @Deprecated
-    public static void setAllowedAnonymIPs(Map<String, String> allowed) {
-        setWhitelistedAnonymousIPs( allowed.keySet() );
     }
 
     /**

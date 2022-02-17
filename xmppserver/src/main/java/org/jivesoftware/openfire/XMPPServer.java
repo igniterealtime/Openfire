@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,14 @@
 
 package org.jivesoftware.openfire;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.reflect.ClassPath;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.logging.log4j.LogManager;
-import org.dom4j.Document;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JNDIDataSourceProvider;
 import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
 import org.jivesoftware.openfire.auth.AuthFactory;
@@ -53,37 +35,13 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.disco.ServerIdentitiesProvider;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
-import org.jivesoftware.openfire.disco.UserFeaturesProvider;
-import org.jivesoftware.openfire.disco.UserIdentitiesProvider;
-import org.jivesoftware.openfire.disco.UserItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
 import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.handler.IQBindHandler;
-import org.jivesoftware.openfire.handler.IQBlockingHandler;
-import org.jivesoftware.openfire.handler.IQEntityTimeHandler;
-import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.handler.IQLastActivityHandler;
-import org.jivesoftware.openfire.handler.IQMessageCarbonsHandler;
-import org.jivesoftware.openfire.handler.IQOfflineMessagesHandler;
-import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.handler.IQPrivacyHandler;
-import org.jivesoftware.openfire.handler.IQPrivateHandler;
-import org.jivesoftware.openfire.handler.IQRegisterHandler;
-import org.jivesoftware.openfire.handler.IQRosterHandler;
-import org.jivesoftware.openfire.handler.IQSessionEstablishmentHandler;
-import org.jivesoftware.openfire.handler.IQSharedGroupHandler;
-import org.jivesoftware.openfire.handler.IQVersionHandler;
-import org.jivesoftware.openfire.handler.IQvCardHandler;
-import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
-import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.openfire.handler.*;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -102,30 +60,34 @@ import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
-import org.jivesoftware.openfire.session.SoftwareVersionManager;
 import org.jivesoftware.openfire.session.SoftwareServerVersionManager;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
-import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.openfire.spi.PacketDelivererImpl;
-import org.jivesoftware.openfire.spi.PacketRouterImpl;
-import org.jivesoftware.openfire.spi.PacketTransporterImpl;
-import org.jivesoftware.openfire.spi.PresenceManagerImpl;
-import org.jivesoftware.openfire.spi.RoutingTableImpl;
-import org.jivesoftware.openfire.spi.XMPPServerInfoImpl;
+import org.jivesoftware.openfire.session.SoftwareVersionManager;
+import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.*;
-import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
-import com.google.common.reflect.ClassPath;
+import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
@@ -1633,95 +1595,6 @@ public class XMPPServer {
      */
     public EntityCapabilitiesManager getEntityCapabilitiesManager() {
         return (EntityCapabilitiesManager) modules.get(EntityCapabilitiesManager.class);
-    }
-
-    /**
-     * Returns a list with all the modules that provide "discoverable" features.
-     *
-     * @return a list with all the modules that provide "discoverable" features.
-     * @deprecated Use {@link IQDiscoInfoHandler} instead.
-     */
-    @Deprecated
-    public List<ServerFeaturesProvider> getServerFeaturesProviders() {
-        List<ServerFeaturesProvider> answer = new ArrayList<>();
-        for (Module module : modules.values()) {
-            if (module instanceof ServerFeaturesProvider) {
-                answer.add((ServerFeaturesProvider) module);
-            }
-        }
-        return answer;
-    }
-
-    /**
-     * Returns a list with all the modules that provide "discoverable" identities.
-     *
-     * @return a list with all the modules that provide "discoverable" identities.
-     * @deprecated Use {@link IQDiscoInfoHandler} instead.
-     */
-    @Deprecated
-    public List<ServerIdentitiesProvider> getServerIdentitiesProviders() {
-        List<ServerIdentitiesProvider> answer = new ArrayList<>();
-        for (Module module : modules.values()) {
-            if (module instanceof ServerIdentitiesProvider) {
-                answer.add((ServerIdentitiesProvider) module);
-            }
-        }
-        return answer;
-    }
-
-    /**
-     * Returns a list with all the modules that provide "discoverable" items associated with
-     * the server.
-     *
-     * @return a list with all the modules that provide "discoverable" items associated with
-     *         the server.
-     * @deprecated Use {@link IQDiscoItemsHandler} instead.
-     */
-    @Deprecated
-    public List<ServerItemsProvider> getServerItemsProviders() {
-        List<ServerItemsProvider> answer = new ArrayList<>();
-        for (Module module : modules.values()) {
-            if (module instanceof ServerItemsProvider) {
-                answer.add((ServerItemsProvider) module);
-            }
-        }
-        return answer;
-    }
-
-    /**
-     * Returns a list with all the modules that provide "discoverable" user identities.
-     *
-     * @return a list with all the modules that provide "discoverable" user identities.
-     * @deprecated Use {@link IQDiscoInfoHandler} instead.
-     */
-    @Deprecated
-    public List<UserIdentitiesProvider> getUserIdentitiesProviders() {
-        List<UserIdentitiesProvider> answer = new ArrayList<>();
-        for (Module module : modules.values()) {
-            if (module instanceof UserIdentitiesProvider) {
-                answer.add((UserIdentitiesProvider) module);
-            }
-        }
-        return answer;
-    }
-
-    /**
-     * Returns a list with all the modules that provide "discoverable" items associated with
-     * users.
-     *
-     * @return a list with all the modules that provide "discoverable" items associated with
-     *         users.
-     * @deprecated Use {@link IQDiscoInfoHandler} instead.
-     */
-    @Deprecated
-    public List<UserItemsProvider> getUserItemsProviders() {
-        List<UserItemsProvider> answer = new ArrayList<>();
-        for (Module module : modules.values()) {
-            if (module instanceof UserItemsProvider) {
-                answer.add((UserItemsProvider) module);
-            }
-        }
-        return answer;
     }
 
     /**

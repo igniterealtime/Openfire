@@ -1,8 +1,22 @@
+/*
+ * Copyright 2019-2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.spi;
 
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
 import org.jivesoftware.openfire.keystore.IdentityStore;
@@ -1016,39 +1030,6 @@ public class ConnectionListener
         restart();
     }
 
-    /**
-     * Constructs and returns a ServerPort instance that reflects the state of this listener.
-     *
-     * @return A ServerPort instance, or null when the listener is not enabled.
-     * @deprecated To obtain the state of this instance, use corresponding getters instead.
-     */
-    @Deprecated
-    public ServerPort getServerPort()
-    {
-        if ( connectionAcceptor == null )
-        {
-            return null;
-        }
-
-        final int port = getPort();
-        final String name = getBindAddress().getHostName();
-        final String address = getBindAddress().getHostAddress();
-        final boolean isSecure = getTLSPolicy() != Connection.TLSPolicy.disabled;
-        final String algorithm = null;
-
-        switch ( type ) {
-            case SOCKET_C2S:
-                return new ServerPort( port, name, address, isSecure, algorithm, ServerPort.Type.client );
-            case SOCKET_S2S:
-                return new ServerPort( port, name, address, isSecure, algorithm, ServerPort.Type.server );
-            case COMPONENT:
-                return new ServerPort( port, name, address, isSecure, algorithm, ServerPort.Type.component );
-            case CONNECTION_MANAGER:
-                return new ServerPort( port, name, address, isSecure, algorithm, ServerPort.Type.connectionManager );
-            default:
-                throw new IllegalStateException( "Unrecognized type: " + type );
-        }
-    }
     @Override
     public String toString()
     {

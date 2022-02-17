@@ -25,6 +25,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.*"%>
+<%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -98,12 +99,12 @@
             errors.put("maxFileSize","maxFileSize");
         }
         try {
-            auditManager.setMaxDays(Integer.parseInt(maxDays));
+            auditManager.setRetention(Duration.ofDays(Integer.parseInt(maxDays)));
         } catch (Exception e){
             errors.put("maxDays","maxDays");
         }
         try {
-            auditManager.setLogTimeout(Integer.parseInt(logTimeout) * 1000);
+            auditManager.setLogTimeout(Duration.ofSeconds(Integer.parseInt(logTimeout)));
         } catch (Exception e){
             errors.put("logTimeout","logTimeout");
         }
@@ -182,8 +183,8 @@
         auditIQ = auditManager.isAuditIQ();
         maxTotalSize = Integer.toString(auditManager.getMaxTotalSize());
         maxFileSize = Integer.toString(auditManager.getMaxFileSize());
-        maxDays = Integer.toString(auditManager.getMaxDays());
-        logTimeout = Integer.toString(auditManager.getLogTimeout() / 1000);
+        maxDays = Long.toString(auditManager.getRetention().toDays());
+        logTimeout = Long.toString(auditManager.getLogTimeout().getSeconds());
         logDir = auditManager.getLogDir();
         StringBuilder ignoreList = new StringBuilder();
         for (String username : auditManager.getIgnoreList()) {

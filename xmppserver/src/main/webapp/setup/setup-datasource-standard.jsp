@@ -14,6 +14,7 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="java.time.Duration" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -95,7 +96,7 @@
             DefaultConnectionProvider conProvider = new DefaultConnectionProvider();
             try {
                 conProvider.setDriver(driver);
-                conProvider.setConnectionTimeout(connectionTimeout);
+                conProvider.setConnectionTimeout(Duration.ofMinutes( Math.round(connectionTimeout * 24 * 60) ));
                 conProvider.setMinConnections(minConnections);
                 conProvider.setMaxConnections(maxConnections);
                 conProvider.setServerURL(serverURL);

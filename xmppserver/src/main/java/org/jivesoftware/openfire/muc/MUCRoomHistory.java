@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,10 +98,12 @@ public final class MUCRoomHistory implements Externalizable {
                 Message message = it.next();
                 Element delayElement = message.getChildElement("delay", "urn:xmpp:delay");
                 if (getRoom().canAnyoneDiscoverJID()) {
-                    // Set the Full JID as the "from" attribute
+                    // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
                     try {
-                        MUCRole role = getRoom().getOccupant(message.getFrom().getResource());
-                        delayElement.addAttribute("from", role.getUserAddress().toString());
+                        List<MUCRole> role = getRoom().getOccupantsByNickname(message.getFrom().getResource());
+                        if (!role.isEmpty()) {
+                            delayElement.addAttribute("from", role.get(0).getUserAddress().toString());
+                        }
                     }
                     catch (UserNotFoundException e) {
                         // Ignore.
@@ -120,10 +122,12 @@ public final class MUCRoomHistory implements Externalizable {
         Date current = new Date();
         delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(current));
         if (getRoom().canAnyoneDiscoverJID()) {
-            // Set the Full JID as the "from" attribute
+            // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
             try {
-                MUCRole role = getRoom().getOccupant(packet.getFrom().getResource());
-                delayInformation.addAttribute("from", role.getUserAddress().toString());
+                List<MUCRole> role = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
+                if (!role.isEmpty()) {
+                    delayInformation.addAttribute("from", role.get(0).getUserAddress().toString());
+                }
             }
             catch (UserNotFoundException e) {
                 // Ignore.

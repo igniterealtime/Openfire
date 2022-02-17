@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.xmpp.packet.Presence;
 /** Handler of XML stanzas sent by clients connected directly to the server. Received packet will
  * have their FROM attribute overridden to avoid spoofing.<p>
  *
- * By default the hostname specified in the stream header sent by clients will not be validated.
+ * By default, the hostname specified in the stream header sent by clients will not be validated.
  * When validated the TO attribute of the stream header has to match the server name or a valid
  * subdomain. If the value of the 'to' attribute is not valid then a host-unknown error
  * will be returned. To enable the validation set the system property
@@ -42,11 +42,6 @@ import org.xmpp.packet.Presence;
 public class ClientStanzaHandler extends StanzaHandler {
 
     public ClientStanzaHandler(PacketRouter router, Connection connection) {
-        super(router, connection);
-    }
-
-    @Deprecated
-    public ClientStanzaHandler(PacketRouter router, String serverName, Connection connection) {
         super(router, connection);
     }
 

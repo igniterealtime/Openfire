@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,6 @@
 
 package org.jivesoftware.util;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.*;
-
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
@@ -31,6 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.ObjectName;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.*;
 
 /**
  * Performs tasks using worker threads. It also allows tasks to be scheduled to be
@@ -137,17 +137,33 @@ public class TaskEngine {
     }
 
     /**
+     * @deprecated Replaced by schedule({@link TimerTask, Duration}
+     */
+    @Deprecated // Remove in Openfire 4.9.0 or later.
+    public void schedule(TimerTask task, long delay) {
+        timer.schedule(new TimerTaskWrapper(task), delay);
+    }
+
+    /**
      * Schedules the specified task for execution after the specified delay.
      *
      * @param task  task to be scheduled.
-     * @param delay delay in milliseconds before task is to be executed.
+     * @param delay delay before task is to be executed.
      * @throws IllegalArgumentException if {@code delay} is negative, or
      *         {@code delay + System.currentTimeMillis()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, or timer was cancelled.
      */
-    public void schedule(TimerTask task, long delay) {
-        timer.schedule(new TimerTaskWrapper(task), delay);
+    public void schedule(TimerTask task, Duration delay) {
+        timer.schedule(new TimerTaskWrapper(task), delay.toMillis());
+    }
+
+    /**
+     * @deprecated Replaced by schedule({@link TimerTask, Instant}
+     */
+    @Deprecated // Remove in Openfire 4.9.0 or later.
+    public void schedule(TimerTask task, Date time) {
+        timer.schedule(new TimerTaskWrapper(task), time);
     }
 
     /**
@@ -160,8 +176,18 @@ public class TaskEngine {
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
-    public void schedule(TimerTask task, Date time) {
-        timer.schedule(new TimerTaskWrapper(task), time);
+    public void schedule(TimerTask task, Instant time) {
+        timer.schedule(new TimerTaskWrapper(task), Date.from(time));
+    }
+
+    /**
+     * @deprecated Replaced by schedule({@link TimerTask, Duration, Duration}
+     */
+    @Deprecated // Remove in Openfire 4.9.0 or later.
+    public void schedule(TimerTask task, long delay, long period) {
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.schedule(taskWrapper, delay, period);
     }
 
     /**
@@ -187,17 +213,28 @@ public class TaskEngine {
      * is held down.
      *
      * @param task task to be scheduled.
-     * @param delay  delay in milliseconds before task is to be executed.
-     * @param period time in milliseconds between successive task executions.
+     * @param delay  delay before task is to be executed.
+     * @param period time between successive task executions.
      * @throws IllegalArgumentException if {@code delay} is negative, or
      *         {@code delay + System.currentTimeMillis()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
+     *
      */
-    public void schedule(TimerTask task, long delay, long period) {
+    public void schedule(TimerTask task, Duration delay, Duration period) {
         TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
         wrappedTasks.put(task, taskWrapper);
-        timer.schedule(taskWrapper, delay, period);
+        timer.schedule(taskWrapper, delay.toMillis(), period.toMillis());
+    }
+
+    /**
+     * @deprecated Replaced by schedule({@link TimerTask, Instant, Duration}
+     */
+    @Deprecated // Remove in Openfire 4.9.0 or later.
+    public void schedule(TimerTask task, Date firstTime, long period) {
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.schedule(taskWrapper, firstTime, period);
     }
 
     /**
@@ -224,15 +261,25 @@ public class TaskEngine {
      *
      * @param task task to be scheduled.
      * @param firstTime First time at which task is to be executed.
-     * @param period time in milliseconds between successive task executions.
+     * @param period time between successive task executions.
      * @throws IllegalArgumentException if {@code time.getTime()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
-    public void schedule(TimerTask task, Date firstTime, long period) {
+    public void schedule(TimerTask task, Instant firstTime, Duration period) {
         TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
         wrappedTasks.put(task, taskWrapper);
-        timer.schedule(taskWrapper, firstTime, period);
+        timer.schedule(taskWrapper, Date.from(firstTime), period.toMillis());
+    }
+
+    /**
+     * @deprecated Replaced by scheduleAtFixedRate({@link TimerTask, Duration, Duration}
+     */
+    @Deprecated // Remove in Openfire 4.9.0 or later.
+    public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.scheduleAtFixedRate(taskWrapper, delay, period);
     }
 
     /**
@@ -259,17 +306,27 @@ public class TaskEngine {
      * with respect to one another.
      *
      * @param task task to be scheduled.
-     * @param delay  delay in milliseconds before task is to be executed.
-     * @param period time in milliseconds between successive task executions.
+     * @param delay delay before task is to be executed.
+     * @param period time between successive task executions.
      * @throws IllegalArgumentException if {@code delay} is negative, or
      *         {@code delay + System.currentTimeMillis()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
-    public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
+    public void scheduleAtFixedRate(TimerTask task, Duration delay, Duration period) {
         TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
         wrappedTasks.put(task, taskWrapper);
-        timer.scheduleAtFixedRate(taskWrapper, delay, period);
+        timer.scheduleAtFixedRate(taskWrapper, delay.toMillis(), period.toMillis());
+    }
+
+    /**
+     * @deprecated Replaced by scheduleAtFixedRate({@link TimerTask, Instant, Duration}
+     */
+    @Deprecated // Remove in Openfire 4.9.0 or later.
+    public void scheduleAtFixedRate(TimerTask task, Date firstTime, long period) {
+        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
+        wrappedTasks.put(task, taskWrapper);
+        timer.scheduleAtFixedRate(taskWrapper, firstTime, period);
     }
 
     /**
@@ -297,15 +354,15 @@ public class TaskEngine {
      *
      * @param task task to be scheduled.
      * @param firstTime First time at which task is to be executed.
-     * @param period time in milliseconds between successive task executions.
+     * @param period time between successive task executions.
      * @throws IllegalArgumentException if {@code time.getTime()} is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
      */
-    public void scheduleAtFixedRate(TimerTask task, Date firstTime, long period) {
+    public void scheduleAtFixedRate(TimerTask task, Instant firstTime, Duration period) {
         TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
         wrappedTasks.put(task, taskWrapper);
-        timer.scheduleAtFixedRate(taskWrapper, firstTime, period);
+        timer.scheduleAtFixedRate(taskWrapper, Date.from(firstTime), period.toMillis());
     }
 
     /**

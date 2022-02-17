@@ -1,4 +1,18 @@
-package org.jivesoftware.util;
+/*
+ * Copyright (C) 2019-2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */package org.jivesoftware.util;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -6,6 +20,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -40,16 +55,6 @@ public class StringUtilsTest {
 
     }
 
-    @Test
-    public void testStringReplace() {
-        assertEquals(StringUtils.replace("Hello Foo Foo", "Foo", "World"), "Hello World World");
-        assertEquals(StringUtils.replace("Hello Foo foo", "Foo", "World"), "Hello World foo");
-        assertEquals(StringUtils.replaceIgnoreCase("Hello Foo foo", "Foo", "World"), "Hello World World");
-        int[] count = new int[1];
-        assertEquals(StringUtils.replaceIgnoreCase("Hello Foo foo", "Foo", "World", count), "Hello World World");
-        assertEquals(count[0], 2);
-    }
-
     private void assertValidDomainName(String domain) {
         assertValidDomainName(domain, domain);
     }
@@ -77,30 +82,30 @@ public class StringUtilsTest {
 
     @Test
     public void testElapsedTimeInSeconds() throws Exception {
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.SECOND), is("1 second"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.SECOND + 1), is("1 second, 1 ms"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.SECOND * 30 + 30), is("30 seconds, 30 ms"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofSeconds(1)), is("1 second"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofMillis(1001)), is("1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofSeconds(30).plus(Duration.ofMillis(30))), is("30 seconds, 30 ms"));
     }
 
     @Test
     public void testElapsedTimeInMinutes() throws Exception {
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.MINUTE), is("1 minute"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 minute, 1 second, 1 ms"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.MINUTE * 30 + JiveConstants.SECOND * 30), is("30 minutes, 30 seconds"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofMinutes(1)), is("1 minute"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofMinutes(1).plus(Duration.ofSeconds(1).plus(Duration.ofMillis(1)))), is("1 minute, 1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofMinutes(30).plus(Duration.ofSeconds(30))), is("30 minutes, 30 seconds"));
     }
 
     @Test
     public void testElapsedTimeInHours() throws Exception {
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.HOUR), is("1 hour"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.HOUR + JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 hour, 1 minute, 1 second, 1 ms"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.HOUR * 10 + JiveConstants.MINUTE * 30), is("10 hours, 30 minutes"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofHours(1)), is("1 hour"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofHours(1).plus(Duration.ofMinutes(1)).plus(Duration.ofSeconds(1)).plus(Duration.ofMillis(1))), is("1 hour, 1 minute, 1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofHours(10).plus(Duration.ofMinutes(30))), is("10 hours, 30 minutes"));
     }
 
     @Test
     public void testElapsedTimeInDays() throws Exception {
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY), is("1 day"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY + JiveConstants.HOUR + JiveConstants.MINUTE + JiveConstants.SECOND + 1), is("1 day, 1 hour, 1 minute, 1 second, 1 ms"));
-        assertThat(StringUtils.getFullElapsedTime(JiveConstants.DAY * 10 + JiveConstants.HOUR * 10), is("10 days, 10 hours"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofDays(1)), is("1 day"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofDays(1).plus(Duration.ofHours(1)).plus(Duration.ofMinutes(1)).plus(Duration.ofSeconds(1)).plus(Duration.ofMillis(1))), is("1 day, 1 hour, 1 minute, 1 second, 1 ms"));
+        assertThat(StringUtils.getFullElapsedTime(Duration.ofDays(10).plus(Duration.ofHours(10))), is("10 days, 10 hours"));
     }
 
     // shellSplit tests, from https://gist.github.com/raymyers/8077031

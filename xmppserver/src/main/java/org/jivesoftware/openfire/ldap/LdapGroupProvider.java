@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,9 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
-
-import java.text.MessageFormat;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.naming.Name;
 import javax.naming.NamingEnumeration;
@@ -52,6 +36,13 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
+import java.text.MessageFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
@@ -67,7 +58,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     private UserManager userManager;
     private String[] standardAttributes;
     private int groupCount = -1;
-    private long expiresStamp = System.currentTimeMillis();
+    private Instant expiresStamp = Instant.now();
 
     /**
      * Constructs a new LDAP group provider.
@@ -146,14 +137,14 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             Log.debug("LdapGroupProvider: Trying to get the number of groups in the system.");
         }
         // Cache user count for 5 minutes.
-        if (groupCount != -1 && System.currentTimeMillis() < expiresStamp) {
+        if (groupCount != -1 && Instant.now().isBefore(expiresStamp)) {
             return groupCount;
         }
         this.groupCount = manager.retrieveListCount(
                 manager.getGroupNameField(),
                 MessageFormat.format(manager.getGroupSearchFilter(), "*")
         );
-        this.expiresStamp = System.currentTimeMillis() + JiveConstants.MINUTE *5;
+        this.expiresStamp = Instant.now().plus(Duration.ofMinutes(5));
         return this.groupCount;
     }
 

@@ -432,6 +432,16 @@
         </c:when>
     </c:choose>
 
+    <c:if test="${room.locked}">
+        <admin:infobox type="warning">
+            <fmt:message key="muc.room.edit.form.warning.room_is_locked">
+                <fmt:param>
+                    <fmt:formatDate value="${room.lockedDate}" type="both" dateStyle="medium" timeStyle="short"/>
+                </fmt:param>
+            </fmt:message>
+        </admin:infobox>
+    </c:if>
+
     <c:choose>
         <c:when test="${not create}">
             <p>

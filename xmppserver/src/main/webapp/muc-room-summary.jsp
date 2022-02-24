@@ -193,10 +193,14 @@
                 <% } %>
         </td>
         <td width="1%" align="center">
-            <nobr><%= room.getOccupantsCount() %>
-            <% if (room.getMaxUsers() > 0 ) { %>
-                / <%= room.getMaxUsers() %>
-            <% } %></nobr>
+            <% if (room.isLocked()) {%>
+            <img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="muc.room.summary.alt_locked" />">
+            <% } else { %>
+                <nobr><%= room.getOccupantsCount() %>
+                <% if (room.getMaxUsers() > 0 ) { %>
+                    / <%= room.getMaxUsers() %>
+                <% } %></nobr>
+            <% } %>
         </td>
         <td width="1%" align="center">
             <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"

@@ -226,7 +226,7 @@ public final class SystemProperty<T> {
     private final T maxValue;
     private final boolean dynamic;
     private final Set<Consumer<T>> listeners = ConcurrentHashMap.newKeySet();
-    private final T initialValue;
+    private T initialValue;
     private final boolean encrypted;
     private final ChronoUnit chronoUnit;
     private final Class baseClass;
@@ -419,6 +419,17 @@ public final class SystemProperty<T> {
      */
     public T getDefaultValue() {
         return defaultValue;
+    }
+
+    /**
+     * Resets the initial value of the property (used to detect if a restart is required). It should
+     * be safe to assume that if a property has been migrated from XML to the database, no restart is
+     * required so this is called post-migration.
+     *
+     * For internal use only.
+     */
+    void migrationComplete() {
+        this.initialValue = getValue();
     }
 
     /**

@@ -802,6 +802,7 @@ public class XMLProperties {
                 } else {
                     Log.warn("XML Property '" + name + "' differs from what is stored in the database.  Please make property changes in the database instead of the configuration file.");
                 }
+                SystemProperty.getProperty(name).ifPresent(SystemProperty::migrationComplete);
             }
         } finally {
             writeLock.unlock();

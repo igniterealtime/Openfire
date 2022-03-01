@@ -1943,8 +1943,12 @@ public abstract class Node implements Cacheable, Externalizable {
         // Set the new parent of this node
         parent = newParent;
         if (parent != null) {
+            parentIdentifier = parent.getUniqueIdentifier();
+
             // Add this node to the new parent node
             parent.addChildNode(this);
+        } else {
+            parentIdentifier = null;
         }
         if (savedToDB) {
             XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateNode(this);

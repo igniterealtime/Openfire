@@ -1936,6 +1936,10 @@ public abstract class Node implements Cacheable, Externalizable {
             return;
         }
 
+        if (parentIdentifier != null && newParent != null && !parentIdentifier.equals(newParent.getUniqueIdentifier())) {
+            // FIXME: Remove this node from the parent when the parent isn't loaded. A previous commit message suggests
+            //        that calling getParent() causes problems when the node is being initialized. OF-2402.
+        }
         if (parent != null) {
             // Remove this node from the current parent node
             parent.removeChildNode(this);

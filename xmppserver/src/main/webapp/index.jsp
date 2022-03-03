@@ -23,7 +23,6 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
-<%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
@@ -87,7 +86,6 @@
             (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin");
 
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
-    HttpBindManager httpBindManager = HttpBindManager.getInstance();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
     boolean rssEnabled = JiveGlobals.getBooleanProperty("rss.enabled", true);
@@ -383,7 +381,7 @@
                     </td>
                     <td width="1%" nowrap>
                         <div style="padding-left:6px;" class="c2">
-                        <%= mbFormat.format(memoryUsageAfterLastGC.getUsedMemory()) %> MB of <%= mbFormat.format(memoryUsageAfterLastGC.getTotalMemory()) %> MB (<%= percentFormat.format(memoryUsageAfterLastGC.getPercentUsed()) %>%) used
+                        <%= mbFormat.format(memoryUsageAfterLastGC.getUsedMemory()) %> MB of <%= mbFormat.format(memoryUsageAfterLastGC.getMaximumMemory()) %> MB (<%= percentFormat.format(memoryUsageAfterLastGC.getPercentUsed()) %>%) used
                         </div>
                     </td>
                 </tr>

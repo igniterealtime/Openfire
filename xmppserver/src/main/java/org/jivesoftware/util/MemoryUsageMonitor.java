@@ -75,11 +75,22 @@ public class MemoryUsageMonitor {
      * Memory usage statistics.
      */
     @Immutable
-    public static class MemoryUsage {
-        final int percent;
+    public static class MemoryUsage
+    {
+        /**
+         * Memory used by object instances.
+         */
         final double usedMemory;
+
+        /**
+         * Memory currently allocated to the JVM ("committed" memory).
+         */
         final double totalMemory;
-        final double percentUsed;
+
+        /**
+         * Maximum amount of memory that the JVM can grow to (-Xmx value).
+         */
+        final double maximumMemory;
 
         /**
          * Creates a snapshot of the current memory usage.
@@ -92,22 +103,18 @@ public class MemoryUsageMonitor {
             final Runtime runtime = Runtime.getRuntime();
 
             final double freeMemory = (double)runtime.freeMemory()/(1024*1024);
-            final double maxMemory = (double)runtime.maxMemory()/(1024*1024);
             final double totalMemory = (double)runtime.totalMemory()/(1024*1024);
+            final double maxMemory = (double)runtime.maxMemory()/(1024*1024);
             final double usedMemory = totalMemory - freeMemory;
-            final double percentFree = ((maxMemory - usedMemory)/maxMemory)*100.0;
-            final double percentUsed = 100 - percentFree;
-            final int percent = 100-(int)Math.round(percentFree);
 
-            return new MemoryUsage(percent, usedMemory, totalMemory, percentUsed);
+            return new MemoryUsage(usedMemory, totalMemory, maxMemory);
         }
 
-        protected MemoryUsage(final int percent, final double usedMemory, final double totalMemory, final double percentUsed)
+        protected MemoryUsage(final double usedMemory, final double totalMemory, final double maximumMemory)
         {
-            this.percent = percent;
             this.usedMemory = usedMemory;
             this.totalMemory = totalMemory;
-            this.percentUsed = percentUsed;
+            this.maximumMemory = maximumMemory;
         }
 
         /**
@@ -131,22 +138,36 @@ public class MemoryUsageMonitor {
         }
 
         /**
-         * Returns the percentage of total memory that is currently used by Openfire.
+         * Returns the maximum amount of memory available to Openfire, including used, free and as-of-yet unallocated
+         * memory, in megabytes.
+         *
+         * This value is equivalent to the amount of memory available to the Java process as configured with the -Xmx
+         * value.
+         *
+         * @return maximum amount of memory available to Openfire, in megabytes.
+         */
+        public double getMaximumMemory() {
+            return maximumMemory;
+        }
+
+        /**
+         * Returns the percentage of the maximum memory that is currently being used by Openfire.
          *
          * @return a percentage (between 0.0 and 100.0).
          */
         public double getPercentUsed() {
+            final double percentUsed = (usedMemory / maximumMemory) * 100.0;
             return Math.max(Math.min(percentUsed, 100.0), 0.0);
         }
 
         /**
-         * Returns the percentage of total memory that is currently used by Openfire, rounded to the nearest integer
-         * value.
+         * Returns the percentage of the maximum memory that is currently used by Openfire, rounded to the nearest
+         * integer value.
          *
          * @return a percentage (between 0 and 100).
          */
         public int getPercent() {
-            return Math.max(Math.min(percent, 100), 0);
+            return (int) Math.round(getPercentUsed());
         }
     }
 }

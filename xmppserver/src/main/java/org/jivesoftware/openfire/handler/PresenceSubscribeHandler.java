@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,6 +152,16 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             try {
                 Roster senderRoster = getRoster(senderJID);
                 if (senderRoster != null) {
+                    if (type == Presence.Type.subscribe && senderRoster.isRosterItem(recipientJID)) {
+                        final RosterItem.SubType subType = senderRoster.getRosterItem(recipientJID).getSubStatus();
+                        if (subType == RosterItem.SUB_TO || subType == RosterItem.SUB_BOTH) {
+                            // This is an RFC3192-style acknowledging receipt of subscription state sent earlier. See
+                            // https://datatracker.ietf.org/doc/html/rfc3921#section-9.4. This stanza should not be forwarded
+                            // to the recipient, as this will cause a new 'subscribed' to be returned, which the client will
+                            // again acknowledge, which causes a loop. See OF-38.
+                            return;
+                        }
+                    }
                     manageSub(recipientJID, true, presence, senderRoster);
                 }
                 Roster recipientRoster = getRoster(recipientJID);
@@ -163,16 +174,20 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                 // and the recipient user has not changed its subscription state.
                 if (!(type == Presence.Type.subscribed && recipientRoster != null && !recipientSubChanged)) {
 
-                    // If the user is already subscribed to the *local* user's presence then do not 
-                    // forward the subscription request. Also, do not send an auto-reply on behalf
-                    // of the user. This presence stanza is the user's server know that it MUST no 
-                    // longer send notification of the subscription state change to the user. 
-                    // See http://tools.ietf.org/html/rfc3921#section-7 and/or OF-38 
+                    // From RFC6121 § 3.1.3: If the contact exists and the user already has a subscription to the
+                    // contact's presence, then the contact's server MUST auto-reply on behalf of the contact by sending
+                    // a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.
                     if (type == Presence.Type.subscribe && recipientRoster != null && !recipientSubChanged) {
                         try {
-                            RosterItem.SubType subType = recipientRoster.getRosterItem(senderJID)
-                                    .getSubStatus();
+                            final RosterItem.SubType subType = recipientRoster.getRosterItem(senderJID).getSubStatus();
                             if (subType == RosterItem.SUB_FROM || subType == RosterItem.SUB_BOTH) {
+                                if (!JiveGlobals.getBooleanProperty("xmpp.presence.suppress-subscribe-autoreply", false)) {
+                                    final Presence reply = new Presence();
+                                    reply.setTo(senderJID.asBareJID());
+                                    reply.setFrom(recipientJID.asBareJID());
+                                    reply.setType(Presence.Type.subscribed);
+                                    deliverer.deliver(reply);
+                                }
                                 return;
                             }
                         }
@@ -264,7 +279,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     /**
      * Manage the subscription request. This method updates a user's roster
      * state, storing any changes made, and updating the roster owner if changes
-     * occured.
+     * occurred.
      *
      * @param target    The roster target's jid (the item's jid to be changed)
      * @param isSending True if the request is being sent by the owner

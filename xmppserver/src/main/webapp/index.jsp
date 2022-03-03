@@ -89,6 +89,8 @@
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
     boolean rssEnabled = JiveGlobals.getBooleanProperty("rss.enabled", true);
+
+    pageContext.setAttribute("memoryUsageAfterLastGC", MemoryUsageMonitor.getInstance().getMemoryUsageAfterLastGC());
 %>
 
 <html>
@@ -343,11 +345,6 @@
             <tr>
                 <td class="c1"><fmt:message key="index.memory" /></td>
                 <td>
-                <%
-                    DecimalFormat mbFormat = new DecimalFormat("#0.00");
-                    DecimalFormat percentFormat = new DecimalFormat("#0.0");
-                    final MemoryUsageMonitor.MemoryUsage memoryUsageAfterLastGC = MemoryUsageMonitor.getInstance().getMemoryUsageAfterLastGC();
-                %>
 
                 <table cellpadding="0" cellspacing="0" border="0" width="300">
                 <tr valign="middle">
@@ -355,33 +352,26 @@
                         <div class="bar">
                         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px #666 solid;">
                         <tr>
-                            <%  if (memoryUsageAfterLastGC.getPercent() == 0) { %>
-
-                                <td width="100%"><img src="images/percent-bar-left.gif" width="100%" height="8" border="0" alt=""></td>
-
-                            <%  } else { %>
-
-                                <%  if (memoryUsageAfterLastGC.getPercent() >= 90) { %>
-
-                                    <td width="<%= memoryUsageAfterLastGC.getPercent() %>%" background="images/percent-bar-used-high.gif"
-                                        ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
-
-                                <%  } else { %>
-
-                                    <td width="<%= memoryUsageAfterLastGC.getPercent() %>%" background="images/percent-bar-used-low.gif"
-                                        ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
-
-                                <%  } %>
-                                <td width="<%= (100-memoryUsageAfterLastGC.getPercent()) %>%" background="images/percent-bar-left.gif"
-                                    ><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
-                            <%  } %>
+                            <c:choose>
+                                <c:when test="${memoryUsageAfterLastGC.percent >= 90}">
+                                    <td width="${memoryUsageAfterLastGC.percent}%" background="images/percent-bar-used-high.gif"><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
+                                </c:when>
+                                <c:when test="${memoryUsageAfterLastGC.percent > 0}">
+                                    <td width="${memoryUsageAfterLastGC.percent}%" background="images/percent-bar-used-low.gif"><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
+                                </c:when>
+                            </c:choose>
+                            <td width="${100 - memoryUsageAfterLastGC.percent}%" background="images/percent-bar-left.gif"><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
                         </tr>
                         </table>
                         </div>
                     </td>
                     <td width="1%" nowrap>
                         <div style="padding-left:6px;" class="c2">
-                        <%= mbFormat.format(memoryUsageAfterLastGC.getUsedMemory()) %> MB of <%= mbFormat.format(memoryUsageAfterLastGC.getMaximumMemory()) %> MB (<%= percentFormat.format(memoryUsageAfterLastGC.getPercentUsed()) %>%) used
+                            <fmt:message key="index.memory_usage_description">
+                                <fmt:param><fmt:formatNumber type="number" minFractionDigits="2" maxFractionDigits="2" value="${memoryUsageAfterLastGC.usedMemory}"/></fmt:param>
+                                <fmt:param><fmt:formatNumber type="number" minFractionDigits="2" maxFractionDigits="2" value="${memoryUsageAfterLastGC.maximumMemory}"/></fmt:param>
+                                <fmt:param><fmt:formatNumber type="number" minFractionDigits="1" maxFractionDigits="1" value="${memoryUsageAfterLastGC.percentUsed}"/></fmt:param>
+                            </fmt:message>
                         </div>
                     </td>
                 </tr>

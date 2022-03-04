@@ -691,7 +691,7 @@ public class PluginManager
                 AdminConsole.addModel( canonicalName, adminElement );
             }
             firePluginCreatedEvent( canonicalName, plugin );
-            if (metadata != null && metadata.getVersion() != null) {
+            if (metadata.getVersion() != null) {
                 Log.info( "Successfully loaded plugin '{}-{}'.", canonicalName, metadata.getVersion());
             } else {
                 Log.info( "Successfully loaded plugin '{}'.", canonicalName);

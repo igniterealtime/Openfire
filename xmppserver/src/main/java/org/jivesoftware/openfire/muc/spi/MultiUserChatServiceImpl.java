@@ -28,44 +28,19 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.disco.DiscoInfoProvider;
-import org.jivesoftware.openfire.disco.DiscoItem;
-import org.jivesoftware.openfire.disco.DiscoItemsProvider;
-import org.jivesoftware.openfire.disco.DiscoServerItem;
-import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.GroupAwareList;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.muc.CannotBeInvitedException;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.HistoryRequest;
-import org.jivesoftware.openfire.muc.HistoryStrategy;
-import org.jivesoftware.openfire.muc.MUCEventDelegate;
-import org.jivesoftware.openfire.muc.MUCEventDispatcher;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.NotAcceptableException;
-import org.jivesoftware.openfire.muc.NotAllowedException;
-import org.jivesoftware.openfire.muc.RegistrationRequiredException;
-import org.jivesoftware.openfire.muc.RoomLockedException;
-import org.jivesoftware.openfire.muc.ServiceUnavailableException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
 import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.AutoCloseableReentrantLock;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveProperties;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -75,12 +50,7 @@ import org.xmpp.component.ComponentManager;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.DataForm.Type;
 import org.xmpp.forms.FormField;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 import org.xmpp.resultsetmanagement.ResultSet;
 
 import javax.annotation.Nonnull;
@@ -1702,7 +1672,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         // Schedule a check to see if the ping was answered, kicking the occupant if it wasn't.
         // The check should be done _before_ the next ping would be sent (to prevent a backlog of ping requests forming)
-        long timeoutMs = userIdlePing.dividedBy(4).toMillis();
+        Duration timeoutMs = userIdlePing.dividedBy(4);
         final CheckPingResponseTask task = new CheckPingResponseTask(occupant, pingRequest.getID());
         occupant.setPendingPingTask(task);
         TaskEngine.getInstance().schedule(task, timeoutMs);
@@ -1936,12 +1906,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    @Deprecated
-    public List<MUCRoom> getChatRooms() {
-        return new ArrayList<>(localMUCRoomManager.getAll());
-    }
-
-    @Override
     public List<MUCRoom> getActiveChatRooms() {
         return new ArrayList<>(localMUCRoomManager.getAll());
     }
@@ -2143,7 +2107,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // Create a new task and schedule it with the new timeout
             userTimeoutTask = new UserTimeoutTask();
-            TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval.toMillis(), userIdleTaskInterval.toMillis());
+            TaskEngine.getInstance().schedule(userTimeoutTask, userIdleTaskInterval, userIdleTaskInterval);
         }
     }
 
@@ -2524,32 +2488,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
-     * {@link #setLogMaxConversationBatchSize(int)} - so please use that instead.
-     * @param size the number of messages to save to the database on each run of the logging process.
-     * @deprecated Use {@link #setLogMaxConversationBatchSize(int)} instead.
-     */
-    @Override
-    @Deprecated
-    public void setLogConversationBatchSize(int size)
-    {
-        setLogMaxConversationBatchSize(size);
-    }
-
-    /**
-     * Property accessor temporarily retained for backward compatibility. The interface prescribes use of
-     * {@link #getLogMaxConversationBatchSize()} - so please use that instead.
-     * @return the number of messages to save to the database on each run of the logging process.
-     * @deprecated Use {@link #getLogMaxConversationBatchSize()} instead.
-     */
-    @Override
-    @Deprecated
-    public int getLogConversationBatchSize()
-    {
-        return getLogMaxConversationBatchSize();
-    }
-
-    /**
      * Sets the maximum number of messages to save to the database on each run of the archiving process.
      * Even though the saving of queued conversations takes place in another thread it is not
      * recommended specifying a big number.
@@ -2660,7 +2598,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         XMPPServer.getInstance().addServerListener( this );
 
         // Remove unused rooms from memory
-        long cleanupFreq = JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY) * 60 * 1000;
+        Duration cleanupFreq = Duration.ofMinutes(JiveGlobals.getLongProperty("xmpp.muc.cleanupFrequency.inMinutes", CLEANUP_FREQUENCY));
         TaskEngine.getInstance().schedule(new CleanupTask(), cleanupFreq, cleanupFreq);
 
         // Set us up to answer disco item requests
@@ -2948,11 +2886,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         return features.iterator();
-    }
-
-    @Override
-    public DataForm getExtendedInfo(final String name, final String node, final JID senderJID) {
-        return IQDiscoInfoHandler.getFirstDataForm(this.getExtendedInfos(name, node, senderJID));
     }
 
     @Override

@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2019-2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.pubsub;
 
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -13,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -42,7 +58,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     /**
      * Flush timer delay is configurable, but not less than 20 seconds (default: 2 mins)
      */
-    private static long flushTimerDelay = Math.max( 20000, JiveGlobals.getIntProperty( "xmpp.pubsub.flush.timer", 120)*1000);
+    private static Duration flushTimerDelay = Duration.ofSeconds(Math.max( 20, JiveGlobals.getIntProperty( "xmpp.pubsub.flush.timer", 120)));
 
     /**
      * Maximum number of published items allowed in the write cache
@@ -93,11 +109,11 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
                     @Override
                     public void run() { flushPendingChanges(false ); } // this member only
                 };
-                TaskEngine.getInstance().schedule(flushTask, Math.abs(prng.nextLong())%flushTimerDelay, flushTimerDelay);
+                TaskEngine.getInstance().schedule(flushTask, Duration.ofMillis(Math.abs(prng.nextLong())%flushTimerDelay.toMillis()), flushTimerDelay);
             }
 
         } catch (Exception ex) {
-            log.error("Failed to initialize pubsub maintentence tasks", ex);
+            log.error("Failed to initialize pubsub maintenance tasks", ex);
         }
     }
 
@@ -603,36 +619,15 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     }
 
     @Override
-    @Deprecated
-    public DefaultNodeConfiguration loadDefaultConfiguration( final PubSubService service, final boolean isLeafType )
-    {
-        return delegate.loadDefaultConfiguration( service, isLeafType );
-    }
-
-    @Override
     public DefaultNodeConfiguration loadDefaultConfiguration( final PubSubService.UniqueIdentifier serviceIdentifier, final boolean isLeafType )
     {
         return delegate.loadDefaultConfiguration( serviceIdentifier, isLeafType );
     }
 
     @Override
-    @Deprecated
-    public void createDefaultConfiguration( final PubSubService service, final DefaultNodeConfiguration config )
-    {
-        delegate.createDefaultConfiguration( service, config );
-    }
-
-    @Override
     public void createDefaultConfiguration( final PubSubService.UniqueIdentifier serviceIdentifier, final DefaultNodeConfiguration config )
     {
         delegate.createDefaultConfiguration( serviceIdentifier, config );
-    }
-
-    @Override
-    @Deprecated
-    public void updateDefaultConfiguration( final PubSubService service, final DefaultNodeConfiguration config )
-    {
-        delegate.updateDefaultConfiguration( service, config );
     }
 
     @Override

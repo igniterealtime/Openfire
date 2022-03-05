@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 
 package org.jivesoftware.openfire.pep;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -49,6 +42,13 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * A PEPService is a {@link PubSubService} for use with XEP-0163: "Personal Eventing via
@@ -113,18 +113,6 @@ public class PEPService implements PubSubService, Cacheable {
      * Used to handle filtered-notifications.
      */
     private final EntityCapabilitiesManager entityCapsManager = XMPPServer.getInstance().getEntityCapabilitiesManager();
-
-    /**
-     * Constructs a PEPService.
-     *
-     * @param server  the XMPP server.
-     * @param bareJID the bare JID (service ID) of the user owning the service.
-     * @deprecated Replaced by {@link #PEPService(XMPPServer, JID)}
-     */
-    @Deprecated
-    public PEPService(XMPPServer server, String bareJID) {
-        this(server, new JID(bareJID).asBareJID());
-    }
 
     /**
      * Constructs a PEPService.

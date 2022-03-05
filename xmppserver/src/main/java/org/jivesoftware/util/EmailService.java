@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2003-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,17 @@
 
 package org.jivesoftware.util;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.mail.*;
+import javax.mail.internet.*;
 import java.security.Security;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
-
-import javax.mail.Address;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Part;
-import javax.mail.SendFailedException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.URLName;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.mail.internet.MimeUtility;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A service to send email.<p>
@@ -221,7 +208,7 @@ public class EmailService {
                 message.setHeader("Content-Transfer-Encoding", "8bit");
                 message.setRecipient(Message.RecipientType.TO, to);
                 message.setFrom(from);
-                message.setSubject(StringUtils.replace(subject, "\n", ""), encoding);
+                message.setSubject(subject.replace("\n", ""), encoding);
                 // Create HTML, plain-text, or combination message
                 if (textBody != null && htmlBody != null) {
                     MimeMultipart content = new MimeMultipart("alternative");

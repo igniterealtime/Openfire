@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software and Artur Hefczyc. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software and Artur Hefczyc, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,24 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.nio.ByteBuffer;
-import java.security.*;
-import java.util.Arrays;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
-
-import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import java.nio.ByteBuffer;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.Arrays;
 
 /**
  * Creates and initializes the SSLContext instance to use to secure the plain connection. This
@@ -56,22 +57,6 @@ public class TLSWrapper {
 
     private int netBuffSize;
     private int appBuffSize;
-
-    /**
-     * @deprecated Use the other constructor.
-     * @param connection the connection to wrap
-     * @param clientMode {@code true} to use client mode, {@code false} to use server mode
-     * @param needClientAuth unused parameter
-     * @param remoteServer unused parameter
-     */
-    @Deprecated
-    public TLSWrapper(Connection connection, boolean clientMode, boolean needClientAuth, String remoteServer)
-    {
-        this(
-            connection.getConfiguration(),
-            clientMode
-        );
-    }
 
     public TLSWrapper(ConnectionConfiguration configuration, boolean clientMode ) {
 

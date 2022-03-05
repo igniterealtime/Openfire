@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@
     JID address = new JID(jid);
     org.jivesoftware.openfire.session.ClientSession currentSess = sessionManager.getSession(address);
     boolean isAnonymous = webManager.getXMPPServer().isLocal(address) &&
-            !UserManager.getInstance().isRegisteredUser(address.getNode());
+            !UserManager.getInstance().isRegisteredUser(address, false);
 
     // No current session found
     if (currentSess == null) {

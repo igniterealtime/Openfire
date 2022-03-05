@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +16,26 @@
 
 package org.jivesoftware.openfire.audit.spi;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.Auditor;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.FastDateFormat;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class AuditorImpl implements Auditor {
 
@@ -77,10 +61,10 @@ public class AuditorImpl implements Auditor {
      */
     private long maxFileSize;
     /**
-     * Max number of days to keep audit information. Once the limit has been reached
+     * Maximum time to keep audit information. Once the limit has been reached
      * audit files that contain information that exceed the limit will be deleted.
      */
-    private int maxDays;
+    private Duration retention;
     /**
      * Flag that indicates if packets can still be accepted to be saved to the audit log.
      */
@@ -120,13 +104,13 @@ public class AuditorImpl implements Auditor {
         auditFormat = FastDateFormat.getInstance("MMM dd, yyyy hh:mm:ss:SSS a", JiveGlobals.getLocale());
     }
 
-    protected void setMaxValues(int totalSize, int fileSize, int days) {
+    protected void setMaxValues(int totalSize, int fileSize, Duration duration) {
         maxTotalSize = (long) totalSize * 1024L * 1024L;
         maxFileSize = (long) fileSize * 1024L * 1024L;
-        maxDays = days;
+        retention = duration;
     }
 
-    public void setLogTimeout(int logTimeout) {
+    public void setLogTimeout(Duration logTimeout) {
         // Cancel any existing task because the timeout has changed
         if (saveQueuedPacketsTask != null) {
             saveQueuedPacketsTask.cancel();
@@ -224,12 +208,7 @@ public class AuditorImpl implements Auditor {
      */
     private void ensureMaxTotalSize() {
         // Get list of existing audit files
-        FilenameFilter filter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith("jive.audit-") && name.endsWith(".log");
-            }
-        };
+        FilenameFilter filter = (dir, name) -> name.startsWith("jive.audit-") && name.endsWith(".log");
         File[] files = baseFolder.listFiles(filter);
         if (files == null) {
             Log.debug( "Path '{}' does not denote a directory, or an IO exception occured while trying to list its content.", baseFolder );
@@ -243,12 +222,7 @@ public class AuditorImpl implements Auditor {
         if (totalLength > maxTotalSize) {
             // Sort files by name (chronological order)
             List<File> sortedFiles = new ArrayList<>(Arrays.asList(files));
-            Collections.sort(sortedFiles, new Comparator<File>() {
-                @Override
-                public int compare(File o1, File o2) {
-                    return o1.getName().compareTo(o2.getName());
-                }
-            });
+            sortedFiles.sort(Comparator.comparing(File::getName));
             // Delete as many old files as required to be under the limit
             while (totalLength > maxTotalSize && !sortedFiles.isEmpty()) {
                 File fileToDelete = sortedFiles.remove(0);
@@ -270,26 +244,19 @@ public class AuditorImpl implements Auditor {
      * Deletes old audit files that exceeded the max number of days limit.
      */
     private void ensureMaxDays() {
-        if (maxDays == -1) {
+        if (retention.isNegative()) {
             // Do nothing since we don't have any limit
             return;
         }
 
         // Set limit date after which we need to delete old audit files
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DATE, maxDays * -1);
+        Instant cutoff = Instant.now().minus(retention);
 
-        final String oldestFile =
-                "jive.audit-" + dateFormat.format(calendar.getTime()) + "-000.log";
+        final String oldestFile = "jive.audit-" + dateFormat.format(Date.from(cutoff)) + "-000.log";
 
         // Get list of audit files to delete
-        FilenameFilter filter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith("jive.audit-") && name.endsWith(".log") &&
-                        name.compareTo(oldestFile) < 0;
-            }
-        };
+        FilenameFilter filter = (dir, name) -> name.startsWith("jive.audit-") && name.endsWith(".log") &&
+                name.compareTo(oldestFile) < 0;
 
         final File[] files = baseFolder.listFiles(filter);
         if ( files != null )
@@ -339,12 +306,7 @@ public class AuditorImpl implements Auditor {
         filesIndex = 0;
     }
     // Get list of existing audit files
-    FilenameFilter filter = new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-            return name.startsWith(filePrefix) && name.endsWith(".log");
-        }
-    };
+    FilenameFilter filter = (dir, name) -> name.startsWith(filePrefix) && name.endsWith(".log");
     File[] files = baseFolder.listFiles(filter);
     // if some daily files were already deleted then files.length will be smaller than filesIndex
     // see also WARNING above

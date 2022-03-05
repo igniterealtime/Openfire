@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.net;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import java.util.TimerTask;
 
@@ -106,8 +108,8 @@ public class MulticastDNSService extends BasicModule {
                 final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                 if ( connectionManager != null )
                 {
-                    clientPortNum = connectionManager.getClientListenerPort();
-                    componentPortNum = connectionManager.getComponentListenerPort();
+                    clientPortNum = connectionManager.getPort( ConnectionType.SOCKET_C2S, false );
+                    componentPortNum = connectionManager.getPort( ConnectionType.COMPONENT, false);
                 }
                 try {
                     if (jmdns == null) {
@@ -131,8 +133,8 @@ public class MulticastDNSService extends BasicModule {
                 }
             }
         };
-        // Schedule the task to run in 5 seconds, to give Wildire time to start the ports. 
-        TaskEngine.getInstance().schedule(startService, 5000);
+        // Schedule the task to run in 5 seconds, to give Openfire time to start the ports.
+        TaskEngine.getInstance().schedule(startService, Duration.ofSeconds(5));
     }
 
 

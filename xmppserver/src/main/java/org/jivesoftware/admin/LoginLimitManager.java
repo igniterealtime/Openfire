@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 
 package org.jivesoftware.admin;
 
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles recording admin console login attempts and handling temporary lockouts where necessary.
@@ -53,12 +54,12 @@ public class LoginLimitManager {
     // Max number of attempts per ip address that can be performed in given time frame
     private long maxAttemptsPerIP;
     // Time frame before attempts per ip addresses are reset
-    private long millisecondsBetweenPerIP;
+    private Duration millisecondsBetweenPerIP;
 
     // Max number of attempts per username that can be performed in a given time frame
     private long maxAttemptsPerUsername;
     // Time frame before attempts per username are reset
-    private long millisecondsBetweenPerUsername;
+    private Duration millisecondsBetweenPerUsername;
 
     // Record of attempts per IP address
     private Map<String,Long> attemptsPerIP;
@@ -84,15 +85,15 @@ public class LoginLimitManager {
         // Max number of attempts per ip address that can be performed in given time frame (10 attempts default)
         maxAttemptsPerIP = JiveGlobals.getLongProperty("adminConsole.maxAttemptsPerIP", 10);
         // Time frame before attempts per ip addresses are reset (15 minutes default)
-        millisecondsBetweenPerIP = JiveGlobals.getLongProperty("adminConsole.perIPAttemptResetInterval", 900000);
+        millisecondsBetweenPerIP = Duration.ofMillis(JiveGlobals.getLongProperty("adminConsole.perIPAttemptResetInterval", 900000));
         // Max number of attempts per username that can be performed in a given time frame (10 attempts default)
         maxAttemptsPerUsername = JiveGlobals.getLongProperty("adminConsole.maxAttemptsPerUsername", 10);
         // Time frame before attempts per ip addresses are reset (15 minutes default)
-        millisecondsBetweenPerUsername = JiveGlobals.getLongProperty("adminConsole.perUsernameAttemptResetInterval", 900000);
+        millisecondsBetweenPerUsername = Duration.ofMillis(JiveGlobals.getLongProperty("adminConsole.perUsernameAttemptResetInterval", 900000));
         // Set up per username attempt reset task
-        taskEngine.scheduleAtFixedRate(new PerUsernameTask(), 0, millisecondsBetweenPerUsername);
+        taskEngine.scheduleAtFixedRate(new PerUsernameTask(), Duration.ZERO, millisecondsBetweenPerUsername);
         // Set up per IP attempt reset task
-        taskEngine.scheduleAtFixedRate(new PerIPAddressTask(), 0, millisecondsBetweenPerIP);
+        taskEngine.scheduleAtFixedRate(new PerIPAddressTask(), Duration.ZERO, millisecondsBetweenPerIP);
     }
 
     /**

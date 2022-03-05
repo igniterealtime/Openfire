@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,10 @@
 
 package org.jivesoftware.openfire.user;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
+import gnu.inet.encoding.Stringprep;
+import gnu.inet.encoding.StringprepException;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
@@ -45,10 +37,12 @@ import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import gnu.inet.encoding.Stringprep;
-import gnu.inet.encoding.StringprepException;
-
 import javax.annotation.Nonnull;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages users, including loading, creating and deleting.
@@ -411,45 +405,6 @@ public final class UserManager {
             throws UnsupportedOperationException
     {
         return provider.findUsers(fields, query, startIndex, numResults);
-    }
-
-    /**
-     * Returns true if the specified local username belongs to a registered local user.
-     *
-     * @param username to username of the user to check it it's a registered user.
-     * @return true if the specified JID belongs to a local registered user.
-     * @deprecated Replaced by {@link #isRegisteredUser(JID, boolean)}, which prevents assumptions about the domain of the user. (OF-2106)
-     */
-    @Deprecated
-    public boolean isRegisteredUser(final String username) {
-        if (username == null || "".equals(username)) {
-            return false;
-        }
-        try {
-            getUser(username);
-            return true;
-        }
-        catch (final UserNotFoundException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Returns true if the specified JID belongs to a local or remote registered user. For
-     * remote users (i.e. domain does not match local domain) a disco#info request is going
-     * to be sent to the bare JID of the user.
-     *
-     * <p>WARNING: If the supplied JID could be a remote user and the disco#info result packet comes back on the same
-     * thread as the one the calls this method then it will not be processed, and this method will block for 60 seconds
-     * by default. To change the timeout, update the system property <code>usermanager.remote-disco-info-timeout-seconds</code>
-     *
-     * @param user to JID of the user to check it it's a registered user.
-     * @return true if the specified JID belongs to a local or remote registered user.
-     * @deprecated Replaced by {@link #isRegisteredUser(JID, boolean)}, of which the signature is clear on performing potentially costly remote lookups. (OF-2106)
-     */
-    @Deprecated
-    public boolean isRegisteredUser(final JID user) {
-        return isRegisteredUser(user, true);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 package org.jivesoftware.openfire.websocket;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Locale;
-import java.util.TimerTask;
-
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -27,11 +22,7 @@ import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
@@ -42,9 +33,7 @@ import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +41,12 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
 import javax.xml.XMLConstants;
+import java.io.IOException;
+import java.io.StringReader;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.TimerTask;
 
 /**
  * This class handles all WebSocket events for the corresponding connection with a remote peer.
@@ -94,7 +89,7 @@ public class XmppWebSocket {
         final PacketDeliverer backupDeliverer = ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
         wsConnection = new WebSocketConnection(this, backupDeliverer, session.getRemoteAddress());
         pingTask = new PingTask();
-        TaskEngine.getInstance().schedule(pingTask, JiveConstants.MINUTE, JiveConstants.MINUTE);
+        TaskEngine.getInstance().schedule(pingTask, Duration.ofMinutes(1), Duration.ofMinutes(1));
     }
 
     @OnWebSocketClose
@@ -383,7 +378,7 @@ public class XmppWebSocket {
             readerPool.setMaxTotal(-1);
             readerPool.setBlockWhenExhausted(false);
             readerPool.setTestOnReturn(true);
-            readerPool.setTimeBetweenEvictionRunsMillis(JiveConstants.MINUTE);
+            readerPool.setTimeBetweenEvictionRunsMillis(Duration.ofMinutes(1).toMillis());
         }
     }
 
@@ -397,8 +392,8 @@ public class XmppWebSocket {
             if (!isWebSocketOpen()) {
                 TaskEngine.getInstance().cancelScheduledTask(pingTask);
             } else {
-                long idleTime = System.currentTimeMillis() - JiveConstants.MINUTE;
-                if (xmppSession.getLastActiveDate().getTime() >= idleTime) {
+                Instant idleTime = Instant.now().minus(Duration.ofMinutes(1));
+                if (xmppSession.getLastActiveDate().toInstant().isAfter(idleTime)) {
                     return;
                 }
                 try {

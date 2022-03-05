@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -394,19 +390,6 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     }
 
     /**
-     * Returns the size of the cache contents in bytes limited to integer size. This value is only a
-     * rough approximation, so cache users should expect that actual VM
-     * memory used by the cache could be significantly higher than the value
-     * reported by this method.
-     *
-     * @return the size of the cache contents in bytes.
-     */
-    @Override
-    public int getCacheSize() {
-        return (int) Math.min(Integer.MAX_VALUE, cacheSize);
-    }
-
-    /**
      * Returns the size of the cache contents in bytes. This value is only a
      * rough approximation, so cache users should expect that actual VM
      * memory used by the cache could be significantly higher than the value
@@ -428,18 +411,6 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     @Override
     public long getMaxCacheSize() {
         return maxCacheSize;
-    }
-
-    /**
-     * Sets the maximum size of the cache in bytes limited to integer size. If the cache grows larger
-     * than the max size, the least frequently used items will be removed. If
-     * the max cache size is set to -1, there is no size limit.
-     *
-     * @param maxCacheSize the maximum size of this cache (-1 indicates unlimited max size).
-     */
-    @Override
-    public void setMaxCacheSize(final int maxCacheSize) {
-       setMaxCacheSize((long)maxCacheSize);
     }
 
     /**

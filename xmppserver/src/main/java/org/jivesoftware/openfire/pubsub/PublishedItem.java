@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,53 +251,6 @@ public class PublishedItem implements Serializable {
         return publisher.equals(user)
             || publisher.toBareJID().equals(user.toBareJID())
             || getNode().isAdmin(user);
-    }
-
-    /**
-     * Returns a string that uniquely identifies this published item in the following format: <i>nodeId:itemId</i>
-     *
-     * Note that this method generates a value that's unique only in context of the node. This allows for different
-     * services to have items with identical keys. Use {@link #getUniqueIdentifier()} to obtain an identifier that is
-     * unique for the entire XMPP domain.
-     *
-     * @return Unique identifier for this item
-     * @deprecated Replaced by {@link #getUniqueIdentifier()} which generates more unique values.
-     */
-    @Deprecated
-    public String getItemKey() {
-        return getItemKey(serviceId, nodeId, id);
-    }
-
-    /**
-     * Returns a string that uniquely identifies this published item in the following format: <i>nodeId:itemId</i>
-     *
-     * Note that this method generates a value that's unique only in context of the node. This allows for different
-     * services to have items with identical keys. Use {@link #getUniqueIdentifier(LeafNode, String)} to obtain an
-     * identifier that is unique for the entire XMPP domain.
-     *
-     * @param node Node for the published item
-     * @param itemId Id for the published item (unique within the node)
-     * @return Unique identifier for this item
-     * @deprecated Replaced by {@link #getUniqueIdentifier(LeafNode, String)} which generates more unique values.
-     */
-    @Deprecated
-    public static String getItemKey(LeafNode node, String itemId) {
-        return getItemKey(node.getUniqueIdentifier().getServiceIdentifier().getServiceId(), node.getUniqueIdentifier().getNodeId(), itemId);
-    }
-
-    /**
-     * Returns a string that uniquely identifies this published item
-     * in the following format: {@code serviceId:nodeId:itemId}. This matches the primary key of the ofPubSubItem table.
-     * @param serviceId Service id for the published item
-     * @param nodeId Node id for the published item
-     * @param itemId Id for the published item (unique within the node)
-     * @return Unique identifier for this item
-     * @deprecated Replaced by {@link #getUniqueIdentifier(String, String, String)} which generates more unique values.
-     */
-    @Deprecated
-    public static String getItemKey(String serviceId, String nodeId, String itemId) {
-    	return new StringBuilder(serviceId).append(nodeId)
-    		.append(':').append(itemId).toString();
     }
 
     /**

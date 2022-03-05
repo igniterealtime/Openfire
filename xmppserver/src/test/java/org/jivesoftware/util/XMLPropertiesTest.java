@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,16 +64,5 @@ public class XMLPropertiesTest {
         String xml = "<root><foo>foo&amp;bar</foo></root>";
         XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
         assertEquals("foo&bar", props.getProperty("foo"));
-    }
-
-    @Test
-    public void testGetPropertiesByName() throws Exception {
-        String xml = "<root><foo><bar><prop>some value</prop><prop>other value</prop><prop>last value</prop></bar></foo></root>";
-        XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
-        String[] result = props.getProperties("foo.bar.prop");
-        assertEquals(3, result.length);
-        assertEquals("some value", result[0]);
-        assertEquals("other value", result[1]);
-        assertEquals("last value", result[2]);
     }
 }

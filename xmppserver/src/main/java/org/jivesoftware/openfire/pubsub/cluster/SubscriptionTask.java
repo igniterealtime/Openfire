@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 
 package org.jivesoftware.openfire.pubsub.cluster;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Optional;
-
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
 import org.jivesoftware.openfire.pubsub.NodeSubscription.State;
@@ -28,7 +23,10 @@ import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Optional;
 
 /**
  * A cluster task used work with a particular subscription (a relation between an entity an a pubsub node) of a pubsub node.
@@ -146,20 +144,6 @@ public abstract class SubscriptionTask extends NodeTask
 
         // When this cluster node does not have the pubsub node loaded in memory, no updates are needed (OF-2077).
         return node.map(value -> new NodeSubscription(value, owner, subJid, state, subId));
-    }
-
-    /**
-     * This method is replaced by {@link #getSubscriptionIfLoaded()} ()}, which performs the exact same operation, but is named
-     * differently to better express intent.
-     *
-     * @deprecated Renamed to {@link #getSubscriptionIfLoaded()}
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2077">Issue OF-2077: NullPointerException with Pubsub(PEP?) and clustering</a>
-     */
-    @Deprecated // TODO Remove this method in Openfire 4.8 or later.
-    @Nullable
-    public NodeSubscription getSubscription()
-    {
-        return getSubscriptionIfLoaded().orElse(null);
     }
 
     @Override

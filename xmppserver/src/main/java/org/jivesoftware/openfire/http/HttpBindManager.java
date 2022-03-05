@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, Ignite Realtime Foundation 2022. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,13 @@
 
 package org.jivesoftware.openfire.http;
 
-import java.io.File;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-
 import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ForwardedRequestCustomizer;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
@@ -50,11 +37,19 @@ import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.IdentityStore;
-import org.jivesoftware.openfire.spi.*;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 /**
  * Responsible for making available BOSH (functionality to the outside world, using an embedded web server.
@@ -83,12 +78,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .build();
 
     /**
-     * @deprecated Replaced with HTTP_BIND_ENABLED.getDefaultValue();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final boolean HTTP_BIND_ENABLED_DEFAULT = HTTP_BIND_ENABLED.getDefaultValue();
-
-    /**
      * TCP port on which the non-encrypted (HTTP) BOSH endpoint is exposed.
      */
     public static final SystemProperty<Integer> HTTP_BIND_PORT = SystemProperty.Builder.ofType(Integer.class)
@@ -99,12 +88,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .build();
 
     /**
-     * @deprecated Replaced with HTTP_BIND_PORT.getDefaultValue();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final int HTTP_BIND_PORT_DEFAULT = HTTP_BIND_PORT.getDefaultValue();
-
-    /**
      * TCP port on which the encrypted (HTTPS) BOSH endpoint is exposed.
      */
     public static final SystemProperty<Integer> HTTP_BIND_SECURE_PORT = SystemProperty.Builder.ofType(Integer.class)
@@ -113,12 +96,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .setDefaultValue(7443)
         .addListener(HttpBindManager::restart)
         .build();
-
-    /**
-     * @deprecated Replaced with HTTP_BIND_SECURE_PORT.getDefaultValue();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final int HTTP_BIND_SECURE_PORT_DEFAULT = HTTP_BIND_SECURE_PORT.getDefaultValue();
 
     /**
      * Minimum amount of threads in the thread pool to perform the network IO related to BOSH traffic.
@@ -166,12 +143,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .setChronoUnit(ChronoUnit.MILLIS)
         .setMaxValue(Duration.ofMillis(Integer.MAX_VALUE)) // Jetty takes an int value, not a long.
         .build();
-
-    /**
-     * @deprecated Replaced with HTTP_BIND_THREADS.getDefaultValue();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final int HTTP_BIND_THREADS_DEFAULT = HTTP_BIND_THREADS.getDefaultValue();
 
     /**
      * The TLS 'mutual authentication' policy that is applied to the BOSH endpoint.
@@ -241,12 +212,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .build();
 
     /**
-     * @deprecated Replaced with HTTP_BIND_CORS_ENABLED.getDefaultValue();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final boolean HTTP_BIND_CORS_ENABLED_DEFAULT = HTTP_BIND_CORS_ENABLED.getDefaultValue();
-
-    /**
      * The Cross-Origin Resource Sharing (CORS) header value that represents the 'allow all orgins' state.
      */
     public static final String HTTP_BIND_CORS_ALLOW_ORIGIN_ALL = "*";
@@ -270,12 +235,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .buildSet(String.class);
 
     /**
-     * @deprecated Replaced with String.join(", ", HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue())
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final String HTTP_BIND_CORS_ALLOW_METHODS_DEFAULT = String.join(", ", HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue());
-
-    /**
      * The name of HTTP headers that are accepted in requests to the BOSH endpoint.
      */
     public static final SystemProperty<Set<String>> HTTP_BIND_CORS_ALLOW_HEADERS = SystemProperty.Builder.ofType(Set.class)
@@ -283,12 +242,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .setDynamic(true)
         .setDefaultValue(new HashSet<>(Arrays.asList("Overwrite", "Destination", "Content-Type", "Depth", "User-Agent", "X-File-Size", "X-Requested-With", "If-Modified-Since", "X-File-Name", "Cache-Control")) )
         .buildSet(String.class);
-
-    /**
-     * @deprecated Replaced with String.join(", ", HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue())
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final String HTTP_BIND_CORS_ALLOW_HEADERS_DEFAULT = String.join(", ", HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue());;
 
     /**
      * How long the results of a preflight request (that is the information contained in the Access-Control-Allow-Methods and Access-Control-Allow-Headers headers) can be cached.
@@ -301,12 +254,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .build();
 
     /**
-     * @deprecated Replaced with HTTP_BIND_CORS_MAX_AGE.getDefaultValue().toSeconds();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final String HTTP_BIND_CORS_MAX_AGE_DEFAULT = String.valueOf(HTTP_BIND_CORS_MAX_AGE.getDefaultValue().getSeconds()); // TODO replace with 'toSeconds()' after dropping support for Java 8
-
-    /**
      * the maximum size in bytes of request headers in the BOSH endpoint. Larger headers will allow for more and/or
      * larger cookies plus larger form content encoded in a URL. However, larger headers consume more memory and can
      * make a server more vulnerable to denial of service attacks.
@@ -316,12 +263,6 @@ public final class HttpBindManager implements CertificateEventListener {
         .setDynamic(true)
         .setDefaultValue(32768)
         .build();
-
-    /**
-     * @deprecated Replaced with HTTP_BIND_REQUEST_HEADER_SIZE.getDefaultValue();
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public static final int HTTP_BIND_REQUEST_HEADER_SIZE_DEFAULT = HTTP_BIND_REQUEST_HEADER_SIZE.getDefaultValue();
 
     private static HttpBindManager instance;
 
@@ -456,7 +397,7 @@ public final class HttpBindManager implements CertificateEventListener {
 
         if ( JiveGlobals.getBooleanProperty( "jetty.temp-file-toucher.enabled", true ) ) {
             tempFileToucherTask = new TempFileToucherTask( httpBindServer );
-            final long period = JiveGlobals.getLongProperty( "jetty.temp-file-toucher.period", JiveConstants.DAY );
+            final Duration period = Duration.ofMillis(JiveGlobals.getLongProperty( "jetty.temp-file-toucher.period", Duration.ofDays(1).toMillis() ));
             TaskEngine.getInstance().schedule( tempFileToucherTask, period, period );
         }
     }
@@ -508,7 +449,7 @@ public final class HttpBindManager implements CertificateEventListener {
     }
 
     private Connector createConnector( final Server httpBindServer ) {
-        final int port = getHttpBindUnsecurePort();
+        final int port = HTTP_BIND_PORT.getValue();
         if (port > 0) {
             HttpConfiguration httpConfig = new HttpConfiguration();
             httpConfig.setSendServerVersion( false );
@@ -527,7 +468,7 @@ public final class HttpBindManager implements CertificateEventListener {
     }
 
     private Connector createSSLConnector( final Server httpBindServer ) {
-        final int securePort = getHttpBindSecurePort();
+        final int securePort = HTTP_BIND_SECURE_PORT.getValue();
         try {
             final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.BOSH_C2S );
 
@@ -563,7 +504,7 @@ public final class HttpBindManager implements CertificateEventListener {
     private void configureProxiedConnector(HttpConfiguration httpConfig) {
         // Check to see if we are deployed behind a proxy
         // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
-        if (isXFFEnabled()) {
+        if (HTTP_BIND_FORWARDED.getValue()) {
             ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
             // default: "X-Forwarded-For"
             String forwardedForHeader = HTTP_BIND_FORWARDED_FOR.getValue();
@@ -581,7 +522,7 @@ public final class HttpBindManager implements CertificateEventListener {
                 customizer.setForwardedHostHeader(forwardedHostHeader);
             }
             // default: none
-            String hostName = getXFFHostName();
+            String hostName = HTTP_BIND_FORWARDED_HOST_NAME.getValue();
             if (hostName != null) {
                 customizer.setHostHeader(hostName);
             }
@@ -620,7 +561,7 @@ public final class HttpBindManager implements CertificateEventListener {
     {
         if ( isHttpBindEnabled() )
         {
-            final int configuredPort = getHttpBindUnsecurePort();
+            final int configuredPort = HTTP_BIND_PORT.getValue();
             for ( final Connector connector : httpBindServer.getConnectors() )
             {
                 if ( !( connector instanceof ServerConnector ) )
@@ -647,7 +588,7 @@ public final class HttpBindManager implements CertificateEventListener {
     {
         if ( isHttpBindEnabled() )
         {
-            final int configuredPort = getHttpBindSecurePort();
+            final int configuredPort = HTTP_BIND_SECURE_PORT.getValue();
             for ( final Connector connector : httpBindServer.getConnectors() )
             {
                 if ( !( connector instanceof ServerConnector ) )
@@ -666,58 +607,15 @@ public final class HttpBindManager implements CertificateEventListener {
     }
 
     public String getHttpBindUnsecureAddress() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindUnsecurePort() + "/http-bind/";
+        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_PORT.getValue() + "/http-bind/";
     }
 
     public String getHttpBindSecureAddress() {
-        return "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindSecurePort() + "/http-bind/";
+        return "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_SECURE_PORT.getValue() + "/http-bind/";
     }
 
     public String getJavaScriptUrl() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + getHttpBindUnsecurePort() + "/scripts/";
-    }
-
-    // http binding CORS support start
-
-    /**
-     * @deprecated Replaced by <tt>HTTP_BIND_CORS_ENABLED.getValue()</tt>
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public boolean isCORSEnabled() {
-        return HTTP_BIND_CORS_ENABLED.getValue();
-    }
-
-    /**
-     * @deprecated Replaced by <tt>HTTP_BIND_CORS_ENABLED.setValue()</tt>
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setCORSEnabled(Boolean value) {
-        if (value != null)
-            HTTP_BIND_CORS_ENABLED.setValue(value);
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_ALLOWED_ORIGINS.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public String getCORSAllowOrigin() {
-        return String.join(",", HTTP_BIND_ALLOWED_ORIGINS.getValue());
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_ALLOWED_ORIGINS.setValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setCORSAllowOrigin(String origins) {
-        final Set<String> update = new HashSet<>();
-        if (origins == null || origins.trim().length() == 0)
-            update.add(HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
-        else {
-            origins = origins.replaceAll("\\s+", "");
-            final String[] split = origins.split(",");
-            update.addAll(Arrays.asList(split));
-        }
-        HTTP_BIND_ALLOWED_ORIGINS.setValue(update);
+        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_PORT.getValue() + "/scripts/";
     }
 
     public boolean isAllOriginsAllowed() {
@@ -726,118 +624,6 @@ public final class HttpBindManager implements CertificateEventListener {
 
     public boolean isThisOriginAllowed(String origin) {
         return isAllOriginsAllowed() || HTTP_BIND_ALLOWED_ORIGINS.getValue().stream().anyMatch(o -> o.equalsIgnoreCase(origin));
-    }
-
-    // http binding CORS support end
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public boolean isXFFEnabled() {
-        return HTTP_BIND_FORWARDED.getValue();
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED.setValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setXFFEnabled(boolean enabled) {
-        HTTP_BIND_FORWARDED.setValue(enabled);
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_FOR.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public String getXFFHeader() {
-        return HTTP_BIND_FORWARDED_FOR.getValue();
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_FOR.setValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setXFFHeader(String header) {
-        if (header == null || header.trim().isEmpty()) {
-            HTTP_BIND_FORWARDED_FOR.setValue(null);
-        } else {
-            HTTP_BIND_FORWARDED_FOR.setValue(header);
-        }
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_SERVER.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public String getXFFServerHeader() {
-        return HTTP_BIND_FORWARDED_SERVER.getValue();
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_SERVER.setValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setXFFServerHeader(String header) {
-        if (header == null || header.trim().isEmpty()) {
-            HTTP_BIND_FORWARDED_SERVER.setValue(null);
-        } else {
-            HTTP_BIND_FORWARDED_SERVER.setValue(header);
-        }
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public String getXFFHostHeader() {
-        return HTTP_BIND_FORWARDED_HOST.getValue();
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST.setValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setXFFHostHeader(String header) {
-        if (header == null || header.trim().isEmpty()) {
-            HTTP_BIND_FORWARDED_HOST.setValue(null);
-        } else {
-            HTTP_BIND_FORWARDED_HOST.setValue(header);
-        }
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST_NAME.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public String getXFFHostName() {
-        return HTTP_BIND_FORWARDED_HOST_NAME.getValue();
-    }
-
-    /**
-     * @deprecated Replaced by HTTP_BIND_FORWARDED_HOST_NAME.setValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setXFFHostName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            HTTP_BIND_FORWARDED_HOST_NAME.setValue(null);
-        } else {
-            HTTP_BIND_FORWARDED_HOST_NAME.setValue(name);
-        }
-    }
-
-    /**
-     * Set the ports on which the HTTP binding service will be running.
-     *
-     * @param unsecurePort the unsecured connection port which clients can connect to.
-     * @param securePort the secured connection port which clients can connect to.
-     * @throws Exception when there is an error configuring the HTTP binding ports.
-     * @deprecated Replaced with HTTP_BIND_PORT.setValue(unsecurePort) and HTTP_BIND_SECURE_PORT.setValue(unsecurePort);
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public void setHttpBindPorts(int unsecurePort, int securePort) throws Exception {
-        HTTP_BIND_PORT.setValue(unsecurePort);
-        HTTP_BIND_SECURE_PORT.setValue(securePort);
     }
 
     /**
@@ -1003,28 +789,6 @@ public final class HttpBindManager implements CertificateEventListener {
         else if (!shouldEnable && httpBindServer != null) {
             stop();
         }
-    }
-
-    /**
-     * Returns the HTTP binding port which does not use SSL.
-     *
-     * @return the HTTP binding port which does not use SSL.
-     * @deprecated Replaced with HTTP_BIND_PORT.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public int getHttpBindUnsecurePort() {
-        return HTTP_BIND_PORT.getValue();
-    }
-
-    /**
-     * Returns the HTTP binding port which uses SSL.
-     *
-     * @return the HTTP binding port which uses SSL.
-     * @deprecated Replaced with HTTP_BIND_SECURE_PORT.getValue()
-     */
-    @Deprecated // TODO drop in Openfire 4.8.0 or later.
-    public int getHttpBindSecurePort() {
-        return HTTP_BIND_SECURE_PORT.getValue();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.audit;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -94,40 +95,39 @@ public interface AuditManager {
     void setMaxFileSize(int size);
 
     /**
-     * Returns the maximum number of days to keep audit information. Once the limit
+     * Returns the maximum duration to keep audit information. Once the limit
      * has been reached audit files that contain information that exceed the limit
      * will be deleted.
      *
-     * @return the maximum number of days to keep audit information
-     *         or -1 for unlimited
+     * @return the maximum duration to keep audit information, negative value for unlimited.
      */
-    int getMaxDays();
+    Duration getRetention();
 
     /**
-     * Set the the maximum number of days to keep audit information.
+     * Set the duration to keep audit information. Once the limit has been reached audit files
+     * that contain information that exceed the limit will be deleted.
      *
-     * @param count the maximum number of days to keep audit information
-     *        or -1 for unlimited
+     * @param duration the maximum duration to keep audit information or a negative value for unlimited
      */
-    void setMaxDays(int count);
+    void setRetention(Duration duration);
 
     /**
-     * Returns the time in milliseconds between successive executions of the task that will save
+     * Returns the time between successive executions of the task that will save
      * the queued audited packets to a permanent store.
      *
-     * @return the time in milliseconds between successive executions of the task that will save
+     * @return the time between successive executions of the task that will save
      *         the queued audited packets to a permanent store.
      */
-    int getLogTimeout();
+    Duration getLogTimeout();
 
     /**
-     * Sets the time in milliseconds between successive executions of the task that will save
+     * Sets the time between successive executions of the task that will save
      * the queued audited packets to a permanent store.
      *
-     * @param logTimeout the time in milliseconds between successive executions of the task that will save
+     * @param logTimeout the time between successive executions of the task that will save
      *        the queued audited packets to a permanent store. 
      */
-    void setLogTimeout(int logTimeout);
+    void setLogTimeout(Duration logTimeout);
 
     /**
      * Returns the absolute path to the directory where the audit log files will be saved.
@@ -243,7 +243,7 @@ public interface AuditManager {
      *
      * @return An iterator of all XPath expressions the audit manager is using
      */
-    Iterator getXPathFilters();
+    Iterator<String> getXPathFilters();
 
     /**
      * Sets the list of usernames that won't be audited. Packets sent or received by any of

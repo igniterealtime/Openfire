@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.keystore;
 
 import org.jivesoftware.openfire.XMPPServer;
@@ -13,7 +29,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -371,10 +390,8 @@ public class CertificateStoreManager extends BasicModule
      * @param type the connection type
      * @return a store type (never null).
      * @see <a href="https://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#KeyStore">Java Cryptography Architecture Standard Algorithm Name Documentation</a>
-     * @deprecated use either {@link #getTrustStoreType(ConnectionType)} or {@link #getIdentityStoreType(ConnectionType)}
      */
-    @Deprecated
-    public static String getKeyStoreType( ConnectionType type )
+    private static String getKeyStoreType( ConnectionType type )
     {
         final String propertyName = type.getPrefix() + "storeType";
         final String defaultValue = "jks";
@@ -389,21 +406,6 @@ public class CertificateStoreManager extends BasicModule
         }
     }
 
-    static void setKeyStoreType( ConnectionType type, String keyStoreType )
-    {
-        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-        JiveGlobals.setProperty( type.getPrefix() + "storeType", keyStoreType );
-
-        final String oldKeyStoreType = getKeyStoreType( type );
-        if ( oldKeyStoreType.equals( keyStoreType ) )
-        {
-            Log.debug( "Ignoring KeyStore type change request (to '{}'): listener already in this state.", keyStoreType );
-            return;
-        }
-
-        Log.debug( "Changing KeyStore type from '{}' to '{}'.", oldKeyStoreType, keyStoreType );
-        // TODO shouldn't this do something?
-    }
 
     /**
      * The password of the identity store for connection created by this listener.

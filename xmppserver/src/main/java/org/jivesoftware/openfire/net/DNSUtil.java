@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class DNSUtil {
         // Attempt the SRV lookup.
         final List<WeightedHostAddress> srvLookups = new LinkedList<>(srvLookup("xmpp-server", "tcp", domain));
 
-        final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ENABLED, true);
+        final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_POLICY, true);
         if (allowTLS) {
             srvLookups.addAll(srvLookup("xmpps-server", "tcp", domain));
         }

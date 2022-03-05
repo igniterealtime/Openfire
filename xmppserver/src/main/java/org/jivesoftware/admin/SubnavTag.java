@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.StringUtils;
 import org.dom4j.Element;
 
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
+import javax.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * <p>A simple JSP tag for displaying sub-navigation bar information in the admin console. The
@@ -178,13 +177,10 @@ public class SubnavTag extends BodyTagSupport {
                                 String subitemDescr = item.attributeValue("description");
                                 String value = getBodyContent().getString();
                                 if (value != null) {
-                                    value = StringUtils.replace(value, "[id]", clean(subitemID));
-                                    value = StringUtils.replace(value, "[name]",
-                                            clean(AdminConsole.getAdminText(subitemName, pluginName)));
-                                    value = StringUtils.replace(value, "[description]",
-                                            clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
-                                    value = StringUtils.replace(value, "[url]",
-                                            request.getContextPath() + "/" + clean(subitemURL));
+                                    value = value.replaceAll("\\[id]", clean(subitemID));
+                                    value = value.replaceAll("\\[name]", clean(AdminConsole.getAdminText(subitemName, pluginName)));
+                                    value = value.replaceAll("\\[description]", clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
+                                    value = value.replaceAll("\\[url]",request.getContextPath() + "/" + clean(subitemURL));
                                 }
                                 String css = getCss();
                                 boolean isCurrent = subnav != null && item.equals(subnav);
@@ -216,6 +212,6 @@ public class SubnavTag extends BodyTagSupport {
      * @return a cleaned version - not null and with escaped characters.
      */
     private String clean(String in) {
-        return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
+        return (in == null ? "" : in.replaceAll("'", "\\'"));
     }
 }

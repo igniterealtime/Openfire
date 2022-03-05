@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.*;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -243,7 +244,7 @@ public class IQRouter extends BasicModule {
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        TaskEngine.getInstance().scheduleAtFixedRate(new TimeoutTask(), 5000, 5000);
+        TaskEngine.getInstance().scheduleAtFixedRate(new TimeoutTask(), Duration.ofSeconds(5), Duration.ofSeconds(5));
         serverName = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();
         multicastRouter = server.getMulticastRouter();

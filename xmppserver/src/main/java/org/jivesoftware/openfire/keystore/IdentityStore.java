@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.keystore;
 
 import org.bouncycastle.operator.OperatorCreationException;
@@ -386,6 +401,7 @@ public class IdentityStore extends CertificateStore
 
     /**
      * Adds a self-signed certificate for the domain of this XMPP service when no certificate for the domain was found.
+     *
      * @throws CertificateStoreConfigException if there was a problem creating the certificate
      */
     public synchronized void ensureDomainCertificate() throws CertificateStoreConfigException
@@ -399,68 +415,14 @@ public class IdentityStore extends CertificateStore
     }
 
     /**
-     * Adds a self-signed certificate for the domain of this XMPP service when no certificate for the domain (of the
-     * provided algorithm) was found.
-     *
-     * This method is a thread-safe equivalent of:
-     * <pre>
-     *   for ( String algorithm : algorithms ) {
-     *     if ( !containsDomainCertificate( algorithm ) ) {
-     *        addSelfSignedDomainCertificate( algorithm );
-     *     }
-     *   }
-     * </pre>
-     *
-     * @param algorithms The algorithms for which to verify / add a domain certificate.
-     * @deprecated Unused as of Openfire 4.3.0. Use 'ensureDomainCertificate' instead. See OF-1599.
-     * @throws CertificateStoreConfigException if there was a problem creating the certificate
-     */
-    @Deprecated
-    public synchronized void ensureDomainCertificates( String... algorithms ) throws CertificateStoreConfigException
-    {
-        for ( String algorithm : algorithms )
-        {
-            Log.debug( "Verifying that a domain certificate ({} algorithm) is available in this store.", algorithm);
-            if ( !containsDomainCertificate( algorithm ) )
-            {
-                Log.debug( "Store does not contain a domain certificate ({} algorithm). A self-signed certificate will be generated.", algorithm);
-                addSelfSignedDomainCertificate( algorithm );
-            }
-        }
-    }
-
-    /**
      * Checks if the store contains a certificate of a particular algorithm that matches the domain of this
      * XMPP service. This method will not distinguish between self-signed and non-self-signed certificates.
-     * @return {@code true}  if the store contains a certificate of a particular algorithm that matches the domain of this XMPP service, otherwise {@code false}
+     *
+     * @return {@code true} if the store contains a certificate of a particular algorithm that matches the domain of this XMPP service, otherwise {@code false}
      * @throws CertificateStoreConfigException if there was a problem creating the certificate
      */
-    @SuppressWarnings("deprecation")
     public synchronized boolean containsDomainCertificate() throws CertificateStoreConfigException
     {
-        return containsDomainCertificate( null );
-    }
-
-    /**
-     * Checks if the store contains a certificate of a particular algorithm that matches the domain of this
-     * XMPP service. This method will not distinguish between self-signed and non-self-signed certificates.
-     *
-     * If the 'algorithm' parameter is used, then this method will evaluate only certificates that match that
-     * certificate.
-     *
-     * @param algorithm An optional algorithm constraint (eg: "RSA"). Can be null, cannot be empty.
-     * @return {@code true} if the store contains a certificate of a particular algorithm that matches the domain of this XMPP service, otherwise {@code false}
-     * @deprecated Unused as of Openfire 4.3.0. Use 'containsDomainCertificate' instead. See OF-1599.
-     * @throws CertificateStoreConfigException if there was a problem creating the certificate
-     */
-    @Deprecated
-    public synchronized boolean containsDomainCertificate( String algorithm ) throws CertificateStoreConfigException
-    {
-        if ( algorithm != null && algorithm.isEmpty() )
-        {
-            throw new IllegalArgumentException( "Argument 'algorithm' cannot be empty (but is allowed to be null)." );
-        }
-
         final String domainName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
         try
@@ -469,12 +431,6 @@ public class IdentityStore extends CertificateStore
             {
                 final Certificate certificate = store.getCertificate( alias );
                 if ( !( certificate instanceof X509Certificate ) )
-                {
-                    continue;
-                }
-
-                // Filter on algorithm, if the algorithm argument is defined.
-                if ( algorithm != null && !certificate.getPublicKey().getAlgorithm().equalsIgnoreCase( algorithm ) )
                 {
                     continue;
                 }
@@ -491,7 +447,7 @@ public class IdentityStore extends CertificateStore
         }
         catch ( KeyStoreException e )
         {
-            throw new CertificateStoreConfigException( "An exception occurred while searching for " + algorithm + " certificates that match the Openfire domain.", e );
+            throw new CertificateStoreConfigException( "An exception occurred while searching for certificates that match the Openfire domain.", e );
         }
     }
 
@@ -501,37 +457,12 @@ public class IdentityStore extends CertificateStore
      * that are currently being hosted).
      *
      * This method will not distinguish between self-signed and non-self-signed certificates.
+     *
      * @return {@code true} if the store contains a certificate of a particular algorithm that contains at least all of the identities of this server, otherwise {@code false}
      * @throws CertificateStoreConfigException if there was a problem accessing the certificates
      */
-    @SuppressWarnings("deprecation")
     public synchronized boolean containsAllIdentityCertificate() throws CertificateStoreConfigException
     {
-        return containsAllIdentityCertificate( null );
-    }
-
-    /**
-     * Checks if the store contains a certificate of a particular algorithm that contains at least all of the identities
-     * of this server (which includes the XMPP domain name, but also its hostname, and XMPP addresses of components
-     * that are currently being hosted).
-     *
-     * This method will not distinguish between self-signed and non-self-signed certificates.
-     *
-     * If the 'algorithm' parameter is used, then this method will evaluate only certificates that match that
-     * certificate.
-     *
-     * @param algorithm An optional algorithm constraint (eg: "RSA"). Can be null, cannot be empty.
-     * @deprecated Unused as of Openfire 4.3.0. Use 'containsAllIdentityCertificate' instead. See OF-1599.
-     * @throws CertificateStoreConfigException if a self-signed certificate could not be created
-     * @return {{@code true} if a certiicate contains all identities for this server, otherwise {@code false}}
-     */
-    @Deprecated
-    public synchronized boolean containsAllIdentityCertificate( String algorithm ) throws CertificateStoreConfigException
-    {
-        if ( algorithm != null && algorithm.isEmpty() )
-        {
-            throw new IllegalArgumentException( "Argument 'algorithm' cannot be empty (but is allowed to be null)." );
-        }
         final Collection<String> dns = CertificateManager.determineSubjectAlternateNameDnsNameValues();
 
         try
@@ -542,11 +473,6 @@ public class IdentityStore extends CertificateStore
 
                 final Certificate certificate = store.getCertificate( alias );
                 if ( !( certificate instanceof X509Certificate ) )
-                {
-                    continue;
-                }
-
-                if ( algorithm != null && !certificate.getPublicKey().getAlgorithm().equalsIgnoreCase( algorithm ) )
                 {
                     continue;
                 }
@@ -582,44 +508,22 @@ public class IdentityStore extends CertificateStore
         }
         catch ( KeyStoreException e )
         {
-            throw new CertificateStoreConfigException( "An exception occurred while searching for " + ( algorithm == null ? "" : algorithm + " " )+ "certificates that match the Openfire domain.", e );
+            throw new CertificateStoreConfigException( "An exception occurred while searching for certificates that match the Openfire domain.", e );
         }
     }
 
     /**
      * Populates the key store with a self-signed certificate for the domain of this XMPP service.
+     *
      * @throws CertificateStoreConfigException if a self-signed certificate could not be created
      */
-    @SuppressWarnings("deprecation")
     public synchronized void addSelfSignedDomainCertificate() throws CertificateStoreConfigException
     {
-        addSelfSignedDomainCertificate( null );
-    }
-
-    /**
-     * Populates the key store with a self-signed certificate for the domain of this XMPP service.
-     *
-     * If the 'algorithm' parameter is used, then this method will evaluate only certificates that match that
-     * certificate.
-     *
-     * @param algorithm An optional algorithm constraint (eg: "RSA"). Can be null, cannot be empty.
-     * @deprecated Unused as of Openfire 4.3.0. Use 'addSelfSignedDomainCertificate' instead. See OF-1599.
-     * @throws CertificateStoreConfigException if a self-signed certificate could not be created
-     */
-    @Deprecated
-    public synchronized void addSelfSignedDomainCertificate( String algorithm ) throws CertificateStoreConfigException
-    {
-        if ( algorithm != null && algorithm.isEmpty() )
-        {
-            throw new IllegalArgumentException( "Argument 'algorithm' cannot be empty (but is allowed to be null)." );
-        }
+        String algorithm = JiveGlobals.getProperty( "cert.algorithm", "RSA" );
 
         final int keySize;
         final String signAlgorithm;
 
-        if ( algorithm == null ) {
-            algorithm = JiveGlobals.getProperty( "cert.algorithm", "RSA" );
-        }
         switch ( algorithm.toUpperCase() )
         {
             case "RSA":

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.commands.admin.*;
 import org.jivesoftware.openfire.commands.admin.group.*;
-import org.jivesoftware.openfire.commands.admin.user.AddUser;
-import org.jivesoftware.openfire.commands.admin.user.DeleteUser;
-import org.jivesoftware.openfire.commands.admin.user.AuthenticateUser;
-import org.jivesoftware.openfire.commands.admin.user.ChangeUserPassword;
-import org.jivesoftware.openfire.commands.admin.user.UserProperties;
+import org.jivesoftware.openfire.commands.admin.user.*;
 import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.commands.generic.Ping;
 import org.jivesoftware.openfire.disco.*;
@@ -106,15 +102,10 @@ public class AdHocCommandHandler extends IQHandler
     public Iterator<String> getFeatures(String name, String node, JID senderJID) {
         return Arrays.asList(NAMESPACE, "jabber:x:data").iterator();
     }
-
-    @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return null;
-    }
     
     @Override
     public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
-        return new HashSet<DataForm>();
+        return new HashSet<>();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jivesoftware.admin;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -177,13 +176,10 @@ public class TabsTag extends BodyTagSupport {
                 if (value != null) {
                     // The URL for the tab should be the URL of the first item in the tab.
                     String pluginName = tab.attributeValue("plugin");
-                    value = StringUtils.replace(value, "[id]", clean(tab.attributeValue("id")));
-                    value = StringUtils.replace(value, "[url]",
-                            request.getContextPath() + "/" + clean(tab.attributeValue("url")));
-                    value = StringUtils.replace(value, "[name]",
-                            clean(AdminConsole.getAdminText(tab.attributeValue("name"), pluginName)));
-                    value = StringUtils.replace(value, "[description]",
-                            clean(AdminConsole.getAdminText(tab.attributeValue("description"), pluginName)));
+                    value = value.replaceAll("\\[id]", clean(tab.attributeValue("id")));
+                    value = value.replaceAll("\\[url]",request.getContextPath() + "/" + clean(tab.attributeValue("url")));
+                    value = value.replaceAll("\\[name]", clean(AdminConsole.getAdminText(tab.attributeValue("name"), pluginName)));
+                    value = value.replaceAll("\\[description]", clean(AdminConsole.getAdminText(tab.attributeValue("description"), pluginName)));
                 }
                 String css = getCss();
                 if (tab.equals(currentTab)) {
@@ -214,6 +210,6 @@ public class TabsTag extends BodyTagSupport {
      * @return a cleaned version - not null and with escaped characters.
      */
     private String clean(String in) {
-        return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
+        return (in == null ? "" : in.replaceAll("'", "\\'"));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2021-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.database.JiveID;
-import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.muc.spi.LocalMUCRoomManager;
@@ -36,7 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
@@ -258,52 +256,7 @@ public interface MultiUserChatService extends Component {
     @Nullable
     Duration getIdleUserPingThreshold();
 
-    /**
-     * Sets the time to elapse between logging the room conversations. A <code>TimerTask</code> will
-     * be added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
-     * responsibility is to log queued rooms conversations. The number of queued conversations to
-     * save on each run can be configured. See {@link #setLogConversationBatchSize(int)}.
-     *
-     * @param timeout the time to elapse between logging the room conversations.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
-     */
-    @Deprecated
-    default void setLogConversationsTimeout(int timeout) {}
-
-    /**
-     * Returns the time to elapse between logging the room conversations. A <code>TimerTask</code>
-     * will be added to a <code>Timer</code> scheduled for repeated fixed-delay execution whose main
-     * responsibility is to log queued rooms conversations. The number of queued conversations to
-     * save on each run can be configured. See {@link #getLogConversationBatchSize()}.
-     *
-     * @return the time to elapse between logging the room conversations.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
-     */
-    @Deprecated
-    default int getLogConversationsTimeout() { return 300000; }
-
-    /**
-     * Sets the number of messages to save to the database on each run of the logging process.
-     * Even though the saving of queued conversations takes place in another thread it is not
-     * recommended specifying a big number.
-     *
-     * @param size the number of messages to save to the database on each run of the logging process.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
-     */
-    @Deprecated
-    default void setLogConversationBatchSize(int size) {};
-
-    /**
-     * Returns the number of messages to save to the database on each run of the logging process.
-     *
-     * @return the number of messages to save to the database on each run of the logging process.
-     * @deprecated No longer used in Openfire 4.4.0 and later (replaced with continuous writes to database: see {@link ArchiveManager}).
-     */
-    @Deprecated
-    default int getLogConversationBatchSize() { return 50; };
-
     Archiver<?> getArchiver();
-
 
     /**
      * Returns the maximum number of messages to save to the database on each run of the archiving process.
@@ -413,48 +366,20 @@ public interface MultiUserChatService extends Component {
     @Nullable MUCRoom getChatRoom(@Nonnull final String roomName);
 
     /**
-     * Returns a list with a snapshot of all the rooms in the server that are loaded in memory.
-     *
-     * Note: up to release 4.6.4 this method was documented to return all the rooms in the server (i.e. persistent or not,
-     * in memory or not). The implementation did not do this, although that behavior had been in place for years.
-     * To avoid future confusion, the method is deprecated, keeping the existing behavior. Replacements have been added
-     * that will return the data as defined in their contract
-     *
-     * @return a list with a snapshot of all the rooms.
-     * @deprecated replaced by getActiveChatRooms() and getAllRoomNames()
-     */
-    @Deprecated // Remove in Openfire 4.7 or later.
-    List<MUCRoom> getChatRooms();
-
-    /**
      * Returns a list with a snapshot of all the rooms in the server that are actively loaded in memory.
      *
      * @return a list with a snapshot of rooms.
      */
-    default List<MUCRoom> getActiveChatRooms() {
-        return getChatRooms(); // Openfire prior to v4.6.4 returned inMemory rooms only.
-    }
+    List<MUCRoom> getActiveChatRooms();
 
     /**
      * Returns a list of names of all the rooms in the server (i.e. persistent or not, in memory or not).
      *
      * @return All room names
      */
-    default Set<String> getAllRoomNames() {
-        // This implementation is wrong, as it won't include names for rooms that are not actively in memory. This
-        // corresponds to the default behavior prior to release v4.6.4. As a fallback (to not break API), it that's
-        // deemed 'acceptable'. This default implementation should be removed (leaving just the interface signature
-        // in place) in or after Openfire 4.7.
-        return getChatRooms().stream().map(MUCRoom::getName).collect(Collectors.toSet());
-    }
+    Set<String> getAllRoomNames();
 
-    default Collection<MUCRoomSearchInfo> getAllRoomSearchInfo() {
-        // This implementation is wrong, as it won't include names for rooms that are not actively in memory. This
-        // corresponds to the default behavior prior to release v4.6.4. As a fallback (to not break API), it that's
-        // deemed 'acceptable'. This default implementation should be removed (leaving just the interface signature
-        // in place) in or after Openfire 4.7.
-        return getChatRooms().stream().map(MUCRoomSearchInfo::new).collect(Collectors.toList());
-    }
+    Collection<MUCRoomSearchInfo> getAllRoomSearchInfo();
 
     /**
      * Returns true if the server includes a chatroom with the requested name.

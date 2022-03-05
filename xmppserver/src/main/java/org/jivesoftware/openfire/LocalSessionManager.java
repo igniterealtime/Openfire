@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,16 @@
 
 package org.jivesoftware.openfire;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalComponentSession;
-import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A LocalSessionManager keeps track of sessions that are connected to this JVM and for
@@ -123,7 +115,7 @@ class LocalSessionManager {
 
     public void start() {
         // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
-        int period = 3 * 60 * 1000;
+        Duration period = Duration.ofMinutes(3);
         TaskEngine.getInstance().scheduleAtFixedRate(new ServerCleanupTask(), period, period);
     }
 

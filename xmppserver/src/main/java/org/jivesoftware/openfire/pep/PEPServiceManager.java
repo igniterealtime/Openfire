@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,40 +174,6 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
         return pepService;
     }
 
-    /**
-     * Retrieves a PEP service -- attempting first from memory, then from the
-     * database.
-     *
-     * This method will automatically create a PEP service if one does not exist.
-     *
-     * @param jid
-     *            the bare JID of the user that owns the PEP service.
-     * @return the requested PEP service.
-     * @deprecated Replaced by {@link #getPEPService(JID)}
-     */
-    @Deprecated
-    public PEPService getPEPService( String jid ) {
-        return getPEPService( jid, true );
-    }
-
-    /**
-     * Retrieves a PEP service -- attempting first from memory, then from the
-     * database.
-     *
-     * This method can automatically create a PEP service if one does not exist.
-     *
-     * @param jid
-     *            the bare JID of the user that owns the PEP service.
-     * @param autoCreate
-     *            true if a PEP service that does not yet exist needs to be created.
-     * @return the requested PEP service if found or null if not found.
-     * @deprecated Replaced by {@link #getPEPService(JID, boolean)}
-     */
-    @Deprecated
-    public PEPService getPEPService( String jid, boolean autoCreate ) {
-        return getPEPService( new JID(jid), autoCreate );
-    }
-
     public PEPService create(JID owner) {
         // Return an error if the packet is from an anonymous, unregistered user
         // or remote user
@@ -336,7 +302,7 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
         for ( final String nodeID : nodeIDs ) {
             nodesToBeProcessed.addAll(findSubscribedNodes(entity, nodeID));
         }
-        if (XMPPServer.getInstance().isLocal( entity ) && UserManager.getInstance().isRegisteredUser( entity.getNode() ) ) {
+        if (UserManager.getInstance().isRegisteredUser(entity,false)) {
             final PEPService service = getPEPService( entity );
             for ( final String nodeID : nodeIDs ) {
                 final Node node = service.getNode( nodeID );

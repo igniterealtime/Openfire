@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.StringUtils;
 import org.dom4j.Element;
 
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspWriter;
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.tagext.BodyTagSupport;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.io.IOException;
 
 /**
  * <p>A simple JSP tag for displaying sidebar information in the admin console. The
@@ -224,13 +223,10 @@ public class SidebarTag extends BodyTagSupport {
                             pluginName = item.attributeValue("plugin");
                             String value = getBodyContent().getString();
                             if (value != null) {
-                                value = StringUtils.replace(value, "[id]", clean(subitemID));
-                                value = StringUtils.replace(value, "[name]",
-                                        clean(AdminConsole.getAdminText(subitemName, pluginName)));
-                                value = StringUtils.replace(value, "[description]",
-                                        clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
-                                value = StringUtils.replace(value, "[url]",
-                                        request.getContextPath() + "/" + clean(subitemURL));
+                                value = value.replaceAll("\\[id]", clean(subitemID));
+                                value = value.replaceAll("\\[name]", clean(AdminConsole.getAdminText(subitemName, pluginName)));
+                                value = value.replaceAll("\\[description]", clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
+                                value = value.replaceAll("\\[url]",request.getContextPath() + "/" + clean(subitemURL));
                             }
                             String css = getCss();
                             boolean isCurrent = item.equals(current);
@@ -273,13 +269,10 @@ public class SidebarTag extends BodyTagSupport {
                                     }
                                     String svalue = getSubsidebarTag().getBody();
                                     if (svalue != null) {
-                                        svalue = StringUtils.replace(svalue, "[id]", clean(sibID));
-                                        svalue = StringUtils.replace(svalue, "[name]",
-                                                clean(AdminConsole.getAdminText(sibName, pluginName)));
-                                        svalue = StringUtils.replace(svalue, "[description]",
-                                                clean(AdminConsole.getAdminText(sibDescr, pluginName)));
-                                        svalue = StringUtils.replace(svalue, "[url]",
-                                                request.getContextPath() + "/" + clean(sibURL));
+                                        svalue = svalue.replaceAll("\\[id]", clean(sibID));
+                                        svalue = svalue.replaceAll("\\[name]", clean(AdminConsole.getAdminText(sibName, pluginName)));
+                                        svalue = svalue.replaceAll("\\[description]", clean(AdminConsole.getAdminText(sibDescr, pluginName)));
+                                        svalue = svalue.replaceAll("\\[url]",request.getContextPath() + "/" + clean(sibURL));
                                     }
                                     buf.append("<li class=\"").append(subcss).append("\">").append(svalue).append("</li>\n");
                                 }
@@ -311,6 +304,6 @@ public class SidebarTag extends BodyTagSupport {
      * @return a cleaned version - not null and with escaped characters.
      */
     private String clean(String in) {
-        return (in == null ? "" : StringUtils.replace(in, "'", "\\'"));
+        return (in == null ? "" : in.replaceAll("'", "\\'"));
     }
 }

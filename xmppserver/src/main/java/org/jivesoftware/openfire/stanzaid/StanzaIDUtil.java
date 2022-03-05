@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019-2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.stanzaid;
 
 import org.dom4j.Element;
@@ -87,43 +102,6 @@ public class StanzaIDUtil
         stanzaIdElement.addAttribute( "by", self.toString() );
 
         return packet;
-    }
-
-    /**
-     * Returns a value that is an appropriate unique and stable stanza ID in
-     * context of XEP-0359: it's either the origin-id value, or a UUID.
-     *
-     * @param packet The stanza for what to return the ID (cannot be null).
-     * @return The ID (never null or empty string).
-     * @deprecated Use UUID.randomUUID() instead
-     */
-    @Deprecated // Remove in or after Openfire 4.8.0
-    public static String generateUniqueAndStableStanzaID( final Packet packet )
-    {
-        return UUID.randomUUID().toString();
-    }
-
-    /**
-     * Returns the first stable and unique stanza-id value from the packet, that is defined
-     * for a particular 'by' value.
-     *
-     * This method does not evaluate 'origin-id' elements in the packet.
-     *
-     * @param packet The stanza (cannot be null).
-     * @param by The 'by' value for which to return the ID (cannot be null or an empty string).
-     * @return The unique and stable ID, or null if no such ID is found.
-     * @deprecated This implementation only works with IDs that are UUIDs, which they need not be. Use {@link #findFirstUniqueAndStableStanzaID(Packet, String)} instead. OF-2026
-     */
-    @Deprecated
-    public static UUID parseUniqueAndStableStanzaID( final Packet packet, final String by )
-    {
-        final String result = findFirstUniqueAndStableStanzaID( packet, by );
-        if ( result == null ) {
-            return null;
-        }
-
-        // Note that this is not compliant with XEP-0359, which specifies that ID values SHOULD (but need not be) UUIDs. This method is retained for backward compatibility with Openfire versions older than 4.5.2.
-        return UUID.fromString( result );
     }
 
     /**

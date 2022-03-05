@@ -328,7 +328,7 @@
             </td>
             <td width="99%">
                 <input type="number" name="maxbatchsize" size="15" maxlength="50" min="1"
-                       value="<%= mucService.getLogConversationBatchSize() %>">
+                       value="<%= mucService.getLogMaxConversationBatchSize() %>">
             </td>
         </tr>
         <tr valign="middle">

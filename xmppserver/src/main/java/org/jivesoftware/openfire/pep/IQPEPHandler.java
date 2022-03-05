@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 
 package org.jivesoftware.openfire.pep;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.*;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -35,11 +30,7 @@ import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.pubsub.*;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
-import org.jivesoftware.openfire.roster.Roster;
-import org.jivesoftware.openfire.roster.RosterEventDispatcher;
-import org.jivesoftware.openfire.roster.RosterEventListener;
-import org.jivesoftware.openfire.roster.RosterItem;
-import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.roster.*;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
@@ -55,6 +46,10 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 import javax.management.ObjectName;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * <p>
@@ -789,11 +784,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
             features.add("http://jabber.org/protocol/pubsub");
             return features.iterator();
         }
-    }
-
-    @Override
-    public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-        return IQDiscoInfoHandler.getFirstDataForm(this.getExtendedInfos(name, node, senderJID));
     }
 
     @Override

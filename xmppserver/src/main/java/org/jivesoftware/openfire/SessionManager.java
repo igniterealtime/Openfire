@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,11 @@ import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.cache.ReverseLookupUpdatingCacheEntryListener;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.cache.CacheUtil;
-import org.jivesoftware.util.cache.ConsistencyChecks;
+import org.jivesoftware.util.cache.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -54,17 +50,7 @@ import org.xmpp.packet.Presence;
 import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -93,8 +79,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
     public static final String ISS_CACHE_NAME = "Incoming Server Session Info Cache";
     public static final String DOMAIN_SESSIONS_CACHE_NAME = "Sessions by Domain";
-    @Deprecated
-    public static final String HOSTNAME_SESSIONS_CACHE_NAME = DOMAIN_SESSIONS_CACHE_NAME;
     public static final String C2S_INFO_CACHE_NAME = "Client Session Info Cache";
 
     public static final int NEVER_KICK = -1;
@@ -123,7 +107,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * Note that, unlike other caches, this cache is populated only when clustering is enabled.
      *
-     * @see RoutingTable#getClientsRoutes(true) which holds content added by the local cluster node.
+     * @see RoutingTable#getClientsRoutes(boolean) (argument: true) which holds content added by the local cluster node.
      * @see #sessionInfoKeysByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private Cache<String, ClientSessionInfo> sessionInfoCache;
@@ -150,7 +134,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * Key: component address, Value: identifier of each cluster node holding a local session to the component.
      *
-     * @see localSessionManager.getComponentsSessions() which holds content added by the local cluster node.
+     * @see LocalSessionManager#getComponentsSessions() which holds content added by the local cluster node.
      */
     private Cache<String, HashSet<NodeID>> componentSessionsCache;
 
@@ -160,7 +144,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * Key: full address of the CM that identifies the socket, Value: nodeID
      *
-     * @see localSessionManager.getConnnectionManagerSessions() which holds content added by the local cluster node.
+     * @see LocalSessionManager#getConnnectionManagerSessions() which holds content added by the local cluster node.
      */
     private Cache<String, NodeID> multiplexerSessionsCache;
 
@@ -169,7 +153,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * Key: stream ID that identifies the socket/session, Value: IncomingServerSesssionInfo
      *
-     * @see localSessionManager.getIncomingServerSessions() which holds content added by the local cluster node.
+     * @see LocalSessionManager#getIncomingServerSessions() which holds content added by the local cluster node.
      * @see #incomingServerSessionInfoByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private Cache<StreamID, IncomingServerSessionInfo> incomingServerSessionInfoCache;
@@ -199,7 +183,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      *
      * Key: remote domain name (domain/subdomain), Value: list of stream IDs that identify each socket.
      *
-     * @see localSessionManager.getIncomingServerSessions() which holds content added by the local cluster node.
+     * @see LocalSessionManager#getIncomingServerSessions() which holds content added by the local cluster node.
      */
     private Cache<String, ArrayList<StreamID>> domainSessionsCache;
 
@@ -728,17 +712,6 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             presence.setTo(session.getAddress());
             session.process(presence);
         }
-    }
-
-    /**
-     * @param originatingResource The JID broadcasting the presence
-     * @param presence The presence to broadcast
-     * @deprecated Use {@link #broadcastPresenceToResources(JID, Presence)} instead.
-     */
-    @Deprecated
-    public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence)
-    {
-        broadcastPresenceToResources(originatingResource, presence);
     }
 
     /**
@@ -1492,11 +1465,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // detached, or every 3 minutes if the max time is outside the default boundaries.
         // TODO Reschedule task if getSessionDetachTime value changes.
         final int max = getSessionDetachTime();
-        final long period;
+        final Duration period;
         if ( max > Duration.ofMinutes(1).toMillis() && max < Duration.ofHours(1).toMillis() ) {
-            period = max / 10;
+            period = Duration.ofMillis(max).dividedBy(10);
         } else {
-            period = Duration.ofMinutes(3).toMillis();
+            period = Duration.ofMinutes(3);
         }
         TaskEngine.getInstance().scheduleAtFixedRate(new DetachedCleanupTask(), period, period);
     }

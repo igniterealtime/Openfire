@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,26 +86,6 @@ public class TLSStreamHandler {
       * handshake wraps or for close operations.
       */
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
-
-    /**
-     * @deprecated Use the other constructor.
-     * @param connection the configuration for the connection
-     * @param socket the plain socket connection to secure
-     * @param clientMode unused parameter
-     * @param remoteServer unused parameter
-     * @param needClientAuth unused parameter
-     * @throws IOException if an exception occurs
-     */
-    @Deprecated
-    public TLSStreamHandler(Connection connection, Socket socket, boolean clientMode, String remoteServer,
-                            boolean needClientAuth) throws IOException
-    {
-        this(
-            socket,
-            connection.getConfiguration(),
-            clientMode
-        );
-    }
 
     /**
      * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting

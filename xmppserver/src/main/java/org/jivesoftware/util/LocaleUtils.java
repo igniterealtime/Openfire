@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,16 @@
 
 package org.jivesoftware.util;
 
-import java.text.DateFormat;
-import java.text.Format;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.text.*;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A set of methods for retrieving and converting locale specific strings and numbers.
@@ -299,21 +288,21 @@ public class LocaleUtils {
         TimeZone zone = TimeZone.getTimeZone(zoneID);
         StringBuilder buf = new StringBuilder();
         // Add in the GMT part to the name. First, figure out the offset.
-        int offset = zone.getRawOffset();
+        Duration offset = Duration.ofMillis(zone.getRawOffset());
         if (zone.inDaylightTime(new Date()) && zone.useDaylightTime()) {
-            offset += (int)JiveConstants.HOUR;
+            offset = offset.plus(Duration.ofHours(1));
         }
 
         buf.append('(');
-        if (offset < 0) {
+        if (offset.isNegative()) {
             buf.append("GMT-");
         }
         else {
             buf.append("GMT+");
         }
-        offset = Math.abs(offset);
-        int hours = offset / (int)JiveConstants.HOUR;
-        int minutes = (offset % (int)JiveConstants.HOUR) / (int)JiveConstants.MINUTE;
+        offset = offset.abs();
+        long hours = offset.toHours();
+        long minutes = offset.minusHours(hours).toMinutes();
         buf.append(hours).append(':');
         if (minutes < 10) {
             buf.append('0').append(minutes);

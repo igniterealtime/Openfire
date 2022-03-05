@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,12 +79,6 @@ public class HttpSessionManager {
     }
 
     /**
-     * @deprecated As of Openfire 4.0.0, the functionality of this method was added to the implementation of #start().
-     */
-    @Deprecated
-    public void init() {}
-
-    /**
      * Starts the services used by the HttpSessionManager.
      *
      * (Re)creates and configures a pooled executor to handle async routing for incoming packets with a configurable
@@ -110,7 +107,7 @@ public class HttpSessionManager {
 
         // Periodically check for Sessions that need a cleanup.
         inactivityTask = new HttpSessionReaper();
-        TaskEngine.getInstance().schedule( inactivityTask, Duration.ofSeconds(30).toMillis(), SESSION_CLEANUP_INTERVAL.getValue().toMillis() );
+        TaskEngine.getInstance().schedule( inactivityTask, Duration.ofSeconds(30), SESSION_CLEANUP_INTERVAL.getValue() );
     }
 
     /**`

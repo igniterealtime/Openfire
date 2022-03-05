@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 
 package org.jivesoftware.openfire.pubsub.cluster;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Optional;
-
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeAffiliate;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -29,6 +24,10 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Optional;
 
 /**
  * Updates the affiliation of a particular entity, for a particular pubsub node.
@@ -81,15 +80,6 @@ public class AffiliationTask extends NodeTask
     public JID getJID()
     {
         return jid;
-    }
-
-    /**
-     * @deprecated Replaced by {@link #getAffiliation()}
-     */
-    @Deprecated // TODO Remove this method in Openfire 4.7 or later.
-    public NodeAffiliate.Affiliation getAffilation()
-    {
-        return affiliation;
     }
 
     /**

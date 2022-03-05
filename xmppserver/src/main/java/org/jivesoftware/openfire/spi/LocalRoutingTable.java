@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,15 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -134,7 +126,7 @@ class LocalRoutingTable {
 
     public void start() {
         // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
-        int period = 3 * 60 * 1000;
+        Duration period = Duration.ofMinutes(3);
         TaskEngine.getInstance().scheduleAtFixedRate(new ServerCleanupTask(), period, period);
     }
 

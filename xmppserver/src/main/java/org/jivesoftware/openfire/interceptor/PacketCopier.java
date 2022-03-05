@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,6 @@
 
 package org.jivesoftware.openfire.interceptor;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
@@ -36,11 +27,13 @@ import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Packet interceptor that notifies of packets activity to components that previously
@@ -95,7 +88,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
         // Create a new task and schedule it with the new timeout
         packetsTask = new ProcessPacketsTask();
-        TaskEngine.getInstance().schedule(packetsTask, 5000, 5000);
+        TaskEngine.getInstance().schedule(packetsTask, Duration.ofSeconds(5), Duration.ofSeconds(5));
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.openfire.XMPPServerInfo;
-
 /**
  * A token that proves that a user has successfully authenticated.
  *
@@ -26,7 +24,6 @@ import org.jivesoftware.openfire.XMPPServerInfo;
  */
 public class AuthToken {
 
-    private static final long serialVersionUID = 2L;
     private final String username;
 
     /**
@@ -64,37 +61,13 @@ public class AuthToken {
     }
 
     /**
-     * Constucts a new AuthToken with the specified username.
+     * Constructs a new AuthToken with the specified username.
      * The username can be either a simple username or a full JID.
      *
      * @param jid the username or bare JID to create an authToken token with.
-     * @deprecated replaced by {@link #generateUserToken(String)}
      */
-    @Deprecated
-    public AuthToken(String jid) {
+    protected AuthToken(String jid) {
         if (jid == null) {
-            this.username = null;
-            return;
-        }
-        int index = jid.indexOf("@");
-        if (index > -1) {
-            this.username = jid.substring(0,index);
-        } else {
-            this.username = jid;
-        }
-    }
-
-    /**
-     * Constucts a new AuthToken with the specified username.
-     * The username can be either a simple username or a full JID.
-     *
-     * @param jid the username or bare JID to create an authToken token with.
-     * @param anonymous {code true} to generate an anonymous login, otherwise {@code false}
-     * @deprecated replaced by {@link #generateAnonymousToken()}
-     */
-    @Deprecated
-    public AuthToken(String jid, Boolean anonymous) {
-        if (jid == null || (anonymous != null && anonymous) ) {
             this.username = null;
             return;
         }
@@ -117,17 +90,6 @@ public class AuthToken {
     }
 
     /**
-     * Returns the domain associated with this AuthToken.
-     *
-     * @return the domain associated with this AuthToken.
-     * @deprecated As Openfire serves only one domain, there's no need for a domain-specific token. Use {@link XMPPServerInfo#getXMPPDomain()} instead.
-     */
-    @Deprecated
-    public String getDomain() {
-        return XMPPServerInfo.XMPP_DOMAIN.getValue();
-    }
-
-    /**
      * Returns true if this AuthToken is the Anonymous auth token.
      *
      * @return true if this token is the anonymous AuthToken.
@@ -137,7 +99,7 @@ public class AuthToken {
     }
 
     /**
-     * A token that proves that a user uses an one time access token.
+     * A token that proves that a user uses a one time access token.
      *
      * @author ma1uta
      */

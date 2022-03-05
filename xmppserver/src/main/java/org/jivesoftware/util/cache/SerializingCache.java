@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -270,12 +272,6 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         return delegate.getCacheMisses();
     }
 
-    @Override
-    @Deprecated
-    public int getCacheSize() {
-        return delegate.getCacheSize();
-    }
-
     public long getLongCacheSize(){
         return delegate.getLongCacheSize();
     }
@@ -283,11 +279,6 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Override
     public long getMaxCacheSize() {
         return delegate.getMaxCacheSize();
-    }
-
-    @Override
-    public void setMaxCacheSize(final int maxCacheSize) {
-       setMaxCacheSize((long)maxCacheSize);
     }
 
     public void setMaxCacheSize(long maxSize){

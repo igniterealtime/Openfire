@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.keystore.CertificateStore;
-import org.jivesoftware.openfire.keystore.CertificateUtils;
 import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
 import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
@@ -491,25 +490,6 @@ public class CertificateManager {
                 Log.error( "A listener threw an exception while processing a 'store changed' event.", e );
             }
         }
-    }
-
-    /**
-     * Orders certificates, starting from the entity to be validated and progressing back toward the CA root.
-     *
-     * This implementation matches "issuers" to "subjects" of certificates in such a way that "issuer" value of a
-     * certificate matches the "subject" value of the next certificate.
-     *
-     * When certificates are provided that do not belong to the same chain, a CertificateException is thrown.
-     *
-     * @param certificates an unordered collection of certificates (cannot be null).
-     * @return An ordered list of certificates (possibly empty, but never null).
-     * @deprecated Moved to CertificateUtils
-     * @throws CertificateException if there was a problem accessing the certificates
-     */
-    @Deprecated
-    public static List<X509Certificate> order( Collection<X509Certificate> certificates ) throws CertificateException
-    {
-        return CertificateUtils.order( certificates );
     }
 
     /**

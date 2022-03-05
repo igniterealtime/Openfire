@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.jivesoftware.openfire.pep.PEPService;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 
@@ -71,11 +70,6 @@ public interface PubSubPersistenceProvider
      *            the identifier of the node to load.
      */
     void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier);
-
-    @Deprecated
-    default void loadSubscription(PubSubService service, Node node, String subId) {
-        loadSubscription(node, subId);
-    }
 
     void loadSubscription(Node node, String subId);
 
@@ -162,22 +156,6 @@ public interface PubSubPersistenceProvider
      * Loads from the database the default node configuration for the specified node type
      * and pubsub service.
      *
-     * @param service the default node configuration used by this pubsub service.
-     * @param isLeafType true if loading default configuration for leaf nodes.
-     * @return the loaded default node configuration for the specified node type and service
-     *         or <tt>null</tt> if none was found.
-     * @deprecated Replaced by {@link #loadDefaultConfiguration(PubSubService.UniqueIdentifier, boolean)}
-     */
-    @Deprecated
-    default DefaultNodeConfiguration loadDefaultConfiguration(PubSubService service, boolean isLeafType)
-    {
-        return loadDefaultConfiguration( service.getUniqueIdentifier(), isLeafType );
-    }
-
-    /**
-     * Loads from the database the default node configuration for the specified node type
-     * and pubsub service.
-     *
      * @param serviceIdentifier Identifier of the service
      * @param isLeafType true if loading default configuration for leaf nodes.
      * @return the loaded default node configuration for the specified node type and service
@@ -188,35 +166,10 @@ public interface PubSubPersistenceProvider
     /**
      * Creates a new default node configuration for the specified service.
      *
-     * @param service the default node configuration used by this pubsub service.
-     * @param config the default node configuration to create in the database.
-     * @deprecated Replaced by {@link #createDefaultConfiguration(PubSubService.UniqueIdentifier, DefaultNodeConfiguration)}
-     */
-    @Deprecated
-    default void createDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config)
-    {
-        createDefaultConfiguration(service.getUniqueIdentifier(), config);
-    }
-
-    /**
-     * Creates a new default node configuration for the specified service.
-     *
      * @param serviceIdentifier Identifier of the service
      * @param config the default node configuration to create in the database.
      */
     void createDefaultConfiguration(PubSubService.UniqueIdentifier serviceIdentifier, DefaultNodeConfiguration config);
-
-    /**
-     * Updates the default node configuration for the specified service.
-     *
-     * @param service the default node configuration used by this pubsub service.
-     * @param config the default node configuration to update in the database.
-     * @deprecated Replaced by {@link #updateDefaultConfiguration(PubSubService.UniqueIdentifier, DefaultNodeConfiguration)}
-     */
-    @Deprecated
-    default void updateDefaultConfiguration(PubSubService service, DefaultNodeConfiguration config) {
-        updateDefaultConfiguration( service.getUniqueIdentifier(), config);
-    }
 
     /**
      * Updates the default node configuration for the specified service.
@@ -254,18 +207,6 @@ public interface PubSubPersistenceProvider
     PublishedItem getPublishedItem(LeafNode node, PublishedItem.UniqueIdentifier itemIdentifier);
 
     void purgeNode(LeafNode leafNode);
-
-    /**
-     * Loads a PEP service from the database, if it exists.
-     *
-     * @param jid
-     *            the JID of the owner of the PEP service.
-     * @return the loaded PEP service, or null if not found.
-     * @deprecated Replaced by {@link #loadPEPServiceFromDB(JID)}
-     */
-    default PEPService loadPEPServiceFromDB(String jid) {
-        return loadPEPServiceFromDB( new JID(jid));
-    }
 
     /**
      * Loads a PEP service from the database, if it exists.

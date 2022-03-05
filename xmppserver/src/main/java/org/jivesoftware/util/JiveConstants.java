@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package org.jivesoftware.util;
 
+import java.time.Duration;
+
 /**
  * Contains constant values representing various objects in Jive.
  */
@@ -29,32 +31,18 @@ public class JiveConstants {
     public static final int MUC_SERVICE = 26;
     public static final int MUC_MESSAGE_ID = 27;
 
-    public static final long SECOND = 1000;
-    public static final long MINUTE = 60 * SECOND;
-    public static final long HOUR = 60 * MINUTE;
-    public static final long DAY = 24 * HOUR;
-    public static final long WEEK = 7 * DAY;
+    @Deprecated // Use Duration.ofSeconds(1).toMillis() instead. Remove in Openfire 4.9 or later.
+    public static final long SECOND = Duration.ofSeconds(1).toMillis();
 
+    @Deprecated // Use Duration.ofMinutes(1).toMillis() instead. Remove in Openfire 4.9 or later.
+    public static final long MINUTE = Duration.ofMinutes(1).toMillis();
 
-    /**
-     * Date/time format for use by SimpleDateFormat. The format conforms to
-     * <a href="http://www.xmpp.org/extensions/xep-0082.html">XEP-0082</a>, which defines
-     * a unified date/time format for XMPP.
-     *
-     * @deprecated Deprecated by the org.jivesoftware.util.XMPPDateTimeFormat class
-     * @see org.jivesoftware.util.XMPPDateTimeFormat
-     */
-    @Deprecated
-    public static final String XMPP_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    @Deprecated // Use Duration.ofHours(1).toMillis() instead. Remove in Openfire 4.9 or later.
+    public static final long HOUR = Duration.ofHours(1).toMillis();
 
-    /**
-     * Date/time format for use by SimpleDateFormat. The format conforms to the format
-     * defined in <a href="http://www.xmpp.org/extensions/xep-0091.html">XEP-0091</a>,
-     * a specialized date format for historical XMPP usage.
-     *
-     * @deprecated Deprecated by the org.jivesoftware.util.XMPPDateTimeFormat class
-     * @see org.jivesoftware.util.XMPPDateTimeFormat
-     */
-    @Deprecated
-    public static final String XMPP_DELAY_DATETIME_FORMAT = "yyyyMMdd'T'HH:mm:ss";
+    @Deprecated // Use Duration.ofDays(1).toMillis() instead. Remove in Openfire 4.9 or later.
+    public static final long DAY = Duration.ofDays(1).toMillis();
+
+    @Deprecated // Use Duration.ofDays(7).toMillis() instead. Remove in Openfire 4.9 or later.
+    public static final long WEEK = Duration.ofDays(7).toMillis();
 }

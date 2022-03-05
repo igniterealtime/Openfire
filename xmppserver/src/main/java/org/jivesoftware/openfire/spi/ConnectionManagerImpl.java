@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.apache.mina.core.buffer.SimpleBufferAllocator;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.ServerPort;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -41,7 +40,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener
 {
@@ -545,6 +547,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
      * @return true if configuration allows this listener to be enabled, otherwise false.
      */
+    @Override
     public boolean isEnabled( ConnectionType type, boolean startInSslMode )
     {
         return getListener( type, startInSslMode ).isEnabled();
@@ -563,6 +566,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
      * @param enabled true if the listener is to be enabled, otherwise false.
      */
+    @Override
     public void enable( ConnectionType type, boolean startInSslMode, boolean enabled )
     {
         getListener( type, startInSslMode ).enable( enabled );
@@ -575,6 +579,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
      * @return a port number.
      */
+    @Override
     public int getPort( ConnectionType type, boolean startInSslMode )
     {
         return getListener( type, startInSslMode ).getPort();
@@ -587,6 +592,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
      * @param port a port number.
      */
+    @Override
     public void setPort( ConnectionType type, boolean startInSslMode, int port )
     {
         getListener( type, startInSslMode ).setPort( port );
@@ -684,286 +690,5 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         SocketSendingTracker.getInstance().shutdown();
         stopListeners();
         super.stop();
-    }
-
-    // #####################################################################
-    // Deprecated delegation methods to individual listeners (as dictated by legacy API design).
-    // #####################################################################
-
-    // Client
-    @Deprecated
-    public void enableClientListener( boolean enabled )
-    {
-        enable( ConnectionType.SOCKET_C2S, false, enabled);
-    }
-
-    @Deprecated
-    public boolean isClientListenerEnabled()
-    {
-        return isEnabled( ConnectionType.SOCKET_C2S, false );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.SOCKET_C2S, false );
-    }
-
-    @Deprecated
-    public void setClientListenerPort( int port )
-    {
-        setPort( ConnectionType.SOCKET_C2S, false, port );
-    }
-
-    @Deprecated
-    public int getClientListenerPort()
-    {
-        return getPort( ConnectionType.SOCKET_C2S, false );
-    }
-
-    // Client in legacy mode
-    @Deprecated
-    public void enableClientSSLListener( boolean enabled )
-    {
-        enable( ConnectionType.SOCKET_C2S, true, enabled );
-    }
-
-    @Deprecated
-    public boolean isClientSSLListenerEnabled()
-    {
-        return isEnabled( ConnectionType.SOCKET_C2S, true );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getSSLSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.SOCKET_C2S, true );
-    }
-
-    @Deprecated
-    public void setClientSSLListenerPort( int port )
-    {
-        setPort( ConnectionType.SOCKET_C2S, true, port );
-    }
-
-    @Deprecated
-    public int getClientSSLListenerPort()
-    {
-        return getPort( ConnectionType.SOCKET_C2S, true );
-    }
-
-    // Component
-    @Deprecated
-    public void enableComponentListener( boolean enabled )
-    {
-        enable( ConnectionType.COMPONENT, false, enabled );
-    }
-
-    @Deprecated
-    public boolean isComponentListenerEnabled()
-    {
-        return isEnabled( ConnectionType.COMPONENT, false );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getComponentAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.COMPONENT, false );
-    }
-
-    @Deprecated
-    public void setComponentListenerPort( int port )
-    {
-        setPort( ConnectionType.COMPONENT, false, port );
-    }
-
-    @Deprecated
-    public int getComponentListenerPort()
-    {
-        return getPort( ConnectionType.COMPONENT, false );
-    }
-
-    // Component in legacy mode
-    @Deprecated
-    public void enableComponentSslListener( boolean enabled )
-    {
-        enable( ConnectionType.COMPONENT, true, enabled );
-    }
-
-    @Deprecated
-    public boolean isComponentSslListenerEnabled()
-    {
-        return isEnabled( ConnectionType.COMPONENT, true );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getComponentSslAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.COMPONENT, true);
-    }
-
-    @Deprecated
-    public void setComponentSslListenerPort( int port )
-    {
-        setPort( ConnectionType.COMPONENT, true, port );
-    }
-
-    @Deprecated
-    public int getComponentSslListenerPort()
-    {
-        return getPort( ConnectionType.COMPONENT, true );
-    }
-
-    // Server
-    @Deprecated
-    public void enableServerListener( boolean enabled )
-    {
-        enable( ConnectionType.SOCKET_S2S, false, enabled );
-    }
-
-    @Deprecated
-    public boolean isServerListenerEnabled()
-    {
-        return isEnabled( ConnectionType.SOCKET_S2S, false );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getServerListenerSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.SOCKET_S2S, false );
-    }
-
-    @Deprecated
-    public void setServerListenerPort( int port )
-    {
-        setPort( ConnectionType.SOCKET_S2S, false, port );
-    }
-
-    @Deprecated
-    public int getServerListenerPort()
-    {
-        return getPort( ConnectionType.SOCKET_S2S, false );
-    }
-
-    @Deprecated
-    public void enableServerSslListener( boolean enabled )
-    {
-        enable( ConnectionType.SOCKET_S2S, true, enabled );
-    }
-
-    @Deprecated
-    public boolean isServerSslListenerEnabled()
-    {
-        return isEnabled( ConnectionType.SOCKET_S2S, true );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getServerSslListenerSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.SOCKET_S2S, true );
-    }
-
-    @Deprecated
-    public void setServerSslListenerPort( int port )
-    {
-        setPort( ConnectionType.SOCKET_S2S, true, port );
-    }
-
-    @Deprecated
-    public int getServerSslListenerPort()
-    {
-        return getPort( ConnectionType.SOCKET_S2S, true );
-    }
-
-    // Connection Manager
-    @Deprecated
-    public void enableConnectionManagerListener( boolean enabled )
-    {
-        enable( ConnectionType.CONNECTION_MANAGER, false, enabled );
-    }
-
-    @Deprecated
-    public boolean isConnectionManagerListenerEnabled()
-    {
-        return isEnabled( ConnectionType.CONNECTION_MANAGER, false );
-    }
-
-    /**
-     * @deprecated Replaced by #getConnectionManagerSocketAcceptor
-     * @return the socket acceptor
-     */
-    @Deprecated
-    public NioSocketAcceptor getMultiplexerSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.CONNECTION_MANAGER, false );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getConnectionManagerSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.CONNECTION_MANAGER, false );
-    }
-
-    @Deprecated
-    public void setConnectionManagerListenerPort( int port )
-    {
-        setPort( ConnectionType.CONNECTION_MANAGER, false, port );
-    }
-
-    @Deprecated
-    public int getConnectionManagerListenerPort()
-    {
-        return getPort( ConnectionType.CONNECTION_MANAGER, false );
-    }
-
-    // Connection Manager in legacy mode
-    @Deprecated
-    public void enableConnectionManagerSslListener( boolean enabled )
-    {
-        enable( ConnectionType.CONNECTION_MANAGER, true, enabled );
-    }
-
-    @Deprecated
-    public boolean isConnectionManagerSslListenerEnabled()
-    {
-        return isEnabled( ConnectionType.CONNECTION_MANAGER, true );
-    }
-
-    @Deprecated
-    public NioSocketAcceptor getConnectionManagerSslSocketAcceptor()
-    {
-        return getSocketAcceptor( ConnectionType.CONNECTION_MANAGER, true );
-    }
-
-    @Deprecated
-    public void setConnectionManagerSslListenerPort( int port )
-    {
-        setPort( ConnectionType.CONNECTION_MANAGER, true, port );
-    }
-
-    @Deprecated
-    public int getConnectionManagerSslListenerPort()
-    {
-        return getPort( ConnectionType.CONNECTION_MANAGER, true );
-    }
-
-    // #####################################################################
-    // Other deprecated implementations.
-    // #####################################################################
-
-    /**
-     * @deprecated use #getListeners
-     */
-    @Deprecated
-    public Collection<ServerPort> getPorts() {
-        final Set<ServerPort> result = new LinkedHashSet<>();
-        for ( ConnectionListener listener : getListeners() )
-        {
-            if (listener.getServerPort() != null)
-            {
-                result.add( listener.getServerPort() );
-            }
-        }
-        return result;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,12 @@
 
 package org.jivesoftware.openfire.container;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.*;
 
 /**
  * A simple registry of cache configuration data for plugins.
@@ -128,13 +124,13 @@ public class PluginCacheRegistry {
             }
             long factor = 1;
             if (lifetimeProp.endsWith("m")) {
-                factor = JiveConstants.MINUTE;
+                factor = Duration.ofMinutes(1).toMillis();
             }
             else if (lifetimeProp.endsWith("h")) {
-                factor = JiveConstants.HOUR;
+                factor = Duration.ofHours(1).toMillis();
             }
             else if (lifetimeProp.endsWith("d")) {
-                factor = JiveConstants.DAY;
+                factor = Duration.ofDays(1).toMillis();
             }
             try {
                 return Long.parseLong(lifetimeProp.substring(0, lifetimeProp.length()-1)) * factor;

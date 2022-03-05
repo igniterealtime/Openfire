@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,6 @@ package org.jivesoftware.openfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.handler.IQBlockingHandler;
-import org.jivesoftware.openfire.handler.IQPrivateHandler;
-import org.jivesoftware.util.cache.CacheUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
@@ -32,14 +27,19 @@ import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
+import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQPrivateHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.cache.CacheUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.forms.FormField.Type;
@@ -530,23 +530,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
-     * return the first DataForm for a Collections
-     * of Set DataForms
-     * @param dataForms collection from which to return the first element (cannot be null, can be an empty collection).
-     * @return first dataform from the collection. Null if the collection was empty.
-     */
-    public static DataForm getFirstDataForm(Set<DataForm> dataForms){
-        if(dataForms == null || dataForms.isEmpty()){
-            return null;
-        }
-        if (dataForms.size() > 1) {
-            Log.warn("Set Data List contains "+dataForms.size()+" DataForms."+
-            "Only the first one of the DataForms will be returned.");
-        }
-        return  dataForms.stream().filter(Objects::nonNull).findAny().orElse(null);
-    }
-
-    /**
      * Set all Software Version data  
      * responsed by the peer for the Software information request Service Discovery (XEP-0232)
      * @param query represented on the response of the peer
@@ -732,11 +715,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     return false;
                 }
                 return false;
-            }
-
-            @Override
-            public DataForm getExtendedInfo(String name, String node, JID senderJID) {
-                return IQDiscoInfoHandler.getFirstDataForm(this.getExtendedInfos(name, node, senderJID));
             }
 
             @Override

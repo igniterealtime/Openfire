@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,16 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.security.KeyStore;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.Enumeration;
-
-import javax.net.ssl.X509TrustManager;
-
-import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 
 /**
  * ServerTrustManager is a Trust Manager that is only used for s2s connections. This TrustManager
@@ -47,17 +45,6 @@ public class ServerTrustManager implements X509TrustManager {
      * KeyStore that holds the trusted CA
      */
     private KeyStore trustStore;
-
-    /**
-     * @deprecated Use ServerTrustManager(KeyStore trustStore) instead (there's no functional difference).
-     * @param server unused parameter
-     * @param trustStore the trust store to manage
-     * @param connection unused parameter
-     */
-    @Deprecated
-    public ServerTrustManager(String server, KeyStore trustStore, Connection connection) {
-        this(trustStore);
-    }
 
     public ServerTrustManager(KeyStore trustTrust) {
         super();

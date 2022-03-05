@@ -295,7 +295,7 @@
     <!-- END jive-contentBox -->
 
 
-<script language="JavaScript" type="text/javascript">
+<script>
 // give focus to domain field
 document.f.domain.focus();
 </script>

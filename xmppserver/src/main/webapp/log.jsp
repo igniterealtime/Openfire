@@ -236,7 +236,7 @@
 <head>
     <title>openfire.log</title>
     <meta name="decorator" content="none"/>
-    <style type="text/css">
+    <style>
     .log TABLE {
         border : 1px #ccc solid;
     }

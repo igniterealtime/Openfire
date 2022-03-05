@@ -247,7 +247,7 @@
 
 <br>
 
-<style type="text/css">
+<style>
 .connectionManagers {
     margin-top: 8px;
     border: 1px solid #DCDCDC;

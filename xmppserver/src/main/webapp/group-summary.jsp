@@ -181,7 +181,7 @@
 
 ${listPager.jumpToPageForm}
 
-<script type="text/javascript">
+<script>
     ${listPager.pageFunctions}
 </script>
 

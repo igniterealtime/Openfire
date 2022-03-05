@@ -227,7 +227,7 @@
 
 <%=listPager.getJumpToPageForm()%>
 
-<script type="text/javascript">
+<script>
     <%=listPager.getPageFunctions()%>
 </script>
     </body>

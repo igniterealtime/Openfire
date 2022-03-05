@@ -309,7 +309,7 @@
     <div class="jive-contentBox">
 
 
-<script type="text/javascript">
+<script>
 var clicked = false;
 function checkClick() {
     if (!clicked) {
@@ -503,7 +503,7 @@ document.acctform.newPassword.focus();
             </c:url>
 
     <a href="${testLink}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-    <script type="text/javascript">
+    <script>
         function loadMsg() {
             var lb = new lightbox(document.getElementById('lbmessage'));
             lb.activate();
@@ -608,7 +608,7 @@ document.acctform.newPassword.focus();
 </div>
 
 <c:if test="${not empty authorizedJIDs}">
-    <script type="text/javascript">
+    <script>
     document.getElementById("jive-setup-save").style.display = "";
     </script>
 </c:if>

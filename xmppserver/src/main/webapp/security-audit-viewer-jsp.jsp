@@ -169,7 +169,7 @@
 </div>
 <p><fmt:message key="global.pages"/>: [ ${listPager.pageLinks} ]</p>
 ${listPager.jumpToPageForm}
-<script type="text/javascript">
+<script>
     ${listPager.pageFunctions}
 </script>
 </c:otherwise>

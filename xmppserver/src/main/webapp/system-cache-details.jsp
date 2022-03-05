@@ -12,7 +12,7 @@
     <fmt:message key="system.cache-details.title" var="title"><fmt:param value="${cacheName}"/></fmt:message>
     <title><c:out value="${title}"/></title>
     <meta name="pageID" content="system-cache"/>
-    <style type="text/css">
+    <style>
         img.clickable {
             cursor: pointer;
         }
@@ -129,7 +129,7 @@ ${listPager.jumpToPageForm}
     <input type="hidden" name="key">
 </form>
 
-<script type="text/javascript">
+<script>
     ${listPager.pageFunctions}
 
     function doDelete(imgObject) {

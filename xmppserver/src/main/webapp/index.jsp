@@ -131,7 +131,7 @@
         <br>
     </c:if>
 
-<style type="text/css">
+<style>
 .bar TD {
     padding : 0;
 }

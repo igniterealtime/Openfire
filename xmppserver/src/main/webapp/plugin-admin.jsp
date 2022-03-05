@@ -158,18 +158,18 @@
 <title><fmt:message key="plugin.admin.title"/></title>
 <meta name="pageID" content="plugin-settings"/>
 <meta name="helpPage" content="manage_system_plugins.html"/>
-<script src="dwr/engine.js" type="text/javascript"></script>
-<script src="dwr/util.js" type="text/javascript"></script>
-<script src="dwr/interface/downloader.js" type="text/javascript"></script>
+<script src="dwr/engine.js"></script>
+<script src="dwr/util.js"></script>
+<script src="dwr/interface/downloader.js"></script>
 
-<script type="text/javascript" >
+<script >
     dwr.engine.setErrorHandler(handleError);
 
     function handleError(error) {
     }
 </script>
 
-<style type="text/css">
+<style>
 
 .textfield {
     font-size: 11px;
@@ -307,7 +307,7 @@ tr.lowerhalf > td:last-child {
 </style>
 
 
-<script type="text/javascript">
+<script>
     function download(url, version, hashCode) {
         document.getElementById(hashCode + "-row").style.display = 'none';
         document.getElementById(hashCode + "-update").style.display = '';

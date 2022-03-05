@@ -740,7 +740,7 @@
 
     ${listPager.jumpToPageForm}
 
-    <script type="text/javascript">
+    <script>
         ${listPager.pageFunctions}
         document.groupmembers["username"].focus();
     </script>
@@ -748,7 +748,7 @@
 </admin:contentBox>
 <!-- END group membership management -->
 
-<script type="text/javascript">
+<script>
     function toggleReadOnly()
     {
         var disabled = document.getElementById('rb201').checked;

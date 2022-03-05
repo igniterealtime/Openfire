@@ -74,7 +74,7 @@
 <title><fmt:message key="plugin.available.title"/></title>
 <meta name="pageID" content="available-plugins"/>
 
-<style type="text/css">
+<style>
 
 .light-gray-border {
     border-color: #ccc;
@@ -143,10 +143,10 @@
 
 </style>
 
-<script src="dwr/engine.js" type="text/javascript"></script>
-<script src="dwr/util.js" type="text/javascript"></script>
-<script src="dwr/interface/downloader.js" type="text/javascript"></script>
-<script type="text/javascript">
+<script src="dwr/engine.js"></script>
+<script src="dwr/util.js"></script>
+<script src="dwr/interface/downloader.js"></script>
+<script>
 
     var downloading;
     function downloadPlugin(url, version, id) {

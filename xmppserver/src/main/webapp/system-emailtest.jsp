@@ -151,7 +151,7 @@
     </head>
     <body>
 
-<script language="JavaScript" type="text/javascript">
+<script>
 var clicked = false;
 function checkClick(el) {
     if (!clicked) {

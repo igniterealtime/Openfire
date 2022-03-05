@@ -96,7 +96,7 @@
 <head>
     <title><fmt:message key="client.connections.settings.title"/></title>
     <meta name="pageID" content="client-connections-settings"/>
-    <script type="text/javascript">
+    <script>
         // Displays or hides the configuration block for a particular connection type, based on the status of the
         // 'enable' checkbox for that connection type.
         function applyDisplayable( connectionType )

@@ -209,7 +209,7 @@
 
     <c:if test="${empty errors and test}">
         <a href="${testPage}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-        <script type="text/javascript">
+        <script>
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
                 lb.activate();
@@ -289,7 +289,7 @@
                         <tbody>
                         <tr>
                             <td nowrap="nowrap">
-                                <script type="text/javascript">
+                                <script>
                                     function updateEncryptionSettings() {
                                         var selectProtocolField = document.getElementById("selectProtocol");
                                         var sslEnabled = selectProtocolField[selectProtocolField.selectedIndex].text == "ldaps";
@@ -342,7 +342,7 @@
             </tr>
             <tr id="plainTextWarning">
                 <td colspan="4" width="100%">
-                    <script type="text/javascript">updateEncryptionSettings();</script>
+                    <script>updateEncryptionSettings();</script>
                     <div class="warning"><fmt:message key="setup.ldap.plaintext" /></div>
                 </td>
             </tr>

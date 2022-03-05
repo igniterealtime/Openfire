@@ -164,7 +164,7 @@
 
 <%  } %>
 
-<script language="JavaScript" type="text/javascript">
+<script>
 function updateSelect(el) {
     if (el.checked) {
         for (var e=0; e<el.form.jid.length; e++) {
@@ -284,7 +284,7 @@ function updateSelect(el) {
 
 </form>
 
-<script language="JavaScript" type="text/javascript">
+<script>
 document.f.message.focus();
 </script>
 

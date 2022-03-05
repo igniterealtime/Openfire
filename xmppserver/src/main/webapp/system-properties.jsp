@@ -14,7 +14,7 @@
     <title><fmt:message key="server.properties.title"/></title>
     <meta name="pageID" content="server-props"/>
     <meta name="helpPage" content="manage_system_properties.html"/>
-    <style type="text/css">
+    <style>
         .nameColumn {
             text-overflow: ellipsis;
             overflow: hidden;
@@ -363,7 +363,7 @@ ${listPager.jumpToPageForm}
     <input type="hidden" name="encrypt">
 </form>
 
-<script type="text/javascript">
+<script>
     ${listPager.pageFunctions}
 
     function getKey(imgObject) {

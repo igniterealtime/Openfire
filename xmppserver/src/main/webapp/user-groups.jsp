@@ -242,7 +242,7 @@
             value="<%=StringUtils.escapeForXML(user.getUsername())%>">
     </form>
 
-    <script language="JavaScript" type="text/javascript">
+    <script>
         document.searchForm.search.focus();
     </script>
 

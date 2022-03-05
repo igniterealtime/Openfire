@@ -181,7 +181,7 @@
         </c:when>
     </c:choose>
     <%--<meta name="subPageID" content="connection-settings-advanced"/>--%>
-    <script type="text/javascript">
+    <script>
         // Displays or hides the configuration blocks, based on the status of selected settings.
         function applyDisplayable()
         {

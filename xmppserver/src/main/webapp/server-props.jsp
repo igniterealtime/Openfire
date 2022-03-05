@@ -207,7 +207,7 @@
     </head>
     <body>
 
-<style type="text/css">
+<style>
 .c1 {
     width : 30%;
 }

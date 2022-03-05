@@ -186,7 +186,7 @@
 
 </form>
 
-<script language="JavaScript" type="text/javascript">
+<script>
 <!--
 document.jndiform.jndiName.focus();
 //-->

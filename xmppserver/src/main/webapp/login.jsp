@@ -163,7 +163,7 @@
 
 %>
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE html>
 
 <html>
 <head>
@@ -171,7 +171,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" /></title>
-    <script language="JavaScript" type="text/javascript">
+    <script>
         <!--
         // break out of frames
         if (self.parent.frames.length != 0) {
@@ -263,7 +263,7 @@
         </div>
     </div>
 
-    <script language="JavaScript" type="text/javascript">
+    <script>
     <!--
         if (document.loginForm.username.value == '')  {
             document.loginForm.username.focus();

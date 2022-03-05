@@ -219,7 +219,7 @@
 
 </form>
 
-    <script language="JavaScript" type="text/javascript">
+    <script>
     document.f.jid.focus();
     </script>
 

@@ -206,7 +206,7 @@
 
 <div id="logviewer">
 
-<style type="text/css">
+<style>
 SELECT, INPUT {
     font-family : verdana, arial, sans-serif;
     font-size : 8pt;
@@ -302,7 +302,7 @@ IFRAME {
             </tr>
             <tr>
                 <td colspan="2">
-                    <script language="JavaScript" type="text/javascript">
+                    <script>
                         <!--
                         function setLog(log) {
                             document.logViewer.clearLog.value = 'false';

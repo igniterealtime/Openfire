@@ -58,7 +58,7 @@
 <head>
 <title><fmt:message key="system.clustering.title"/></title>
 <meta name="pageID" content="system-clustering"/>
-<style type="text/css">
+<style>
 .jive-contentBox .local {
     background-color: #ffc;
     }

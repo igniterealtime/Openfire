@@ -212,7 +212,7 @@
 <%  // Disable the form if a read-only user provider.
     if (LockOutManager.getLockOutProvider().isReadOnly()) { %>
 
-<script language="Javascript" type="text/javascript">
+<script>
   function disable() {
     var limit = document.forms[0].elements.length;
     for (i=0;i<limit;i++) {

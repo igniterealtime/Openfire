@@ -189,7 +189,7 @@
         </c:url>
 
         <a href="${sb}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-        <script type="text/javascript">
+        <script>
             function loadMsg() {
                 var lb = new lightbox(document.getElementById('lbmessage'));
                 lb.activate();

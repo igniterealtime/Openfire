@@ -36,7 +36,7 @@
     <head>
         <title><fmt:message key="system.cache.title"/></title>
         <meta name="pageID" content="system-cache"/>
-        <script language="JavaScript" type="text/javascript">
+        <script>
         var selected = false;
         var cbstate = '';
         function handleCBClick(el) {
@@ -300,7 +300,7 @@
 <fmt:message key="system.cache.desc.effectiveness" />
 </p>
 
-    <script language="JavaScript" type="text/javascript">
+    <script>
     clearCBs(document.cacheForm);
     setCBState(document.cacheForm);
     </script>

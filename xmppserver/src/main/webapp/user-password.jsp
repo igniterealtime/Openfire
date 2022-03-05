@@ -185,14 +185,14 @@
 <input type="submit" value="<fmt:message key="global.cancel" />" name="cancel">
 </form>
 
-<script language="JavaScript" type="text/javascript">
+<script>
 document.passform.password.focus();
 </script>
 
     <%  // Disable the form if a read-only user provider.
     if (UserManager.getUserProvider().isReadOnly()) { %>
 
-<script language="Javascript" type="text/javascript">
+<script>
   function disable() {
     var limit = document.forms[0].elements.length;
     for (i=0;i<limit;i++) {

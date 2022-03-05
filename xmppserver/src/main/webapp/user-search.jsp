@@ -72,7 +72,7 @@
     </table>
   </fieldset>
 </form>
-<script language="JavaScript" type="text/javascript">
+<script>
 document.f.username.focus();
 </script>
 

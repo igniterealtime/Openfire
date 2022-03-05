@@ -70,7 +70,7 @@
     <head>
         <title><fmt:message key="setup.finished.title" /></title>
         <meta name="currentStep" content="5"/>
-        <script type="text/javascript">
+        <script>
 
         function showhide(id){
             let obj = document.getElementById(id);

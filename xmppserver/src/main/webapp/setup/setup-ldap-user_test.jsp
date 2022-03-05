@@ -81,9 +81,9 @@
 <meta name="decorator" content="none"/>
 </head>
 <body>
-<script type="text/javascript" language="javascript" src="../js/tooltips/domTT.js"></script>
-<script type="text/javascript" language="javascript" src="../js/tooltips/domLib.js"></script>
-<style type="text/css">
+<script src="../js/tooltips/domTT.js"></script>
+<script src="../js/tooltips/domLib.js"></script>
+<style>
 #lightbox{
     top: 20%;
     margin-top: -20px;

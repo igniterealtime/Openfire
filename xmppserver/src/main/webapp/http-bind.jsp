@@ -126,7 +126,7 @@
         <fmt:message key="httpbind.settings.title"/>
     </title>
     <meta name="pageID" content="http-bind"/>
-    <script type="text/javascript">
+    <script>
         var enabled = ${serverManager.httpBindEnabled ? 'true' : 'false'};
         var setEnabled = function() {
             $("port").disabled = !enabled;

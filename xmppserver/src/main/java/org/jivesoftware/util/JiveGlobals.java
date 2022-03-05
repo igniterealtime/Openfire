@@ -1289,18 +1289,15 @@ public class JiveGlobals {
                 try {
                     securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
                     setupPropertyEncryption();
-                    TaskEngine.getInstance().schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            // Migrate all secure XML properties into the database automatically
-                            for (String propertyName : securityProperties.getAllPropertyNames()) {
-                                if (!propertyName.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX)) {
-                                    setPropertyEncrypted(propertyName, true);
-                                    securityProperties.migrateProperty(propertyName);
-                                }
+                    new Thread(() -> {
+                        // Migrate all secure XML properties into the database automatically
+                        for (String propertyName : securityProperties.getAllPropertyNames()) {
+                            if (!propertyName.startsWith(ENCRYPTED_PROPERTY_NAME_PREFIX)) {
+                                setPropertyEncrypted(propertyName, true);
+                                securityProperties.migrateProperty(propertyName);
                             }
                         }
-                    }, Duration.ofSeconds(1));
+                    }).start();
                 }
                 catch (IOException ioe) {
                     Log.error(ioe.getMessage());

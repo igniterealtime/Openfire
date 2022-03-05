@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,7 @@
 package org.jivesoftware.openfire.crowd;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +44,7 @@ public class CrowdUserProvider implements UserProvider {
     private static final String SEARCH_FIELD_NAME = "Name";
     private static final String SEARCH_FIELD_EMAIL = "Email";
     private static final Set<String> SEARCH_FIELDS = new TreeSet<>(Arrays.asList(
-            new String[]{SEARCH_FIELD_USERNAME, SEARCH_FIELD_NAME, SEARCH_FIELD_EMAIL}));
+        SEARCH_FIELD_USERNAME, SEARCH_FIELD_NAME, SEARCH_FIELD_EMAIL));
     
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ScheduledExecutorService crowdUserSync = Executors.newSingleThreadScheduledExecutor();
@@ -89,7 +81,7 @@ public class CrowdUserProvider implements UserProvider {
             if (usersCache.containsKey(username)) {
                 return usersCache.get(username);
             } else {
-                throw new UserNotFoundException("User : '" + String.valueOf(username) + "'");
+                throw new UserNotFoundException("User : '" + username + "'");
             }
         } finally {
             lock.readLock().unlock();
@@ -205,12 +197,17 @@ public class CrowdUserProvider implements UserProvider {
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex, int numResults) throws UnsupportedOperationException {
         lock.readLock().lock();
         try {
-            ArrayList<User> foundUsers = (ArrayList<User>) findUsers(fields, query);
-            
-            Collection<User> results = new ArrayList<>(foundUsers.size());
-            
-            for (int i = 0, j = startIndex; i < numResults && j < foundUsers.size(); ++i, ++j) {
-                results.add(foundUsers.get(j));
+            final Iterator<User> userIterator = findUsers(fields, query).iterator();
+            final Collection<User> results = new ArrayList<>();
+            int i = 0;
+            while(userIterator.hasNext()) {
+                final User user = userIterator.next();
+                if (++i >= startIndex) {
+                    results.add(user);
+                }
+                if (results.size() >= numResults) {
+                    break;
+                }
             }
             
             return results;
@@ -273,11 +270,7 @@ public class CrowdUserProvider implements UserProvider {
     public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException {
         throw new UnsupportedOperationException("Setting user modification date unsupported by this version of user provider");
     }
-    
 
-    
-    
-    
     static class UserSynch implements Runnable {
         CrowdUserProvider userProvider;
         
@@ -288,7 +281,7 @@ public class CrowdUserProvider implements UserProvider {
         @Override
         public void run() {
             LOG.info("running synch with crowd...");
-            CrowdManager manager = null;
+            CrowdManager manager;
             try {
                 manager = CrowdManager.getInstance();
             } catch (Exception e) {
@@ -296,7 +289,7 @@ public class CrowdUserProvider implements UserProvider {
                 return;
             }
             
-            List<org.jivesoftware.openfire.crowd.jaxb.User> allUsers = null;
+            List<org.jivesoftware.openfire.crowd.jaxb.User> allUsers;
             try {
                 allUsers = manager.getAllUsers();
             } catch (RemoteException re) {
@@ -320,7 +313,7 @@ public class CrowdUserProvider implements UserProvider {
                 }
             }
             
-            LOG.info("crowd synch done, returned " + allUsers.size() + " users");
+            LOG.info("crowd synch done, returned " + (allUsers == null ? "no" : allUsers.size()) + " users");
             
         }
         

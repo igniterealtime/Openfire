@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class CrowdProperties {
     private static final String HTTP_TIMEOUT = "http.timeout";
     private static final String HTTP_SOCKET_TIMEOUT = "http.socket.timeout";
     
-    private Properties props;
+    private final Properties props;
     
     public CrowdProperties() throws IOException {
         props = new Properties();
@@ -50,10 +50,10 @@ public class CrowdProperties {
         if (!file.exists()) {
             throw new IOException("The file crowd.properties is missing from Openfire conf folder");
         } else {
-            try {
-                props.load(new FileInputStream(file));
+            try (final FileInputStream fis = new FileInputStream(file)) {
+                props.load(fis);
             } catch (IOException ioe) {
-                throw new IOException("Unable to load crowd.properties file");
+                throw new IOException("Unable to load crowd.properties file", ioe);
             }
         }
         
@@ -111,7 +111,7 @@ public class CrowdProperties {
     }
     
     private int getIntegerValue(String propKey, int defaultValue) {
-        int i = 0;
+        int i;
         try {
             i = Integer.parseInt(props.getProperty(propKey));
         } catch (NumberFormatException nfe) {

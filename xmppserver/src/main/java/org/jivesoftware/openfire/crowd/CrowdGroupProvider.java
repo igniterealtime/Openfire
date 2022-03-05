@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,15 +75,15 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
 
         Cache<String, ArrayList<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
         groupMembershipCache.setMaxCacheSize(-1L);
-        groupMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
+        groupMembershipCache.setMaxLifetime(ttl * 1000L); // msecs instead of sec - see Cache API
 
         Cache<JID, ArrayList<String>> userMembershipCache = CacheFactory.createLocalCache(USER_MEMBERSHIP_CACHE_NAME);
         userMembershipCache.setMaxCacheSize(-1L);
-        userMembershipCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
+        userMembershipCache.setMaxLifetime(ttl * 1000L); // msecs instead of sec - see Cache API
         
         Cache<String, org.jivesoftware.openfire.crowd.jaxb.Group> groupCache = CacheFactory.createLocalCache(GROUP_CACHE_NAME);
         groupCache.setMaxCacheSize(-1L);
-        groupCache.setMaxLifetime(ttl * 1000); // msecs instead of sec - see Cache API
+        groupCache.setMaxLifetime(ttl * 1000L); // msecs instead of sec - see Cache API
     }
 
     @Override
@@ -100,7 +100,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
             return new Group(name, group.description, members, admins);
             
         } catch (RemoteException re) {
-            LOG.error("Failure to load group:" + String.valueOf(name), re);
+            LOG.error("Failure to load group:" + name, re);
             throw new GroupNotFoundException(re);
         }
     }
@@ -125,10 +125,10 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
             return results;
             
         } catch (RemoteException re) {
-            LOG.error("Failure to get the members of crowd group:" + String.valueOf(groupName), re);
+            LOG.error("Failure to get the members of crowd group:" + groupName, re);
         }
         
-        groupMembershipCache.put(groupName, new ArrayList<JID>());
+        groupMembershipCache.put(groupName, new ArrayList<>());
         return Collections.emptyList();
     }
     
@@ -141,14 +141,14 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
         }
         
         try {
-            groups = new ArrayList(manager.getUserGroups(user.getNode()));
+            groups = new ArrayList<>(manager.getUserGroups(user.getNode()));
             userMembershipCache.put(user, groups);
             return groups;
         } catch (RemoteException re) {
-            LOG.error("Failure to load the groups of user:" + String.valueOf(user), re);
+            LOG.error("Failure to load the groups of user:" + user, re);
         }
         
-        userMembershipCache.put(user, new ArrayList<String>());
+        userMembershipCache.put(user, new ArrayList<>());
         return Collections.emptyList();
     }
 
@@ -269,8 +269,8 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     static class GroupSynch implements Runnable {
         @Override
         public void run() {
-            LOG.info("running synch with crowd...");
-            CrowdManager manager = null;
+            LOG.info("running sync with crowd...");
+            CrowdManager manager;
             try {
                 manager = CrowdManager.getInstance();
             } catch (Exception e) {
@@ -278,7 +278,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
                 return;
             }
             
-            List<String> allGroups = null;
+            List<String> allGroups;
             try {
                 allGroups = manager.getAllGroupNames();
             } catch (RemoteException re) {
@@ -295,7 +295,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
                 }
             }
             
-            LOG.info("crowd synch done, returned " + allGroups.size() + " groups");
+            LOG.info("crowd synch done, returned " + (allGroups == null ? "no" : allGroups.size()) + " groups");
         }
     }
 

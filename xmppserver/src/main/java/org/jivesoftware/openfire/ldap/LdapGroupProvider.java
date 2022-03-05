@@ -44,6 +44,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jivesoftware.util.SystemProperty;
+
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
  * read-only so any set operations will result in an exception.
@@ -59,6 +61,12 @@ public class LdapGroupProvider extends AbstractGroupProvider {
     private String[] standardAttributes;
     private int groupCount = -1;
     private Instant expiresStamp = Instant.now();
+
+    public static SystemProperty<Boolean> PROCESSBIGGROUPS = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("ldap.useRangeRetrieval")
+            .setDefaultValue(false)
+            .setDynamic(true)
+            .build();
 
     /**
      * Constructs a new LDAP group provider.
@@ -83,6 +91,19 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             Log.error("Unable to load group: {}", groupName, e);
             throw new GroupNotFoundException("Group with name " + groupName + " not found.", e);
         }
+    }
+
+    public String genNextRangePart(int lasthigh)
+    {
+        String groupMemberField = manager.getGroupMemberField();
+
+        int pageSize = LdapManager.LDAP_PAGE_SIZE.getValue();
+        if (pageSize==-1)
+        {
+            pageSize=1500;
+        }
+
+        return groupMemberField+";range=" + String.valueOf(lasthigh+1) + "-" + String.valueOf(lasthigh + pageSize+1);
     }
 
     /**
@@ -116,7 +137,127 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             ctx = manager.getContext(baseDN);
             Attributes attrs = ctx.getAttributes(relativeDN, standardAttributes);
 
-            return processGroup(ctx, attrs, membersToIgnore);
+            if (!PROCESSBIGGROUPS.getValue())
+            {
+                return processGroup(ctx, attrs, membersToIgnore);
+            }
+            else
+            {
+                boolean paging = false;
+    
+                NamingEnumeration<? extends Attribute> i = attrs.getAll();
+                int rangehigh=-1;
+                int oldrangehigh=-1;
+    
+                while (i.hasMore())
+                {
+                    Attribute attribute = i.next();
+                    String key = attribute.getID().toLowerCase();
+                    if (key.startsWith(manager.getGroupMemberField())&&key.contains(";range="))
+                    {
+                        rangehigh = Integer.parseInt(key.substring(key.indexOf(";range=")+";range=".length()).split("\\-")[1]);
+    
+                        paging=true;
+                        Log.debug("using range retrival for group: {}", relativeDN);
+                        break;
+                    }
+                }
+    
+                if (!paging)
+                {
+                    return processGroup(ctx, attrs, membersToIgnore);
+                }
+                else
+                {
+                    //retrieve first part with attributes that came from AD
+                    ArrayList<String> stdAttr=new ArrayList<String>();
+                    for (int n=0;n<standardAttributes.length;n++)
+                    {
+                        if (!standardAttributes[n].contains(manager.getGroupMemberField()))
+                        {
+                            stdAttr.add(standardAttributes[n]);
+                        }
+                    }
+    
+                    stdAttr.add(manager.getGroupMemberField()+";range=0-"+String.valueOf(rangehigh));
+                    Log.debug("first range will be 0-{}",rangehigh);
+    
+                    //reload Attributes as said in MSDN will prepare range retrival
+                    attrs = ctx.getAttributes(relativeDN, stdAttr.toArray(new String[stdAttr.size()]));
+    
+                    //get the first part of the group
+                    Group tmpGroup = processGroup(ctx, attrs, membersToIgnore);
+                    Collection<JID> admins = tmpGroup.getAdmins();
+                    String description = tmpGroup.getDescription();
+                    String name = tmpGroup.getName();
+                    ArrayList<JID> members = new ArrayList<JID>();
+                    members.addAll(tmpGroup.getMembers());
+    
+                    //now load the rest
+                    do
+                    {
+                        try
+                        {
+                            stdAttr.clear();
+                            for (int n=0;n<standardAttributes.length;n++)
+                            {
+                                if (!standardAttributes[n].contains(manager.getGroupMemberField()))
+                                {
+                                    stdAttr.add(standardAttributes[n]);
+                                }
+                            }
+                            //Add the next range rangehigh+1 to rangehigh+1+ldap.pagedResultsSize
+                            stdAttr.add(genNextRangePart(rangehigh));
+    
+                            attrs = ctx.getAttributes(relativeDN, stdAttr.toArray(new String[stdAttr.size()]));
+                            NamingEnumeration<? extends Attribute> inext = attrs.getAll();
+                            while (inext.hasMore())
+                            {
+                                Attribute attribute = inext.next();
+                                String key = attribute.getID().toLowerCase();
+                                if (key.startsWith(manager.getGroupMemberField())&&key.contains(";range="))
+                                {
+                                    //get next rangehigh
+                                    oldrangehigh=rangehigh;
+                                    if (key.substring(key.indexOf(";range=")+";range=".length()).split("\\-")[1].equals("*")==false)
+                                    {
+                                        //we will have a minimum of two more ranges
+                                        rangehigh = Integer.parseInt(key.substring(key.indexOf(";range=")+";range=".length()).split("\\-")[1]);
+                                    }
+                                    else
+                                    {
+                                        //* means to the end of the range
+                                        rangehigh = -1;
+                                    }
+                                    break;
+                                }
+                            }
+    
+                            //load the group members now
+                            Log.debug("next range will be {}-{}",oldrangehigh,rangehigh!=-1?rangehigh:"*");
+    
+                            tmpGroup=processGroup(ctx, attrs, membersToIgnore);
+                            if (tmpGroup!=null&&tmpGroup.getMembers().size()>0)
+                            {
+                                members.addAll(tmpGroup.getMembers());
+                            }
+                            else
+                            {
+                                // no next found
+                                break;
+                            }
+    
+                        }
+                        catch (Exception e)
+                        {
+                            Log.debug("error while reading the ldap group with range retrival",e); // no next found, cause of missing attribute
+                            break;
+                        }
+                    }while (rangehigh!=-1);  //The last part was received
+    
+                    return new Group(name, description, members, admins);
+                }
+            }
         }
         finally {
             try {
@@ -248,17 +389,42 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         filter.append(MessageFormat.format(manager.getGroupSearchFilter(), "*"));
         filter.append('(').append(key).append('=').append(LdapManager.sanitizeSearchFilter(value, false));
         filter.append("))");
-        if (Log.isDebugEnabled()) {
-            Log.debug("Trying to find group names using query: " + filter.toString());
+        
+        if (!PROCESSBIGGROUPS.getValue())
+        {
+            if (Log.isDebugEnabled()) {
+                Log.debug("Trying to find group names using query: " + filter.toString());
+            }
+
+            // Perform the LDAP query
+            return manager.retrieveList(
+                    manager.getGroupNameField(),
+                    filter.toString(),
+                    -1,
+                    -1,
+                    null);
         }
-        // Perform the LDAP query
-        return manager.retrieveList(
-                manager.getGroupNameField(),
-                filter.toString(),
-                -1,
-                -1,
-                null
-        );
+        else
+        {
+            String ldapfilter = filter.toString();
+            String searchRangeStr = ";range=";
+            if (ldapfilter.contains(searchRangeStr))
+            {
+                ldapfilter=ldapfilter.substring(0,ldapfilter.indexOf(searchRangeStr))+
+                        ldapfilter.substring(ldapfilter.indexOf("=",
+                                ldapfilter.indexOf(searchRangeStr)+searchRangeStr.length()));
+            }
+
+            Log.debug("Trying to find group names using query: {}", ldapfilter);
+
+            // Perform the LDAP query
+            return manager.retrieveList(
+                    manager.getGroupNameField(),
+                    ldapfilter,
+                    -1,
+                    -1,
+                    null);
+        }
     }
 
     @Override
@@ -334,6 +500,22 @@ public class LdapGroupProvider extends AbstractGroupProvider {
 
         Log.debug("Loading members of group: {}", name);
 
+        if (memberField==null&&PROCESSBIGGROUPS.getValue())
+        {
+            NamingEnumeration<? extends Attribute> i = a.getAll();
+
+            while (i.hasMore())
+            {
+                Attribute attribute = i.next();
+                String key = attribute.getID().toLowerCase();
+                if (key.startsWith(manager.getGroupMemberField()))
+                {
+                    memberField=attribute;
+                    break;
+                }
+            }
+        }
+
         if (memberField != null) {
             NamingEnumeration ne = memberField.getAll();
             while (ne.hasMore()) {
@@ -341,8 +523,6 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 LdapName userDN = null;
                 // If not posix mode, each group member is stored as a full DN.
                 if (!manager.isPosixMode()) {
-                    // Create an LDAP name with the full DN.
-                    userDN = new LdapName(username);
                     try {
                         // Try to find the username with a regex pattern match.
                         Matcher matcher = pattern.matcher(username);
@@ -355,6 +535,8 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         // example, Active Directory has a username field of
                         // sAMAccountName, but stores group members as "CN=...".
                         else {
+                            // Create an LDAP name with the full DN.
+                            userDN = new LdapName(username);
                             // Turn the LDAP name into something we can use in a
                             // search by stripping off the comma.
                             StringBuilder userFilter = new StringBuilder();
@@ -436,6 +618,9 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                                 true);
                             if (userDNStr != null)
                                 userDN = new LdapName(userDNStr);
+                        } else if (userDN == null) {
+                            // Create an LDAP name with the full DN.
+                            userDN = new LdapName(username);
                         }
                         if (userDN != null && manager.isGroupDN(userDN)) {
                             isGroup = true;

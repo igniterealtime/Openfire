@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,8 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
      */
     @Override
     public Element loadVCard(String username) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("loadvcard:" + username);
-        }
-        
+        LOG.debug("loadvcard {}", username);
+
         if (MUTEX.containsKey(username)) {
             // preventing looping
             return null;
@@ -83,10 +81,8 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
                     return null;
                 }
 
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(vcard != null ? vcard.asXML() : "vcard is null");
-                }
-                
+                LOG.debug(vcard != null ? vcard.asXML() : "vcard is null");
+
                 
                 // store this new vcard
                 if (vcard != null) {
@@ -113,9 +109,7 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
      */
     @Override
     public Element createVCard(String username, Element vCardElement) throws AlreadyExistsException {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("createvcard:" + vCardElement.asXML());
-        }
+        LOG.debug("createvcard: {}", vCardElement.asXML());
         return super.createVCard(username, vCardElement);
     }
 
@@ -145,12 +139,10 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
             emailNode.setText(user.email);
             
         } catch (UserNotFoundException unfe) {
-            LOG.error("Unable to find user:" + String.valueOf(username) + " for updating its vcard", unfe);
+            LOG.error("Unable to find user:" + username + " for updating its vcard", unfe);
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("updatevcard:" + vCard.asXML());
-        }
+        LOG.debug("updatevcard: {}", vCard.asXML());
 
         return super.updateVCard(username, vCard);
     }

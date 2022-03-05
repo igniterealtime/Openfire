@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,6 @@ import org.jivesoftware.openfire.crowd.jaxb.Users;
 
 public class CrowdManager {
     private static final Logger LOG = LoggerFactory.getLogger(CrowdManager.class);
-    private static final Object O = new Object();
     private static final String APPLICATION_XML = "application/xml";
     private static final Header HEADER_CONTENT_TYPE_APPLICATION_XML = new BasicHeader(HttpHeaders.CONTENT_TYPE, APPLICATION_XML);
     private static final Header HEADER_ACCEPT_APPLICATION_XML = new BasicHeader(HttpHeaders.ACCEPT, APPLICATION_XML);
@@ -79,13 +78,9 @@ public class CrowdManager {
     private RequestConfig requestConfig;
     private HttpClientContext clientContext;
 
-    public static CrowdManager getInstance() {
+    public static synchronized CrowdManager getInstance() {
         if (INSTANCE == null) {
-            synchronized (O) {
-                if (INSTANCE == null) {
-                    INSTANCE = new CrowdManager();
-                }
-            }
+            INSTANCE = new CrowdManager();
         }
         return INSTANCE;
     }
@@ -162,7 +157,7 @@ public class CrowdManager {
      */
     public void authenticate(String username, String password) throws RemoteException {
         username = JID.unescapeNode(username);
-        LOG.debug("authenticate '" + String.valueOf(username) + "'");
+        LOG.debug("authenticate '" + username + "'");
 
         final AuthenticatePost authenticatePost = new AuthenticatePost();
         authenticatePost.value = password;

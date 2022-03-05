@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class CrowdAdminProvider implements AdminProvider {
         while (tokenizer.hasMoreTokens()) {
             String groupName = tokenizer.nextToken().trim().toLowerCase();
             
-            if (groupName != null && groupName.length() > 0) {
+            if (groupName.length() > 0) {
                 try {
                     LOG.info("Adding admin users from group: " + groupName);
                     Group group = provider.getGroup(groupName);
@@ -59,7 +59,7 @@ public class CrowdAdminProvider implements AdminProvider {
                     }
                     
                 } catch (GroupNotFoundException gnfe) {
-                    LOG.error("Error when trying to load the members of group:" + String.valueOf(groupName), gnfe);
+                    LOG.error("Error when trying to load the members of group:" + groupName, gnfe);
                 }
             }
         }
@@ -70,16 +70,13 @@ public class CrowdAdminProvider implements AdminProvider {
             results.add(new JID("admin", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true));
         }
         
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("admin users: " + results.toString());
-        }
-        
+        LOG.debug("admin users: {}", results);
+
         return results;
     }
 
     @Override
     public void setAdmins(List<JID> admins) {
-        return;
     }
 
     @Override

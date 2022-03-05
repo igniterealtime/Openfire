@@ -262,7 +262,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="text" name="driver" id="driver" size="75" maxlength="150" value="${fn:escapeXml(not empty driver ? driver : '')}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.jdbc_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.jdbc_info"/></span></div>
         <c:if test="${not empty errors['driver']}">
             <span class="jive-error-text">
                 <c:out value="${errors['driver']}"/>
@@ -276,7 +276,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="text" name="serverURL" id="serverURL" size="75" maxlength="250" value="${not empty serverURL ? fn:escapeXml(serverURL) : ''}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.valid_url" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.valid_url"/></span></div>
         <c:if test="${not empty errors['serverURL']}">
             <span class="jive-error-text">
                 <c:out value="${errors['serverURL']}"/>
@@ -291,7 +291,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="text" name="username" id="username" size="20" maxlength="50" value="${fn:escapeXml(not empty username ? username : '')}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.username_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.username_info"/></span></div>
         <c:if test="${not empty errors['username']}">
             <span class="jive-error-text">
                 <c:out value="${errors['username']}"/>
@@ -305,7 +305,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="password" name="password" id="password" size="20" maxlength="50" value="${fn:escapeXml(not empty password ? password : '')}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.password_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.password_info"/></span></div>
         <c:if test="${not empty errors['password']}">
             <span class="jive-error-text">
                 <c:out value="${errors['password']}"/>
@@ -320,7 +320,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="number" min="0" name="minConnections" id="minConnections" size="5" maxlength="5" value="${fn:escapeXml(not empty minConnections and minConnections > -1 ? minConnections : '')}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.pool"/></span></div>
         <c:if test="${not empty errors['minConnections']}">
             <span class="jive-error-text">
                 <c:out value="${errors['minConnections']}"/>
@@ -334,7 +334,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="number" min="1" name="maxConnections" id="maxConnections" size="5" maxlength="5" value="${fn:escapeXml(not empty maxConnections and maxConnections > -1 ? maxConnections : '')}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.pool" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.pool"/></span></div>
         <c:if test="${not empty errors['maxConnections']}">
             <span class="jive-error-text">
                 <c:out value="${errors['maxConnections']}"/>
@@ -348,7 +348,7 @@ function checkSubmit() {
     </td>
     <td>
         <input type="text" name="connectionTimeout" id="connectionTimeout" size="5" maxlength="5" value="${fn:escapeXml(not empty connectionTimeout ? connectionTimeout : '')}"> <span style="display: block; float: left; padding: 2px 5px 0px 2px;"><fmt:message key="setup.datasource.standard.timeout.days" /></span>
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.datasource.standard.timeout_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.timeout_info"/></span></div>
         <c:if test="${not empty errors['connectionTimeout']}">
             <span class="jive-error-text">
                 <c:out value="${errors['connectionTimeout']}"/>

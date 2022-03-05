@@ -255,14 +255,14 @@
             </tr>
             <c:if test="${initialSetup}">
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.type" />:</td>
+                <td align="right" width="1%" nowrap="nowrap"><label for="jiveLDAPserverType"><fmt:message key="setup.ldap.server.type" />:</label></td>
                 <td colspan="3" nowrap>
                     <select name="serverType" size="1" id="jiveLDAPserverType" style="width:90%;">
                         <option value="" ${empty serverType ? "selected" : ""}><fmt:message key="setup.ldap.server.type_select" /></option>
                         <option value="activedirectory" ${'activedirectory' eq serverType ? "selected" : ""}>Active Directory</option>
                         <option value="openldap" ${'openldap' eq serverType ? "selected" : ""}>OpenLDAP</option>
                         <option value="other" ${'other' eq serverType ? "selected" : ""}><fmt:message key="setup.ldap.server.type_other" /></option>
-                    </select><span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.type_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                    </select><div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.type_help"/></span></div>
                 </td>
             </tr>
             </c:if>
@@ -273,16 +273,16 @@
                         <thead>
                         <tr>
                             <td nowrap="nowrap">
-                                <fmt:message key="setup.ldap.server.protocol" />
-                                <span class="jive-setup-helpicon" style="float:right" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.protocol_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                                <label for="selectProtocol"><fmt:message key="setup.ldap.server.protocol" /></label>
+                                <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.protocol_help"/></span></div>
                             </td>
                             <td nowrap="nowrap">
-                                <fmt:message key="setup.ldap.server.host" />
-                                <span class="jive-setup-helpicon" style="float:right" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.host_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                                <label for="jiveLDAPphost"><fmt:message key="setup.ldap.server.host" /></label>
+                                <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.host_help"/></span></div>
                             </td>
                             <td nowrap="nowrap">
-                                <fmt:message key="setup.ldap.server.port" />
-                                <span class="jive-setup-helpicon" style="float:right" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.port_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                                <label for="jiveLDAPport"><fmt:message key="setup.ldap.server.port" /></label>
+                                <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.port_help"/></span></div>
                             </td>
                         </tr>
                         </thead>
@@ -330,14 +330,14 @@
             </tr>
             <tr>
                 <td align="right" width="1%" nowrap="nowrap">
-                    <fmt:message key="setup.ldap.server.starttls" />:
+                    <label for="starttls"><fmt:message key="setup.ldap.server.starttls" />:</label>
                 </td>
                 <td colspan="3">
                     <select id="starttls" name="starttls" onchange="updateEncryptionSettings();">
                         <option value="true" <c:if test="${startTlsEnabled}">SELECTED</c:if>><fmt:message key="global.yes" /></option>
                         <option value="false" <c:if test="${!startTlsEnabled}">SELECTED</c:if>><fmt:message key="global.no" /></option>
                     </select>
-                    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.starttls_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+                    <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.starttls_help"/></span></div>
                 </td>
             </tr>
             <tr id="plainTextWarning">
@@ -347,10 +347,10 @@
                 </td>
             </tr>
             <tr>
-                <td align="right"><fmt:message key="setup.ldap.server.basedn" />:</td>
+                <td align="right"><label for="jiveLDAPbasedn"><fmt:message key="setup.ldap.server.basedn" />:</label></td>
                 <td colspan="3">
                     <input type="text" name="basedn" id="jiveLDAPbasedn" size="40" maxlength="300" value="${fn:escapeXml(baseDN)}" style="width:90%;">
-                    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.basedn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 16000);"></span>
+                    <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.basedn_help"/></span></div>
                 </td>
             </tr>
             <tr><td colspan="4">&nbsp;</td></tr>
@@ -358,15 +358,15 @@
                 <td colspan="4"><strong><fmt:message key="setup.ldap.server.auth" />:</strong></td>
             </tr>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.admindn" />:</td>
+                <td align="right" width="1%" nowrap="nowrap"><label for="jiveLDAPadmindn"><fmt:message key="setup.ldap.server.admindn" />:</label></td>
                 <td colspan="3">
                     <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="300" value="${fn:escapeXml(adminDN)}" style="width:90%;">
-                    <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.admindn_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', -1);"></span>
+                    <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.admindn_help"/></span></div>
                 </td>
             </tr>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><fmt:message key="setup.ldap.server.password" />:</td>
-                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${not empty adminPassword ? fn:escapeXml(adminPassword) : ''}"> <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.ldap.server.password_help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span></td>
+                <td align="right" width="1%" nowrap="nowrap"><label for="jiveLDAPadminpwd"><fmt:message key="setup.ldap.server.password" />:</label></td>
+                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${not empty adminPassword ? fn:escapeXml(adminPassword) : ''}"> <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.password_help"/></span></div></td>
             </tr>
             </table>
         </div>

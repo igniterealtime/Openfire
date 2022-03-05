@@ -338,36 +338,40 @@ html>body .jive-vcardTable {
 /* --------------------------------------------- */
 /*  Tooltip styles                               */
 /* --------------------------------------------- */
-.jive-setup-helpicon {
+.openfire-helpicon-with-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.openfire-helpicon-with-tooltip .helpicon {
     display: block;
     float: left;
-    width: 17px;
-    height: 17px;
-    margin: 3px 0 0 5px;
-    background: transparent url(../images/setup_helpicon.gif) no-repeat;
+    width: 14px;
+    height: 14px;
+    background: transparent url('../images/setup_helpicon.gif') no-repeat;
 }
-div.jiveTooltip {
+
+.openfire-helpicon-with-tooltip .tooltiptext {
+    font-family: Arial, Helvetica sans-serif;
+    font-size: small;
+    visibility: hidden;
+    width: 240px;
+    background-color: #FFFBE2;
+    color: black;
+    text-align: center;
+    border: 1px solid #bbb;
+    padding: 5px;
     position: absolute;
-    width: 330px;
-    padding: 6px;
-    background-color: #f9f5d5;
-    border: 1px solid #999;
-    text-align: left;
-    z-index: 20;
-    -moz-border-radius: 0;
-    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=92);
-    -moz-opacity: .92;
-    -khtml-opacity: .92;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -120px;
+    word-wrap:break-word;
+    white-space: normal;
 }
-div.jiveTooltip .contents {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    color: #333;
-    margin: 0;
-    padding: 0 3px;
-    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=100);
-    -moz-opacity: 1;
-    -khtml-opacity: 1;
+
+.openfire-helpicon-with-tooltip:hover .tooltiptext {
+    visibility: visible;
 }
 
 

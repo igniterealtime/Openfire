@@ -203,7 +203,7 @@
     </td>
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${not empty domain ? fn:escapeXml(domain) : ''}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.domain.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.domain.help" /></span></div>
         <c:if test="${not empty errors['domain']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_domain" />
@@ -217,7 +217,7 @@
     </td>
     <td width="99%">
         <input type="text" size="30" maxlength="150" name="fqdn" id="fqdn" value="${not empty fqdn ? fn:escapeXml(fqdn) : ''}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.fqdn.help" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.fqdn.help" /></span></div>
         <c:if test="${not empty errors['fqdn']}">
         <span class="jive-error-text">
         <fmt:message key="setup.host.settings.invalid_fqdn" />
@@ -233,7 +233,7 @@
     </td>
     <td width="99%">
         <input type="number" min="1" max="65535" size="6" maxlength="6" name="embeddedPort" id="embeddedPort" value="${not empty embeddedPort ? embeddedPort : 9090}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.port_number" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.port_number" /></span></div>
         <c:if test="${not empty errors['embeddedPort']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_port" />
@@ -247,7 +247,7 @@
     </td>
     <td width="99%">
         <input type="number" min="1" max="65535" size="6" maxlength="6" name="securePort" id="securePort" value="${not empty securePort ? securePort : 9091}">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.secure_port_number" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.secure_port_number" /></span></div>
         <c:if test="${not empty errors['securePort']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.invalid_port" />
@@ -260,7 +260,7 @@
         <fmt:message key="setup.host.settings.encryption_algorithm" />
     </td>
     <td width="99%">
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.encryption_algorithm_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span><br /><br />
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.encryption_algorithm_info" /></span></div><br /><br />
         <input type="radio" name="encryptionAlgorithm" value="Blowfish" id="Blowfish" checked><label for="Blowfish"><fmt:message key="setup.host.settings.encryption_blowfish" /></label><br /><br />
         <input type="radio" name="encryptionAlgorithm" value="AES" id="AES"><label for="AES"><fmt:message key="setup.host.settings.encryption_aes" /></label><br /><br />
     </td>
@@ -272,7 +272,7 @@
     <td width="99%">
         <input type="password" size="50" name="encryptionKey" id="encryptionKey"/><br /><br />
         <input type="password" size="50" name="encryptionKey1" id="encryptionKey1" />
-        <span class="jive-setup-helpicon" onmouseover="domTT_activate(this, event, 'content', '<fmt:message key="setup.host.settings.encryption_key_info" />', 'styleClass', 'jiveTooltip', 'trail', true, 'delay', 300, 'lifetime', 8000);"></span>
+        <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.encryption_key_info"/></span></div>
         <c:if test="${not empty errors['encryptionKey']}">
             <span class="jive-error-text">
             <fmt:message key="setup.host.settings.encryption_key_invalid" />

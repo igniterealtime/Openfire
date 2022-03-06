@@ -64,6 +64,7 @@ public class CookieUtils {
      * @param response the servlet response.
      * @param cookie the cookie object to be deleted.
      */
+    @SuppressWarnings("lgtm[java/insecure-cookie]") // We're explicitly setting an empty cookie to remove things.
     public static void deleteCookie(HttpServletRequest request, HttpServletResponse response,
             Cookie cookie)
     {

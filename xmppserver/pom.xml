@@ -52,6 +52,8 @@
                                 <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
                             </systemPropertyVariables>
                             <argLine>@{argLine} -Duser.language=us -Duser.country=US</argLine>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -163,6 +165,8 @@
                         <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
                     </systemPropertyVariables>
                     <argLine>-Duser.language=us -Duser.country=US</argLine>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
         </plugins>

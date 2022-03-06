@@ -17,6 +17,8 @@
 package org.jivesoftware.util;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -119,6 +121,16 @@ public class FaviconServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         final String host = request.getParameter("host");
+
+        // OF-1885: Ensure that the provided value is a valid hostname.
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            InetAddress.getByName(host);
+        } catch (UnknownHostException e) {
+            LOGGER.info("Request for favicon of hostname that can't be parsed as a valid hostname '{}' is ignored.", host, e);
+            writeBytesToStream(defaultBytes, response);
+            return;
+        }
 
         // Validate that we're connected to the host
         final SessionManager sessionManager = SessionManager.getInstance();

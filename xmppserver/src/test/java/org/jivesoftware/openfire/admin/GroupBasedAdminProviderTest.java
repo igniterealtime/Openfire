@@ -6,6 +6,7 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -34,8 +35,9 @@ public class GroupBasedAdminProviderTest {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         Fixtures.clearExistingProperties();
+        CacheFactory.initialize();
         GroupManager.GROUP_PROVIDER.setValue(TestGroupProvider.class);
         mockGroupName = "mock-group-name";
         JiveGlobals.setProperty("provider.group.groupBasedAdminProvider.groupName", mockGroupName);

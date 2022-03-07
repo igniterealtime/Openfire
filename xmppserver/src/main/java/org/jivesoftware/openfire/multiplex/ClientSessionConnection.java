@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -169,9 +171,11 @@ public class ClientSessionConnection extends VirtualConnection {
      * nothing. But if the server originated the request to close the connection then we need
      * to send to the Connection Manager a packet letting him know that the Client Session needs
      * to be terminated.
+     *
+     * @param error If non-null, this error will be sent to the peer before the connection is disconnected.
      */
     @Override
-    public void closeVirtualConnection() {
+    public void closeVirtualConnection(@Nullable final StreamError error) {
         // Figure out who requested the connection to be closed
         StreamID streamID = session.getStreamID();
         if (multiplexerManager.getClientSession(connectionManagerName, streamID) == null) {
@@ -191,6 +195,10 @@ public class ClientSessionConnection extends VirtualConnection {
                         "http://jabber.org/protocol/connectionmanager");
                 child.addAttribute("id", streamID.getID());
                 child.addElement("close");
+                if (error != null) {
+                    // Note that this is ignored by all Connection Manager implementations at the time of writing.
+                    child.add(error.getElement());
+                }
                 multiplexerSession.process(closeRequest);
             }
         }

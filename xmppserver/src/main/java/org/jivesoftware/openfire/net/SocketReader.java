@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 
 package org.jivesoftware.openfire.net;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -37,13 +33,11 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.Roster;
-import org.xmpp.packet.StreamError;
+import org.xmpp.packet.*;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.List;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -353,15 +347,10 @@ public abstract class SocketReader implements Runnable {
      * closing the connection a stream error will be sent to the entity.
      */
     void closeNeverSecuredConnection() {
-        // Set the not_authorized error
-        StreamError error = new StreamError(StreamError.Condition.not_authorized);
-        // Deliver stanza
-        connection.deliverRawText(error.toXML());
-        // Close the underlying connection
-        connection.close();
+        // Send a stream error and close the underlying connection.
+        connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
         // Log a warning so that admins can track this case from the server side
-        Log.warn("TLS was required by the server and connection was never secured. " +
-                "Closing connection : " + connection);
+        Log.warn("TLS was required by the server and connection was never secured. Closing connection: {}", connection);
     }
 
     private IQ getIQ(Element doc) {
@@ -432,16 +421,10 @@ public abstract class SocketReader implements Runnable {
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
             sb.append("version=\"1.0\">");
-            // Set the host_unknown error
-            StreamError error = new StreamError(StreamError.Condition.host_unknown);
-            sb.append(error.toXML());
-            // Deliver stanza
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            // Send the host_unknown error and close the underlying connection
+            connection.close(new StreamError(StreamError.Condition.host_unknown, "The 'to' attribute does not specify an XMPP domain entity served by this service."));
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host +
-                    ". Connection: " + connection);
+            Log.warn("Closing session due to incorrect hostname in stream header. Host: {}. Connection: {}", host, connection);
         }
 
         // Create the correct session based on the sent namespace. At this point the server
@@ -461,15 +444,10 @@ public abstract class SocketReader implements Runnable {
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
             sb.append("version=\"1.0\">");
-            // Include the bad-namespace-prefix in the response
-            StreamError error = new StreamError(StreamError.Condition.bad_namespace_prefix);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            // Include the bad-namespace-prefix in the response and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.bad_namespace_prefix, "The namespace used in the request does not identify functionality that can be provided by this endpoint."));
             // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to bad_namespace_prefix in stream header. Prefix: " +
-                    xpp.getNamespace(null) + ". Connection: " + connection);
+            Log.warn("Closing session due to bad_namespace_prefix in stream header. Prefix: {}. Connection: {}", xpp.getNamespace(null), connection);
         }
     }
 

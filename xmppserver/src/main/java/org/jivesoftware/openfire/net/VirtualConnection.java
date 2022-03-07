@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.security.cert.Certificate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -29,8 +24,13 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
+import java.security.cert.Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Abstract implementation of the Connection interface that models abstract connections. Abstract
@@ -182,6 +182,16 @@ public abstract class VirtualConnection implements Connection {
      */
     @Override
     public void close() {
+    }
+
+    /**
+     * Closes the session, the virtual connection and notifies listeners that the connection
+     * has been closed.
+     *
+     * @param error If non-null, the end-stream tag will be preceded with this error.
+     */
+    @Override
+    public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             
             if (session != null) {
@@ -203,7 +213,7 @@ public abstract class VirtualConnection implements Connection {
             listeners.clear();
 
             try {
-                closeVirtualConnection();
+                closeVirtualConnection(error);
             } catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
             }
@@ -242,8 +252,10 @@ public abstract class VirtualConnection implements Connection {
     }
 
     /**
-     * Closes the virtual connection. Subsclasses should indicate what closing a virtual
+     * Closes the virtual connection. Subclasses should indicate what closing a virtual
      * connection means. At this point the session has a CLOSED state.
+     *
+     * @param error If non-null, this error will be sent to the peer before the connection is disconnected.
      */
-    public abstract void closeVirtualConnection();
+    public abstract void closeVirtualConnection(@Nullable final StreamError error);
 }

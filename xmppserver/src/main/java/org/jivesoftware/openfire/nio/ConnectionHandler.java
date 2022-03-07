@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,37 +132,32 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             if (connection != null) {
                 // Close idle connection
                 if (Log.isDebugEnabled()) {
-                    Log.debug("ConnectionHandler: Closing connection that has been idle: " + connection);
+                    Log.debug("ConnectionHandler: Closing connection that has been idle: {}", connection);
                 }
-                connection.close();
+                connection.close(new StreamError(StreamError.Condition.connection_timeout, "Closing connection due to inactivity."));
             }
         }
     }
 
     @Override
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-        Log.warn("Closing connection due to exception in session: " + session, cause);
+        Log.warn("Closing connection due to exception in session: {}", session, cause);
 
-        try {
-            // OF-524: Determine stream:error message.
-            final StreamError error;
-            if ( cause != null && (cause instanceof XMLNotWellFormedException || (cause.getCause() != null && cause.getCause() instanceof XMLNotWellFormedException) ) ) {
-                error = new StreamError( StreamError.Condition.not_well_formed );
-            } else {
-                error = new StreamError( StreamError.Condition.internal_server_error );
-            }
+        // OF-524: Determine stream:error message.
+        final StreamError error;
 
-            final Connection connection = (Connection) session.getAttribute( CONNECTION );
+        // OF-1784: Don't write an error when the source problem is an issue with writing data.
+        if (!JiveGlobals.getBooleanProperty("xmpp.skip-error-delivery-on-write-error.disable", false) && cause instanceof WriteException) {
+            error = null;
+        } else if ( cause != null && (cause instanceof XMLNotWellFormedException || (cause.getCause() != null && cause.getCause() instanceof XMLNotWellFormedException) ) ) {
+            error = new StreamError( StreamError.Condition.not_well_formed );
+        } else {
+            error = new StreamError(StreamError.Condition.internal_server_error);
+        }
 
-            // OF-1784: Don't write an error when the source problem is an issue with writing data.
-            if ( JiveGlobals.getBooleanProperty( "xmpp.skip-error-delivery-on-write-error.disable", false ) || !(cause instanceof WriteException) ) {
-                connection.deliverRawText( error.toXML() );
-            }
-        } finally {
-            final Connection connection = (Connection) session.getAttribute( CONNECTION );
-            if (connection != null) {
-                connection.close();
-            }
+        final Connection connection = (Connection) session.getAttribute(CONNECTION);
+        if (connection != null) {
+            connection.close(error);
         }
     }
 
@@ -185,7 +180,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
             Log.error("Closing connection due to error while processing message: {}", message, e);
             final Connection connection = (Connection) session.getAttribute(CONNECTION);
             if ( connection != null ) {
-                connection.close();
+                connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while processing data raw inbound data."));
             }
         }
     }

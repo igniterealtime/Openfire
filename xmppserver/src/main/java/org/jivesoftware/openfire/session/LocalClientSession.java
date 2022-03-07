@@ -212,12 +212,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 // Do nothing
             }
 
-            Log.debug("LocalClientSession: Closed connection to client attempting to connect from: " + hostAddress);
-            // Include the not-authorized error in the response
-            StreamError error = new StreamError(StreamError.Condition.not_authorized);
-            connection.deliverRawText(error.toXML());
-            // Close the underlying connection
-            connection.close();
+            Log.debug("LocalClientSession: Closed connection to client attempting to connect from: {}", hostAddress);
+            // Include the not-authorized error in the response and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.not_authorized));
             return null;
         }
 

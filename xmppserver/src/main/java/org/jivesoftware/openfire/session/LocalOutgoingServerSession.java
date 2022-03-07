@@ -365,7 +365,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         }
                         else if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                             log.debug("I have no StartTLS yet I must TLS");
-                            connection.close();
+                            connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
                             return null;
                         }
                         // Check if we are going to try server dialback (XMPP 1.0)
@@ -375,7 +375,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                             OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
                             if (method.authenticateDomain(newSocketReader, id)) {
                                 log.debug( "Successfully authenticated the connection with dialback!" );
-                                StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                                StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                                 LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
                                 connection.init(session);
                                 // Set the remote domain name as the address of the session.
@@ -399,7 +399,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.debug( "Something went wrong so close the connection and try server dialback over a plain connection" );
             if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                 log.debug("I have no StartTLS yet I must TLS");
-                connection.close();
+                connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
                 return null;
             }
             connection.close();

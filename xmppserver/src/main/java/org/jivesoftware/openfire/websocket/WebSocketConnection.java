@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package org.jivesoftware.openfire.websocket;
 
-import java.net.InetSocketAddress;
-
 import org.dom4j.Namespace;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.VirtualConnection;
-import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -33,6 +31,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
+import java.net.InetSocketAddress;
 
 /**
  * Following the conventions of the BOSH implementation, this class extends {@link VirtualConnection}
@@ -56,9 +55,9 @@ public class WebSocketConnection extends VirtualConnection
     }
 
     @Override
-    public void closeVirtualConnection()
+    public void closeVirtualConnection(@Nullable final StreamError error)
     {
-        socket.closeSession();
+        socket.closeSession(error);
     }
 
     @Override
@@ -78,8 +77,7 @@ public class WebSocketConnection extends VirtualConnection
 
     @Override
     public void systemShutdown() {
-        deliverRawText(new StreamError(StreamError.Condition.system_shutdown).toXML());
-        close();
+        close(new StreamError(StreamError.Condition.system_shutdown));
     }
 
     @Override

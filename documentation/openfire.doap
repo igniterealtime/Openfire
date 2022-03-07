@@ -370,5 +370,10 @@
                 <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0359.html"/>
             </xmpp:SupportedXep>
         </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0237.html"/>
+            </xmpp:SupportedXep>
+        </implements>
     </Project>
 </rdf:RDF>

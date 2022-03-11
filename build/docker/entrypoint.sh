@@ -43,10 +43,12 @@ initialize_log_dir() {
 }
 
 copy_provided_plugins() {
-  if [ -d "/opt/plugins" ]; then
-    echo "Copying user-provided plugins"
-    cp -nR /opt/plugins/* ${OPENFIRE_DIR}/plugins/
-  fi
+  for file in /opt/plugins/*.jar; do # Workaround for https://github.com/koalaman/shellcheck/wiki/SC2144 that doesn't involve redirecting terminal output
+    if [ -f "$file" ]; then
+      echo "Copying user-provided plugin: $file"
+      cp -n "$file" "${OPENFIRE_DIR}/plugins/"
+    fi
+  done
 }
 
 # allow arguments to be passed to openfire launch

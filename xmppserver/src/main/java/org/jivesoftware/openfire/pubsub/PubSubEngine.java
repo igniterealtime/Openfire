@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -49,7 +51,7 @@ public class PubSubEngine
 {
     private static final Logger Log = LoggerFactory.getLogger(PubSubEngine.class);
 
-    private static final String MUTEX_SUFFIX_USER = " psu";
+    private static final Interner<JID> userMutex = Interners.newWeakInterner();
     private static final String MUTEX_SUFFIX_NODE = " psn";
     /**
      * The packet router for the server.
@@ -254,7 +256,7 @@ public class PubSubEngine
             JID subscriber = presence.getFrom();
             Map<JID, String> fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
             if (fullPresences == null) {
-                synchronized ((subscriber.toBareJID() + MUTEX_SUFFIX_USER).intern()) {
+                synchronized (userMutex.intern(subscriber.asBareJID())) {
                     fullPresences = service.getSubscriberPresences().get(subscriber.asBareJID());
                     if (fullPresences == null) {
                         fullPresences = new ConcurrentHashMap<>();

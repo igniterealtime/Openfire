@@ -121,7 +121,7 @@ public final class OF33 {
                 }
                 // Copy rooms.
                 try {
-                    Long roomID, newRoomID;
+                    long roomID, newRoomID;
                     ResultSet roomRS = null;
                     pstmt = con
                             .prepareStatement("SELECT roomID, creationDate, modificationDate, "

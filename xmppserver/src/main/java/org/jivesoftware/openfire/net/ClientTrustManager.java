@@ -130,14 +130,13 @@ public class ClientTrustManager implements X509TrustManager {
             crlLastUpdated = modified;
             Log.debug("ClientTrustManager: Updating CRLs");
             useCRLs = false;
-            try {
+            try (final FileInputStream crlStream = new FileInputStream(crlFile);
+                 final BufferedInputStream crlBuffer = new BufferedInputStream(crlStream))
+            {
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
                 X509CRL crl;
 
-                FileInputStream crlStream = new FileInputStream(crlFile);
-                BufferedInputStream crlBuffer = new BufferedInputStream(crlStream);
-                
                 crls.clear(); //remove existing CRLs
                 while (crlBuffer.available() > 0) {
                     crl = (X509CRL)cf.generateCRL(crlBuffer);
@@ -148,7 +147,7 @@ public class ClientTrustManager implements X509TrustManager {
             }
             catch(FileNotFoundException e) {
                 // Its ok if the file wasnt found- maybe we dont have any CRL's
-                Log.debug("ClientTrustManager: CRL file not found: "+crlFile.toString());
+                Log.debug("ClientTrustManager: CRL file not found: "+crlFile);
             }
             catch(IOException e) {
                 //Thrown bot the input streams

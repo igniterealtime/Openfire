@@ -34,6 +34,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A ConnectionMultiplexerManager is responsible for keeping track of the connected
@@ -69,7 +70,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * Map that keeps track of connection managers and hosted sessions.
      * Key: Domain of connection manager; Value: Map with Key: stream ID; Value: Client session
      */
-    private Map<String, Map<StreamID, LocalClientSession>> sessionsByManager =
+    private ConcurrentMap<String, ConcurrentMap<StreamID, LocalClientSession>> sessionsByManager =
             new ConcurrentHashMap<>();
 
     private SessionManager sessionManager;
@@ -151,17 +152,8 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
                     SessionManager.getInstance().createClientSession(connection, streamID);
             // Register that this streamID belongs to the specified connection manager
             streamIDs.put(streamID, connectionManagerDomain);
-            // Register which sessions are being hosted by the speicifed connection manager
-            Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerDomain);
-            if (sessions == null) {
-                synchronized (connectionManagerDomain.intern()) {
-                    sessions = sessionsByManager.get(connectionManagerDomain);
-                    if (sessions == null) {
-                        sessions = new ConcurrentHashMap<>();
-                        sessionsByManager.put(connectionManagerDomain, sessions);
-                    }
-                }
-            }
+            // Register which sessions are being hosted by the specified connection manager
+            ConcurrentMap<StreamID, LocalClientSession> sessions = sessionsByManager.computeIfAbsent(connectionManagerDomain, c -> new ConcurrentHashMap<>());
             sessions.put(streamID, session);
             return true;
         }
@@ -195,16 +187,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
     public void multiplexerAvailable(String connectionManagerName) {
         // Add a new entry in the list of available managers. Here is where we are going to store
         // which clients were connected through which connection manager
-        Map<StreamID, LocalClientSession> sessions = sessionsByManager.get(connectionManagerName);
-        if (sessions == null) {
-            synchronized (connectionManagerName.intern()) {
-                sessions = sessionsByManager.get(connectionManagerName);
-                if (sessions == null) {
-                    sessions = new ConcurrentHashMap<>();
-                    sessionsByManager.put(connectionManagerName, sessions);
-                }
-            }
-        }
+        sessionsByManager.computeIfAbsent(connectionManagerName, e -> new ConcurrentHashMap<>());
     }
 
     /**

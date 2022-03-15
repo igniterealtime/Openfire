@@ -620,7 +620,7 @@ public class IdentityStore extends CertificateStore
             }
         }
 
-        Log.info( "The supplied certificate chain does not cover the domain of this XMPP service ('" + domainName + "'). Instead, it covers " + Arrays.toString( serverIdentities.toArray( new String[ serverIdentities.size() ] ) ) );
+        Log.info( "The supplied certificate chain does not cover the domain of this XMPP service ('" + domainName + "'). Instead, it covers " + Arrays.toString( serverIdentities.toArray(new String[0]) ) );
         return false;
     }
 

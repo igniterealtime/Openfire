@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.session.ClientSession;
 
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * Filters and sorts lists of sessions. This allows for a very rich set of possible
@@ -299,7 +300,7 @@ public class SessionResultFilter {
     }
 
     /**
-     * Rounds the given date down to the nearest specfied second.
+     * Rounds the given date down to the nearest specified second.
      *
      * @param date the date (as a long) that we want to round.
      * @param seconds the number of seconds we want to round the date to.
@@ -348,6 +349,11 @@ public class SessionResultFilter {
         else {
             return false;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sortField, sortOrder, username, numResults, creationDateRangeMin, creationDateRangeMax, lastActivityDateRangeMin, lastActivityDateRangeMax);
     }
 
     /**

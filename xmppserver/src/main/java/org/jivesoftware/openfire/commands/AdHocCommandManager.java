@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,17 +47,17 @@ public class AdHocCommandManager {
      * Map that holds the offered commands by this service. Note: Key=commandCode, Value=command.
      * commandCode matches the node attribute sent by command requesters.
      */
-    private Map<String, AdHocCommand> commands = new ConcurrentHashMap<>();
+    private final Map<String, AdHocCommand> commands = new ConcurrentHashMap<>();
     /**
      * Map that holds the number of command sessions of each requester.
      * Note: Key=requester full's JID, Value=number of sessions
      */
-    private Map<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<>();
     /**
      * Map that holds the command sessions. Used mainly to quickly locate a SessionData.
      * Note: Key=sessionID, Value=SessionData
      */
-    private Map<String, SessionData> sessions = new ConcurrentHashMap<>();
+    private final Map<String, SessionData> sessions = new ConcurrentHashMap<>();
 
     /**
      * Adds a new command to the list of supported ad-hoc commands by this server. The new

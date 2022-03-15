@@ -256,11 +256,10 @@ public class ClientTrustManager implements X509TrustManager {
                 // For every certificate in the chain, verify that the certificate
                 // is valid at the current time.
                 Date date = new Date();
-                for (int i = 0; i < nSize; i++) {
+                for (X509Certificate x509Certificate : x509Certificates) {
                     try {
-                        x509Certificates[i].checkValidity(date);
-                    }
-                    catch (GeneralSecurityException generalsecurityexception) {
+                        x509Certificate.checkValidity(date);
+                    } catch (GeneralSecurityException generalsecurityexception) {
                         throw new CertificateException("invalid date of " + peerIdentities);
                     }
                 }

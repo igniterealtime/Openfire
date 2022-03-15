@@ -255,8 +255,8 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
      */
     @Override
     public void removeComponent(String subdomain) {
-        RoutableComponents components = null;
-        if (routables == null || (components = routables.get(subdomain)) == null) {
+        RoutableComponents components;
+        if ((components = routables.get(subdomain)) == null) {
             return;
         }
         List<Component> componentsToRemove = new ArrayList<>(components.getComponents());

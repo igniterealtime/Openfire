@@ -47,6 +47,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * A simple service that allows components to retrieve a roster based solely on the ID
@@ -93,9 +94,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         .setDynamic(false)
         .build();
 
-    private static final String MUTEX_SUFFIX = " ro";
-
-    private Cache<String, Roster> rosterCache = null;
+    private Cache<String, Roster> rosterCache;
     private XMPPServer server;
     private RoutingTable routingTable;
     private RosterItemProvider provider;
@@ -159,15 +158,17 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     public Roster getRoster(String username) throws UserNotFoundException {
         Roster roster = rosterCache.get(username);
         if (roster == null) {
-            // Synchronize using a unique key so that other threads loading the User
-            // and not the Roster cannot produce a deadlock
-           synchronized ((username  + MUTEX_SUFFIX).intern()) {
+            final Lock lock = rosterCache.getLock(username);
+            lock.lock();
+            try {
                 roster = rosterCache.get(username);
                 if (roster == null) {
                     // Not in cache so load a new one:
                     roster = new Roster(username);
                     rosterCache.put(username, roster);
                 }
+            } finally {
+                lock.unlock();
             }
         }
         return roster;

@@ -39,9 +39,9 @@ public class PrivacyListManager {
     private static final PrivacyListManager instance = new PrivacyListManager();
     private static Cache<String, PrivacyList> listsCache;
 
-    private PrivacyListProvider provider = PrivacyListProvider.getInstance();
+    private final PrivacyListProvider provider = PrivacyListProvider.getInstance();
 
-    private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
+    private final List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
 
     static {
         PrivacyListEventListener eventListener = new PrivacyListEventListener() {

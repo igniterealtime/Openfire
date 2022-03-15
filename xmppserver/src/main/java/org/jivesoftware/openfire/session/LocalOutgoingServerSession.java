@@ -52,7 +52,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -79,11 +78,6 @@ import java.util.stream.Collectors;
 public class LocalOutgoingServerSession extends LocalServerSession implements OutgoingServerSession {
 
     private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
-
-    /**
-     * Regular expression to ensure that the hostname contains letters.
-     */
-    private static Pattern pattern = Pattern.compile("[a-zA-Z]");
 
     private OutgoingServerSocketReader socketReader;
     private Collection<DomainPair> outgoingDomainPairs = new HashSet<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,7 @@ import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 import javax.net.ssl.X509TrustManager;
 
@@ -174,11 +170,6 @@ public class ClientTrustManager implements X509TrustManager {
         Log.debug("ClientTrustManager: checkClientTrusted(x509Certificates,"+string+") called");
 
         loadCRL();
-        ArrayList<X509Certificate> certs = new ArrayList<>();
-        for(int i = 0; i < x509Certificates.length ; i++) {
-            certs.add(x509Certificates[i]);
-        }
-
 
         boolean verify = JiveGlobals.getBooleanProperty("xmpp.client.certificate.verify", true);
         if (verify) {

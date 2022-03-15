@@ -190,7 +190,7 @@ public class ClientTrustManager implements X509TrustManager {
                         if (principalIssuer.equals(principalLast)) {
                             try {
                                 PublicKey publickey =
-                                        x509Certificates[i + 1].getPublicKey();
+                                        x509Certificates[i + 1].getPublicKey(); // lgtm [java/index-out-of-bounds]
                                 x509Certificates[i].verify(publickey);
                             }
                             catch (GeneralSecurityException generalsecurityexception) {

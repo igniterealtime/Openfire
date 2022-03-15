@@ -569,7 +569,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
             if (method.authenticateDomain(newSocketReader, id)) {
                 log.debug("Dialback over TLS was successful.");
-                StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                 LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
                 connection.init(session);
                 // Set the remote domain name as the address of the session.
@@ -607,7 +607,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
             // SASL authentication was successful so create new OutgoingServerSession
             id = xpp.getAttributeValue("", "id");
-            StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+            StreamID streamID = BasicStreamIDFactory.createStreamID(id);
             LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, new OutgoingServerSocketReader(reader), streamID);
             connection.init(session);
             // Set the remote domain name as the address of the session

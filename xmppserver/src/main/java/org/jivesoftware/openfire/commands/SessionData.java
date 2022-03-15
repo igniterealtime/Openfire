@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A SessionData instance is responsible for keeping information gathered during the many stages
@@ -32,16 +34,18 @@ import java.util.Map;
  */
 public class SessionData {
 
-    private long creationStamp;
+    private final ReentrantLock lock = new ReentrantLock();
 
-    private String id;
-    private JID owner;
+    private final long creationStamp;
+
+    private final String id;
+    private final JID owner;
 
     /**
      * Map that keeps the association of variables and values obtained in each stage.
      * Note: Key=stage number, Value=Map with key=variable name and value=variable values.
      */
-    private Map<Integer, Map<String, List<String>>> stagesData = new HashMap<>();
+    private final Map<Integer, Map<String, List<String>>> stagesData = new HashMap<>();
 
     /**
      * Keeps the default execution action to follow if the command requester does not include
@@ -157,4 +161,12 @@ public class SessionData {
         this.stage = stage;
     }
 
+    /**
+     * Returns a mutex that should be obtained before accessing any immutable field of an instance of this class.
+     *
+     * @return A mutex.
+     */
+    public Lock getLock() {
+        return lock;
+    }
 }

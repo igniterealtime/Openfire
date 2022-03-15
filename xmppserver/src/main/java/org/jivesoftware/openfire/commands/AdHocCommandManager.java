@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 
 /**
  * An AdHocCommandManager is responsible for keeping the list of available commands offered
@@ -205,7 +206,9 @@ public class AdHocCommandManager {
                 return reply;
             }
 
-            synchronized (sessionid.intern()) {
+            final Lock lock = session.getLock();
+            lock.lock();
+            try {
                 // Check if the user is requesting to cancel the command
                 if (AdHocCommand.Action.cancel.name().equals(action)) {
                     // User requested to cancel command execution so remove the session data
@@ -263,6 +266,8 @@ public class AdHocCommandManager {
                     // Command has been executed so remove the session data
                     removeSessionData(sessionid, from);
                 }
+            } finally {
+                lock.unlock();
             }
         }
         return reply;

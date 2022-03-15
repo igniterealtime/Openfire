@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.session;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -78,6 +80,8 @@ import java.util.stream.Collectors;
 public class LocalOutgoingServerSession extends LocalServerSession implements OutgoingServerSession {
 
     private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
+
+    private static final Interner<JID> remoteAuthMutex = Interners.newWeakInterner();
 
     private final OutgoingServerSocketReader socketReader;
     private final Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
@@ -645,13 +649,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     boolean canProcess(Packet packet) {
         final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
         boolean processed = true;
-        if (!checkOutgoingDomainPair(domainPair)) {
-            synchronized (("Auth::" + domainPair.getRemote()).intern()) {
-                if (!checkOutgoingDomainPair(domainPair) &&
-                        !authenticateSubdomain(domainPair)) {
-                    // Return error since sender domain was not validated by remote server
-                    processed = false;
-                }
+        synchronized (remoteAuthMutex.intern(new JID(null, domainPair.getRemote(), null))) {
+            if (!checkOutgoingDomainPair(domainPair) && !authenticateSubdomain(domainPair)) {
+                // Return error since sender domain was not validated by remote server
+                processed = false;
             }
         }
         if (!processed) {

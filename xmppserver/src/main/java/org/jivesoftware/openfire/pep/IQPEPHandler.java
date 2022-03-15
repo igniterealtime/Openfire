@@ -42,7 +42,6 @@ import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.*;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -88,6 +87,15 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         RosterEventListener, UserEventListener, DiscoInfoProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(IQPEPHandler.class);
+
+    /**
+     * Controls if the PEP service is available on this domain.
+     */
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.pep.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
 
     /**
      * Metadata that relates to the IQ processing capabilities of this specific {@link IQHandler}.
@@ -341,10 +349,11 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
      * Returns true if the PEP service is enabled in the server.
      *
      * @return true if the PEP service is enabled in the server.
+     * @deprecated Replaced by {@link #ENABLED}.
      */
-    // TODO: listen for property changes to stop/start this module.
+    @Deprecated // Can be removed in Openfire 4.9.0 or later.
     public boolean isEnabled() {
-        return JiveGlobals.getBooleanProperty("xmpp.pep.enabled", true);
+        return ENABLED.getValue();
     }
 
     // *****************************************************************
@@ -361,7 +370,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     @Override
     public IQ handleIQ(IQ packet) {
         // Do nothing if server is not enabled
-        if (!isEnabled()) {
+        if (!ENABLED.getValue()) {
             IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.service_unavailable);
@@ -665,7 +674,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     @Override
     public void availableSession(ClientSession session, Presence presence) {
         // Do nothing if server is not enabled
-        if (!isEnabled()) {
+        if (!ENABLED.getValue()) {
             return;
         }
         JID newlyAvailableJID = presence.getFrom();

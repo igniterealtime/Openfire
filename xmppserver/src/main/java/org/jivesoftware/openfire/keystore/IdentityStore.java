@@ -114,13 +114,13 @@ public class IdentityStore extends CertificateStore
             }
 
             final Certificate certificate = store.getCertificate( alias );
-            if ( certificate == null || (!(certificate instanceof X509Certificate)))
+            if (!(certificate instanceof X509Certificate))
             {
                 throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"': there is no corresponding certificate in the store, or it is not an X509 certificate." );
             }
 
             final Key key = store.getKey( alias, configuration.getPassword() );
-            if ( key == null || (!(key instanceof PrivateKey) ) )
+            if (!(key instanceof PrivateKey))
             {
                 throw new CertificateStoreConfigException( "Cannot generate CSR for alias '"+ alias +"': there is no corresponding key in the store, or it is not a private key." );
             }
@@ -596,14 +596,7 @@ public class IdentityStore extends CertificateStore
     protected static synchronized KeyPair generateKeyPair( String algorithm, int keySize ) throws GeneralSecurityException
     {
         final KeyPairGenerator generator;
-        if ( PROVIDER == null )
-        {
-            generator = KeyPairGenerator.getInstance( algorithm );
-        }
-        else
-        {
-            generator = KeyPairGenerator.getInstance( algorithm, PROVIDER );
-        }
+        generator = KeyPairGenerator.getInstance( algorithm, PROVIDER );
         generator.initialize( keySize, new SecureRandom() );
         return generator.generateKeyPair();
     }

@@ -53,7 +53,7 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
     /**
      * Pseudo-random number generator object for use with getMultiplexerSession(String).
      */
-    private static Random randGen = new Random();
+    private static final Random randGen = new Random();
 
     static {
         // Add the unique instance of this class as a session listener. We need to react
@@ -65,15 +65,15 @@ public class ConnectionMultiplexerManager implements SessionEventListener {
      * Map that keeps track of connection managers and hosted connections.
      * Key: stream ID; Value: Domain of connection manager hosting connection
      */
-    private Map<StreamID, String> streamIDs = new ConcurrentHashMap<>();
+    private final Map<StreamID, String> streamIDs = new ConcurrentHashMap<>();
     /**
      * Map that keeps track of connection managers and hosted sessions.
      * Key: Domain of connection manager; Value: Map with Key: stream ID; Value: Client session
      */
-    private ConcurrentMap<String, ConcurrentMap<StreamID, LocalClientSession>> sessionsByManager =
+    private final ConcurrentMap<String, ConcurrentMap<StreamID, LocalClientSession>> sessionsByManager =
             new ConcurrentHashMap<>();
 
-    private SessionManager sessionManager;
+    private final SessionManager sessionManager;
 
     /**
      * Returns the unique instance of this class.

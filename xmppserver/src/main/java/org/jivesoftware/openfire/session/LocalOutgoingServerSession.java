@@ -79,8 +79,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
 
-    private OutgoingServerSocketReader socketReader;
-    private Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
+    private final OutgoingServerSocketReader socketReader;
+    private final Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
 
     /**
      * Authenticates the local domain to the remote domain. Once authenticated the remote domain can be expected to
@@ -369,7 +369,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                             OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
                             if (method.authenticateDomain(newSocketReader, id)) {
                                 log.debug( "Successfully authenticated the connection with dialback!" );
-                                StreamID streamID = new BasicStreamIDFactory().createStreamID(id);
+                                StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                                 LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
                                 connection.init(session);
                                 // Set the remote domain name as the address of the session.

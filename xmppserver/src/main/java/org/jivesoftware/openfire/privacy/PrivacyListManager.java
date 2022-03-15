@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,8 +43,6 @@ public class PrivacyListManager {
 
     private List<PrivacyListEventListener> listeners = new CopyOnWriteArrayList<>();
 
-    private static final String MUTEX_SUFFIX = " prv";
-    
     static {
         PrivacyListEventListener eventListener = new PrivacyListEventListener() {
             @Override
@@ -168,21 +167,22 @@ public class PrivacyListManager {
      */
     public PrivacyList getDefaultPrivacyList(String username) {
         // Check if we have the default list in the cache
-        String cacheKey = getDefaultCacheKey(username);
-        PrivacyList list = listsCache.get(cacheKey);
-        if (list == null) {
-            synchronized ((username + MUTEX_SUFFIX).intern()) {
-                list = listsCache.get(cacheKey);
-                if (list == null) {
-                    // Load default list from the database
-                    list = provider.loadDefaultPrivacyList(username);
-                    if (list != null) {
-                        listsCache.put(cacheKey, list);
-                    }
+        final String cacheKey = getDefaultCacheKey(username);
+        final Lock lock = listsCache.getLock(cacheKey);
+        lock.lock();
+        try {
+            PrivacyList list = listsCache.get(cacheKey);
+            if (list == null) {
+                // Load default list from the database
+                list = provider.loadDefaultPrivacyList(username);
+                if (list != null) {
+                    listsCache.put(cacheKey, list);
                 }
             }
+            return list;
+        } finally {
+            lock.unlock();
         }
-        return list;
     }
 
     /**

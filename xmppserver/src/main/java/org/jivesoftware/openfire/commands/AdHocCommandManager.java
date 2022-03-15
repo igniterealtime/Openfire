@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -52,7 +53,7 @@ public class AdHocCommandManager {
      * Map that holds the number of command sessions of each requester.
      * Note: Key=requester full's JID, Value=number of sessions
      */
-    private final Map<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<>();
     /**
      * Map that holds the command sessions. Used mainly to quickly locate a SessionData.
      * Note: Key=sessionID, Value=SessionData
@@ -150,18 +151,10 @@ public class AdHocCommandManager {
                 }
                 else {
                     // The command requires user interactions (ie. has stages)
-                    // Check that the user has not excedded the limit of allowed simultaneous
+                    // Check that the user has not exceeded the limit of allowed simultaneous
                     // command sessions.
-                    AtomicInteger counter = sessionsCounter.get(from);
-                    if (counter == null) {
-                        synchronized (from.intern()) {
-                            counter = sessionsCounter.get(from);
-                            if (counter == null) {
-                                counter = new AtomicInteger(0);
-                                sessionsCounter.put(from, counter);
-                            }
-                        }
-                    }
+                    AtomicInteger counter = sessionsCounter.computeIfAbsent(from, e->new AtomicInteger(0));
+
                     int limit = JiveGlobals.getIntProperty("xmpp.command.limit", 100);
                     if (counter.incrementAndGet() > limit) {
                         counter.decrementAndGet();
@@ -305,10 +298,14 @@ public class AdHocCommandManager {
      */
     private void removeSessionData(String sessionid, String from) {
         sessions.remove(sessionid);
-        if (sessionsCounter.get(from).decrementAndGet() <= 0) {
-            // Remove the AtomicInteger when no commands are being executed
-            sessionsCounter.remove(from);
-        }
+        sessionsCounter.computeIfPresent(from, (key, count) -> {
+            if (count.decrementAndGet() <= 0) {
+                // Remove the AtomicInteger when no commands are being executed
+                return null;
+            } else {
+                return count;
+            }
+        });
     }
 
     public void stop() {

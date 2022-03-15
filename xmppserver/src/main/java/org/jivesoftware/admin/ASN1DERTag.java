@@ -27,8 +27,7 @@ public class ASN1DERTag extends BodyTagSupport {
     @Override
     public int doEndTag() throws JspException {
 
-        try {
-            final ASN1InputStream decoder = new ASN1InputStream(value);
+        try (final ASN1InputStream decoder = new ASN1InputStream(value)){
             ASN1Primitive primitive = decoder.readObject();
             while (primitive != null && !(primitive instanceof ASN1Null)) {
                 pageContext.getOut().write(doPrimitive(primitive));

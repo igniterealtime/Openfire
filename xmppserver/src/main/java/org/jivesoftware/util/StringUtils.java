@@ -33,6 +33,7 @@ import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Utility class to perform common String manipulation algorithms.
@@ -245,8 +246,7 @@ public final class StringUtils {
     /**
      * Used by the hash method.
      */
-    private static Map<String, MessageDigest> digests =
-            new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, MessageDigest> digests = new ConcurrentHashMap<>();
 
     /**
      * Hashes a String using the Md5 algorithm and returns the result as a
@@ -331,23 +331,19 @@ public final class StringUtils {
      * @return a hashed version of the passed-in String
      */
     public static String hash(byte[] bytes, String algorithm) {
-        synchronized (algorithm.intern()) {
-            MessageDigest digest = digests.get(algorithm);
-            if (digest == null) {
-                try {
-                    digest = MessageDigest.getInstance(algorithm);
-                    digests.put(algorithm, digest);
-                }
-                catch (NoSuchAlgorithmException nsae) {
-                    Log.error("Failed to load the " + algorithm + " MessageDigest. " +
-                            "Jive will be unable to function normally.", nsae);
-                    return null;
-                }
+        MessageDigest digest = digests.computeIfAbsent(algorithm, a -> {
+            try {
+                return MessageDigest.getInstance(algorithm);
             }
-            // Now, compute hash.
-            digest.update(bytes);
-            return encodeHex(digest.digest());
-        }
+            catch (NoSuchAlgorithmException nsae) {
+                Log.error("Failed to load the " + algorithm + " MessageDigest. " +
+                        "Jive will be unable to function normally.", nsae);
+                return null;
+            }
+        });
+        // Now, compute hash.
+        digest.update(bytes);
+        return encodeHex(digest.digest());
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
@@ -64,6 +66,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
     private static final Logger Log = LoggerFactory.getLogger(MulticastRouter.class);
 
     private static final String NAMESPACE = "http://jabber.org/protocol/address";
+
+    private static final Interner<JID> domainMutex = Interners.newWeakInterner();
 
     private XMPPServer server;
     /**
@@ -145,7 +149,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         // Keep a registry of packets that should be sent to remote domains.
         for (String domain : remoteServers) {
             boolean shouldDiscover = false;
-            synchronized (domain.intern()) {
+            synchronized (domainMutex.intern(new JID(null, domain, null))) {
                 Collection<Packet> packets = remotePackets.get(domain);
                 if (packets == null) {
                     packets = new ArrayList<>();
@@ -224,7 +228,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
     private void sendToRemoteServer(String domain, String multicastService) {
         Collection<Packet> packets = null;
         // Get the packets to send to the remote entity
-        synchronized (domain.intern()) {
+        synchronized (domainMutex.intern(new JID(null, domain, null))) {
             packets = remotePackets.remove(domain);
         }
 

@@ -111,10 +111,8 @@
         <style title="setupStyle" media="screen">
             @import "../style/global.css";
             @import "../style/setup.css";
-            @import "../style/lightbox.css";
         </style>
 
-        <script src="../js/lightbox.js"></script>
         <script src="../js/setup.js"></script>
         <decorator:head />
     </head>

@@ -502,14 +502,9 @@ document.acctform.newPassword.focus();
                 <c:param name="csrf" value="${csrf}"/>
             </c:url>
 
-    <a href="${testLink}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-    <script>
-        function loadMsg() {
-            var lb = new lightbox(document.getElementById('lbmessage'));
-            lb.activate();
-        }
-        setTimeout('loadMsg()', 250);
-    </script>
+            <dialog open>
+                <c:import url="${testLink}"/>
+            </dialog>
 
         </c:if>
     <p>

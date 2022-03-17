@@ -54,7 +54,6 @@
 /* blue div container (seen on the LDAP screens) */
 .jive-contentBox_bluebox {
     display: block;
-    position: relative;
     border: 1px solid #bbbbbb;
     background-color: #eeeeee;
     -moz-border-radius: 3px;

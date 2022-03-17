@@ -208,14 +208,9 @@
 <body>
 
     <c:if test="${empty errors and test}">
-        <a href="${testPage}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-        <script>
-            function loadMsg() {
-                var lb = new lightbox(document.getElementById('lbmessage'));
-                lb.activate();
-            }
-            setTimeout('loadMsg()', 500);
-        </script>
+        <dialog open>
+            <c:import url="${testPage}"/>
+        </dialog>
     </c:if>
 
     <c:if test="${initialSetup}">

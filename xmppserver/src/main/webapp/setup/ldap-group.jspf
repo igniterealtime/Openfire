@@ -7,7 +7,6 @@
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
-<%@ page import="java.util.Arrays" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -188,14 +187,9 @@
             <c:param name="serverType" value="${serverType}"/>
         </c:url>
 
-        <a href="${sb}" id="lbmessage" title="<fmt:message key="global.test" />" style="display:none;"></a>
-        <script>
-            function loadMsg() {
-                var lb = new lightbox(document.getElementById('lbmessage'));
-                lb.activate();
-            }
-            setTimeout('loadMsg()', 500);
-        </script>
+        <dialog open>
+            <c:import url="${testPage}"/>
+        </dialog>
 
     </c:if>
 

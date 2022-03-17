@@ -4,8 +4,6 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.net.URLDecoder" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
-<%@ page import="javax.naming.ldap.LdapName" %>
 <%@ page import="javax.naming.ldap.Rdn" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -73,7 +71,9 @@
         <div class="jive-testPanel-content">
 
             <div align="right" class="jive-testPanel-close">
-                <a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
+                <form method="dialog">
+                    <button><fmt:message key="setup.ldap.server.test.close" /></button>
+                </form>
             </div>
 
             <h2><fmt:message key="global.test" />: <span><fmt:message key="setup.admin.settings.test.title-desc" /></span></h2>

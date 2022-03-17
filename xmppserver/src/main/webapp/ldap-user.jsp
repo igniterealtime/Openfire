@@ -17,11 +17,9 @@
 %>
 
 <style title="setupStyle" media="screen">
-    @import "style/lightbox.css";
     @import "style/ldap.css";
 </style>
 
-<script src="js/lightbox.js"></script>
 <script src="js/setup.js"></script>
 
 <%@ include file="setup/ldap-user.jspf" %>

@@ -73,9 +73,11 @@
     <!-- BEGIN connection settings test panel -->
     <div class="jive-testPanel">
         <div class="jive-testPanel-content" style="min-width: 600px;">
-        
+
             <div align="right" class="jive-testPanel-close">
-                <a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
+                <form method="dialog">
+                    <button><fmt:message key="setup.ldap.server.test.close" /></button>
+                </form>
             </div>
             
             

@@ -82,11 +82,6 @@
 </head>
 <body>
 <style>
-#lightbox{
-    top: 20%;
-    margin-top: -20px;
-    }
-
 .jive-testPanel {
     margin-top: -100px;
     }
@@ -100,7 +95,9 @@ html>body .jive-testPanel {
     <div class="jive-testPanel-content">
 
         <div align="right" class="jive-testPanel-close">
-            <a href="#" class="lbAction" rel="deactivate"><fmt:message key="setup.ldap.server.test.close" /></a>
+            <form method="dialog">
+                <button><fmt:message key="setup.ldap.server.test.close" /></button>
+            </form>
         </div>
 
 

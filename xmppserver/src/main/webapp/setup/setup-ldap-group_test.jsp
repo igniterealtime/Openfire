@@ -1,7 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.admin.LdapGroupTester" %>
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
-<%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Collection" %>
@@ -63,7 +62,9 @@
     <div class="jive-testPanel-content">
 
         <div align="right" class="jive-testPanel-close">
-            <a href="#" class="lbAction" rel="deactivate">Close</a>
+            <form method="dialog">
+                <button><fmt:message key="setup.ldap.server.test.close" /></button>
+            </form>
         </div>
 
 

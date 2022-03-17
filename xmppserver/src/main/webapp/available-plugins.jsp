@@ -162,29 +162,31 @@
 
     function downloadComplete(status) {
         downloading = false;
+        let statusRow = document.getElementById(status.hashCode + "-row");
+        let pluginRow = document.getElementById(status.hashCode);
         if (!status.successfull) {
             document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/add-16x16.gif" border="0"/>';
-            document.getElementById(status.hashCode).style.background = "#FFFFFF";
+            pluginRow.style.background = "#FFFFFF";
             document.getElementById("errorMessage").style.display = '';
-            document.getElementById(status.hashCode).style.display = '';
-            document.getElementById(status.hashCode + "-row").style.display = 'none';
-            setTimeout("closeErrorMessage()", 5000);
+            pluginRow.style.display = '';
+            statusRow.style.display = 'none';
         }
         else {
-            document.getElementById(status.hashCode).style.display = 'none';
-            document.getElementById(status.hashCode + "-row").style.display = '';
-            setTimeout("fadeIt('" + status.hashCode + "')", 3000);
+            pluginRow.style.display = 'none';
+            statusRow.style.display = '';
+            statusRow.style.opacity = 1;
+            setTimeout(fade, 3000, statusRow);
         }
     }
 
-    function closeErrorMessage(){
-        Effect.Fade("errorMessage");
+    function fade(row) {
+        row.style.opacity -= .1;
+        if (row.style.opacity <= 0) {
+            row.style.display= 'none';
+        } else {
+            setTimeout(fade, 100, row);
+        }
     }
-
-    function fadeIt(id) {
-        Effect.Fade(id + "-row");
-    }
-
 
     dwr.engine.setErrorHandler(handleError);
 

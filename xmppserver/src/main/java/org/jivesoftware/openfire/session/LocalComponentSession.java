@@ -15,13 +15,6 @@
  */
 package org.jivesoftware.openfire.session;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.SessionManager;
@@ -40,6 +33,9 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
+
+import javax.annotation.Nonnull;
+import java.util.*;
 
 /**
  * Represents a session between the server and a component.
@@ -194,6 +190,29 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     public String getAvailableStreamFeatures() {
         // Nothing special to add
         return null;
+    }
+
+    @Override
+    public void setDetached() {
+        throw new UnsupportedOperationException("Stream management is not supported for components.");
+    }
+
+    @Override
+    public void reattach(LocalSession connectionProvider, long h) {
+        throw new UnsupportedOperationException("Stream management is not supported for components.");
+    }
+
+    /**
+     * Returns the connection associated with this Session.
+     *
+     * @return The connection for this session
+     */
+    @Nonnull
+    @Override
+    public Connection getConnection() {
+        final Connection connection = super.getConnection();
+        assert connection != null; // Openfire does not implement stream management for external component sessions. Therefor, the connection cannot be null.
+        return connection;
     }
 
     @Override

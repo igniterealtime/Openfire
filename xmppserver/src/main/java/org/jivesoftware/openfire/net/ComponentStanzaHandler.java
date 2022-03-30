@@ -110,7 +110,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
                             subdomain = extraDomain;
                         }
                         InternalComponentManager.getInstance().addComponent(subdomain, component);
-                        session.getConnection().registerCloseListener( handback -> InternalComponentManager.getInstance().removeComponent( subdomain, (ComponentSession.ExternalComponent) handback ), component );
+                        componentSession.getConnection().registerCloseListener( handback -> InternalComponentManager.getInstance().removeComponent( subdomain, (ComponentSession.ExternalComponent) handback ), component );
                         // Send confirmation that the new domain has been registered
                         connection.deliverRawText("<bind/>");
                     }

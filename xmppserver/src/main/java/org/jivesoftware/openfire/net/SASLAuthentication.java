@@ -16,25 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -51,17 +32,21 @@ import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
+import java.security.Security;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -219,6 +204,7 @@ public class SASLAuthentication {
                 boolean trustedCert = false;
                 if (session.isSecure()) {
                     final Connection connection = ( (LocalClientSession) session ).getConnection();
+                    assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
                     if ( SKIP_PEER_CERT_REVALIDATION_CLIENT.getValue() ) {
                         // Trust that the peer certificate has been validated when TLS got established.
                         trustedCert = connection.getPeerCertificates() != null && connection.getPeerCertificates().length > 0;
@@ -377,13 +363,15 @@ public class SASLAuthentication {
                     }
 
                     // Success!
-                    if ( session instanceof IncomingServerSession )
+                    if ( session instanceof LocalIncomingServerSession )
                     {
+                        final LocalIncomingServerSession incomingServerSession = (LocalIncomingServerSession) session;
+
                         // Flag that indicates if certificates of the remote server should be validated.
                         final boolean verify = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
                         if ( verify )
                         {
-                            if ( verifyCertificates( session.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
+                            if ( verifyCertificates( incomingServerSession.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
                             {
                                 ( (LocalIncomingServerSession) session ).tlsAuth();
                             }

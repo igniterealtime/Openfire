@@ -16,14 +16,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import javax.net.ssl.SSLSession;
-
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -38,6 +30,15 @@ import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
+
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLSession;
+import java.net.UnknownHostException;
+import java.security.cert.Certificate;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The session represents a connection between the server and a client (c2s) or
@@ -229,15 +230,13 @@ public abstract class LocalSession implements Session {
     /**
      * Returns the connection associated with this Session.
      *
+     * Note that null can be returned, for example when the session is detached.
+     *
      * @return The connection for this session
      */
+    @Nullable
     public Connection getConnection() {
-        Connection connection = conn;
-        if (connection == null)
-        {
-            Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, new IllegalStateException());
-            }
-        return connection;
+        return conn;
     }
 
     /**

@@ -18,23 +18,14 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -146,18 +137,18 @@ class LocalRoutingTable {
                     LocalSession session = (LocalSession) route;
                     try {
                         // Notify connected client that the server is being shut down
-                        if (!session.isDetached()) {
+                        if (session.getConnection() != null) { // Can occur if a session is 'detached'.
                             session.getConnection().systemShutdown();
                         }
                     }
                     catch (Throwable t) {
-                        // Ignore.
+                        Log.debug("A throwable was thrown while trying to send the close stream header to a session.", t);
                     }
                 }
             }
         }
         catch (Exception e) {
-            // Ignore.
+            Log.debug("An exception was thrown while trying to send the close stream header to a session.", e);
         }
     }
 

@@ -113,7 +113,14 @@ public class StreamManager {
     public StreamManager(LocalSession session) {
         String address;
         try {
-            address = session.getConnection().getHostAddress();
+            final Connection connection = session.getConnection();
+            if (connection != null) {
+                address = connection.getHostAddress();
+            } else {
+                // This smells: Why would a stream manager be created for a session without a connection (which typically is a session that is already detached)?
+                LoggerFactory.getLogger(StreamManager.class).warn("Connection is null for session: {}", session.getAddress());
+                address = null;
+            }
         }
         catch ( UnknownHostException e )
         {
@@ -338,6 +345,7 @@ public class StreamManager {
             Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession.getStreamID(), fullJid);
             Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
+            assert oldConnection != null; // If the other session is not detached, the connection can't be null.
             oldConnection.close();
         }
         Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
@@ -546,7 +554,9 @@ public class StreamManager {
         Element resumed = new DOMElement(QName.get("resumed", namespace));
         resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
         resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
-        session.getConnection().deliverRawText(resumed.asXML());
+        final Connection connection = session.getConnection();
+        assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
+        connection.deliverRawText(resumed.asXML());
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
         Log.debug("Processing remaining unacked stanzas");
@@ -562,7 +572,7 @@ public class StreamManager {
                                 delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
-                            session.getConnection().deliver(m);
+                            connection.deliver(m);
                         } else if (unacked.packet instanceof Presence) {
                             Presence p = (Presence) unacked.packet;
                             if (p.getExtension("delay", "urn:xmpp:delay") == null) {
@@ -570,9 +580,9 @@ public class StreamManager {
                                 delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
-                            session.getConnection().deliver(p);
+                            connection.deliver(p);
                         } else {
-                            session.getConnection().deliver(unacked.packet);
+                            connection.deliver(unacked.packet);
                         }
                     } catch (UnauthorizedException e) {
                         Log.warn("Caught unauthorized exception, which seems worrying: ", e);

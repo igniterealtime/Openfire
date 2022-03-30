@@ -16,9 +16,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import java.net.UnknownHostException;
-import java.util.*;
-
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -42,7 +39,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.*;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
+import org.xmpp.packet.Presence;
+import org.xmpp.packet.StreamError;
+
+import java.net.UnknownHostException;
+import java.util.*;
 
 /**
  * Represents a session between the server and a client.
@@ -998,12 +1001,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public String toString()
     {
         String peerAddress = "(not available)";
-        if ( getConnection() != null ) {
-        try {
-            peerAddress = getConnection().getHostAddress();
-        } catch ( UnknownHostException e ) {
-            Log.debug( "Unable to determine address for peer of local client session.", e );
-        }
+        if (getConnection() != null) {
+            try {
+                peerAddress = getConnection().getHostAddress();
+            } catch (UnknownHostException e) {
+                Log.debug("Unable to determine address for peer of local client session.", e);
+            }
         }
         return this.getClass().getSimpleName() +"{" +
             "address=" + getAddress() +

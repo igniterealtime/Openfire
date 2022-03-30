@@ -38,6 +38,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Locale;
 
@@ -188,6 +189,29 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
         }
         return null;
+    }
+
+    @Override
+    public void setDetached() {
+        throw new UnsupportedOperationException("Stream management is not supported for multiplexers.");
+    }
+
+    @Override
+    public void reattach(LocalSession connectionProvider, long h) {
+        throw new UnsupportedOperationException("Stream management is not supported for multiplexers.");
+    }
+
+    /**
+     * Returns the connection associated with this Session.
+     *
+     * @return The connection for this session
+     */
+    @Nonnull
+    @Override
+    public Connection getConnection() {
+        final Connection connection = super.getConnection();
+        assert connection != null; // Openfire does not implement stream management for multiplex connections. Therefor, the connection cannot be null.
+        return connection;
     }
 
     /**

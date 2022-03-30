@@ -138,18 +138,18 @@ class LocalRoutingTable {
                     LocalSession session = (LocalSession) route;
                     try {
                         // Notify connected client that the server is being shut down
-                        if (!session.isDetached()) {
+                        if (session.getConnection() != null) { // Can occur if a session is 'detached'.
                             session.getConnection().systemShutdown();
                         }
                     }
                     catch (Throwable t) {
-                        // Ignore.
+                        Log.debug("A throwable was thrown while trying to send the close stream header to a session.", t);
                     }
                 }
             }
         }
         catch (Exception e) {
-            // Ignore.
+            Log.debug("An exception was thrown while trying to send the close stream header to a session.", e);
         }
     }
 

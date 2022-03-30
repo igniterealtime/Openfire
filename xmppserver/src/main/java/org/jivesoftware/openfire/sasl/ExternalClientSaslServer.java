@@ -68,6 +68,7 @@ public class ExternalClientSaslServer implements SaslServer
         complete = true;
 
         final Connection connection = session.getConnection();
+        assert connection != null; // While the peer is performing a SASL negotiation, the connection can't be null.
         Certificate[] peerCertificates = connection.getPeerCertificates();
         if ( peerCertificates == null || peerCertificates.length < 1 )
         {

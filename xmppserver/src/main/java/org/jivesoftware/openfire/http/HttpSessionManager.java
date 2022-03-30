@@ -360,20 +360,21 @@ public class HttpSessionManager {
             for (HttpSession session : sessionMap.values()) {
                 try {
                     Duration lastActive = Duration.between(session.getLastActivity(), currentTime);
+                    String hostAddress = session.getConnection() != null ? session.getConnection().getHostAddress() : "(not available)";
                     if( !lastActive.isNegative() && !lastActive.isZero() && HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
                         Log.info("Session {} was last active {} ago: {} from IP {} " +
                                 " currently on rid {}",
                                 session.getStreamID(),
                                 lastActive,
                                 session.getAddress(), // JID
-                                session.getConnection().getHostAddress(),
+                                hostAddress,
                                 session.getLastAcknowledged()); // RID
                     }
                     if (lastActive.compareTo(session.getInactivityTimeout()) > 0) {
                         Log.info("Closing idle session {}: {} from IP {}",
                                 session.getStreamID(),
                                 session.getAddress(),
-                                session.getConnection().getHostAddress());
+                                hostAddress);
                         session.close();
                     }
                 } catch (Exception e) {

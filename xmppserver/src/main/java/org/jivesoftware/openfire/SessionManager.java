@@ -468,11 +468,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         final PacketDeliverer backupDeliverer = ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
         final HttpSession.HttpVirtualConnection vConnection = new HttpSession.HttpVirtualConnection(connection.getRemoteAddr(), backupDeliverer, ConnectionType.SOCKET_C2S);
-        HttpSession session = new HttpSession(vConnection, serverName, id, connection.getRequestId(), connection.getPeerCertificates(), language, wait, hold, isSecure,
+        final HttpSession session = new HttpSession(vConnection, serverName, id, connection.getRequestId(), connection.getPeerCertificates(), language, wait, hold, isSecure,
                                               maxPollingInterval, maxRequests, maxPause, defaultInactivityTimeout, majorVersion, minorVersion);
-        Connection conn = session.getConnection();
-        conn.init(session);
-        conn.registerCloseListener(clientSessionListener, session);
+        vConnection.init(session);
+        vConnection.registerCloseListener(clientSessionListener, session);
         localSessionManager.getPreAuthenticatedSessions().put(session.getAddress().getResource(), session);
         connectionsCounter.incrementAndGet();
         return session;

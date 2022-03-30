@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLSession;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
@@ -229,15 +230,13 @@ public abstract class LocalSession implements Session {
     /**
      * Returns the connection associated with this Session.
      *
+     * Note that null can be returned, for example when the session is detached.
+     *
      * @return The connection for this session
      */
+    @Nullable
     public Connection getConnection() {
-        Connection connection = conn;
-        if (connection == null)
-        {
-            Log.error("Attempt to read connection of detached session with address {} and streamID {}: ", this.address, this.streamID, new IllegalStateException());
-            }
-        return connection;
+        return conn;
     }
 
     /**

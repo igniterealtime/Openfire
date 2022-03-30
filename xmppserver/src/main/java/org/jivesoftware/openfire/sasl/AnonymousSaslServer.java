@@ -1,12 +1,13 @@
 package org.jivesoftware.openfire.sasl;
 
-import javax.security.sasl.Sasl;
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.SystemProperty;
+
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
 
 /**
  * Implementation of the SASL ANONYMOUS mechanism.
@@ -57,7 +58,9 @@ public class AnonymousSaslServer implements SaslServer
         }
 
         // Verify that client can connect from his IP address.
-        final boolean forbidAccess = !LocalClientSession.isAllowedAnonymous( session.getConnection() );
+        final Connection connection = session.getConnection();
+        assert connection != null; // While the peer is performing a SASL negotiation, the connection can't be null.
+        final boolean forbidAccess = !LocalClientSession.isAllowedAnonymous(connection);
         if ( forbidAccess )
         {
             throw new SaslException( "Authentication failed" );

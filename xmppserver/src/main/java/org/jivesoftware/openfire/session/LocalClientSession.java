@@ -931,12 +931,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public String toString()
     {
         String peerAddress = "(not available)";
-        if ( getConnection() != null ) {
-        try {
-            peerAddress = getConnection().getHostAddress();
-        } catch ( UnknownHostException e ) {
-            Log.debug( "Unable to determine address for peer of local client session.", e );
-        }
+        if (getConnection() != null) {
+            try {
+                peerAddress = getConnection().getHostAddress();
+            } catch (UnknownHostException e) {
+                Log.debug("Unable to determine address for peer of local client session.", e);
+            }
         }
         return this.getClass().getSimpleName() +"{" +
             "address=" + getAddress() +

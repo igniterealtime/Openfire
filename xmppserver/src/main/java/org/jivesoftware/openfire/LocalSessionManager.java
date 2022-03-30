@@ -134,18 +134,19 @@ class LocalSessionManager {
 
             for (LocalSession session : sessions) {
                 try {
-                    // Notify connected client that the server is being shut down
-                    if (!session.isDetached()) {
-                        session.getConnection().systemShutdown();
+                    // Notify connected client that the server is being shut down.
+                    final Connection connection = session.getConnection();
+                    if (connection != null) { // The session may have been detached.
+                        connection.systemShutdown();
                     }
                 }
                 catch (Throwable t) {
-                    // Ignore.
+                    Log.debug("Error while sending system shutdown to session {}", session, t);
                 }
             }
         }
         catch (Exception e) {
-            // Ignore.
+            Log.debug("Error while sending system shutdown to sessions", e);
         }
     }
 

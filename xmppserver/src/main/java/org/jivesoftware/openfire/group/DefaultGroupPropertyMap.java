@@ -1,19 +1,27 @@
+/*
+ * Copyright (C) 2013-2022 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.group;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.PersistableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
-    private static final long serialVersionUID = 3128889631577167040L;
+    private static final long serialVersionUID = -7501088917416583815L;
     private static final Logger logger = LoggerFactory.getLogger(DefaultGroupPropertyMap.class);
 
     // moved from {@link Group} as these are specific to the default provider
@@ -94,17 +102,28 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     public V remove(Object key) {
         V result = super.remove(key);
         if (key instanceof String) {
-            deleteProperty((String)key);
+            deleteProperty((String)key, (String)result);
         }
         return result;
     }
 
     @Override
     public void clear() {
+        final Map<K,V> originalMap = new HashMap<>(this); // copy to be used by event handling.
         super.clear();
-        deleteAllProperties();
+
+        // Ignore all entries that are not strings.
+        final Map<String, String> map = originalMap.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof String && entry.getKey() instanceof String)
+            .collect(Collectors.toMap(entry -> (String)entry.getKey(), entry -> (String)entry.getValue()));
+
+        deleteAllProperties(map);
     }
 
+    /**
+     * Be aware that removing a property through the iterator of the returned key set might cause unexpected behavior,
+     * as not all event handlers will be notified with all data required for cache updates to be processed.
+     */
     @Override
     public Set<K> keySet() {
         // custom class needed here to handle key.remove()
@@ -191,7 +210,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public void remove() {
             delegate.remove();
             if (current instanceof String) {
-                deleteProperty((String)current);
+                deleteProperty((String)current, null); // FIXME by not providing the original value, some event handlers may not be able to handle this.
             }
             current = null;
         }
@@ -231,7 +250,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public boolean remove(Object o) {
             boolean propertyExists = delegate.remove(o);
             if (propertyExists) {
-                deleteProperty((String)((Entry<K,V>)o).getKey());
+                deleteProperty((String)((Entry<K,V>)o).getKey(), (String)((Entry<K,V>)o).getValue());
             }
             return propertyExists;
         }
@@ -242,8 +261,14 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
          */
         @Override
         public void clear() {
+            final Map<String,String> originalMap = new HashMap<>(); // copy to be used by event handling.
+            for (Entry<K,V> entry : delegate) {
+                if (entry.getKey() instanceof String && entry.getValue() instanceof String) {
+                    originalMap.put((String) entry.getKey(), (String) entry.getValue());
+                }
+            }
             delegate.clear();
-            deleteAllProperties();
+            deleteAllProperties(originalMap);
         }
 
         // these methods are problematic (and not really necessary),
@@ -349,8 +374,8 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     }
 
     /**
-     * Remove group property from the database when the {@link Iterator.remove}
-     * method is invoked via the {@link Map.entrySet} set
+     * Remove group property from the database when the {@link Iterator#remove}
+     * method is invoked via the {@link Map#entrySet} set
      */
     private class EntryIterator<E> implements Iterator<Entry<K, V>> {
 
@@ -389,15 +414,16 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public void remove() {
             delegate.remove();
             K key = current.getKey();
+            V value = current.getValue();
             if (key instanceof String) {
-                deleteProperty((String)key);
+                deleteProperty((String)key, value instanceof String ? (String)value : null);
             }
             current = null;
         }
     }
     
     /**
-     * Update the database when a group property is updated via {@link Map.Entry.setValue}
+     * Update the database when a group property is updated via {@link Map.Entry#setValue}
      */
     private class EntryWrapper<E> implements Entry<K,V> {
         private Entry<K,V> delegate;
@@ -447,7 +473,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
                         updateProperty((String)key,(String)value, (String)oldValue);
                     }
                 } else {
-                    deleteProperty((String)key);
+                    deleteProperty((String)key, (oldValue instanceof String) ? (String)oldValue : null);
                 }
             }
             return oldValue;
@@ -478,13 +504,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             DbConnectionManager.closeConnection(pstmt, con);
         }
 
+        // Clean up caches.
         DefaultGroupProvider.sharedGroupMetaCache.clear();
-
-        Map<String, Object> event = new HashMap<>();
-        event.put("propertyKey", key);
-        event.put("type", "propertyAdded");
-        GroupEventDispatcher.dispatchEvent(group,
-                GroupEventDispatcher.EventType.group_modified, event);
+        GroupManager.getInstance().propertyAddedPostProcess(group, key);
     }
 
     /**
@@ -512,14 +534,9 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             DbConnectionManager.closeConnection(pstmt, con);
         }
 
+        // Clean up caches.
         DefaultGroupProvider.sharedGroupMetaCache.clear();
-
-        Map<String, Object> event = new HashMap<>();
-        event.put("propertyKey", key);
-        event.put("type", "propertyModified");
-        event.put("originalValue", originalValue);
-        GroupEventDispatcher.dispatchEvent(group,
-                GroupEventDispatcher.EventType.group_modified, event);
+        GroupManager.getInstance().propertyDeletedPostProcess(group, key, originalValue);
     }
 
     /**
@@ -527,7 +544,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      * 
      * @param key Property name
      */
-    private synchronized void deleteProperty(String key) {
+    private synchronized void deleteProperty(String key, String originalValue) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -544,19 +561,15 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             DbConnectionManager.closeConnection(pstmt, con);
         }
 
+        // Clean up caches.
         DefaultGroupProvider.sharedGroupMetaCache.clear();
-
-        Map<String, Object> event = new HashMap<>();
-        event.put("type", "propertyDeleted");
-        event.put("propertyKey", key);
-        GroupEventDispatcher.dispatchEvent(group,
-            GroupEventDispatcher.EventType.group_modified, event);
+        GroupManager.getInstance().propertyDeletedPostProcess(group, key, originalValue);
     }
 
     /**
      * Delete all properties from the database for the current group
      */
-    private synchronized void deleteAllProperties() {
+    private synchronized void deleteAllProperties(final Map<String,String> originalMap) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -572,12 +585,8 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
             DbConnectionManager.closeConnection(pstmt, con);
         }
 
+        // Clean up caches.
         DefaultGroupProvider.sharedGroupMetaCache.clear();
-
-        Map<String, Object> event = new HashMap<>();
-        event.put("type", "propertyDeleted");
-        event.put("propertyKey", "*");
-        GroupEventDispatcher.dispatchEvent(group,
-            GroupEventDispatcher.EventType.group_modified, event);
+        GroupManager.getInstance().propertiesDeletedPostProcess(group, originalMap);
     }
 }

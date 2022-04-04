@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
@@ -167,18 +166,11 @@ public class Group implements Cacheable, Externalizable {
         }
         try {
             String originalName = this.name;
-            GroupJID originalJID = getJID();
             provider.setName(originalName, name);
             this.name = name;
             this.jid = null; // rebuilt when needed
 
-            // Fire event.
-            Map<String, Object> params = new HashMap<>();
-            params.put("type", "nameModified");
-            params.put("originalValue", originalName);
-            params.put("originalJID", originalJID);
-            GroupEventDispatcher.dispatchEvent(this, GroupEventDispatcher.EventType.group_modified,
-                    params);
+            groupManager.renameGroupPostProcess(this, originalName);
         }
         catch (GroupAlreadyExistsException e) {
             Log.error("Failed to change group name; group already exists");
@@ -217,12 +209,8 @@ public class Group implements Cacheable, Externalizable {
             String originalDescription = this.description;
             provider.setDescription(name, description);
             this.description = description;
-            // Fire event.
-            Map<String, Object> params = new HashMap<>();
-            params.put("type", "descriptionModified");
-            params.put("originalValue", originalDescription);
-            GroupEventDispatcher.dispatchEvent(this,
-                    GroupEventDispatcher.EventType.group_modified, params);
+
+            groupManager.redescribeGroupPostProcess(this, originalDescription);
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);
@@ -504,18 +492,12 @@ public class Group implements Cacheable, Externalizable {
                     iter.remove();
                     // Remove the group user from the backend store.
                     provider.deleteMember(name, user);
-                    // Fire event.
+
+                    // Perform post-processing (cache updates and event notifications).
                     if (adminCollection) {
-                        Map<String, String> params = new HashMap<>();
-                        params.put("admin", user.toString());
-                        GroupEventDispatcher.dispatchEvent(Group.this,
-                                GroupEventDispatcher.EventType.admin_removed, params);
-                    }
-                    else {
-                        Map<String, String> params = new HashMap<>();
-                        params.put("member", user.toString());
-                        GroupEventDispatcher.dispatchEvent(Group.this,
-                                GroupEventDispatcher.EventType.member_removed, params);
+                        groupManager.adminRemovedPostProcess(Group.this, user);
+                    } else {
+                        groupManager.memberRemovedPostProcess(Group.this, user);
                     }
                 }
             };
@@ -559,28 +541,13 @@ public class Group implements Cacheable, Externalizable {
 
                 }
 
-                // Fire event.
-                Map<String, String> params = new HashMap<>();
+                // Perform post-processing (cache updates and event notifications).
                 if (adminCollection) {
-                    params.put("admin", user.toString());
-                    if (alreadyGroupUser) {
-                        params.put("member", user.toString());
-                        GroupEventDispatcher.dispatchEvent(Group.this,
-                                    GroupEventDispatcher.EventType.member_removed, params);
-                    }
-                    GroupEventDispatcher.dispatchEvent(Group.this,
-                                GroupEventDispatcher.EventType.admin_added, params);
+                    groupManager.adminAddedPostProcess(Group.this, user, alreadyGroupUser);
+                } else {
+                    groupManager.memberAddedPostProcess(Group.this, user, alreadyGroupUser);
                 }
-                else {
-                    params.put("member", user.toString());
-                    if (alreadyGroupUser) {
-                        params.put("admin", user.toString());
-                        GroupEventDispatcher.dispatchEvent(Group.this,
-                                    GroupEventDispatcher.EventType.admin_removed, params);
-                    }
-                    GroupEventDispatcher.dispatchEvent(Group.this,
-                                GroupEventDispatcher.EventType.member_added, params);
-                }
+
                 // If the user was a member that became an admin or vice versa then remove the
                 // user from the other collection
                 if (alreadyGroupUser) {

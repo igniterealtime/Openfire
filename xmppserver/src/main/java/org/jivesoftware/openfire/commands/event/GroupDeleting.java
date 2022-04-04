@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -74,15 +73,16 @@ public class GroupDeleting extends AdHocCommand {
         Group group;
         try {
             group = GroupManager.getInstance().getGroup(groupname, true);
-
-            // Fire event.
-            Map<String, Object> params = Collections.emptyMap();
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_deleting, params);
-
         } catch (GroupNotFoundException e) {
             note.addAttribute("type", "error");
             note.setText("Group not found.");
+            return;
         }
+
+        // Perform post-processing (cache updates and event notifications).
+        GroupManager.getInstance().deleteGroupPreProcess(group);
+        // Since the group is about to be deleted by the provided, mark it as removed in the caches.
+        GroupManager.getInstance().deleteGroupPostProcess(group);
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");

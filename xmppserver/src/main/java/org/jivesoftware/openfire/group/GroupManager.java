@@ -25,7 +25,6 @@ import com.google.common.collect.Interners;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
@@ -38,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Manages groups.
@@ -96,160 +96,6 @@ public class GroupManager {
 
         initProvider(GROUP_PROVIDER.getValue());
 
-        GroupEventDispatcher.addListener(new GroupEventListener() {
-            @Override
-            public void groupCreated(Group group, Map params) {
-
-                // Adds default properties if they don't exist, since the creator of
-                // the group could set them.
-                if (group.getSharedWith() == null) {
-                    group.shareWithNobody();
-                }
-                
-                // Since the group could be created by the provider, add it possible again
-                groupCache.put(group.getName(), CacheableOptional.of(group));
-
-                // Evict only the information related to Groups.
-                // Do not evict groups with 'user' as keys.
-                clearGroupCountCache();
-                clearGroupNameCache();
-
-                // Evict cached information for affected users
-                evictCachedUsersForGroup(group);
-
-                // Evict cached paginated group names
-                evictCachedPaginatedGroupNames();
-            }
-
-            @Override
-            public void groupDeleting(Group group, Map params) {
-                // Since the group could be deleted by the provider, remove it possible again
-                groupCache.put(group.getName(), CacheableOptional.of( null ));
-
-                // Evict only the information related to Groups.
-                // Do not evict groups with 'user' as keys.
-                clearGroupCountCache();
-                clearGroupNameCache();
-
-                // Evict cached information for affected users
-                evictCachedUsersForGroup(group);
-
-                // Evict cached paginated group names
-                evictCachedPaginatedGroupNames();
-            }
-
-            @Override
-            public void groupModified(Group group, Map params) {
-                String type = (String)params.get("type");
-                // If shared group settings changed, expire the cache.
-                if (type != null) {
-                    if (type.equals("propertyModified") ||
-                        type.equals("propertyDeleted") || type.equals("propertyAdded"))
-                    {
-                        Object key = params.get("propertyKey");
-                        if ("sharedRoster.showInRoster".equals(key) || "*".equals(key))
-                        {
-                            clearGroupNameCache();
-
-                            String originalValue = (String) params.get("originalValue");
-                            String newValue = group.getProperties().get("sharedRoster.showInRoster");
-
-                            // 'showInRoster' has changed
-                            if (!StringUtils.equals(originalValue, newValue)) {
-
-                                if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
-                                    evictCachedUserSharedGroups();
-                                }
-                            }
-                        } else if ("sharedRoster.groupList".equals(key)) {
-
-                            String originalValue = (String) params.get("originalValue");
-                            String newValue = group.getProperties().get("sharedRoster.groupList");
-
-                            // 'groupList' has changed
-                            if (!StringUtils.equals(originalValue, newValue)) {
-                                evictCachedUsersForGroup( group );
-
-                                // Also clear the cache for groups that have been removed from the shared list.
-                                if ( originalValue != null ) {
-                                    final Set<String> newGroupNames = newValue == null ? new HashSet<>() : splitGroupList(newValue);
-                                    final Set<String> oldGroupNames = splitGroupList(originalValue);
-
-                                    // The 'new' group names are already handled by the evictCachedUserForGroup call above. No need to do that twice.
-                                    oldGroupNames.removeAll(newGroupNames);
-                                    oldGroupNames.forEach( g -> evictCachedUsersForGroup(g) );
-                                }
-                            }
-                        }
-                    }
-                    // clean up cache for old group name
-                    if (type.equals("nameModified")) {
-                        String originalName = (String) params.get("originalValue");
-                        if (originalName != null) {
-                            groupCache.remove(originalName);
-                        }
-
-                        clearGroupNameCache();
-
-                        // Evict cached information for affected users
-                        evictCachedUsersForGroup(group);
-
-                        // Evict cached paginated group names
-                        evictCachedPaginatedGroupNames();
-                        
-                    }
-                }
-                // Set object again in cache. This is done so that other cluster nodes
-                // get refreshed with latest version of the object
-                groupCache.put(group.getName(), CacheableOptional.of(group));
-            }
-
-            @Override
-            public void memberAdded(Group group, Map params) {
-                // Set object again in cache. This is done so that other cluster nodes
-                // get refreshed with latest version of the object
-                groupCache.put(group.getName(), CacheableOptional.of(group));
-                
-                // Remove only the collection of groups the member belongs to.
-                String member = (String) params.get("member");
-                evictCachedUserForGroup(member);
-            }
-
-            @Override
-            public void memberRemoved(Group group, Map params) {
-                // Set object again in cache. This is done so that other cluster nodes
-                // get refreshed with latest version of the object
-                groupCache.put(group.getName(), CacheableOptional.of(group));
-                
-                // Remove only the collection of groups the member belongs to.
-                String member = (String) params.get("member");
-                evictCachedUserForGroup(member);
-            }
-
-            @Override
-            public void adminAdded(Group group, Map params) {
-                // Set object again in cache. This is done so that other cluster nodes
-                // get refreshed with latest version of the object
-                groupCache.put(group.getName(), CacheableOptional.of(group));
-                
-                // Remove only the collection of groups the member belongs to.
-                String member = (String) params.get("admin");
-                evictCachedUserForGroup(member);
-            }
-
-            @Override
-            public void adminRemoved(Group group, Map params) {
-                // Set object again in cache. This is done so that other cluster nodes
-                // get refreshed with latest version of the object
-                groupCache.put(group.getName(), CacheableOptional.of(group));
-                
-                // Remove only the collection of groups the member belongs to.
-                String member = (String) params.get("admin");
-                evictCachedUserForGroup(member);
-            }
-
-        });
-
         UserEventDispatcher.addListener(new UserEventListener() {
             @Override
             public void userCreated(User user, Map<String, Object> params) {
@@ -297,16 +143,10 @@ public class GroupManager {
                 throw new GroupAlreadyExistsException();
             }
             catch (GroupNotFoundException unfe) {
-                // The group doesn't already exist so we can create a new group
+                // The group doesn't already exist, so we can create a new group
                 newGroup = provider.createGroup(name);
-                // Update caches.
-                clearGroupNameCache();
-                clearGroupCountCache();
-                groupCache.put(name, CacheableOptional.of(newGroup));
 
-                // Fire event.
-                GroupEventDispatcher.dispatchEvent(newGroup,
-                        GroupEventDispatcher.EventType.group_created, Collections.emptyMap());
+                createGroupPostProcess(newGroup);
             }
             return newGroup;
         } finally {
@@ -392,17 +232,14 @@ public class GroupManager {
      * @param group the group to delete.
      */
     public void deleteGroup(Group group) throws GroupNotFoundException {
-        // Fire event.
-        GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_deleting,
-                Collections.emptyMap());
+        // Fire the event that announces that a group will be deleted (prior to the fact).
+        deleteGroupPreProcess(group);
 
         // Delete the group.
         provider.deleteGroup(group.getName());
 
-        // Add a no-hit to the cache.
-        groupCache.put(group.getName(), CacheableOptional.of(null));
-        clearGroupNameCache();
-        clearGroupCountCache();
+        // Update caches.
+        deleteGroupPostProcess(group);
     }
 
     /**
@@ -427,7 +264,7 @@ public class GroupManager {
                 }
             }
         }
-        evictCachedUserForGroup(userJID.toBareJID());
+        evictCachedUserForGroup(userJID.asBareJID());
     }
 
     /**
@@ -680,9 +517,8 @@ public class GroupManager {
         return provider;
     }
 
-    private void evictCachedUserForGroup(String userJid) {
-        if (userJid != null) {
-            JID user = new JID(userJid);
+    private void evictCachedUserForGroup(JID user) {
+        if (user != null) {
 
             // remove cache for getGroups
             synchronized (USER_GROUPS_LOCK) {
@@ -719,8 +555,8 @@ public class GroupManager {
 
         // Evict cached information for affected users.
         groups.forEach( g -> {
-            g.getAdmins().forEach( jid -> evictCachedUserForGroup( jid.toBareJID()) );
-            g.getMembers().forEach( jid -> evictCachedUserForGroup( jid.toBareJID()) );
+            g.getAdmins().forEach( jid -> evictCachedUserForGroup( jid.asBareJID()) );
+            g.getMembers().forEach( jid -> evictCachedUserForGroup( jid.asBareJID()) );
         });
 
         // If any of the groups is shared with everybody, evict all cached groups.
@@ -787,6 +623,423 @@ public class GroupManager {
         groupMetaCache.keySet().stream()
             .filter(key -> key.startsWith(GROUP_NAMES_KEY))
             .forEach(key -> groupMetaCache.remove(key));
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a new group having been created.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * created. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that has been created.
+     */
+    public void createGroupPostProcess(@Nonnull final Group group)
+    {
+        // Adds default properties if they don't exist.
+        if (group.getSharedWith() == null) {
+            group.shareWithNobody();
+        }
+
+        // Update caches.
+        clearGroupNameCache();
+        clearGroupCountCache();
+        evictCachedUsersForGroup(group);
+        evictCachedPaginatedGroupNames();
+
+        groupCache.put(group.getName(), CacheableOptional.of(group));
+
+        // Fire event.
+        GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_created, Collections.emptyMap());
+    }
+
+    /**
+     * Dispatches events that reflect an existing group having been deleted.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager just before a group will be
+     * deleted. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that is about to be removed.
+     */
+    public void deleteGroupPreProcess(@Nonnull final Group group)
+    {
+        // Fire event.
+        GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_deleting, Collections.emptyMap());
+    }
+
+    /**
+     * Updates the caches maintained by this manager to reflect an existing group having been deleted.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * deleted. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that has been deleted. Care should be taken to not apply changes to this instance, as it
+     *              no longer refers to a valid, existing group.
+     */
+    public void deleteGroupPostProcess(@Nonnull final Group group)
+    {
+        // Add a no-hit to the cache.
+        groupCache.put(group.getName(), CacheableOptional.of(null));
+        clearGroupNameCache();
+        clearGroupCountCache();
+        evictCachedUsersForGroup(group);
+        evictCachedPaginatedGroupNames();
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect an admin user having been added
+     * to a group.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param admin The address of the admin that was added to the group.
+     * @param wasMember Whether the admin was a member of the group (which are mutually exclusive roles) before the update.
+     */
+    public void adminAddedPostProcess(@Nonnull final Group group, @Nonnull final JID admin, final boolean wasMember)
+    {
+        evictCachedUserForGroup(admin);
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after an admin was added to it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), e);
+            return;
+        }
+
+        // Fire event.
+        final Map<String, String> params = new HashMap<>();
+        params.put("admin", admin.toString());
+        if (wasMember) {
+            params.put("member", admin.toString());
+            GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.member_removed, params);
+        }
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.admin_added, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect an admin user having been
+     * removed from a group.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param admin The address of the admin that was removed from the group.
+     */
+    public void adminRemovedPostProcess(@Nonnull final Group group, @Nonnull final JID admin)
+    {
+        evictCachedUserForGroup(admin);
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after an admin was removed from it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), e);
+            return;
+        }
+
+        // Fire event.
+        final Map<String, String> params = new HashMap<>();
+        params.put("admin", admin.toString());
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.admin_removed, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a member user having been added
+     * to a group.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param member The address of the member that was added to the group.
+     * @param wasAdmin Whether the member was an admin of the group (which are mutually exclusive roles) before the update.
+     */
+    public void memberAddedPostProcess(@Nonnull final Group group, @Nonnull final JID member, final boolean wasAdmin)
+    {
+        evictCachedUserForGroup(member);
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after a member was added to it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), e);
+            return;
+        }
+
+        // Fire event.
+        final Map<String, String> params = new HashMap<>();
+        params.put("member", member.toString());
+        if (wasAdmin) {
+            params.put("admin", member.toString());
+            GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.admin_removed, params);
+        }
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.member_added, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a member user having been
+     * removed from a group.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param member The address of the member that was removed from the group.
+     */
+    public void memberRemovedPostProcess(@Nonnull final Group group, @Nonnull final JID member)
+    {
+        evictCachedUserForGroup(member);
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after a member was removed from it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), e);
+            return;
+        }
+
+        // Fire event.
+        final Map<String, String> params = new HashMap<>();
+        params.put("member", member.toString());
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.member_removed, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a group having received a new
+     * name.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param originalName The name of the group prior to the change.
+     */
+    public void renameGroupPostProcess(@Nonnull final Group group, @Nullable final String originalName)
+    {
+        // Clean up caches
+        if (originalName != null) {
+            groupCache.remove(originalName);
+        }
+        clearGroupNameCache();
+        evictCachedUsersForGroup(group);
+        evictCachedPaginatedGroupNames();
+
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after it was renamed (original name: '{}'). This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), originalName, e);
+            return;
+        }
+
+        // Fire event.
+        final Map<String, Object> params = new HashMap<>();
+        params.put("type", "nameModified");
+        params.put("originalValue", originalName);
+        params.put("originalJID", new GroupJID(originalName));
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a group having received a new
+     * description.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param originalDescription The description of the group prior to the change.
+     */
+    public void redescribeGroupPostProcess(@Nonnull final Group group, @Nullable final String originalDescription)
+    {
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after its description was changed. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), e);
+            return;
+        }
+
+        // Fire event.
+        final Map<String, Object> params = new HashMap<>();
+        params.put("type", "descriptionModified");
+        params.put("originalValue", originalDescription);
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a group having received a new
+     * property.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param key The key of the property that was added.
+     */
+    public void propertyAddedPostProcess(@Nonnull final Group group, @Nonnull final String key)
+    {
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after a property (key: '{}') was added to it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), key, e);
+            return;
+        }
+        propertyChangePostProcess(updatedGroup, key, null);
+
+        // Fire event.
+        final Map<String, Object> params = new HashMap<>();
+        params.put("propertyKey", key);
+        params.put("type", "propertyAdded");
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a group having received a
+     * modification to one of its properties.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param key The key of the property that was modified.
+     * @param originalValue The value of the property prior to the modification.
+     */
+    public void propertyModifiedPostProcess(@Nonnull final Group group, @Nonnull final String key, @Nonnull final String originalValue)
+    {
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after a property (key: '{}') was modified. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), key, e);
+            return;
+        }
+        propertyChangePostProcess(updatedGroup, key, originalValue);
+
+        // Fire event.
+        final Map<String, Object> params = new HashMap<>();
+        params.put("propertyKey", key);
+        params.put("type", "propertyModified");
+        params.put("originalValue", originalValue);
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a group having one of its
+     * properties removed.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param key The key of the property that was removed.
+     * @param originalValue The value of the property prior to the removal.
+     */
+    public void propertyDeletedPostProcess(@Nonnull final Group group, @Nonnull final String key, @Nonnull final String originalValue)
+    {
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after a property (key: '{}') was removed from it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), key, e);
+            return;
+        }
+        propertyChangePostProcess(updatedGroup, key, originalValue);
+
+        // Fire event.
+        final Map<String, Object> params = new HashMap<>();
+        params.put("propertyKey", key);
+        params.put("type", "propertyDeleted");
+        params.put("originalValue", originalValue);
+
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+    }
+
+    /**
+     * Updates the caches maintained by this manager and dispatches events that reflect a group having all of its
+     * properties removed.
+     *
+     * This method is intended to be invoked to update the internal state of GroupManager after a group has been
+     * updated. It should rarely be invoked by code that is not part of the GroupManager implementation.
+     *
+     * @param group The group that was modified.
+     * @param originalProperties The properties of the group prior to the removal.
+     */
+    public void propertiesDeletedPostProcess(@Nonnull final Group group, @Nonnull final Map<String, String> originalProperties)
+    {
+        final Group updatedGroup;
+        try {
+            // By forcing the lookup, the cache will automatically receive the required refresh.
+            updatedGroup = getGroup(group.getName(), true);
+        } catch (GroupNotFoundException e) {
+            Log.error("Group '{}' was not found after all its properties were removed from it. This is indicative of a bug in Openfire. Please consider reporting it.", group.getName(), e);
+            return;
+        }
+
+        // Make sure that 'shared roster' changes are processed.
+        for (final Map.Entry<String, String> entry : originalProperties.entrySet()) {
+            GroupManager.getInstance().propertyChangePostProcess(group, entry.getKey(), entry.getValue());
+        }
+
+        // Fire event.
+        final Map<String, Object> event = new HashMap<>();
+        event.put("type", "propertyDeleted");
+        event.put("propertyKey", "*");
+        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, event);
+    }
+
+    // A generic method to process the effect of property changes to contact list sharing. Re-used by all property change post-processing methods.
+    private void propertyChangePostProcess(final Group group, final String key, final String originalValue)
+    {
+        switch (key) {
+            case "sharedRoster.showInRoster": {
+                clearGroupNameCache();
+
+                // Check to see if the definition of people to which the shared group is shared has changed
+                final String newValue = group.getProperties().get("sharedRoster.showInRoster");
+                if (!StringUtils.equals(originalValue, newValue)) {
+                    if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
+                        evictCachedUserSharedGroups();
+                    }
+                }
+                break;
+            }
+
+            case "sharedRoster.groupList": {
+                // Check to see if the list of groups to which the shared group is shared has changed
+                final String newValue = group.getProperties().get("sharedRoster.groupList");
+
+                if (!StringUtils.equals(originalValue, newValue)) {
+                    evictCachedUsersForGroup(group);
+
+                    // Also clear the cache for groups that have been removed from the shared list.
+                    if (originalValue != null) {
+                        final Set<String> newGroupNames = newValue == null ? new HashSet<>() : splitGroupList(newValue);
+                        final Set<String> oldGroupNames = splitGroupList(originalValue);
+
+                        // The 'new' group names are already handled by the evictCachedUserForGroup call above. No need to do that twice.
+                        oldGroupNames.removeAll(newGroupNames);
+                        oldGroupNames.forEach(this::evictCachedUsersForGroup);
+                    }
+                }
+                break;
+            }
+        }
     }
 
     /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -28,7 +27,6 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,36 +69,42 @@ public class GroupAdminAdded extends AdHocCommand {
             return;
         }
 
-        // Creates event params.
-        Map<String, Object> params = null;
+        final String wasMemberValue = get(data, "wasMember", 0);
+        if (wasMemberValue == null) {
+            note.addAttribute("type", "error");
+            note.setText("WasMember required parameter.");
+            return;
+        }
+        final boolean wasMember = "1".equals(wasMemberValue) || Boolean.parseBoolean(wasMemberValue);
 
+        JID admin;
         try {
-
             // Get the admin
-            String admin = get(data, "admin", 0);
-
-            // Adds the admin
-            params = new HashMap<>();
-            params.put("admin", admin);
+            String adminValue = get(data, "admin", 0);
+            admin = new JID(adminValue);
         }
         catch (NullPointerException npe) {
             note.addAttribute("type", "error");
             note.setText("Admin required parameter.");
             return;
         }
+        catch (IllegalArgumentException e) {
+            note.addAttribute("type", "error");
+            note.setText("Admin value needs to be a JID.");
+            return;
+        }
 
-        // Sends the event
-        Group group;
+        final Group group;
         try {
-            group = GroupManager.getInstance().getGroup(groupname, true);
-
-            // Fire event.
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.admin_added, params);
-
+            group = GroupManager.getInstance().getGroup(groupname);
         } catch (GroupNotFoundException e) {
             note.addAttribute("type", "error");
             note.setText("Group not found.");
+            return;
         }
+
+        // Perform post-processing (cache updates and event notifications).
+        GroupManager.getInstance().adminAddedPostProcess(group, admin, wasMember);
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
@@ -128,6 +132,12 @@ public class GroupAdminAdded extends AdHocCommand {
         field.setType(FormField.Type.text_single);
         field.setLabel("The username of the new admin");
         field.setVariable("admin");
+        field.setRequired(true);
+
+        field = form.addField();
+        field.setType(FormField.Type.boolean_type);
+        field.setLabel("Was this user previously a member?");
+        field.setVariable("wasMember");
         field.setRequired(true);
 
         // Add the form to the command

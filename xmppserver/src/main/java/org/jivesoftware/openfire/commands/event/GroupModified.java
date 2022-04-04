@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -28,7 +27,6 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,56 +80,92 @@ public class GroupModified extends AdHocCommand {
             return;
         }
 
-        // Identifies the value variable
-        String valueVariable = null;
-        String valueVariableName = null;
+        // Check the 'originalValue' and 'propertyKey' values, in case they are needed.
+        final String originalValue = get(data, "originalValue", 0);
+        final String propertyKey = get(data, "propertyKey", 0);
 
-        if ("nameModified".equals(type) || "descriptionModified".equals(type)) {
+        switch (type) {
+            case "nameModified":
+                if (originalValue == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'nameModified', parameter 'originalValue' is required.");
+                    return;
+                }
+                break;
 
-            valueVariable = "originalValue";
-            valueVariableName = "Original value";
+            case "descriptionModified":
+                if (originalValue == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'descriptionModified', parameter 'originalValue' is required.");
+                    return;
+                }
+                break;
 
-        } else if ("propertyModified".equals(type) || "propertyAdded".equals(type) ||
-                "propertyDeleted".equals(type)) {
+            case "propertyAdded":
+                if (propertyKey == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'propertyAdded', parameter 'propertyKey' is required.");
+                    return;
+                }
+                break;
 
-            valueVariable = "propertyKey";
-            valueVariableName = "Property key";
+            case "propertyModified":
+                if (originalValue == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'propertyModified', parameter 'originalValue' is required.");
+                    return;
+                }
+                if (propertyKey == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'propertyModified', parameter 'propertyKey' is required.");
+                    return;
+                }
+                break;
 
+            case "propertyDeleted":
+                if (originalValue == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'propertyDeleted', parameter 'originalValue' is required.");
+                    return;
+                }
+                if (propertyKey == null) {
+                    note.addAttribute("type", "error");
+                    note.setText("For type 'propertyDeleted', parameter 'propertyKey' is required.");
+                    return;
+                }
+                break;
         }
 
-        // Creates event params.
-        Map<String, Object> params = new HashMap<>();
-
-        // Gets the value of the change if it exist
-        String value;
-        if (valueVariable != null) {
-            try {
-                // Gets the value
-                value = get(data, valueVariable, 0);
-                // Adds it to the event params
-                params.put(valueVariable, value);
-
-            } catch (NullPointerException npe) {
-                note.addAttribute("type", "error");
-                note.setText(valueVariableName + " required parameter.");
-                return;
-            }
-        }
-
-        // Adds the type of change
-        params.put("type", type);
-
-        // Sends the event
         Group group;
         try {
             group = GroupManager.getInstance().getGroup(groupname, true);
-
-            // Fire event.
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_modified, params);
-
         } catch (GroupNotFoundException e) {
             note.addAttribute("type", "error");
             note.setText("Group not found.");
+            return;
+        }
+
+        // Perform post-processing (cache updates and event notifications).
+        switch (type) {
+            case "nameModified":
+                GroupManager.getInstance().renameGroupPostProcess(group, originalValue);
+                break;
+
+            case "descriptionModified":
+                GroupManager.getInstance().redescribeGroupPostProcess(group, originalValue);
+                break;
+
+            case "propertyAdded":
+                GroupManager.getInstance().propertyAddedPostProcess(group, propertyKey);
+                break;
+
+            case "propertyModified":
+                GroupManager.getInstance().propertyModifiedPostProcess(group, propertyKey, originalValue);
+                break;
+
+            case "propertyDeleted":
+                GroupManager.getInstance().propertyDeletedPostProcess(group, propertyKey, originalValue);
+                break;
         }
 
         // Answer that the operation was successful

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -28,7 +27,6 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,36 +69,34 @@ public class GroupMemberRemoved extends AdHocCommand {
             return;
         }
 
-        // Creates event params.
-        Map<String, Object> params = null;
-
+        JID member;
         try {
-
             // Get the member
-            String member = get(data, "member", 0);
-
-            // Adds the member
-            params = new HashMap<>();
-            params.put("member", member);
+            String memberValue = get(data, "member", 0);
+            member = new JID(memberValue);
         }
         catch (NullPointerException npe) {
             note.addAttribute("type", "error");
             note.setText("Member required parameter.");
             return;
         }
+        catch (IllegalArgumentException e) {
+            note.addAttribute("type", "error");
+            note.setText("Member value needs to be a JID.");
+            return;
+        }
 
-        // Sends the event
-        Group group;
+        final Group group;
         try {
-            group = GroupManager.getInstance().getGroup(groupname, true);
-
-            // Fire event.
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.member_removed, params);
-
+            group = GroupManager.getInstance().getGroup(groupname);
         } catch (GroupNotFoundException e) {
             note.addAttribute("type", "error");
             note.setText("Group not found.");
+            return;
         }
+
+        // Perform post-processing (cache updates and event notifications).
+        GroupManager.getInstance().memberRemovedPostProcess(group, member);
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");

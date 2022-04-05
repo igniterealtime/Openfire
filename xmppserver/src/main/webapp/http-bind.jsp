@@ -91,7 +91,7 @@
                     HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader);
                 }
 
-                final String xffHostHeader = ParamUtils.getParameter( request, "XFFServerHeader" );
+                final String xffHostHeader = ParamUtils.getParameter( request, "xffHostHeader" );
                 if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
                     HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(null);
                 } else {
@@ -291,7 +291,7 @@
                     <label for="rb05"><b><fmt:message key="httpbind.settings.cors.label_enable"/></b> - <fmt:message key="httpbind.settings.cors.label_enable_info"/></label>
                     <table border="0">
                         <tr><td><label for="CORSDomains"><fmt:message key="httpbind.settings.cors.domain_list"/></label></td></tr>
-                        <tr><td><input id="CORSDomains" type="text" size="80" name="CORSDomains" value="${fn:escapeXml(serverManager.CORSAllowOrigin)}"></td></tr>
+                        <tr><td><input id="CORSDomains" type="text" size="80" name="CORSDomains" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_ALLOWED_ORIGINS.valueAsSaved)}"></td></tr>
                     </table>
                 </td>
             </tr>

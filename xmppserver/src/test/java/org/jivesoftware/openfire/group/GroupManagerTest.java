@@ -60,6 +60,7 @@ public class GroupManagerTest {
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
         groupCache = CacheFactory.createCache("Group");
+        groupCache.clear();
         JiveGlobals.setProperty("provider.group.className", TestGroupProvider.class.getName());
     }
 
@@ -82,6 +83,8 @@ public class GroupManagerTest {
             field.set(null, null);
             field.setAccessible(false);
         }
+
+        groupCache.clear();
     }
 
     @Test

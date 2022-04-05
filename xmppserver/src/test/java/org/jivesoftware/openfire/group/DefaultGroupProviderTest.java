@@ -23,15 +23,14 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertThrows;
 
@@ -92,11 +91,16 @@ public class DefaultGroupProviderTest extends DBTestCase
         // Reset static fields after use (to not confuse other test classes).
         // TODO: this ideally goes in a static @AfterClass method, but that's not supported in JUnit 3.
         for (String fieldName : Arrays.asList("INSTANCE", "provider")) {
-            Field field = GroupManager.class.getDeclaredField(fieldName);
+            final Field field = GroupManager.class.getDeclaredField(fieldName);
             field.setAccessible(true);
             field.set(null, null);
             field.setAccessible(false);
         }
+
+        final Field field = GroupEventDispatcher.class.getDeclaredField("listeners");
+        field.setAccessible(true);
+        ((List)field.get(null)).clear();
+        field.setAccessible(false);
     }
 
     @Override
@@ -156,6 +160,18 @@ public class DefaultGroupProviderTest extends DBTestCase
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup(GROUP_NAME);
         assertThrows(GroupAlreadyExistsException.class, ()-> provider.createGroup(GROUP_NAME));
+    }
+
+    /**
+     * Asserts that a group can be created, removed and recreated again, with the same name.
+     */
+    public void testRecreateGroup() throws Exception
+    {
+        final String GROUP_NAME = "Test Group A";
+        final DefaultGroupProvider provider = new DefaultGroupProvider();
+        provider.createGroup(GROUP_NAME);
+        provider.deleteGroup(GROUP_NAME);
+        provider.createGroup(GROUP_NAME);
     }
 
     /**

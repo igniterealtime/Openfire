@@ -451,6 +451,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                                 lock.unlock();
                             }
                         }
+                    } else if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue() && packet instanceof IQ && ((IQ) packet).isResponse() && ((IQ) packet).getChildElement().getNamespaceURI().equals(IQMUCvCardHandler.NAMESPACE)) {
+                        Log.trace( "Stanza is a VCard response stanza." );
+                        processVCardResponse((IQ) packet);
                     } else {
                         Log.trace( "Stanza is a regular MUC stanza." );
                         processRegularStanza(packet);
@@ -577,7 +580,74 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * This method does all stanz routing in the chat server for 'regular' MUC stanzas. Packet routing is actually very
+     * Processes a VCard response stanza that is supposedly sent to an occupant of a room as a result of that occupant
+     * having requested the VCard of another occupant earlier.
+     *
+     * VCard processing in MUC rooms depends on a bit of a hack: most clients of requestees cannot process a request for
+     * a VCard themselves (see XEP-0054). Instead, the request is rerouted to the bare JID of the requestee, which is
+     * responded to by its home server. {@link MUCRoom#sendPrivatePacket(Packet, MUCRole)} implements this rerouting.
+     * The response from the home server is then processed by this method. It needs special care as its 'from' address
+     * is a bare JID (and thus not directly related to a single occupant).
+     *
+     * @param response An IQ stanza that should be a response to an earlier VCard request.
+     */
+    public void processVCardResponse(@Nonnull final IQ response)
+    {
+        if (!response.isResponse()) {
+            throw new IllegalArgumentException("IQ must be a response, but is of type: " + response.getType());
+        }
+
+        // Name of the room that the stanza is addressed to.
+        final String roomName = response.getTo().getNode();
+
+        if ( roomName == null )
+        {
+            // Packets to the groupchat service (as opposed to a specific room on the service). This should not occur
+            // (should be handled by MultiUserChatServiceImpl instead).
+            Log.warn(LocaleUtils.getLocalizedString("muc.error.not-supported") + " " + response);
+            return;
+        }
+
+        StanzaIDUtil.ensureUniqueAndStableStanzaID(response, response.getTo().asBareJID());
+
+        final Lock lock = getChatRoomLock(roomName);
+        lock.lock();
+        try {
+            // Get the room, if one exists.
+            @Nullable MUCRoom room = getChatRoom(roomName);
+
+            // Determine if this sender (responding to the VCard request) has a pre-existing role in the addressed room.
+            // VCards responses are sent by servers on behalf of the user, so have a bare JID in the 'from' address.
+            // This cannot be uniquely matched to a single occupant. In case that they are with multiple occupants in
+            // the room, we will use the role with the most liberal permissions.
+            MUCRole preExistingRole;
+            if (room == null) {
+                preExistingRole = null;
+            } else {
+                try {
+                    preExistingRole = room.getOccupantsByBareJID(response.getFrom().asBareJID())
+                        .stream()
+                        .min(Comparator.comparingInt(o -> o.getRole().getValue()))
+                        .orElse(null);
+                } catch (UserNotFoundException e) {
+                    preExistingRole = null;
+                }
+            }
+            Log.debug("Preexisting role for user {} in room {} (that currently {} exist): {}", response.getFrom(), roomName, room == null ? "does not" : "does", preExistingRole == null ? "(none)" : preExistingRole);
+
+            process(response, room, preExistingRole);
+
+            // Ensure that other cluster nodes see any changes (unlikely to have occurred here, but better safe than sorry) that might have been applied.
+            if (room != null) {
+                syncChatRoom(room);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * This method does all stanza routing in the chat server for 'regular' MUC stanzas. Packet routing is actually very
      * simple:
      *
      * <ul>
@@ -598,7 +668,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         {
             // Packets to the groupchat service (as opposed to a specific room on the service). This should not occur
             // (should be handled by MultiUserChatServiceImpl instead).
-            Log.warn(LocaleUtils.getLocalizedString("muc.error.not-supported") + " " + packet.toString());
+            Log.warn(LocaleUtils.getLocalizedString("muc.error.not-supported") + " " + packet);
             if ( packet instanceof IQ && ((IQ) packet).isRequest() )
             {
                 sendErrorPacket(packet, PacketError.Condition.feature_not_implemented, "Unable to process stanza.");

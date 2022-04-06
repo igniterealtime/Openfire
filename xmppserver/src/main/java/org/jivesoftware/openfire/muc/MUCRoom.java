@@ -1410,6 +1410,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * If the system property xmpp.muc.allowpm.blockall is set to true, this will block all private packets
      * However, if this property is false (by default) then it will allow non-message private packets.
      *
+     * If the system property xmpp.muc.vcard.enabled is set to true, then IQ requests that are VCard requests for
+     * occupants of the MUC room are processed differently to allow for VCards to be requested from the home server of
+     * the occupant. See {@link MultiUserChatServiceImpl#processVCardResponse(IQ)} for details.
+     *
      * @param packet The packet to send.
      * @param senderRole the role of the user that is trying to send a public message.
      * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
@@ -1451,6 +1455,21 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         // Sending the stanza will modify it. Make sure that the event listeners that are triggered after sending
         // the stanza don't get the 'real' address from the recipient.
         final Packet immutable = stanza.createCopy();
+
+        // If this is a VCard request, then the intended recipient's home server (possibly not this instance of Openfire) needs
+        // to answer on behalf of the intended recipient. See {@link MultiUserChatServiceImpl#processVCardResponse(IQ)} for details.
+        if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue() && stanza instanceof IQ && ((IQ)stanza).getType() == IQ.Type.get) {
+            final IQ request = (IQ)stanza;
+            if (IQMUCvCardHandler.NAMESPACE.equals(request.getChildElement().getNamespaceURI())) {
+                // Build request from the requestor's room nickname (to have the response be delivered through the MUC room) to the home user of the intended recipient.
+                final JID bareJID = occupants.get(0).getUserAddress().asBareJID();
+                Log.debug("Sending VCard request to occupant {}'s real JID ('{}') to answer VCard request of {}", resource, bareJID, request.getFrom());
+                request.setTo(bareJID);
+
+                XMPPServer.getInstance().getPacketRouter().route(request);
+                return;
+            }
+        }
 
         // Forward it to each occupant.
         for (final MUCRole occupant : occupants) {

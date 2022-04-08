@@ -53,21 +53,21 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
     private static final String GROUPLIST_CONTAINERS =
             "SELECT groupName from ofGroupProp " +
-            "WHERE name='sharedRoster.groupList' " +
+            "WHERE name='" + Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY + "' " +
             "AND (propValue LIKE ? OR (groupName = ? AND (propValue IS NULL OR LTRIM(propValue) = '') ))"; // using Ltrim instead of trim, as the latter wasn't supported in SQL Server prior to 2017.
     private static final String PUBLIC_GROUPS_SQL =
             "SELECT groupName from ofGroupProp " +
-            "WHERE name='sharedRoster.showInRoster' " +
-            "AND propValue='everybody'";
+            "WHERE name='" + Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY + "' " +
+            "AND propValue='" + SharedGroupVisibility.everybody.getDbValue() + "'";
     private static final String GROUPS_FOR_PROP =
             "SELECT groupName from ofGroupProp " +
             "WHERE name=? " +
             "AND propValue=?";
     private static final String LOAD_SHARED_GROUPS =
-            "SELECT groupName FROM ofGroupProp WHERE name='sharedRoster.showInRoster' " +
-            "AND propValue IS NOT NULL AND propValue <> 'nobody'";
+            "SELECT groupName FROM ofGroupProp WHERE name='" + Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY + "' " +
+            "AND propValue IS NOT NULL AND propValue <> '" + SharedGroupVisibility.nobody.getDbValue() + "'";
     private static final String HAS_SHARED_GROUPS_PARTIAL =
-            "WHERE EXISTS (SELECT 1 FROM ofGroupProp WHERE name='sharedRoster.showInRoster' AND propValue IS NOT NULL AND propValue <> 'nobody')";
+            "WHERE EXISTS (SELECT 1 FROM ofGroupProp WHERE name='" + Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY + "' AND propValue IS NOT NULL AND propValue <> '" + SharedGroupVisibility.nobody.getDbValue() + "')";
     private static final String LOAD_PROPERTIES =
             "SELECT name, propValue FROM ofGroupProp WHERE groupName=?";
 

@@ -354,8 +354,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         String originalValue = (String) params.get("originalValue");
 
 
-        if ("sharedRoster.showInRoster".equals(keyChanged)) {
-            String currentValue = group.getProperties().get("sharedRoster.showInRoster");
+        if (Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY.equals(keyChanged)) {
+            String currentValue = group.getProperties().get(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY);
             // Nothing has changed so do nothing.
             if (currentValue.equals(originalValue)) {
                 return;
@@ -389,8 +389,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
             });
         }
-        else if ("sharedRoster.groupList".equals(keyChanged)) {
-            String currentValue = group.getProperties().get("sharedRoster.groupList");
+        else if (Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY.equals(keyChanged)) {
+            String currentValue = group.getProperties().get(Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY);
             // Nothing has changed so do nothing.
             if (currentValue.equals(originalValue)) {
                 return;
@@ -422,8 +422,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 }
             });
         }
-        else if ("sharedRoster.displayName".equals(keyChanged)) {
-            String currentValue = group.getProperties().get("sharedRoster.displayName");
+        else if (Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY.equals(keyChanged)) {
+            String currentValue = group.getProperties().get(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY);
             // Nothing has changed so do nothing.
             if (currentValue.equals(originalValue)) {
                 return;

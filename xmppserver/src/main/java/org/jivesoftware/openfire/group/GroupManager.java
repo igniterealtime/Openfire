@@ -1007,11 +1007,11 @@ public class GroupManager {
     private void propertyChangePostProcess(final Group group, final String key, final String originalValue)
     {
         switch (key) {
-            case "sharedRoster.showInRoster": {
+            case Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY: {
                 clearGroupNameCache();
 
                 // Check to see if the definition of people to which the shared group is shared has changed
-                final String newValue = group.getProperties().get("sharedRoster.showInRoster");
+                final String newValue = group.getProperties().get(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY);
                 if (!StringUtils.equals(originalValue, newValue)) {
                     if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
                         evictCachedUserSharedGroups();
@@ -1020,9 +1020,9 @@ public class GroupManager {
                 break;
             }
 
-            case "sharedRoster.groupList": {
+            case Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY: {
                 // Check to see if the list of groups to which the shared group is shared has changed
-                final String newValue = group.getProperties().get("sharedRoster.groupList");
+                final String newValue = group.getProperties().get(Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY);
 
                 if (!StringUtils.equals(originalValue, newValue)) {
                     evictCachedUsersForGroup(group);

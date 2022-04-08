@@ -451,7 +451,7 @@ public class RosterItem implements Cacheable, Externalizable {
                     // Check now if there is a group whose display name matches the requested group
                     Collection<Group> groupsWithProp = GroupManager
                             .getInstance()
-                            .search("sharedRoster.displayName", groupName);
+                            .search(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, groupName);
                     Iterator<Group> itr = groupsWithProp.iterator();
                     while(itr.hasNext()) {
                         Group group = itr.next();

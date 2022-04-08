@@ -1449,7 +1449,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     public void testSearchByKeyAndValueReturnsGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
-        final Collection<String> result = provider.search("sharedRoster.showInRoster", "nobody");
+        final Collection<String> result = provider.search(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, SharedGroupVisibility.nobody.getDbValue());
         assertEquals(1, result.size());
         assertTrue(result.contains("Test Group A"));
     }
@@ -1464,7 +1464,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     public void testSearchByKeyAndValueReturnsNothingForInvalidValue() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
-        final Collection<String> result = provider.search("sharedRoster.showInRoster", "Invalid Value");
+        final Collection<String> result = provider.search(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, "Invalid Value");
         assertEquals(0, result.size());
     }
 
@@ -1472,7 +1472,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
         provider.createGroup("Test Group B").shareWithNobody();
-        final Collection<String> result = provider.search("sharedRoster.showInRoster", "nobody");
+        final Collection<String> result = provider.search(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, SharedGroupVisibility.nobody.getDbValue());
         assertEquals(2, result.size());
         assertTrue(result.contains("Test Group A"));
         assertTrue(result.contains("Test Group B"));
@@ -1482,7 +1482,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
         provider.createGroup("Test Group B").shareWithNobody();
-        final Collection<String> result = provider.search("sharedRoster.groupList", "");
+        final Collection<String> result = provider.search(Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, "");
         assertEquals(2, result.size());
         assertTrue(result.contains("Test Group A"));
         assertTrue(result.contains("Test Group B"));
@@ -1495,12 +1495,12 @@ public class AbstractGroupProviderTest extends DBTestCase {
         PersistableMap<String,String> result =  provider.loadProperties(a);
 
         assertEquals(3, result.size());
-        assertTrue(result.containsKey("sharedRoster.displayName"));
-        assertEquals("", result.get("sharedRoster.displayName"));
-        assertTrue(result.containsKey("sharedRoster.groupList"));
-        assertEquals("", result.get("sharedRoster.groupList"));
-        assertTrue(result.containsKey("sharedRoster.showInRoster"));
-        assertEquals("nobody", result.get("sharedRoster.showInRoster"));
+        assertTrue(result.containsKey(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY));
+        assertEquals("", result.get(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY));
+        assertTrue(result.containsKey(Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY));
+        assertEquals("", result.get(Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY));
+        assertTrue(result.containsKey(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY));
+        assertEquals(SharedGroupVisibility.nobody.getDbValue(), result.get(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY));
     }
 
     public void testLoadPropertiesReturnsNoPropertiesForNewGroup() throws Exception {

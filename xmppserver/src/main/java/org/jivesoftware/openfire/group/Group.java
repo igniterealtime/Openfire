@@ -51,6 +51,10 @@ public class Group implements Cacheable, Externalizable {
 
     private static final Logger Log = LoggerFactory.getLogger(Group.class);
 
+    public static final String SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY = "sharedRoster.showInRoster";
+    public static final String SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY = "sharedRoster.displayName";
+    public static final String SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY = "sharedRoster.groupList";
+
     private transient GroupProvider provider;
     private transient GroupManager groupManager;
     private transient PersistableMap<String, String> properties;
@@ -244,9 +248,9 @@ public class Group implements Cacheable, Externalizable {
      */
     public void shareWithNobody() {
         final PersistableMap<String, String> properties = getProperties();
-        properties.put("sharedRoster.showInRoster", "nobody");
-        properties.put("sharedRoster.displayName", "");
-        properties.put("sharedRoster.groupList", "");
+        properties.put(SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, SharedGroupVisibility.nobody.getDbValue());
+        properties.put(SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, "");
+        properties.put(SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, "");
     }
 
     /**
@@ -258,9 +262,9 @@ public class Group implements Cacheable, Externalizable {
      */
     public void shareWithEverybody(@Nonnull final String displayName) {
         final PersistableMap<String, String> properties = getProperties();
-        properties.put("sharedRoster.showInRoster", "everybody");
-        properties.put("sharedRoster.displayName", displayName);
-        properties.remove("sharedRoster.groupList");
+        properties.put(SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, SharedGroupVisibility.everybody.getDbValue());
+        properties.put(SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, displayName);
+        properties.remove(SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY);
     }
 
     /**
@@ -272,9 +276,9 @@ public class Group implements Cacheable, Externalizable {
      */
     public void shareWithUsersInSameGroup(@Nonnull final String displayName) {
         final PersistableMap<String, String> properties = getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.displayName", displayName);
-        properties.put("sharedRoster.groupList", "");
+        properties.put(SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, SharedGroupVisibility.usersOfGroups.getDbValue());
+        properties.put(SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, displayName);
+        properties.put(SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, "");
     }
 
     /**
@@ -287,9 +291,9 @@ public class Group implements Cacheable, Externalizable {
      */
     public void shareWithUsersInGroups(@Nonnull final List<String> groupNames, @Nonnull final String displayName) {
         final PersistableMap<String, String> properties = getProperties();
-        properties.put("sharedRoster.showInRoster", "onlyGroup");
-        properties.put("sharedRoster.displayName", displayName);
-        properties.put("sharedRoster.groupList", String.join(",", groupNames));
+        properties.put(SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY, SharedGroupVisibility.usersOfGroups.getDbValue());
+        properties.put(SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, displayName);
+        properties.put(SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, String.join(",", groupNames));
     }
 
     /**
@@ -304,7 +308,7 @@ public class Group implements Cacheable, Externalizable {
      */
     @Nullable
     public String getSharedDisplayName() {
-        return getProperties().get("sharedRoster.displayName");
+        return getProperties().get(SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY);
     }
 
     /**
@@ -319,7 +323,7 @@ public class Group implements Cacheable, Externalizable {
      */
     @Nullable
     public SharedGroupVisibility getSharedWith() {
-        final String value = getProperties().get("sharedRoster.showInRoster");
+        final String value = getProperties().get(SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY);
         if (value == null) {
             return null;
         }

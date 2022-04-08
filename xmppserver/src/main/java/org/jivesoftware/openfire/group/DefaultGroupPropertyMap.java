@@ -210,7 +210,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         public void remove() {
             delegate.remove();
             if (current instanceof String) {
-                deleteProperty((String)current, null); // FIXME by not providing the original value, some event handlers may not be able to handle this.
+                deleteProperty((String)current, null); // FIXME OF-2430 by not providing the original value, some event handlers may not be able to handle this.
             }
             current = null;
         }

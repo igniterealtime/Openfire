@@ -112,7 +112,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
         final Map<K,V> originalMap = new HashMap<>(this); // copy to be used by event handling.
         super.clear();
 
-        // Ignore all entries that are not strings.
+        // Create a copy of all to-be-deleted string values (to be sent to event listeners).
         final Map<String, String> map = originalMap.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof String && entry.getKey() instanceof String)
             .collect(Collectors.toMap(entry -> (String)entry.getKey(), entry -> (String)entry.getValue()));
@@ -568,6 +568,8 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
     /**
      * Delete all properties from the database for the current group
+     *
+     * @param originalMap The properties of the group prior to the removal.
      */
     private synchronized void deleteAllProperties(final Map<String,String> originalMap) {
         Connection con = null;

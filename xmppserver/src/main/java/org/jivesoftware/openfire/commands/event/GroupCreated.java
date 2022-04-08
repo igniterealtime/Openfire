@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.commands.event;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -26,9 +27,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Notifies the that a group was created. It can be used by user providers to notify Openfire of the
@@ -58,24 +57,24 @@ public class GroupCreated extends AdHocCommand {
 
         Map<String, List<String>> data = sessionData.getData();
 
-        // Get the group name
-        String groupname;
-        try {
-            groupname = get(data, "groupName", 0);
-        }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("Group name required parameter.");
-            return;
+        // Input validation
+        final Set<String> inputValidationErrors = new HashSet<>();
+
+        Group group = null;
+        final String groupName = get(data, "groupName", 0);
+        if (StringUtils.isBlank(groupName)) {
+            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+        } else {
+            try {
+                group = GroupManager.getInstance().getGroup(groupName);
+            } catch (GroupNotFoundException e) {
+                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+            }
         }
 
-        // Sends the event
-        Group group;
-        try {
-            group = GroupManager.getInstance().getGroup(groupname, true);
-        } catch (GroupNotFoundException e) {
+        if (!inputValidationErrors.isEmpty()) {
             note.addAttribute("type", "error");
-            note.setText("Group not found.");
+            note.setText(StringUtils.join(inputValidationErrors, " "));
             return;
         }
 

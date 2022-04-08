@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.commands.event;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -26,9 +27,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Notifies the that a member was added to the group. It can be used by user providers to notify Openfire of the
@@ -58,48 +57,44 @@ public class GroupMemberAdded extends AdHocCommand {
 
         Map<String, List<String>> data = sessionData.getData();
 
-        // Get the group name
-        String groupname;
-        try {
-            groupname = get(data, "groupName", 0);
-        }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("Group name required parameter.");
-            return;
+        // Input validation
+        final Set<String> inputValidationErrors = new HashSet<>();
+
+        Group group = null;
+        final String groupName = get(data, "groupName", 0);
+        if (StringUtils.isBlank(groupName)) {
+            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+        } else {
+            try {
+                group = GroupManager.getInstance().getGroup(groupName);
+            } catch (GroupNotFoundException e) {
+                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+            }
         }
 
         final String wasAdminValue = get(data, "wasAdmin", 0);
-        if (wasAdminValue == null) {
-            note.addAttribute("type", "error");
-            note.setText("WasAdmin required parameter.");
-            return;
+        if (StringUtils.isBlank(wasAdminValue)) {
+            inputValidationErrors.add("The parameter 'wasAdmin' is required, but is missing.");
         }
         final boolean wasAdmin = "1".equals(wasAdminValue) || Boolean.parseBoolean(wasAdminValue);
 
         JID member;
-        try {
-            // Get the member
-            String memberValue = get(data, "member", 0);
-            member = new JID(memberValue);
-        }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("Member required parameter.");
+        final String memberValue = get(data, "member", 0);
+        if (StringUtils.isBlank(memberValue)) {
+            inputValidationErrors.add("The parameter 'member' is required, but is missing.");
             return;
-        }
-        catch (IllegalArgumentException e) {
-            note.addAttribute("type", "error");
-            note.setText("Member value needs to be a JID.");
-            return;
+        } else {
+            try {
+                member = new JID(memberValue);
+            } catch (IllegalArgumentException e) {
+                inputValidationErrors.add("The value for parameter 'member' should be a valid JID, but '" + memberValue + "' is not.");
+                return;
+            }
         }
 
-        final Group group;
-        try {
-            group = GroupManager.getInstance().getGroup(groupname);
-        } catch (GroupNotFoundException e) {
+        if (!inputValidationErrors.isEmpty()) {
             note.addAttribute("type", "error");
-            note.setText("Group not found.");
+            note.setText(StringUtils.join(inputValidationErrors, " "));
             return;
         }
 

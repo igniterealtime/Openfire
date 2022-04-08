@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
-    private static final long serialVersionUID = -7501088917416583815L;
+    private static final long serialVersionUID = 3128889631577167040L;
     private static final Logger logger = LoggerFactory.getLogger(DefaultGroupPropertyMap.class);
 
     // moved from {@link Group} as these are specific to the default provider

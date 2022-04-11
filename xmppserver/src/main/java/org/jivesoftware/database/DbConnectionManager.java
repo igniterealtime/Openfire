@@ -161,12 +161,13 @@ public class DbConnectionManager {
     public static Connection getConnection() throws SQLException {
         ensureConnectionProvider();
 
-        int currentRetryCount = 0;
+        int currentAttemptNumber = 0;
         int maxRetries = JiveGlobals.getXMLProperty(SETTING_DATABASE_MAX_RETRIES, 10);
         int retryWait = JiveGlobals.getXMLProperty(SETTING_DATABASE_RETRY_DELAY, 250); // milliseconds
         SQLException lastException = null;
-        boolean loopIfNoConnection = false;
+        boolean loopIfNoConnection;
         do {
+            currentAttemptNumber++;
             try {
                 Connection con = connectionProvider.getConnection();
                 if (con != null) {
@@ -184,11 +185,10 @@ public class DbConnectionManager {
                 // TODO distinguish recoverable from non-recoverable exceptions.
                 lastException = e;
                 Log.info("Unable to get a connection from the database pool " +
-                        "(attempt " + currentRetryCount + " out of " + maxRetries + ").", e);
+                        "(attempt " + currentAttemptNumber + " out of " + (maxRetries + 1) + ").", e);
             }
             
-            currentRetryCount++;
-            loopIfNoConnection = currentRetryCount <= maxRetries;
+            loopIfNoConnection = currentAttemptNumber < maxRetries + 1;
             if (loopIfNoConnection) {
                 try {
                     Thread.sleep(retryWait);
@@ -202,7 +202,7 @@ public class DbConnectionManager {
         } while (loopIfNoConnection);
         
         throw new SQLException("ConnectionManager.getConnection() " +
-                "failed to obtain a connection after " + currentRetryCount + " retries. " +
+                "failed to obtain a connection after " + currentAttemptNumber + " attempts. " +
                 "The exception from the last attempt is as follows: " + lastException);
     }
 

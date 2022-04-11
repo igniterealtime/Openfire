@@ -312,10 +312,10 @@ public class Roster implements Cacheable, Externalizable {
             for (String groupDisplayName : groups) {
                 Collection<Group> groupsWithProp = GroupManager
                         .getInstance()
-                        .search("sharedRoster.displayName", groupDisplayName);
+                        .search(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, groupDisplayName);
                 for ( Group group : groupsWithProp )
                 {
-                    String showInRoster = group.getProperties().get( "sharedRoster.showInRoster" );
+                    String showInRoster = group.getProperties().get(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY);
                     if ( showInRoster != null && !showInRoster.equals( "nobody" ) )
                     {
                         throw new SharedGroupException( "Cannot add an item to a shared group" );

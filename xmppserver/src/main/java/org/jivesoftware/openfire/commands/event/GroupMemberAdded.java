@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jivesoftware.openfire.commands.event;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -27,10 +27,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Notifies the that a member was added to the group. It can be used by user providers to notify Openfire of the
@@ -60,47 +57,49 @@ public class GroupMemberAdded extends AdHocCommand {
 
         Map<String, List<String>> data = sessionData.getData();
 
-        // Get the group name
-        String groupname;
-        try {
-            groupname = get(data, "groupName", 0);
+        // Input validation
+        final Set<String> inputValidationErrors = new HashSet<>();
+
+        Group group = null;
+        final String groupName = get(data, "groupName", 0);
+        if (StringUtils.isBlank(groupName)) {
+            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+        } else {
+            try {
+                group = GroupManager.getInstance().getGroup(groupName);
+            } catch (GroupNotFoundException e) {
+                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+            }
         }
-        catch (NullPointerException npe) {
+
+        final String wasAdminValue = get(data, "wasAdmin", 0);
+        if (StringUtils.isBlank(wasAdminValue)) {
+            inputValidationErrors.add("The parameter 'wasAdmin' is required, but is missing.");
+        }
+        final boolean wasAdmin = "1".equals(wasAdminValue) || Boolean.parseBoolean(wasAdminValue);
+
+        JID member;
+        final String memberValue = get(data, "member", 0);
+        if (StringUtils.isBlank(memberValue)) {
+            inputValidationErrors.add("The parameter 'member' is required, but is missing.");
+            return;
+        } else {
+            try {
+                member = new JID(memberValue);
+            } catch (IllegalArgumentException e) {
+                inputValidationErrors.add("The value for parameter 'member' should be a valid JID, but '" + memberValue + "' is not.");
+                return;
+            }
+        }
+
+        if (!inputValidationErrors.isEmpty()) {
             note.addAttribute("type", "error");
-            note.setText("Group name required parameter.");
+            note.setText(StringUtils.join(inputValidationErrors, " "));
             return;
         }
 
-        // Creates event params.
-        Map<String, Object> params = null;
-        
-        try {
-
-            // Get the member
-            String member = get(data, "member", 0);
-
-            // Adds the member
-            params = new HashMap<>();
-            params.put("member", member);
-        }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("Member required parameter.");
-            return;
-        }
-
-        // Sends the event
-        Group group;
-        try {
-            group = GroupManager.getInstance().getGroup(groupname, true);
-
-            // Fire event.
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.member_added, params);
-
-        } catch (GroupNotFoundException e) {
-            note.addAttribute("type", "error");
-            note.setText("Group not found.");
-        }
+        // Perform post-processing (cache updates and event notifications).
+        GroupManager.getInstance().memberAddedPostProcess(group, member, wasAdmin);
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
@@ -128,6 +127,12 @@ public class GroupMemberAdded extends AdHocCommand {
         field.setType(FormField.Type.text_single);
         field.setLabel("Member");
         field.setVariable("member");
+        field.setRequired(true);
+
+        field = form.addField();
+        field.setType(FormField.Type.boolean_type);
+        field.setLabel("Was this user previously an admin?");
+        field.setVariable("wasAdmin");
         field.setRequired(true);
 
         // Add the form to the command

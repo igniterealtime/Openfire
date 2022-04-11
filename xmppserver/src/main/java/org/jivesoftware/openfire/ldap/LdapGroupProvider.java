@@ -239,7 +239,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> search(String key, String value) {
-        if (key.equals("sharedRoster.displayName")){
+        if (key.equals(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY)){
             return super.search(key,value);
         }
 

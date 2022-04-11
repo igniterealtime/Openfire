@@ -53,6 +53,11 @@ public enum SharedGroupVisibility {
     }
 
     @Nonnull
+    public String getDbValue() {
+        return dbValue;
+    }
+
+    @Nonnull
     public static SharedGroupVisibility fromDatabaseValue(@Nullable final String dbValue) {
         if (dbValue == null) {
             return nobody;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jivesoftware.openfire.commands.event;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -27,9 +27,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Notifies the that a group was created. It can be used by user providers to notify Openfire of the
@@ -59,30 +57,29 @@ public class GroupCreated extends AdHocCommand {
 
         Map<String, List<String>> data = sessionData.getData();
 
-        // Get the group name
-        String groupname;
-        try {
-            groupname = get(data, "groupName", 0);
+        // Input validation
+        final Set<String> inputValidationErrors = new HashSet<>();
+
+        Group group = null;
+        final String groupName = get(data, "groupName", 0);
+        if (StringUtils.isBlank(groupName)) {
+            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+        } else {
+            try {
+                group = GroupManager.getInstance().getGroup(groupName);
+            } catch (GroupNotFoundException e) {
+                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+            }
         }
-        catch (NullPointerException npe) {
+
+        if (!inputValidationErrors.isEmpty()) {
             note.addAttribute("type", "error");
-            note.setText("Group name required parameter.");
+            note.setText(StringUtils.join(inputValidationErrors, " "));
             return;
         }
 
-        // Sends the event
-        Group group;
-        try {
-            group = GroupManager.getInstance().getGroup(groupname, true);
-
-            // Fire event.
-            Map<String, Object> params = Collections.emptyMap();
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_created, params);
-
-        } catch (GroupNotFoundException e) {
-            note.addAttribute("type", "error");
-            note.setText("Group not found.");
-        }
+        // Perform post-processing (cache updates and event notifications).
+        GroupManager.getInstance().createGroupPostProcess(group);
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");

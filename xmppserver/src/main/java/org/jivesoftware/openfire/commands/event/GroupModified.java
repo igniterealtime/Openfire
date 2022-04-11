@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jivesoftware.openfire.commands.event;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
@@ -27,10 +27,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Notifies the that a group was modified. It can be used by user providers to notify Openfire of the
@@ -60,78 +57,93 @@ public class GroupModified extends AdHocCommand {
 
         Map<String, List<String>> data = sessionData.getData();
 
-        // Get the group name
-        String groupname;
-        try {
-            groupname = get(data, "groupName", 0);
-        }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("Group name required parameter.");
-            return;
-        }
+        // Input validation
+        final Set<String> inputValidationErrors = new HashSet<>();
 
-        // Get the modification type
-        String type;
-        try {
-            type = get(data, "changeType", 0);
-        }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText("Change type required parameter.");
-            return;
-        }
-
-        // Identifies the value variable
-        String valueVariable = null;
-        String valueVariableName = null;
-
-        if ("nameModified".equals(type) || "descriptionModified".equals(type)) {
-
-            valueVariable = "originalValue";
-            valueVariableName = "Original value";
-
-        } else if ("propertyModified".equals(type) || "propertyAdded".equals(type) ||
-                "propertyDeleted".equals(type)) {
-
-            valueVariable = "propertyKey";
-            valueVariableName = "Property key";
-
-        }
-
-        // Creates event params.
-        Map<String, Object> params = new HashMap<>();
-
-        // Gets the value of the change if it exist
-        String value;
-        if (valueVariable != null) {
+        Group group = null;
+        final String groupName = get(data, "groupName", 0);
+        if (StringUtils.isBlank(groupName)) {
+            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+        } else {
             try {
-                // Gets the value
-                value = get(data, valueVariable, 0);
-                // Adds it to the event params
-                params.put(valueVariable, value);
-
-            } catch (NullPointerException npe) {
-                note.addAttribute("type", "error");
-                note.setText(valueVariableName + " required parameter.");
-                return;
+                group = GroupManager.getInstance().getGroup(groupName);
+            } catch (GroupNotFoundException e) {
+                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
             }
         }
 
-        // Adds the type of change
-        params.put("type", type);
+        final String type = get(data, "changeType", 0);
+        final String originalValue = get(data, "originalValue", 0);
+        final String propertyKey = get(data, "propertyKey", 0);
+        if (StringUtils.isBlank(type)) {
+            inputValidationErrors.add("The parameter 'changeType' is required, but is missing.");
+        } else {
+            switch (type) {
+                case "nameModified":
+                    if (StringUtils.isBlank(originalValue)) {
+                        inputValidationErrors.add("For changeType 'nameModified', parameter 'originalValue' is required.");
+                    }
+                    break;
 
-        // Sends the event
-        Group group;
-        try {
-            group = GroupManager.getInstance().getGroup(groupname, true);
+                case "descriptionModified":
+                    if (StringUtils.isBlank(originalValue)) {
+                        inputValidationErrors.add("For changeType 'descriptionModified', parameter 'originalValue' is required.");
+                    }
+                    break;
 
-            // Fire event.
-            GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_modified, params);
+                case "propertyAdded":
+                    if (StringUtils.isBlank(propertyKey)) {
+                        inputValidationErrors.add("For changeType 'propertyAdded', parameter 'propertyKey' is required.");
+                    }
+                    break;
 
-        } catch (GroupNotFoundException e) {
+                case "propertyModified":
+                    if (StringUtils.isBlank(originalValue)) {
+                        inputValidationErrors.add("For changeType 'propertyModified', parameter 'originalValue' is required.");
+                    }
+                    if (StringUtils.isBlank(propertyKey)) {
+                        inputValidationErrors.add("For changeType 'propertyModified', parameter 'propertyKey' is required.");
+                    }
+                    break;
+
+                case "propertyDeleted":
+                    if (StringUtils.isBlank(originalValue)) {
+                        inputValidationErrors.add("For changeType 'propertyDeleted', parameter 'originalValue' is required.");
+                    }
+                    if (StringUtils.isBlank(propertyKey)) {
+                        inputValidationErrors.add("For changeType 'propertyDeleted', parameter 'propertyKey' is required.");
+                    }
+                    break;
+            }
+        }
+
+        if (!inputValidationErrors.isEmpty()) {
             note.addAttribute("type", "error");
-            note.setText("Group not found.");
+            note.setText(StringUtils.join(inputValidationErrors, " "));
+            return;
+        }
+
+        // Perform post-processing (cache updates and event notifications).
+        switch (type) {
+            case "nameModified":
+                GroupManager.getInstance().renameGroupPostProcess(group, originalValue);
+                break;
+
+            case "descriptionModified":
+                GroupManager.getInstance().redescribeGroupPostProcess(group, originalValue);
+                break;
+
+            case "propertyAdded":
+                GroupManager.getInstance().propertyAddedPostProcess(group, propertyKey);
+                break;
+
+            case "propertyModified":
+                GroupManager.getInstance().propertyModifiedPostProcess(group, propertyKey, originalValue);
+                break;
+
+            case "propertyDeleted":
+                GroupManager.getInstance().propertyDeletedPostProcess(group, propertyKey, originalValue);
+                break;
         }
 
         // Answer that the operation was successful

@@ -166,6 +166,7 @@ public class IQAdminHandler {
                     // The client is requesting the list of members
                     // In a members-only room members can get the list of members
                     if (room.isMembersOnly()
+                            && MUCRole.Affiliation.member != senderRole.getAffiliation()
                             && MUCRole.Affiliation.admin != senderRole.getAffiliation()
                             && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
                         throw new ForbiddenException();

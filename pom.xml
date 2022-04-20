@@ -42,7 +42,7 @@
     <scm>
         <connection>scm:git:https://github.com/igniterealtime/Openfire.git</connection>
         <developerConnection>scm:git:git@github.com:igniterealtime/Openfire.git</developerConnection>
-        <url>https://github.com/igniterealtime/Openfire/tree/master</url>
+        <url>https://github.com/igniterealtime/Openfire/tree/main</url>
     </scm>
 
     <developers>

@@ -371,6 +371,10 @@ public class NodeSubscription {
         this.savedToDB = savedToDB;
     }
 
+    public boolean isSavedToDB() {
+        return this.savedToDB;
+    }
+
     /**
      * Configures the subscription based on the sent {@link DataForm} included in the IQ
      * packet sent by the subscriber. If the subscription was pending of configuration

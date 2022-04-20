@@ -68,6 +68,19 @@ public class NodeAffiliate implements Cacheable
     }
 
     /**
+     * Indicates if the affiliation is present in the database.
+     */
+    private boolean savedToDB = false;
+
+    public void setSavedToDB(boolean savedToDB) {
+        this.savedToDB = savedToDB;
+    }
+
+    public boolean isSavedToDB() {
+        return this.savedToDB;
+    }
+
+    /**
      * Returns the list of subscriptions of the affiliate in the node.
      *
      * @return the list of subscriptions of the affiliate in the node.

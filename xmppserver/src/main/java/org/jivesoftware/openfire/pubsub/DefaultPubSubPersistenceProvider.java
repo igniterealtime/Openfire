@@ -856,6 +856,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             }
             NodeAffiliate affiliate = new NodeAffiliate(node, new JID(rs.getString(2)));
             affiliate.setAffiliation(NodeAffiliate.Affiliation.valueOf(rs.getString(3)));
+            affiliate.setSavedToDB(true);
             node.addAffiliate(affiliate);
         }
         catch (SQLException sqle) {
@@ -996,12 +997,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
+
             pstmt = con.prepareStatement(ADD_AFFILIATION);
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.setString(4, affiliate.getAffiliation().name());
             pstmt.executeUpdate();
+            affiliate.setSavedToDB(true);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while creating an affiliation ({}) to a node ({}) in the database.", affiliate, node.getUniqueIdentifier(), sqle);
@@ -1046,6 +1049,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.executeUpdate();
+            affiliate.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while removing an affiliation ({}) to a node ({}) in the database.", affiliate, node.getUniqueIdentifier(), sqle);
@@ -1163,6 +1167,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(subscription.getNode().getNodeID()));
             pstmt.setString(3, subscription.getID());
             pstmt.executeUpdate();
+            subscription.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while removing a subscription ({}) in the database.", subscription, sqle);

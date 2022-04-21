@@ -100,10 +100,10 @@ jobs:
     outputs:
       is_publishable_branch: ${{ steps.check-branch.outputs.is_publishable_branch }}
     steps:
-      - name: check branch ${{ github.ref }} is either master or a version number
+      - name: check branch ${{ github.ref }} is either main or a version number
         id: check-branch
         run: |
-          if [[ ${{ github.ref }} == 'refs/heads/master' || ${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then
+          if [[ ${{ github.ref }} == 'refs/heads/main' || ${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then
             echo "::set-output name=is_publishable_branch::true"
           else
             echo "::set-output name=is_publishable_branch::false"
@@ -175,7 +175,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           # Defend against another commit quickly following the first
-          # We want the one that's been tested, rather than the head of master
+          # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
       - name: Cache Maven repository
         uses: actions/cache@v1
@@ -224,14 +224,14 @@ jobs:
     if: |
       needs.can-publish-docker.outputs.is_DOCKERHUB_SECRET_set == 'true' && 
       github.event_name == 'push' && 
-      (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
+      (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
 
     outputs:
       imagedigest: ${{ steps.docker_build.outputs.digest }}
     
     steps:
-      - name: Set up variables if we're on master
-        if: ${{ github.ref == 'refs/heads/master' }}
+      - name: Set up variables if we're on main
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: echo "SOURCE_TAG=alpha" >> $GITHUB_ENV
 
       - name: Set up variables if we're on a tag
@@ -241,7 +241,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           # Defend against another commit quickly following the first
-          # We want the one that's been tested, rather than the head of master
+          # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
 
       - name: Download distribution artifact from build job.

@@ -20,7 +20,7 @@
             <p>Openfire can be deployed as part of a container architecture. This document covers how the official images are built, how to deploy them, and how you can build your own.</p>
 
             <h2>Builds</h2>
-            <p>The official builds of Openfire for Docker come from GitHub. When a tag is pushed, a new image is built by the CI and uploaded to Docker Hub with the same tag. Any push to the master branch is built and pushed to the 'latest' tag on Docker Hub, and whilst every effort made, these should be considered potentially unstable.</p>
+            <p>The official builds of Openfire for Docker come from GitHub. When a tag is pushed, a new image is built by the CI and uploaded to Docker Hub with the same tag. Any push to the main branch is built and pushed to the 'latest' tag on Docker Hub, and whilst every effort made, these should be considered potentially unstable.</p>
             <p>You can build the container image locally as you might any other, using <pre>docker build . -t openfire:mytag</pre>. Note that Openfire is a large application in a monorepo with a sizeable number of dependencies, and as such doesn't use a multi-stage build for Docker. Instead it builds an image from an already compiled repository. For more repeatable builds, try <pre>build/docker/buildWithDocker.sh</pre>.</p>
 
             <h2>Usage</h2>

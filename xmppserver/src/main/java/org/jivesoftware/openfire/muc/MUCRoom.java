@@ -1452,12 +1452,15 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         // the stanza don't get the 'real' address from the recipient.
         final Packet immutable = stanza.createCopy();
 
-        // Forward it to each occupant.
-        for (final MUCRole occupant : occupants) {
+        //We don't want to send a "message" stanza to every instance of an occupant... this is handled by carbon copies...
+        if (stanza instanceof Message) {
+            final MUCRole occupant = occupants.get(0);
             occupant.send(stanza); // Use the stanza copy to send data. The 'to' address of this object will be changed by sending it.
-            if (stanza instanceof Message) {
-                // Use an unmodified copy of the stanza (with the original 'to' address) when invoking event listeners (OF-2163)
-                MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(), (Message) immutable);
+            MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(), (Message) immutable);
+        } else {
+            //Not a "message" send to all occupants
+            for (final MUCRole occupant : occupants) {
+                occupant.send(stanza); // Use the stanza copy to send data. The 'to' address of this object will be changed by sending it.
             }
         }
     }

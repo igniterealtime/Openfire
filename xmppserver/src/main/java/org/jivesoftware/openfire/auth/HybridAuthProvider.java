@@ -182,11 +182,11 @@ public class HybridAuthProvider implements AuthProvider {
             primaryProvider.authenticate(username, password);
             return;
         }
-        else if (secondaryOverrides.contains(username.toLowerCase())) {
+        else if (secondaryOverrides != null && secondaryOverrides.contains(username.toLowerCase())) {
             secondaryProvider.authenticate(username, password);
             return;
         }
-        else if (tertiaryOverrides.contains(username.toLowerCase())) {
+        else if (tertiaryOverrides != null && tertiaryOverrides.contains(username.toLowerCase())) {
             tertiaryProvider.authenticate(username, password);
             return;
         }

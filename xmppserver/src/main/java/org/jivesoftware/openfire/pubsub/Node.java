@@ -1936,6 +1936,10 @@ public abstract class Node implements Cacheable, Externalizable {
             return;
         }
 
+        if (parentIdentifier != null && newParent != null && !parentIdentifier.equals(newParent.getUniqueIdentifier())) {
+            // FIXME: Remove this node from the parent when the parent isn't loaded. A previous commit message suggests
+            //        that calling getParent() causes problems when the node is being initialized. OF-2402.
+        }
         if (parent != null) {
             // Remove this node from the current parent node
             parent.removeChildNode(this);
@@ -1943,8 +1947,12 @@ public abstract class Node implements Cacheable, Externalizable {
         // Set the new parent of this node
         parent = newParent;
         if (parent != null) {
+            parentIdentifier = parent.getUniqueIdentifier();
+
             // Add this node to the new parent node
             parent.addChildNode(this);
+        } else {
+            parentIdentifier = null;
         }
         if (savedToDB) {
             XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateNode(this);

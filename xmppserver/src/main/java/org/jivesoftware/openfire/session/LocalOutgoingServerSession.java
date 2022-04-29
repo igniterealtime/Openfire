@@ -363,7 +363,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         }
                         else if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                             log.debug("I have no StartTLS yet I must TLS");
-                            connection.close();
+                            connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
                             return null;
                         }
                         // Check if we are going to try server dialback (XMPP 1.0)
@@ -397,7 +397,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.debug( "Something went wrong so close the connection and try server dialback over a plain connection" );
             if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                 log.debug("I have no StartTLS yet I must TLS");
-                connection.close();
+                connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
                 return null;
             }
             connection.close();

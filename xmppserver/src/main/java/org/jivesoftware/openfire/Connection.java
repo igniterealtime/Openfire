@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 
 package org.jivesoftware.openfire;
 
-import java.io.Closeable;
-import java.net.UnknownHostException;
-import java.security.cert.Certificate;
-
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
+import java.io.Closeable;
+import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 
 /**
  * Represents a connection on the server.
@@ -158,6 +158,21 @@ public interface Connection extends Closeable {
      */
     @Override
     void close();
+
+    /**
+     * Close this session including associated socket connection, optionally citing a
+     * stream error. The events for closing the session are:
+     * <ul>
+     *      <li>Set closing flag to prevent redundant shutdowns.
+     *      <li>Close the socket.
+     *      <li>Notify all listeners that the channel is shut down.
+     * </ul>
+     *
+     * Not all implementations use the same order of events.
+     *
+     * @param error If non-null, the end-stream tag will be preceded with this error.
+     */
+    void close(@Nullable final StreamError error);
 
     /**
      * Notification message indicating that the server is being shutdown. Implementors

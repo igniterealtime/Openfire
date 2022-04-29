@@ -426,15 +426,10 @@ public abstract class StanzaHandler {
      */
     private boolean negotiateTLS() {
         if (connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
-            // Set the not_authorized error
-            StreamError error = new StreamError(StreamError.Condition.not_authorized);
-            // Deliver stanza
-            connection.deliverRawText(error.toXML());
-            // Close the underlying connection
-            connection.close();
+            // Send a not_authorized error and close the underlying connection
+            connection.close(new StreamError(StreamError.Condition.not_authorized, "A request to negotiate TLS is denied, as TLS has been disabled by configuration."));
             // Log a warning so that admins can track this case from the server side
-            Log.warn("TLS requested by initiator when TLS was never offered by server. " +
-                    "Closing connection : " + connection);
+            Log.warn("TLS requested by initiator when TLS was never offered by server. Closing connection: {}", connection);
             return false;
         }
         // Client requested to secure the connection using TLS. Negotiate TLS.
@@ -609,15 +604,10 @@ public abstract class StanzaHandler {
      * closing the connection a stream error will be sent to the entity.
      */
     void closeNeverSecuredConnection() {
-        // Set the not_authorized error
-        StreamError error = new StreamError(StreamError.Condition.not_authorized);
-        // Deliver stanza
-        connection.deliverRawText(error.toXML());
-        // Close the underlying connection
-        connection.close();
+        // Send a stream error and close the underlying connection.
+        connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was established."));
         // Log a warning so that admins can track this case from the server side
-        Log.warn("TLS was required by the server and connection was never secured. " +
-                "Closing connection : " + connection);
+        Log.warn("TLS was required by the server and connection was never secured. Closing connection: {}", connection);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,21 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.StreamError;
+import org.xmpp.packet.*;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * A SocketReader specialized for server connections. This reader will be used when the open
@@ -159,26 +155,18 @@ public class ServerSocketReader extends SocketReader {
      */
     private void packetReceived(Packet packet) throws PacketRejectedException {
         if (packet.getTo() == null || packet.getFrom() == null) {
-            Log.debug("Closing IncomingServerSession due to packet with no TO or FROM: " +
-                    packet.toXML());
-            // Send a stream error saying that the packet includes no TO or FROM
-            StreamError error = new StreamError(StreamError.Condition.improper_addressing);
-            connection.deliverRawText(error.toXML());
-            // Close the underlying connection
-            connection.close();
+            Log.debug("Closing IncomingServerSession due to packet with no TO or FROM: {}", packet.toXML());
+            // Send a stream error saying that the packet includes no TO or FROM and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.improper_addressing, "Missing 'to' or 'from' attribute."));
             open = false;
             throw new PacketRejectedException("Packet with no TO or FROM attributes");
         }
         else if (!((LocalIncomingServerSession) session).isValidDomain(packet.getFrom().getDomain())) {
-            Log.debug("Closing IncomingServerSession due to packet with invalid domain: " +
-                    packet.toXML());
-            // Send a stream error saying that the packet includes an invalid FROM
-            StreamError error = new StreamError(StreamError.Condition.invalid_from);
-            connection.deliverRawText(error.toXML());
-            // Close the underlying connection
-            connection.close();
+            Log.debug("Closing IncomingServerSession due to packet with invalid domain: {}", packet.toXML());
+            // Send a stream error saying that the packet includes an invalid FROM and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.invalid_from, "Invalid domain specified in 'from' attribute."));
             open = false;
-            throw new PacketRejectedException("Packet with no TO or FROM attributes");
+            throw new PacketRejectedException("Packet invalid FROM attribute");
         }
     }
 

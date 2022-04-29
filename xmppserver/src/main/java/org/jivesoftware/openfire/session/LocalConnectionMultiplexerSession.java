@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 
 package org.jivesoftware.openfire.session;
-
-import java.util.Collection;
-import java.util.Locale;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
@@ -40,6 +37,9 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
+
+import java.util.Collection;
+import java.util.Locale;
 
 /**
  * Represents a session between the server and a connection manager.<p>
@@ -80,13 +80,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
-            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Domain not specified in stanza: " + xpp.getText());
-            // Include the bad-format in the response
-            StreamError error = new StreamError(StreamError.Condition.bad_format);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Domain not specified in stanza: {}", xpp.getText());
+            // Include the bad-format in the response and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.bad_format, "Missing 'to' attribute value."));
             return null;
         }
 
@@ -96,24 +92,15 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         String secretKey = ConnectionMultiplexerManager.getDefaultSecret();
         if (secretKey == null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] A shared secret for connection manager was not found.");
-            // Include the internal-server-error in the response
-            StreamError error = new StreamError(StreamError.Condition.internal_server_error);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            // Include the internal-server-error in the response and close the underlying connection
+            connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
         // Check that the requested subdomain is not already in use
         if (SessionManager.getInstance().getConnectionMultiplexerSession(address) != null) {
-            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Another connection manager is already using domain: " + domain);
-            // Domain already occupied so return a conflict error and close the connection
-            // Include the conflict error in the response
-            StreamError error = new StreamError(StreamError.Condition.conflict);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Another connection manager is already using domain: {}", domain);
+            // Domain already occupied so return a conflict error and close the connection.
+            connection.close(new StreamError(StreamError.Condition.conflict, "The requested address is already being used by another connection manager."));
             return null;
         }
 
@@ -178,9 +165,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             return session;
         }
         catch (Exception e) {
-            Log.error("An error occured while creating a Connection Manager Session", e);
+            Log.error("An error occurred while creating a Connection Manager Session", e);
             // Close the underlying connection
-            connection.close();
+            connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
     }
@@ -214,17 +201,12 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      */
     public boolean authenticate(String digest) {
         // Perform authentication. Wait for the handshake (with the secret key)
-        String anticipatedDigest = AuthFactory.createDigest(getStreamID().getID(),
-                ConnectionMultiplexerManager.getDefaultSecret());
+        String anticipatedDigest = AuthFactory.createDigest(getStreamID().getID(), ConnectionMultiplexerManager.getDefaultSecret());
         // Check that the provided handshake (secret key + sessionID) is correct
         if (!anticipatedDigest.equalsIgnoreCase(digest)) {
-            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Incorrect handshake for connection manager with domain: " +
-                    getAddress().getDomain());
-            //  The credentials supplied by the initiator are not valid (answer an error
-            // and close the connection)
-            conn.deliverRawText(new StreamError(StreamError.Condition.not_authorized).toXML());
-            // Close the underlying connection
-            conn.close();
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Incorrect handshake for connection manager with domain: {}", getAddress().getDomain());
+            // The credentials supplied by the initiator are not valid (answer an error and close the connection)
+            conn.close(new StreamError(StreamError.Condition.not_authorized));
             return false;
         }
         else {

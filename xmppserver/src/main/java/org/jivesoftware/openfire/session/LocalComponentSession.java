@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 package org.jivesoftware.openfire.session;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketException;
@@ -40,6 +33,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
+
+import java.util.*;
 
 /**
  * Represents a session between the server and a component.
@@ -76,10 +71,9 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     public static LocalComponentSession createSession(String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         String domain = xpp.getAttributeValue("", "to");
-        Boolean allowMultiple = xpp.getAttributeValue("", "allowMultiple") != null;
+        boolean allowMultiple = xpp.getAttributeValue("", "allowMultiple") != null;
 
-        Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: " +
-                domain);
+        Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: {}", domain);
 
         // Default answer header in case of an error
         StringBuilder sb = new StringBuilder();
@@ -94,13 +88,9 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
-            Log.debug("LocalComponentSession: [ExComp] Domain not specified in stanza: " + xpp.getText());
-            // Include the bad-format in the response
-            StreamError error = new StreamError(StreamError.Condition.bad_format);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            Log.debug("LocalComponentSession: [ExComp] Domain not specified in stanza: {}", xpp.getText());
+            // Include the bad-format in the response and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.bad_format, "Domain not specified in 'to' attribute."));
             return null;
         }
 
@@ -114,37 +104,24 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         JID componentJID = new JID(domain);
         // Check that an external component for the specified subdomain may connect to this server
         if (!ExternalComponentManager.canAccess(subdomain)) {
-            Log.debug(
-                    "LocalComponentSession: [ExComp] Component is not allowed to connect with subdomain: " + subdomain);
-            StreamError error = new StreamError(StreamError.Condition.host_unknown);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
+            Log.debug("LocalComponentSession: [ExComp] Component is not allowed to connect with subdomain: {}", subdomain);
             // Close the underlying connection
-            connection.close();
+            connection.close(new StreamError(StreamError.Condition.host_unknown, "Component is not allowed to connect with the requested subdomain."));
             return null;
         }
         // Check that a secret key was configured in the server
         String secretKey = ExternalComponentManager.getSecretForComponent(subdomain);
         if (secretKey == null) {
             Log.debug("LocalComponentSession: [ExComp] A shared secret for the component was not found.");
-            // Include the internal-server-error in the response
-            StreamError error = new StreamError(StreamError.Condition.internal_server_error);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            // Include the internal-server-error in the response and close the underlying connection.
+            connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
         // Check that the requested subdomain is not already in use
         if (!allowMultiple && InternalComponentManager.getInstance().hasComponent(componentJID)) {
             Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: " + domain);
             // Domain already occupied so return a conflict error and close the connection
-            // Include the conflict error in the response
-            StreamError error = new StreamError(StreamError.Condition.conflict);
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
-            // Close the underlying connection
-            connection.close();
+            connection.close(new StreamError(StreamError.Condition.conflict, "The requested domain is already being used by another component."));
             return null;
         }
 
@@ -179,9 +156,9 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             return session;
         }
         catch (Exception e) {
-            Log.error("An error occured while creating a ComponentSession", e);
+            Log.error("An error occurred while creating a ComponentSession", e);
             // Close the underlying connection
-            connection.close();
+            connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
     }
@@ -225,13 +202,9 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         String anticipatedDigest = AuthFactory.createDigest(getStreamID().getID(), secretKey);
         // Check that the provided handshake (secret key + sessionID) is correct
         if (!anticipatedDigest.equalsIgnoreCase(digest)) {
-            Log.debug("LocalComponentSession: [ExComp] Incorrect handshake for component with domain: " +
-                    defaultSubdomain);
-            //  The credentials supplied by the initiator are not valid (answer an error
-            // and close the connection)
-            conn.deliverRawText(new StreamError(StreamError.Condition.not_authorized).toXML());
-            // Close the underlying connection
-            conn.close();
+            Log.debug("LocalComponentSession: [ExComp] Incorrect handshake for component with domain: {}", defaultSubdomain);
+            // The credentials supplied by the initiator are not valid (answer an error and close the connection).
+            conn.close(new StreamError(StreamError.Condition.not_authorized));
             return false;
         }
         else {
@@ -244,19 +217,13 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             try {
                 InternalComponentManager.getInstance().addComponent(defaultSubdomain, component);
                 conn.registerCloseListener( handback -> InternalComponentManager.getInstance().removeComponent( defaultSubdomain, (ExternalComponent) handback ), component );
-                Log.debug(
-                        "LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: " +
-                                defaultSubdomain);
+                Log.debug("LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: {}", defaultSubdomain);
                 return true;
             }
             catch (ComponentException e) {
-                Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: " +
-                        defaultSubdomain);
-                //  The credentials supplied by the initiator are not valid (answer an error
-                // and close the connection)
-                conn.deliverRawText(new StreamError(StreamError.Condition.conflict).toXML());
-                // Close the underlying connection
-                conn.close();
+                Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: {}", defaultSubdomain, e);
+                // The credentials supplied by the initiator are not valid (answer an error and close the connection).
+                conn.close(new StreamError(StreamError.Condition.conflict, "Another component seems to be using this domain."));
                 return false;
             }
         }
@@ -332,7 +299,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
                 }
                 catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                    connection.close();
+                    connection.close(new StreamError(StreamError.Condition.internal_server_error));
                 }
             }
         }

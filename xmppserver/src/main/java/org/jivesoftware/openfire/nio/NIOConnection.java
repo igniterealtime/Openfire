@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,6 @@
  */
 
 package org.jivesoftware.openfire.nio;
-
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.COMPRESSION_FILTER_NAME;
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.EXECUTOR_FILTER_NAME;
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.TLS_FILTER_NAME;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.UnknownHostException;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.annotation.Nullable;
-import javax.net.ssl.*;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.filterchain.IoFilterChain;
@@ -52,6 +33,25 @@ import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.StreamError;
+
+import javax.annotation.Nullable;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.*;
 
 /**
  * Implementation of {@link Connection} interface specific for NIO connections when using the Apache MINA framework.
@@ -102,7 +102,7 @@ public class NIOConnection implements Connection {
      * closed.
      */
     private AtomicReference<State> state = new AtomicReference<>(State.OPEN);
-    
+
     /**
      * Lock used to ensure the integrity of the underlying IoSession (refer to
      * https://issues.apache.org/jira/browse/DIRMINA-653 for details)
@@ -214,6 +214,11 @@ public class NIOConnection implements Connection {
 
     @Override
     public void close() {
+        close(null);
+    }
+
+    @Override
+    public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
 
             // Ensure that the state of this connection, its session and the MINA context are eventually closed.
@@ -222,8 +227,14 @@ public class NIOConnection implements Connection {
                 session.setStatus(Session.STATUS_CLOSED);
             }
 
+            String rawEndStream = "";
+            if (error != null) {
+                rawEndStream = error.toXML();
+            }
+            rawEndStream += "</stream:stream>";
+
             try {
-                deliverRawText0("</stream:stream>");
+                deliverRawText0(rawEndStream);
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
             }
@@ -240,9 +251,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public void systemShutdown() {
-        deliverRawText("<stream:error><system-shutdown " +
-                "xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>");
-        close();
+        close(new StreamError(StreamError.Condition.system_shutdown));
     }
 
     /**
@@ -314,7 +323,7 @@ public class NIOConnection implements Connection {
             try {
                 buffer.putString(packet.getElement().asXML(), encoder.get());
                 buffer.flip();
-                
+
                 ioSessionLock.lock();
                 try {
                     ioSession.write(buffer);

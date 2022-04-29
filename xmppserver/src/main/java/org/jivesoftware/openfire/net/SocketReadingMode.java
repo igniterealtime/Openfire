@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import java.io.IOException;
-import java.net.Socket;
-
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
@@ -29,6 +26,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.StreamError;
 
 import javax.net.ssl.SSLHandshakeException;
+import java.io.IOException;
+import java.net.Socket;
 
 /**
  * Abstract class for {@link BlockingReadingMode}.
@@ -66,15 +65,10 @@ abstract class SocketReadingMode {
      */
     protected boolean negotiateTLS() {
         if (socketReader.connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
-            // Set the not_authorized error
-            StreamError error = new StreamError(StreamError.Condition.not_authorized);
-            // Deliver stanza
-            socketReader.connection.deliverRawText(error.toXML());
-            // Close the underlying connection
-            socketReader.connection.close();
+            // Send a not_authorized error and close the underlying connection
+            socketReader.connection.close(new StreamError(StreamError.Condition.not_authorized, "A request to negotiate TLS is denied, as TLS has been disabled by configuration."));
             // Log a warning so that admins can track this case from the server side
-            Log.warn("TLS requested by initiator when TLS was never offered by server. " +
-                    "Closing connection : " + socketReader.connection);
+            Log.warn("TLS requested by initiator when TLS was never offered by server. Closing connection: {}", socketReader.connection);
             return false;
         }
         // Client requested to secure the connection using TLS. Negotiate TLS.

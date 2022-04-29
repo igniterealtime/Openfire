@@ -17,6 +17,8 @@
 package org.jivesoftware.util;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -120,6 +122,16 @@ public class FaviconServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) {
         final String host = request.getParameter("host");
 
+        // OF-1885: Ensure that the provided value is a valid hostname.
+        try {
+            //noinspection ResultOfMethodCallIgnored
+            InetAddress.getByName(host);
+        } catch (UnknownHostException e) {
+            LOGGER.info("Request for favicon of hostname that can't be parsed as a valid hostname '{}' is ignored.", host, e);
+            writeBytesToStream(defaultBytes, response);
+            return;
+        }
+
         // Validate that we're connected to the host
         final SessionManager sessionManager = SessionManager.getInstance();
         final Optional<String> optionalHost = Stream
@@ -195,9 +207,10 @@ public class FaviconServlet extends HttpServlet {
         return bytes;
     }
 
+    @SuppressWarnings("lgtm[java/ssrf]")
     private byte[] getImage(String url) {
         // Try to get the favicon from the url using an HTTP connection from the pool
-        // that also allows to configure timeout values (e.g. connect and get data)
+        // that also allows configuring timeout values (e.g. connect and get data)
         final RequestConfig requestConfig = RequestConfig.custom()
             .setConnectTimeout(5000)
             .setSocketTimeout(5000)

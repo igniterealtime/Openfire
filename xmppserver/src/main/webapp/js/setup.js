@@ -1,18 +1,17 @@
 /*
 togglePanel function
 This is for showing and hiding the advanced options panel.
-This toggles toggles an individual panel (slides up and down).
+This toggles an individual panel (slides up and down).
 */
 
-function togglePanel(thisID) {
-
-let activeLink = thisID.id+"Link";
-
-    if ($(thisID).style.display != 'none') {
-        Effect.toggle($(thisID),'slide', {duration: .4});
-        $(activeLink).className = "";
+function togglePanel(panel)
+{
+    const activeLink = document.getElementById(panel.id+"Link");
+    if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+        activeLink.className = 'jiveAdvancedButtonOn';
     } else {
-        Effect.toggle($(thisID),'slide', {duration: .4});
-        $(activeLink).className = "jiveAdvancedButtonOn";
+        panel.style.display = 'block';
+        activeLink.className = '';
     }
 }

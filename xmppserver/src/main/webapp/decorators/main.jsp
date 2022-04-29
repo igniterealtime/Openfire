@@ -62,12 +62,7 @@
         <link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
         <link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
         <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
-        <script src="<%= path %>/js/prototype.js"></script>
-        <script src="<%= path %>/js/scriptaculous.js"></script>
         <script src="<%= path %>/js/cookies.js"></script>
-        <script>
-
-        </script>
         <script src="<%= path %>/js/behaviour.js"></script>
         <script>
         // Add a nice little rollover effect to any row in a jive-table object. This will help

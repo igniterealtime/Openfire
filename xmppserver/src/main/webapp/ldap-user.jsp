@@ -21,8 +21,6 @@
     @import "style/ldap.css";
 </style>
 
-<script src="js/prototype.js"></script>
-<script src="js/scriptaculous.js"></script>
 <script src="js/lightbox.js"></script>
 <script src="js/setup.js"></script>
 

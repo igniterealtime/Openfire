@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.StringTokenizer;
-import java.util.Vector;
-
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.admin.AdminManager;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Different clients perform authentication differently, so this policy 
@@ -59,22 +60,11 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationPolicy.class);
 
-    private Vector<String> approvedRealms;
-    private boolean proxyAuth;
-
-    public DefaultAuthorizationPolicy() {
-        approvedRealms = new Vector<>();
-        proxyAuth = false;
-        
-        String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
-        if(realmList != null) {
-            StringTokenizer st = new StringTokenizer(realmList, " ,\t\n\r\f");
-            while(st.hasMoreTokens()) {
-                approvedRealms.add(st.nextToken());
-            }
-        }
-        proxyAuth = JiveGlobals.getBooleanProperty("sasl.proxyAuth", false);
-    }
+    public static final SystemProperty<Boolean> IGNORE_CASE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.ignorecase")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
 
     /**
      * Returns true if the principal is explicitly authorized to the JID
@@ -102,11 +92,11 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             authenRealm = authenID.substring((authenID.lastIndexOf("@")+1));
         }
 
-        if (!proxyAuth || !AdminManager.getInstance().isUserAdmin(authenUser, true)) {
+        if (!SASLAuthentication.PROXY_AUTH.getValue() || !AdminManager.getInstance().isUserAdmin(authenUser, true)) {
             if(!userUser.equals(authenUser)) {
-                //for this policy the user portion of both must match, so lets short circut here if we can
-                if(JiveGlobals.getBooleanProperty("xmpp.auth.ignorecase",true)) {
-                    if(!userUser.toLowerCase().equals(authenUser.toLowerCase())){
+                // For this policy the user portion of both must match, so lets short circuit here if we can.
+                if(IGNORE_CASE.getValue()) {
+                    if(!userUser.equalsIgnoreCase(authenUser)){
                         if (Log.isDebugEnabled()) {
                             Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
                         }
@@ -124,11 +114,11 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             if(authenRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue()))  {
                 Log.debug("DefaultAuthorizationPolicy: authenRealm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
                 authorized = true;
-            } else if(authenRealm.equals(JiveGlobals.getProperty("sasl.realm")))  {
+            } else if(authenRealm.equals(SASLAuthentication.REALM.getValue()))  {
                 Log.debug("DefaultAuthorizationPolicy: authenRealm = sasl.realm");
                 authorized = true;
             } else { 
-                for(String realm : approvedRealms) {
+                for(String realm : SASLAuthentication.APPROVED_REALMS.getValue()) {
                     if(authenRealm.equals(realm)) {
                         if (Log.isDebugEnabled()) {
                             Log.debug("DefaultAuthorizationPolicy: authenRealm = "+realm+" which is approved");

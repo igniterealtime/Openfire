@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -61,8 +59,6 @@ public class AuthorizationManager {
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("provider.authorization.classList");
         JiveGlobals.migrateProperty("provider.authorizationMapping.classList");
-        JiveGlobals.migrateProperty("sasl.approvedRealms");
-        JiveGlobals.migrateProperty("sasl.realm");
 
         String classList = JiveGlobals.getProperty("provider.authorization.classList");
         if (classList != null) {

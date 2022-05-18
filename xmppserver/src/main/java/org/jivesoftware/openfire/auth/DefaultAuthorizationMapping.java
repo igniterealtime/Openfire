@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.*;
 
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,20 +36,6 @@ import org.slf4j.LoggerFactory;
 public class DefaultAuthorizationMapping implements AuthorizationMapping {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationMapping.class);
-
-    private Vector<String> approvedRealms;
-
-    public DefaultAuthorizationMapping() {
-        approvedRealms = new Vector<>();
-        
-        String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
-        if(realmList != null) {
-            StringTokenizer st = new StringTokenizer(realmList, " ,\t\n\r\f");
-            while(st.hasMoreTokens()) {
-                approvedRealms.add(st.nextToken());
-            }
-        }
-    }
 
     /**
      * Returns true if the principal is explicity authorized to the JID
@@ -66,11 +53,11 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
                 if(realm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
                     Log.debug("DefaultAuthorizationMapping: realm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
                     return username;
-                } else if(realm.equals(JiveGlobals.getProperty("sasl.realm"))) {
+                } else if(realm.equals(SASLAuthentication.REALM.getValue())) {
                     Log.debug("DefaultAuthorizationMapping: ream = sasl.realm");
                     return username;
                 } else {
-                    for(String approvedRealm : approvedRealms) {
+                    for(String approvedRealm : SASLAuthentication.APPROVED_REALMS.getValue()) {
                         if(realm.equals(approvedRealm)) {
                             Log.debug("DefaultAuthorizationMapping: realm ("+realm+") = "+approvedRealm+" which is approved");
                             return username;

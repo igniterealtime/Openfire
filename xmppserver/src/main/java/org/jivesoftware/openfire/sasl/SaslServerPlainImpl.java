@@ -123,7 +123,7 @@ public class SaslServerPlainImpl implements SaslServer {
                     // The client does not provide an authorization identity when it wishes the server to derive an
                     // identity from the credentials and use that as the authorization identity.
                     authcid = tokens.nextToken(); // identity whose password will be used
-                    authzid = authcid; // identity to act as.
+                    authzid = AuthorizationManager.map(authcid); // identity to act as.
                 }
                 password = tokens.nextToken();
                 NameCallback ncb = new NameCallback("PLAIN authentication ID: ", authcid);

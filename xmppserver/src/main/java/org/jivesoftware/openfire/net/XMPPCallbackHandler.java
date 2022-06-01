@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,12 +37,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Callback handler that may be used when doing SASL authentication. A CallbackHandler
- * may be required depending on the SASL mechanism being used.<p>
+ * may be required depending on the SASL mechanism being used.
  *
  * Mechanisms that use a digest don't include a password so the server needs to use the
  * stored password of the user to compare it (somehow) with the specified digest. This
- * operation requires that the UserProvider being used supports passwords retrival.
- * {@link SASLAuthentication} should not offer these kind of SASL mechanisms if the user
+ * operation requires that the UserProvider being used supports passwords retrieval.
+ * {@link SASLAuthentication} should not offer these kinds of SASL mechanisms if the user
  * provider being in use does not support passwords retrieval.
  *
  * @author Hao Chen
@@ -55,11 +55,8 @@ public class XMPPCallbackHandler implements CallbackHandler {
     }
 
     @Override
-    public void handle(final Callback[] callbacks)
-            throws IOException, UnsupportedCallbackException {
-
-
-        String realm;
+    public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException
+    {
         String name = null;
 
         for (Callback callback : callbacks) {
@@ -71,16 +68,13 @@ public class XMPPCallbackHandler implements CallbackHandler {
                 if (name == null) {
                     name = ((NameCallback) callback).getDefaultName();
                 }
-                //Log.debug("XMPPCallbackHandler: NameCallback: " + name);
+                Log.trace("NameCallback: {}", name);
             }
             else if (callback instanceof PasswordCallback) {
                 try {
-                    // Get the password from the UserProvider. Some UserProviders may not support
-                    // this operation
-                    ((PasswordCallback) callback)
-                            .setPassword(AuthFactory.getPassword(name).toCharArray());
-
-                    //Log.debug("XMPPCallbackHandler: PasswordCallback");
+                    // Get the password from the UserProvider. Some UserProviders may not support this operation
+                    ((PasswordCallback) callback).setPassword(AuthFactory.getPassword(name).toCharArray());
+                    Log.trace("PasswordCallback");
                 }
                 catch (UserNotFoundException | UnsupportedOperationException e) {
                     throw new IOException(e.toString());
@@ -88,7 +82,7 @@ public class XMPPCallbackHandler implements CallbackHandler {
 
             }
             else if (callback instanceof VerifyPasswordCallback) {
-                //Log.debug("XMPPCallbackHandler: VerifyPasswordCallback");
+                Log.trace("VerifyPasswordCallback");
                 VerifyPasswordCallback vpcb = (VerifyPasswordCallback) callback;
                 try {
                     AuthToken at = AuthFactory.authenticate(name, new String(vpcb.getPassword()));
@@ -99,42 +93,37 @@ public class XMPPCallbackHandler implements CallbackHandler {
                 }
             }
             else if (callback instanceof AuthorizeCallback) {
-                //Log.debug("XMPPCallbackHandler: AuthorizeCallback");
+                Log.trace("AuthorizeCallback");
                 AuthorizeCallback authCallback = ((AuthorizeCallback) callback);
-                // Principal that authenticated
-                String principal = authCallback.getAuthenticationID();
-                // Username requested (not full JID)
-                String username = authCallback.getAuthorizationID();
-                // Remove any REALM from the username. This is optional in the spec and it may cause
-                // a lot of users to fail to log in if their clients is sending an incorrect value
-                if (username != null && username.contains("@")) {
-                    username = username.substring(0, username.lastIndexOf("@"));
+
+                // Principal that authenticated - identity whose password was used.
+                String authcid = authCallback.getAuthenticationID();
+
+                // Username requested (not full JID) - identity to act as.
+                String authzid = authCallback.getAuthorizationID();
+
+                // Remove any REALM from the username. This is optional in the specifications, and it may cause
+                // a lot of users to fail to log in if their clients is sending an incorrect value.
+                if (authzid != null && authzid.contains("@")) {
+                    authzid = authzid.substring(0, authzid.lastIndexOf("@"));
                 }
-                if (principal.equals(username)) {
-                    //client perhaps made no request, get default username
-                    username = AuthorizationManager.map(principal);
-                    if (Log.isDebugEnabled()) {
-                        //Log.debug("XMPPCallbackHandler: no username requested, using " + username);
-                    }
+                if (authcid.equals(authzid)) {
+                    // Client perhaps made no request, get default username.
+                    authzid = AuthorizationManager.map(authcid);
+                    Log.trace("No username requested, using {}", authzid);
                 }
-                if (AuthorizationManager.authorize(username, principal)) {
-                    if (Log.isDebugEnabled()) {
-                        //Log.debug("XMPPCallbackHandler: " + principal + " authorized to " + username);
-                    }
+                if (AuthorizationManager.authorize(authzid, authcid)) {
+                    Log.trace("{} authorized to {}", authcid, authzid);
                     authCallback.setAuthorized(true);
-                    authCallback.setAuthorizedID(username);
+                    authCallback.setAuthorizedID(authzid);
                 }
                 else {
-                    if (Log.isDebugEnabled()) {
-                        //Log.debug("XMPPCallbackHandler: " + principal + " not authorized to " + username);
-                    }
+                    Log.trace("{} not authorized to {}", authcid, authzid);
                     authCallback.setAuthorized(false);
                 }
             }
             else {
-                if (Log.isDebugEnabled()) {
-                    //Log.debug("XMPPCallbackHandler: Callback: " + callback.getClass().getSimpleName());
-                }
+                Log.debug("Unsupported callback: {}" + callback.getClass().getSimpleName());
                 throw new UnsupportedCallbackException(callback, "Unrecognized Callback");
             }
         }

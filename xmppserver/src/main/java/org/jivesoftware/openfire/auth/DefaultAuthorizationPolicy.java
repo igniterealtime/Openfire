@@ -23,35 +23,28 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
- * Different clients perform authentication differently, so this policy 
- * will authorize any principal to a requested user that match specific 
- * conditions that are considered secure defaults for most installations. 
+ * Different clients perform authentication differently, so this policy will authorize any authentication identity, or
+ * 'principal' (identity whose password will be used) to a requested authorization identity (identity to act as) that
+ * match specific conditions that are considered secure defaults for most installations.
  *
- * Keep in mind if a client does not request any username Java copies the
- * authenticated ID to the requested username.
+ * Keep in mind if a client does not request any authorization identity, the authentication identity will be used as the
+ * authorization identity.
  *
  * <ul>
- * <li>If the authenticated ID is in the form of a plain username, and the 
- *     requested user is in the form of a plain username, then the two must
- *     be exactly the same.  
- * <li>If the authenticated ID contains an '@', then the portion before the 
- *     '@' must match exactly the requested username and the portion after 
- *     the '@' must match at least one of the following:
+ * <li>If the authentication identity is in the form of a plain username, and the requested authorization identity is in
+ *     the form of a plain username, then the two must be exactly the same.
+ * <li>If the authentication identity contains an '@', then the portion before the '@' must match exactly the requested
+ *     authorization identity and the portion after the '@' must match at least one of the following:
  *     <ul>
  *     <li>The XMPP domain of the server
  *     <li>The SASL realm of the server
  *     <li>Be in the list of acceptable realms
  *     </ul>
- * <li>If the requested username contains an '@' then the portion before the
- *     '@' will be considered the requested username only if the portion after
- *     the '@' matches the XMPP domain of the server or the portion after the 
- *     '@' in the authenticated ID, if any.
+ * <li>If the requested authorization identity contains an '@' then the portion before the '@' will be considered the
+ *     requested authorization identity only if the portion after the '@' matches the XMPP domain of the server or the
+ *     portion after the '@' in the authentication identity, if any.
  * </ul>
- *
  * 
  * @see AuthorizationManager
  * @author Jay Kline
@@ -67,92 +60,83 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
         .build();
 
     /**
-     * Returns true if the principal is explicitly authorized to the JID
+     * Returns true if the provided authentication identity (identity whose password will be used) is explicitly allowed
+     * to the provided authorization identity (identity to act as).
      *
-     * @param username  The username requested.
-     * @param authenID The authenticated ID (principal) requesting the username.
-     * @return true if the authenticated ID is authorized to the requested user.
+     * @param authzid authorization identity (identity to act as).
+     * @param authcid authentication identity, or 'principal' (identity whose password will be used)
+     * @return true if the authzid is explicitly allowed to be used by the user authenticated with the authcid.
      */
     @Override
-    public boolean authorize(String username, String authenID) {
+    public boolean authorize(String authzid, String authcid) {
         boolean authorized = false;
 
-        String userUser = username; //I know, I know, dumb variable name...
-        String userRealm = null;
+        String authzUser = authzid;
+        String authzRealm = null;
  
-        String authenUser = authenID;
-        String authenRealm = null;
+        String authcUser = authcid;
+        String authcRealm = null;
 
-        if(username.contains("@")) {
-            userUser = username.substring(0,username.lastIndexOf("@"));
-            userRealm = username.substring((username.lastIndexOf("@")+1)); 
+        if (authzid.contains("@")) {
+            authzUser = authzid.substring(0, authzid.lastIndexOf("@"));
+            authzRealm = authzid.substring((authzid.lastIndexOf("@")+1));
         }
-        if(authenID.contains("@")){
-            authenUser = authenID.substring(0,(authenID.lastIndexOf("@")));
-            authenRealm = authenID.substring((authenID.lastIndexOf("@")+1));
+        if (authcid.contains("@")){
+            authcUser = authcid.substring(0,(authcid.lastIndexOf("@")));
+            authcRealm = authcid.substring((authcid.lastIndexOf("@")+1));
         }
 
-        if (!SASLAuthentication.PROXY_AUTH.getValue() || !AdminManager.getInstance().isUserAdmin(authenUser, true)) {
-            if(!userUser.equals(authenUser)) {
+        if (!SASLAuthentication.PROXY_AUTH.getValue() || !AdminManager.getInstance().isUserAdmin(authcUser, true)) {
+            if(!authzUser.equals(authcUser)) {
                 // For this policy the user portion of both must match, so lets short circuit here if we can.
                 if(IGNORE_CASE.getValue()) {
-                    if(!userUser.equalsIgnoreCase(authenUser)){
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
-                        }
+                    if(!authzUser.equalsIgnoreCase(authcUser)){
+                        Log.debug("Authorization username {} doesn't match authentication username {}", authzUser, authcUser);
                         return false;
                     }
                 } else {
-                    Log.debug("DefaultAuthorizationPolicy: usernames don't match ("+userUser+" "+authenUser+")");
+                    Log.debug("Authorization username {} doesn't match authentication username {}", authzUser, authcUser);
                     return false;
                 }
             }
         }
-        Log.debug("DefaultAuthorizationPolicy: Checking authenID realm");
-        // Next up, check if the authenID realm is acceptable. 
-        if(authenRealm != null) {
-            if(authenRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue()))  {
-                Log.debug("DefaultAuthorizationPolicy: authenRealm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
+        Log.debug("Checking authcRealm");
+        if(authcRealm != null) {
+            if(authcRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue()))  {
+                Log.trace("authcRealm = {}", XMPPServerInfo.XMPP_DOMAIN.getKey());
                 authorized = true;
-            } else if(authenRealm.equals(SASLAuthentication.REALM.getValue()))  {
-                Log.debug("DefaultAuthorizationPolicy: authenRealm = sasl.realm");
+            } else if(authcRealm.equals(SASLAuthentication.REALM.getValue()))  {
+                Log.trace("authcRealm = sasl.realm");
                 authorized = true;
             } else { 
                 for(String realm : SASLAuthentication.APPROVED_REALMS.getValue()) {
-                    if(authenRealm.equals(realm)) {
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("DefaultAuthorizationPolicy: authenRealm = "+realm+" which is approved");
-                        }
+                    if(authcRealm.equals(realm)) {
+                        Log.trace("authcRealm = {} which is approved", realm);
                         authorized = true;
                     } else {
-                        if (Log.isDebugEnabled()) {
-                            Log.debug("DefaultAuthorizationPolicy: authenRealm != "+realm+" which is approved");
-                        }
+                        Log.trace("authcRealm != {} which is approved", realm);
                     }
                 }
             }
         } else {
-            //no realm in the authenID
+            // no realm in the authcRealm
             authorized = true;
         }
 
         if(!authorized) {
             return false;
         }  else {
-            //reset for next round of tests
+            // reset for next round of tests
             authorized = false;
         }
-        //Next up, check if the username realm is acceptable.
-        if(userRealm != null) {
-            if(userRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
-                Log.debug("DefaultAuthorizationPolicy: userRealm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
+        Log.debug("Checking authzRealm");
+        if(authzRealm != null) {
+            if(authzRealm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
+                Log.trace("authcRealm = {}", XMPPServerInfo.XMPP_DOMAIN.getKey());
                 authorized = true;
             } else {
-                if(authenRealm != null && authenRealm.equals(userRealm)) {
-                    //authen and username are identical
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("DefaultAuthorizationPolicy: userRealm = "+authenRealm+" which is approved");
-                    }
+                if(authcRealm != null && authcRealm.equals(authzRealm)) {
+                    Log.trace("DefaultAuthorizationPolicy: authcRealm = {} which is approved", authcRealm);
                     authorized = true;
                 }
             }
@@ -160,7 +144,7 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
             authorized = true;
         }
 
-        //no more checks
+        // no more checks
         return authorized;
     }
 
@@ -181,9 +165,9 @@ public class DefaultAuthorizationPolicy implements AuthorizationPolicy {
      */
     @Override
     public String description() {
-        return "Different clients perform authentication differently, so this policy "+ 
-               "will authorize any principal to a requested user that match specific "+
-               "conditions that are considered secure defaults for most installations.";
+        return "Different clients perform authentication differently, so this policy will authorize any authentication " +
+            "identity, or 'principal' (identity whose password will be used) to a requested authorization identity " +
+            "(identity to act as) that match specific conditions that are considered secure defaults for most installations.";
     }
 }
     

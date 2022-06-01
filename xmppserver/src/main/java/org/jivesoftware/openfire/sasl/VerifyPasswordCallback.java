@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,22 @@ package org.jivesoftware.openfire.sasl;
 import javax.security.auth.callback.Callback;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 
 /**
- * This callback isused by SaslServer to determine if a password supplied by a 
+ * This callback issued by SaslServer to determine if a password supplied by a
  * client is verified.
  * Under most circumstances the PasswordCallback should be used instead, but its
- * use requires the underlying sercurity services have access to the stored password
+ * use requires the underlying security services have access to the stored password
  * to perform a comparison.
- * The security service provider instantiate and pass a VerifyPasswordCallback to the
+ * The security service provider instantiates and passes a VerifyPasswordCallback to the
  * handle method of a CallbackHandler to verify password information.
  *
  * @see javax.security.auth.callback.PasswordCallback
  * @see javax.security.auth.callback.CallbackHandler
  * @author Jay Kline
  */
-
 public class VerifyPasswordCallback implements Callback, Serializable {
 
     private static final long serialVersionUID = -6393402725550707836L;
@@ -65,9 +65,7 @@ public class VerifyPasswordCallback implements Callback, Serializable {
      */
     public void clearPassword() {
         if (password != null) {
-            for (int i = 0; i < password.length; i++) {
-                password[i] = ' ';
-            }
+            Arrays.fill(password, ' ');
             password = null;
         }
     }

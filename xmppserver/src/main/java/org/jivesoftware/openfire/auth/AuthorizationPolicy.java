@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,15 @@
 package org.jivesoftware.openfire.auth;
 
 /**
- * This is the interface the AuthorizationManager uses to
- * conduct authorizations.
- * <p>
- * Users that wish to integrate with their own authorization
- * system must implement this interface, and are strongly
- * encouraged to extend either the AbstractAuthoriationPolicy
- * or the AbstractAuthorizationProvider classes which allow
- * the admin console manage the classes more effectively.
- * Register the class with Openfire in the {@code openfire.xml}
- * file.  An entry in that file would look like the following:
- * </p>
+ * This is the interface the AuthorizationManager uses to conduct authorizations.
+ *
+ * Users that wish to integrate with their own authorization system must implement this interface, and are strongly
+ * encouraged to extend either the AbstractAuthoriationPolicy or the AbstractAuthorizationProvider classes which allow
+ * the admin console manage the classes more effectively. Register the class with Openfire in the {@code openfire.xml}
+ * file.
+ *
+ * An entry in that file would look like the following:
+ *
  * <pre>
  *   &lt;provider&gt;
  *     &lt;authorization&gt;
@@ -40,13 +38,14 @@ package org.jivesoftware.openfire.auth;
 public interface AuthorizationPolicy {
 
     /**
-     * Returns true if the principal is explicitly authorized to the JID
+     * Returns true if the provided authentication identity (identity whose password will be used) is explicitly allowed
+     * to the provided authorization identity (identity to act as).
      *
-     * @param username  The username requested.
-     * @param principal The principal requesting the username.
-     * @return true is the user is authorized to be principal
+     * @param authzid authorization identity (identity to act as).
+     * @param authcid authentication identity, or 'principal' (identity whose password will be used)
+     * @return true if the authzid is explicitly allowed to be used by the user authenticated with the authcid.
      */
-    boolean authorize( String username, String principal );
+    boolean authorize(String authzid, String authcid);
 
     /**
      * Returns the short name of the Policy

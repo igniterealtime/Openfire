@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.sasl;
 
+
+import org.jivesoftware.openfire.auth.AuthorizationManager;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -37,7 +39,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
  * <p>
  * client ----- {authzid, authcid, password} -----&gt; server
  * </p>
- * Each paramater sent to the server is seperated by a null character
+ * Each parameter sent to the server is seperated by a null character
  * The authorization ID (authzid) may be empty.
  *
  * @author Jay Kline
@@ -45,8 +47,16 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 public class SaslServerPlainImpl implements SaslServer {
 
-    private String principal;
-    private String username; //requested authorization identity
+    /**
+     * Authentication identity (identity whose password will be used).
+     */
+    private String authcid;
+
+    /**
+     * Authorization identity (identity to act as). Derived from principal if not specifically set by the peer.
+     */
+    private String authzid;
+
     private String password;
     private CallbackHandler cbh;
     private boolean completed;
@@ -107,31 +117,33 @@ public class SaslServerPlainImpl implements SaslServer {
                 String data = new String(response, StandardCharsets.UTF_8);
                 StringTokenizer tokens = new StringTokenizer(data, "\0");
                 if (tokens.countTokens() > 2) {
-                    username = tokens.nextToken();
-                    principal = tokens.nextToken();
+                    authzid = tokens.nextToken(); // identity to act as
+                    authcid = tokens.nextToken(); // identity whose password will be used
                 } else {
-                    username = tokens.nextToken();
-                    principal = username;
+                    // The client does not provide an authorization identity when it wishes the server to derive an
+                    // identity from the credentials and use that as the authorization identity.
+                    authcid = tokens.nextToken(); // identity whose password will be used
+                    authzid = authcid; // identity to act as.
                 }
                 password = tokens.nextToken();
-                NameCallback ncb = new NameCallback("PLAIN authentication ID: ",principal);
+                NameCallback ncb = new NameCallback("PLAIN authentication ID: ", authcid);
                 VerifyPasswordCallback vpcb = new VerifyPasswordCallback(password.toCharArray());
                 cbh.handle(new Callback[]{ncb,vpcb});
 
                 if (vpcb.getVerified()) {
                     vpcb.clearPassword();
-                    AuthorizeCallback acb = new AuthorizeCallback(principal,username);
+                    AuthorizeCallback acb = new AuthorizeCallback(authcid, authzid);
                     cbh.handle(new Callback[]{acb});
                     if(acb.isAuthorized()) {
-                        username = acb.getAuthorizedID();
+                        authzid = acb.getAuthorizedID();
                         completed = true;
                     } else {
                         completed = true;
-                        username = null;
-                        throw new SaslException("PLAIN: user not authorized: "+principal);
+                        authzid = null;
+                        throw new SaslException("PLAIN: user not authorized: "+ authcid);
                     }
                 } else {
-                    throw new SaslException("PLAIN: user not authorized: "+principal);
+                    throw new SaslException("PLAIN: user not authorized: "+ authcid);
                 }
             } else {
                 //Client gave no initial response
@@ -142,7 +154,7 @@ public class SaslServerPlainImpl implements SaslServer {
             }
         } catch (UnsupportedCallbackException | IOException | NoSuchElementException e) {
             aborted = true;
-            throw new SaslException("PLAIN authentication failed for: "+username, e);
+            throw new SaslException("PLAIN authentication failed for: "+ authzid, e);
         }
         return null;
     }
@@ -168,8 +180,8 @@ public class SaslServerPlainImpl implements SaslServer {
      */
     @Override
     public String getAuthorizationID() {
-        if(completed) {
-            return username;
+        if (completed) {
+            return authzid;
         } else {
             throw new IllegalStateException("PLAIN authentication not completed");
         }
@@ -241,8 +253,8 @@ public class SaslServerPlainImpl implements SaslServer {
     @Override
     public void dispose() throws SaslException {
         password = null;
-        username = null;
-        principal = null;
+        authzid = null;
+        authcid = null;
         completed = false;
     }
 }

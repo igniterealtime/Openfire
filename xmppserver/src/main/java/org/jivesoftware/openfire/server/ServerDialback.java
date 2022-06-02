@@ -497,7 +497,7 @@ public class ServerDialback {
             log.debug( "Unable to validate domain: Remote domain is not allowed to establish a connection to this server." );
             return false;
         }
-        else if (isHostUnknown(recipient)) {
+        else if (validateHost() && isHostUnknown(recipient)) {
             dialbackError(recipient, remoteDomain, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
             log.debug( "Unable to validate domain: recipient not recognized as a local domain." );
             return false;
@@ -645,6 +645,10 @@ public class ServerDialback {
         }
         return host_unknown;
     }
+    
+    private boolean validateHost() {
+       return JiveGlobals.getBooleanProperty("xmpp.server.validate.host",true); 
+    }
 
     private VerifyResult sendVerifyKey(String key, StreamID streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket, boolean skipTLS, boolean directTLS) throws IOException, XmlPullParserException, RemoteConnectionFailedException {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Verify key with AS: " + remoteDomain + " for OS: " + recipient + " (id " + streamID + ")]" );
@@ -757,7 +761,7 @@ public class ServerDialback {
                         // condition is sent to the Originating Server
                         throw new RemoteConnectionFailedException("Invalid ID");
                     }
-                    else if (isHostUnknown( doc.attributeValue( "to" ) )) {
+                    else if (validateHost() && isHostUnknown( doc.attributeValue( "to" ) )) {
                         // Include the host-unknown stream error condition in the response
                         writer.write(new StreamError(StreamError.Condition.host_unknown).toXML());
                         writer.write("</stream:stream>");

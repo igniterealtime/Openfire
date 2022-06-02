@@ -205,6 +205,6 @@ public class ServerSocketReader extends SocketReader {
 
     @Override
     boolean validateHost() {
-        return true;
+        return JiveGlobals.getBooleanProperty("xmpp.server.validate.host",true);
     }
 }

@@ -77,7 +77,7 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean validateHost() {
-        return true;
+        return JiveGlobals.getBooleanProperty("xmpp.server.validate.host",true);
     }
 
     @Override

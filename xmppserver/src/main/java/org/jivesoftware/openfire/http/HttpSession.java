@@ -1061,7 +1061,7 @@ public class HttpSession extends LocalClientSession {
         builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
             .append(getLastAcknowledged()).append("'>");
 
-        setLastResponseEmpty(elements.size() == 0);
+        setLastResponseEmpty(elements.isEmpty());
         for (Deliverable child : elements) {
             builder.append(child.getDeliverable());
         }

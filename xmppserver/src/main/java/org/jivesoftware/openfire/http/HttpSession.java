@@ -163,7 +163,13 @@ public class HttpSession extends LocalClientSession {
     // FIXME: OF-2445: Prevent elements to be scheduled for delivery in #pendingElements after the session is closed (as they would never be delivered).
     private final ConcurrentLinkedQueue<Deliverable> pendingElements = new ConcurrentLinkedQueue<>();
 
-    private final List<Delivered> sentElements = new ArrayList<>();
+    /**
+     * A list of data that has been delivered, for potential future retransmission.
+     *
+     * The size of this collection is limited. It will contain only the last few transmitted elements.
+     */
+    @GuardedBy("itself")
+    private final List<Delivered> sentElements = new ArrayList<>(); // FIXME: OF-2446 Use a more appropriate data type than ArrayList.
 
     private Instant lastPoll = Instant.EPOCH;
     private Duration inactivityTimeout;
@@ -664,13 +670,14 @@ public class HttpSession extends LocalClientSession {
      * @return previously delivered data when found.
      */
     @Nullable
-    @GuardedBy("connectionQueue")
     private Delivered retrieveDeliverable(final long rid) {
         Delivered result = null;
-        for (Delivered delivered : sentElements) {
-            if (delivered.getRequestID() == rid) {
-                result = delivered;
-                break;
+        synchronized (sentElements) {
+            for (Delivered delivered : sentElements) {
+                if (delivered.getRequestID() == rid) {
+                    result = delivered;
+                    break;
+                }
             }
         }
         return result;
@@ -970,11 +977,13 @@ public class HttpSession extends LocalClientSession {
 
         // Keep track of data that has been delivered, for potential future retransmission.
         final Delivered delivered = new Delivered(deliverable, connection.getRequestId());
-        while (sentElements.size() > maxRequests) {
-            sentElements.remove(0);
-        }
+        synchronized (sentElements) {
+            while (sentElements.size() > maxRequests) {
+                sentElements.remove(0);
+            }
 
-        sentElements.add(delivered);
+            sentElements.add(delivered);
+        }
     }
 
     private void closeSession() {

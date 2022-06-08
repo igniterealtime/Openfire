@@ -61,7 +61,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
 
 /**
  * A session represents a series of interactions with an XMPP client sending packets using the HTTP
@@ -153,8 +152,13 @@ public class HttpSession extends LocalClientSession {
      */
     private final X509Certificate[] sslCertificates;
 
+    /**
+     * Collection of client connections on which a BOSH request has been made, but have not been responded to.
+     *
+     * The connections in the queue will be ordered by their requestId value.
+     */
     @GuardedBy("itself")
-    private final List<HttpConnection> connectionQueue = new LinkedList<>();
+    private final PriorityQueue<HttpConnection> connectionQueue = new PriorityQueue<>((o1, o2) -> (int) (o1.getRequestId() - o2.getRequestId()));
 
     /**
      * A thread-safe collection (using a weakly consistent iterator) that contains stanzas that could not immediately be
@@ -186,8 +190,6 @@ public class HttpSession extends LocalClientSession {
     private boolean lastResponseEmpty;
 
     private final SessionPacketRouter router = new SessionPacketRouter(this);
-
-    private static final Comparator<HttpConnection> connectionComparator = (o1, o2) -> (int) (o1.getRequestId() - o2.getRequestId());
 
     public HttpSession(HttpVirtualConnection vConnection, String serverName,
                        StreamID streamID, long requestId, X509Certificate[] sslCertificates, Locale language,
@@ -376,10 +378,11 @@ public class HttpSession extends LocalClientSession {
     public void pause(Duration duration) {
         // Respond immediately to all pending requests
         synchronized (connectionQueue) {
-            for (HttpConnection toClose : connectionQueue) {
-                if (!toClose.isClosed()) {
-                    toClose.close();
-                }
+            final Iterator<HttpConnection> iter = connectionQueue.iterator();
+            while (iter.hasNext()) {
+                final HttpConnection toClose = iter.next();
+                toClose.close();
+                iter.remove();
             }
         }
         setInactivityTimeout(duration);
@@ -395,13 +398,8 @@ public class HttpSession extends LocalClientSession {
     public Instant getLastActivity() {
         synchronized (connectionQueue) {
             if (!connectionQueue.isEmpty()) {
-                for (HttpConnection connection : connectionQueue) {
-                    // The session is currently active, set the last activity to the current time.
-                    if (!(connection.isClosed())) {
-                        lastActivity = Instant.now();
-                        break;
-                    }
-                }
+                // The session is currently active, set the last activity to the current time.
+                lastActivity = Instant.now();
             }
             return lastActivity;
         }
@@ -516,26 +514,24 @@ public class HttpSession extends LocalClientSession {
              * deliverable on the new connection. This is under the assumption that a connection has been dropped,
              * and re-requested before jetty has realised.
              */
-            // TODO is there overlap with the retransmission logic above? Can this be simplified?
-            for (HttpConnection queuedConnection : connectionQueue) {
+            final Iterator<HttpConnection> iter = connectionQueue.iterator();
+            while (iter.hasNext()) {
+                final HttpConnection queuedConnection = iter.next();
                 if (queuedConnection.getRequestId() == rid) {
                     Log.debug("Found previous connection in queue with rid {}", rid);
-                    if(queuedConnection.isClosed()) {
-                        Log.debug("It's closed - copying deliverables");
 
-                        Delivered deliverable = retrieveDeliverable(rid);
-                        if (deliverable == null) {
-                            Log.warn("In session {} deliverable unavailable for {}", streamid, rid);
-                            throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
-                        }
-                        connection.deliverBody(asBodyText(deliverable.deliverables), true);
-                    } else {
-                        Log.debug("For session {} queued connection is still open - calling close() on the old connection (as the new connection will replace it).", streamid);
+                    // Note that the old connection is removed here, but the new connection will not be added back before the mutex is released. This leaves
+                    // room for another thread to try and consume a connection before this connection has been restored. This should be safe, as the consumer
+                    // should not be allowed to consume a connection with a RID that, compared to the previously consumed RID, leaves a 'gap'. In that case,
+                    // the to-be-delivered data is expected to be queued, which will be picked up as soon as this connection (for which the RID 'fills the gap',
+                    // is being processed by org.jivesoftware.openfire.http.HttpSession.processConnection.
+                    iter.remove();
 
-                        // TODO implement section 14.3 of XEP 0124 instead of this!
-                        deliver(queuedConnection, Collections.singletonList(new Deliverable("")), true);
-                        connection.close();
-                    }
+                    assert !queuedConnection.isClosed();
+                    Log.debug("For session {} queued connection is still open - calling close() on the old connection (as the new connection will replace it).", streamid);
+                    // TODO: OF-2447: implement section 14.3 of XEP 0124 instead of this!
+                    deliver(queuedConnection, Collections.singletonList(new Deliverable("")), true);
+                    connection.close(); // FIXME: OF-2448: As the intention is for the new connection to replace the old connection, the new connection should not be closed, I think.
                     break;
                 }
             }
@@ -610,7 +606,9 @@ public class HttpSession extends LocalClientSession {
                     Log.trace("Session {} Request ID {}, event complete: {}", streamID, rid, asyncEvent);
                 }
                 synchronized (connectionQueue) {
-                    connectionQueue.remove(connection);
+                    if (connectionQueue.remove(connection) || !connection.isClosed()) {
+                        Log.warn("Discovered a 'complete' event for a BOSH connection that has not been consumed (for session {} with Request ID {}, was closed: {}). This likely is a bug in Openfire.", streamID, rid, connection.isClosed());
+                    }
                     lastActivity = Instant.now();
                 }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
@@ -626,6 +624,8 @@ public class HttpSession extends LocalClientSession {
                     // If onTimeout does not result in a complete(), the container falls back to default behavior.
                     // This is why this body is to be delivered in a non-async fashion.
                     synchronized (connectionQueue) {
+                        // Consume the connection that is timing out, by removing it from the queue and sending data to it.
+                        connectionQueue.remove(connection);
                         deliver(connection, Collections.singletonList(new Deliverable("")), false);
                         setLastResponseEmpty(true);
                     }
@@ -643,6 +643,7 @@ public class HttpSession extends LocalClientSession {
                 }
                 Log.warn("For session {} an unhandled AsyncListener error occurred: ", streamID, asyncEvent.getThrowable());
                 synchronized (connectionQueue) {
+                    // There was an error with a connection. Make sure it cannot be consumed again.
                     connectionQueue.remove(connection);
                 }
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
@@ -705,36 +706,39 @@ public class HttpSession extends LocalClientSession {
         // connection arrives that 'fills the gap' (and be used only _after_ that connection gets used).
         boolean aConnectionAvailableForDelivery = false;
         synchronized (connectionQueue) {
+            // Note that this queue will automatically order its entities.
             connectionQueue.add(connection);
 
-            // Order the connection queue, and determine if the sequence of consecutive request IDs can be updated.
-            connectionQueue.sort(connectionComparator);
+            final Iterator<HttpConnection> iter = connectionQueue.iterator();
+            while (iter.hasNext()) {
+                final HttpConnection queuedConnection = iter.next();
+                assert !queuedConnection.isClosed();
 
-            for (final HttpConnection queuedConnection : connectionQueue) {
                 final long queuedRequestID = queuedConnection.getRequestId();
                 if (queuedRequestID <= lastSequentialRequestID) {
+                    Log.warn("Detected a queued connection (for session {}) with a request ID ({}) that is not higher than the last sequential request ID ({}). This likely is a bug in Openfire.", streamid, queuedRequestID, lastSequentialRequestID);
                     continue;
                 }
                 if (queuedRequestID == lastSequentialRequestID + 1)
                 {
                     // There is a new connection available for consumption.
                     lastSequentialRequestID = queuedRequestID;
-                    if (queuedConnection.isClosed()) {
-                        continue; // Unsure if this can happen - perhaps at edge-cases involving time-outs?
-                    }
 
                     // The data that was provided by the client can now be processed by the server.
-                    sendPendingPackets(queuedConnection.getInboundDataQueue());
+                    sendPendingPackets(queuedConnection.getInboundDataQueue()); // FIXME: OF-2444: This should not be done while holding the lock on connectionQueue, as it leads to deadlocks!
 
                     // Evaluate edge-cases.
                     if (queuedConnection.isTerminate()) {
+                        iter.remove(); // This connection will be consumed here.
                         queuedConnection.deliverBody(createEmptyBody(true), true);
                         close();
                     } else if (queuedConnection.isRestart()) {
+                        iter.remove(); // This connection has now been fully consumed.
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
                     } else if (queuedConnection.getPause() != null && queuedConnection.getPause().compareTo(getMaxPause()) <= 0) {
-                        pause(queuedConnection.getPause()); // TODO shouldn't we error when the requested pause is higher than the allowed maximum?
-                        connection.deliverBody(createEmptyBody(false), true);
+                        iter.remove(); // This connection will be consumed by this block. It should not be processed by the 'pause' method.
+                        pause(queuedConnection.getPause()); // TODO: OF-2449: shouldn't we error when the requested pause is higher than the allowed maximum?
+                        connection.deliverBody(createEmptyBody(false), true); // FIXME: OF-2450: Deliver an empty body on queuedConnection, not connection.
                         setLastResponseEmpty(true);
                     } else {
                         // At least one new connection has become available, and can be used to return data to the client.
@@ -756,7 +760,7 @@ public class HttpSession extends LocalClientSession {
                 // Note that the code leading up to here checks if the Request ID of the new connection 'fits in the window',
                 // which means that for polling sessions, the request ID must have been a sequential one, which in turn should
                 // guarantee that 'a new connection is now available for delivery').
-                assert aConnectionAvailableForDelivery;
+                assert aConnectionAvailableForDelivery; // FIXME: OF-2451: the edge-cases evaluated above make this assertion not necessarily true.
             }
 
             if (isPollingSession() || aConnectionAvailableForDelivery) {
@@ -771,17 +775,18 @@ public class HttpSession extends LocalClientSession {
 
             // When a new connection has become available, older connections need to be released (allowing the client to
             // send more data if it needs to).
-            final List<HttpConnection> openConnections = connectionQueue.stream()
-                .filter(c -> !c.isClosed())
-                .filter(c -> c.getRequestId() <= lastSequentialRequestID)
-                .sorted(connectionComparator)
-                .collect(Collectors.toList());
-
-            while( openConnections.size() > hold) {
+            while (!connectionQueue.isEmpty() && connectionQueue.size() > hold) {
                 if (Log.isTraceEnabled()) {
-                    Log.trace("Stream {}: releasing oldest connection (rid {}), as the amount of open connections ({}) is higher than the requested amount to hold ({}).", streamid, rid, openConnections.size(), hold);
+                    Log.trace("Stream {}: releasing oldest connection (rid {}), as the amount of open connections ({}) is higher than the requested amount to hold ({}).", streamid, rid, connectionQueue.size(), hold);
                 }
-                final HttpConnection openConnection = openConnections.remove(0);
+                final HttpConnection openConnection = connectionQueue.peek();
+                assert openConnection != null;
+                if (openConnection.getRequestId() > lastSequentialRequestID) {
+                    break; // There's a gap.
+                }
+
+                // Consume this connection.
+                connectionQueue.poll();
                 openConnection.deliverBody(createEmptyBody(false), true);
             }
         }
@@ -828,18 +833,11 @@ public class HttpSession extends LocalClientSession {
      *         protocol.
      */
     private void checkOveractivity(HttpConnection connection) throws HttpBindException {
-        int pendingConnections = 0;
+        int pendingConnections;
         OveractivityType overactivity = OveractivityType.NONE;
 
         synchronized (connectionQueue) {
-            for (HttpConnection conn : connectionQueue) {
-                if (!conn.isClosed()) {
-                    pendingConnections++;
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("For session {} and origin rid {} an open connection is pending with rid {}", getStreamID(), connection.getRequestId(), conn.getRequestId());
-                    }
-                }
-            }
+            pendingConnections = connectionQueue.size();
         }
 
         Instant time = Instant.now();
@@ -928,15 +926,15 @@ public class HttpSession extends LocalClientSession {
     private void deliver(@Nonnull final List<Deliverable> deliverable) {
         boolean delivered = false;
         synchronized (connectionQueue) {
-            for (HttpConnection connection : connectionQueue) {
-                // We can only use connections that have not been used yet.
-                if (connection.isClosed()) {
-                    continue;
-                }
+            while (!connectionQueue.isEmpty()) {
+                final HttpConnection connection = connectionQueue.peek();
+                assert !connection.isClosed();
+
                 try {
                     // We can only use connections that have a sequential request ID.
                     if (connection.getRequestId() <= lastSequentialRequestID) {
-                        deliver(connection, deliverable, true);
+                        connectionQueue.poll();
+                        deliver(connection, deliverable, true); // TODO OF-2444 move this out from under the connectionQueue mutex maybe?
                         delivered = true;
                     }
 
@@ -996,22 +994,22 @@ public class HttpSession extends LocalClientSession {
             // open connections in this method.
             synchronized (connectionQueue) {
                 boolean isFirst = true;
-                for (HttpConnection toClose : connectionQueue) {
+                while (!connectionQueue.isEmpty()) {
+                    final HttpConnection toClose = connectionQueue.poll();
+                    assert !toClose.isClosed();
                     try {
                         // XEP-0124, section 13: "The connection manager SHOULD acknowledge the session termination on
                         // the oldest connection with an HTTP 200 OK containing a <body/> element of the type
                         // 'terminate'. On all other open connections, the connection manager SHOULD respond with an
                         // HTTP 200 OK containing an empty <body/> element.
-                        if (!toClose.isClosed()) {
-                            final String body;
-                            if (isFirst) {
-                                isFirst = false;
-                                body = this.createEmptyBody(true);
-                            } else {
-                                body = null;
-                            }
-                            toClose.deliverBody(body, true);
+                        final String body;
+                        if (isFirst) {
+                            isFirst = false;
+                            body = this.createEmptyBody(true);
+                        } else {
+                            body = null;
                         }
+                        toClose.deliverBody(body, true);
                     } catch (HttpConnectionClosedException e) {
                         // Probably benign.
                         Log.debug("Closing an already closed connection.", e);

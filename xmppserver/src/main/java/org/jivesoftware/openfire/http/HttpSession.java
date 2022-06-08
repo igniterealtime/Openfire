@@ -60,6 +60,7 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 /**
@@ -155,8 +156,12 @@ public class HttpSession extends LocalClientSession {
     @GuardedBy("itself")
     private final List<HttpConnection> connectionQueue = new LinkedList<>();
 
-    @GuardedBy("connectionQueue")
-    private final List<Deliverable> pendingElements = new ArrayList<>();
+    /**
+     * A thread-safe collection (using a weakly consistent iterator) that contains stanzas that could not immediately be
+     * delivered to the peer.
+     */
+    // FIXME: OF-2445: Prevent elements to be scheduled for delivery in #pendingElements after the session is closed (as they would never be delivered).
+    private final ConcurrentLinkedQueue<Deliverable> pendingElements = new ConcurrentLinkedQueue<>();
 
     private final List<Delivered> sentElements = new ArrayList<>();
 
@@ -749,11 +754,14 @@ public class HttpSession extends LocalClientSession {
                 assert aConnectionAvailableForDelivery;
             }
 
-            if (isPollingSession() || (aConnectionAvailableForDelivery && !pendingElements.isEmpty())) {
-                lastActivity = Instant.now();
-                SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.connection_opened, connection, context ); // TODO is this the right place to dispatch this event?
-                deliver(pendingElements);
-                pendingElements.clear();
+            if (isPollingSession() || aConnectionAvailableForDelivery) {
+                // In a thread-safe manner, create a copy of all elements that are currently pending.
+                final List<Deliverable> toProcessElements = drainPendingElements();
+                if (!toProcessElements.isEmpty()) {
+                    lastActivity = Instant.now();
+                    SessionEventDispatcher.dispatchEvent(this, SessionEventDispatcher.EventType.connection_opened, connection, context); // TODO is this the right place to dispatch this event?
+                    deliver(toProcessElements);
+                }
             }
 
             // When a new connection has become available, older connections need to be released (allowing the client to
@@ -941,11 +949,10 @@ public class HttpSession extends LocalClientSession {
                             ". Openfire will attempt to recover by ignoring this connection.", e);
                 }
             }
-
-            if (!delivered) {
-                Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
-                pendingElements.addAll( deliverable );
-            }
+        }
+        if (!delivered) {
+            Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
+            pendingElements.addAll(deliverable); // ConcurrentLinkedQueue.addAll is not guaranteed to be atomic. We don't need that, as long as the insertion/iteration order is guaranteed. I'm not sure if it is (but I assume so).
         }
     }
 
@@ -1006,11 +1013,11 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("An unexpected exception occurred while closing a session.", e);
                     }
                 }
+            }
 
-                for (Deliverable deliverable : pendingElements) {
-                    failDelivery(deliverable.getPackets());
-                }
-                pendingElements.clear();
+            final List<Deliverable> toProcessElements = drainPendingElements();
+            for (Deliverable deliverable : toProcessElements) {
+                failDelivery(deliverable.getPackets());
             }
         } finally { // ensure the session is removed from the session map
             SessionEventDispatcher.dispatchEvent( this, SessionEventDispatcher.EventType.session_closed, null, null );
@@ -1098,6 +1105,24 @@ public class HttpSession extends LocalClientSession {
         }
 
         return response.asXML();
+    }
+
+    /**
+     * Removes all elements that are queued to be delivered to the peer from the queue and returns them as an
+     * unmodifiable collection.
+     *
+     * @return An unmodifiable list of elements that are to be sent to the peer.
+     */
+    @Nonnull
+    private List<Deliverable> drainPendingElements()
+    {
+        final List<Deliverable> result = new LinkedList<>();
+        final Iterator<Deliverable> iter = pendingElements.iterator(); // Weakly consistent iterator.
+        while (iter.hasNext()) {
+            result.add(iter.next());
+            iter.remove();
+        }
+        return Collections.unmodifiableList(result);
     }
 
     /**

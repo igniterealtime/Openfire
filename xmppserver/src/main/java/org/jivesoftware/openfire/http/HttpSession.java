@@ -327,8 +327,7 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Sets the time, in seconds, after which this session will be considered inactive and be be
-     * terminated.
+     * Sets the time, in seconds, after which this session will be considered inactive and be terminated.
      *
      * @param inactivityTimeout the time, in seconds, after which this session will be considered
      * inactive and be terminated.
@@ -473,9 +472,9 @@ public class HttpSession extends LocalClientSession {
      * @param body the body element that was sent containing the request for a new session.
      * @param context the context of the asynchronous servlet call leading up to this method call.
      *
-     * @throws org.jivesoftware.openfire.http.HttpBindException for several reasons: if the encoding inside of an auth packet is
-     * not recognized by the server, or if the packet type is not recognized.
-     * @throws org.jivesoftware.openfire.http.HttpConnectionClosedException if the session is no longer available.
+     * @throws HttpBindException for several reasons: if the encoding inside an auth packet is not recognized by the
+     *                           server, or if the packet type is not recognized.
+     * @throws HttpConnectionClosedException if the session is no longer available.
      * @throws IOException if an input or output exception occurred
      */
     public void forwardRequest(HttpBindBody body, AsyncContext context)
@@ -544,7 +543,7 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * This methods sends any pending packets in the session. If no packets are
+     * This method sends any pending packets in the session. If no packets are
      * pending, this method simply returns. The method is internally synchronized
      * to avoid simultaneous sending operations on this Session. If two
      * threads try to run this method simultaneously, the first one will trigger
@@ -585,8 +584,7 @@ public class HttpSession extends LocalClientSession {
      *
      * @param body the body element that was sent containing the request for a new session.
      * @param context the context of the asynchronous servlet call leading up to this method call.
-     * @return the created {@link org.jivesoftware.openfire.http.HttpConnection} which represents
-     *         the connection.
+     * @return the created {@link HttpConnection} which represents the connection.
      */
     @Nonnull
     synchronized HttpConnection createConnection(@Nonnull final HttpBindBody body, @Nonnull final AsyncContext context)
@@ -695,7 +693,7 @@ public class HttpSession extends LocalClientSession {
         }
 
         // Note that connections can be expected to arrive 'out of order'. The implementation should only use a connection
-        // that has a request ID value that's exactly one higher than the last request ID value in the 'gapless' sequence
+        // that has a request ID value that's exactly one higher than the last request ID value in the 'gap-less' sequence
         // of request IDs. When a connection is being processed that has a higher value, it should go unused until another
         // connection arrives that 'fills the gap' (and be used only _after_ that connection gets used).
         boolean aConnectionAvailableForDelivery = false;
@@ -748,7 +746,7 @@ public class HttpSession extends LocalClientSession {
             // Request ID of the new connection 'fits in the window'
 
             if (isPollingSession()) {
-                // Note that the code leading up to this checks if the Request ID of the new connection 'fits in the window',
+                // Note that the code leading up to here checks if the Request ID of the new connection 'fits in the window',
                 // which means that for polling sessions, the request ID must have been a sequential one, which in turn should
                 // guarantee that 'a new connection is now available for delivery').
                 assert aConnectionAvailableForDelivery;
@@ -783,7 +781,7 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Attempts to processes a request for redelivery of data that was sent earlier.
+     * Attempts to process a request for redelivery of data that was sent earlier.
      *
      * This method is expected to be called with a connection that has a request ID that was already processed before.
      *
@@ -815,7 +813,7 @@ public class HttpSession extends LocalClientSession {
     /**
      * Check that the client SHOULD NOT make more simultaneous requests than specified
      * by the 'requests' attribute in the connection manager's Session Creation Response.
-     * However the client MAY make one additional request if it is to pause or terminate a session.
+     * However, the client MAY make one additional request if it is to pause or terminate a session.
      *
      * @see <a href="http://www.xmpp.org/extensions/xep-0124.html#overactive">overactive</a>
      * @param connection the new connection.
@@ -858,7 +856,7 @@ public class HttpSession extends LocalClientSession {
                         " with rid " + connection.getRequestId() +
                         " lastResponseEmpty = " + lastResponseEmpty  +
                         " overactivity = " + overactivity +
-                        " deltaFromlastPoll = " + deltaFromLastPoll +
+                        " deltaFromLastPoll = " + deltaFromLastPoll +
                         " isPollingSession() = " + localIsPollingSession +
                         " maxRequests = " + maxRequests +
                         " pendingConnections = " + pendingConnections);
@@ -992,7 +990,7 @@ public class HttpSession extends LocalClientSession {
                 for (HttpConnection toClose : connectionQueue) {
                     try {
                         // XEP-0124, section 13: "The connection manager SHOULD acknowledge the session termination on
-                        // the oldest connection with a HTTP 200 OK containing a <body/> element of the type
+                        // the oldest connection with an HTTP 200 OK containing a <body/> element of the type
                         // 'terminate'. On all other open connections, the connection manager SHOULD respond with an
                         // HTTP 200 OK containing an empty <body/> element.
                         if (!toClose.isClosed()) {
@@ -1053,7 +1051,7 @@ public class HttpSession extends LocalClientSession {
      * usage of this method is to generate data that can be included in HTTP responses returned to the client.
      *
      * @param elements The data to be transformed (can be empty).
-     * @return The text representation (wrapped in a body element) of the the provided elements.
+     * @return The text representation (wrapped in a body element) of the provided elements.
      */
     @Nonnull
     private String asBodyText(@Nonnull final List<Deliverable> elements) {
@@ -1087,7 +1085,7 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Creets a BOSH 'body' element that represents a 'session restart' event, including the stream features that are
+     * Creates a BOSH 'body' element that represents a 'session restart' event, including the stream features that are
      * available to this session.
      *
      * @return The string representation of a BOSH 'body' element for a 'session restart'.
@@ -1227,9 +1225,9 @@ public class HttpSession extends LocalClientSession {
                 if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
                     // use string-based operation here to avoid cascading xmlns wonkery
                     StringBuilder packetXml = new StringBuilder(packet.toXML());
-                    final int noslash = packetXml.indexOf( ">" );
+                    final int noSlash = packetXml.indexOf( ">" );
                     final int slash = packetXml.indexOf( "/>" );
-                    final int insertAt = ( noslash - 1 == slash ? slash : noslash );
+                    final int insertAt = ( noSlash - 1 == slash ? slash : noSlash );
                     packetXml.insert( insertAt, " xmlns=\"jabber:client\"");
                     stanzas.add(packetXml.toString());
                 } else {

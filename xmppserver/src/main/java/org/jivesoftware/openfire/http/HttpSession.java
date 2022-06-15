@@ -782,7 +782,7 @@ public class HttpSession extends LocalClientSession {
                 final HttpConnection openConnection = connectionQueue.peek();
                 assert openConnection != null;
                 if (openConnection.getRequestId() > lastSequentialRequestID) {
-                    break; // There's a gap.
+                    break; // There's a gap. As described above, connections must be used in sequence, without jumping the queue.
                 }
 
                 // Consume this connection.

@@ -18,8 +18,6 @@ package org.jivesoftware.openfire.muc.spi;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MUCEventListener;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.cluster.*;
 import org.jivesoftware.util.SystemProperty;
@@ -34,8 +32,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import java.time.Instant;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -133,13 +129,13 @@ public class OccupantManager implements MUCEventListener
      *
      * Calls to this method must be mode only under guard of a write lock that been obtained from {@link #mutex}.
      *
-     * @param oldOccupant An occupant that is to be removed from the registration of the referred node (nullable)
-     * @param newOccupant An occupant that is to be added to the registration of the referred node (nullable)
+     * @param oldOccupant An occupant that is to be removed from the registration of the referred node
+     * @param newOccupant An occupant that is to be added to the registration of the referred node
      * @param nodeIDToReplaceOccupantFor The id of the node that the old/new occupant need to be (de)registered under. If null then the occupant is (de)registered for each node.
      */
     @GuardedBy("mutex")
-    private void replaceOccupant(Occupant oldOccupant, Occupant newOccupant, NodeID nodeIDToReplaceOccupantFor) {
-
+    private void replaceOccupant(@Nullable final Occupant oldOccupant, @Nullable final Occupant newOccupant, @Nullable final NodeID nodeIDToReplaceOccupantFor)
+    {
         Set<NodeID> nodeIDsToReplaceOccupantFor = new HashSet<>();
         if (nodeIDToReplaceOccupantFor == null) {
             nodeIDsToReplaceOccupantFor = occupantsByNode.keySet(); // all node ids
@@ -163,10 +159,16 @@ public class OccupantManager implements MUCEventListener
     }
 
     /**
+     * Registers disappearance of an existing occupant on a specific node.
+     *
      * Calls to this method must be mode only under guard of a write lock that been obtained from {@link #mutex}.
+     *
+     * @param oldOccupant An occupant that is to be removed from the registration of the referred node.
+     * @param nodeID The ID of the node that the occupant need to be deregistered from.
      */
     @GuardedBy("mutex")
-    private void deleteOccupantFromNode(Occupant oldOccupant, NodeID nodeID) {
+    private void deleteOccupantFromNode(@Nullable final Occupant oldOccupant, @Nonnull final NodeID nodeID)
+    {
         if (oldOccupant != null) {
             if (occupantsByNode.containsKey(nodeID)) {
                 occupantsByNode.get(nodeID).remove(oldOccupant);
@@ -199,7 +201,8 @@ public class OccupantManager implements MUCEventListener
      * @param jid The JID to check
      * @return True if the JID relates to the service, otherwise false.
      */
-    public boolean isForThisService(@Nonnull final JID jid) {
+    public boolean isForThisService(@Nonnull final JID jid)
+    {
         return jid.getDomain().equals(serviceDomain);
     }
 
@@ -213,7 +216,7 @@ public class OccupantManager implements MUCEventListener
      * @param nickname nickname of the user in the room.
      */
     @Override
-    public void occupantJoined(JID roomJID, JID userJID, String nickname)
+    public void occupantJoined(@Nonnull final JID roomJID, @Nonnull final JID userJID, @Nonnull final String nickname)
     {
         if (!isForThisService(roomJID)) {
             return;
@@ -229,7 +232,9 @@ public class OccupantManager implements MUCEventListener
         }
     }
 
-    public OccupantAddedTask registerOccupantJoinedLocally(JID roomJID, JID userJID, String nickname) {
+    @Nonnull
+    public OccupantAddedTask registerOccupantJoinedLocally(@Nonnull final JID roomJID, @Nonnull final JID userJID, @Nonnull final String nickname)
+    {
         Log.debug("New local occupancy in room '{}' of service '{}': entity '{}' using nickname '{}'", roomJID.getNode(), serviceName, userJID, nickname);
 
         final OccupantAddedTask task = new OccupantAddedTask(serviceName, roomJID.getNode(), nickname, userJID, XMPPServer.getInstance().getNodeID());
@@ -249,7 +254,7 @@ public class OccupantManager implements MUCEventListener
      * @param newNickname nickname of the user in the room after the change.
      */
     @Override
-    public void nicknameChanged(JID roomJID, JID userJID, String oldNickname, String newNickname)
+    public void nicknameChanged(@Nonnull final JID roomJID, @Nonnull final JID userJID, @Nonnull final String oldNickname, @Nonnull final String newNickname)
     {
         if (!isForThisService(roomJID)) {
             return;
@@ -304,7 +309,8 @@ public class OccupantManager implements MUCEventListener
      * @param nickname nickname that the user used in the room.
      */
     @Override
-    public void occupantNickKicked(JID roomJID, String nickname) {
+    public void occupantNickKicked(JID roomJID, String nickname)
+    {
         Log.debug("Informing nodes about kicking occupant with nick {} from room {} of service {}", nickname, roomJID.getNode(), serviceName);
         final OccupantKickedForNicknameTask task = new OccupantKickedForNicknameTask(serviceName, roomJID.getNode(), nickname, XMPPServer.getInstance().getNodeID());
         process(task); // On this cluster node.
@@ -325,7 +331,6 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantAddedTask task)
     {
-//        LocalTime start = LocalTime.now();
         final Occupant newOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         mutex.writeLock().lock();
         try {
@@ -333,7 +338,6 @@ public class OccupantManager implements MUCEventListener
         } finally {
             mutex.writeLock().unlock();
         }
-//        logOccupantData("A new occupant was added on node " + task.getOriginator(), start, null);
     }
 
     /**
@@ -344,7 +348,6 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantUpdatedTask task)
     {
-//        LocalTime start = LocalTime.now();
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getOldNickname(), task.getRealJID());
         final Occupant newOccupant = new Occupant(task.getRoomName(), task.getNewNickname(), task.getRealJID());
 
@@ -354,7 +357,6 @@ public class OccupantManager implements MUCEventListener
         } finally {
             mutex.writeLock().unlock();
         }
-//        logOccupantData("An occupant was updated on node " + task.getOriginator(), start, null);
     }
 
     /**
@@ -367,7 +369,6 @@ public class OccupantManager implements MUCEventListener
     {
         Log.debug("Processing task to remove occupant {} - {}", task.getRealJID(), task.getNickname());
 
-//        LocalTime start = LocalTime.now();
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         mutex.writeLock().lock();
         try {
@@ -377,7 +378,6 @@ public class OccupantManager implements MUCEventListener
         }
 
         Log.debug("Done processing task to remove occupant {} - {}", task.getRealJID(), task.getNickname());
-//        logOccupantData("An occupant was removed on node " + task.getOriginator(), start, null);
     }
 
     /**
@@ -417,7 +417,8 @@ public class OccupantManager implements MUCEventListener
      *
      * @param task Cluster task that informs of occupants on a remote node.
      */
-    public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task) {
+    public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task)
+    {
         Set<Occupant> oldOccupants;
 
         mutex.writeLock().lock();
@@ -458,7 +459,8 @@ public class OccupantManager implements MUCEventListener
      * @return All room names that have the user as an occupant.
      */
     @Nonnull
-    public Set<String> roomNamesForAddress(@Nonnull final JID realJID) {
+    public Set<String> roomNamesForAddress(@Nonnull final JID realJID)
+    {
         mutex.readLock().lock();
         try {
             return nodesByOccupant.keySet().stream()
@@ -492,8 +494,8 @@ public class OccupantManager implements MUCEventListener
      *
      * @param userJid The address of the user for which to record activity.
      */
-    public void registerActivity(@Nonnull final JID userJid) {
-
+    public void registerActivity(@Nonnull final JID userJid)
+    {
         // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
         getLocalOccupants().stream()
             .filter(occupant -> userJid.equals(occupant.getRealJID()))
@@ -508,7 +510,8 @@ public class OccupantManager implements MUCEventListener
      * @return A timestamp, or null when there currently is no occupant by that JID on the local node.
      */
     @Nullable
-    public Instant lastActivityOnLocalNode(@Nonnull final JID userJid) {
+    public Instant lastActivityOnLocalNode(@Nonnull final JID userJid)
+    {
         return getLocalOccupants().stream()
             .filter(occupant -> userJid.equals(occupant.getRealJID()))
             .map(Occupant::getLastActive)
@@ -521,7 +524,8 @@ public class OccupantManager implements MUCEventListener
      *
      * @return a user count
      */
-    public int numberOfUniqueUsers() {
+    public int numberOfUniqueUsers()
+    {
         mutex.readLock().lock();
         try {
             return nodesByOccupant.size();
@@ -532,11 +536,13 @@ public class OccupantManager implements MUCEventListener
 
     /**
      * Checks whether the occupant exists, optionally excluding a specific node from evaluation.
-     * @param occupant
-     * @param exclude
-     * @return
+     *
+     * @param occupant The subject of the existence check
+     * @param exclude An optional node to exclude from the check
+     * @return True if the occupant was found, otherwise false.
      */
-    public boolean exists(@Nonnull final Occupant occupant, @Nullable final NodeID exclude) {
+    public boolean exists(@Nonnull final Occupant occupant, @Nullable final NodeID exclude)
+    {
         mutex.readLock().lock();
         try {
             return nodesByOccupant.getOrDefault(occupant, new HashSet<>()).stream()
@@ -546,7 +552,14 @@ public class OccupantManager implements MUCEventListener
         }
     }
 
-    public boolean exists(@Nonnull final Occupant occupant) {
+    /**
+     * Checks whether the occupant exists.
+     *
+     * @param occupant The subject of the existence check
+     * @return True if the occupant was found, otherwise false.
+     */
+    public boolean exists(@Nonnull final Occupant occupant)
+    {
         mutex.readLock().lock();
         try {
             return nodesByOccupant.containsKey(occupant);
@@ -556,7 +569,8 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Nonnull
-    public Set<Occupant> occupantsForRoomByNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID) {
+    public Set<Occupant> occupantsForRoomByNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID)
+    {
         mutex.readLock().lock();
         try {
             return occupantsByNode.getOrDefault(nodeID, Collections.emptySet()).stream()
@@ -568,7 +582,8 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Nonnull
-    public Set<Occupant> occupantsForRoomExceptForNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID) {
+    public Set<Occupant> occupantsForRoomExceptForNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID)
+    {
         mutex.readLock().lock();
         try {
             return occupantsByNode.entrySet().stream().filter(e -> !e.getKey().equals(nodeID))
@@ -589,7 +604,8 @@ public class OccupantManager implements MUCEventListener
      * @return All data that this instance maintained for the cluster node.
      */
     @Nonnull
-    public Set<Occupant> leftCluster(@Nonnull final NodeID nodeID) {
+    public Set<Occupant> leftCluster(@Nonnull final NodeID nodeID)
+    {
         Set<Occupant> returnValue;
         mutex.writeLock().lock();
         try {
@@ -612,12 +628,12 @@ public class OccupantManager implements MUCEventListener
      * @return All data that this instance maintained for all cluster nodes except the local one.
      */
     @Nullable
-    public Set<Occupant> leftCluster() {
+    public Set<Occupant> leftCluster()
+    {
         final NodeID ownNodeID = XMPPServer.getInstance().getNodeID();
         mutex.writeLock().lock();
         try {
             final Set<Occupant> occupantsLeftOnThisNode = occupantsByNode.getOrDefault(ownNodeID, new HashSet<>());
-
 
             final Set<Occupant> occupantsRemoved = occupantsByNode.entrySet().stream()
                 .filter(e -> !e.getKey().equals(ownNodeID))
@@ -628,12 +644,10 @@ public class OccupantManager implements MUCEventListener
             // Now actually remove what needs to be removed
             occupantsByNode.entrySet().removeIf(e -> !e.getKey().equals(ownNodeID));
 
-
             nodesByOccupant.clear();
             occupantsLeftOnThisNode.forEach(o -> nodesByOccupant.computeIfAbsent(o, (n) -> new HashSet<>()).add(ownNodeID));
 
             Log.debug("Reset occupants because we left the cluster");
-
             return occupantsRemoved;
         } finally {
             mutex.writeLock().unlock();
@@ -641,7 +655,8 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Nonnull
-    public Map<NodeID, Set<Occupant>> getOccupantsByNode() {
+    public Map<NodeID, Set<Occupant>> getOccupantsByNode()
+    {
         mutex.readLock().lock();
         try {
             return Collections.unmodifiableMap(occupantsByNode);
@@ -651,7 +666,8 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Nonnull
-    public Map<Occupant, Set<NodeID>> getNodesByOccupant() {
+    public Map<Occupant, Set<NodeID>> getNodesByOccupant()
+    {
         mutex.readLock().lock();
         try {
             return Collections.unmodifiableMap(nodesByOccupant);
@@ -666,7 +682,8 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Override
-    public void roomDestroyed(JID roomJID) {
+    public void roomDestroyed(@Nonnull final JID roomJID)
+    {
         // When a room is destroyed, remove all registered occupants for that room.
         mutex.writeLock().lock();
         try {
@@ -696,7 +713,8 @@ public class OccupantManager implements MUCEventListener
     /**
      * Representation of a user that is an occupant of a chatroom.
      */
-    public static class Occupant {
+    public static class Occupant
+    {
         String roomName;
         String nickname;
         JID realJID;
@@ -784,55 +802,5 @@ public class OccupantManager implements MUCEventListener
                 "', last active " + lastActive +
                 ")";
         }
-    }
-
-    /**
-     * Logs key data about rooms and occupants.
-     * Use only when needed, it clouds up the log.
-     * @param reasonForLogging Will be logged to provide context for why this is being logged.
-     * @param start Start time of the operation for which this log is created.
-     * @param roomCache The room cache.
-     */
-    public void logOccupantData(String reasonForLogging, LocalTime start, Map<String, MUCRoom> roomCache) {
-        LocalTime end = LocalTime.now();
-        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
-        List<String> callStack = Arrays.stream(elements).skip(2L).limit(10L).map(StackTraceElement::toString).collect(Collectors.toList());
-        Log.debug("================== OCCUPANT MANAGER DATA ==================");
-        Log.debug("===                         TIME                        ===");
-        Log.debug(
-            "=                   {} - {}                   =",
-            start.withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME),
-            end.withNano(0).format(DateTimeFormatter.ISO_LOCAL_TIME)
-        );
-        Log.debug("===                        REASON                       ===");
-        Log.debug("= {}", reasonForLogging);
-        Log.debug("===                  OCCUPANTS BY NODE                  ===");
-        Log.debug("=                        COUNT: {}", occupantsByNode.size());
-        occupantsByNode.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(occupant -> Log.debug("= - {}", occupant));
-        });
-        Log.debug("===                  NODES BY OCCUPANT                  ===");
-        Log.debug("=                        COUNT: {}", nodesByOccupant.size());
-        nodesByOccupant.forEach((key, value) -> {
-            Log.debug("= {}", key);
-            value.forEach(nodeID -> Log.debug("= - {}", nodeID));
-        });
-        Log.debug("===                  ROOM CACHE CONTENTS                ===");
-        if (roomCache == null) {
-            Log.debug("===                     NOT SPECIFIED                   ===");
-        } else {
-            roomCache
-                .values()
-                .forEach(room -> Log.debug("= " + room.getName() + " ---> " + room
-                    .getOccupants()
-                    .stream()
-                    .map(MUCRole::getNickname)
-                    .collect(Collectors.joining("/"))
-                ));
-        }
-        Log.debug("===                  TOP OF CALL STACK                  ===");
-        callStack.forEach(se -> Log.debug("= {}", se));
-        Log.debug("================ END OCCUPANT MANAGER DATA ================");
     }
 }

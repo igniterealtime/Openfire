@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Community. All rights reserved.
+ * Copyright (C) 2021-2022 Ignite Realtime Community. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.muc.cluster;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
@@ -43,6 +42,7 @@ public class OccupantUpdatedTask implements ClusterTask<Void>
         this.subdomain = subdomain;
         this.roomName = roomName;
         this.oldNickname = oldNickname;
+        this.newNickname = newNickname;
         this.realJID = realJID;
         this.originator = originator;
     }
@@ -79,7 +79,7 @@ public class OccupantUpdatedTask implements ClusterTask<Void>
     @Override
     public void run() {
         final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
-        ((MultiUserChatServiceImpl) multiUserChatService).getOccupantManager().process(this);
+        multiUserChatService.getOccupantManager().process(this);
     }
 
     @Override

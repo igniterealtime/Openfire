@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -72,6 +73,7 @@ public class MUCRole implements Cacheable, Externalizable {
     /**
      * The user's presence in the room.
      */
+    @GuardedBy("this")
     private Presence presence;
 
     /**
@@ -98,6 +100,7 @@ public class MUCRole implements Cacheable, Externalizable {
     /**
      * A fragment containing the x-extension for non-anonymous rooms.
      */
+    @GuardedBy("this")
     private Element extendedInformation;
 
     /**
@@ -133,18 +136,20 @@ public class MUCRole implements Cacheable, Externalizable {
         this.userJid = userJid;
         this.role = role;
         this.affiliation = affiliation;
-
-        extendedInformation =
-            DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
-        calculateExtendedInformation();
         rJID = new JID(roomJid.getNode(), roomJid.getDomain(), nick);
-        setPresence(presence);
 
-        // Check if new occupant wants to be a deaf occupant
-        Element element = presence.getElement()
-            .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
-        if (element != null) {
-            voiceOnly = element.element("deaf-occupant") != null;
+        synchronized (this) {
+            extendedInformation = DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
+            calculateExtendedInformation();
+
+            setPresence(presence);
+
+            // Check if new occupant wants to be a deaf occupant
+            Element element = presence.getElement()
+                .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
+            if (element != null) {
+                voiceOnly = element.element("deaf-occupant") != null;
+            }
         }
     }
 
@@ -174,14 +179,14 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     /**
-     * Obtain the current presence status of a user in a chatroom.
+     * Obtains a copy of the current presence status of a user in a chatroom.
      *
      * The 'from' address of the presence stanza is guaranteed to reflect the room role of this role.
      *
      * @return The presence of the user in the room.
      */
-    public Presence getPresence() {
-        return presence;
+    public synchronized Presence getPresence() {
+        return presence.createCopy();
     }
 
     /**
@@ -189,7 +194,7 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @param newPresence The presence of the user in the room.
      */
-    public void setPresence(Presence newPresence) {
+    public synchronized void setPresence(Presence newPresence) {
         // Try to remove the element whose namespace is "http://jabber.org/protocol/muc" since we
         // don't need to include that element in future presence broadcasts
         Element element = newPresence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc"));
@@ -197,9 +202,11 @@ public class MUCRole implements Cacheable, Externalizable {
             newPresence.getElement().remove(element);
         }
 
-        this.presence = newPresence;
-        this.presence.setFrom(getRoleAddress());
-        updatePresence();
+        synchronized (this) {
+            this.presence = newPresence;
+            this.presence.setFrom(getRoleAddress());
+            updatePresence();
+        }
     }
 
     /**
@@ -231,11 +238,13 @@ public class MUCRole implements Cacheable, Externalizable {
         // TODO OF-2288: A moderator MUST NOT be able to revoke voice from a user whose affiliation is at or above the moderator's level.
 
         role = newRole;
-        if (MUCRole.Role.none == role) {
-            presence.setType(Presence.Type.unavailable);
-            presence.setStatus(null);
+        synchronized (this) {
+            if (MUCRole.Role.none == role) {
+                presence.setType(Presence.Type.unavailable);
+                presence.setStatus(null);
+            }
+            calculateExtendedInformation();
         }
-        calculateExtendedInformation();
     }
 
     /**
@@ -267,7 +276,9 @@ public class MUCRole implements Cacheable, Externalizable {
         }
         affiliation = newAffiliation;
         // TODO The fragment is being calculated twice (1. setting the role & 2. setting the aff)
-        calculateExtendedInformation();
+        synchronized (this) {
+            calculateExtendedInformation();
+        }
     }
 
     /**
@@ -363,7 +374,9 @@ public class MUCRole implements Cacheable, Externalizable {
     private void setRoleAddress(JID jid) {
         rJID = jid;
         // Set the new sender of the user presence in the room
-        presence.setFrom(jid);
+        synchronized (this) {
+            presence.setFrom(jid);
+        }
     }
 
     /**
@@ -531,6 +544,7 @@ public class MUCRole implements Cacheable, Externalizable {
      * Calculates and sets the extended presence information to add to the presence.
      * The information to add contains the user's jid, affiliation and role.
      */
+    @GuardedBy("this")
     private void calculateExtendedInformation() {
         ElementUtil.setProperty(extendedInformation, "x.item:jid", userJid.toString());
         ElementUtil.setProperty(extendedInformation, "x.item:affiliation", affiliation.toString());
@@ -538,6 +552,7 @@ public class MUCRole implements Cacheable, Externalizable {
         updatePresence();
     }
 
+    @GuardedBy("this")
     private void updatePresence() {
         if (extendedInformation != null && presence != null) {
             // Remove any previous extendedInformation, then re-add it.
@@ -738,14 +753,16 @@ public class MUCRole implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfAnything(roomJid);
         size += CacheSizes.sizeOfAnything(userJid);
         size += CacheSizes.sizeOfString(nick);
-        if (presence != null) {
-            size += CacheSizes.sizeOfAnything(presence.getElement());
+        synchronized (this) {
+            size += CacheSizes.sizeOfAnything(extendedInformation);
+            if (presence != null) {
+                size += CacheSizes.sizeOfAnything(presence.getElement());
+            }
         }
         size += CacheSizes.sizeOfAnything(role);
         size += CacheSizes.sizeOfAnything(affiliation);
         size += CacheSizes.sizeOfBoolean(); // voiceOnly
         size += CacheSizes.sizeOfAnything(rJID);
-        size += CacheSizes.sizeOfAnything(extendedInformation);
         size += CacheSizes.sizeOfAnything(reportedFmucJID);
         return size;
     }
@@ -759,15 +776,19 @@ public class MUCRole implements Cacheable, Externalizable {
                 ExternalizableUtil.getInstance().writeSafeUTF(out, userJid.toString());
             }
             ExternalizableUtil.getInstance().writeSafeUTF(out, nick);
-            ExternalizableUtil.getInstance().writeBoolean(out, presence != null);
-            if (presence != null) {
-                ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
+            synchronized (this) {
+                ExternalizableUtil.getInstance().writeBoolean(out, presence != null);
+                if (presence != null) {
+                    ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) presence.getElement());
+                }
             }
             ExternalizableUtil.getInstance().writeSerializable(out, role);
             ExternalizableUtil.getInstance().writeSerializable(out, affiliation);
             ExternalizableUtil.getInstance().writeBoolean(out, voiceOnly);
             ExternalizableUtil.getInstance().writeSafeUTF(out, rJID.toString());
-            ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) extendedInformation);
+            synchronized (this) {
+                ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) extendedInformation);
+            }
             ExternalizableUtil.getInstance().writeBoolean(out, reportedFmucJID != null);
             if (reportedFmucJID != null) {
                 ExternalizableUtil.getInstance().writeSafeUTF(out, reportedFmucJID.toString());
@@ -788,16 +809,20 @@ public class MUCRole implements Cacheable, Externalizable {
                 userJid = null;
             }
             nick = ExternalizableUtil.getInstance().readSafeUTF(in);
-            if (ExternalizableUtil.getInstance().readBoolean(in)) {
-                presence = new Presence((Element) ExternalizableUtil.getInstance().readSerializable(in));
-            } else {
-                presence = null;
+            synchronized (this) { // Unlikely to be needed, as this should operate on a new instance. Will prevent static analyzers from complaining at negligible cost.
+                if (ExternalizableUtil.getInstance().readBoolean(in)) {
+                    presence = new Presence((Element) ExternalizableUtil.getInstance().readSerializable(in));
+                } else {
+                    presence = null;
+                }
             }
             role = (MUCRole.Role) ExternalizableUtil.getInstance().readSerializable(in);
             affiliation = (MUCRole.Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
             voiceOnly = ExternalizableUtil.getInstance().readBoolean(in);
             rJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
-            extendedInformation = (Element) ExternalizableUtil.getInstance().readSerializable(in);
+            synchronized (this) { // Unlikely to be needed, as this should operate on a new instance. Will prevent static analyzers from complaining at negligible cost.
+                extendedInformation = (Element) ExternalizableUtil.getInstance().readSerializable(in);
+            }
             if (ExternalizableUtil.getInstance().readBoolean(in)) {
                 reportedFmucJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
             }

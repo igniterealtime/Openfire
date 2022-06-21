@@ -1435,7 +1435,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // Send "unavailable" presence for the old nickname
-        final Presence presence = preExistingRole.getPresence().createCopy();
+        final Presence presence = preExistingRole.getPresence(); // This returns a copy. Modifications will not be applied to the original.
         // Switch the presence to OFFLINE
         presence.setType(Presence.Type.unavailable);
         presence.setStatus(null);

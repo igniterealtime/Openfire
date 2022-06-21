@@ -1148,7 +1148,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 continue;
             }
 
-            final Presence occupantPresence = occupant.getPresence().createCopy(); // defensive copy to prevent modifying the original.
+            final Presence occupantPresence = occupant.getPresence(); // This returns a copy. Modifications will not be applied to the original.
             if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
                 // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
                 final Element frag = occupantPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
@@ -1187,8 +1187,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         // Send the presence of this new occupant to existing occupants
         Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), this.getJID() );
         try {
-            final Presence originalPresence = leaveRole.getPresence();
-            final Presence presence = originalPresence.createCopy(); // Defensive copy to not modify the original.
+            final Presence presence = leaveRole.getPresence(); // This returns a copy. Modifications will not be applied to the original.
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
             // Change (or add) presence information about roles and affiliations
@@ -1263,7 +1262,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         // Send the presence of this new occupant to existing occupants
         Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), this.getJID() );
         try {
-            final Presence joinPresence = joinRole.getPresence().createCopy();
+            final Presence joinPresence = joinRole.getPresence();
             return broadcastPresence(joinPresence, true, joinRole);
         } catch (Exception e) {
             Log.error( "An exception occurred while sending initial presence of new occupant '{}' to the existing occupants of room: '{}'", joinRole.getUserAddress(), this.getJID(), e);
@@ -1823,7 +1822,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             role.setRole(newRole);
 
             // Prepare a new presence to be sent to all the room occupants
-            presences.add(role.getPresence().createCopy());
+            presences.add(role.getPresence());
         }
         // Answer all the updated presences
         return presences;
@@ -1849,7 +1848,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             // Update the presence with the new role
             role.setRole(newRole);
             // Prepare a new presence to be sent to all the room occupants
-            return role.getPresence().createCopy();
+            return role.getPresence();
         }
         return null;
     }
@@ -2342,7 +2341,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
         // Get the new, updated presence for the occupant in the room. The presence reflects the occupant's updated
         // availability and their existing association.
-        final Presence updatedPresence = occupantRole.getPresence().createCopy();
+        final Presence updatedPresence = occupantRole.getPresence();
 
         // Broadcast updated presence of occupant.
         broadcastPresence(updatedPresence, false, occupantRole);
@@ -2376,7 +2375,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         }
 
         // Broadcast new presence of occupant
-        broadcastPresence(occupantRole.getPresence().createCopy(), false, occupantRole);
+        broadcastPresence(occupantRole.getPresence(), false, occupantRole);
     }
 
     /**

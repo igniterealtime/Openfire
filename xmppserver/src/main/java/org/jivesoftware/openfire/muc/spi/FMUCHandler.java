@@ -333,7 +333,7 @@ public class FMUCHandler
                 {
                     Log.trace("(room: '{}'): Informing joined node '{}' that occupant '{}' left the MUC.", room.getJID(), peer, occupantToLeave.getUserAddress());
 
-                    final Presence leave = occupantToLeave.getPresence().createCopy();
+                    final Presence leave = occupantToLeave.getPresence(); // This returns a copy. Modifications will not be applied to the original.
                     leave.setType(Presence.Type.unavailable);
                     leave.setTo(new JID(peer.getNode(), peer.getDomain(), occupantToLeave.getNickname()));
                     leave.setFrom(occupantToLeave.getRoleAddress());

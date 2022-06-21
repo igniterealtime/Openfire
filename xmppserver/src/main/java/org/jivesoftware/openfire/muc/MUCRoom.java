@@ -51,7 +51,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
- * A chat room on the chat server manages its users, and enforces it's own security rules.
+ * A chat room on the chat server manages its users, and enforces its own security rules.
  *
  * A MUCRoom could represent a persistent room which means that its configuration will be maintained in sync with its
  * representation in the database, or it represents a non-persistent room. These rooms have no representation in the
@@ -77,7 +77,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         .setChronoUnit(ChronoUnit.MILLIS)
         .build();
 
-    public static SystemProperty<Boolean> ALLOWPM_BLOCKALL = SystemProperty.Builder.ofType( Boolean.class )
+    public static final SystemProperty<Boolean> ALLOWPM_BLOCKALL = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("xmpp.muc.allowpm.blockall")
         .setDefaultValue(false)
         .setDynamic(true)
@@ -91,7 +91,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * All occupants that are associated with this room.
      */
-    public ArrayList<MUCRole> occupants = new ArrayList<>();
+    public final ArrayList<MUCRole> occupants = new ArrayList<>();
 
     /**
      * The name of the room.
@@ -114,9 +114,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     long endTime;
 
     /**
-     * After a room has been destroyed it may remain in memory but it won't be possible to use it.
-     * When a room is destroyed it is immediately removed from the MultiUserChatService but it's
-     * possible that while the room was being destroyed it was being used by another thread so we
+     * After a room has been destroyed it may remain in memory, but it won't be possible to use it.
+     * When a room is destroyed it is immediately removed from the MultiUserChatService, but it's
+     * possible that while the room was being destroyed it was being used by another thread, so we
      * need to protect the room under these rare circumstances.
      */
     public boolean isDestroyed = false;
@@ -216,8 +216,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     private String password = null;
 
     /**
-     * Every presence packet can include the JID of every occupant unless the owner deactives this
-     * configuration.
+     * Every presence packet can include the JID of every occupant unless the owner deactivates this configuration.
      */
     private boolean canAnyoneDiscoverJID;
 
@@ -278,7 +277,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
-     * permitted to to federate with the local room.
+     * permitted to federate with the local room.
      *
      * A null value is to be interpreted as allowing all rooms to be permitted.
      *
@@ -310,7 +309,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * The ID of the room. If the room is temporary and does not log its conversation then the value
-     * will always be -1. Otherwise a value will be obtained from the database.
+     * will always be -1, otherwise a value will be obtained from the database.
      */
     private long roomID = -1;
 
@@ -337,7 +336,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * Do not use this constructor. It was added to implement the Externalizable
-     * interface required to work inside of a cluster.
+     * interface required to work inside a cluster.
      */
     public MUCRoom() {
     }
@@ -345,14 +344,14 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Create a new chat room.
      *
-     * @param chatservice the service hosting the room.
-     * @param roomname the name of the room.
+     * @param chatService the service hosting the room.
+     * @param roomName the name of the room.
      */
-    public MUCRoom(@Nonnull MultiUserChatService chatservice, @Nonnull String roomname) {
-        this.mucService = chatservice;
-        this.name = roomname;
-        this.naturalLanguageName = roomname;
-        this.description = roomname;
+    public MUCRoom(@Nonnull MultiUserChatService chatService, @Nonnull String roomName) {
+        this.mucService = chatService;
+        this.name = roomName;
+        this.naturalLanguageName = roomName;
+        this.description = roomName;
         this.startTime = System.currentTimeMillis();
         this.creationDate = new Date(startTime);
         this.modificationDate = new Date(startTime);
@@ -402,7 +401,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     }
 
     /**
-     * Get the multi user chat service the room is attached to.
+     * Get the multi-user chat service the room is attached to.
      *
      * @return the MultiUserChatService instance that the room is attached to.
      */
@@ -411,7 +410,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     }
 
     /**
-     * Sets the multi user chat service the room is attached to.
+     * Sets the multi-user chat service the room is attached to.
      *
      * @param service The MultiUserChatService that the room is attached to (cannot be {@code null}).
      */
@@ -658,7 +657,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * Returns the bare JID of the member for which a nickname is reserved. Returns null if no member registered the
      * nickname.
      *
-     * @param nickname The nickname for which to lookup a member. Cannot be {@code null}.
+     * @param nickname The nickname for which to look up a member. Cannot be {@code null}.
      * @return the bare JID of the member that has registered this nickname, or null if none.
      */
     public JID getMemberForReservedNickname(String nickname) {
@@ -672,7 +671,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * Returns the affiliation state of the user in the room. Possible affiliations are
-     * MUCRole.OWNER, MUCRole.ADMINISTRATOR, MUCRole.MEMBER, MUCRole.OUTCAST and MUCRole.NONE.<p>
+     * MUCRole.OWNER, MUCRole.ADMINISTRATOR, MUCRole.MEMBER, MUCRole.OUTCAST and MUCRole.NONE.
      *
      * Note: Prerequisite - A lock must already be obtained before sending this message.
      *
@@ -740,7 +739,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @throws ServiceUnavailableException   If the user cannot join the room since the max number
      *                                       of users has been reached.
      * @throws NotAcceptableException       If the registered user is trying to join with a
-     *                                      nickname different than the reserved nickname.
+     *                                      nickname different from the reserved nickname.
      */
     public MUCRole joinRoom( @Nonnull String nickname,
                              @Nullable String password,
@@ -760,7 +759,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             MUCRole.Role role = getRole( bareJID );
             MUCRole.Affiliation affiliation = getAffiliation( bareJID );
             if (affiliation != MUCRole.Affiliation.owner && mucService.isSysadmin(bareJID)) {
-                // The user is a system administrator of the MUC service. Treat him as an owner although he won't appear in the list of owners
+                // The user is a system administrator of the MUC service. Treat him as an owner, although he won't appear in the list of owners.
                 Log.debug( "User '{}' is a sysadmin. Treat as owner.", realAddress);
                 role = MUCRole.Role.moderator;
                 affiliation = MUCRole.Affiliation.owner;
@@ -799,7 +798,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 // Grab the existing one.
                 Log.debug( "Skip adding user '{}' as an occupant of room '{}' using nickname '{}', as it already is. Updating occupancy with its latest presence information.", realAddress, this.getJID(), nickname );
                 joinRole = getOccupantByFullJID(realAddress);
-                joinRole.setPresence( presence ); // OF-1581: Use latest presence information.
+                joinRole.setPresence(presence); // OF-1581: Use the latest presence information.
             }
         }
 
@@ -917,7 +916,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         // Check if the nickname is already used in the room
         checkJoinRoomPreconditionNicknameInUse( realAddress, nickname );
 
-        // If the room is password protected and the provided password is incorrect raise a
+        // If the room is password protected and the provided password is incorrect raise an
         // Unauthorized exception - unless the JID that is joining is a system admin.
         checkJoinRoomPreconditionPasswordProtection( realAddress, password );
 
@@ -1299,7 +1298,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         for (MUCRole leaveRole : getOccupants()) {
             if (leaveRole != null) {
                 // Add the removed occupant to the list of removed occupants. We are keeping a
-                // list of removed occupants to process later outside of the lock.
+                // list of removed occupants to process later outside the lock.
                 removedRoles.add(leaveRole);
             }
         }
@@ -1337,7 +1336,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 removeOccupantRole(removedRole);
             }
             catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error("An exception occurred while tyring to inform occupant '{}' that room '{}' was destroyed.", removedRole, name, e);
             }
         }
 
@@ -1352,7 +1351,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      *
      * @param presenceType Type of presence to create (cannot be {@code null}).
      * @return The new presence
-     * @throws UnauthorizedException If the user doesn't have permission to leave the room
      */
     public Presence createPresence(Presence.Type presenceType) {
         Presence presence = new Presence();
@@ -1524,11 +1522,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         }
 
         if (!presence.getFrom().asBareJID().equals(this.getJID())) {
-            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // At this point, the 'from' address of the to-be broadcast stanza can be expected to be the role-address
             // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
             // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
             // See: OF-2152
-            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
+            throw new IllegalArgumentException("Broadcast presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
         }
 
         // Create a defensive copy, to prevent modifications to leak back to the invoker.
@@ -1547,10 +1545,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         }
 
         // If FMUC is active, propagate the presence through FMUC first. Note that when a master-slave mode is active,
-        // we need to wait for an echo back, before the message can be broadcasted locally. The 'propagate' method will
+        // we need to wait for an echo back, before the message can be broadcast locally. The 'propagate' method will
         // return a CompletableFuture object that is completed as soon as processing can continue.
         return fmucHandler.propagate(stanza, sender)
-            // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
+            // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun(() -> broadcast(stanza, isJoinPresence));
     }
 
@@ -1566,11 +1564,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         Log.debug("Broadcasting presence update in room {} for occupant {}", this.getName(), presence.getFrom() );
 
         if (!presence.getFrom().asBareJID().equals(this.getJID())) {
-            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // At this point, the 'from' address of the to-be broadcast stanza can be expected to be the role-address
             // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
             // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
             // See: OF-2152
-            throw new IllegalArgumentException("Broadcasted presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
+            throw new IllegalArgumentException("Broadcast presence stanza's 'from' JID " + presence.getFrom() + " does not match room JID: " + this.getJID());
         }
 
         // Three distinct flavors of the presence stanzas can be sent:
@@ -1612,7 +1610,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             }
             catch ( Exception e )
             {
-                Log.warn( "An unexpected exception prevented a presence update from {} to be broadcasted to {}.", presence.getFrom(), occupant.getUserAddress(), e );
+                Log.warn("An unexpected exception prevented a presence update from {} to be broadcast to {}.", presence.getFrom(), occupant.getUserAddress(), e);
             }
         }
     }
@@ -1683,18 +1681,18 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     private void broadcast(@Nonnull final Message message, @Nonnull final MUCRole sender)
     {
         if (!message.getFrom().asBareJID().equals(this.getJID())) {
-            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // At this point, the 'from' address of the to-be broadcast stanza can be expected to be the role-address
             // of the subject, or more broadly: it's bare JID representation should match that of the room. If that's not
             // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
             // See: OF-2152
-            throw new IllegalArgumentException("Broadcasted message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
+            throw new IllegalArgumentException("Broadcast message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
         }
 
         // If FMUC is active, propagate the message through FMUC first. Note that when a master-slave mode is active,
-        // we need to wait for an echo back, before the message can be broadcasted locally. The 'propagate' method will
+        // we need to wait for an echo back, before the message can be broadcast locally. The 'propagate' method will
         // return a CompletableFuture object that is completed as soon as processing can continue.
         fmucHandler.propagate( message, sender )
-            // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
+            // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun( () -> {
                     // Broadcast message to occupants connected to this domain.
                     broadcast(message);
@@ -1706,7 +1704,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * Broadcasts the message stanza as captured by the argument to all occupants that are local to the domain (in other
      * words, it excludes occupants that connected via FMUC).
      *
-     * This method also ensures that the broadcasted message is logged to persistent storage, if that feature is enabled
+     * This method also ensures that the broadcast message is logged to persistent storage, if that feature is enabled
      * for this room
      *
      * @param message The message stanza
@@ -1716,11 +1714,11 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         Log.debug("Broadcasting message in room {} for occupant {}", this.getName(), message.getFrom() );
 
         if (!message.getFrom().asBareJID().equals(this.getJID())) {
-            // At this point, the 'from' address of the to-be broadcasted stanza can be expected to be the role-address
+            // At this point, the 'from' address of the to-be broadcast stanza can be expected to be the role-address
             // of the sender, or more broadly: it's bare JID representation should match that of the room. If that's not
             // the case then there's a bug in Openfire. Catch this here, as otherwise, privacy-sensitive data is leaked.
             // See: OF-2152
-            throw new IllegalArgumentException("Broadcasted message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
+            throw new IllegalArgumentException("Broadcast message stanza's 'from' JID " + message.getFrom() + " does not match room JID: " + this.getJID());
         }
 
         // Add message to the room history
@@ -1742,7 +1740,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             }
             catch ( Exception e )
             {
-                Log.warn( "An unexpected exception prevented a message from {} to be broadcast to {}.", message.getFrom(), occupant.getUserAddress(), e );
+                Log.warn("An unexpected exception prevented a message from {} to be broadcast to {}.", message.getFrom(), occupant.getUserAddress(), e);
             }
         }
         if (isLogEnabled()) {
@@ -1805,7 +1803,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         List<Presence> presences = new ArrayList<>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
         JID bareJID = jid.asBareJID();
-        List<MUCRole> roles = null;
+        List<MUCRole> roles;
         try {
             roles = getOccupantsByBareJID(bareJID);
         } catch (UserNotFoundException e) {
@@ -2041,7 +2039,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             if (owners.contains(bareJID) && owners.size() == 1) {
                 throw new ConflictException();
             }
-            // Check if user is already an member
+            // Check if user is already a member
             if (members.containsKey(bareJID)) {
                 // Do nothing
                 return Collections.emptyList();
@@ -2380,12 +2378,12 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * Changes the room's subject if the occupant has enough permissions. The occupant must be
-     * a moderator or the room must be configured so that anyone can change its subject. Otherwise
-     * a forbidden exception will be thrown.<p>
+     * a moderator or the room must be configured so that anyone can change its subject, otherwise
+     * a forbidden exception will be thrown.
      *
      * The new subject will be added to the history of the room.
      *
-     * @param packet the sent packet to change the room's subject (cannot be {@code null}).
+     * @param packet the stanza used to change the room's subject (cannot be {@code null}).
      * @param role the role of the user that is trying to change the subject (cannot be {@code null}).
      * @throws ForbiddenException If the user is not allowed to change the subject.
      */
@@ -2428,7 +2426,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * Sends an invitation to a user. The invitation will be sent as if the room is inviting the
-     * user. The invitation will include the original occupant the sent the invitation together with
+     * user. The invitation will include the original occupant that sent the invitation together with
      * the reason for the invitation if any. Since the invitee could be offline at the moment we
      * need the originating session so that the offline strategy could potentially bounce the
      * message with the invitation.
@@ -2474,7 +2472,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 }
             }
             Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
-            // ChatUser will be null if the room itself (ie. via admin console) made the request
+            // ChatUser will be null if the room itself (i.e. via admin console) made the request
             if (senderRole.getUserAddress() != null) {
                 frag.addElement("invite").addAttribute("from", senderRole.getUserAddress().toBareJID());
             }
@@ -2658,11 +2656,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * messages to the room (i.e. has voice) and may change the room's subject.
      *
      * @param jid The full JID of the occupant to give participant privileges (cannot be {@code null}).
-     * @param reason The reason why participant privileges were gave to the user or {@code null}
-     *        if none.
+     * @param reason The reason why participant privileges were given to the user or {@code null} if none.
      * @param senderRole The role of the user that is granting participant privileges to an occupant (cannot be {@code null}).
-     * @return the updated presence of the occupant or {@code null} if the JID does not belong to
-     *         an existing occupant.
+     * @return the updated presence of the occupant or {@code null} if the JID does not belong to an existing occupant.
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
      * @throws ForbiddenException If the user is not allowed to grant participant privileges.
      */
@@ -2686,7 +2682,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * Changes the role of the user within the room to visitor. A visitor can receive messages but
-     * is not allowed to send messages to the room (i.e. does not has voice) and may invite others
+     * is not allowed to send messages to the room (i.e. does not have voice) and may invite others
      * to the room.
      *
      * @param jid the full JID of the occupant to change to visitor (cannot be {@code null}).
@@ -2956,8 +2952,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     public List<Presence> setMembersOnly(boolean membersOnly) {
         List<Presence> presences = new CopyOnWriteArrayList<>();
         if (membersOnly && !this.membersOnly) {
-            // If the room was not members-only and now it is, kick occupants that aren't member
-            // of the room
+            // If the room was not members-only and now it is, kick occupants that aren't member of the room.
             for (MUCRole occupant : getOccupants()) {
                 if (occupant.getAffiliation().compareTo(MUCRole.Affiliation.member) > 0) {
                     try {
@@ -3001,7 +2996,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Sets if registered users can only join the room using their registered nickname. A
      * not_acceptable error will be returned if the user tries to join the room with a nickname
-     * different than the reserved nickname.
+     * different from the reserved nickname.
      *
      * @param restricted if registered users can only join the room using their registered nickname.
      */
@@ -3012,7 +3007,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Returns true if registered users can only join the room using their registered nickname. By
      * default, registered users can join the room using any nickname. A not_acceptable error
-     * will be returned if the user tries to join the room with a nickname different than the
+     * will be returned if the user tries to join the room with a nickname different from the
      * reserved nickname.
      *
      * @return true if registered users can only join the room using their registered nickname.
@@ -3024,10 +3019,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Sets if room occupants are allowed to change their nicknames in the room. By default,
      * occupants are allowed to change their nicknames. A not_acceptable error will be returned if
-     * an occupant tries to change his nickname and this feature is not enabled.<p>
+     * an occupant tries to change his nickname and this feature is not enabled.
      *
      * Notice that this feature is not supported by the MUC spec so answering a not_acceptable
-     * error may break some cliens.
+     * error may break some clients.
      *
      * @param canChange if room occupants are allowed to change their nicknames in the room.
      */
@@ -3038,10 +3033,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Returns true if room occupants are allowed to change their nicknames in the room. By
      * default, occupants are allowed to change their nicknames. A not_acceptable error will be
-     * returned if an occupant tries to change his nickname and this feature is not enabled.<p>
+     * returned if an occupant tries to change his nickname and this feature is not enabled.
      *
      * Notice that this feature is not supported by the MUC spec so answering a not_acceptable
-     * error may break some cliens.
+     * error may break some clients.
      *
      * @return true if room occupants are allowed to change their nicknames in the room.
      */
@@ -3145,7 +3140,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
-     * permitted to to federate with the local room.
+     * permitted to federate with the local room.
      *
      * A null value is to be interpreted as allowing all rooms to be permitted.
      *
@@ -3159,7 +3154,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
     /**
      * A set of addresses of MUC rooms (typically on a remote XMPP domain) that defines the list of rooms that is
-     * permitted to to federate with the local room.
+     * permitted to federate with the local room.
      *
      * A null value is to be interpreted as allowing all rooms to be permitted.
      *
@@ -3382,8 +3377,8 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Sets the date when the room was locked. Initially when the room is created it is locked so
      * the locked date is the creation date of the room. Afterwards, the room may be manually
-     * locked and unlocked so the locked date may be in these cases different than the creation
-     * date. A Date with time 0 means that the the room is unlocked.
+     * locked and unlocked so the locked date may be in these cases different from the creation
+     * date. A Date with time 0 means that the room is unlocked.
      *
      * @param lockedTime the date when the room was locked.
      */
@@ -3394,7 +3389,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     /**
      * Returns the date when the room was locked. Initially when the room is created it is locked so
      * the locked date is the creation date of the room. Afterwards, the room may be manually
-     * locked and unlocked so the locked date may be in these cases different than the creation
+     * locked and unlocked so the locked date may be in these cases different from the creation
      * date. When the room is unlocked a Date with time 0 is returned.
      *
      * @return the date when the room was locked.

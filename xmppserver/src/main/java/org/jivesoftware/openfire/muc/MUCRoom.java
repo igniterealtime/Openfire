@@ -997,7 +997,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     private void checkJoinRoomPreconditionNicknameInUse(@Nonnull final JID realAddress, @Nonnull String nickname ) throws UserAlreadyExistsException
     {
         final JID bareJID = realAddress.asBareJID();
-        final boolean canJoin = occupants == null || occupants.stream().noneMatch(mucRole -> !mucRole.getUserAddress().asBareJID().equals(bareJID) && mucRole.getNickname().equalsIgnoreCase(nickname));
+        final boolean canJoin = occupants.stream().noneMatch(mucRole -> !mucRole.getUserAddress().asBareJID().equals(bareJID) && mucRole.getNickname().equalsIgnoreCase(nickname));
         Log.trace( "{} Room join precondition 'nickname in use': User '{}' {} join room '{}'.", canJoin ? "PASS" : "FAIL", realAddress, canJoin ? "can" : "cannot", this.getJID() );
         if (!canJoin) {
             throw new UserAlreadyExistsException( "Someone else in the room uses the nickname that you want to use." );
@@ -2619,9 +2619,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * @return a collection with the current list of moderators.
      */
     public Collection<MUCRole> getParticipants() {
-        if (occupants == null) {
-            return Collections.emptyList();
-        }
         final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getRole() == MUCRole.Role.participant).collect(Collectors.toList());
         return Collections.unmodifiableList(roles);
     }

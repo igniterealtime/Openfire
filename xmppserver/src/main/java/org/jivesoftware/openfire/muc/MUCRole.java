@@ -316,7 +316,11 @@ public class MUCRole implements Cacheable, Externalizable {
      * @return The chatroom hosting this role.
      */
     protected MUCRoom getChatRoom() {
-        return XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid).getChatRoom(roomJid.getNode());
+        final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid);
+        if (multiUserChatService == null) {
+            throw new NullPointerException("The MUC service for room '" + roomJid + "' does not exist! This is likely a bug in Openfire.");
+        }
+        return multiUserChatService.getChatRoom(roomJid.getNode());
     }
 
     /**
@@ -380,7 +384,7 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns true if the room occupant does not want to get messages broadcasted to all
+     * Returns true if the room occupant does not want to get messages broadcast to all
      * room occupants. This type of users are called "deaf" occupants. Deaf occupants will still
      * be able to get private messages, presences, IQ packets or room history.<p>
      *
@@ -404,7 +408,7 @@ public class MUCRole implements Cacheable, Externalizable {
     /**
      * Sends a packet to the user.
      *
-     * Note that sending a packet can modify it (notably, the 'to' address can be changed. If this is undesired (for
+     * Note that sending a packet can modify it (notably, the 'to' address can be changed). If this is undesired (for
      * example, because post-processing should not expose the modified 'to' address), then a copy of the original
      * stanza should be provided as an argument to this method.
      *
@@ -493,7 +497,7 @@ public class MUCRole implements Cacheable, Externalizable {
                 Log.trace( "Unable to identify occupant '{}'", packet.getFrom() );
             }
 
-            // If this users is user joined through FMUC, use the FMUC-reported address, otherwise, use the local address.
+            // If this user is joined through FMUC, use the FMUC-reported address, otherwise, use the local address.
             switch ( sender.size() )
             {
                 case 0:
@@ -593,7 +597,7 @@ public class MUCRole implements Cacheable, Externalizable {
          */
         none(3);
 
-        private int value;
+        private final int value;
 
         Role(int value) {
             this.value = value;
@@ -657,7 +661,7 @@ public class MUCRole implements Cacheable, Externalizable {
          */
         none(50);
 
-        private int value;
+        private final int value;
 
         Affiliation(int value) {
             this.value = value;

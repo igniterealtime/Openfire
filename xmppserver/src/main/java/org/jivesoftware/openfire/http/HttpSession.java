@@ -178,7 +178,6 @@ public class HttpSession extends LocalClientSession {
     private Instant lastPoll = Instant.EPOCH;
     private Duration inactivityTimeout;
 
-    @GuardedBy("connectionQueue")
     private Instant lastActivity;
 
     @GuardedBy("connectionQueue")
@@ -504,6 +503,7 @@ public class HttpSession extends LocalClientSession {
 
             // Check for retransmission.
             if (rid <= lastAnsweredRequestID) {
+                Log.debug("Request {} on session {} appears to be a request for redelivery, as the last answered RID is {}", rid, getStreamID(), lastAnsweredRequestID);
                 redeliver(connection);
                 return;
             }
@@ -609,8 +609,8 @@ public class HttpSession extends LocalClientSession {
                     if (connectionQueue.remove(connection) || !connection.isClosed()) {
                         Log.warn("Discovered a 'complete' event for a BOSH connection that has not been consumed (for session {} with Request ID {}, was closed: {}). This likely is a bug in Openfire.", streamID, rid, connection.isClosed());
                     }
-                    lastActivity = Instant.now();
                 }
+                lastActivity = Instant.now();
                 SessionEventDispatcher.dispatchEvent( HttpSession.this, SessionEventDispatcher.EventType.connection_closed, connection, context );
             }
 
@@ -654,6 +654,7 @@ public class HttpSession extends LocalClientSession {
                 if (Log.isTraceEnabled()) {
                     Log.trace("Session {} Request ID {}, event start: {}", streamID, rid, asyncEvent);
                 }
+                lastActivity = Instant.now();
             }
         });
 
@@ -709,33 +710,39 @@ public class HttpSession extends LocalClientSession {
             // Note that this queue will automatically order its entities.
             connectionQueue.add(connection);
 
+            lastActivity = Instant.now();
+
             final Iterator<HttpConnection> iter = connectionQueue.iterator();
             while (iter.hasNext()) {
                 final HttpConnection queuedConnection = iter.next();
                 assert !queuedConnection.isClosed();
 
                 final long queuedRequestID = queuedConnection.getRequestId();
-                if (queuedRequestID <= lastSequentialRequestID) {
-                    Log.warn("Detected a queued connection (for session {}) with a request ID ({}) that is not higher than the last sequential request ID ({}). This likely is a bug in Openfire.", streamid, queuedRequestID, lastSequentialRequestID);
+                if (queuedRequestID <= lastSequentialRequestID)
+                {
+                    // The request body (inbound data) for this request will already have been processed, but the connection remains queued, waiting to be used to send outbound data.
+                    Log.trace("Detected a queued connection (for session {}) with a request ID ({}) that is not higher than the last sequential request ID ({}). This connection is waiting to be used to deliver outbound data back to the client.", streamid, queuedRequestID, lastSequentialRequestID);
                     continue;
                 }
                 if (queuedRequestID == lastSequentialRequestID + 1)
                 {
-                    // There is a new connection available for consumption.
-                    lastSequentialRequestID = queuedRequestID;
-
+                    Log.debug("Detected a queued connection (for session {}) with request ID ({}) that is exactly one higher than the last sequential request ID ({}). This inbound data on this connection will now be processed, after which the connection can be used to send outbound data back to the client.", streamid, queuedRequestID, lastSequentialRequestID);
                     // The data that was provided by the client can now be processed by the server.
-                    sendPendingPackets(queuedConnection.getInboundDataQueue()); // FIXME: OF-2444: This should not be done while holding the lock on connectionQueue, as it leads to deadlocks!
+                    // The below sends this data asynchronously.
+                    sendPendingPackets(queuedConnection.getInboundDataQueue());
 
                     // Evaluate edge-cases.
                     if (queuedConnection.isTerminate()) {
+                        Log.debug("Connection (for session {}) with request ID ({}) is a request to terminate.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection will be consumed here.
                         queuedConnection.deliverBody(createEmptyBody(true), true);
                         close();
                     } else if (queuedConnection.isRestart()) {
+                        Log.debug("Connection (for session {}) with request ID ({}) is a request to restart.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection has now been fully consumed.
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
                     } else if (queuedConnection.getPause() != null && queuedConnection.getPause().compareTo(getMaxPause()) <= 0) {
+                        Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
                         iter.remove(); // This connection will be consumed by this block. It should not be processed by the 'pause' method.
                         pause(queuedConnection.getPause()); // TODO: OF-2449: shouldn't we error when the requested pause is higher than the allowed maximum?
                         connection.deliverBody(createEmptyBody(false), true); // FIXME: OF-2450: Deliver an empty body on queuedConnection, not connection.
@@ -744,6 +751,10 @@ public class HttpSession extends LocalClientSession {
                         // At least one new connection has become available, and can be used to return data to the client.
                         aConnectionAvailableForDelivery = true;
                     }
+
+                    // There is a new connection available for consumption.
+                    lastSequentialRequestID = queuedRequestID;
+
                     // Note that when this connection fills a gap in the sequence, other connections might already be
                     // available that have the 'next' Request ID value. We need to keep iterating.
                 } else {
@@ -764,13 +775,8 @@ public class HttpSession extends LocalClientSession {
             }
 
             if (isPollingSession() || aConnectionAvailableForDelivery) {
-                // In a thread-safe manner, create a copy of all elements that are currently pending.
-                final List<Deliverable> toProcessElements = drainPendingElements();
-                if (!toProcessElements.isEmpty()) {
-                    lastActivity = Instant.now();
-                    SessionEventDispatcher.dispatchEvent(this, SessionEventDispatcher.EventType.connection_opened, connection, context); // TODO is this the right place to dispatch this event?
-                    deliver(toProcessElements);
-                }
+                SessionEventDispatcher.dispatchEvent(this, SessionEventDispatcher.EventType.connection_opened, connection, context); // TODO is this the right place to dispatch this event?
+                tryImmediateDelivery();
             }
 
             // When a new connection has become available, older connections need to be released (allowing the client to
@@ -923,40 +929,79 @@ public class HttpSession extends LocalClientSession {
      *
      * @param deliverable data to be delivered.
      */
-    private void deliver(@Nonnull final List<Deliverable> deliverable) {
-        boolean delivered = false;
+    private void deliver(@Nonnull final List<Deliverable> deliverable)
+    {
+        pendingElements.addAll(deliverable); // ConcurrentLinkedQueue.addAll is not guaranteed to be atomic. We don't need that, as long as the insertion/iteration order is guaranteed. I'm not sure if it is (but I assume so).
+        tryImmediateDelivery();
+    }
+
+    /**
+     * Tries to deliver all data that is queued to be sent to the client, if data has been queued and a connection is
+     * available for delivery.
+     *
+     * When no data is queued for delivery, or when no connection is available, an invocation does nothing.
+     */
+    private void tryImmediateDelivery()
+    {
+        final List<Deliverable> deliverables = drainPendingElements();
+        if (deliverables.isEmpty()) {
+            Log.trace("Immediate delivery of pending data to the client on session {} was requested, but no data is pending.", getStreamID());
+            return;
+        }
+
+        final HttpConnection connection = getConnectionReadyForOutboundDelivery();
+
+        if (connection == null) {
+            Log.trace("Immediate delivery of pending data to the client on session {} was requested, but no connection is available. The data ({} deliverables) will be re-queued.", getStreamID(), deliverables.size());
+            // place pending deliverables back on queue. // FIXME: if other threads have placed pending elements, this will cause a re-order, which might be undesirable.
+            pendingElements.addAll(deliverables);
+            return;
+        }
+
+        // OF-2444: deliver asynchronously, to avoid deadlocking issues.
+        HttpBindManager.getInstance().getSessionManager().execute(() -> {
+            try {
+                deliver(connection, deliverables, true);
+            } catch (HttpConnectionClosedException e) {
+                /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
+                Log.warn("Iterating over a connection that was closed for session {}. Openfire will recover from this problem, but it should not occur in the first place.", getStreamID(), e);
+                // place pending deliverables back on queue. // FIXME: if other threads have placed pending elements, this will cause a re-order, which might be undesirable.
+                pendingElements.addAll(deliverables);
+            } catch (IOException e) {
+                Log.warn("An unexpected exception occurred while iterating over connections for session {}. Openfire will attempt to recover by ignoring this connection.", getStreamID(), e);
+                // place pending deliverables back on queue. // FIXME: if other threads have placed pending elements, this will cause a re-order, which might be undesirable.
+                pendingElements.addAll(deliverables);
+            }
+        });
+    }
+
+    /**
+     * Returns a connection that can be used to deliver data to the client, if such a connection is currently available.
+     *
+     * @return A connection that is ready to be responded to.
+     */
+    @Nullable
+    private HttpConnection getConnectionReadyForOutboundDelivery()
+    {
+        HttpConnection connection = null;
         synchronized (connectionQueue) {
-            while (!connectionQueue.isEmpty()) {
-                final HttpConnection connection = connectionQueue.peek();
+            // The connection queue is ordered. No need to iterate further than the first element.
+            if (!connectionQueue.isEmpty()) {
+                connection = connectionQueue.peek();
                 assert !connection.isClosed();
 
-                try {
-                    // We can only use connections that have a sequential request ID.
-                    if (connection.getRequestId() <= lastSequentialRequestID) {
-                        connectionQueue.poll();
-                        deliver(connection, deliverable, true); // TODO OF-2444 move this out from under the connectionQueue mutex maybe?
-                        delivered = true;
-                    }
-
-                    // The connection queue is ordered. No need to iterate further;
-                    break;
+                // We can only use connections that have a sequential request ID.
+                if (connection.getRequestId() <= lastSequentialRequestID) {
+                    Log.trace("Got a connection that is ready for outbound delivery of session {}. The connection's RID is {}. The last sequential RID was: {}", getStreamID(), connection.getRequestId(), lastSequentialRequestID);
+                    connection = connectionQueue.poll();
+                } else {
+                    Log.trace("Trying to get a connection that is ready for outbound delivery of session {}, but the first connection in the connection queue isn't the next connection that needs to be responded to. It's RID is {}, while the last sequential RID was {}.", getStreamID(), connection.getRequestId(), lastSequentialRequestID);
                 }
-                catch (HttpConnectionClosedException e) {
-                    /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
-                    StreamID streamID = getStreamID();
-                    Log.warn("Iterating over a connection that was closed for session " + streamID +
-                            ". Openfire will recover from this problem, but it should not occur in the first place.");
-                } catch (IOException e) {
-                    StreamID streamID = getStreamID();
-                    Log.warn("An unexpected exception occurred while iterating over connections for session " + streamID +
-                            ". Openfire will attempt to recover by ignoring this connection.", e);
-                }
+            } else {
+                Log.trace("Trying to get a connection that is ready for outbound delivery of session {}, but the connection queue is currently empty. The last sequential RID was {}", getStreamID(), lastSequentialRequestID);
             }
         }
-        if (!delivered) {
-            Log.debug("Unable to immediately deliver a stanza on session {}. It is being queued instead).", getStreamID());
-            pendingElements.addAll(deliverable); // ConcurrentLinkedQueue.addAll is not guaranteed to be atomic. We don't need that, as long as the insertion/iteration order is guaranteed. I'm not sure if it is (but I assume so).
-        }
+        return connection;
     }
 
     /**
@@ -966,12 +1011,14 @@ public class HttpSession extends LocalClientSession {
      * @param deliverable The data to be delivered.
      * @param async should the invocation block until the data has been delivered?
      */
-    @GuardedBy("connectionQueue")
     private void deliver(@Nonnull final HttpConnection connection, @Nonnull final List<Deliverable> deliverable, final boolean async)
         throws HttpConnectionClosedException, IOException
     {
+        Log.trace("Delivering {} deliverables to the client on session {}, using connection with RID {}", deliverable.size(), getStreamID(), connection.getRequestId());
         connection.deliverBody(asBodyText(deliverable), async);
         lastAnsweredRequestID = connection.getRequestId();
+
+        lastActivity = Instant.now();
 
         // Keep track of data that has been delivered, for potential future retransmission.
         final Delivered delivered = new Delivered(deliverable, connection.getRequestId());

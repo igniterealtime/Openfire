@@ -61,7 +61,7 @@ public class HttpSessionManager {
     private SessionManager sessionManager;
     private final Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
     private TimerTask inactivityTask;
-    private ThreadPoolExecutor sendPacketPool;
+    private ThreadPoolExecutor stanzaWorkerPool;
     private final SessionListener sessionListener = new SessionListener() {
         @Override
         public void sessionClosed(HttpSession session) {
@@ -84,7 +84,7 @@ public class HttpSessionManager {
     /**
      * Starts the services used by the HttpSessionManager.
      *
-     * (Re)creates and configures a pooled executor to handle async routing for incoming packets with a configurable
+     * (Re)creates and configures a pooled executor to handle async routing for stanzas with a configurable
      * (through property "xmpp.httpbind.worker.threads") amount of threads; also uses an unbounded task queue and
      * configurable ("xmpp.httpbind.worker.timeout") keep-alive.
      *
@@ -97,16 +97,16 @@ public class HttpSessionManager {
 
         this.sessionManager = SessionManager.getInstance();
 
-        sendPacketPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
+        stanzaWorkerPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(), // unbounded task queue
                 new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
         );
 
         if (JMXManager.isEnabled()) {
-            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(sendPacketPool);
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(stanzaWorkerPool);
             workerThreadPoolObjectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "bosh");
         }
-        sendPacketPool.prestartCoreThread();
+        stanzaWorkerPool.prestartCoreThread();
 
         // Periodically check for Sessions that need a cleanup.
         inactivityTask = new HttpSessionReaper();
@@ -169,7 +169,7 @@ public class HttpSessionManager {
             session.close();
         }
         sessionMap.clear();
-        sendPacketPool.shutdown();
+        stanzaWorkerPool.shutdown();
     }
 
     /**
@@ -387,6 +387,6 @@ public class HttpSessionManager {
     }
 
     protected void execute(Runnable runnable) {
-        this.sendPacketPool.execute(runnable);
+        this.stanzaWorkerPool.execute(runnable);
     }
 }

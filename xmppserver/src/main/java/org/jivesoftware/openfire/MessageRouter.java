@@ -179,6 +179,10 @@ public class MessageRouter extends BasicModule {
                 reply.setTo(session.getAddress());
                 reply.setFrom(packet.getTo());
                 reply.setType(packet.getType());
+                if(packet.getError()!= null){
+                    PacketError packetError = packet.getError();
+                    reply.setError(new PacketError(packetError.getCondition(), packetError.getType(), packetError.getText()));
+                }
                 reply.setThread(packet.getThread());
                 reply.setBody(e.getRejectionMessage());
                 session.process(reply);

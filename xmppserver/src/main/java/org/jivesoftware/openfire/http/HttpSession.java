@@ -704,6 +704,7 @@ public class HttpSession extends LocalClientSession {
         // of request IDs. When a connection is being processed that has a higher value, it should go unused until another
         // connection arrives that 'fills the gap' (and be used only _after_ that connection gets used).
         boolean aConnectionAvailableForDelivery = false;
+        boolean mustClose = false;
         synchronized (connectionQueue) {
             // Note that this queue will automatically order its entities.
             connectionQueue.add(connection);
@@ -734,7 +735,7 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to terminate.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection will be consumed here.
                         queuedConnection.deliverBody(createEmptyBody(true), true);
-                        close();
+                        mustClose = true;
                     } else if (queuedConnection.isRestart()) {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to restart.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection has now been fully consumed.
@@ -762,37 +763,44 @@ public class HttpSession extends LocalClientSession {
                 }
             }
 
-            // If a connection became available for delivery and there's pending data to be delivered, deliver immediately.
-            // Request ID of the new connection 'fits in the window'
+            if (!mustClose) {
+                // If a connection became available for delivery and there's pending data to be delivered, deliver immediately.
+                // Request ID of the new connection 'fits in the window'
 
-            if (isPollingSession()) {
-                // Note that the code leading up to here checks if the Request ID of the new connection 'fits in the window',
-                // which means that for polling sessions, the request ID must have been a sequential one, which in turn should
-                // guarantee that 'a new connection is now available for delivery').
-                assert aConnectionAvailableForDelivery; // FIXME: OF-2451: the edge-cases evaluated above make this assertion not necessarily true.
-            }
-
-            if (isPollingSession() || aConnectionAvailableForDelivery) {
-                SessionEventDispatcher.dispatchEvent(this, SessionEventDispatcher.EventType.connection_opened, connection, context); // TODO is this the right place to dispatch this event?
-                tryImmediateDelivery();
-            }
-
-            // When a new connection has become available, older connections need to be released (allowing the client to
-            // send more data if it needs to).
-            while (!connectionQueue.isEmpty() && connectionQueue.size() > hold) {
-                if (Log.isTraceEnabled()) {
-                    Log.trace("Stream {}: releasing oldest connection (rid {}), as the amount of open connections ({}) is higher than the requested amount to hold ({}).", streamid, rid, connectionQueue.size(), hold);
-                }
-                final HttpConnection openConnection = connectionQueue.peek();
-                assert openConnection != null;
-                if (openConnection.getRequestId() > lastSequentialRequestID) {
-                    break; // There's a gap. As described above, connections must be used in sequence, without jumping the queue.
+                if (isPollingSession()) {
+                    // Note that the code leading up to here checks if the Request ID of the new connection 'fits in the window',
+                    // which means that for polling sessions, the request ID must have been a sequential one, which in turn should
+                    // guarantee that 'a new connection is now available for delivery').
+                    assert aConnectionAvailableForDelivery; // FIXME: OF-2451: the edge-cases evaluated above make this assertion not necessarily true.
                 }
 
-                // Consume this connection.
-                connectionQueue.poll();
-                openConnection.deliverBody(createEmptyBody(false), true);
+                if (isPollingSession() || aConnectionAvailableForDelivery) {
+                    SessionEventDispatcher.dispatchEvent(this, SessionEventDispatcher.EventType.connection_opened, connection, context); // TODO is this the right place to dispatch this event?
+                    tryImmediateDelivery();
+                }
+
+                // When a new connection has become available, older connections need to be released (allowing the client to
+                // send more data if it needs to).
+                while (!connectionQueue.isEmpty() && connectionQueue.size() > hold) {
+                    if (Log.isTraceEnabled()) {
+                        Log.trace("Stream {}: releasing oldest connection (rid {}), as the amount of open connections ({}) is higher than the requested amount to hold ({}).", streamid, rid, connectionQueue.size(), hold);
+                    }
+                    final HttpConnection openConnection = connectionQueue.peek();
+                    assert openConnection != null;
+                    if (openConnection.getRequestId() > lastSequentialRequestID) {
+                        break; // There's a gap. As described above, connections must be used in sequence, without jumping the queue.
+                    }
+
+                    // Consume this connection.
+                    connectionQueue.poll();
+                    openConnection.deliverBody(createEmptyBody(false), true);
+                }
             }
+        }
+
+        // OF-2444: Call 'close()' outside of the connectionQueue mutex, to avoid deadlocks.
+        if (mustClose) {
+            close();
         }
     }
 

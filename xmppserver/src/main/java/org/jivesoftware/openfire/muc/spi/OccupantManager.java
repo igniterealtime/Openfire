@@ -497,9 +497,14 @@ public class OccupantManager implements MUCEventListener
     public void registerActivity(@Nonnull final JID userJid)
     {
         // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
-        getLocalOccupants().stream()
-            .filter(occupant -> userJid.equals(occupant.getRealJID()))
-            .forEach(o -> o.setLastActive(Instant.now()));
+        mutex.writeLock().lock();
+        try {
+            occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptySet()).stream()
+                .filter(occupant -> userJid.equals(occupant.getRealJID()))
+                .forEach(o -> o.setLastActive(Instant.now()));
+        } finally {
+            mutex.writeLock().unlock();
+        }
     }
 
     /**
@@ -512,11 +517,16 @@ public class OccupantManager implements MUCEventListener
     @Nullable
     public Instant lastActivityOnLocalNode(@Nonnull final JID userJid)
     {
-        return getLocalOccupants().stream()
-            .filter(occupant -> userJid.equals(occupant.getRealJID()))
-            .map(Occupant::getLastActive)
-            .max(java.util.Comparator.naturalOrder())
-            .orElse(null);
+        mutex.readLock().lock();
+        try {
+            return occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptySet()).stream()
+                .filter(occupant -> userJid.equals(occupant.getRealJID()))
+                .map(Occupant::getLastActive)
+                .max(java.util.Comparator.naturalOrder())
+                .orElse(null);
+        } finally {
+            mutex.readLock().unlock();
+        }
     }
 
     /**

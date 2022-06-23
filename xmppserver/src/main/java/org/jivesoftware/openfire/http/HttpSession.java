@@ -665,24 +665,22 @@ public class HttpSession extends LocalClientSession {
      * Attempts to find data that was previously sent back to the client, using a particular request ID. This is
      * expected to be used to process requests for retransmission.
      *
-     * The implementation only holds a limited amount of data. It will return null when no data that matches the ID can
-     * be found.
+     * The implementation only holds a limited amount of data. It will return an empty Optional when no data that
+     * matches the ID can be found.
      *
      * @param rid The request ID for which to find previously delivered data.
      * @return previously delivered data when found.
      */
-    @Nullable
-    private Delivered retrieveDeliverable(final long rid) {
-        Delivered result = null;
+    @Nonnull
+    private Optional<Delivered> retrieveDeliverable(final long rid) {
         synchronized (sentElements) {
             for (Delivered delivered : sentElements) {
                 if (delivered.getRequestID() == rid) {
-                    result = delivered;
-                    break;
+                    return Optional.of(delivered);
                 }
             }
         }
-        return result;
+        return Optional.empty();
     }
 
     /**
@@ -814,12 +812,12 @@ public class HttpSession extends LocalClientSession {
     private void redeliver(@Nonnull final HttpConnection connection) throws HttpBindException, IOException, HttpConnectionClosedException
     {
         Log.debug("Session {} requesting a retransmission for rid {}", getStreamID(), connection.getRequestId());
-        final Delivered deliverable = retrieveDeliverable(connection.getRequestId());
-        if (deliverable == null) {
+        final Optional<Delivered> deliverable = retrieveDeliverable(connection.getRequestId());
+        if (!deliverable.isPresent()) {
             Log.warn("Deliverable unavailable for " + connection.getRequestId() + " in session " + getStreamID());
             throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
         }
-        connection.deliverBody(asBodyText(deliverable.deliverables), true);
+        connection.deliverBody(asBodyText(deliverable.get().deliverables), true);
     }
 
     private enum OveractivityType {
@@ -949,9 +947,9 @@ public class HttpSession extends LocalClientSession {
             return;
         }
 
-        final HttpConnection connection = getConnectionReadyForOutboundDelivery();
+        final Optional<HttpConnection> connection = getConnectionReadyForOutboundDelivery();
 
-        if (connection == null) {
+        if (!connection.isPresent()) {
             Log.trace("Immediate delivery of pending data to the client on session {} was requested, but no connection is available. The data ({} deliverables) will be re-queued.", getStreamID(), deliverables.size());
             // place pending deliverables back on queue. // FIXME: if other threads have placed pending elements, this will cause a re-order, which might be undesirable.
             pendingElements.addAll(deliverables);
@@ -961,7 +959,7 @@ public class HttpSession extends LocalClientSession {
         // OF-2444: deliver asynchronously, to avoid deadlocking issues.
         HttpBindManager.getInstance().getSessionManager().execute(() -> {
             try {
-                deliver(connection, deliverables, true);
+                deliver(connection.get(), deliverables, true);
             } catch (HttpConnectionClosedException e) {
                 /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */
                 Log.warn("Iterating over a connection that was closed for session {}. Openfire will recover from this problem, but it should not occur in the first place.", getStreamID(), e);
@@ -980,20 +978,20 @@ public class HttpSession extends LocalClientSession {
      *
      * @return A connection that is ready to be responded to.
      */
-    @Nullable
-    private HttpConnection getConnectionReadyForOutboundDelivery()
+    @Nonnull
+    private Optional<HttpConnection> getConnectionReadyForOutboundDelivery()
     {
-        HttpConnection connection = null;
         synchronized (connectionQueue) {
             // The connection queue is ordered. No need to iterate further than the first element.
             if (!connectionQueue.isEmpty()) {
-                connection = connectionQueue.peek();
+                final HttpConnection connection = connectionQueue.peek();
                 assert !connection.isClosed();
 
                 // We can only use connections that have a sequential request ID.
                 if (connection.getRequestId() <= lastSequentialRequestID) {
                     Log.trace("Got a connection that is ready for outbound delivery of session {}. The connection's RID is {}. The last sequential RID was: {}", getStreamID(), connection.getRequestId(), lastSequentialRequestID);
-                    connection = connectionQueue.poll();
+                    connectionQueue.poll(); // remove it.
+                    return Optional.of(connection);
                 } else {
                     Log.trace("Trying to get a connection that is ready for outbound delivery of session {}, but the first connection in the connection queue isn't the next connection that needs to be responded to. It's RID is {}, while the last sequential RID was {}.", getStreamID(), connection.getRequestId(), lastSequentialRequestID);
                 }
@@ -1001,7 +999,7 @@ public class HttpSession extends LocalClientSession {
                 Log.trace("Trying to get a connection that is ready for outbound delivery of session {}, but the connection queue is currently empty. The last sequential RID was {}", getStreamID(), lastSequentialRequestID);
             }
         }
-        return connection;
+        return Optional.empty();
     }
 
     /**

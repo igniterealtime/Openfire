@@ -178,15 +178,11 @@
     </script>
 </head>
 <body>
-<p>
-    <fmt:message key="httpbind.settings.info"/>
-</p>
 
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
             <c:when test="${err.key eq 'port'}"><fmt:message key="httpbind.settings.error.port"/></c:when>
-            <c:when test="${err.key eq 'missingMotdMessage'}"><fmt:message key="motd.message.missing"/></c:when>
             <c:otherwise>
                 <c:if test="${not empty err.value}">
                     <fmt:message key="httpbind.settings.error.general"/>
@@ -196,6 +192,28 @@
         </c:choose>
     </admin:infobox>
 </c:forEach>
+
+<c:if test="${serverManager.httpBindEnabled}">
+    <admin:infobox type="info">
+        <p><fmt:message key="httpbind.settings.infobox-enabled.title"/></p>
+        <p>
+            <fmt:message key="httpbind.settings.infobox-enabled.websocket-endpoints">
+                <fmt:param><c:out value="${serverManager.websocketUnsecureAddress}"/></fmt:param>
+                <fmt:param><c:out value="${serverManager.websocketSecureAddress}"/></fmt:param>
+            </fmt:message>
+        </p>
+        <p>
+            <fmt:message key="httpbind.settings.infobox-enabled.bosh-endpoints">
+                <fmt:param><c:out value="${serverManager.httpBindUnsecureAddress}"/></fmt:param>
+                <fmt:param><c:out value="${serverManager.httpBindSecureAddress}"/></fmt:param>
+            </fmt:message>
+        </p>
+    </admin:infobox>
+</c:if>
+
+<p>
+    <fmt:message key="httpbind.settings.info"/>
+</p>
 
 <form action="http-bind.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
@@ -215,12 +233,10 @@
                              <tr>
                                 <td><label for="port"><fmt:message key="httpbind.settings.vanilla_port"/></label></td>
                                 <td><input id="port" type="text" size="5" maxlength="10" name="port" value="${HttpBindManager.HTTP_BIND_PORT.value}" /></td>
-                                <td>( <c:out value="${serverManager.httpBindUnsecureAddress}"/> )</td>
                             </tr>
                             <tr>
                                 <td><label for="securePort"><fmt:message key="httpbind.settings.secure_port"/></label></td>
                                 <td><input id="securePort" type="text" size="5" maxlength="10" name="securePort" value="${HttpBindManager.HTTP_BIND_SECURE_PORT.value}" /></td>
-                                <td>( <c:out value="${serverManager.httpBindSecureAddress}"/> )</td>
                             </tr>
                         </table>
                     </td>

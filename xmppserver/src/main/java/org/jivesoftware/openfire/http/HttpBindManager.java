@@ -606,6 +606,14 @@ public final class HttpBindManager implements CertificateEventListener {
         return false;
     }
 
+    public String getWebsocketUnsecureAddress() {
+        return "ws://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_PORT.getValue() + "/ws/";
+    }
+
+    public String getWebsocketSecureAddress() {
+        return "wss://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_SECURE_PORT.getValue() + "/ws/";
+    }
+
     public String getHttpBindUnsecureAddress() {
         return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_PORT.getValue() + "/http-bind/";
     }

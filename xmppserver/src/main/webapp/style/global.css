@@ -682,72 +682,72 @@ table.calBgColor {
 td.cal {
     background-color:#FFFFFF;
     color:#000000;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
     padding:0;
 }
 select.month {
     background:transparent none repeat scroll 0;
     color:#000000;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
     width:85px;
 }
 input.year {
     background:transparent none repeat scroll 0;
     color:#000000;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
     width:30px;
 }
 td.calDaysColor {
     background-color:#000000;
     color:#FFFFFF;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
 }
 td.calWeekend {
     background-color:#D3D3D3;
     color:#FFFFFF;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
 }
 td.calBgColor {
     background-color:#FFFFCC;
     color:#FFFFFF;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
 }
 .calBorderColor {
     background-color:#A9A9A9;
     color:#FFFFFF;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
 }
 td.calHighlightColor {
     background-color:#FFFFCC;
     color:#FFFFFF;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
 }
 a.cal {
     background:transparent none repeat scroll 0;
     color:#000000;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
     text-decoration:none;
 }
 a.cal:hover {
     background:transparent none repeat scroll 0;
     color:#FF0000;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
     text-decoration:none;
 }
 .calDisabled {
     background:transparent none repeat scroll 0;
     color:#808080;
-    font-family:Arial,Helvetica,Sans-serif;
+    font-family:Arial,Helvetica,sans-serif;
     font-size:11px;
     text-decoration:none;
 }

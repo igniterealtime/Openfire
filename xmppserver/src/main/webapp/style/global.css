@@ -85,10 +85,7 @@ fieldset div .jive-table {
     padding:0;
 }
 fieldset {
-    -moz-border-radius-bottomleft:3px;
-    -moz-border-radius-bottomright:3px;
-    -moz-border-radius-topleft:3px;
-    -moz-border-radius-topright:3px;
+    -moz-border-radius: 3px;
     border:2px solid #CCCCCC;
     width:95%;
     padding: 0.4em;
@@ -334,11 +331,9 @@ iframe {
 }
 #jive-subnav ul li.current a, #jive-subnav ul li.current a:visited {
     background-color:#F9F9F9;
-    border-color:#cecece;
-    border-style:solid;
     margin:0;
     padding:3px 15px 4px 15px;
-    border: 0;
+    border: 0 solid #cecece;
 }
 #jive-subnav ul li.current a:hover, #jive-subnav ul li.current a:active {
     background-color:#F9F9F9;
@@ -440,10 +435,7 @@ iframe {
     padding-top:0;
 }
 #jive-sidebar ul {
-    -moz-border-radius-bottomleft:0;
-    -moz-border-radius-bottomright:5px;
-    -moz-border-radius-topleft:0;
-    -moz-border-radius-topright:0;
+    -moz-border-radius: 0 0 5px 0;
     border-bottom:1px solid #E6E6E6;
     border-right:1px solid #E6E6E6;
     list-style-type:none;
@@ -769,10 +761,7 @@ a.cal:hover {
     width:90%;
 }
 .success {
-    -moz-border-radius-bottomleft:3px;
-    -moz-border-radius-bottomright:3px;
-    -moz-border-radius-topleft:3px;
-    -moz-border-radius-topright:3px;
+    -moz-border-radius: 3px;
     background-color:#CDF6CD;
     background-image:url(../images/success-16x16.gif);
     background-position:5px;
@@ -785,10 +774,7 @@ a.cal:hover {
     padding:5px 5px 5px 28px;
 }
 .error {
-    -moz-border-radius-bottomleft:3px;
-    -moz-border-radius-bottomright:3px;
-    -moz-border-radius-topleft:3px;
-    -moz-border-radius-topright:3px;
+    -moz-border-radius: 3px;
     background-color:#EDB9B1;
     background-image:url(../images/error-16x16.gif);
     background-position:5px;
@@ -801,10 +787,7 @@ a.cal:hover {
     padding:5px 5px 5px 28px;
 }
 .warning {
-    -moz-border-radius-bottomleft:3px;
-    -moz-border-radius-bottomright:3px;
-    -moz-border-radius-topleft:3px;
-    -moz-border-radius-topright:3px;
+    -moz-border-radius: 3px;
     background-color:#FFE9B2;
     background-image:url(../images/icon_warning-small.gif);
     background-position:5px;
@@ -822,10 +805,7 @@ a.cal:hover {
 /* --------------------------------------------- */
 
 .jive-contentBox {
-    -moz-border-radius-bottomleft:4px;
-    -moz-border-radius-bottomright:4px;
-    -moz-border-radius-topleft:0;
-    -moz-border-radius-topright:0;
+    -moz-border-radius: 0 0 4px 4px;
     background-color:#FFFFFF;
     border:1px solid #CCCCCC;
     display:block;
@@ -909,10 +889,7 @@ th.jive-table-th-center {
 /* --------------------------------------------- */
 
 #jive-roster {
-    -moz-border-radius-bottomleft:4px;
-    -moz-border-radius-bottomright:4px;
-    -moz-border-radius-topleft:4px;
-    -moz-border-radius-topright:4px;
+    -moz-border-radius: 4px;
     background-color:#F9F9F9;
     border:1px solid #DCDCDC;
     display:block;
@@ -990,10 +967,7 @@ th.jive-table-th-center {
 /* --------------------------------------------- */
 
 #jive-main-content {
-    -moz-border-radius-bottomleft:4px;
-    -moz-border-radius-bottomright:4px;
-    -moz-border-radius-topleft:4px;
-    -moz-border-radius-topright:4px;
+    -moz-border-radius: 4px;
     background:#F5F5F5 url(../images/jive-body-contentbox-bg.gif) repeat-x scroll center top;
     border:1px solid #DCDCDC;
     margin:15px 0 20px 0;

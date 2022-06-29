@@ -164,7 +164,6 @@ public class HttpSession extends LocalClientSession {
      * A thread-safe collection (using a weakly consistent iterator) that contains stanzas that could not immediately be
      * delivered to the peer.
      */
-    // FIXME: OF-2445: Prevent elements to be scheduled for delivery in #pendingElements after the session is closed (as they would never be delivered).
     private final ConcurrentLinkedQueue<Deliverable> pendingElements = new ConcurrentLinkedQueue<>();
 
     /**
@@ -952,6 +951,12 @@ public class HttpSession extends LocalClientSession {
         final List<Deliverable> deliverables = drainPendingElements();
         if (deliverables.isEmpty()) {
             Log.trace("Immediate delivery of pending data to the client on session {} was requested, but no data is pending.", getStreamID());
+            return;
+        }
+
+        // OF-2445: stanzas should not linger forever in a queue of a session that is already closed.
+        if (isClosed()) {
+            deliverables.forEach(deliverable -> failDelivery(deliverable.getPackets()));
             return;
         }
 

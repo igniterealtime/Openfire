@@ -530,7 +530,7 @@ public class HttpSession extends LocalClientSession {
                     Log.debug("For session {} queued connection is still open - calling close() on the old connection (as the new connection will replace it).", streamid);
                     // TODO: OF-2447: implement section 14.3 of XEP 0124 instead of this!
                     deliver(queuedConnection, Collections.singletonList(new Deliverable("")), true);
-                    connection.close(); // FIXME: OF-2448: As the intention is for the new connection to replace the old connection, the new connection should not be closed, I think.
+                    queuedConnection.close();
                     break;
                 }
             }

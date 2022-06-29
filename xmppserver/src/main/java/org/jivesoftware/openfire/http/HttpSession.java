@@ -736,12 +736,19 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to restart.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection has now been fully consumed.
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
-                    } else if (queuedConnection.getPause() != null && queuedConnection.getPause().compareTo(getMaxPause()) <= 0) {
-                        Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
+                    } else if (queuedConnection.getPause() != null) {
+                        // OF-2449: Error when the requested pause is higher than the allowed maximum.
+                        if (queuedConnection.getPause().compareTo(getMaxPause()) > 0) {
+                            Log.info("Connection (for session {}) with request ID ({}) is a request to pause (for {}) that is longer than the maximum allowable value {}", getStreamID(), queuedRequestID, queuedConnection.getPause(), getMaxPause());
+                            queuedConnection.deliverBody(createTerminalBindingBody("policy-violation"), true);
+                            mustClose = true;
+                        } else {
+                            Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
+                            pause(queuedConnection.getPause());
+                            queuedConnection.deliverBody(createEmptyBody(false), true);
+                            setLastResponseEmpty(true);
+                        }
                         iter.remove(); // This connection will be consumed by this block. It should not be processed by the 'pause' method.
-                        pause(queuedConnection.getPause()); // TODO: OF-2449: shouldn't we error when the requested pause is higher than the allowed maximum?
-                        queuedConnection.deliverBody(createEmptyBody(false), true);
-                        setLastResponseEmpty(true);
                     } else {
                         // At least one new connection has become available, and can be used to return data to the client.
                         aConnectionAvailableForDelivery = true;
@@ -1143,6 +1150,22 @@ public class HttpSession extends LocalClientSession {
         final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
         body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
+        return body.asXML();
+    }
+
+    /**
+     * Creates an empty BOSH 'body' element that including a 'terminate' type attribute (that, in BOSH, signifies the
+     * end of a session), and sets the 'condition' attribute to a specified value.
+     *
+     * @param condition The terminate condition to set.
+     * @return The string representation of a BOSH 'body' element.
+     */
+    @Nonnull
+    protected String createTerminalBindingBody(@Nonnull final String condition)
+    {
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
+        body.addAttribute("type", "terminate");
+        body.addAttribute("condition", condition);
         return body.asXML();
     }
 

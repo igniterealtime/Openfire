@@ -744,7 +744,7 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
                         iter.remove(); // This connection will be consumed by this block. It should not be processed by the 'pause' method.
                         pause(queuedConnection.getPause()); // TODO: OF-2449: shouldn't we error when the requested pause is higher than the allowed maximum?
-                        connection.deliverBody(createEmptyBody(false), true); // FIXME: OF-2450: Deliver an empty body on queuedConnection, not connection.
+                        queuedConnection.deliverBody(createEmptyBody(false), true);
                         setLastResponseEmpty(true);
                     } else {
                         // At least one new connection has become available, and can be used to return data to the client.

@@ -172,7 +172,7 @@ public class HttpSession extends LocalClientSession {
      * The size of this collection is limited. It will contain only the last few transmitted elements.
      */
     @GuardedBy("itself")
-    private final List<Delivered> sentElements = new ArrayList<>(); // FIXME: OF-2446 Use a more appropriate data type than ArrayList.
+    private final LinkedList<Delivered> sentElements = new LinkedList<>();
 
     private Instant lastPoll = Instant.EPOCH;
     private Duration inactivityTimeout;
@@ -1035,7 +1035,7 @@ public class HttpSession extends LocalClientSession {
         final Delivered delivered = new Delivered(deliverable, connection.getRequestId());
         synchronized (sentElements) {
             while (sentElements.size() > maxRequests) {
-                sentElements.remove(0);
+                sentElements.poll();
             }
 
             sentElements.add(delivered);

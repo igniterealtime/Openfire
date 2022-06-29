@@ -30,11 +30,13 @@ import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +72,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class HttpSession extends LocalClientSession {
 
     private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
+
+    /**`
+     * Controls if client-provided 'pause' values that are invalid (higher than 'maxpause') are ignored or will cause the client to be disconnected.
+     */
+    public static SystemProperty<Boolean> IGNORE_INVALID_PAUSE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.httpbind.client.maxpause.ignore-invalid")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
 
     private static XmlPullParserFactory factory = null;
     private static final ThreadLocal<XMPPPacketReader> localParser;
@@ -738,8 +749,8 @@ public class HttpSession extends LocalClientSession {
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
                     } else if (queuedConnection.getPause() != null) {
                         // OF-2449: Error when the requested pause is higher than the allowed maximum.
-                        if (queuedConnection.getPause().compareTo(getMaxPause()) > 0) {
-                            Log.info("Connection (for session {}) with request ID ({}) is a request to pause (for {}) that is longer than the maximum allowable value {}", getStreamID(), queuedRequestID, queuedConnection.getPause(), getMaxPause());
+                        if (!IGNORE_INVALID_PAUSE.getValue() && (queuedConnection.getPause().compareTo(getMaxPause()) > 0 || queuedConnection.getPause().isNegative())) {
+                            Log.info("Connection (for session {}) with request ID ({}) is a request to pause (for {}) that is outside of the permissible range of 0 to {}", getStreamID(), queuedRequestID, queuedConnection.getPause(), getMaxPause());
                             queuedConnection.deliverBody(createTerminalBindingBody("policy-violation"), true);
                             mustClose = true;
                         } else {

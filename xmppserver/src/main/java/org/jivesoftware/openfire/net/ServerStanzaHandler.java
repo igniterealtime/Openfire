@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -51,6 +52,15 @@ import org.xmpp.packet.StreamError;
 public class ServerStanzaHandler extends StanzaHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(ServerStanzaHandler.class);
+
+    /**
+     * Controls if JIDs that are in the addresses of stanzas supplied by remote domains are validated.
+     */
+    public static final SystemProperty<Boolean> SKIP_JID_VALIDATION = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.server.incoming.skip-jid-validation")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
 
     public ServerStanzaHandler(PacketRouter router, Connection connection) {
         super(router, connection);
@@ -91,8 +101,7 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean validateJIDs() {
-        // TODO Should we trust other servers???
-        return false;
+        return !SKIP_JID_VALIDATION.getValue();
     }
 
     @Override

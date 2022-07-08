@@ -117,7 +117,7 @@ abstract class Channel implements Runnable {
      * Remove every Listeners
      */
     public void removeListeners() {
-        listeners.removeAll(listeners);
+        listeners.clear();
     }
 
     public void cancel() {

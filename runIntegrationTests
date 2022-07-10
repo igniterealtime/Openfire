@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SMACK_VERSION="4.4.4"
+SMACK_VERSION="4.4.6"
 GRADLE_VERSION="6.3"
 FORCE_CUSTOM_GRADLE=true
 CURL_ARGS="--location --silent"
@@ -155,11 +155,6 @@ function runTestsInGradle {
 	echo "Starting Integration Tests (using Smack ${SMACK_VERSION})…"
 
 	DISABLED_INTEGRATION_TESTS=()
-
-	# The three tests below suffer from a race condition, making them flap. See https://github.com/igniterealtime/Smack/pull/440
-    DISABLED_INTEGRATION_TESTS+=(MoodIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(UserTuneIntegrationTest)
-    DISABLED_INTEGRATION_TESTS+=(GeolocationIntegrationTest)
 
     # Occasionally fail because of unstable AbstractSmackIntegrationTest#performActionAndWaitForPresence being used.
     # See https://github.com/igniterealtime/Smack/commit/5bfe789e08ebb251b3c4302cb653c715eee363ea for unstable solution.

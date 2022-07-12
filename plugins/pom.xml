@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.igniterealtime.openfire</groupId>
-    <version>4.7.2-SNAPSHOT</version>
+    <version>4.7.2</version>
     <artifactId>plugins</artifactId>
     <packaging>pom</packaging>
     <name>Openfire Plugins</name>
@@ -120,7 +120,7 @@
         <plugin.name>${project.artifactId}</plugin.name>
 
         <!-- Versions -->
-        <openfire.version>4.7.2-SNAPSHOT</openfire.version>
+        <openfire.version>4.7.2</openfire.version>
         <!-- Note; the following jetty.version should be identical to the jetty.version in xmppserver/pom.xml -->
         <jetty.version>9.4.43.v20210629</jetty.version>
     </properties>

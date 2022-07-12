@@ -4,7 +4,7 @@
     <parent>
         <artifactId>plugins</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-	<version>4.7.2-SNAPSHOT</version>
+	<version>4.7.2</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
     <artifactId>openfire-plugin-assembly-descriptor</artifactId>

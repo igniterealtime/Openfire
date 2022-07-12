@@ -30,11 +30,13 @@ import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +72,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class HttpSession extends LocalClientSession {
 
     private static final Logger Log = LoggerFactory.getLogger(HttpSession.class);
+
+    /**`
+     * Controls if client-provided 'pause' values that are invalid (higher than 'maxpause') are ignored or will cause the client to be disconnected.
+     */
+    public static SystemProperty<Boolean> IGNORE_INVALID_PAUSE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.httpbind.client.maxpause.ignore-invalid")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
 
     private static XmlPullParserFactory factory = null;
     private static final ThreadLocal<XMPPPacketReader> localParser;
@@ -736,12 +747,19 @@ public class HttpSession extends LocalClientSession {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to restart.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection has now been fully consumed.
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
-                    } else if (queuedConnection.getPause() != null && queuedConnection.getPause().compareTo(getMaxPause()) <= 0) {
-                        Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
+                    } else if (queuedConnection.getPause() != null) {
+                        // OF-2449: Error when the requested pause is higher than the allowed maximum.
+                        if (!IGNORE_INVALID_PAUSE.getValue() && (queuedConnection.getPause().compareTo(getMaxPause()) > 0 || queuedConnection.getPause().isNegative())) {
+                            Log.info("Connection (for session {}) with request ID ({}) is a request to pause (for {}) that is outside of the permissible range of 0 to {}", getStreamID(), queuedRequestID, queuedConnection.getPause(), getMaxPause());
+                            queuedConnection.deliverBody(createTerminalBindingBody("policy-violation"), true);
+                            mustClose = true;
+                        } else {
+                            Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
+                            pause(queuedConnection.getPause());
+                            queuedConnection.deliverBody(createEmptyBody(false), true);
+                            setLastResponseEmpty(true);
+                        }
                         iter.remove(); // This connection will be consumed by this block. It should not be processed by the 'pause' method.
-                        pause(queuedConnection.getPause()); // TODO: OF-2449: shouldn't we error when the requested pause is higher than the allowed maximum?
-                        queuedConnection.deliverBody(createEmptyBody(false), true);
-                        setLastResponseEmpty(true);
                     } else {
                         // At least one new connection has become available, and can be used to return data to the client.
                         aConnectionAvailableForDelivery = true;
@@ -1143,6 +1161,22 @@ public class HttpSession extends LocalClientSession {
         final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
         if (terminate) { body.addAttribute("type", "terminate"); }
         body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
+        return body.asXML();
+    }
+
+    /**
+     * Creates an empty BOSH 'body' element that including a 'terminate' type attribute (that, in BOSH, signifies the
+     * end of a session), and sets the 'condition' attribute to a specified value.
+     *
+     * @param condition The terminate condition to set.
+     * @return The string representation of a BOSH 'body' element.
+     */
+    @Nonnull
+    protected String createTerminalBindingBody(@Nonnull final String condition)
+    {
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
+        body.addAttribute("type", "terminate");
+        body.addAttribute("condition", condition);
         return body.asXML();
     }
 

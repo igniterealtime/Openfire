@@ -69,7 +69,7 @@
         <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${admin:urlEncode(node.nodeID)}" />
     </c:when>
     <c:otherwise>
-        <meta name="subPageID" content="pubsub-node-details"/>
+        <meta name="subPageID" content="pubsub-node-configuration"/>
         <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
     </c:otherwise>
 </c:choose>

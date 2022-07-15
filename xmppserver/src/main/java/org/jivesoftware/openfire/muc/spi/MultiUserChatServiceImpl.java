@@ -451,7 +451,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                                 lock.unlock();
                             }
                         }
-                    } else if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue() && packet instanceof IQ && ((IQ) packet).isResponse() && ((IQ) packet).getChildElement().getNamespaceURI().equals(IQMUCvCardHandler.NAMESPACE)) {
+                    } else if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue() && packet instanceof IQ && ((IQ) packet).isResponse() && (((IQ) packet).getChildElement() != null) && ((IQ) packet).getChildElement().getNamespaceURI().equals(IQMUCvCardHandler.NAMESPACE)) {
                         Log.trace( "Stanza is a VCard response stanza." );
                         processVCardResponse((IQ) packet);
                     } else {

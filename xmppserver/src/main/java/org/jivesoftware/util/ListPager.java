@@ -45,10 +45,21 @@ public class ListPager<T> {
 
     private static final String REQUEST_PARAMETER_KEY_PAGE_SIZE = "listPagerPageSize";
     private static final String REQUEST_PARAMETER_KEY_CURRENT_PAGE = "listPagerCurrentPage";
+    private static final String REQUEST_PARAMETER_KEY_SORT_ORDER = "sortOrder";
+    private static final String REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER = "sortColumnNumber";
     private static final String PAGINATION_FORM_ID = "paginationForm";
     private static final int DEFAULT_PAGE_SIZE = 25;
     private static final int[] PAGE_SIZES = {25, 50, 100, 1000};
 
+    /**
+     * Descending sort (ie 3, 2, 1...).
+     */
+    public static final int DESCENDING = 0;
+
+    /**
+     * Ascending sort (ie 3, 4, 5...).
+     */
+    public static final int ASCENDING = 1;
 
     private final int totalItemCount;
     private final List<T> itemsOnPage;
@@ -58,6 +69,8 @@ public class ListPager<T> {
     private final int currentPage;
     private final int firstItemOnPage;
     private final int lastItemOnPage;
+    private final int sortColumnNumber;
+    private final int sortOrder;
     private final String[] additionalFormFields;
     private final HttpServletRequest request;
 
@@ -83,6 +96,21 @@ public class ListPager<T> {
      * @param additionalFormFields 0 or more input field identifiers (<strong>NOT form field names</strong>) to include in requests for other pages
      */
     public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items, final Predicate<T> filter, final String... additionalFormFields) {
+        this(request, response, items, filter, 0, false, additionalFormFields);
+    }
+
+    /**
+     * Creates a unfiltered list pager.
+     *
+     * @param request              the request object for the page in question
+     * @param response             the response object for the page in question
+     * @param items                the complete list of items to display on the page
+     * @param sortColumnNumber     the index of the column (0-based) of which values are to be ordered
+     * @param sortDescending       true if the column is to be in descending order, false for ascending order.
+     * @param filter               the filter to apply to the complete list
+     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT form field names</strong>) to include in requests for other pages
+     */
+    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items, final Predicate<T> filter, final int sortColumnNumber, final boolean sortDescending, final String... additionalFormFields) {
         final HttpSession session = request.getSession();
         final WebManager webManager = new WebManager();
         webManager.init(request, response, session, session.getServletContext());
@@ -101,6 +129,8 @@ public class ListPager<T> {
         this.firstItemOnPage = filteredItemCount == 0 ? 0 : (currentPage - 1) * pageSize + 1;
         this.lastItemOnPage = filteredItemCount == 0 ? 0 : Math.min(currentPage * pageSize, filteredItemCount);
         this.itemsOnPage = filteredItemCount == 0 ? Collections.emptyList() : filteredItems.subList(firstItemOnPage - 1, lastItemOnPage);
+        this.sortOrder = sortDescending ? DESCENDING : ASCENDING;
+        this.sortColumnNumber = sortColumnNumber;
         this.additionalFormFields = additionalFormFields;
 
         webManager.setRowsPerPage(requestURI, pageSize);
@@ -175,6 +205,14 @@ public class ListPager<T> {
         return totalItemCount != filteredItemCount;
     }
 
+    public int getSortColumnNumber() {
+        return sortColumnNumber;
+    }
+
+    public boolean isSortDescending() {
+        return sortOrder == DESCENDING;
+    }
+
     /**
      * @return a string that contains HTML for selecting the page size
      */
@@ -241,7 +279,9 @@ public class ListPager<T> {
     public String getHiddenFields() {
         final StringBuilder sb = new StringBuilder("\n")
             .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize))
-            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
+            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage))
+            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_SORT_ORDER, sortOrder))
+            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER, sortColumnNumber));
         for (final String additionalFormField : additionalFormFields) {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "");
             sb.append(String.format("\t<input type='hidden' name='%s' value='%s'%s>\n",
@@ -328,6 +368,18 @@ public class ListPager<T> {
             // Changes the current page size, and submits the form
             .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
             .append(String.format("\t\tformObject.%s.value = pageSize;\n", REQUEST_PARAMETER_KEY_PAGE_SIZE))
+            .append("\t\tsubmitForm();\n")
+            .append("\t\treturn false;\n")
+            .append("\t}\n")
+            .append("\n");
+
+        sb.append("\tfunction toggleColumnOrder(sortColumnNumber) {\n")
+            // Orders based on a particular column, reversing the order if that column was already ordered on.
+            .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
+            .append(String.format("\t\tvar previousSortColumnNumber = formObject.%s.value || '0';\n", "sortColumnNumber"))
+            .append(String.format("\t\tvar previousSortOrder = formObject.%s.value || '1';\n", "sortOrder"))
+            .append(String.format("\t\tformObject.%s.value = sortColumnNumber;\n", "sortColumnNumber"))
+            .append(String.format("\t\tformObject.%s.value = parseInt(previousSortColumnNumber) === sortColumnNumber ? 1-previousSortOrder : 1;\n", "sortOrder"))
             .append("\t\tsubmitForm();\n")
             .append("\t\treturn false;\n")
             .append("\t}\n")

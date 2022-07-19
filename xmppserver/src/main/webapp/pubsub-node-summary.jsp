@@ -1,18 +1,17 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer,
                  org.jivesoftware.openfire.pep.PEPServiceInfo,
-                 org.jivesoftware.openfire.pep.PEPServiceManager,
                  org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
                  org.jivesoftware.util.ListPager,
                  org.jivesoftware.util.ParamUtils,
                  org.xmpp.packet.JID,
-                 java.util.Collections,
-                 java.util.Comparator,
-                 java.util.List,
-                 java.util.function.Predicate"
+                 java.util.List"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="org.jivesoftware.openfire.pubsub.PubsubNodeResultFilter" %>
+<%@ page import="java.util.Arrays" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -23,6 +22,9 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%  // Get parameters
+    int sortOrder = ParamUtils.getIntParameter(request, "sortOrder", webManager.getPageProperty("pubsub-node-summary", "console.sortOrder", PubsubNodeResultFilter.ASCENDING));
+    int sortColumnNumber = ParamUtils.getIntParameter(request, "sortColumnNumber", webManager.getPageProperty("pubsub-node-summary", "console.sortColumnNumber", PubsubNodeResultFilter.SORT_NODE_IDENTIFIER));
+
     String ownerString = ParamUtils.getParameter( request, "owner" );
     if ( ownerString == null )
     {
@@ -41,6 +43,13 @@
         }
     }
 
+    if (request.getParameter("sortOrder") != null) {
+        webManager.setPageProperty("pubsub-node-summary", "console.sortOrder", sortOrder);
+    }
+    if (request.getParameter("sortColumnNumber") != null) {
+        webManager.setPageProperty("pubsub-node-summary", "console.sortColumnNumber", sortColumnNumber);
+    }
+
     boolean PEPMode = false;
     PubSubServiceInfo pubSubServiceInfo;
     if ( owner == null )
@@ -57,43 +66,33 @@
         pubSubServiceInfo = null;
     }
 
+    final PubsubNodeResultFilter pubsubNodeResultFilter = PubsubNodeResultFilter.createDefaultSessionFilter();
+    pubsubNodeResultFilter.setSortOrder(sortOrder);
+    pubsubNodeResultFilter.setSortColumnNumber(sortColumnNumber);
+
+    for (final String filterParam : pubsubNodeResultFilter.getFilterParams()) {
+        final String filterValue = ParamUtils.getStringParameter(request, filterParam, "").trim();
+        if (!filterValue.isEmpty()) {
+            pubsubNodeResultFilter.addFilter(filterParam, filterValue);
+        }
+        pageContext.setAttribute(filterParam, filterValue);
+    }
+
     List<Node> nodes;
-    if ( pubSubServiceInfo != null )
-    {
+    if (pubSubServiceInfo != null){
         nodes = pubSubServiceInfo.getLeafNodes();
-        nodes.sort(Comparator.comparing(node -> node.getUniqueIdentifier().getNodeId().toLowerCase()));
+    } else {
+        nodes = new ArrayList<>();
     }
-    else
-    {
-        nodes = Collections.emptyList();
-    }
+    nodes.sort(pubsubNodeResultFilter.getSortComparator());
 
-    // By default, display all nodes
-    Predicate<Node> filter = node -> true;
-    final String searchNodeId = ParamUtils.getStringParameter(request, "searchNodeId", "");
-    if(!searchNodeId.trim().isEmpty()) {
-        final String searchCriteria = searchNodeId.trim().toLowerCase();
-        filter = filter.and(node -> node.getUniqueIdentifier().getNodeId().toLowerCase().contains(searchCriteria));
-    }
-    final String searchNodeName = ParamUtils.getStringParameter(request, "searchNodeName", "");
-    if(!searchNodeName.trim().isEmpty()) {
-        final String searchCriteria = searchNodeName.trim().toLowerCase();
-        filter = filter.and(node -> node.getName().toLowerCase().contains(searchCriteria));
-    }
-    final String searchNodeDescription = ParamUtils.getStringParameter(request, "searchNodeDescription", "");
-    if(!searchNodeDescription.trim().isEmpty()) {
-        final String searchCriteria = searchNodeDescription.trim().toLowerCase();
-        filter = filter.and(node -> node.getDescription().toLowerCase().contains(searchCriteria));
-    }
+    final List<String> additionalParams = new ArrayList<>(Arrays.asList(pubsubNodeResultFilter.getFilterParams()));
+    additionalParams.add("username");
 
-    final ListPager<Node> listPager = new ListPager<>(request, response, nodes, filter, "searchNodeId", "searchNodeName", "searchNodeDescription", "username");
+    final ListPager<Node> listPager = new ListPager<>(request, response, nodes, pubsubNodeResultFilter.getFilter(), pubsubNodeResultFilter.getSortColumnNumber(), pubsubNodeResultFilter.getSortOrder() == PubsubNodeResultFilter.DESCENDING, additionalParams.toArray(new String[0]));
     pageContext.setAttribute("listPager", listPager);
-
-    pageContext.setAttribute("owner", owner );
+    pageContext.setAttribute("owner", owner);
     pageContext.setAttribute("PEPMode", PEPMode);
-    pageContext.setAttribute("searchNodeId", searchNodeId);
-    pageContext.setAttribute("searchNodeName", searchNodeName);
-    pageContext.setAttribute("searchNodeDescription", searchNodeDescription);
 
 %>
 <html>
@@ -141,12 +140,54 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th nowrap><fmt:message key="pubsub.node.summary.id" /></th>
-        <th nowrap><fmt:message key="pubsub.node.summary.name" /></th>
-        <th nowrap><fmt:message key="pubsub.node.summary.description" /></th>
-        <th nowrap><fmt:message key="pubsub.node.summary.items" /></th>
-        <th nowrap><fmt:message key="pubsub.node.summary.affiliates" /></th>
-        <th nowrap><fmt:message key="pubsub.node.summary.subscribers" /></th>
+        <th nowrap>
+            <a href="pubsub-node-summary.jsp" onclick='return toggleColumnOrder(${PubsubNodeResultFilter.SORT_NODE_IDENTIFIER})'>
+                <fmt:message key="pubsub.node.summary.id" />
+                <c:if test="${listPager.sortColumnNumber == PubsubNodeResultFilter.SORT_NODE_IDENTIFIER}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
+        <th nowrap>
+            <a href="pubsub-node-summary.jsp" onclick='return toggleColumnOrder(${PubsubNodeResultFilter.SORT_NODE_NAME})'>
+                <fmt:message key="pubsub.node.summary.name" />
+                <c:if test="${listPager.sortColumnNumber == PubsubNodeResultFilter.SORT_NODE_NAME}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
+        <th nowrap>
+            <a href="pubsub-node-summary.jsp" onclick='return toggleColumnOrder(${PubsubNodeResultFilter.SORT_NODE_DESCRIPTION})'>
+                <fmt:message key="pubsub.node.summary.description" />
+                <c:if test="${listPager.sortColumnNumber == PubsubNodeResultFilter.SORT_NODE_DESCRIPTION}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
+        <th nowrap>
+            <a href="pubsub-node-summary.jsp" onclick='return toggleColumnOrder(${PubsubNodeResultFilter.SORT_ITEM_COUNT})'>
+                <fmt:message key="pubsub.node.summary.items" />
+                <c:if test="${listPager.sortColumnNumber == PubsubNodeResultFilter.SORT_ITEM_COUNT}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
+        <th nowrap>
+            <a href="pubsub-node-summary.jsp" onclick='return toggleColumnOrder(${PubsubNodeResultFilter.SORT_AFFILIATE_COUNT})'>
+                <fmt:message key="pubsub.node.summary.affiliates" />
+                <c:if test="${listPager.sortColumnNumber == PubsubNodeResultFilter.SORT_AFFILIATE_COUNT}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
+        <th nowrap>
+            <a href="pubsub-node-summary.jsp" onclick='return toggleColumnOrder(${PubsubNodeResultFilter.SORT_SUBSCRIBER_COUNT})'>
+                <fmt:message key="pubsub.node.summary.subscribers" />
+                <c:if test="${listPager.sortColumnNumber == PubsubNodeResultFilter.SORT_SUBSCRIBER_COUNT}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
         <c:if test="${not PEPMode}" >
             <th nowrap><fmt:message key="global.edit" /></th>
         </c:if>
@@ -156,44 +197,29 @@
     <tr>
         <td></td>
         <td nowrap>
-            <input type="search"
-                   id="searchNodeId"
-                   size="20"
-                   value="${fn:escapeXml(searchNodeId)}"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
+            <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_NODE_IDENTIFIER)}" size="20" value="${fn:escapeXml(searchNodeId)}"/>
+            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
-            <input type="search"
-                   id="searchNodeName"
-                   size="20"
-                   value="${fn:escapeXml(searchNodeName)}"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
+            <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_NODE_NAME)}" size="20" value="${fn:escapeXml(searchNodeName)}"/>
+            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
-            <input type="search"
-                   id="searchNodeDescription"
-                   size="20"
-                   value="${fn:escapeXml(searchNodeDescription)}"/>
-             <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
+            <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_NODE_DESCRIPTION)}" size="20" value="${fn:escapeXml(searchNodeDescription)}"/>
+            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
-        <td></td>
-        <td></td>
-        <td></td>
+        <td nowrap>
+            <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_ITEM_COUNT)}" size="20" value="${fn:escapeXml(searchItemCount)}"/>
+            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+        </td>
+        <td nowrap>
+            <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_AFFILIATE_COUNT)}" size="20" value="${fn:escapeXml(searchAffiliateCount)}"/>
+            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+        </td>
+        <td nowrap>
+            <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_SUBSCRIBER_COUNT)}" size="20" value="${fn:escapeXml(searchSubscriberCount)}"/>
+            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+        </td>
         <c:if test="${not PEPMode}">
             <td></td>
         </c:if>

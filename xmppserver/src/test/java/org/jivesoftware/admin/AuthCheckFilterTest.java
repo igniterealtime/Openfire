@@ -4,11 +4,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +22,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.Collections;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthCheckFilterTest {
@@ -164,6 +163,196 @@ public class AuthCheckFilterTest {
         new AuthCheckFilter(adminManager, loginLimitManager);
 
         assertThat(AuthCheckFilter.isServletRequestAuthenticatorInstanceOf(AdminUserServletAuthenticatorClass.class), is(false));
+    }
+
+    @Test
+    public void nonExcludedUrlWillNotErrorWhenListsEmpty() throws Exception {
+        // Setup test fixture.
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        // Execute system under test.
+        filter.doFilter(request, response, filterChain);
+
+        // Verify result
+        verify(response, never()).sendError(anyInt());
+        verify(filterChain, atLeastOnce()).doFilter(any(), any());
+    }
+
+    @Test
+    public void excludedUrlWillNotErrorWhenListsEmpty() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            // Execute system under test.
+            filter.doFilter(request, response, filterChain);
+
+            // Verify result
+            verify(response, never()).sendError(anyInt());
+            verify(filterChain, atLeastOnce()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
+    }
+
+    @Test
+    public void nonExcludedUrlWillErrorWhenOnBlocklist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, atLeastOnce()).sendError(anyInt());
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    public void excludedUrlWillNotErrorWhenOnBlocklist() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+            filter.doFilter(request, response, filterChain);
+
+            verify(response, never()).sendError(anyInt());
+            verify(filterChain, atLeastOnce()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
+    }
+
+    @Test
+    public void excludedUrlWillErrorWhenOnBlocklistAndExcludesAreIgnored() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+            AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(true);
+            filter.doFilter(request, response, filterChain);
+
+            verify(response, atLeastOnce()).sendError(anyInt());
+            verify(filterChain, never()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
+    }
+
+    @Test
+    public void nonExcludedUrlWillErrorWhenNotOnAllowlist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton("w.x.y.z"));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, atLeastOnce()).sendError(anyInt());
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    public void excludedUrlWillNotErrorWhenNotOnAllowlist() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton("w.x.y.z"));
+            filter.doFilter(request, response, filterChain);
+
+            verify(response, never()).sendError(anyInt());
+            verify(filterChain, atLeastOnce()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
+    }
+
+    @Test
+    public void excludedUrlWillErrorWhenNotOnAllowlistAndExcludesAreIgnored() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton("w.x.y.z"));
+            AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(true);
+            filter.doFilter(request, response, filterChain);
+
+            verify(response, atLeastOnce()).sendError(anyInt());
+            verify(filterChain, never()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
+    }
+
+    @Test
+    public void nonExcludedUrlWillErrorWhenOnBothLists() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+        AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, atLeastOnce()).sendError(anyInt());
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    public void excludedUrlWillNotErrorWhenOnBothLists() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+            AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+            filter.doFilter(request, response, filterChain);
+
+            verify(response, never()).sendError(anyInt());
+            verify(filterChain, atLeastOnce()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
+    }
+
+    @Test
+    public void excludedUrlWillErrorWhenOnBothListsAndExcludesAreIgnored() throws Exception {
+        // Setup test fixture.
+        try {
+            AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+            final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+            AuthCheckFilter.addExclude(request.getRequestURI().substring(1));
+
+            AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+            AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton(request.getRemoteAddr()));
+            AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(true);
+            filter.doFilter(request, response, filterChain);
+
+            verify(response, atLeastOnce()).sendError(anyInt());
+            verify(filterChain, never()).doFilter(any(), any());
+        } finally {
+            // Tear down test fixture.
+            AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
+        }
     }
 
     public static class AdminUserServletAuthenticatorClass implements ServletRequestAuthenticator {

@@ -48,6 +48,11 @@
                   url="logviewer.jsp"
                   description="${sidebar.server-logs.descr}"/>
 
+            <!-- Admin Console Access -->
+            <item id="system-admin-console-access" name="${sidebar.admin-console-access}"
+                  url="system-admin-console-access.jsp"
+                  description="${sidebar.admin-console-access.descr}"/>
+
             <!-- Email -->
             <item id="system-email" name="${sidebar.server-email}"
                   url="system-email.jsp"

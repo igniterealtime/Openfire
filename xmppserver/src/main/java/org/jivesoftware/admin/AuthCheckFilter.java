@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -55,6 +56,33 @@ public class AuthCheckFilter implements Filter {
         .setDefaultValue(null)
         .setDynamic(true)
         .addListener(AuthCheckFilter::initAuthenticator)
+        .build();
+
+    /**
+     * List of IP addresses that are not allowed to access the admin console.
+     */
+    public static final SystemProperty<Set<String>> IP_ACCESS_BLOCKLIST = SystemProperty.Builder.ofType(Set.class)
+        .setKey("adminConsole.access.ip-blocklist")
+        .setDefaultValue(Collections.emptySet())
+        .setDynamic(true)
+        .buildSet(String.class);
+
+    /**
+     * List of IP addresses that are allowed to access the admin console. When empty, this list is ignored.
+     */
+    public static final SystemProperty<Set<String>> IP_ACCESS_ALLOWLIST = SystemProperty.Builder.ofType(Set.class)
+        .setKey("adminConsole.access.ip-allowlist")
+        .setDefaultValue(Collections.emptySet())
+        .setDynamic(true)
+        .buildSet(String.class);
+
+    /**
+     * Controls if IP Access lists are applied to excluded URLs.
+     */
+    public static final SystemProperty<Boolean> IP_ACCESS_IGNORE_EXCLUDES = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("adminConsole.access.ignore-excludes")
+        .setDefaultValue(false)
+        .setDynamic(true)
         .build();
 
     private static ServletRequestAuthenticator servletRequestAuthenticator;
@@ -220,6 +248,13 @@ public class AuthCheckFilter implements Filter {
                 break;
             }
         }
+
+        if (!doExclude || IP_ACCESS_IGNORE_EXCLUDES.getValue()) {
+            if (!passesBlocklist(req) || !passesAllowList(req)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+        }
         if (!doExclude) {
             WebManager manager = new WebManager();
             manager.init(request, response, request.getSession(), context);
@@ -284,5 +319,36 @@ public class AuthCheckFilter implements Filter {
             Log.error(e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * Verifies that the remote address of the request is <em>not</em> on the blocklist.
+     *
+     * If this method returns 'false', the request should not be allowed to be serviced.
+     *
+     * @param req The request for which the check the remote address.
+     * @return true if the remote address of the request is not on the blacklist.
+     */
+    public static boolean passesBlocklist(@Nonnull final ServletRequest req) {
+        // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
+        // set to 'true' to have the below report the true 'peer' address.
+        final String remoteAddr = req.getRemoteAddr();
+        return !IP_ACCESS_BLOCKLIST.getValue().contains(remoteAddr);
+    }
+
+    /**
+     * Verifies that the remote address of the request is either on the allowlist, or the allowlist is empty.
+     *
+     * If this method returns 'false', the request should not be allowed to be serviced.
+     *
+     * @param req The request for which the check the remote address.
+     * @return true if the remote address of the request is on the allowlist, or when the allowlist is empty.
+     */
+    public static boolean passesAllowList(@Nonnull final ServletRequest req) {
+        // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
+        // set to 'true' to have the below report the true 'peer' address.
+        final String remoteAddr = req.getRemoteAddr();
+        final Set<String> allowList = IP_ACCESS_ALLOWLIST.getValue();
+        return allowList.isEmpty() || allowList.contains(remoteAddr);
     }
 }

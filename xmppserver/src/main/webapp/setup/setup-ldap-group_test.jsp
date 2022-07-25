@@ -50,13 +50,6 @@
     pageContext.setAttribute( "groups", groups );
 %>
 
-<html>
-<head>
-<meta name="decorator" content="none"/>
-</head>
-<body>
-
-
 <!-- BEGIN connection settings test panel -->
 <div class="jive-testPanel">
     <div class="jive-testPanel-content">
@@ -96,7 +89,3 @@
         </c:choose>
     </div>
 </div>
-
-
-</body>
-</html>

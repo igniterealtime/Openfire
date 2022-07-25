@@ -76,22 +76,9 @@
     pageContext.setAttribute( "serverType", ParamUtils.getParameter(request, "serverType") );
     pageContext.setAttribute( "userIndex", userIndex );
 %>
-<html>
-<head>
-<meta name="decorator" content="none"/>
-</head>
-<body>
-<style>
-.jive-testPanel {
-    margin-top: -100px;
-    }
-html>body .jive-testPanel {
-    margin-top: 0px;
-    }
-</style>
 
 <!-- BEGIN connection settings test panel -->
-<div class="jive-testPanel">
+<div class="jive-testPanel" style="margin-top: 0px">
     <div class="jive-testPanel-content">
 
         <div align="right" class="jive-testPanel-close">
@@ -257,7 +244,3 @@ html>body .jive-testPanel {
 
     </div>
 </div>
-
-
-</body>
-</html>

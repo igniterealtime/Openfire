@@ -64,6 +64,18 @@ import javax.xml.XMLConstants;
 @WebSocket
 public class XmppWebSocket {
 
+    /**
+     * Controls if clients that do websockets without the required XMPP framing will get their 'stream' element names
+     * replaced, so that they are able to connect.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2479">OF-2479: Allow Tsung to test with websockets</a>
+     */
+    private static final SystemProperty<Boolean> STREAM_SUBSTITUTION_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.websocket.stream-substitution-enabled")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
     private static final String STREAM_HEADER = "open";
     private static final String STREAM_FOOTER = "close";
     private static final String FRAMING_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-framing";
@@ -109,6 +121,19 @@ public class XmppWebSocket {
         XMPPPacketReader reader = null;
         try {
             reader = readerPool.borrowObject();
+
+            if (STREAM_SUBSTITUTION_ENABLED.getValue()) {
+                // Allow clients that do websockets without the required XMPP framing to connect. See https://igniterealtime.atlassian.net/browse/OF-2479
+                if (stanza.startsWith("<?xml version='1.0'?><stream:stream ")) {
+                    stanza = stanza.replace("<?xml version='1.0'?><stream:stream ", "<open ");
+                    stanza = stanza.replace("jabber:client", "urn:ietf:params:xml:ns:xmpp-framing");
+                    stanza += "</open>";
+                }
+                if (stanza.startsWith("</stream:stream>")) {
+                    stanza = stanza.replace("</stream:stream>", "<close xmlns='urn:ietf:params:xml:ns:xmpp-framing' />");
+                }
+            }
+
             Document doc = reader.read(new StringReader(stanza));
 
             if (xmppSession == null) {

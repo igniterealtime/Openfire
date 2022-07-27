@@ -161,35 +161,36 @@ public class XmppWebSocket {
     @OnWebSocketError
     public void onError(Throwable error)
     {
-        Log.error("Error detected; session: " + wsSession, error);
+        Log.error("Error detected; session: {}", wsSession, error);
 
         // Handle asynchronously, to prevent deadlocks. See OF-2473.
         HttpBindManager.getInstance().getSessionManager().execute(() -> {
-            try {
-                Log.debug("Attempting to close session on which an error occurred.");
-                closeStream(new StreamError(StreamError.Condition.internal_server_error));
-                if (wsSession != null) {
-                    wsSession.disconnect();
+            synchronized (this) {
+                try {
+                    Log.debug("Attempting to close session on which an error occurred.");
+                    if (isWebSocketOpen()) {
+                        closeStream(new StreamError(StreamError.Condition.internal_server_error));
+                    }
+                } catch (Exception e) {
+                    Log.error("Error disconnecting websocket", e);
+                } finally {
+                    wsSession = null;
                 }
-            } catch ( Exception e ) {
-                Log.error("Error disconnecting websocket", e);
-            } finally {
-                wsSession = null;
             }
         });
     }
 
     // local (package) visibility
 
-    boolean isWebSocketOpen() {
+    synchronized boolean isWebSocketOpen() {
         return wsSession != null && wsSession.isOpen();
     }
 
-    boolean isWebSocketSecure() {
+    synchronized boolean isWebSocketSecure() {
         return wsSession != null && wsSession.isSecure();
     }
 
-    void closeWebSocket()
+    synchronized void closeWebSocket()
     {
         if (isWebSocketOpen())
         {
@@ -199,8 +200,10 @@ public class XmppWebSocket {
     }
 
     void closeSession() {
-        if (isWebSocketOpen()) {
-            closeStream(null);
+        synchronized (this) {
+            if (isWebSocketOpen()) {
+                closeStream(null);
+            }
         }
         if (xmppSession != null) {
             if (!xmppSession.getStreamManager().getResume()) {
@@ -221,7 +224,7 @@ public class XmppWebSocket {
      *
      * @param packet XML to be sent to client
      */
-    void deliver(String packet)
+    synchronized void deliver(String packet)
     {
         if (isWebSocketOpen())
         {
@@ -391,7 +394,7 @@ public class XmppWebSocket {
         deliver(sb.toString());
     }
 
-    private void closeStream(StreamError streamError)
+    private synchronized void closeStream(StreamError streamError)
     {
         if (isWebSocketOpen()) {
 

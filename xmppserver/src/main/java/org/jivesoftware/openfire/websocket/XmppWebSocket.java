@@ -114,7 +114,13 @@ public class XmppWebSocket {
     public void onClose(int statusCode, String reason)
     {
         // Handle asynchronously, to prevent deadlocks. See OF-2473.
-        HttpBindManager.getInstance().getSessionManager().execute(this::closeSession);
+        HttpBindManager.getInstance().getSessionManager().execute(() -> {
+            try {
+                closeSession();
+            } catch (Throwable t) {
+                Log.warn("An exception occurred while trying to process @OnWebSocketClose for session {}.", wsSession, t);
+            }
+        });
     }
 
     @OnWebSocketMessage

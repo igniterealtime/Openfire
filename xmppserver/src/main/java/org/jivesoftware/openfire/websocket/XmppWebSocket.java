@@ -25,6 +25,7 @@ import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SASLAuthentication.Status;
@@ -96,7 +97,8 @@ public class XmppWebSocket {
     @OnWebSocketClose
     public void onClose(int statusCode, String reason)
     {
-        closeSession();
+        // Handle asynchronously, to prevent deadlocks. See OF-2473.
+        HttpBindManager.getInstance().getSessionManager().execute(this::closeSession);
     }
 
     @OnWebSocketMessage
@@ -125,14 +127,21 @@ public class XmppWebSocket {
     public void onError(Throwable error)
     {
         Log.error("Error detected; session: " + wsSession, error);
-        closeStream(new StreamError(StreamError.Condition.internal_server_error));
-        try {
-            if (wsSession != null) {
-                wsSession.disconnect();
+
+        // Handle asynchronously, to prevent deadlocks. See OF-2473.
+        HttpBindManager.getInstance().getSessionManager().execute(() -> {
+            try {
+                Log.debug("Attempting to close session on which an error occurred.");
+                closeStream(new StreamError(StreamError.Condition.internal_server_error));
+                if (wsSession != null) {
+                    wsSession.disconnect();
+                }
+            } catch ( Exception e ) {
+                Log.error("Error disconnecting websocket", e);
+            } finally {
+                wsSession = null;
             }
-        } catch ( Exception e ) {
-            Log.error("Error disconnecting websocket", e);
-        }
+        });
     }
 
     // local (package) visibility

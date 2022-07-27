@@ -34,6 +34,7 @@ import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -390,7 +391,12 @@ public class HttpSessionManager {
         }
     }
 
-    protected void execute(Runnable runnable) {
+    /**
+     * Executes a Runnable in the thread pool that is used for processing stanzas received over BOSH.
+     *
+     * @param runnable The task to run
+     */
+    public void execute(@Nonnull final Runnable runnable) {
         this.stanzaWorkerPool.execute(runnable);
     }
 }

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -33,11 +33,9 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.net.URLDecoder" %>
-<%@ page import="java.util.ArrayList" %>
-<%@ page import="java.util.Collections" %>
-<%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.muc.CannotBeInvitedException" %>
+<%@ page import="java.util.*" %>
+<%@ page import="java.util.stream.Collectors" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -250,7 +248,10 @@
     <p>
     <label for="groupJIDs"><fmt:message key="muc.room.affiliations.add_group" /></label><br/>
     <select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" id="groupJIDs">
-    <%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
+    <% final List<Group> groups = webManager.getGroupManager().getGroups().stream()
+            .sorted(Comparator.comparing(g->g.getName().toLowerCase()))
+            .collect(Collectors.toList());
+        for (Group g : groups) {	%>
         <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
          <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
          ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>

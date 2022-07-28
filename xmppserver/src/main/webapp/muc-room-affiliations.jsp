@@ -84,53 +84,53 @@
             errors.put("userJID","userJID");
         }
 
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
-                ArrayList<String> memberJIDs = new ArrayList<String>();
+                List<JID> memberJIDs = new ArrayList<>();
                 if (userJID != null) {
+                    final JID addMe;
                     // Escape username
                     if (userJID.indexOf('@') == -1) {
                         String username = JID.escapeNode(userJID);
                         String domain = webManager.getXMPPServer().getServerInfo().getXMPPDomain();
+                        addMe = new JID(username, domain, null);
                         userJID = username + '@' + domain;
                     }
                     else {
                         String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
-                        String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                        String rest = userJID.substring(userJID.indexOf('@') + 1);
+                        addMe = new JID(username, rest.trim(), null);
                         userJID = username + rest.trim();
                     }
-                    memberJIDs.add(userJID);
+                    memberJIDs.add(addMe);
                 }
                 if (groupNames != null) {
                     // create a group JID for each group
                     for (String groupName : groupNames) {
                         GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
-                        memberJIDs.add(groupJID.toString());
+                        memberJIDs.add(groupJID);
                     }
                 }
                 IQ iq = new IQ(IQ.Type.set);
                 Element frag = iq.setChildElement("query", "http://jabber.org/protocol/muc#admin");
-                for (String memberJID : memberJIDs){
+                for (JID memberJID : memberJIDs){
                     Element item = frag.addElement("item");
                     item.addAttribute("affiliation", affiliation);
-                    item.addAttribute("jid", memberJID);
-                    if(nickName != null){
-                        item.addAttribute("nick", nickName);
-                    }else{
-                        //set the name of the user as the nickname of the member
-                        if(userJID != null){
-                            JID jid = new JID(userJID);
-                            item.addAttribute("nick",jid.getNode());
-                        }
-                    }
+                    item.addAttribute("jid", memberJID.toString());
+                    // Set the name of the user as the nickname of the member when no nickname is provided.
+                    item.addAttribute("nick", nickName != null ? nickName : memberJID.getNode());
                 }
                 // Send the IQ packet that will modify the room's configuration
                 room.getIQAdminHandler().handleIQ(iq, room.getRole());
                 webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
                 // Log the event
-                for (String memberJID : memberJIDs) {
-                    webManager.logEvent("set MUC affilation to "+affiliation+" for "+memberJID+" in "+roomName, null);
+                for (JID memberJID : memberJIDs) {
+                    if (memberJID instanceof GroupJID) {
+                        webManager.logEvent("set MUC affiliation to " + affiliation + " for members of group " + ((GroupJID) memberJID).getGroupName() + " in " + roomName, null);
+                    } else {
+                        webManager.logEvent("set MUC affiliation to " + affiliation + " for " + memberJID + " in " + roomName, null);
+                    }
                 }
                 // done, return
                 response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));

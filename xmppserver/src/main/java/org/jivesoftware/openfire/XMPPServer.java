@@ -616,7 +616,7 @@ public class XMPPServer {
         // Check if keystore (that out-of-the-box is a fallback for all keystores) already has certificates for current domain.
         CertificateStoreManager certificateStoreManager = null; // Will be a module after finishing setup.
         try {
-            certificateStoreManager = new CertificateStoreManager();
+            certificateStoreManager = new CertificateStoreManager(true);
             certificateStoreManager.initialize( this );
             certificateStoreManager.start();
             final IdentityStore identityStore = certificateStoreManager.getIdentityStore( ConnectionType.SOCKET_C2S );

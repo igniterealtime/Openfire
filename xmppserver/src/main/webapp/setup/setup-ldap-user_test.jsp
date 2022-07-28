@@ -104,7 +104,7 @@
                     <td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.personal" /></td>
                 </tr>
                 <tr>
-                    <td class="jive-testpanel-vcard-label" width="20%" style="${not empty attributes['Name'] ? 'font-weight: bold' : ''}"><fmt:message key="setup.ldap.user.vcard.name" />:</td>
+                    <td class="jive-testpanel-vcard-label" style="${not empty attributes['Name'] ? 'font-weight: bold' : ''}"><fmt:message key="setup.ldap.user.vcard.name" />:</td>
                     <td class="jive-testpanel-vcard-value"><c:out value="${not empty attributes['Name'] ? attributes['Name'] : ''}"/></td>
                 </tr>
                 <tr>

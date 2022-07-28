@@ -457,6 +457,8 @@ html>body .jive-vcardTable {
     padding: 1px 2px 1px 6px;
     color: #666;
     font-size: 8pt;
+    white-space: nowrap;
+    width: 1%;
 }
 .jive-testpanel-vcard-value {
     text-align: left;

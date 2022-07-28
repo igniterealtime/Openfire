@@ -182,6 +182,7 @@ public abstract class VirtualConnection implements Connection {
      */
     @Override
     public void close() {
+        close(null);
     }
 
     /**

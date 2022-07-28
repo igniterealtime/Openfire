@@ -427,6 +427,7 @@ html>body .jive-vcardTable {
 }
 .jive-testTable-vcard {
     float: left;
+    width: 682px;
 }
 .jive-testpanel-vcard-header {
     border: 1px solid #dddddd;

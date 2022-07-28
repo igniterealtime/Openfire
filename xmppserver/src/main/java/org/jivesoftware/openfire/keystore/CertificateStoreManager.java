@@ -54,9 +54,17 @@ public class CertificateStoreManager extends BasicModule
 
     private CertificateStoreWatcher storeWatcher;
 
-    public CertificateStoreManager( )
+    private final boolean disableWatcher;
+
+    public CertificateStoreManager()
+    {
+        this(false);
+    }
+
+    public CertificateStoreManager(final boolean disableWatcher)
     {
         super( "Certificate Store Manager" );
+        this.disableWatcher = disableWatcher;
     }
 
     @Override
@@ -64,7 +72,7 @@ public class CertificateStoreManager extends BasicModule
     {
         super.initialize( server );
 
-        storeWatcher = new CertificateStoreWatcher();
+        storeWatcher = disableWatcher ? null : new CertificateStoreWatcher();
 
         for ( final ConnectionType type : ConnectionType.values() )
         {
@@ -76,7 +84,9 @@ public class CertificateStoreManager extends BasicModule
                 {
                     final IdentityStore store = new IdentityStore( identityStoreConfiguration, false );
                     identityStores.put( identityStoreConfiguration, store );
-                    storeWatcher.watch( store );
+                    if ( storeWatcher != null ) {
+                        storeWatcher.watch( store );
+                    }
                 }
                 typeToIdentityStore.put( type, identityStoreConfiguration );
             }
@@ -93,7 +103,9 @@ public class CertificateStoreManager extends BasicModule
                 {
                     final TrustStore store = new TrustStore( trustStoreConfiguration, false );
                     trustStores.put( trustStoreConfiguration, store );
-                    storeWatcher.watch( store );
+                    if ( storeWatcher != null ) {
+                        storeWatcher.watch( store );
+                    }
                 }
                 typeToTrustStore.put( type, trustStoreConfiguration );
             }
@@ -107,7 +119,9 @@ public class CertificateStoreManager extends BasicModule
     @Override
     public synchronized void destroy()
     {
-        storeWatcher.destroy();
+        if (storeWatcher != null) {
+            storeWatcher.destroy();
+        }
         typeToIdentityStore.clear();
         typeToTrustStore.clear();
         identityStores.clear();
@@ -154,7 +168,9 @@ public class CertificateStoreManager extends BasicModule
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
                 final IdentityStore store = new IdentityStore( configuration, createIfAbsent );
                 identityStores.put( configuration, store );
-                storeWatcher.watch( store );
+                if ( storeWatcher != null ) {
+                    storeWatcher.watch(store);
+                }
             }
 
             typeToIdentityStore.put( type, configuration );
@@ -164,7 +180,7 @@ public class CertificateStoreManager extends BasicModule
             if ( oldConfig != null && !typeToIdentityStore.containsValue( oldConfig ) )
             {
                 final IdentityStore store = identityStores.remove( oldConfig );
-                if ( store != null )
+                if ( store != null && storeWatcher != null )
                 {
                     storeWatcher.unwatch( store );
                 }
@@ -207,7 +223,9 @@ public class CertificateStoreManager extends BasicModule
                 // This constructor can throw an exception. If it does, the state of the manager should not have already changed.
                 final TrustStore store = new TrustStore( configuration, createIfAbsent );
                 trustStores.put( configuration, store );
-                storeWatcher.watch( store );
+                if ( storeWatcher != null ) {
+                    storeWatcher.watch(store);
+                }
             }
 
             typeToTrustStore.put( type, configuration );
@@ -217,7 +235,7 @@ public class CertificateStoreManager extends BasicModule
             if ( oldConfig != null && !typeToTrustStore.containsValue( oldConfig ) )
             {
                 final TrustStore store = trustStores.remove( oldConfig );
-                if ( store != null )
+                if ( store != null && storeWatcher != null )
                 {
                     storeWatcher.unwatch( store );
                 }

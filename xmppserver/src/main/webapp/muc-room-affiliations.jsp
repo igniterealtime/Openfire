@@ -49,7 +49,6 @@
     String nickName = ParamUtils.getParameter(request,"nickName");
     String roomName = roomJID.getNode();
     String[] groupNames = ParamUtils.getParameters(request, "groupNames");
-    final String affName = ParamUtils.getStringParameter(request, "affName", "");
 
     boolean add = request.getParameter("add") != null;
     boolean addsuccess = request.getParameter("addsuccess") != null;
@@ -259,23 +258,21 @@
     </select>
     </p>
     <p>
-        <select name="affiliation"  onchange='location.href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&affName="+ this.options[this.selectedIndex].value;'>
-            <option value="owner"<%= affName.equals("owner") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.owner" /></option>
-            <option value="admin"<%= affName.equals("admin") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.admin" /></option>
-            <option value="member"<%= affName.equals("member") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.member" /></option>
-            <option value="outcast"<%= affName.equals("outcast") ? " selected='selected'" : "" %>><fmt:message key="muc.room.affiliations.outcast" /></option>
+        <select name="affiliation" onchange="document.getElementById('memberNickParagraph').style.visibility = (this.selectedIndex === 2 ? 'visible' : 'hidden')">
+            <option value="owner"><fmt:message key="muc.room.affiliations.owner" /></option>
+            <option value="admin"><fmt:message key="muc.room.affiliations.admin" /></option>
+            <option value="member"><fmt:message key="muc.room.affiliations.member" /></option>
+            <option value="outcast"><fmt:message key="muc.room.affiliations.outcast" /></option>
         </select>
     </p>
     <p>
         <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
         <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? StringUtils.escapeHTMLTags(userJID) : "") %>" id="memberJID">
     </p>
-    <% if(!affName.isEmpty() && affName.equals("member")) {%>
-        <p>
-            <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid_nickname" /></label>
-            <input type="text" name="nickName" size="30" maxlength="255" value="<%= (nickName != null ? StringUtils.escapeHTMLTags(nickName) : "") %>" id="memberJID">
-        </p>
-    <%  } %>
+    <p id="memberNickParagraph" style="visibility: hidden">
+        <label for="memberNick"><fmt:message key="muc.room.affiliations.add_jid_nickname" /></label>
+        <input type="text" name="nickName" size="30" maxlength="255" value="<%= (nickName != null ? StringUtils.escapeHTMLTags(nickName) : "") %>" id="memberNick">
+    </p>
     <p>
         <input type="submit" value="<fmt:message key="global.add" />">
     </p>

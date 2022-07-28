@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.net.StartTlsFilter;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -173,7 +174,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public Certificate[] getLocalCertificates() {
-        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
+        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED);
         if (sslSession != null) {
             return sslSession.getLocalCertificates();
         }
@@ -183,7 +184,7 @@ public class NIOConnection implements Connection {
     @Override
     public Certificate[] getPeerCertificates() {
         try {
-            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SESSION);
+            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED);
             if (sslSession != null) {
                 return sslSession.getPeerCertificates();
             }
@@ -403,12 +404,13 @@ public class NIOConnection implements Connection {
 
         if (!directTLS)
         {
-            ioSession.setAttribute( SslFilter.DISABLE_ENCRYPTION_ONCE, Boolean.TRUE );
+            ioSession.getFilterChain().addAfter(TLS_FILTER_NAME, STARTTLS_FILTER_NAME, new StartTlsFilter());
         }
 
         if ( !clientMode && !directTLS ) {
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
+            ioSession.getFilterChain().remove(STARTTLS_FILTER_NAME);
         }
     }
 

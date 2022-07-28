@@ -49,6 +49,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 {
     public static final String EXECUTOR_FILTER_NAME = "threadModel";
     public static final String TLS_FILTER_NAME = "tls";
+    public static final String STARTTLS_FILTER_NAME = "startTls";
     public static final String COMPRESSION_FILTER_NAME = "compression";
     public static final String XMPP_CODEC_FILTER_NAME = "xmpp";
     public static final String CAPACITY_FILTER_NAME = "outCap";

@@ -383,7 +383,6 @@ public class EncryptionArtifactFactory
         final SslFilter filter = new SslFilter( sslContext );
 
         // Copy configuration from the SSL Engine into the filter.
-        filter.setUseClientMode( sslEngine.getUseClientMode() );
         filter.setEnabledProtocols( sslEngine.getEnabledProtocols() );
         filter.setEnabledCipherSuites( sslEngine.getEnabledCipherSuites() );
 

@@ -70,16 +70,19 @@
         }
     }, Collectors.mapping(e -> e, Collectors.toSet())));
 
-    Set<String> allHosts = new HashSet<>();
-    allHosts.addAll(inByHost.keySet());
-    allHosts.addAll(outByHost.keySet());
-    allHosts = allHosts.stream().map(address -> {
+    Map<String, String> allHosts = new HashMap<>();
+
+    Set<String> hosts = new HashSet<>();
+    hosts.addAll(inByHost.keySet());
+    hosts.addAll(outByHost.keySet());
+
+    for (String host : hosts) {
         try {
-            return address + " / " + InetAddress.getByName(address).getCanonicalHostName();
+            allHosts.put(host, InetAddress.getByName(host).getCanonicalHostName());
         } catch (Exception e) {
-            return address;
+            allHosts.put(host, null);
         }
-    }).collect(Collectors.toSet());
+    }
 
     final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 
@@ -147,8 +150,8 @@
 
         <c:forEach items="${allHosts}" var="host">
 
-            <c:set var="inSessions" value="${inByHost[host]}"/>
-            <c:set var="outSessions" value="${outByHost[host]}"/>
+            <c:set var="inSessions" value="${inByHost[host.key]}"/>
+            <c:set var="outSessions" value="${outByHost[host.key]}"/>
 
             <div class="jive-table">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -162,7 +165,8 @@
                             <fmt:message key="server.session.details.hostname" />
                         </td>
                         <td>
-                            <c:out value="${host}"/>
+                            <c:out value="${host.key}"/>
+                            <c:if test="${not empty host.value}">/ <c:out value="${host.value}"/></c:if>
                         </td>
                     </tr>
                     <tr>

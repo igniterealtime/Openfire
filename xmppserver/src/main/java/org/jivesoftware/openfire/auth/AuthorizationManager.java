@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -31,22 +29,22 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Manages the AuthorizationProvider objects.
- * <p>
+ *
  * Overall description of the authentication and authorization process:
- * </p>
- * After a client connects, and indicates a desire to use SASL, the
- * SASLAuthentication object decides which SASL mechanisms to advertise,
- * and then performs the authentication. If authentication is successful,
- * the XMPPCallbackHandler is asked to handle() an AuthorizeCallback.  The
- * XMPPCallbackHandler asks the AuthorizationManager to authorize the
- * principal to the requested username.  The AuthorizationManager manages
- * a list of AuthorizationProvider classes, and tries them one at a time
- * and returns true with the first AuthorizationProvider that authorizes
- * the principal to the username.  If no classes authorize the principal,
- * false is returned, which traces all the way back to give the client an
- * unauthorized message. Its important to note that the message the client
- * receives will give no indication if the principal authenticated successfully,
- * you will need to check the server logs for that information.
+ *
+ * After a client connects, and indicates a desire to use SASL, the SASLAuthentication object decides which SASL
+ * mechanisms to advertise, and then performs the authentication. If authentication is successful, the
+ * XMPPCallbackHandler is asked to handle() an AuthorizeCallback.
+ *
+ * The XMPPCallbackHandler asks the AuthorizationManager to authorize the authentication identity whose password was
+ * used (the 'principal) to the requested authorization identity (the username that the user wants to act as).
+ *
+ * The AuthorizationManager manages a list of AuthorizationProvider classes, and tries them one at a time and returns
+ * true with the first AuthorizationProvider that authorizes the authentication identity to the authorization identity.
+ *
+ * If no classes authorize the authentication identity, false is returned, which traces all the way back to give the
+ * client an unauthorized message. It's important to note that the message the client receives will give no indication
+ * if the authentiation identity authenticated successfully. You will need to check the server logs for that information.
  *
  * @author Jay Kline
  */
@@ -54,15 +52,13 @@ public class AuthorizationManager {
 
     private static final Logger Log = LoggerFactory.getLogger(AuthorizationManager.class);
 
-    private static ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<>();
-    private static ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<>();
+    private static final ArrayList<AuthorizationPolicy> authorizationPolicies = new ArrayList<>();
+    private static final ArrayList<AuthorizationMapping> authorizationMapping = new ArrayList<>();
 
     static {
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("provider.authorization.classList");
         JiveGlobals.migrateProperty("provider.authorizationMapping.classList");
-        JiveGlobals.migrateProperty("sasl.approvedRealms");
-        JiveGlobals.migrateProperty("sasl.realm");
 
         String classList = JiveGlobals.getProperty("provider.authorization.classList");
         if (classList != null) {
@@ -128,29 +124,26 @@ public class AuthorizationManager {
     }
 
     /**
-     * Authorize the authenticated used to the requested username.  This uses the
-     * selected the selected AuthenticationProviders.
+     * Authorize the authenticated username (authcid, principal) to the requested username (authzid).
      *
-     * @param username The requested username.
-     * @param principal The authenticated principal.
-     * @return true if the user is authorized.
+     * This uses the selected AuthenticationProviders.
+     *
+     * @param authzid authorization identity (identity to act as).
+     * @param authcid authentication identity (identity whose password will be used)
+     * @return true if the user is authorized to act as the requested authorization identity.
      */
-
-    public static boolean authorize(String username, String principal) {
+    public static boolean authorize(String authzid, String authcid) {
         for (AuthorizationPolicy ap : authorizationPolicies) {
-            if (Log.isDebugEnabled()) {
-                Log.debug("AuthorizationManager: Trying "+ap.name()+".authorize("+username+" , "+principal+")");
-            }
+            Log.trace("Trying if AuthorizationPolicy {} authorizes {} to act as {}", ap.name(), authcid, authzid);
 
-            if (ap.authorize(username, principal)) {
-                // Authorized..  but do you exist?
+            if (ap.authorize(authzid, authcid)) {
+                // Authorized...  but do you exist?
                 try {
-                    UserManager.getUserProvider().loadUser(username);
+                    UserManager.getUserProvider().loadUser(authzid);
                 }
                 catch (UserNotFoundException nfe) {
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("AuthorizationManager: User " + username + " not found " + nfe.toString());
-                    }
+                    Log.debug("User {} not found ", authzid, nfe);
+
                     // Should we add the user?
                     if(JiveGlobals.getBooleanProperty("xmpp.auth.autoadd",false)) {
                         if (UserManager.getUserProvider().isReadOnly()) {
@@ -161,19 +154,14 @@ public class AuthorizationManager {
                             return false;
                         }
                         try {
-                            UserManager.getInstance().createUser(username, StringUtils.randomString(8), null, null);
-                            if (Log.isDebugEnabled()) {
-                                Log.info("AuthorizationManager: User "+username+" created.");
-                            }
+                            UserManager.getInstance().createUser(authzid, StringUtils.randomString(8), null, null);
+                            Log.info("AuthorizationManager: User {} created.", authzid);
                             return true;
                         }
                         catch (UserAlreadyExistsException uaee) {
                             // Somehow the user got created in this very short timeframe.. 
                             // To be safe, lets fail here. The user can always try again.
-                            if (Log.isDebugEnabled()) {
-                                Log.error("AuthorizationManager: User " + username +
-                                        " already exists while attempting to add user.");
-                            }
+                            Log.error("AuthorizationManager: User {} already exists while attempting to add user.", authzid, uaee);
                             return false;
                         }
                     }
@@ -188,23 +176,22 @@ public class AuthorizationManager {
     }
 
     /**
-     * Map the authenticated principal to the default username.  If the authenticated 
-     * principal did not supply a username, determine the default to use.
+     * Map the authenticated username (authcid, principal) to the username to act as (authzid).
      *
-     * @param principal The authentiated principal to determine the default username.
-     * @return The default username for the authentiated principal.
+     * If the authenticated username did not supply a username to act as, determine the default to use.
+     *
+     * @param authcid authentication identity (identity whose password will be used), for which to determine the username to act as (authzid).
+     * @return The username to act as (authzid) for the provided authentication identity.
      */
-
-    public static String map(String principal) {
+    public static String map(String authcid) {
         for (AuthorizationMapping am : authorizationMapping) {
-            if (Log.isDebugEnabled()) {
-                Log.debug("AuthorizationManager: Trying " + am.name() + ".map(" + principal + ")");
-            }
-            String username = am.map(principal);
-            if( ! username.equals(principal) ) {
-                return username;
+            Log.trace("Trying if AuthorizationMapping {} provides an authzid that is different from the provided authcid {}", am.name(), authcid);
+            String authzid = am.map(authcid);
+            if(!authzid.equals(authcid)) {
+                Log.trace("AuthorizationMapping {} provided an authzid {} for the provided authcid {}", am.name(), authzid, authcid);
+                return authzid;
             }
         }
-        return principal;
+        return authcid;
     }
 }

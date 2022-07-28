@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,17 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.StringTokenizer;
-import java.util.Vector;
-
 import org.jivesoftware.openfire.XMPPServerInfo;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is the interface the used to provide default default authorization
- * ID's when none was selected by the client.
- * This class simply removes the realm (if any) from the principal if and only if
- * the realm matches the server's realm, the server's xmpp domain name, or 
+ * The default implementation that defines the default authorization identity to be used, when none was selected by the
+ * client.
+ *
+ * This class simply removes the realm (if any) from the authentication identity (or 'principal') if and only if
+ * the realm matches the server's realm, the server's xmpp domain name, or any of the pre-approved realm names.
  * 
  * @author Jay Kline
  */
@@ -36,58 +34,45 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultAuthorizationMapping.class);
 
-    private Vector<String> approvedRealms;
-
-    public DefaultAuthorizationMapping() {
-        approvedRealms = new Vector<>();
-        
-        String realmList = JiveGlobals.getProperty("sasl.approvedRealms");
-        if(realmList != null) {
-            StringTokenizer st = new StringTokenizer(realmList, " ,\t\n\r\f");
-            while(st.hasMoreTokens()) {
-                approvedRealms.add(st.nextToken());
-            }
-        }
-    }
-
     /**
-     * Returns true if the principal is explicity authorized to the JID
+     * Returns the default authorization identity (the identity to act as) for a provided authentication identity
+     * (or 'principal' - whose password is used).
      *
-     * @param principal The autheticated principal requesting authorization.
-     * @return The name of the default username to use.
+     * @param authcid authentication identity (or 'principal' whose password is used)
+     * @return The name of the default authorization identity to use.
      */
     @Override
-    public String map(String principal) {
-        if(principal.contains("@")) {
-            String realm = principal.substring(principal.lastIndexOf('@')+1);
-            String username = principal.substring(0,principal.lastIndexOf('@'));
+    public String map(String authcid) {
+        if(authcid.contains("@")) {
+            String realm = authcid.substring(authcid.lastIndexOf('@')+1);
+            String authzid = authcid.substring(0,authcid.lastIndexOf('@'));
 
             if(realm.length() > 0) {
                 if(realm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
                     Log.debug("DefaultAuthorizationMapping: realm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
-                    return username;
-                } else if(realm.equals(JiveGlobals.getProperty("sasl.realm"))) {
+                    return authzid;
+                } else if(realm.equals(SASLAuthentication.REALM.getValue())) {
                     Log.debug("DefaultAuthorizationMapping: ream = sasl.realm");
-                    return username;
+                    return authzid;
                 } else {
-                    for(String approvedRealm : approvedRealms) {
+                    for(String approvedRealm : SASLAuthentication.APPROVED_REALMS.getValue()) {
                         if(realm.equals(approvedRealm)) {
                             Log.debug("DefaultAuthorizationMapping: realm ("+realm+") = "+approvedRealm+" which is approved");
-                            return username;
+                            return authzid;
                         } else {
                             Log.debug("DefaultAuthorizationPolicy: realm ("+realm+") != "+approvedRealm+" which is approved");
                         }
                     }
                 }
                 Log.debug("DefaultAuthorizationMapping: No approved mappings found.");
-                return principal;
+                return authcid;
             } else {
                 Log.debug("DefaultAuthorizationMapping: Realm has no length");
             }
         } else {
             Log.debug("DefaultAuthorizationMapping: No realm found");
         }
-        return principal;
+        return authcid;
     }
 
     /**
@@ -107,8 +92,9 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
      */
     @Override
     public String description() {
-        return "Simply remove's the realm of the requesting principal if and only if "+
-               "the realm matches the server's realm or the server's xmpp domain name. "+
-               "Otherwise the principal is used as the username.";
+        return "Simply removes the realm of the requesting authentication identity ('principal') if and only if "+
+               "the realm matches the server's realm, the server's XMPP domain name, or any of the pre-approved "+
+               "realm names. Otherwise the input value (authentication identity) is returned as-is, causing it to " +
+               "be used as the authorization identity (the identity to act as).";
     }
 }

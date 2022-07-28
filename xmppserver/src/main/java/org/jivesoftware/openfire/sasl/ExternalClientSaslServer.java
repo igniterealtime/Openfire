@@ -90,75 +90,75 @@ public class ExternalClientSaslServer implements SaslServer
             throw new SaslException( "Certificate chain of peer is not trusted." );
         }
 
-        // Process client identities / principals.
-        final ArrayList<String> principals = new ArrayList<>();
-        principals.addAll( CertificateManager.getClientIdentities( trusted ) );
-        String principal;
-        switch ( principals.size() )
+        // Process client authentication identities / principals.
+        final ArrayList<String> authenticationIdentities = new ArrayList<>();
+        authenticationIdentities.addAll( CertificateManager.getClientIdentities( trusted ) );
+        String authenticationIdentity;
+        switch ( authenticationIdentities.size() )
         {
             case 0:
-                principal = "";
+                authenticationIdentity = "";
                 break;
 
             default:
-                Log.debug( "More than one principal found, using the first one." );
+                Log.debug( "More than one authentication identity found, using the first one." );
                 // intended fall-through;
             case 1:
-                principal = principals.get( 0 );
+                authenticationIdentity = authenticationIdentities.get( 0 );
                 break;
         }
 
-        // Process requested user name.
-        String username;
+        // Process requested username to act as.
+        String authorizationIdentity;
         if ( response != null && response.length > 0 )
         {
-            username = new String( response, StandardCharsets.UTF_8 );
-            if( PROPERTY_SASL_EXTERNAL_CLIENT_SUPPRESS_MATCHING_REALMNAME.getValue() && username.contains("@") ) {
-                String userUser = username.substring(0,username.lastIndexOf("@"));
-                String userRealm = username.substring((username.lastIndexOf("@")+1));
-                if ( XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( userRealm ) ) {
-                    username = userUser;
+            authorizationIdentity = new String( response, StandardCharsets.UTF_8 );
+            if( PROPERTY_SASL_EXTERNAL_CLIENT_SUPPRESS_MATCHING_REALMNAME.getValue() && authorizationIdentity.contains("@") ) {
+                String authzUser = authorizationIdentity.substring(0,authorizationIdentity.lastIndexOf("@"));
+                String authzRealm = authorizationIdentity.substring((authorizationIdentity.lastIndexOf("@")+1));
+                if ( XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( authzRealm ) ) {
+                    authorizationIdentity = authzUser;
                 }
             }
         }
         else
         {
-            username = null;
+            authorizationIdentity = null;
         }
 
-        if ( username == null || username.length() == 0 )
+        if ( authorizationIdentity == null || authorizationIdentity.length() == 0 )
         {
-            // No username was provided, according to XEP-0178 we need to:
+            // No authorization identity was provided, according to XEP-0178 we need to:
             //    * attempt to get it from the cert first
             //    * have the server assign one
 
-            // There shouldn't be more than a few principals in here. One ideally. We set principal to the first one in
-            // the list to have a sane default. If this list is empty, then the cert had no identity at all, which will
+            // There shouldn't be more than a few authentication identities in here. One ideally. We set authcid to the
+            // first one in the list to have a sane default. If this list is empty, then the cert had no identity at all, which will
             // cause an authorization failure.
-            for ( String princ : principals )
+            for ( String authcid : authenticationIdentities )
             {
-                final String mappedUsername = AuthorizationManager.map( princ );
-                if ( !mappedUsername.equals( princ ) )
+                final String mappedUsername = AuthorizationManager.map( authcid );
+                if ( !mappedUsername.equals( authcid ) )
                 {
-                    username = mappedUsername;
-                    principal = princ;
+                    authorizationIdentity = mappedUsername;
+                    authenticationIdentity = authcid;
                     break;
                 }
             }
 
-            if ( username == null || username.length() == 0 )
+            if ( authorizationIdentity == null || authorizationIdentity.length() == 0 )
             {
-                // Still no username.  Punt.
-                username = principal;
+                // Still no username to act as.  Punt.
+                authorizationIdentity = authenticationIdentity;
             }
-            Log.debug( "No username requested, using: {}", username );
+            Log.debug( "No username requested, using: {}", authorizationIdentity );
         }
 
-        // Its possible that either/both username and principal are null here. The providers should not allow a null authorization
-        if ( AuthorizationManager.authorize( username, principal ) )
+        // It's possible that either/both authzid and authcid are null here. The providers should not allow a null authorization.
+        if ( AuthorizationManager.authorize( authorizationIdentity, authenticationIdentity ) )
         {
-            Log.debug( "Principal {} authorized to username {}", principal, username );
-            authorizationID = username;
+            Log.debug( "Authcid {} authorized to authzid (username) {}", authenticationIdentity, authorizationIdentity );
+            authorizationID = authorizationIdentity;
             return null; // Success!
         }
 

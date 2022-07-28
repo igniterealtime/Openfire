@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,9 @@ import java.util.Collection;
 import java.util.Enumeration;
 
 /**
- * Provider for authorization using LDAP. Checks if the authenticated
- * principal is in the user's LDAP object using the authorizeField
- * from the system properties. An entry in that file would
- * look like the following:
+ * Provider for authorization using LDAP. Checks if the XMPP authentication identity, or 'principal' (identity whose
+ * password will be used) is in the user's LDAP object using the authorizeField from the system properties. An entry in
+ * that file would look like the following:
  *
  * <ul>
  * <li>{@code ldap.authorizeField = k5login}</li>
@@ -62,32 +61,33 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
     }
 
     /**
-     * Returns if the principal is explicitly authorized to the JID, throws
-     * an UnauthorizedException otherwise
+     * Returns true if the provided XMPP authentication identity (identity whose password will be used) is explicitly
+     * allowed to the provided XMPP authorization identity (identity to act as).
      *
-     * @param username  The username requested.import org.jivesoftware.openfire.ldap.*;
-     * @param principal The principal requesting the username.
+     * @param authzid XMPP authorization identity (identity to act as).
+     * @param authcid XMPP authentication identity, or 'principal' (identity whose password will be used)
+     * @return true if the authzid is explicitly allowed to be used by the user authenticated with the authcid.
      */
     @Override
-    public boolean authorize(String username, String principal) {
-        return getAuthorized(username).contains(principal);
+    public boolean authorize(String authzid, String authcid) {
+        return getAuthorized(authzid).contains(authcid);
     }
 
     /**
-     * Returns a String Collection of principals that are authorized to use
-     * the named user.
+     * Returns a collection of XMPP authentication identities (or 'principals') that are authorized to use the XMPP
+     * authorization identity (identity to act as) as provided in the argument of this method.
      *
-     * @param username the username.
-     * @return A String Collection of principals that are authorized.
+     * @param authzid XMPP authorization identity (identity to act as).
+     * @return A collection of XMPP authentication identities (or 'principals') that are authorized to use the authzid
      */
-    private Collection<String> getAuthorized(String username) {
+    private Collection<String> getAuthorized(String authzid) {
         // Un-escape Node
-        username = JID.unescapeNode(username);
+        authzid = JID.unescapeNode(authzid);
 
         Collection<String> authorized = new ArrayList<>();
         DirContext ctx = null;
         try {
-            Rdn[] userRDN = manager.findUserRDN(username);
+            Rdn[] userRDN = manager.findUserRDN(authzid);
             // Load record.
             String[] attributes = new String[]{
                     usernameField,
@@ -104,8 +104,8 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
 
             return authorized;
         }
-        catch (Exception e) {
-            // Ignore.
+        catch (Exception ex) {
+            Log.debug("An exception occurred while trying to retrieve authorized principals for user {}.", authzid, ex);
         }
         finally {
             try {
@@ -114,7 +114,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
                 }
             }
             catch (Exception ex) {
-                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve authorized principals for user {}.", username, ex);
+                Log.debug("An exception occurred while trying to close a LDAP context after trying to retrieve authorized principals for user {}.", authzid, ex);
             }
         }
         return authorized;
@@ -137,6 +137,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
      */
     @Override
     public String description() {
-        return "Provider for authorization using LDAP. Checks if the authenticated principal is in the user's LDAP object using the authorizeField property.";
+        return "Provider for authorization using LDAP. Checks if the authentication identity, or 'principal' (identity" +
+            " whose password will be used) is in the user's LDAP object using the authorizeField property.";
     }
 }

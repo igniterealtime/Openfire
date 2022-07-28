@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,25 @@ import java.util.regex.Pattern;
 public class SASLAuthentication {
 
     private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
+
+    // TODO how is this different from a singular entry in APPROVED_REALMS? Should these two properties be folded into eachother?
+    public static final SystemProperty<String> REALM = SystemProperty.Builder.ofType(String.class)
+        .setKey("sasl.realm")
+        .setDynamic(true)
+        .setDefaultValue(null)
+        .build();
+
+    public static final SystemProperty<List<String>> APPROVED_REALMS = SystemProperty.Builder.ofType(List.class)
+        .setKey("sasl.approvedRealms")
+        .setDefaultValue(Collections.emptyList())
+        .setDynamic(true)
+        .buildList(String.class);
+
+    public static final SystemProperty<Boolean> PROXY_AUTH = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("sasl.proxyAuth")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
 
     public static final SystemProperty<Boolean> SKIP_PEER_CERT_REVALIDATION_CLIENT = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.auth.external.client.skip-cert-revalidation")

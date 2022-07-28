@@ -570,14 +570,12 @@
                     <tr>
                         <td valign="top"><fmt:message key="muc.room.edit.form.broadcast" />:</td>
                         <td>
-                            <fieldset>
-                                <input name="roomconfig_presencebroadcast" type="checkbox" value="true" id="moderator" ${broadcastModerator ? 'checked' : ''}>
-                                <label for="moderator"><fmt:message key="muc.room.edit.form.moderator" /></label>
-                                <input name="roomconfig_presencebroadcast2" type="checkbox" value="true" id="participant" ${broadcastParticipant ? 'checked' : ''}>
-                                <label for="participant"><fmt:message key="muc.room.edit.form.participant" /></label>
-                                <input name="roomconfig_presencebroadcast3" type="checkbox" value="true" id="visitor" ${broadcastVisitor ? 'checked' : ''}>
-                                <label for="visitor"><fmt:message key="muc.room.edit.form.visitor" /></label>
-                            </fieldset>
+                            <input name="roomconfig_presencebroadcast" type="checkbox" value="true" id="moderator" ${broadcastModerator ? 'checked' : ''}>
+                            <label for="moderator"><fmt:message key="muc.room.edit.form.moderator" /></label>
+                            <input name="roomconfig_presencebroadcast2" type="checkbox" value="true" id="participant" ${broadcastParticipant ? 'checked' : ''}>
+                            <label for="participant"><fmt:message key="muc.room.edit.form.participant" /></label>
+                            <input name="roomconfig_presencebroadcast3" type="checkbox" value="true" id="visitor" ${broadcastVisitor ? 'checked' : ''}>
+                            <label for="visitor"><fmt:message key="muc.room.edit.form.visitor" /></label>
                         </td>
                     </tr>
                     <tr>

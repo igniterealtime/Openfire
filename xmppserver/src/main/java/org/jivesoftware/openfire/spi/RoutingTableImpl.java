@@ -1077,7 +1077,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             lockA.lock();
             try {
                 clientRoute = anonymousUsersCache.remove(address);
-                anonymous = true;
+                if (clientRoute != null) {
+                    anonymous = true;
+                }
             }
             finally {
                 lockA.unlock();

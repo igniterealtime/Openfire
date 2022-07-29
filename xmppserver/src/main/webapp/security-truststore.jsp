@@ -11,6 +11,8 @@
 <%@ page import="java.util.Set" %>
 <%@ page import="java.security.cert.X509Certificate" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="java.time.Duration" %>
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -76,6 +78,11 @@
             {
                 try
                 {
+                    // When updating certificates through the admin console, do not cause changes to restart the website, as
+                    // that is very likely to log out the administrator that is performing the changes. As the keystore change
+                    // event is async, this line disables restarting the plugin for a few minutes.
+                    ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+
                     trustStore.delete( alias );
 
                     // Log the event

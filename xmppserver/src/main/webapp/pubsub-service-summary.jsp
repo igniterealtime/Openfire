@@ -40,7 +40,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-summary.jsp");
+        response.sendRedirect("pubsub-service-summary.jsp");
         return;
     }
 

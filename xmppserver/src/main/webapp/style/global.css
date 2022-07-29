@@ -579,17 +579,40 @@ pre, tt {
     padding:3px;
     vertical-align:top;
 }
-.jive-error-text, .jive-error .jive-icon-label, .jive-error-text a, .jive-error .jive-icon-label a {
+.jive-error-text, .jive-error .jive-icon-label {
     color:#FF0000;
 }
-.jive-warning-text, .jive-warning .jive-icon-label, .jive-warning-text a, .jive-warning-text .jive-icon-label a {
+
+.jive-error-text a, .jive-error .jive-icon-label a {
+    color: #7F0000;
+    text-decoration: underline !important;
+}
+
+.jive-warning-text, .jive-warning .jive-icon-label {
     color: #FF6C0D;
 }
-.jive-success-text, .jive-success .jive-icon-label, .jive-success-text a, .jive-success .jive-icon-label a {
+
+.jive-warning-text a, .jive-warning .jive-icon-label a {
+    color: #b24500;
+    text-decoration: underline !important;
+}
+
+.jive-success-text, .jive-success .jive-icon-label {
     color:#009900;
 }
-.jive-info-text, .jive-info .jive-icon-label, .jive-info-text a, .jive-info .jive-icon-label a {
+
+.jive-success-text a, .jive-success .jive-icon-label a {
+    color: #00c500;
+    text-decoration: underline !important;
+}
+
+.jive-info-text, .jive-info .jive-icon-label {
     color:#330066;
+}
+
+.jive-info-text a, .jive-info .jive-icon-label a {
+    color: #6700cc;
+    text-decoration: underline !important;
 }
 
 /* tables */

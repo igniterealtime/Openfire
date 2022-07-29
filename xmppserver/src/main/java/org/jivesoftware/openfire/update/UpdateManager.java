@@ -169,7 +169,8 @@ public class UpdateManager extends BasicModule {
                                 }
                             }
                             // Keep track of the last time we checked for updates.
-                            final Instant lastUpdate = Instant.now();
+                            // Openfire SystemProperties store as truncated to millis
+                            final Instant lastUpdate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
                             LAST_UPDATE_CHECK.setValue(lastUpdate);
                             // As an extra precaution, make sure that that the value
                             // we just set is saved. If not, return to make sure that

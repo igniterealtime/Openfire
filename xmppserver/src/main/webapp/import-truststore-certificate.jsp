@@ -8,6 +8,8 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -69,6 +71,10 @@
         {
             try
             {
+                // When updating certificates through the admin console, do not immediately restart the website, as that
+                // is very likely to lock out the administrator that is performing the changes.
+                ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+
                 // Import certificate
                 trustStoreConfig.installCertificate( alias, certificate );
 

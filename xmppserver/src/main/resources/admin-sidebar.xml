@@ -150,7 +150,7 @@
 
                     <item id="sidebar-certificate-store-socket_c2s-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=SOCKET_C2S"
-                          description="${sidebar.identity-store.descr"/>
+                          description="${sidebar.identity-store.descr}"/>
 
                     <item id="sidebar-certificate-store-socket_c2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=SOCKET_C2S"
@@ -162,11 +162,11 @@
 
                     <item id="sidebar-certificate-store-socket_s2s-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=SOCKET_S2S"
-                          description="${sidebar.identity-store.descr"/>
+                          description="${sidebar.identity-store.descr}"/>
 
                     <item id="sidebar-certificate-store-socket_s2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=SOCKET_S2S"
-                          description="${sidebar.trust-store.descr"/>
+                          description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>
 
@@ -174,11 +174,11 @@
 
                     <item id="sidebar-certificate-store-bosh_c2s-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=BOSH_C2S"
-                          description="${sidebar.identity-store.descr"/>
+                          description="${sidebar.identity-store.descr}"/>
 
                     <item id="sidebar-certificate-store-bosh_c2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=BOSH_C2S"
-                          description="${sidebar.trust-store.descr"/>
+                          description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>
 
@@ -186,11 +186,11 @@
 
                     <item id="sidebar-certificate-store-component-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=COMPONENT"
-                          description="${sidebar.identity-store.descr"/>
+                          description="${sidebar.identity-store.descr}"/>
 
                     <item id="sidebar-certificate-store-component-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=COMPONENT"
-                          description="${sidebar.trust-store.descr"/>
+                          description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>
 
@@ -198,11 +198,11 @@
 
                     <item id="sidebar-certificate-store-connection_manager-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=CONNECTION_MANAGER"
-                          description="${sidebar.identity-store.descr"/>
+                          description="${sidebar.identity-store.descr}"/>
 
                     <item id="sidebar-certificate-store-connection_manager-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=CONNECTION_MANAGER"
-                          description="${sidebar.trust-store.descr"/>
+                          description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>
 
@@ -210,11 +210,11 @@
 
                     <item id="sidebar-certificate-store-webadmin-identity-store" name="${sidebar.identity-store}"
                           url="security-keystore.jsp?connectionType=WEBADMIN"
-                          description="${sidebar.identity-store.descr"/>
+                          description="${sidebar.identity-store.descr}"/>
 
                     <item id="sidebar-certificate-store-webadmin-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=WEBADMIN"
-                          description="${sidebar.trust-store.descr"/>
+                          description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>
                 <!--&lt;!&ndash; Certificate key stores ("Openfire Certificates") &ndash;&gt;-->

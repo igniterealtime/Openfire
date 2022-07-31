@@ -2472,10 +2472,9 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
                 }
             }
             Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
-            // ChatUser will be null if the room itself (i.e. via admin console) made the request
-            if (senderRole.getUserAddress() != null) {
-                frag.addElement("invite").addAttribute("from", senderRole.getUserAddress().toBareJID());
-            }
+            // ChatUser will be null if the room itself (i.e. via admin console) made the request. In that case, use the room JID. See OF-2486.
+            final JID from = senderRole.getUserAddress() != null ? senderRole.getUserAddress() : getJID();
+            frag.addElement("invite").addAttribute("from", from.toBareJID());
             if (reason != null && reason.length() > 0) {
                 Element invite = frag.element("invite");
                 if (invite == null) {

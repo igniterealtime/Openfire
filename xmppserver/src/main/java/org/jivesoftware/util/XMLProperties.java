@@ -769,29 +769,14 @@ public class XMLProperties {
             return false;
         }
 
-        // No errors occurred, so delete the main file.
-        // Delete the old file so we can replace it.
+        // No errors occurred, so replace the main file.
         try {
-            Files.deleteIfExists(file);
-        } catch (final IOException e) {
-            Log.error("Error deleting existing property file {}: ", tempFile, e);
-            return false;
-        }
-        // Copy new contents to the file.
-        try {
-            Files.copy(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING);
         } catch (final Exception e) {
-            Log.error("Error copying new property file from {} to {}:", tempFile, file, e);
-            // There were errors so abort replacing the old property file.
+            Log.error("Error moving new property file from {} to {}:", tempFile, file, e);
             return false;
         }
 
-        // If no errors, delete the temp file.
-        try {
-            Files.deleteIfExists(tempFile);
-        } catch (IOException e) {
-            Log.error("Error deleting temp file {}", tempFile, e);
-        }
         return true;
     }
 

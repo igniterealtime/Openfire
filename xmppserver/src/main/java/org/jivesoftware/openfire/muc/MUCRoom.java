@@ -3427,6 +3427,12 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
      * become persistent.
      */
     public void saveToDB() {
+        // OF-400: Subjects can't be longer than 100 characters in the database. Invokers should truncate longer subjects (or reject them with an error).
+        if (this.getSubject() != null && this.getSubject().length() > 100) {
+            Log.error("Unable to store subject for room '{}' as it has more than 100 characters.", this.getName());
+            return;
+        }
+
         // Make the room persistent
         MUCPersistenceManager.saveToDB(this);
         if (!savedToDB) {

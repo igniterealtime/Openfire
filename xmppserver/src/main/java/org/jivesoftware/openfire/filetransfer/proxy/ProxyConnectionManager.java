@@ -176,13 +176,12 @@ public class ProxyConnectionManager {
                                 processConnection(socket);
                             }
                             catch (IOException ie) {
-                                Log.error("Error processing file transfer proxy connection",
-                                        ie);
                                 try {
+                                    Log.info("Unable to process data send through inbound connection from {} to file transfer proxy: {}", socket.getInetAddress(), ie.getMessage());
                                     socket.close();
                                 }
                                 catch (IOException e) {
-                                    /* Do Nothing */
+                                    Log.debug("An exception occurred while trying to close a socket after processing data delivered by it caused an exception.", e);
                                 }
                             }
                         }
@@ -204,7 +203,7 @@ public class ProxyConnectionManager {
         // first byte is version should be 5
         int b = in.read();
         if (b != 5) {
-            throw new IOException("Only SOCKS5 supported");
+            throw new IOException("Only SOCKS5 supported. Peer is sending something that is incompatible.");
         }
 
         // second byte number of authentication methods supported
@@ -225,7 +224,7 @@ public class ProxyConnectionManager {
             }
         }
         if (authMethod != 0) {
-            throw new IOException("Authentication method not supported");
+            throw new IOException("Authentication method requested by peer is not supported.");
         }
 
         // No auth method so respond with success

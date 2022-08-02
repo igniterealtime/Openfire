@@ -2392,11 +2392,6 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
             MUCRole.Role.moderator == role.getRole()) {
             // Set the new subject to the room
             subject = packet.getSubject();
-            // OF-400: Openfire only supports 100 characters for the subject. Truncate, if longer.
-            if (subject != null && subject.length() > 100) {
-                Log.info("Subject for room '{}' was changed by '{}' to a value that is longer than the maximum allowable 100 characters. The subject was truncated to fit.", name, role.getUserAddress());
-                subject = subject.substring(0, 97) + "...";
-            }
             MUCPersistenceManager.updateRoomSubject(this);
             // Notify all the occupants that the subject has changed
             packet.setFrom(role.getRoleAddress());

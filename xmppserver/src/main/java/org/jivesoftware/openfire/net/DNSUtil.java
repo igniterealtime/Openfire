@@ -240,7 +240,7 @@ public class DNSUtil {
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(new WeightedHostAddress[0])); // Empty result (different from negative result!)
                 result = new WeightedHostAddress[0];
             } catch (NamingException e) {
-                logger.error("DNS SRV lookup failed for '{}'", lookup, e);
+                logger.info("DNS SRV lookup was unsuccessful for '{}': {}", lookup, e.getMessage());
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(null)); // Negative result cache (different from empty result!)
                 result = new WeightedHostAddress[0];
             }

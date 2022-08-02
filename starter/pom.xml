@@ -4,7 +4,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>4.7.3</version>
+        <version>4.7.4-SNAPSHOT</version>
     </parent>
     <artifactId>starter</artifactId>
     <name>Starter for Openfire</name>

@@ -484,7 +484,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     /**
-     * Process an IQ set stanza that was addressed to the a node/user.
+     * Process an IQ set stanza that was addressed to a node/user.
      *
      * @param packet The stanza to process.
      * @return A response (can be null).
@@ -492,6 +492,16 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     private IQ handleIQRequestToUser(IQ packet)
     {
         final JID jidTo = packet.getTo().asBareJID();
+
+        // Only service local, registered users.
+        if (!UserManager.getInstance().isRegisteredUser(jidTo, false)) {
+            Log.debug("Rejected IQ request from '{}' to the PEP service of '{}' that is not a local, registered user.", packet.getFrom(), packet.getTo());
+            final IQ reply = IQ.createResultIQ(packet);
+            reply.setChildElement(packet.getChildElement().createCopy());
+            reply.setError(new PacketError(PacketError.Condition.item_not_found, PacketError.Condition.item_not_found.getDefaultType(), "PEP service does not exist. Only local, registered users have a PEP service."));
+            return reply;
+        }
+
         final PEPService pepService = pepServiceManager.getPEPService(jidTo);
         pepServiceManager.process(pepService, packet);
         return null;

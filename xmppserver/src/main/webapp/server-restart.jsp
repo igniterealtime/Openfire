@@ -22,7 +22,7 @@
     <meta http-equiv="refresh" content="5; URL=${redirectPage}">
 </head>
 <body><fmt:message key="server-restart.info">
-    <fmt:param value="<a href=\"$redirectPage}\">"/>
+    <fmt:param value="<a href=\"${redirectPage}\">"/>
     <fmt:param value="</a>"/>
 </fmt:message>
 </body>

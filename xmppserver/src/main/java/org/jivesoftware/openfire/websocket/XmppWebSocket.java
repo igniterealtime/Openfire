@@ -287,15 +287,19 @@ public class XmppWebSocket {
                         router = new SessionPacketRouter(xmppSession);
                     }
                 }
-                router.route(stanza);
+                HttpBindManager.getInstance().getSessionManager().execute(() -> {
+                    try {
+                        router.route(stanza);
+                    }  catch (UnknownStanzaException use) {
+                        Log.warn("Received invalid stanza: " + stanza.asXML());
+                        sendPacketError(stanza, PacketError.Condition.bad_request);
+                    }
+                });
             } else {
                 // require authentication
                 Log.warn("Not authorized: " + stanza.asXML());
                 sendPacketError(stanza, PacketError.Condition.not_authorized);
             }
-        } catch (UnknownStanzaException use) {
-            Log.warn("Received invalid stanza: " + stanza.asXML());
-            sendPacketError(stanza, PacketError.Condition.bad_request);
         } catch (Exception ex) {
             Log.error("Failed to process incoming stanza: " + stanza.asXML(), ex);
             closeStream(new StreamError(StreamError.Condition.internal_server_error));

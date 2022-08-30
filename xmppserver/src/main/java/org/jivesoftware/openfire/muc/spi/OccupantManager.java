@@ -91,11 +91,11 @@ public class OccupantManager implements MUCEventListener
     private final String serviceDomain;
 
     /**
-     * Lookup table for finding occupants by node.
+     * Lookup table for finding occupants by node. Occupants are keyed by their 'real JID' property.
      */
     @Nonnull
     @GuardedBy("mutex")
-    private final ConcurrentMap<NodeID, Set<Occupant>> occupantsByNode = new ConcurrentHashMap<>();
+    private final ConcurrentMap<NodeID, Map<JID, Set<Occupant>>> occupantsByNode = new ConcurrentHashMap<>();
 
     /**
      * Lookup table for finding nodes by occupant.
@@ -149,7 +149,8 @@ public class OccupantManager implements MUCEventListener
 
             // Step 2: add new occupant, if there is any
             if (newOccupant != null) {
-                occupantsByNode.computeIfAbsent(nodeID, (n) -> new HashSet<>()).add(newOccupant);
+                occupantsByNode.computeIfAbsent(nodeID, (n) -> new HashMap<>())
+                    .computeIfAbsent(newOccupant.getRealJID(), (s) -> new HashSet<>()).add(newOccupant);
                 nodesByOccupant.computeIfAbsent(newOccupant, (n) -> new HashSet<>()).add(nodeID);
             }
 
@@ -170,11 +171,18 @@ public class OccupantManager implements MUCEventListener
     private void deleteOccupantFromNode(@Nullable final Occupant oldOccupant, @Nonnull final NodeID nodeID)
     {
         if (oldOccupant != null) {
-            if (occupantsByNode.containsKey(nodeID)) {
-                occupantsByNode.get(nodeID).remove(oldOccupant);
-                if (occupantsByNode.get(nodeID).isEmpty()) {
-                    // Clean up, don't leave behind empty set
-                    occupantsByNode.remove(nodeID);
+            final Map<JID, Set<Occupant>> occupantsOnNode = occupantsByNode.get(nodeID);
+            if (occupantsOnNode != null) {
+                final Set<Occupant> occupantsForJID = occupantsOnNode.get(oldOccupant.getRealJID());
+                if (occupantsForJID != null) {
+                    occupantsForJID.remove(oldOccupant);
+                    // Clean up, don't leave behind empty entries.
+                    if (occupantsForJID.isEmpty()) {
+                        occupantsOnNode.remove(oldOccupant.getRealJID());
+                        if (occupantsOnNode.isEmpty()) {
+                            occupantsByNode.remove(nodeID);
+                        }
+                    }
                 }
             }
             if (nodesByOccupant.containsKey(oldOccupant)) {
@@ -393,7 +401,8 @@ public class OccupantManager implements MUCEventListener
         final Set<Occupant> occupantsToKick;
         mutex.readLock().lock();
         try {
-            occupantsToKick = occupantsByNode.values().stream()
+            occupantsToKick = occupantsByNode.values().stream().map(Map::values)
+                .flatMap(Collection::stream)
                 .flatMap(Collection::stream)
                 .filter(o -> o.getNickname().equals(task.getNickname()))
                 .filter(o -> o.getRoomName().equals(task.getRoomName()))
@@ -423,8 +432,12 @@ public class OccupantManager implements MUCEventListener
 
         mutex.writeLock().lock();
         try {
-            oldOccupants = occupantsByNode.get(task.getOriginator());
-
+            final Map<JID, Set<Occupant>> jidSetMap = occupantsByNode.get(task.getOriginator());
+            if (jidSetMap == null) {
+                oldOccupants = null;
+            } else {
+                oldOccupants = jidSetMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+            }
             Log.debug("We received a copy of {} local MUC occupants from node {}. We already had {} occupants in local registration for that node.", task.getOccupants().size(), task.getOriginator(), oldOccupants == null ? 0 : oldOccupants.size());
 
             if (oldOccupants != null) {
@@ -482,7 +495,8 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptySet());
+            return occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptyMap())
+                .values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
         } finally {
             mutex.readLock().unlock();
         }
@@ -499,9 +513,13 @@ public class OccupantManager implements MUCEventListener
         // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
         mutex.writeLock().lock();
         try {
-            occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptySet()).stream()
-                .filter(occupant -> userJid.equals(occupant.getRealJID()))
-                .forEach(o -> o.setLastActive(Instant.now()));
+            final Map<JID, Set<Occupant>> localOccupants = occupantsByNode.get((XMPPServer.getInstance().getNodeID()));
+            if (localOccupants != null) {
+                final Set<Occupant> localOccupantsForUser = localOccupants.get(userJid);
+                if (localOccupantsForUser != null) {
+                    localOccupantsForUser.forEach(occupant -> occupant.setLastActive(Instant.now()));
+                }
+            }
         } finally {
             mutex.writeLock().unlock();
         }
@@ -519,11 +537,17 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptySet()).stream()
-                .filter(occupant -> userJid.equals(occupant.getRealJID()))
-                .map(Occupant::getLastActive)
-                .max(java.util.Comparator.naturalOrder())
-                .orElse(null);
+            final Map<JID, Set<Occupant>> localOccupants = occupantsByNode.get((XMPPServer.getInstance().getNodeID()));
+            if (localOccupants != null) {
+                final Set<Occupant> localOccupantsForUser = localOccupants.get(userJid);
+                if (localOccupantsForUser != null) {
+                    return localOccupantsForUser.stream()
+                        .map(Occupant::getLastActive)
+                        .max(java.util.Comparator.naturalOrder())
+                        .orElse(null);
+                }
+            }
+            return null;
         } finally {
             mutex.readLock().unlock();
         }
@@ -583,7 +607,8 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return occupantsByNode.getOrDefault(nodeID, Collections.emptySet()).stream()
+            // TODO optimize this in a way that it does not need to iterate over all occupants.
+            return occupantsByNode.getOrDefault(nodeID, Collections.emptyMap()).values().stream().flatMap(Collection::stream)
                 .filter(occupant -> occupant.getRoomName().equals(roomName))
                 .collect(Collectors.toSet());
         } finally {
@@ -596,11 +621,22 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return occupantsByNode.entrySet().stream().filter(e -> !e.getKey().equals(nodeID))
-                .map(Map.Entry::getValue)
-                .flatMap(Collection::stream)
-                .filter(occupant -> occupant.getRoomName().equals(roomName))
-                .collect(Collectors.toSet());
+            // TODO optimize this in a way that it does not need to iterate over all occupants.
+            final Set<Occupant> result = new HashSet<>();
+            for (Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : occupantsByNode.entrySet()) {
+                if (entry.getKey().equals(nodeID)) {
+                    continue;
+                }
+                final Map<JID, Set<Occupant>> occupantsOnRemoteNode = entry.getValue();
+                for (final Set<Occupant> occupantsForJID : occupantsOnRemoteNode.values()) {
+                    for (final Occupant occupantForJID : occupantsForJID) {
+                        if (occupantForJID.getRoomName().equals(roomName)) {
+                            result.add(occupantForJID);
+                        }
+                    }
+                }
+            }
+            return result;
         } finally {
             mutex.readLock().unlock();
         }
@@ -619,7 +655,7 @@ public class OccupantManager implements MUCEventListener
         Set<Occupant> returnValue;
         mutex.writeLock().lock();
         try {
-            Set<Occupant> occupantsBeingRemoved = occupantsByNode.getOrDefault(nodeID, new HashSet<>());
+            Set<Occupant> occupantsBeingRemoved = occupantsByNode.getOrDefault(nodeID, new HashMap<>()).values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
 
             // Defensive copy to prevent modifying the returned set
             returnValue = new HashSet<>(occupantsBeingRemoved);
@@ -643,19 +679,33 @@ public class OccupantManager implements MUCEventListener
         final NodeID ownNodeID = XMPPServer.getInstance().getNodeID();
         mutex.writeLock().lock();
         try {
-            final Set<Occupant> occupantsLeftOnThisNode = occupantsByNode.getOrDefault(ownNodeID, new HashSet<>());
+            final Map<JID, Set<Occupant>> occupantsLeftOnThisNode = occupantsByNode.getOrDefault(ownNodeID, new HashMap<>());
 
-            final Set<Occupant> occupantsRemoved = occupantsByNode.entrySet().stream()
-                .filter(e -> !e.getKey().equals(ownNodeID))
-                .flatMap(e -> e.getValue().stream())
-                .filter(o -> !occupantsLeftOnThisNode.contains(o))
-                .collect(Collectors.toSet());
+            final Set<Occupant> occupantsRemoved = new HashSet<>();
+            for (Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : occupantsByNode.entrySet()) {
+                if (entry.getKey().equals(ownNodeID)) {
+                    continue;
+                }
+                for (final Map.Entry<JID, Set<Occupant>> occupantsOnRemoteNode : entry.getValue().entrySet()) {
+                    final Set<Occupant> localOccupantsForJID = occupantsLeftOnThisNode.get(occupantsOnRemoteNode.getKey());
+                    if (localOccupantsForJID == null) {
+                        occupantsRemoved.addAll(occupantsOnRemoteNode.getValue());
+                    } else {
+                        for (final Occupant occupantOnRemoteNode : occupantsOnRemoteNode.getValue()) {
+                            if (!localOccupantsForJID.contains(occupantOnRemoteNode)) {
+                                occupantsRemoved.add(occupantOnRemoteNode);
+                            }
+                        }
+                    }
+                }
+            }
 
             // Now actually remove what needs to be removed
             occupantsByNode.entrySet().removeIf(e -> !e.getKey().equals(ownNodeID));
 
             nodesByOccupant.clear();
-            occupantsLeftOnThisNode.forEach(o -> nodesByOccupant.computeIfAbsent(o, (n) -> new HashSet<>()).add(ownNodeID));
+            occupantsLeftOnThisNode.values().stream().flatMap(Collection::stream)
+                .forEach(o -> nodesByOccupant.computeIfAbsent(o, (n) -> new HashSet<>()).add(ownNodeID));
 
             Log.debug("Reset occupants because we left the cluster");
             return occupantsRemoved;
@@ -669,7 +719,12 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return Collections.unmodifiableMap(occupantsByNode);
+            final Map<NodeID, Set<Occupant>> result = new HashMap<>();
+            for (final Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : occupantsByNode.entrySet()) {
+                final Set<Occupant> occupants = entry.getValue().values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+                result.put(entry.getKey(), occupants);
+            }
+            return Collections.unmodifiableMap(result);
         } finally {
             mutex.readLock().unlock();
         }

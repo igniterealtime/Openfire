@@ -3493,6 +3493,10 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         size += CacheSizes.sizeOfLong();        // startTime
         size += CacheSizes.sizeOfLong();        // endTime
         size += CacheSizes.sizeOfBoolean();     // isDestroyed
+
+        // The size of roomHistory is expensive to calculate. Use an estimation instead.
+        size += 25 * 100;
+
         size += CacheSizes.sizeOfAnything(roomHistory);
         size += CacheSizes.sizeOfLong();        // lockedTime
         size += CacheSizes.sizeOfCollection(owners);

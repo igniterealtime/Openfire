@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import java.time.Instant;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -130,7 +129,7 @@ public class MUCRoomTest {
         populateField(input, "startTime", Instant.now().minus(Duration.ofDays(4)).toEpochMilli());
         populateField(input, "endTime", Instant.now().minus(Duration.ofHours(23)).toEpochMilli());
         populateField(input, "isDestroyed", true);
-        populateField(input, "roomHistory", new MUCRoomHistory(input, new HistoryStrategy(null)));
+        populateField(input, "roomHistory", new MUCRoomHistory(input, new HistoryStrategy(new JID("test-room-name", mockService.getServiceDomain(),null), null)));
         populateField(input, "lockedTime", Instant.now().minus(Duration.ofMinutes(141)).toEpochMilli());
         populateField(input, "owners", owners);
         populateField(input, "admins", admins);

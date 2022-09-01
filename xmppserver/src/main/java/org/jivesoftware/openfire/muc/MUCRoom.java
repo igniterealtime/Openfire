@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
  * database.
  *
  * @author Gaston Dombiak
+ * @author Guus der Kinderen, guus@goodbytes.nl
  */
 @JiveID(JiveConstants.MUC_ROOM)
 public class MUCRoom implements GroupEventListener, Externalizable, Result, Cacheable {
@@ -369,7 +370,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         this.canChangeNickname = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canChangeNickname", true);
         this.registrationEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.registrationEnabled", true);
         // TODO Allow to set the history strategy from the configuration form?
-        roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
+        roomHistory = new MUCRoomHistory(this, new HistoryStrategy(getJID(), mucService.getHistoryStrategy()));
         this.iqOwnerHandler = new IQOwnerHandler(this);
         this.iqAdminHandler = new IQAdminHandler(this);
         this.fmucHandler = new FMUCHandler(this);
@@ -1342,6 +1343,8 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
 
         // Remove the room from the DB if the room was persistent
         MUCPersistenceManager.deleteFromDB(this);
+        // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
+        roomHistory.purge();
         // Fire event that the room has been destroyed
         MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
     }
@@ -3655,7 +3658,7 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
         String subdomain = ExternalizableUtil.getInstance().readSafeUTF(in);
         mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(subdomain);
         if (mucService == null) throw new IllegalArgumentException("MUC service not found for subdomain: " + subdomain);
-        roomHistory = new MUCRoomHistory(this, new HistoryStrategy(mucService.getHistoryStrategy()));
+        roomHistory = new MUCRoomHistory(this, new HistoryStrategy(getJID(), mucService.getHistoryStrategy()));
 
         this.iqOwnerHandler = new IQOwnerHandler(this);
         this.iqAdminHandler = new IQAdminHandler(this);

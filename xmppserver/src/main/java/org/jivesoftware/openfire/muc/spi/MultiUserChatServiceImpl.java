@@ -112,6 +112,7 @@ import java.util.stream.Stream;
  * abandoned rooms won't be loaded into memory when the Multi-User Chat service starts up.</p>
  *
  * @author Gaston Dombiak
+ * @author Guus der Kinderen, guus@goodbytes.nl
  */
 public class MultiUserChatServiceImpl implements Component, MultiUserChatService,
     ServerItemsProvider, DiscoInfoProvider, DiscoItemsProvider, XMPPServerListener, ClusterEventListener
@@ -340,7 +341,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             this.chatDescription = LocaleUtils.getLocalizedString("muc.service-name");
         }
         this.isHidden = isHidden;
-        historyStrategy = new HistoryStrategy(null);
+        historyStrategy = new HistoryStrategy(getAddress(), null);
 
         localMUCRoomManager = new LocalMUCRoomManager(this);
         occupantManager = new OccupantManager(this);

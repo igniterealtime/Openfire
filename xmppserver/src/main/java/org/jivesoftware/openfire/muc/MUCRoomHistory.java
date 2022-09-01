@@ -41,6 +41,7 @@ import java.util.*;
  * joining and leaving times.
  * 
  * @author Gaston Dombiak
+ * @author Guus der Kinderen, guus@goodbytes.nl
  */
 public final class MUCRoomHistory implements Externalizable {
     private static final Logger Log = LoggerFactory.getLogger(MUCRoomHistory.class);
@@ -172,7 +173,7 @@ public final class MUCRoomHistory implements Externalizable {
             // payload initialized as XML string from DB
             try {
                 Element element = SAXReaderUtil.readRootElement(stanza);
-                for (Element child : (List<Element>)element.elements()) {
+                for (Element child : element.elements()) {
                     Namespace ns = child.getNamespace();
                     if (ns == null || ns.getURI().equals("jabber:client") || ns.getURI().equals("jabber:server")) {
                         continue;
@@ -181,10 +182,10 @@ public final class MUCRoomHistory implements Externalizable {
                     if (!child.getText().isEmpty()) {
                         added.setText(child.getText());
                     }
-                    for (Attribute attr : (List<Attribute>)child.attributes()) {
+                    for (Attribute attr : child.attributes()) {
                         added.addAttribute(attr.getQName(), attr.getValue());
                     }
-                    for (Element el : (List<Element>)child.elements()) {
+                    for (Element el : child.elements()) {
                         added.add(el.createCopy());
                     }
                 }
@@ -223,6 +224,14 @@ public final class MUCRoomHistory implements Externalizable {
             delayInformation.addAttribute("from", getRoom().getRole().getRoleAddress().toString());
         }
         historyStrategy.addMessage(message);
+    }
+
+    /**
+     * Removes all history that is maintained for this instance.
+     */
+    public void purge()
+    {
+        historyStrategy.purge();
     }
 
     /**

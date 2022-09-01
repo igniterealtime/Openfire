@@ -25,10 +25,7 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginClassLoader;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.session.RemoteSessionLocatorImpl;
-import org.jivesoftware.util.InitializationException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -150,6 +147,7 @@ public class CacheFactory {
         cacheNames.put("JID Domain-parts", "jidDomainprep");
         cacheNames.put("JID Resource-parts", "jidResourceprep");
         cacheNames.put("Sequences", "sequences");
+        cacheNames.put("MUC History", "mucHistory");
         cacheNames.put("MUC Service Pings Sent", "mucPings");
 
         cacheProps.put(PROPERTY_PREFIX_CACHE + "dnsRecords" + PROPERTY_SUFFIX_SIZE, 128 * 1024L);
@@ -236,6 +234,8 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "publishedItems" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(15).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "sequences" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "sequences" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "mucHistory" + PROPERTY_SUFFIX_SIZE, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "mucHistory" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "mucPings" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "mucPings" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(30).toMillis());
 

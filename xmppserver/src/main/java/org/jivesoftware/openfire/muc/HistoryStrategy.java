@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,24 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.dom4j.Element;
+import org.dom4j.tree.DefaultElement;
+import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
+import javax.annotation.Nullable;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
-
-import org.dom4j.tree.DefaultElement;
-import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.cache.ExternalizableUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-
-import javax.annotation.Nullable;
+import java.util.concurrent.locks.Lock;
 
 /**
  * <p>Multi-User Chat rooms may cache history of the conversations in the room in order to
@@ -44,21 +44,27 @@ import javax.annotation.Nullable;
  *
  * @author Gaston Dombiak
  * @author Derek DeMoro
+ * @author Guus der Kinderen, guus@goodbytes.nl
  */
 public class HistoryStrategy implements Externalizable {
 
     private static final Logger Log = LoggerFactory.getLogger(HistoryStrategy.class);
 
     /**
+     * An unlimited cache that records MUC room messages. The key of the cache is the room JID for which a list of
+     * messages is recorded.
+     */
+    private static final Cache<JID, Messages> MUC_HISTORY_CACHE = CacheFactory.createCache("MUC History");
+
+    /**
+     * The address of the room (expected to be a bare JID) for which this instance records message history.
+     */
+    private JID roomJID;
+
+    /**
      * The type of strategy being used.
      */
     private Type type = Type.number;
-
-    /**
-     * List containing the history of messages.
-     */
-    // TODO it is likely that a lot of serialization (in a cluster) can be prevented by replacing this queue with a clustered cache.
-    private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
 
     /**
      * Default max number.
@@ -102,9 +108,11 @@ public class HistoryStrategy implements Externalizable {
      * Create a history strategy with the given parent strategy (for defaults) or null if no 
      * parent exists.
      *
+     * @param roomJID the unique identifier of the room for which this strategy will store messages.
      * @param parentStrategy The parent strategy of this strategy or null if none exists.
      */
-    public HistoryStrategy(HistoryStrategy parentStrategy) {
+    public HistoryStrategy(JID roomJID, HistoryStrategy parentStrategy) {
+        this.roomJID = roomJID;
         this.parent = parentStrategy;
         if (parent == null) {
             maxNumber = DEFAULT_MAX_NUMBER;
@@ -174,9 +182,17 @@ public class HistoryStrategy implements Externalizable {
      * @param packet The packet to add to the chatroom's history.
      */
     public void addMessage(Message packet){
+
+        // Room subject change messages are special
+        boolean subjectChange = isSubjectChangeRequest(packet);
+        if (subjectChange) {
+            roomSubject = packet;
+            return;
+        }
+
         // get the conditions based on default or not
-        Type strategyType;
-        int strategyMaxNumber;
+        final Type strategyType;
+        final int strategyMaxNumber;
         if (type == Type.defaulType && parent != null) {
             strategyType = parent.getType();
             strategyMaxNumber = parent.getMaxNumber();
@@ -186,33 +202,16 @@ public class HistoryStrategy implements Externalizable {
             strategyMaxNumber = maxNumber;
         }
 
-        // Room subject change messages are special
-        boolean subjectChange = isSubjectChangeRequest(packet);
-        if (subjectChange) {
-            roomSubject = packet;
-            return;
-        }
+        final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
+        lock.lock();
+        try {
+            final Messages history = MUC_HISTORY_CACHE.getOrDefault(roomJID, new Messages());
+            history.add(packet, strategyType, strategyMaxNumber);
 
-        // store message according to active strategy
-        if (strategyType == Type.all) {
-            history.add(packet);
-        }
-        else if (strategyType == Type.number) {
-            if (history.size() >= strategyMaxNumber) {
-                // We have to remove messages so the new message won't exceed
-                // the max history size
-                // This is complicated somewhat because we must skip over the
-                // last room subject
-                // message because we want to preserve the room subject if
-                // possible.
-                Iterator<Message> historyIter = history.iterator();
-                while (historyIter.hasNext() && history.size() >= strategyMaxNumber) {
-                    if (historyIter.next() != roomSubject) {
-                        historyIter.remove();
-                    }
-                }
-            }
-            history.add(packet);
+            // Explicitly add back to cache (Hazelcast won't update-by-reference).
+            MUC_HISTORY_CACHE.put(roomJID, history);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -225,12 +224,32 @@ public class HistoryStrategy implements Externalizable {
     }
 
     /**
+     * Obtains the historic messages cached for this particular room from the cache.
+     *
+     * This method ensures that a room-based lock is acquired, before interacting with the cache.
+     *
+     * Note that modifications applied to the returned collection are not guaranteed to be applied to the cache.
+     * Explicitly put the collection back in the cache to ensure that changes are persisted there.
+     *
+     * @return The historic messages for this room.
+     */
+    protected Queue<Message> getHistoryFromCache() {
+        final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
+        lock.lock();
+        try {
+            return MUC_HISTORY_CACHE.getOrDefault(roomJID, new Messages()).asCollection();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Obtain the current history as an iterator of messages to play back to a new room member.
      * 
      * @return An iterator of Message objects to be sent to the new room member.
      */
     public Iterator<Message> getMessageHistory(){
-        LinkedList<Message> list = new LinkedList<>(history);
+        final LinkedList<Message> list = new LinkedList<>(getHistoryFromCache());
         // Sort messages. Messages may be out of order when running inside of a cluster
         list.sort(new MessageComparator());
         return list.iterator();
@@ -244,16 +263,30 @@ public class HistoryStrategy implements Externalizable {
      * @return A list iterator of Message objects positioned at the end of the list.
      */
     public ListIterator<Message> getReverseMessageHistory(){
-        LinkedList<Message> list = new LinkedList<>(history);
+        final LinkedList<Message> list = new LinkedList<>(getHistoryFromCache());
         // Sort messages. Messages may be out of order when running inside of a cluster
         list.sort(new MessageComparator());
         return list.listIterator(list.size());
     }
 
+    /**
+     * Removes all history that is maintained for this instance.
+     */
+    public void purge()
+    {
+        final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
+        lock.lock();
+        try {
+            MUC_HISTORY_CACHE.remove(roomJID);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableUtil.getInstance().writeSerializable(out, type);
-        ExternalizableUtil.getInstance().writeSerializableCollection(out, history.stream().map(message -> (DefaultElement)message.getElement()).collect(Collectors.toCollection(ArrayList::new)));
+        ExternalizableUtil.getInstance().writeSafeUTF(out, roomJID.toString());
         ExternalizableUtil.getInstance().writeInt(out, maxNumber);
 
         ExternalizableUtil.getInstance().writeBoolean(out,parent != null);
@@ -280,9 +313,7 @@ public class HistoryStrategy implements Externalizable {
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         type = (Type) ExternalizableUtil.getInstance().readSerializable(in);
-        final ArrayList<DefaultElement> serializedHistory = new ArrayList<>();
-        ExternalizableUtil.getInstance().readSerializableCollection(in, serializedHistory, this.getClass().getClassLoader());
-        history = serializedHistory.stream().map(Message::new).collect(Collectors.toCollection(ConcurrentLinkedQueue::new));
+        roomJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
         maxNumber = ExternalizableUtil.getInstance().readInt(in);
 
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
@@ -415,6 +446,93 @@ public class HistoryStrategy implements Externalizable {
         return JiveGlobals.getBooleanProperty("xmpp.muc.subject.change.strict", true);
     }
 
+    /**
+     * A wrapper for a collection of Message instances that is cached.
+     */
+    public static class Messages implements Cacheable, Externalizable
+    {
+        private ConcurrentLinkedQueue<Message> history = new ConcurrentLinkedQueue<>();
+
+        public Messages() {}
+
+        public void add(Message packet, Type strategyType, int strategyMaxNumber)
+        {
+            // store message according to active strategy
+            if (strategyType == Type.all) {
+                history.add(packet);
+            } else if (strategyType == Type.number) {
+                if (history.size() >= strategyMaxNumber) {
+                    // We have to remove messages so the new message won't exceed the max history size.
+                    while (!history.isEmpty() && history.size() >= strategyMaxNumber) {
+                        history.poll();
+                    }
+                }
+                history.add(packet);
+            }
+        }
+
+        public Queue<Message> asCollection()
+        {
+            return history;
+        }
+
+        @Override
+        public int getCachedSize() throws CannotCalculateSizeException
+        {
+            int size = 0;
+            size += CacheSizes.sizeOfObject();      // overhead of object
+            size += CacheSizes.sizeOfObject();      // overhead of collection.
+
+            // OF-2498: repeated calculation of the true size of each message stanza is very resource intensive.
+            //          To avoid performance issues, this implementation uses a size of 2k per message, which has
+            //          empirically been observed to be roughly correct. Mileage will probably vary considerably.
+            size += history.size() * 2048;
+
+            return size;
+        }
+
+        @Override
+        public String toString()
+        {
+            // Note: this value is shown in the Openfire admin console (in the 'cache values' page). Do not expose
+            // privacy-sensitive data, such as message content.
+            return "A collection of " + history.size() + " message stanza(s).";
+        }
+
+        @Override
+        public boolean equals(Object o)
+        {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Messages messages = (Messages) o;
+            return history.equals(messages.history);
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return Objects.hash(history);
+        }
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            ExternalizableUtil.getInstance().writeLong(out, history.size());
+            for (final Message packet : history) {
+                ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) packet.getElement());
+            }
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            history = new ConcurrentLinkedQueue<>();
+            final long size = ExternalizableUtil.getInstance().readLong(in);
+            for (int i=0; i<size;i++) {
+                Element packetElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
+                history.add(new Message(packetElement, true));
+            }
+        }
+    }
+
     private static class MessageComparator implements Comparator<Message> {
         @Override
         public int compare(Message o1, Message o2) {
@@ -432,20 +550,11 @@ public class HistoryStrategy implements Externalizable {
         return maxNumber == that.maxNumber && type == that.type
             && Objects.equals(contextPrefix, that.contextPrefix) && Objects.equals(contextSubdomain, that.contextSubdomain)
             && (roomSubject == that.roomSubject || (roomSubject != null && that.roomSubject != null && Objects.equals(roomSubject.toXML(), that.roomSubject.toXML())) )
-            && equalsHistory(that.history) && Objects.equals(parent, that.parent);
-    }
-
-    private boolean equalsHistory(Object o) {
-        if (this.history == o) return true;
-        if (o == null || this.history.getClass() != o.getClass()) return false;
-        Collection<Message> that = (Collection<Message>) o;
-        final ArrayList<String> thatList = that.stream().map(Packet::toXML).collect(Collectors.toCollection(ArrayList::new));
-        final ArrayList<String> thisList = history.stream().map(Packet::toXML).collect(Collectors.toCollection(ArrayList::new));
-        return thatList.equals(thisList);
+            && Objects.equals(roomJID, that.roomJID) && Objects.equals(parent, that.parent);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, history, maxNumber, parent, roomSubject, contextPrefix, contextSubdomain);
+        return Objects.hash(type, roomJID, maxNumber, parent, roomSubject, contextPrefix, contextSubdomain);
     }
 }

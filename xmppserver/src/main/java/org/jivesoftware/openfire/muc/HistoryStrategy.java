@@ -18,7 +18,9 @@ package org.jivesoftware.openfire.muc;
 
 import org.dom4j.Element;
 import org.dom4j.tree.DefaultElement;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
+import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.*;
 import org.slf4j.Logger;
@@ -54,7 +56,7 @@ public class HistoryStrategy implements Externalizable {
      * An unlimited cache that records MUC room messages. The key of the cache is the room JID for which a list of
      * messages is recorded.
      */
-    private static final Cache<JID, Messages> MUC_HISTORY_CACHE = CacheFactory.createCache("MUC History");
+    private static final Cache<JID, CacheableOptional<Messages>> MUC_HISTORY_CACHE = CacheFactory.createCache("MUC History");
 
     /**
      * The address of the room (expected to be a bare JID) for which this instance records message history.
@@ -205,11 +207,17 @@ public class HistoryStrategy implements Externalizable {
         final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
         lock.lock();
         try {
-            final Messages history = MUC_HISTORY_CACHE.getOrDefault(roomJID, new Messages());
+            final CacheableOptional<Messages> optional = MUC_HISTORY_CACHE.get(roomJID);
+            final Messages history;
+            if (optional == null || optional.isAbsent()) {
+                history = new Messages();
+            } else {
+                history = optional.get();
+            }
             history.add(packet, strategyType, strategyMaxNumber);
 
             // Explicitly add back to cache (Hazelcast won't update-by-reference).
-            MUC_HISTORY_CACHE.put(roomJID, history);
+            MUC_HISTORY_CACHE.put(roomJID, CacheableOptional.of(history));
         } finally {
             lock.unlock();
         }
@@ -234,10 +242,26 @@ public class HistoryStrategy implements Externalizable {
      * @return The historic messages for this room.
      */
     protected Queue<Message> getHistoryFromCache() {
+        // Ensure room history is in cache. Doing this outside of the lock below, to reduce the likelihood of deadlocks occurring.
+        if (!MUC_HISTORY_CACHE.containsKey(roomJID)) {
+            try {
+                final MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
+                MUCPersistenceManager.loadHistory(room);
+            } catch (Exception e) {
+                Log.error("Unable to load history for room {} from database.", roomJID, e);
+            }
+        }
+
+        // Obtain history from cache.
         final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
         lock.lock();
         try {
-            return MUC_HISTORY_CACHE.getOrDefault(roomJID, new Messages()).asCollection();
+            final CacheableOptional<Messages> optional = MUC_HISTORY_CACHE.get(roomJID);
+            if (optional == null || optional.isAbsent()) {
+                return new Messages().asCollection();
+            } else {
+                return optional.get().asCollection();
+            }
         } finally {
             lock.unlock();
         }

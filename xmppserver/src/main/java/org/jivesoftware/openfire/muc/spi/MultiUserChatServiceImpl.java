@@ -2742,6 +2742,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
         final int preloadDays = MUCPersistenceManager.getIntProperty(chatServiceName, "preload.days", 30);
         if (preloadDays > 0) {
+            if (ClusterManager.isClusteringEnabled()) {
+                Log.warn("Preloading MUC rooms when clustering is enabled can lead to a lot of duplicated database overhead. Consider disabling MUC room preloading.");
+            }
             // Load all the persistent rooms to memory
             final Instant cutoff = Instant.now().minus(Duration.ofDays(preloadDays));
             for (final MUCRoom room : MUCPersistenceManager.loadRoomsFromDB(this, Date.from(cutoff))) {

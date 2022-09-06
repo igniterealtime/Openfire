@@ -215,6 +215,7 @@ public class LocalMUCRoomManager
             Log.trace("Removing room '{}' of service '{}'", roomName, serviceName);
             final MUCRoom room = ROOM_CACHE.remove(roomName);
             if (room != null) {
+                room.getRoomHistory().purge();
                 GroupEventDispatcher.removeListener(room);
             }
             localRooms.remove(roomName);

@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.sql.*;
 import java.util.Date;
@@ -310,42 +311,7 @@ public class MUCPersistenceManager {
 
             // Recreate the history only for the rooms that have the conversation logging
             // enabled
-            if (room.isLogEnabled()) {
-                pstmt = con.prepareStatement(LOAD_HISTORY);
-
-                // Reload the history, using "muc.history.reload.limit" (days) if present
-                long from = 0;
-                String reloadLimit = JiveGlobals.getProperty(MUC_HISTORY_RELOAD_LIMIT);
-                if (reloadLimit != null) {
-                    // if the property is defined, but not numeric, default to 2 (days)
-                    int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
-                    Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
-                    from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
-                }
-
-                pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
-                pstmt.setLong(2, room.getID());
-                rs = pstmt.executeQuery();
-
-                while (rs.next()) {
-                    String senderJID = rs.getString("sender");
-                    String nickname = rs.getString("nickname");
-                    Date sentDate = new Date(Long.parseLong(rs.getString("logTime").trim()));
-                    String subject = rs.getString("subject");
-                    String body = rs.getString("body");
-                    String stanza = rs.getString("stanza");
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
-                }
-            }
-            DbConnectionManager.fastcloseStmt(rs, pstmt);
-
-            // If the room does not include the last subject in the history then recreate one if
-            // possible
-            if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
-                    room.getSubject().length() > 0) {
-                room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toString(),
-                        null, room.getModificationDate(), room.getSubject(), null, null);
-            }
+            loadHistory(room);
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
@@ -767,6 +733,66 @@ public class MUCPersistenceManager {
         }
 
         return rooms;
+    }
+
+    /**
+     * Load or reload the room history for a particular room from the database into memory.
+     *
+     * Invocation of this method will replace exising room history that's stored in memory (if any) with a freshly set
+     * of messages obtained from the database.
+     *
+     * @param room The room for which to load message history from the database into memory.
+     * @throws SQLException
+     */
+    public static void loadHistory(@Nonnull final MUCRoom room) throws SQLException
+    {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            if (room.isLogEnabled()) {
+                con = DbConnectionManager.getConnection();
+                pstmt = con.prepareStatement(LOAD_HISTORY);
+
+                // Reload the history, using "muc.history.reload.limit" (days) if present
+                long from = 0;
+                String reloadLimit = JiveGlobals.getProperty(MUC_HISTORY_RELOAD_LIMIT);
+                if (reloadLimit != null) {
+                    // if the property is defined, but not numeric, default to 2 (days)
+                    int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
+                    Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
+                    from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
+                }
+
+                pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
+                pstmt.setLong(2, room.getID());
+                rs = pstmt.executeQuery();
+
+                // When reloading history, make sure that the old data is removed from memory before re-adding it.
+                room.getRoomHistory().purge();
+
+                while (rs.next()) {
+                    String senderJID = rs.getString("sender");
+                    String nickname = rs.getString("nickname");
+                    Date sentDate = new Date(Long.parseLong(rs.getString("logTime").trim()));
+                    String subject = rs.getString("subject");
+                    String body = rs.getString("body");
+                    String stanza = rs.getString("stanza");
+                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
+                }
+            }
+
+            // If the room does not include the last subject in the history then recreate one if
+            // possible
+            if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
+                room.getSubject().length() > 0) {
+                room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toString(),
+                    null, room.getModificationDate(), room.getSubject(), null, null);
+            }
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
     }
 
     private static void loadHistory(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {

@@ -14,7 +14,14 @@
         </description>
 
         <homepage rdf:resource="https://www.igniterealtime.org/projects/openfire/"/>
+        <schema:logo rdf:resource="https://www.igniterealtime.org/fans/logo-openfire.png"/>
+
+        <download-page rdf:resource="https://www.igniterealtime.org/downloads/"/>
+        <support-forum rdf:resource="https://discourse.igniterealtime.org/"/>
+        
         <bug-database rdf:resource="https://igniterealtime.atlassian.net/projects/OF/issues"/>
+        <category rdf:resource="https://linkmauve.fr/ns/xmpp-doap#category-xmpp"/>
+        <category rdf:resource="https://linkmauve.fr/ns/xmpp-doap#category-jabber"/>
         <category rdf:resource="https://linkmauve.fr/ns/xmpp-doap#category-server"/>
         <license rdf:resource="http://usefulinc.com/doap/licenses/asl20"/>
 

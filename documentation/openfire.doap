@@ -14,7 +14,7 @@
         </description>
 
         <homepage rdf:resource="https://www.igniterealtime.org/projects/openfire/"/>
-        <schema:logo rdf:resource="https://www.igniterealtime.org/fans/logo-openfire.png"/>
+        <schema:logo rdf:resource="https://discourse.igniterealtime.org/uploads/default/original/2X/8/8ff463e1804aaee92b985fb007d4c0bc937ecdcd.png"/>
 
         <download-page rdf:resource="https://www.igniterealtime.org/downloads/"/>
         <support-forum rdf:resource="https://discourse.igniterealtime.org/"/>

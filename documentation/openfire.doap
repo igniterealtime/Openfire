@@ -352,6 +352,11 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0233.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="http://www.xmpp.org/extensions/xep-0278.html"/>
             </xmpp:SupportedXep>
         </implements>

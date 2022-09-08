@@ -81,6 +81,17 @@ public class LocalMUCRoomManager
     private final Cache<String, MUCRoom> ROOM_CACHE;
 
     /**
+     * Counters for the data that is in ROOM_CACHE. Used to return statistics without having to iterate over the
+     * entire content of ROOM_CACHE.
+     */
+    private final Cache<String, Long> ROOM_CACHE_STATS;
+
+    /**
+     * The key used in {@link #ROOM_CACHE_STATS} to keep track of the amount of non-persistent rooms in the cache.
+     */
+    private static final String STAT_KEY_ROOMCOUNT_NONPERSISTENT = "Amount of MUC rooms (non-persistent)";
+
+    /**
      * A cluster-local copy of rooms, used to (re)populating #ROOM_CACHE upon cluster join or leave.
      */
     private final Map<String, MUCRoom> localRooms = new HashMap<>();
@@ -97,6 +108,9 @@ public class LocalMUCRoomManager
         ROOM_CACHE = CacheFactory.createCache("MUC Service '" + serviceName + "' Rooms");
         ROOM_CACHE.setMaxLifetime(-1);
         ROOM_CACHE.setMaxCacheSize(-1L);
+        ROOM_CACHE_STATS = CacheFactory.createCache("MUC Service '" + serviceName + "' Room Statistics");
+        ROOM_CACHE_STATS.setMaxLifetime(-1);
+        ROOM_CACHE_STATS.setMaxCacheSize(-1L);
     }
 
     /**
@@ -138,8 +152,9 @@ public class LocalMUCRoomManager
         lock.lock();
         try {
             Log.trace("Adding room '{}' of service '{}'", room.getName(), serviceName);
-            ROOM_CACHE.put(room.getName(), room);
+            final MUCRoom oldValue = ROOM_CACHE.put(room.getName(), room);
             localRooms.put(room.getName(), room);
+            updateNonPersistentRoomStat(oldValue, room);
         } finally {
             lock.unlock();
         }
@@ -162,9 +177,11 @@ public class LocalMUCRoomManager
             if (room.isDestroyed) {
                 ROOM_CACHE.remove(room.getName());
                 localRooms.remove(room.getName());
+                updateNonPersistentRoomStat(null, room);
             } else {
-                ROOM_CACHE.put(room.getName(), room);
+                final MUCRoom oldValue = ROOM_CACHE.put(room.getName(), room);
                 localRooms.put(room.getName(), room);
+                updateNonPersistentRoomStat(oldValue, room);
             }
         } finally {
             lock.unlock();
@@ -217,6 +234,7 @@ public class LocalMUCRoomManager
             if (room != null) {
                 room.getRoomHistory().purge();
                 GroupEventDispatcher.removeListener(room);
+                updateNonPersistentRoomStat(room, null);
             }
             localRooms.remove(roomName);
             return room;
@@ -290,6 +308,7 @@ public class LocalMUCRoomManager
                 if (!ROOM_CACHE.containsKey(roomName)) {
                     Log.trace("Room was not known to the cluster. Added our representation.");
                     ROOM_CACHE.put(roomName, localRoom);
+                    updateNonPersistentRoomStat(null, localRoom);
                 } else {
                     Log.trace("Room was known to the cluster. Merging our local representation with cluster-provided data.");
                     final MUCRoom roomInCluster = ROOM_CACHE.get(roomName);
@@ -370,6 +389,7 @@ public class LocalMUCRoomManager
                     // Sync room back to make cluster aware of changes.
                     Log.debug("Re-added local room '{}' to cache, with occupants: {}", roomName, roomInCluster.getOccupants().stream().map(MUCRole::getUserAddress).map(JID::toString).collect(Collectors.joining( ", " )));
                     ROOM_CACHE.put(roomName, roomInCluster);
+                    // The implementation of this method does not allow configuration to be changed that warrants a update toe ROOM_CACHE_STATS
 
                     // TODO: update the local copy of the room with occupants, maybe?
                 }
@@ -497,6 +517,7 @@ public class LocalMUCRoomManager
                 lock.unlock();
             }
         }
+        recomputeNonPersistentRoomCount();
     }
 
     /**
@@ -537,5 +558,108 @@ public class LocalMUCRoomManager
 
     public Map<String, MUCRoom> getLocalRooms() {
         return localRooms;
+    }
+
+    /**
+     * Modifies the statistic in {@link #ROOM_CACHE_STATS} that keeps a count of all non-persisted MUC rooms
+     * (key: {@link #STAT_KEY_ROOMCOUNT_NONPERSISTENT}), based on a rooms that are removed from or added to {@link #ROOM_CACHE}
+     *
+     * @param oldValue a room that was removed from {@link #ROOM_CACHE}
+     * @param newValue a room that was added to {@link #ROOM_CACHE}
+     */
+    private void updateNonPersistentRoomStat(@Nullable final MUCRoom oldValue, @Nullable final MUCRoom newValue)
+    {
+        int delta = 0;
+        if (oldValue != null && !oldValue.isPersistent()) {
+            delta--;
+        }
+        if (newValue != null && !newValue.isPersistent()) {
+            delta++;
+        }
+        if (delta < 0) {
+            decrementStatistic(STAT_KEY_ROOMCOUNT_NONPERSISTENT);
+        } else if (delta > 0) {
+            incrementStatistic(STAT_KEY_ROOMCOUNT_NONPERSISTENT);
+        }
+    }
+
+    /**
+     * Increments (+1) a number-based value of a statistic as maintained in {@link #ROOM_CACHE_STATS}.
+     *
+     * @param key the key used to store the statistic in the cache.
+     */
+    private void incrementStatistic(@Nonnull final String key)
+    {
+        final Lock lock = ROOM_CACHE_STATS.getLock(key);
+        lock.lock();
+        try {
+            Long count = ROOM_CACHE_STATS.getOrDefault(key, 0L);
+            count++;
+            ROOM_CACHE_STATS.put(key, count);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Decrements (-1) a number-based value of a statistic as maintained in {@link #ROOM_CACHE_STATS}.
+     *
+     * @param key the key used to store the statistic in the cache.
+     */
+    private void decrementStatistic(@Nonnull final String key)
+    {
+        final Lock lock = ROOM_CACHE_STATS.getLock(key);
+        lock.lock();
+        try {
+            Long count = ROOM_CACHE_STATS.getOrDefault(key, 0L);
+            count--;
+            ROOM_CACHE_STATS.put(key, count);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Iterates over all MUC rooms (in the cache, non-cached rooms are obviously not non-persistent) and counts the
+     * number of non-persistent rooms.
+     *
+     * This method is more resource intensive, but perhaps more accurate, than {@link #getNonPersistentRoomCount()}.
+     *
+     * @return The count of non-persistent MUC rooms.
+     */
+    public long recomputeNonPersistentRoomCount()
+    {
+        final long count = getAll().stream().filter(room -> !room.isPersistent()).count();
+        final Lock lock = ROOM_CACHE_STATS.getLock(STAT_KEY_ROOMCOUNT_NONPERSISTENT);
+        lock.lock();
+        try {
+            final Long oldCount = ROOM_CACHE_STATS.put(STAT_KEY_ROOMCOUNT_NONPERSISTENT, count);
+            if (oldCount != null && oldCount != count) {
+                Log.warn("Recomputed the amount of non persistent MUC rooms. The amount registered was {}, while the new count is {}", oldCount, count);
+            }
+            return count;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns a count of all rooms that are non-persistent.
+     *
+     * The statistic returned by this method is based on a derived value. It is not based on a direct re-evaluation of
+     * each room.
+     *
+     * This method is not as resource intensive, but perhaps less accurate, than {@link #recomputeNonPersistentRoomCount()}.
+     *
+     * @return The count of non-persistent MUC rooms.
+     */
+    public long getNonPersistentRoomCount() {
+        final Lock lock = ROOM_CACHE_STATS.getLock(STAT_KEY_ROOMCOUNT_NONPERSISTENT);
+        lock.lock();
+        try {
+            return ROOM_CACHE_STATS.getOrDefault(STAT_KEY_ROOMCOUNT_NONPERSISTENT, 0L);
+        } finally {
+            lock.unlock();
+        }
     }
 }

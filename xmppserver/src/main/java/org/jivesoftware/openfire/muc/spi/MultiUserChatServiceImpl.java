@@ -2806,8 +2806,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     @Override
     public int getNumberChatRooms() {
+        // Note that inactive, persistent rooms might not live in memory, only in the database.
         int persisted = MUCPersistenceManager.countRooms(this);
-        final long nonPersisted = localMUCRoomManager.getAll().stream().filter(room -> !room.isPersistent()).count();
+        final long nonPersisted = localMUCRoomManager.getNonPersistentRoomCount();
         return persisted + (int) nonPersisted;
     }
 
@@ -2822,15 +2823,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
-     * Retuns the total number of users that have joined in all rooms in the server.
+     * Returns the total number of users that have joined in all rooms in the server.
      *
      * @return the number of existing rooms in the server.
      */
     @Override
     public int getNumberRoomOccupants() {
         int total = 0;
-        for (final MUCRoom room : localMUCRoomManager.getAll()) {
-            total = total + room.getOccupantsCount();
+        for (final Set<OccupantManager.Occupant> nodeSet : occupantManager.getOccupantsByNode().values()) {
+            total += nodeSet.size();
         }
         return total;
     }

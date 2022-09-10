@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF xmlns="http://usefulinc.com/ns/doap#"
          xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:schema="https://schema.org/"
          xmlns:xmpp="https://linkmauve.fr/ns/xmpp-doap#">
     <Project>
 

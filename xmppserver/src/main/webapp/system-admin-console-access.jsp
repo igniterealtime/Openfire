@@ -20,7 +20,7 @@
     // Get parameters
     final String blockedIPs = request.getParameter("blockedIPs");
     final String allowedIPs = request.getParameter("allowedIPs");
-    final boolean ignoreExcludes= ParamUtils.getBooleanParameter( request, "ignore-excludes" );
+    final boolean ignoreExcludes = ParamUtils.getBooleanParameter(request, "ignore-excludes");
 
     boolean save = ParamUtils.getParameter(request, "save") != null;
     boolean success = ParamUtils.getBooleanParameter(request, "success");
@@ -88,9 +88,9 @@
 
     pageContext.setAttribute("errors", errors);
     pageContext.setAttribute("success", errors.isEmpty() && success);
-    pageContext.setAttribute("blockedIPs", String.join(", ", AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue()));
-    pageContext.setAttribute("allowedIPs", String.join(", ", AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue()));
-    pageContext.setAttribute("ignoreExcludes", AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.getValue());
+    pageContext.setAttribute("blockedIPs", errors.isEmpty() ? String.join(", ", AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue()) : blockedIPs);
+    pageContext.setAttribute("allowedIPs", errors.isEmpty() ? String.join(", ", AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue()) : allowedIPs);
+    pageContext.setAttribute("ignoreExcludes", errors.isEmpty() ? AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.getValue() : ignoreExcludes);
 
 %>
 

@@ -109,6 +109,11 @@ public class MUCRole implements Cacheable, Externalizable {
     private JID reportedFmucJID;
 
     /**
+     * A cached value for the cache size of this instance.
+     */
+    private transient int cacheSize;
+
+    /**
      * This constructor is provided to comply with the Externalizable interface contract. It should not be used directly.
      */
     public MUCRole()
@@ -308,6 +313,9 @@ public class MUCRole implements Cacheable, Externalizable {
     public void changeNickname(String nickname) {
         this.nick = nickname;
         setRoleAddress(new JID(roomJid.getNode(), roomJid.getDomain(), nick));
+        synchronized (this) {
+            cacheSize = -1;
+        }
     }
 
     /**
@@ -363,6 +371,7 @@ public class MUCRole implements Cacheable, Externalizable {
 
     public void setReportedFmucAddress( @Nonnull final JID reportedFmucAddress ) {
         this.reportedFmucJID = reportedFmucAddress;
+        cacheSize = -1;
     }
 
     /**
@@ -380,6 +389,7 @@ public class MUCRole implements Cacheable, Externalizable {
         // Set the new sender of the user presence in the room
         synchronized (this) {
             presence.setFrom(jid);
+            cacheSize = -1;
         }
     }
 
@@ -567,6 +577,7 @@ public class MUCRole implements Cacheable, Externalizable {
             }
             Element exi = extendedInformation.createCopy();
             presence.getElement().add(exi);
+            cacheSize = -1;
         }
     }
 
@@ -752,23 +763,25 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     @Override
-    public int getCachedSize() throws CannotCalculateSizeException {
-        int size = CacheSizes.sizeOfObject(); // overhead of object.
-        size += CacheSizes.sizeOfAnything(roomJid);
-        size += CacheSizes.sizeOfAnything(userJid);
-        size += CacheSizes.sizeOfString(nick);
-        synchronized (this) {
+    public synchronized int getCachedSize() throws CannotCalculateSizeException {
+        if (cacheSize == -1) {
+            int size = CacheSizes.sizeOfObject(); // overhead of object.
+            size += CacheSizes.sizeOfAnything(roomJid);
+            size += CacheSizes.sizeOfAnything(userJid);
+            size += CacheSizes.sizeOfString(nick);
             size += CacheSizes.sizeOfAnything(extendedInformation);
             if (presence != null) {
                 size += CacheSizes.sizeOfAnything(presence.getElement());
             }
+            size += CacheSizes.sizeOfAnything(role);
+            size += CacheSizes.sizeOfAnything(affiliation);
+            size += CacheSizes.sizeOfBoolean(); // voiceOnly
+            size += CacheSizes.sizeOfAnything(rJID);
+            size += CacheSizes.sizeOfAnything(reportedFmucJID);
+
+            cacheSize = size;
         }
-        size += CacheSizes.sizeOfAnything(role);
-        size += CacheSizes.sizeOfAnything(affiliation);
-        size += CacheSizes.sizeOfBoolean(); // voiceOnly
-        size += CacheSizes.sizeOfAnything(rJID);
-        size += CacheSizes.sizeOfAnything(reportedFmucJID);
-        return size;
+        return cacheSize;
     }
 
     @Override
@@ -830,6 +843,7 @@ public class MUCRole implements Cacheable, Externalizable {
             if (ExternalizableUtil.getInstance().readBoolean(in)) {
                 reportedFmucJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
             }
+            cacheSize = -1;
         } catch (IOException | RuntimeException e ) {
             Log.error("read error", e);
             throw e;

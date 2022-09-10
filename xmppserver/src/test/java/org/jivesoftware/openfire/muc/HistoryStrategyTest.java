@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,14 +107,14 @@ public class HistoryStrategyTest
     {
         final Message h1 = new Message();
         h1.setFrom(new JID("test" + StringUtils.randomString(4) + "@example.org"));
-        h1.setFrom(new JID("foo" + StringUtils.randomString(4) + "@example.org"));
+        h1.setTo(new JID("foo" + StringUtils.randomString(4) + "@example.org"));
         h1.setType(Message.Type.groupchat);
         h1.setBody("This is a historic message that is used in a unit test. Some random value to make text unique: " + StringUtils.randomString(10) );
         h1.addChildElement("delay", "urn:xmpp:delay").addAttribute("stamp", "2");
 
         final Message h2 = new Message();
         h2.setFrom(new JID("bar" + StringUtils.randomString(4) + "@example.org"));
-        h2.setFrom(new JID("foobar" +StringUtils.randomString(4)+ "@example.org"));
+        h2.setTo(new JID("foobar" +StringUtils.randomString(4)+ "@example.org"));
         h2.setType(Message.Type.groupchat);
         h2.setBody("This is another historic message that is used in a unit test. Some random value to make text unique: " + StringUtils.randomString(10));
         h2.addChildElement("delay", "urn:xmpp:delay").addAttribute("stamp", "1");
@@ -125,19 +125,20 @@ public class HistoryStrategyTest
 
         final Message subject = new Message();
         subject.setFrom(new JID("bar" + StringUtils.randomString(4) + "@example.org"));
-        subject.setFrom(new JID("foobar" +StringUtils.randomString(4)+ "@example.org"));
+        subject.setTo(new JID("foobar" +StringUtils.randomString(4)+ "@example.org"));
         subject.setType(Message.Type.groupchat);
         subject.setBody("This is a subject message that is used in a unit test. Some random value to make text unique: " + StringUtils.randomString(10));
         subject.addChildElement("delay", "urn:xmpp:delay").addAttribute("stamp", "4");
 
         final HistoryStrategy result = new HistoryStrategy(); // Set all fields to a non-default value, for a more specific test!
         populateField(result, "type", HistoryStrategy.Type.all);
-        populateField(result, "history", history);
+        populateField(result, "roomJID", new JID("test" + StringUtils.randomString(4) + "@example.org"));
         populateField(result, "maxNumber", new Random().nextInt(10000));
         populateField(result, "parent", null);
         populateField(result, "roomSubject", subject);
         populateField(result, "contextPrefix", "test prefix");
         populateField(result, "contextSubdomain", "test subdomain");
+        history.forEach(result::addMessage);
 
         return result;
     }

@@ -48,38 +48,46 @@ release.</p>
 
 <p>The core compliance level includes full support of the XMPP RFC's as well as the most common extensions.
 The table below details the level of support for the requirements set by
-<a href="http://www.xmpp.org/extensions/xep-0423.html">XEP-0423: XMPP Compliance Suites 2020</a>.</p>
+<a href="http://www.xmpp.org/extensions/xep-0459.html">XEP-0459: XMPP Compliance Suites 2022</a>.</p>
 
 <table class="dbtable">
     <tr>
+        <th>Feature</th>
         <th>Specification</th>
         <th width="20%">Core Server Supported</th>
         <th width="20%">Advanced Server Supported</th>
     </tr><tr>
+        <td>Core Features</td>    
         <td><a href="http://xmpp.org/rfcs/rfc6120.html">RFC 6120</a>: XMPP Core</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>TLS</td>    
         <td><a href="http://xmpp.org/rfcs/rfc7590.html">RFC 7590</a>: TLS</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Direct TLS</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0368.html">XEP-0368</a>: SRV records for XMPP over TLS</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Feature discovery</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0030.html">XEP-0030</a>: Service Discovery</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Feature broadcasts</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0115.html">XEP-0115</a>: Entity Capabilities</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Server Extensibility</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0114.html">XEP-0114</a>: Jabber Component Protocol</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Event publishing</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0163.html">XEP-0163</a>: Personal Eventing Protocol</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
@@ -95,22 +103,27 @@ The table below details the level of support for the requirements set by
 
 <table class="dbtable">
     <tr>
+        <th>Feature</th>
         <th>Specification</th>
         <th width="20%">Core Server Supported</th>
         <th width="20%">Advanced Server Supported</th>
     </tr><tr>
+        <td>Web Connection Mechanisms</td>
         <td><a href="http://xmpp.org/rfcs/rfc7395.html">RFC 7395</a>: An Extensible Messaging and Presence Protocol (XMPP) Subprotocol for WebSocket</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Web Connection Mechanisms</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>: Bidirectional-streams Over Synchronous HTTP (BOSH)</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Web Connection Mechanisms</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0206.html">XEP-0206</a>: XMPP over BOSH [<a href="#fn1">1</a>]</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Connection Mechanism Discovery</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0156.html">XEP-0156</a>: Discovering Alternative XMPP Connection Methods</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
@@ -126,66 +139,97 @@ The table below details the level of support for the requirements set by
 
 <table class="dbtable">
     <tr>
+      <th>Feature</th>
       <th>Specification</th>    
       <th width="20%">Core Server Supported</th>
       <th width="20%">Advanced Server Supported</th>
-  </tr><tr>
+    </tr><tr>
+        <td>Core features</td>
         <td><a href="http://xmpp.org/rfcs/rfc6121.html">RFC 6121</a>: XMPP IM</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>The /me Command</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0245.html">XEP-0245</a>: The /me Command (XEP-0245)</td>
+        <td align="center" class="supported">N/A</td>
+        <td align="center" class="supported">✓</td>
+    </tr><tr>
+        <td>User Avatars</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0153.html">XEP-0153</a>: vCard-Based Avatars [<a href="#fn2">2</a>]</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>User Avatars</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0398.html">XEP-0398</a>: User Avatar to vCard-Based Avatars Conversion</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td> 
     </tr><tr>
+        <td>User Avatar Compatibility</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0054.html">XEP-0054</a>: vcard-temp</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Outbound Message Synchronization</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0280.html">XEP-0280</a>: Message Carbons</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>User Blocking</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0191.html">XEP-0191</a>: Blocking Command</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Group Chat</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0045.html">XEP-0045</a>: Multi-User Chat</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Group Chat</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0249.html">XEP-0249</a>: Direct MUC Invitations</td>
         <td align="center" class="unsupported">X</td>
         <td align="center" class="unsupported">X</td>
     </tr><tr>
+        <td>Advanced Group Chat</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0048.html">XEP-0048</a>: Bookmark Storage [<a href="#fn3">3</a>]</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
-        <td><a href="http://www.xmpp.org/extensions/xep-0410.html">XEP-0410</a>: MUC Self-Ping (Schrödinger's Chat)</td>
-        <td align="center" class="supported">N/A</td>
-        <td align="center" class="supported">✓</td>
-    </tr><tr>
-        <td><a href="http://www.xmpp.org/extensions/xep-0411.html">XEP-0411</a>: Bookmarks Conversion</td>
-        <td align="center" class="unsupported">N/A</td>
-        <td align="center" class="unsupported">X</td>
-    </tr><tr>
-        <td><a href="http://www.xmpp.org/extensions/xep-0049.html">XEP-0049</a>: Private XML Storage</td>
-        <td align="center" class="supported">N/A</td>
-        <td align="center" class="supported">✓</td>
-    </tr><tr>
-        <td><a href="http://www.xmpp.org/extensions/xep-0198.html">XEP-0198</a>: Stream Management</td>
-        <td align="center" class="supported">N/A</td>
-        <td align="center" class="supported">✓</td>
-    </tr><tr>
+         <td>Advanced Group Chat</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0313.html">XEP-0313</a>: Message Archive Management [<a href="#fn4">4</a>]</td>
         <td align="center" class="supported">N/A</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Advanced Group Chat</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0402.html">XEP-0402</a>: PEP Native Bookmarks</td>
+        <td align="center" class="unsupported">N/A</td>
+        <td align="center" class="unsupported">X</td>
+    </tr><tr>
+        <td>Advanced Group Chat</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0410.html">XEP-0410</a>: MUC Self-Ping (Schrödinger's Chat)</td>
+        <td align="center" class="supported">N/A</td>
+        <td align="center" class="supported">✓</td>
+    </tr><tr>
+        <td>Persistent Storage of Private Data via PubSub</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0223.html">XEP-0223</a>: Best Practices for Persistent Storage of Private Data via Publish-Subscribe</td>
+        <td align="center" class="supported">N/A</td>
+        <td align="center" class="supported">✓</td>
+    </tr><tr>
+        <td>Private XML Storage</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0049.html">XEP-0049</a>: Private XML Storage</td>
+        <td align="center" class="supported">N/A</td>
+        <td align="center" class="supported">✓</td>
+    </tr><tr>
+        <td>Stream Management</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0198.html">XEP-0198</a>: Stream Management</td>
+        <td align="center" class="supported">N/A</td>
+        <td align="center" class="supported">✓</td>
+    </tr><tr>
+        <td>History Storage / Retrieval</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0313.html">XEP-0313</a>: Message Archive Management [<a href="#fn4">4</a>]</td>
+        <td align="center" class="supported">N/A</td>
+        <td align="center" class="supported">✓</td>
+    </tr><tr>
+        <td>File Upload</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0363.html">XEP-0363</a>: HTTP File Upload [<a href="#fn5">5</a>]</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
@@ -202,18 +246,22 @@ The table below details the level of support for the requirements set by
 
 <table class="dbtable">
     <tr>
+        <td>Feature</td>
         <th>Specification</th>    
         <th width="20%">Core Server Supported</th>
         <th width="20%">Advanced Server Supported</th>
     </tr><tr>
+        <td>Stream Management</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0198.html">XEP-0198</a>: Stream Management</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
     </tr><tr>
+        <td>Client State Indication</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0352.html">XEP-0352</a>: Client State Indication</td>
         <td align="center" class="unsupported">X</td>
         <td align="center" class="unsupported">X</td>
     </tr><tr>
+        <td>Third Party Push Notifications</td>
         <td><a href="http://www.xmpp.org/extensions/xep-0357.html">XEP-0357</a>: Push Notifications [<a href="#fn6">6</a>]</td>
         <td align="center" class="supported">✓</td>
         <td align="center" class="supported">✓</td>
@@ -302,7 +350,7 @@ The table below details the level of support for the requirements set by
     </tr><tr>
         <td><a href="http://www.xmpp.org/extensions/xep-0215.html">XEP-0215</a>: External Service Discovery [<a href="#fn12">12</a>]</td> 
     </tr><tr>
-        <td><a href="http://www.xmpp.org/extensions/xep-0223.html">XEP-0223</a>: XMPP Server Registration for use with Kerberos V5</td>
+        <td><a href="http://www.xmpp.org/extensions/xep-0233.html">XEP-0233</a>: XMPP Server Registration for use with Kerberos V5</td>
     </tr><tr>
         <td><a href="http://www.xmpp.org/extensions/xep-0227.html">XEP-0227</a>: Portable Import/Export Format for XMPP-IM Servers [<a href="#fn13">13</a>]</td>
     </tr><tr>

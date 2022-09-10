@@ -80,7 +80,7 @@
             AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(ignoreExcludes);
 
             // Log the event
-            webManager.logEvent("Updated Admin Console access configuration.", "Blocklist = " + String.join(", ", blockedSet) +"\nAllowlist = " + String.join(", ", allowedSet)+"\nignore excludes = "+ignoreExcludes);
+            webManager.logEvent("Updated Admin Console access configuration.", "Blocklist = {" + String.join(", ", blockedSet) + "}\nAllowlist = {" + String.join(", ", allowedSet) + "}\nIgnore excludes = " + ignoreExcludes);
             response.sendRedirect("system-admin-console-access.jsp?success=true");
             return;
         }

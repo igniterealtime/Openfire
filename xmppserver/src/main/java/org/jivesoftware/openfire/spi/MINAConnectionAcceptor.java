@@ -14,6 +14,8 @@ import org.apache.mina.transport.socket.SocketSessionConfig;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.JMXManager;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.net.StalledSessionsFilter;
 import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.JiveGlobals;
@@ -21,6 +23,7 @@ import org.jivesoftware.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -50,6 +53,11 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
     private final EncryptionArtifactFactory encryptionArtifactFactory;
 
     private NioSocketAcceptor socketAcceptor;
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the thread pool executor.
+     */
+    private ObjectName executorServiceObjectName;
 
     /**
      * Instantiates, but not starts, a new instance.
@@ -107,9 +115,10 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
             // Construct a new socket acceptor, and configure it.
             socketAcceptor = buildSocketAcceptor();
 
-            if ( JMXManager.isEnabled() )
-            {
-                // configureJMX( socketAcceptor, name );
+            if (JMXManager.isEnabled()) {
+                // Register a 'vanilla' Openfire MBean, that provides consistent exposure of thread pool executors.
+                final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(eventExecutor);
+                this.executorServiceObjectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + name);
             }
 
             final DefaultIoFilterChainBuilder filterChain = socketAcceptor.getFilterChain();
@@ -144,6 +153,10 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
             System.err.println( "Error starting " + configuration.getPort() + ": " + e.getMessage() );
             Log.error( "Error starting: " + configuration.getPort(), e );
             // Reset for future use.
+            if (executorServiceObjectName != null) {
+                JMXManager.tryUnregister(executorServiceObjectName);
+                executorServiceObjectName = null;
+            }
             if (socketAcceptor != null) {
                 try {
                     socketAcceptor.unbind();
@@ -160,6 +173,10 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
     @Override
     public synchronized void stop()
     {
+        if (executorServiceObjectName != null) {
+            JMXManager.tryUnregister(executorServiceObjectName);
+            executorServiceObjectName = null;
+        }
         if ( socketAcceptor != null )
         {
             socketAcceptor.unbind();
@@ -282,79 +299,5 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
         socketSessionConfig.setTcpNoDelay( JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", socketSessionConfig.isTcpNoDelay() ) );
 
         return socketAcceptor;
-    }
-
-    private void configureJMX( NioSocketAcceptor acceptor, String suffix )
-    {
-        final String prefix = IoServiceMBean.class.getPackage().getName();
-
-        // monitor the IoService
-        try
-        {
-            final IoServiceMBean mbean = new IoServiceMBean( acceptor );
-            final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-            final ObjectName name = new ObjectName( prefix + ":type=SocketAcceptor,name=" + suffix );
-            mbs.registerMBean( mbean, name );
-            // mbean.startCollectingStats(JiveGlobals.getIntProperty("xmpp.socket.jmx.interval", 60000));
-        }
-        catch ( JMException ex )
-        {
-            Log.warn( "Failed to register MINA acceptor mbean (JMX): " + ex );
-        }
-
-        // optionally register IoSession mbeans (one per session)
-        if ( JiveGlobals.getBooleanProperty( "xmpp.socket.jmx.sessions", false ) )
-        {
-            acceptor.addListener( new IoServiceListener()
-            {
-                private ObjectName getObjectNameForSession( IoSession session ) throws MalformedObjectNameException
-                {
-                    return new ObjectName( prefix + ":type=IoSession,name=" + session.getRemoteAddress().toString().replace( ':', '/' ) );
-                }
-
-                @Override
-                public void sessionCreated(final IoSession session)
-                {
-                    try
-                    {
-                        ManagementFactory.getPlatformMBeanServer().registerMBean(
-                                new IoSessionMBean( session ),
-                                getObjectNameForSession( session )
-                        );
-                    }
-                    catch ( JMException ex )
-                    {
-                        Log.warn( "Failed to register MINA session mbean (JMX): " + ex );
-                    }
-                }
-
-                @Override
-                public void sessionDestroyed(final IoSession session)
-                {
-                    try
-                    {
-                        ManagementFactory.getPlatformMBeanServer().unregisterMBean(
-                                getObjectNameForSession( session )
-                        );
-                    }
-                    catch ( JMException ex )
-                    {
-                        Log.warn( "Failed to unregister MINA session mbean (JMX): " + ex );
-                    }
-                }
-
-                @Override
-                public void serviceActivated(final IoService service) {}
-
-                @Override
-                public void serviceDeactivated(final IoService service ) {}
-
-                @Override
-                public void serviceIdle(final IoService service, final IdleStatus idleStatus) {}
-
-                @Override
-                public void sessionClosed(final IoSession ioSession) {}
-            } );
-        }
     }
 }

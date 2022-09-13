@@ -301,7 +301,7 @@ public class HistoryStrategy implements Externalizable {
         final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
         lock.lock();
         try {
-            MUC_HISTORY_CACHE.remove(roomJID);
+            MUC_HISTORY_CACHE.put(roomJID, CacheableOptional.of(null));
         } finally {
             lock.unlock();
         }

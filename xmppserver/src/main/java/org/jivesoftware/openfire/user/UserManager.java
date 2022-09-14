@@ -22,6 +22,7 @@ import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQRouter;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -73,6 +74,16 @@ public final class UserManager {
         .setBaseClass(UserPropertyProvider.class)
         .setDefaultValue(DefaultUserPropertyProvider.class)
         .addListener(UserManager::initPropertyProvider)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * When enabled, allows Openfire to process data for local JIDs that potentially are future users. To be used when
+     * users are provisioned externally/on an ad-hoc basis.
+     */
+    private static final SystemProperty<Boolean> ALLOW_FUTURE_USERS = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("usermanager.future-users.enable")
+        .setDefaultValue(false)
         .setDynamic(true)
         .build();
 
@@ -496,6 +507,22 @@ public final class UserManager {
             }
             return isRegistered;
         }
+    }
+
+    /**
+     * Checks if the provided address belongs to a locally registered user that potentially has not registered yet.
+     *
+     * This method is intended to be used in use-cases where data addressed at a local user is processed, prior to that
+     * user having received a representation in the user manager. This can occur when users are created on ad-hoc basis,
+     * such as through the result of external authentication.
+     *
+     * When the feature that allows future users to be considered is disabled, this method will always return false.
+     *
+     * @param user The address of a user
+     * @return True if the address could be used for a locally registered user, potentially not having registered yet.
+     */
+    public static boolean isPotentialFutureLocalUser(final JID user) {
+        return ALLOW_FUTURE_USERS.getValue() && XMPPServer.getInstance().isLocal(user) && !SessionManager.getInstance().isAnonymousRoute(user.getNode());
     }
 
     private static void initProvider(final Class clazz) {

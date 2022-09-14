@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         JID recipient = message.getTo();
         String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
-        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient, false)) {
+        if (username == null || !(UserManager.getInstance().isRegisteredUser(recipient, false) || UserManager.isPotentialFutureLocalUser(recipient))) {
             Log.trace( "Not storing message for which the recipient ({}) is not a registered local user.", recipient );
             return null;
         }

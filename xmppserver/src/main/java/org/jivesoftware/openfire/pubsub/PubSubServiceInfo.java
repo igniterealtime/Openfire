@@ -117,12 +117,14 @@ public class PubSubServiceInfo {
             try {
                 if (username.contains("@")) {
                     JID jid = new JID(username);
+                    // TODO OF-2506: figure out why anonymous users should not be 'valid'. There is no way to check if remote users are anonymous anyway.
                     if (userManager.isRegisteredUser(jid, true)) {
                         return jid;
                     }
                 } else {
                     // Assume that the value refers to a user on the local server.
                     final JID jid = xmppServer.createJID(username, null);
+                    // TODO OF-2506: figure out why anonymous users should not be 'valid'. There is no way to check if remote users are anonymous anyway.
                     if (userManager.isRegisteredUser(jid, false)) {
                         return jid;
                     }

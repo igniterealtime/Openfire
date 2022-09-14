@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,7 +264,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     private Roster getRoster(JID address) {
         String username;
         Roster roster = null;
-        if (userManager.isRegisteredUser(address, false)) {
+        if (userManager.isRegisteredUser(address, false) || UserManager.isPotentialFutureLocalUser(address)) {
             username = address.getNode();
             try {
                 roster = rosterManager.getRoster(username);

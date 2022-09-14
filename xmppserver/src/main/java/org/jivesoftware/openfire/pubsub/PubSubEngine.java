@@ -23,7 +23,6 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesListener;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.RefreshNodeTask;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
@@ -684,9 +683,10 @@ public class PubSubEngine
 
     private void subscribeNodeAsync(final IQ iq, final JID subscriberJID, final Node node, final JID owner, final PubSubService service, final JID from, final Element childElement, final AccessModel accessModel) {
 
-        // Check if the subscriber is an anonymous user
-        if (!isComponent(subscriberJID) && !isRemoteServer(subscriberJID) && !UserManager.getInstance().isRegisteredUser(subscriberJID, true)) {
+        // Check if the subscriber is an anonymous user.
+        if (XMPPServer.getInstance().isLocal(subscriberJID) && SessionManager.getInstance().isAnonymousRoute(subscriberJID.getNode())) {
             // Anonymous users cannot subscribe to the node. Return forbidden error
+            // TODO OF-2506: figure out why anonymous users should not be allowed to subscribe. There is no way to check if remote users are anonymous anyway.
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
         }
@@ -1295,6 +1295,7 @@ public class PubSubEngine
      */
     public static CreateNodeResponse createNodeHelper(PubSubService service, JID requester, Element configuration, String nodeID, DataForm publishOptions) {
         // Verify that sender has permissions to create nodes
+        // TODO OF-2506: figure out why anonymous users should not be allowed to create a node. There is no way to check if remote users are anonymous anyway.
         if (!service.canCreateNode(requester) || (!isComponent(requester) && !UserManager.getInstance().isRegisteredUser(requester, true))) {
             // The user is not allowed to create nodes so return an error
             return new CreateNodeResponse(PacketError.Condition.forbidden, null, null);
@@ -2061,27 +2062,6 @@ public class PubSubEngine
         final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
         if (routingTable != null) {
             return routingTable.hasComponentRoute(jid);
-        }
-        return false;
-    }
-
-    /**
-     * Checks to see if the supplied JID is that of a connected remote server
-     * @param jid the JID representing the remote server
-     * @return true if the supplied JID is a connected server session
-     */
-    private static boolean isRemoteServer(final JID jid) {
-        final String jidString = jid.toString();
-        final SessionManager sessionManager = SessionManager.getInstance();
-        for (final String incomingServer : sessionManager.getIncomingServers()) {
-            if(incomingServer.equals(jidString)) {
-                return true;
-            }
-        }
-        for (final String outgoingServer : sessionManager.getOutgoingServers()) {
-            if(outgoingServer.equals(jidString)) {
-                return true;
-            }
         }
         return false;
     }

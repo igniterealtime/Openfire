@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,8 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
                     recipientJID.getNode() == null ||
                     message.getExtension("received", "urn:xmpp:carbons:2") != null ||
-                    !UserManager.getInstance().isRegisteredUser(recipientJID, false)) {
+                    !(UserManager.getInstance().isRegisteredUser(recipientJID, false) || UserManager.isPotentialFutureLocalUser(recipientJID))
+            ) {
                 return;
             }
 

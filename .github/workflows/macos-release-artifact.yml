@@ -27,12 +27,12 @@ jobs:
           tag=$(echo ${{ github.ref }} | cut -d '/' -f3)
           echo "::set-output name=tag::$tag"
           echo "tag is '$tag'"
-          version=$(echo ${{ github.ref }} | cut -d '/' -f3 | cut -c 2- | sed 's/\./_/g')
-          echo "::set-output name=version::$version"
-          echo "version is '$version'"
           rel_id=$(curl -sL https://api.github.com/repos/${{github.repository}}/releases | jq -r --arg TAG "$tag" '.[] | select(.tag_name==$TAG) | .id')
           echo ::set-output name=rel_id::$rel_id
           echo "rel_id is '$rel_id'"
+          version=$(echo ${{ github.ref }} | cut -d '/' -f3 | cut -c 2- | sed 's/\./_/g')
+          echo "::set-output name=version::$version"
+          echo "version is '$version'"
 
       - name: Cache Maven repository
         uses: actions/cache@v1

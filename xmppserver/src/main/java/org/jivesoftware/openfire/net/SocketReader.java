@@ -16,6 +16,11 @@
 
 package org.jivesoftware.openfire.net;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Collections;
+import java.util.List;
+
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -27,6 +32,7 @@ import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +40,6 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.*;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -461,8 +463,12 @@ public abstract class SocketReader implements Runnable {
             // requested host matched the server name
             return false;
         }
-        // Check if the host matches a subdomain of this host
-        return !routingTable.hasComponentRoute(new JID(host));
+        if (routingTable.hasComponentRoute(new JID(host))) {
+            // Check if the host matches a subdomain of this host
+            return false;
+        }
+
+        return !JiveGlobals.getListProperty("xmpp.gateway.domains", Collections.emptyList()).contains(host);
     }
 
     /**

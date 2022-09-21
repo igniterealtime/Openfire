@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="188.78853mm"
+   height="52.397812mm"
+   viewBox="0 0 188.78853 52.397812"
+   version="1.1"
+   id="svg5"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="TriangleStart"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       markerWidth="5.3244081"
+       markerHeight="6.155385"
+       viewBox="0 0 5.3244081 6.1553851"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-4.0391606,-5.2490036)">
+    <rect
+       style="fill:none;stroke:#335588;stroke-width:0.79375;stroke-dasharray:none;stroke-opacity:1"
+       id="rect234"
+       width="41.874817"
+       height="13.285447"
+       x="4.4360356"
+       y="28.297823"
+       ry="3.8031826" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="7.4987187"
+       y="32.671543"
+       id="text1000"><tspan
+         id="tspan998"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.175px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#006600;fill-opacity:1;stroke-width:0.264583"
+         x="7.4987187"
+         y="32.671543">saturn</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="21.82679"
+       y="39.293724"
+       id="text2614"><tspan
+         id="tspan2612"
+         style="font-size:3.175px;fill:#6b6b6b;fill-opacity:1;stroke-width:0.264583"
+         x="21.82679"
+         y="39.293724">203.0.113.2</tspan></text>
+    <rect
+       style="fill:none;stroke:#335588;stroke-width:0.79375;stroke-dasharray:none;stroke-opacity:1"
+       id="rect234-3"
+       width="41.874817"
+       height="13.285447"
+       x="77.496017"
+       y="28.297823"
+       ry="3.8031826" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="80.558701"
+       y="32.671543"
+       id="text1000-6"><tspan
+         id="tspan998-7"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.175px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#006600;fill-opacity:1;stroke-width:0.264583"
+         x="80.558701"
+         y="32.671543">trunk</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="94.886772"
+       y="39.293724"
+       id="text2614-5"><tspan
+         id="tspan2612-3"
+         style="font-size:3.175px;fill:#6b6b6b;fill-opacity:1;stroke-width:0.264583"
+         x="94.886772"
+         y="39.293724">198.51.100.4</tspan></text>
+    <g
+       id="g2737"
+       transform="translate(18.79536,-0.12439323)">
+      <rect
+         style="fill:none;stroke:#335588;stroke-width:0.79375;stroke-dasharray:none;stroke-opacity:1"
+         id="rect234-5"
+         width="41.874817"
+         height="13.285447"
+         x="131.76064"
+         y="28.422216"
+         ry="3.8031826" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="134.82332"
+         y="32.795937"
+         id="text1000-62"><tspan
+           id="tspan998-9"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:3.175px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#006600;fill-opacity:1;stroke-width:0.264583"
+           x="134.82332"
+           y="32.795937">mercury</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="149.15138"
+         y="39.418114"
+         id="text2614-1"><tspan
+           id="tspan2612-2"
+           style="font-size:3.175px;fill:#6b6b6b;fill-opacity:1;stroke-width:0.264583"
+           x="149.15138"
+           y="39.418114">233.252.0.6</tspan></text>
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.529167;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+       d="M 43.759331,24.538413 C 61.44857,14.925624 81.623689,9.9344398 101.75449,10.190812 c 18.55985,0.236366 37.04804,4.91925 53.48253,13.546616"
+       id="path2811" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.529167;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#TriangleStart)"
+       d="m 43.254935,44.239502 c 5.000976,5.65442 12.339351,9.175293 19.879296,9.537872 8.09868,0.389447 16.303341,-2.89556 21.895443,-8.766564"
+       id="path2815" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:16.2456px;line-height:1.25;font-family:sans-serif;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:0.406141"
+       x="86.359634"
+       y="17.522158"
+       id="text3056"
+       transform="scale(1.0819295,0.92427462)"><tspan
+         id="tspan3054"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';fill:#ff0000;fill-opacity:1;stroke-width:0.406141"
+         x="86.359634"
+         y="17.522158">X</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:3.175px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="4.8786836"
+       y="57.056267"
+       id="text3798"><tspan
+         id="tspan3796"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.175px;font-family:FreeMono;-inkscape-font-specification:FreeMono;stroke-width:0.264583"
+         x="4.8786836"
+         y="57.056267">dnsutil.dnsOverride: {mercury.example.net,198.51.100.4:5269}</tspan></text>
+  </g>
+</svg>

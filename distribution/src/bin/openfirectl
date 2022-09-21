@@ -125,13 +125,14 @@ start() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_LOGDIR
 
-        # Start daemons.
-        echo "Starting openfire: \c"
+    # Start daemons.
+    echo "Starting openfire: \c"
 
-	PID=`su - $OPENFIRE_USER -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &"`
+	su - $OPENFIRE_USER -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &"
 	RETVAL=$?
 
 	if [ $RETVAL -eq 0 -a ! -z "$OPENFIRE_PIDFILE" ]; then
+	    PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
 		echo $PID > $OPENFIRE_PIDFILE
 	fi
 

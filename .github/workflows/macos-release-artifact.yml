@@ -1,6 +1,8 @@
-name: Openfire Mac Artifact
+name: Openfire Mac Release Artifact
 
-on: [push, pull_request]
+on:
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -17,43 +19,34 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
-      - id: get-id
-        name: Compute needed variables
+
+      - name: Compute Version
+        id: get-id
         run: |
           set -x
-          id=$(echo ${{ github.repository }} | cut -d- -f2)
-          echo "::set-output name=id::$id"
-          echo "id is '$id'"
-          tag=$(echo ${{ github.ref }} | cut -d '/' -f3)
-          echo "::set-output name=tag::$tag"
-          echo "tag is '$tag'"
-          rel_id=$(curl -sL https://api.github.com/repos/${{github.repository}}/releases | jq -r --arg TAG "$tag" '.[] | select(.tag_name==$TAG) | .id')
-          echo ::set-output name=rel_id::$rel_id
-          echo "rel_id is '$rel_id'"
           version=$(echo ${{ github.ref }} | cut -d '/' -f3 | cut -c 2- | sed 's/\./_/g')
           echo "::set-output name=version::$version"
           echo "version is '$version'"
 
-      - name: Cache Maven repository
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-java${{ matrix.java }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-java${{ matrix.java }}-maven-
-            ${{ runner.os }}-
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
       - name: Build with Maven
         run: mvn -B package -Pcoverage --file pom.xml
+
       - name: Build Artifact
         run: |
           bash build/osx/build_dmg.sh
-      - name: Conditionally Push Artifact to Github Release
+
+      - name: Push Artifact to Github Release
         uses: actions/upload-release-asset@v1
-        if: ${{ contains(github.repository, 'igniterealtime/') && github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get-id.outputs.rel_id }}/assets?name=openfire_${{ steps.get-id.outputs.version }}.dmg
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: distribution/build/osx/Openfire.dmg
           asset_name: openfire_${{ steps.get-id.outputs.version }}.dmg
           asset_content_type: application/octet-stream

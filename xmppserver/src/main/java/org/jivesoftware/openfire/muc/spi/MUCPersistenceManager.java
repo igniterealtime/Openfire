@@ -311,7 +311,7 @@ public class MUCPersistenceManager {
 
             // Recreate the history only for the rooms that have the conversation logging
             // enabled
-            loadHistory(room);
+            loadHistory(room, room.getRoomHistory().getMaxMessages());
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
@@ -746,6 +746,21 @@ public class MUCPersistenceManager {
      */
     public static void loadHistory(@Nonnull final MUCRoom room) throws SQLException
     {
+        loadHistory(room, -1);
+    }
+
+    /**
+     * Load or reload the room history for a particular room from the database into memory.
+     *
+     * Invocation of this method will replace exising room history that's stored in memory (if any) with a freshly set
+     * of messages obtained from the database.
+     *
+     * @param room The room for which to load message history from the database into memory.
+     * @param maxNumber A hint for the maximum number of messages that need to be read from the database. -1 for all messages.
+     * @throws SQLException
+     */
+    public static void loadHistory(@Nonnull final MUCRoom room, final int maxNumber) throws SQLException
+    {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -753,7 +768,7 @@ public class MUCPersistenceManager {
         try {
             if (room.isLogEnabled()) {
                 con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(LOAD_HISTORY);
+                pstmt = con.prepareStatement(LOAD_HISTORY, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
                 // Reload the history, using "muc.history.reload.limit" (days) if present
                 long from = 0;
@@ -771,6 +786,15 @@ public class MUCPersistenceManager {
 
                 // When reloading history, make sure that the old data is removed from memory before re-adding it.
                 room.getRoomHistory().purge();
+
+                try {
+                    if (maxNumber > -1 && rs.last()) {
+                        // Try to skip to the last few rows from the result set.
+                        rs.relative(maxNumber * -1);
+                    }
+                } catch (SQLException e) {
+                    Log.debug("Unable to skip to the last {} rows of the result set.", maxNumber, e);
+                }
 
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");

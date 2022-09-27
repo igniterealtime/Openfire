@@ -289,6 +289,15 @@ public final class MUCRoomHistory implements Externalizable {
         return historyStrategy.isSubjectChangeRequest(message);
     }
 
+    /**
+     * Returns the maximum number of messages that is kept in history for this room, or -1 when there is no such limit.
+     *
+     * @return The maximum amount of historic messages to keep for this room, or -1.
+     */
+    public int getMaxMessages() {
+        return historyStrategy.getType() == HistoryStrategy.Type.number ? historyStrategy.getMaxNumber() : -1;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

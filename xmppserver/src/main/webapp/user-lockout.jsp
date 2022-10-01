@@ -42,13 +42,13 @@
     boolean lock = request.getParameter("lock") != null;
     String username = ParamUtils.getParameter(request,"username");
     String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
-    Integer startdelay = ParamUtils.getIntParameter(request,"startdelay",-1); // -1 is immediate, -2 custom
-    Integer duration = ParamUtils.getIntParameter(request,"duration",-1); // -1 is infinite, -2 custom
+    Long startdelay = ParamUtils.getLongParameter(request,"startdelay",-1); // -1 is immediate, -2 custom
+    Long duration = ParamUtils.getLongParameter(request,"duration",-1); // -1 is infinite, -2 custom
     if (startdelay == -2) {
-        startdelay = ParamUtils.getIntParameter(request,"startdelay_custom", -1);
+        startdelay = ParamUtils.getLongParameter(request,"startdelay_custom", -1);
     }
     if (duration == -2) {
-        duration = ParamUtils.getIntParameter(request,"duration_custom", -1);   
+        duration = ParamUtils.getLongParameter(request,"duration_custom", -1);
     }
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");

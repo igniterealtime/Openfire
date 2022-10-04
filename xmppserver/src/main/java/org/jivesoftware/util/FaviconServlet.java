@@ -19,11 +19,16 @@ package org.jivesoftware.util;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -36,6 +41,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
@@ -187,7 +193,7 @@ public class FaviconServlet extends HttpServlet {
         if (hitsCache.containsKey(host)) {
             return hitsCache.get(host);
         }
-        byte[] bytes = getImage("http://" + host + "/favicon.ico");
+        byte[] bytes = getImage(host);
         if (bytes == null) {
             // Cache that the requested domain does not have a favicon. Check if this
             // is the first cache miss or the second.
@@ -208,32 +214,44 @@ public class FaviconServlet extends HttpServlet {
     }
 
     @SuppressWarnings("lgtm[java/ssrf]")
-    private byte[] getImage(String url) {
+    private byte[] getImage(@Nonnull final String host) {
+        final Set<URI> urls = new HashSet<>();
+
+        try {
+            // Using a builder to reduce the impact of using user-provided values to generate a URL request.
+            urls.add(new URIBuilder().setScheme("https").setHost(host).setPath("favicon.ico").build());
+            urls.add(new URIBuilder().setScheme("http").setHost(host).setPath("favicon.ico").build());
+        } catch (URISyntaxException e) {
+            LOGGER.debug("An exception occurred while trying to obtain an image from: {}", host, e);
+            return null;
+        }
         // Try to get the favicon from the url using an HTTP connection from the pool
         // that also allows configuring timeout values (e.g. connect and get data)
         final RequestConfig requestConfig = RequestConfig.custom()
             .setConnectTimeout(5000)
             .setSocketTimeout(5000)
             .build();
-        final HttpUriRequest getRequest = RequestBuilder.get(url)
-            .setConfig(requestConfig)
-            .build();
 
-        try(final CloseableHttpResponse response = client.execute(getRequest)) {
-            if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                final byte[] result = EntityUtils.toByteArray(response.getEntity());
+        for (final URI url : urls) {
+            final HttpUriRequest getRequest = RequestBuilder.get(url)
+                .setConfig(requestConfig)
+                .build();
 
-                // Prevent SSRF by checking result (OF-1885)
-                if ( !GraphicsUtils.isImage( result ) ) {
-                    LOGGER.info( "Ignoring response to an HTTP request that should have returned an image (but returned something else): {}", url) ;
-                    return null;
+            try (final CloseableHttpResponse response = client.execute(getRequest)) {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                    final byte[] result = EntityUtils.toByteArray(response.getEntity());
+
+                    // Prevent SSRF by checking result (OF-1885)
+                    if (!GraphicsUtils.isImage(result)) {
+                        LOGGER.info("Ignoring response to an HTTP request that should have returned an image (but returned something else): {}", url);
+                        continue;
+                    }
+                    return result;
                 }
-                return result;
+            } catch (final IOException ex) {
+                LOGGER.debug("An exception occurred while trying to obtain an image from: {}", url, ex);
             }
-        } catch (final IOException ex) {
-            LOGGER.debug( "An exception occurred while trying to obtain an image from: {}", url, ex );
         }
-
         return null;
     }
 

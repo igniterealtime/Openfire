@@ -20,7 +20,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -646,7 +645,7 @@ public class ServerDialback {
         }
 
         if (host_unknown) {
-            host_unknown = !JiveGlobals.getListProperty("xmpp.gateway.domains", Collections.emptyList()).contains(recipient);
+            host_unknown = Trunking.isTrunkingEnabledFor(recipient);
         }
         return host_unknown;
     }

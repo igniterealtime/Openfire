@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.net;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.List;
 
 import org.dom4j.Element;
@@ -32,7 +31,6 @@ import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -468,7 +466,7 @@ public abstract class SocketReader implements Runnable {
             return false;
         }
 
-        return !JiveGlobals.getListProperty("xmpp.gateway.domains", Collections.emptyList()).contains(host);
+        return !Trunking.isTrunkingEnabledFor(host);
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.http;
 
+import org.apache.commons.lang3.StringUtils;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -1019,20 +1020,26 @@ public class HttpSession extends LocalClientSession {
      * Uses a connection to return data to the client.
      *
      * @param connection The connection to use return data.
-     * @param deliverable The data to be delivered.
+     * @param deliverables The data to be delivered.
      * @param async should the invocation block until the data has been delivered?
      */
-    private void deliver(@Nonnull final HttpConnection connection, @Nonnull final List<Deliverable> deliverable, final boolean async)
+    private void deliver(@Nonnull final HttpConnection connection, @Nonnull final List<Deliverable> deliverables, final boolean async)
         throws HttpConnectionClosedException, IOException
     {
-        Log.trace("Delivering {} deliverables to the client on session {}, using connection with RID {}", deliverable.size(), getStreamID(), connection.getRequestId());
-        connection.deliverBody(asBodyText(deliverable), async);
+        Log.trace("Delivering {} deliverables to the client on session {}, using connection with RID {}", deliverables.size(), getStreamID(), connection.getRequestId());
+        connection.deliverBody(asBodyText(deliverables), async);
         lastAnsweredRequestID = connection.getRequestId();
 
         lastActivity = Instant.now();
 
+        for (final Deliverable deliverable : deliverables) {
+            for (int i=0; i<deliverable.stanzaCount(); i++) {
+                incrementServerPacketCount();
+            }
+        }
+
         // Keep track of data that has been delivered, for potential future retransmission.
-        final Delivered delivered = new Delivered(deliverable, connection.getRequestId());
+        final Delivered delivered = new Delivered(deliverables, connection.getRequestId());
         synchronized (sentElements) {
             while (sentElements.size() > maxRequests) {
                 sentElements.poll();
@@ -1277,9 +1284,12 @@ public class HttpSession extends LocalClientSession {
         @Nullable
         private final List<String> packets;
 
+        private final int stanzaCount;
+
         public Deliverable(@Nonnull final String text) {
             this.text = text;
             this.packets = null;
+            stanzaCount = StringUtils.countMatches(text, "<presence ") + StringUtils.countMatches(text, "<iq ") + StringUtils.countMatches(text, "<message ");
         }
 
         public Deliverable(@Nonnull final List<Packet> elements) {
@@ -1301,6 +1311,7 @@ public class HttpSession extends LocalClientSession {
             }
 
             this.packets = Collections.unmodifiableList(stanzas);
+            this.stanzaCount = stanzas.size();
         }
 
         @Nonnull
@@ -1350,6 +1361,10 @@ public class HttpSession extends LocalClientSession {
                 }
             }
             return answer;
+        }
+
+        public int stanzaCount() {
+            return stanzaCount;
         }
     }
 

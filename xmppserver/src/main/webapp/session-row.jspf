@@ -9,6 +9,7 @@
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
  <%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
+ <%@ page import="java.text.NumberFormat" %>
 
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -181,7 +182,10 @@
     <%  } %>
 
     <td width="1%" nowrap>
-        <%= sess.getPresence().getPriority() %>
+        <%= NumberFormat.getNumberInstance().format(sess.getNumClientPackets()) %>
+    </td>
+    <td width="1%" nowrap>
+        <%= NumberFormat.getNumberInstance().format(sess.getNumServerPackets()) %>
     </td>
 
     <td width="1%" nowrap>

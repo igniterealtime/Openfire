@@ -29,7 +29,7 @@ jobs:
             ${{ runner.os }}-java${{ matrix.java }}-maven-
             ${{ runner.os }}-
       - name: Build with Maven
-        run: mvn -B package -Pcoverage --file pom.xml
+        run: ./mvnw -B package -Pcoverage --file pom.xml
       - name: Upload distribution
         uses: actions/upload-artifact@v2
         with:
@@ -193,7 +193,7 @@ jobs:
           server-username: IGNITE_REALTIME_MAVEN_USERNAME
           server-password: IGNITE_REALTIME_MAVEN_PASSWORD
       - name: Publish
-        run: mvn -B deploy
+        run: ./mvnw -B deploy
         env:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}

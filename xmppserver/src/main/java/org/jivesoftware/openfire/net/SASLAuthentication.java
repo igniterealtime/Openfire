@@ -93,6 +93,32 @@ public class SASLAuthentication {
         .setDefaultValue(false)
         .build();
 
+    /**
+     * Require the peer to provide an authorization identity through SASL (typically in the Initial Response) when authenticating
+     * an inbound S2S connection that uses the EXTERNAL SASL mechanism.
+     *
+     * This is not required by the XMPP protocol specification, but it was required by Openfire versions prior to release 4.8.0.
+     * This configuration option is added to allow for backwards compatibility.
+     */
+    public static final SystemProperty<Boolean> EXTERNAL_S2S_REQUIRE_AUTHZID = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.external.server.require-authzid")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
+    /**
+     * Send an authorization identity in the Initial Response when attempting to authenticate using the SASL EXTERNAL
+     * mechanism with a remote XMPP domain. Sending the authzid in this manner is not required by the XMPP protocol
+     * specification, but is recommended in XEP-0178 for compatibility with older server implementations.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0178.html">XEP-0178: Best Practices for Use of SASL EXTERNAL with Certificates</a>
+     */
+    public static final SystemProperty<Boolean> EXTERNAL_S2S_SKIP_SENDING_AUTHZID = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.external.server.skip-sending-authzid")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");

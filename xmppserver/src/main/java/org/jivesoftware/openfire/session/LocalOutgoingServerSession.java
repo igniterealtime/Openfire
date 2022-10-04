@@ -267,7 +267,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         return null;
     }
 
-
     private static boolean configDoesNotRequireTls(ConnectionConfiguration listenerConfiguration) {
         return listenerConfiguration.getTlsPolicy() != Connection.TLSPolicy.required;
     }

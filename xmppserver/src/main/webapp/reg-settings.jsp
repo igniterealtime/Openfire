@@ -59,6 +59,7 @@
     boolean inbandEnabled = ParamUtils.getBooleanParameter(request, "inbandEnabled");
     boolean canChangePassword = ParamUtils.getBooleanParameter(request, "canChangePassword");
     boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
+    boolean futureUsersEnabled = ParamUtils.getBooleanParameter(request, "futureUsersEnabled");
     String allowedIPs = request.getParameter("allowedIPs");
     String allowedAnonymIPs = request.getParameter("allowedAnonymIPs");
     String blockedIPs = request.getParameter("blockedIPs");
@@ -92,6 +93,7 @@
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
         AnonymousSaslServer.ENABLED.setValue(anonLogin);
+        UserManager.ALLOW_FUTURE_USERS.setValue( futureUsersEnabled );
 
         // Build a Map with the allowed IP addresses
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
@@ -130,13 +132,14 @@
         SASLAuthentication.setEnabledMechanisms( mechsEnabled );
 
         // Log the event
-        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs+"\nSASL mechanisms enabled = "+ mechsEnabled);
+        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs+"\nFuture users enabled = "+futureUsersEnabled+"\nSASL mechanisms enabled = "+ mechsEnabled);
     }
 
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
     anonLogin = AnonymousSaslServer.ENABLED.getValue();
+    futureUsersEnabled = UserManager.ALLOW_FUTURE_USERS.getValue();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
     Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();
@@ -175,6 +178,7 @@
     pageContext.setAttribute( "blockedIPs",         blockedIPs);
     pageContext.setAttribute( "allowedIPs",         allowedIPs );
     pageContext.setAttribute( "allowedAnonymIPs",   allowedAnonymIPs );
+    pageContext.setAttribute( "futureUsersEnabled", futureUsersEnabled );
     pageContext.setAttribute( "saslEnabledMechanisms",     SASLAuthentication.getEnabledMechanisms() );
     pageContext.setAttribute( "saslImplementedMechanisms", SASLAuthentication.getImplementedMechanisms() );
     pageContext.setAttribute( "saslSupportedMechanisms",   SASLAuthentication.getSupportedMechanisms() );
@@ -272,6 +276,21 @@
             <tr>
                 <td valign='top'><b><fmt:message key="reg.settings.ips_anonymous" /></b></td>
                 <td><textarea name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedAnonymIPs}"><c:out value="${allowedAnonymIPs}"/></c:if></textarea></td>
+            </tr>
+        </table>
+    </admin:contentBox>
+
+    <fmt:message key="reg.settings.future_users" var="future_users_boxtitle"/>
+    <admin:contentBox title="${future_users_boxtitle}">
+        <p><fmt:message key="reg.settings.future_users_info" /></p>
+        <table cellpadding="3" cellspacing="0" border="0">
+            <tr>
+                <td width="1%"><input type="radio" name="futureUsersEnabled" value="true" id="rb07" ${futureUsersEnabled ? 'checked' : ''}></td>
+                <td width="99%"><label for="rb07"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.future_users_enabled" /></label></td>
+            </tr>
+            <tr>
+                <td width="1%"><input type="radio" name="futureUsersEnabled" value="false" id="rb08" ${futureUsersEnabled ? '' : 'checked'}></td>
+                <td width="99%"><label for="rb08"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.future_users_disabled" /></label></td>
             </tr>
         </table>
     </admin:contentBox>

@@ -81,7 +81,7 @@ public final class UserManager {
      * When enabled, allows Openfire to process data for local JIDs that potentially are future users. To be used when
      * users are provisioned externally/on an ad-hoc basis.
      */
-    private static final SystemProperty<Boolean> ALLOW_FUTURE_USERS = SystemProperty.Builder.ofType(Boolean.class)
+    public static final SystemProperty<Boolean> ALLOW_FUTURE_USERS = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("usermanager.future-users.enable")
         .setDefaultValue(false)
         .setDynamic(true)

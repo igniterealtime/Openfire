@@ -269,7 +269,7 @@
         </c:if>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
-        <th nowrap>
+        <th nowrap title="<fmt:message key="session.details.received" />">
             <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_CLIENT_PACKETS})'>
                 <fmt:message key="session.details.received-abbreviation" />
                 <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_CLIENT_PACKETS}">
@@ -277,7 +277,7 @@
                 </c:if>
             </a>
         </th>
-        <th nowrap>
+        <th nowrap title="<fmt:message key="session.details.transmitted" />">
             <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_SERVER_PACKETS})'>
                 <fmt:message key="session.details.transmitted-abbreviation" />
                 <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_SERVER_PACKETS }">

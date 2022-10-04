@@ -164,7 +164,7 @@
             <fmt:message key="session.details.statistics" />
         </td>
         <td>
-            <fmt:message key="session.details.received" />
+            <fmt:message key="session.details.received-and-transmitted" />
             <%= numFormatter.format(componentSession.getNumClientPackets()) %>/<%= numFormatter.format(componentSession.getNumServerPackets()) %>
         </td>
     </tr>

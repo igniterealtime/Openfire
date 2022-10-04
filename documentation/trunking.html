@@ -75,7 +75,7 @@
             <p>
                 The server that is sending the message will attempt to establish a server-to-server connection with the target server. The sending server perform DNS lookups based on the domain name of the target server. The results of this lookup must be manipulated
                 in such a way that the resulting IP address is that of the trunking server. Openfire can facilitate such DNS manipulation, as it allows DNS lookups to be skipped in favor of preconfigured hard-coded values. To configure such values, the
-                property <tt>dnsutil.dnsOverride</tt> can be used.
+                property <tt>dnsutil.dnsOverride</tt> can be used. Note that these changes are needed only on the server(s) that send data through the trunking server. The trunking server itself should not need them.
             </p>
             <p>
                 The expected format of the value of the <tt>dnsutil.dnsOverride</tt> property is a comma-sparated list of <code>{HOST,IP:PORT}</code>. Note that whitespace is not allowed, as shown in <a href="#example-dnsutil-propvalue">example 1</a>:

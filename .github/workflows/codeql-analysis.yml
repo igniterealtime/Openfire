@@ -49,7 +49,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
     - name: Build with Maven
-      run: mvn package 
+      run: ./mvnw package
         
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

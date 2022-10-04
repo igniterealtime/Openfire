@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 <%@ page import="org.jivesoftware.util.ListPager" %>
 <%@ page import="java.util.function.Predicate" %>
 <%@ page import="java.net.UnknownHostException" %>
-<%@ page import="java.util.Collection" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
@@ -50,16 +49,20 @@
     int refresh = ParamUtils.getIntParameter(request,"refresh",webManager.getRefreshValue("session-summary", 0));
     pageContext.setAttribute("refresh", refresh);
     boolean close = ParamUtils.getBooleanParameter(request,"close");
-    int order = ParamUtils.getIntParameter(request, "order",
-            webManager.getPageProperty("session-summary", "console.order", SessionResultFilter.ASCENDING));
+    int sortOrder = ParamUtils.getIntParameter(request, "sortOrder", webManager.getPageProperty("session-summary", "console.order", SessionResultFilter.ASCENDING));
+    int sortColumnNumber = ParamUtils.getIntParameter(request, "sortColumnNumber", webManager.getPageProperty("session-summary", "console.sortColumnNumber", SessionResultFilter.SORT_USER));
+
     String jid = ParamUtils.getParameter(request,"jid");
 
     if (request.getParameter("refresh") != null) {
         webManager.setRefreshValue("session-summary", refresh);
     }
 
-    if (request.getParameter("order") != null) {
-        webManager.setPageProperty("session-summary", "console.order", order);
+    if (request.getParameter("sortOrder") != null) {
+        webManager.setPageProperty("session-summary", "console.order", sortOrder);
+    }
+    if (request.getParameter("sortColumnNumber") != null) {
+        webManager.setPageProperty("session-summary", "console.sortColumnNumber", sortColumnNumber);
     }
 
     // Get the user manager
@@ -97,7 +100,8 @@
     }
 
     SessionResultFilter sessionResultFilter = SessionResultFilter.createDefaultSessionFilter();
-    sessionResultFilter.setSortOrder(order);
+    sessionResultFilter.setSortField(sortColumnNumber);
+    sessionResultFilter.setSortOrder(sortOrder);
     // Filter out the dodgy looking sessions
     List<ClientSession> sessions = new ArrayList<>(sessionManager.getSessions( sessionResultFilter));
 
@@ -168,18 +172,6 @@
             }
         });
     }
-    final String searchPriority = ParamUtils.getStringParameter(request, "searchPriority", "");
-    if (!searchPriority.trim().isEmpty()) {
-        int intValue;
-        try {
-            intValue = Integer.parseInt(searchPriority.trim());
-        } catch (final NumberFormatException e) {
-            // If we can't parse it, use a default which no session can actually have
-            intValue = Integer.MIN_VALUE;
-        }
-        final int searchCriteria = intValue;
-        filter = filter.and(clientSession -> clientSession.getPresence().getPriority() == searchCriteria);
-    }
     final String searchHostAddress = ParamUtils.getStringParameter(request, "searchHostAddress", "");
     if(!searchHostAddress.trim().isEmpty()) {
         final String searchCriteria = searchHostAddress.trim();
@@ -192,8 +184,8 @@
         });
     }
 
-    final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter,
-        "refresh", "searchName", "searchResource", "searchVersion", "searchNode", "searchStatus", "searchPresence", "searchPriority", "searchHostAddress");
+    final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter, sessionResultFilter.getSortField(), sessionResultFilter.getSortOrder() == SessionResultFilter.DESCENDING,
+        "refresh", "searchName", "searchResource", "searchVersion", "searchNode", "searchStatus", "searchPresence", "searchHostAddress");
     pageContext.setAttribute("listPager", listPager);
     pageContext.setAttribute("searchName", searchName);
     pageContext.setAttribute("searchResource", searchResource);
@@ -201,7 +193,6 @@
     pageContext.setAttribute("searchNode", searchNode);
     pageContext.setAttribute("searchStatus", searchStatus);
     pageContext.setAttribute("searchPresence", searchPresence);
-    pageContext.setAttribute("searchPriority", searchPriority);
     pageContext.setAttribute("searchHostAddress", searchHostAddress);
     pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
 %>
@@ -232,7 +223,7 @@
             <c:if test="${listPager.filtered}">
                 <fmt:message key="session.summary.filtered_session_count" />: <c:out value="${listPager.filteredItemCount}"/>
             </c:if>
-        <c:if test="${listPager.totalPages > 1}">
+            <c:if test="${listPager.totalPages > 1}">
                 -- <fmt:message key="global.showing" /> <c:out value="${listPager.firstItemNumberOnPage}"/>-<c:out value="${listPager.lastItemNumberOnPage}"/>
                 <p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]
             </c:if>
@@ -264,37 +255,12 @@
     <tr>
         <th>&nbsp;</th>
         <th nowrap>
-        <%
-            if (sessionResultFilter.getSortField() == SessionResultFilter.SORT_USER) {
-                if (sessionResultFilter.getSortOrder() == SessionResultFilter.DESCENDING) {
-        %>
-        <table border="0"><tr valign="middle"><th>
-        <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
-        <fmt:message key="session.details.name" /></a>
-        </th><th>
-        <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
-        <img src="images/sort_descending.gif" border="0" width="16" height="16" alt=""></a>
-        </th></tr></table>
-        <%
-                }
-                else {
-        %>
-        <table border="0"><tr valign="middle"><th>
-        <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
-        <fmt:message key="session.details.name" /></a>
-        </th><th>
-        <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
-        <img src="images/sort_ascending.gif" width="16" height="16" border="0" alt=""></a>
-        </th></tr></table>
-        <%
-                }
-            }
-            else {
-        %>
-            <fmt:message key="session.details.name" />
-        <%
-            }
-        %>
+            <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_USER})'>
+                <fmt:message key="session.details.name" />
+                <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_USER}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
         </th>
         <th nowrap><fmt:message key="session.details.resource" /></th>
         <th nowrap><fmt:message key="session.details.version" /></th>
@@ -303,7 +269,22 @@
         </c:if>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
-        <th nowrap><fmt:message key="session.details.priority" /></th>
+        <th nowrap>
+            <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_CLIENT_PACKETS})'>
+                <fmt:message key="session.details.received-abbreviation" />
+                <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_CLIENT_PACKETS}">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
+        <th nowrap>
+            <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_SERVER_PACKETS})'>
+                <fmt:message key="session.details.transmitted-abbreviation" />
+                <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_SERVER_PACKETS }">
+                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                </c:if>
+            </a>
+        </th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
@@ -376,19 +357,7 @@
                 <option <c:if test='${searchPresence eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
             </select>
         </td>
-        <td nowrap>
-            <input type="search"
-                   id="searchPriority"
-                   size="5"
-                   min="-128"
-                   max="127"
-                   value="<c:out value="${searchPriority}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
+        <td nowrap colspan="2">
         </td>
         <td nowrap>
             <input type="search"
@@ -410,7 +379,7 @@
         if (sessions.isEmpty()) {
     %>
         <tr>
-            <td colspan="11">
+            <td colspan="12">
 
                 <fmt:message key="session.summary.not_session" />
 

@@ -15,9 +15,13 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.util.SystemProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -32,6 +36,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class ExternalServerSaslServer implements SaslServer
 {
+    private static final Logger Log = LoggerFactory.getLogger(ExternalServerSaslServer.class);
+
     /**
      * This property controls if the inbound connection is required to provide an authorization identity in the SASL
      * EXTERNAL handshake (as part of an `auth` element). In older XMPP specifications, it was not required to have a
@@ -66,7 +72,7 @@ public class ExternalServerSaslServer implements SaslServer
     }
 
     @Override
-    public byte[] evaluateResponse( byte[] response ) throws SaslException
+    public byte[] evaluateResponse( @Nonnull final byte[] response ) throws SaslException
     {
         if ( isComplete() )
         {
@@ -75,10 +81,9 @@ public class ExternalServerSaslServer implements SaslServer
 
         final String defaultIdentity = session.getDefaultIdentity();
         final String requestedId;
-        if ( response == null || response.length == 0 )
-        {
+        if (response.length == 0 && session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY) == null) {
             if (PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID.getValue() || defaultIdentity == null) {
-                // No hostname was provided so send a challenge to get it
+                // No initial response. Send a challenge to get one, per RFC 4422 appendix-A.
                 return new byte[0];
             } else {
                 requestedId = defaultIdentity;

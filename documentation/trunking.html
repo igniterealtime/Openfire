@@ -117,7 +117,7 @@
                 </li>
                 <li>
                     <p>
-                        When one of its users of <tt>saturn.example.org</tt> sends a stanza to one of the users of <tt>mercury.example.net</tt>, <tt>saturn.example.org</tt> will attempt to establish a server-to-server connection to <tt>mercury.example.net</tt>. The objective here is to
+                        When a user of <tt>saturn.example.org</tt> sends a stanza to one of the users of <tt>mercury.example.net</tt>, <tt>saturn.example.org</tt> will attempt to establish a server-to-server connection to <tt>mercury.example.net</tt>. The objective here is to
                         ensure that <tt>saturn.example.org</tt> is made to believe that the IP address of <tt>mercury.example.net</tt> is <code>198.51.100.4</code>, instead of its actual address <code>233.252.0.6</code>. This will cause the server-to-server connection to be established
                         to <tt>trunk.example.org</tt> instead of to <tt>mercury.example.net</tt>. To this end, the property <tt>dnsutil.dnsOverride</tt> is configured with the following value on <tt>saturn.example.org</tt>: <code>{mercury.example.net,198.51.100.4:5269}</code>
                     </p>

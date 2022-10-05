@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="9.0.5" transformSequenceNumber="9">
+<install4j version="10.0.3" transformSequenceNumber="10">
   <directoryPresets config="src/bin/extra/sysconfig/openfire" />
   <application name="${compiler:APP_NAME}" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/distributions" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:sys.version}" compression="9" lzmaCompression="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:sys.version}" allPathsRelative="true" autoSave="true" macVolumeId="419a18ebe125f2bf" javaMinVersion="1.8" allowBetaVM="true">
     <languages>
@@ -29,7 +29,7 @@
       <variable name="WINDOWS_INSTALL_DIR" value="Openfire" />
     </variables>
   </application>
-  <files keepModificationTimes="true" preserveSymlinks="false">
+  <files keepModificationTimes="true">
     <mountPoints>
       <mountPoint id="33" location="resources" />
       <mountPoint id="34" location="resources/security" />
@@ -64,7 +64,6 @@
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
       </java>
-      <macStaticAssociationActions mode="selected" />
       <vmOptionsFile mode="none" />
       <iconImageFiles>
         <file path="./images/service-16x16.png" />
@@ -80,7 +79,6 @@
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
       </java>
-      <macStaticAssociationActions mode="selected" />
       <vmOptionsFile mode="none" />
       <iconImageFiles>
         <file path="./images/openfire-16x16.png" />
@@ -96,7 +94,6 @@
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
       </java>
-      <macStaticAssociationActions mode="selected" />
       <vmOptionsFile mode="none" />
       <iconImageFiles>
         <file path="./images/openfired-16x16.png" />
@@ -110,7 +107,6 @@
           <scanDirectory location="lib" />
         </classPath>
       </java>
-      <macStaticAssociationActions mode="selected" />
       <vmOptionsFile mode="none" />
     </launcher>
   </launchers>
@@ -734,7 +730,7 @@ return console.askYesNo(message, true);
     </styles>
   </installerGui>
   <mediaSets>
-    <windows name="Windows x86" id="3" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" jreBitType="32">
+    <windows name="Windows x86" id="3" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" architecture="32">
       <excludedLaunchers>
         <launcher id="22" />
       </excludedLaunchers>
@@ -764,7 +760,7 @@ return console.askYesNo(message, true);
       </exclude>
       <jreBundle jreBundleSource="none" />
     </unixArchive>
-    <windowsArchive name="Windows Archive" id="31" installDir="${compiler:APP_SHORT_NAME}" overridePrincipalLanguage="true" jreBitType="32">
+    <windowsArchive name="Windows Archive" id="31" installDir="${compiler:APP_SHORT_NAME}" overridePrincipalLanguage="true" architecture="32">
       <excludedLaunchers>
         <launcher id="22" />
       </excludedLaunchers>
@@ -780,7 +776,7 @@ return console.askYesNo(message, true);
       </exclude>
       <jreBundle jreBundleSource="none" />
     </windowsArchive>
-    <windows name="Windows x64" id="1354" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true">
+    <windows name="Windows x64" id="1354" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" architecture="64">
       <excludedLaunchers>
         <launcher id="22" />
       </excludedLaunchers>

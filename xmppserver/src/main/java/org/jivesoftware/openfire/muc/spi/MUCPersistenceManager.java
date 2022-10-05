@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -347,7 +347,8 @@ public class MUCPersistenceManager {
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 try {
-                    room.addMember(new JID(rs.getString("jid")), rs.getString("nickname"), room.getRole());
+                    final JID jid = GroupJID.fromString(rs.getString("jid"));
+                    room.addMember(jid, rs.getString("nickname"), room.getRole());
                 }
                 catch (Exception e) {
                     Log.error(e.getMessage(), e);

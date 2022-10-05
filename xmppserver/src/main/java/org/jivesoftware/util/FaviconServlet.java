@@ -213,7 +213,6 @@ public class FaviconServlet extends HttpServlet {
         return bytes;
     }
 
-    @SuppressWarnings("lgtm[java/ssrf]")
     private byte[] getImage(@Nonnull final String host) {
         final Set<URI> urls = new HashSet<>();
 

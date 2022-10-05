@@ -171,7 +171,7 @@ public class MUCPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to load reserved nickname for {} in room {}", bareJID, room.getName(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -332,12 +332,11 @@ public class MUCPersistenceManager {
                             room.addOutcast(affiliationJID, null, room.getRole());
                             break;
                         default:
-                            Log.error("Unkown affiliation value " + affiliation + " for user "
-                                    + affiliationJID.toBareJID() + " in persistent room " + room.getID());
+                            Log.error("Unknown affiliation value {} for user {} in persistent room {}", affiliation, affiliationJID.toBareJID(), room.getID());
                     }
                 }
                 catch (Exception e) {
-                    Log.error(e.getMessage(), e);
+                    Log.error("Unable to load affiliation for room: {}", room.getName(), e);
                 }
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
@@ -351,7 +350,7 @@ public class MUCPersistenceManager {
                     room.addMember(jid, rs.getString("nickname"), room.getRole());
                 }
                 catch (Exception e) {
-                    Log.error(e.getMessage(), e);
+                    Log.error("Unable to load member for room: {}", room.getName(), e);
                 }
             }
             // Set now that the room's configuration is updated in the database. Note: We need to
@@ -366,7 +365,7 @@ public class MUCPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to load room: {}", room.getName(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -494,7 +493,7 @@ public class MUCPersistenceManager {
             }
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to save room: {}", room.getName(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -535,7 +534,7 @@ public class MUCPersistenceManager {
             room.setSavedToDB(false);
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to delete room: {}", room.getName(), sqle);
             abortTransaction = true;
         }
         finally {
@@ -996,7 +995,7 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to update subject for room: {}", room.getName(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1023,7 +1022,7 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to update lock status for room: {}", room.getName(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1056,7 +1055,7 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to update empty date for room: {}", room.getName(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
@@ -1094,7 +1093,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to save member {} in room: {}", jid, room.getName(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -1113,7 +1112,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to save affiliation for {} in room: {}", jid, room.getName(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -1136,7 +1135,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to update member {} in room: {}", jid, room.getName(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -1163,7 +1162,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to change affiliation to member for {} in room: {}", jid, room.getName(), sqle);
                     abortTransaction = true;
                 }
                 finally {
@@ -1190,7 +1189,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to change member to affiliation for {} in room: {}", jid, room.getName(), sqle);
                     abortTransaction = true;
                 }
                 finally {
@@ -1211,7 +1210,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to update affiliation for {} in room: {}", jid, room.getName(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -1244,7 +1243,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to remove member for {} in room: {}", jid, room.getName(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -1262,7 +1261,7 @@ public class MUCPersistenceManager {
                     pstmt.executeUpdate();
                 }
                 catch (SQLException sqle) {
-                    Log.error(sqle.getMessage(), sqle);
+                    Log.error("A database error occurred while trying to remove affiliation for {} in room: {}", jid, room.getName(), sqle);
                 }
                 finally {
                     DbConnectionManager.closeConnection(pstmt, con);
@@ -1294,7 +1293,7 @@ public class MUCPersistenceManager {
             pstmt.executeUpdate();
         }
         catch (SQLException sqle) {
-            Log.error(sqle.getMessage(), sqle);
+            Log.error("A database error occurred while trying to remove affiliation for {} in all rooms", affiliationJID, sqle);
         }
         finally {
             DbConnectionManager.closeConnection(pstmt, con);

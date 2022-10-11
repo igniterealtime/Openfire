@@ -19,9 +19,7 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
-import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.net.SocketConnection;
-import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -465,21 +463,10 @@ public class ConnectionListener
 
     protected Connection.ClientAuth getDefaultClientAuth()
     {
-        try
-        {
-            final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( getType() );
-            final boolean hasSignedCert = identityStore.getAllCertificates()
-                .values()
-                .stream()
-                .anyMatch( certificate -> !CertificateManager.isSelfSignedCertificate( certificate ) && !CertificateManager.isSigningRequestPending( certificate ) );
-
-            if ( hasSignedCert && Arrays.asList( ConnectionType.SOCKET_S2S ).contains( getType() ) ) {
-                return Connection.ClientAuth.wanted;
-            } else {
-                return Connection.ClientAuth.disabled;
-            }
-        } catch ( Exception e ) {
-            Log.info( "An unexpected exception occurred while calculating the default client auth setting for connection type {}.", getType(), e );
+        // While SASL EXTERNAL is rarely used for clients, it is commonly used in S2S. It should be enabled by default for S2S, but not for C2S. (OF-2521)
+        if ( Arrays.asList( ConnectionType.SOCKET_S2S ).contains( getType() ) ) {
+            return Connection.ClientAuth.wanted;
+        } else {
             return Connection.ClientAuth.disabled;
         }
     }

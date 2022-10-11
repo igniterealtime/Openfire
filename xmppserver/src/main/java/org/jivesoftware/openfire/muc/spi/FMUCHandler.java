@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1008,11 +1008,14 @@ public class FMUCHandler
             for ( final Packet response : outboundJoinProgress.getResponses() ) {
                 try
                 {
+                    final List<Message> history = new LinkedList<>();
                     if ( response instanceof Presence ) {
                         makeRemoteOccupantJoinRoom((Presence) response);
                     } else if ( response instanceof Message && response.getElement().element("body") != null) {
-                        addRemoteHistoryToRoom((Message) response);
+                        history.add((Message) response);
                     } else if ( response instanceof Message && response.getElement().element("subject") != null) {
+                        // When the subject is received, all historic messages must have already been received.
+                        addRemoteHistoryToRoom(history);
                         applyRemoteSubjectToRoom((Message) response, roomRole);
                     }
                 } catch ( Exception e ) {
@@ -1047,37 +1050,40 @@ public class FMUCHandler
         }
     }
 
-    private void addRemoteHistoryToRoom( @Nonnull final Message message )
+    private void addRemoteHistoryToRoom( @Nonnull final List<Message> messages )
     {
-        final Element fmuc = message.getElement().element(FMUC);
-        if ( fmuc == null ) {
-            throw new IllegalArgumentException( "Argument 'presence' should be an FMUC presence, but it does not appear to be: it is missing the FMUC child element." );
-        }
-
-        Log.trace("(room: '{}'): Received history from joined FMUC node '{}'. Applying it locally.", room.getJID(), outboundJoinProgress.getPeer() );
-
-        final JID userJID = new JID( fmuc.attributeValue("from"));
-        final String nickname = message.getFrom().getResource();
-        Date sentDate;
-        final Element delay = message.getChildElement("delay","urn:xmpp:delay");
-        if ( delay != null ) {
-            final String stamp = delay.attributeValue("stamp");
-            try
-            {
-                sentDate = new XMPPDateTimeFormat().parseString(stamp);
+        final List<Message> parsedMessages = new LinkedList<>();
+        for (final Message message : messages) {
+            final Element fmuc = message.getElement().element(FMUC);
+            if (fmuc == null) {
+                throw new IllegalArgumentException("Argument 'presence' should be an FMUC presence, but it does not appear to be: it is missing the FMUC child element.");
             }
-            catch ( ParseException e )
-            {
-                Log.warn( "Cannot parse 'stamp' from delay element in message as received in FMUC join: {}", message, e );
+
+            Log.trace("(room: '{}'): Received history from joined FMUC node '{}'. Applying it locally.", room.getJID(), outboundJoinProgress.getPeer());
+
+            final JID userJID = new JID(fmuc.attributeValue("from"));
+            final String nickname = message.getFrom().getResource();
+            Date sentDate;
+            final Element delay = message.getChildElement("delay", "urn:xmpp:delay");
+            if (delay != null) {
+                final String stamp = delay.attributeValue("stamp");
+                try {
+                    sentDate = new XMPPDateTimeFormat().parseString(stamp);
+                } catch (ParseException e) {
+                    Log.warn("Cannot parse 'stamp' from delay element in message as received in FMUC join: {}", message, e);
+                    sentDate = null;
+                }
+            } else {
                 sentDate = null;
+                Log.warn("Missing delay element in message received in FMUC join: {}", message);
             }
-        } else {
-            sentDate = null;
-            Log.warn( "Missing delay element in message received in FMUC join: {}", message );
+
+            final Message cleanedUpMessage = createCopyWithoutFMUC(message);
+            final Message parsed = room.getRoomHistory().parseHistoricMessage(userJID.toString(), nickname, sentDate, cleanedUpMessage.getSubject(), cleanedUpMessage.getBody(), cleanedUpMessage.toXML());
+            parsedMessages.add(parsed);
         }
 
-        final Message cleanedUpMessage = createCopyWithoutFMUC(message);
-        room.getRoomHistory().addOldMessage( userJID.toString(), nickname, sentDate, cleanedUpMessage.getSubject(), cleanedUpMessage.getBody(), cleanedUpMessage.toXML() );
+        room.getRoomHistory().addOldMessages(parsedMessages);
     }
 
     /**

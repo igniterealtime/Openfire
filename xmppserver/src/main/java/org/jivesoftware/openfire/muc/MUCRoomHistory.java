@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -163,9 +164,51 @@ public final class MUCRoomHistory implements Externalizable {
      * @param subject the subject included in the message.
      * @param body the body of the message.
      * @param stanza the stanza to add
+     * @deprecated Replaced by a combination of {@link #parseHistoricMessage} and {@link #addOldMessages}. Less overhead when adding more than one message.
      */
+    @Deprecated // Remove in Openfire 4.8.0 or later.
     public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
-            String body, String stanza)
+            String body, String stanza) {
+        final Message message = parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza);
+        historyStrategy.addMessage(message);
+    }
+
+    /**
+     * Add message(s) to the history of the chat room.
+     *
+     * The messages will likely come from the database when loading the room history from the database.
+     * @param oldMessages The messages to add to the history
+     */
+    public void addOldMessages(@Nonnull final List<Message> oldMessages) {
+        addOldMessages(oldMessages.toArray(new Message[0]));
+    }
+
+    /**
+     * Add message(s) to the history of the chat room.
+     *
+     * The messages will likely come from the database when loading the room history from the database.
+     * @param oldMessages The messages to add to the history
+     */
+    public void addOldMessages(@Nonnull final Message... oldMessages) {
+        historyStrategy.addMessage(oldMessages);
+    }
+
+    /**
+     * Creates a new message, representing a message that was exchanged in a chat room in the past, based on the
+     * provided information.
+     *
+     * This information will likely come from the database when loading the room history from the database.
+     *
+     * @param senderJID the sender's JID of the message.
+     * @param nickname the sender's nickname of the message.
+     * @param sentDate the date when the message was sent to the room.
+     * @param subject the subject included in the message.
+     * @param body the body of the message.
+     * @param stanza the stanza to add
+     * @return A historic chat message.
+     */
+    public Message parseHistoricMessage(String senderJID, String nickname, Date sentDate, String subject,
+                                        String body, String stanza)
     {
         Message message = new Message();
         message.setType(Message.Type.groupchat);
@@ -223,7 +266,7 @@ public final class MUCRoomHistory implements Externalizable {
             // Set the Room JID as the "from" attribute
             delayInformation.addAttribute("from", getRoom().getRole().getRoleAddress().toString());
         }
-        historyStrategy.addMessage(message);
+        return message;
     }
 
     /**

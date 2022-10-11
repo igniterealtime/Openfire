@@ -645,7 +645,7 @@ public class ServerDialback {
         }
 
         if (host_unknown) {
-            host_unknown = Trunking.isTrunkingEnabledFor(recipient);
+            host_unknown = !Trunking.isTrunkingEnabledFor(recipient);
         }
         return host_unknown;
     }

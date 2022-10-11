@@ -25,6 +25,7 @@ import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 
 import javax.annotation.Nonnull;
 import java.math.BigInteger;
@@ -796,6 +797,7 @@ public class MUCPersistenceManager {
                     Log.debug("Unable to skip to the last {} rows of the result set.", maxNumber, e);
                 }
 
+                final List<Message> oldMessages = new LinkedList<>();
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
@@ -803,7 +805,11 @@ public class MUCPersistenceManager {
                     String subject = rs.getString("subject");
                     String body = rs.getString("body");
                     String stanza = rs.getString("stanza");
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
+                    oldMessages.add(room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza));
+                }
+
+                if (!oldMessages.isEmpty()) {
+                    room.getRoomHistory().addOldMessages(oldMessages);
                 }
             }
 
@@ -811,8 +817,9 @@ public class MUCPersistenceManager {
             // possible
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
                 room.getSubject().length() > 0) {
-                room.getRoomHistory().addOldMessage(room.getRole().getRoleAddress().toString(),
+                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getRole().getRoleAddress().toString(),
                     null, room.getModificationDate(), room.getSubject(), null, null);
+                room.getRoomHistory().addOldMessages(subject);
             }
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -853,7 +860,8 @@ public class MUCPersistenceManager {
                     String subject   = resultSet.getString("subject");
                     String body      = resultSet.getString("body");
                     String stanza    = resultSet.getString("stanza");
-                    room.getRoomHistory().addOldMessage(senderJID, nickname, sentDate, subject, body, stanza);
+                    final Message message = room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza);
+                    room.getRoomHistory().addOldMessages(message);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
                 }
@@ -870,12 +878,14 @@ public class MUCPersistenceManager {
                 && loadedRoom.getSubject() != null
                 && loadedRoom.getSubject().length() > 0)
             {
-                loadedRoom.getRoomHistory().addOldMessage(  loadedRoom.getRole().getRoleAddress().toString(),
+                final Message message = loadedRoom.getRoomHistory().parseHistoricMessage(
+                                                            loadedRoom.getRole().getRoleAddress().toString(),
                                                             null,
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),
                                                             null,
                                                             null);
+                loadedRoom.getRoomHistory().addOldMessages(message);
             }
         }
     }

@@ -129,8 +129,7 @@ public abstract class LocalSession implements Session {
         conn = connection;
         this.streamID = streamID;
         this.serverName = serverName;
-        String id = streamID.getID();
-        this.address = new JID(null, serverName, id, true);
+        this.address = new JID(null, serverName, UUID.randomUUID().toString(), true);
         this.sessionManager = SessionManager.getInstance();
         this.streamManager = new StreamManager(this);
         this.language = language;

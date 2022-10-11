@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.io.ObjectOutput;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * <p>Multi-User Chat rooms may cache history of the conversations in the room in order to
@@ -178,17 +180,25 @@ public class HistoryStrategy implements Externalizable {
     }
 
     /**
-     * Add a message to the current chat history. The strategy type will determine what 
+     * Add a message(s) to the current chat history. The strategy type will determine what
      * actually happens to the message.
      *
-     * @param packet The packet to add to the chatroom's history.
+     * @param packets The messages to add to the chatroom's history.
      */
-    public void addMessage(Message packet){
-
+    public void addMessage(@Nonnull final Message... packets)
+    {
         // Room subject change messages are special
-        boolean subjectChange = isSubjectChangeRequest(packet);
-        if (subjectChange) {
-            roomSubject = packet;
+        for (final Message packet : packets) {
+            boolean subjectChange = isSubjectChangeRequest(packet);
+            if (subjectChange) {
+                roomSubject = packet;
+            }
+        }
+
+        // Do not process subject changes anymore after this point.
+        final List<Message> messages = Arrays.stream(packets).filter(p -> !isSubjectChangeRequest(p)).collect(Collectors.toList());
+
+        if (messages.isEmpty()) {
             return;
         }
 
@@ -214,7 +224,9 @@ public class HistoryStrategy implements Externalizable {
             } else {
                 history = optional.get();
             }
-            history.add(packet, strategyType, strategyMaxNumber);
+            for (final Message message : messages) {
+                history.add(message, strategyType, strategyMaxNumber);
+            }
 
             // Explicitly add back to cache (Hazelcast won't update-by-reference).
             MUC_HISTORY_CACHE.put(roomJID, CacheableOptional.of(history));

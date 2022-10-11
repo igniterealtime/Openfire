@@ -265,6 +265,7 @@ CREATE TABLE ofMucConversationLog (
   body                CLOB,
   stanza              CLOB
 );
+CREATE INDEX ofMucConvLog_roomtime_idx ON ofMucConversationLog (roomID, logTime);
 CREATE INDEX ofMucConvLog_time_idx ON ofMucConversationLog (logTime);
 CREATE INDEX ofMucConvLog_msg_id ON ofMucConversationLog (messageID);
 
@@ -391,7 +392,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 33);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 34);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

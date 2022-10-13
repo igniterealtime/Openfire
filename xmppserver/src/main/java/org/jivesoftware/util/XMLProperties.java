@@ -16,38 +16,18 @@
 
 package org.jivesoftware.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-
 import org.apache.commons.text.StringEscapeUtils;
-import org.dom4j.Attribute;
-import org.dom4j.CDATA;
-import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Node;
+import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
 
 /**
  * Provides the the ability to use simple XML property files. Each property is
@@ -81,31 +61,66 @@ public class XMLProperties {
     private Map<String, String> propertyCache = new HashMap<>();
 
     /**
-     * Creates a new empty XMLPropertiesTest object.
+     * Creates a new empty XMLProperties object. The object will only have an empty root element.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
+     *
+     * @throws IOException if an exception occurs initializing the properties
+     * @return an XMLProperties instance that is empty
+     */
+    public static XMLProperties getNonPersistedInstance() throws IOException {
+        return new XMLProperties();
+    }
+
+    /**
+     * Creates a new empty XMLProperties object.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
      *
      * @throws IOException if an error occurs loading the properties.
+     * @deprecated replaced by {@link #getNonPersistedInstance()}
      */
+    @Deprecated // Make 'private' in or after Openfire 4.8.0.
     public XMLProperties() throws IOException {
        buildDoc(new StringReader("<root />"));
     }
 
     /**
-     * Creates a new XMLPropertiesTest object.
+     * Creates a new XMLProperties object.
      *
      * @param fileName the full path the file that properties should be read from
      *                 and written to.
      * @throws IOException if an error occurs loading the properties.
+     * @deprecated use XMLProperties(Path) instead
      */
+    @Deprecated // Remove in or after Openfire 4.8.0
     public XMLProperties(String fileName) throws IOException {
         this(Paths.get(fileName));
     }
 
     /**
-     * Loads XML properties from a stream.
+     * Creates a new XMLProperties object with content loaded from a stream.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
      *
      * @param in the input stream of XML.
      * @throws IOException if an exception occurs when reading the stream.
+     * @return an XMLProperties instance populated with data from the stream.
      */
+    public static XMLProperties getNonPersistedInstance(@Nonnull final InputStream in) throws IOException {
+        return new XMLProperties(in);
+    }
+
+    /**
+     * Loads XML properties from a stream.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
+     *
+     * @param in the input stream of XML.
+     * @throws IOException if an exception occurs when reading the stream.
+     * @deprecated replaced by {@link #getNonPersistedInstance(InputStream)}
+     */
+    @Deprecated // Make 'private' in or after Openfire 4.8.0.
     public XMLProperties(InputStream in) throws IOException {
         try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             buildDoc(reader);
@@ -124,7 +139,7 @@ public class XMLProperties {
     }
 
     /**
-     * Creates a new XMLPropertiesTest object.
+     * Creates a new XMLProperties object.
      *
      * @param file the file that properties should be read from and written to.
      * @throws IOException if an error occurs loading the properties.
@@ -288,7 +303,7 @@ public class XMLProperties {
         }
         return result;
     }
-    
+
     /**
      * Return all values who's path matches the given property
      * name as a String array, or an empty array if the if there
@@ -513,7 +528,7 @@ public class XMLProperties {
      * @return True if the value was added to the list; false if the value was already present
      */
     public boolean addToList(String propertyName, String value) {
-        
+
         List<String> properties = getProperties(propertyName, true);
         boolean propertyWasAdded = properties.add(value);
         if (propertyWasAdded) {
@@ -531,7 +546,7 @@ public class XMLProperties {
      * @return True if the value was removed from the list; false if the value was not found
      */
     public boolean removeFromList(String propertyName, String value) {
-        
+
         List<String> properties = getProperties(propertyName, true);
         boolean propertyWasRemoved = properties.remove(value);
         if (propertyWasRemoved) {
@@ -554,7 +569,7 @@ public class XMLProperties {
         }
         return result;
     }
-    
+
     private List<String> getChildPropertyNamesFor(Element parent, String parentName) {
         List<String> result = new ArrayList<>();
         for (Element child : parent.elements()) {
@@ -753,7 +768,7 @@ public class XMLProperties {
      */
     private synchronized boolean saveProperties() {
         if (file == null) {
-            Log.error("Unable to save XML properties; no file specified");
+            Log.error("Unable to save XML properties", new IllegalStateException("No file specified"));
             return false;
         }
 

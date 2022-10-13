@@ -1267,14 +1267,15 @@ public class JiveGlobals {
                     openfireProperties = new XMLProperties(home + File.separator + getConfigName());
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe.getMessage());
+                    Log.error("Unable to load default Openfire properties from: {}{}{}", home, File.separator, getConfigName(), ioe);
                     failedLoading = true;
                 }
             }
             // create a default/empty XML properties set (helpful for unit testing)
             if (openfireProperties == null) {
-                try { 
-                    openfireProperties = new XMLProperties();
+                try {
+                    Log.warn("Default properties have not been loaded from file. Using a non-persisting dummy properties object.");
+                    openfireProperties = XMLProperties.getNonPersistedInstance();
                 } catch (IOException e) {
                     Log.error("Failed to setup default openfire properties", e);
                 }            	
@@ -1313,14 +1314,15 @@ public class JiveGlobals {
                     }, 1000);
                 }
                 catch (IOException ioe) {
-                    Log.error(ioe.getMessage());
+                    Log.error("Unable to load default security properties from: {}{}{}", home, File.separator, getConfigName(), ioe);
                     failedLoading = true;
                 }
             }
             // create a default/empty XML properties set (helpful for unit testing)
             if (securityProperties == null) {
-                try { 
-                    securityProperties = new XMLProperties();
+                try {
+                    Log.warn("Security properties have not been loaded from file. Using a non-persisting dummy properties object.");
+                    securityProperties = XMLProperties.getNonPersistedInstance();
                 } catch (IOException e) {
                     Log.error("Failed to setup default security properties", e);
                 }            	

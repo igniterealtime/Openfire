@@ -28,7 +28,7 @@ public class XMLPropertiesTest {
     @Test
     public void testAttributes() throws Exception {
         String xml = "<root><foo></foo></root>";
-        XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
+        XMLProperties props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes()));
         assertNull(props.getAttribute("foo","bar"));
         xml = "<root><foo bar=\"test123\"></foo></root>";
         props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
@@ -37,7 +37,7 @@ public class XMLPropertiesTest {
 
     @Test
     public void testGetProperty() throws Exception {
-        XMLProperties props = new XMLProperties(getClass().getResourceAsStream("XMLProperties.test01.xml"));
+        XMLProperties props = XMLProperties.getNonPersistedInstance(getClass().getResourceAsStream("XMLProperties.test01.xml"));
         assertEquals("123", props.getProperty("foo.bar"));
         assertEquals("456", props.getProperty("foo.bar.baz"));
         assertNull(props.getProperty("foo"));
@@ -46,7 +46,7 @@ public class XMLPropertiesTest {
 
     @Test
     public void testGetChildPropertiesIterator() throws Exception {
-        XMLProperties props = new XMLProperties(getClass().getResourceAsStream("XMLProperties.test02.xml"));
+        XMLProperties props = XMLProperties.getNonPersistedInstance(getClass().getResourceAsStream("XMLProperties.test02.xml"));
         String[] names = {"a","b","c","d"};
         String[] values = {"1","2","3","4"};
         String[] children = props.getChildrenProperties("foo.bar");
@@ -62,7 +62,7 @@ public class XMLPropertiesTest {
     @Test
     public void testGetPropertyWithXMLEntity() throws Exception {
         String xml = "<root><foo>foo&amp;bar</foo></root>";
-        XMLProperties props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
+        XMLProperties props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes()));
         assertEquals("foo&bar", props.getProperty("foo"));
     }
 }

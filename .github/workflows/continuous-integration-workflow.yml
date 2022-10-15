@@ -103,10 +103,10 @@ jobs:
       - name: check branch ${{ github.ref }} is either master or a version number
         id: check-branch
         run: |
-          if [[ ${{ github.ref }} == 'refs/heads/master' || ${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then
-            echo "::set-output name=is_publishable_branch::true"
+          if [[ ${{ github.ref }} == 'refs/heads/main' || ${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then            
+            echo "is_publishable_branch=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=is_publishable_branch::false"
+            echo "is_publishable_branch=false" >> $GITHUB_OUTPUT
           fi
 
   connectivity:
@@ -213,7 +213,7 @@ jobs:
             DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
             echo "is_DOCKERHUB_SECRET_set: ${{ env.DOCKERHUB_SECRET != '' }}"
-            echo "::set-output name=is_DOCKERHUB_SECRET_set::${{ env.DOCKERHUB_SECRET != '' }}"
+            echo "is_DOCKERHUB_SECRET_set=${{ env.DOCKERHUB_SECRET != '' }}" >> $GITHUB_OUTPUT
 
 
   publish-docker:

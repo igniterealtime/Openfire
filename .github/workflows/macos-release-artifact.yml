@@ -25,7 +25,7 @@ jobs:
         run: |
           set -x
           version=$(echo ${{ github.ref }} | cut -d '/' -f3 | cut -c 2- | sed 's/\./_/g')
-          echo "::set-output name=version::$version"
+          echo "version=$version" >> $GITHUB_OUTPUT
           echo "version is '$version'"
 
       - name: Get release

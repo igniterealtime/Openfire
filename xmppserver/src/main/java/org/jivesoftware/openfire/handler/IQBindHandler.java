@@ -133,7 +133,7 @@ public class IQBindHandler extends IQHandler {
 
                     int conflictCount = oldSession.incrementConflictCount();
                     if (conflictCount > conflictLimit) {
-                        Log.info("Conflicting resource binding request from {} using {}. Conflict count {} is over the configured limit of {}. Returning conflict error to and closing session of OLD client (stream ID: {}).", packet.getFrom(), conflictCount, conflictLimit, resource, oldSession.getStreamID());
+                        Log.info("Conflicting resource binding request from {} using {}. Conflict count {} is over the configured limit of {}. Returning conflict error to and closing session of OLD client (stream ID: {}).", packet.getFrom(), resource, conflictCount, conflictLimit, oldSession.getStreamID());
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         oldSession.deliverRawText(error.toXML());
                         oldSession.close(); // When living on a remote cluster node, this will prevent that session from becoming 'resumable'.
@@ -146,7 +146,7 @@ public class IQBindHandler extends IQHandler {
                         }
                     }
                     else {
-                        Log.info("Conflicting resource binding request from {} using {}. Conflict count {} is NOT over the configured limit of {}. Returning conflict error to NEW client (stream ID: {}).", packet.getFrom(), conflictCount, conflictLimit, resource, session.getStreamID());
+                        Log.info("Conflicting resource binding request from {} using {}. Conflict count {} is NOT over the configured limit of {}. Returning conflict error to NEW client (stream ID: {}).", packet.getFrom(), resource, conflictCount, conflictLimit, session.getStreamID());
                         reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.conflict);
                         // Send the error directly since a route does not exist at this point.

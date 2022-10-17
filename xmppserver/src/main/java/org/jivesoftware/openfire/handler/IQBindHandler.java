@@ -60,13 +60,11 @@ public class IQBindHandler extends IQHandler {
 
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
+        Log.trace("Handling resource binding request from {}", packet.getFrom());
         LocalClientSession session = (LocalClientSession) sessionManager.getSession(packet.getFrom());
         // If no session was found then answer an error (if possible)
         if (session == null) {
-            Log.error("Error during resource binding. Session not found in " +
-                    sessionManager.getPreAuthenticatedKeys() +
-                    " for key " +
-                    packet.getFrom());
+            Log.warn("Error during resource binding. Session not found in {} for key {}. Returning internal-server-error to client.", sessionManager.getPreAuthenticatedKeys(), packet.getFrom());
             // This error packet will probably won't make it through
             IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
@@ -82,13 +80,16 @@ public class IQBindHandler extends IQHandler {
         if (resource == null || resource.length() == 0) {
             // None was defined so use the random generated resource
             resource = session.getAddress().getResource();
+            Log.trace("Resource binding request from {} did not request a particular resource. Generated random value: {}", packet.getFrom(), resource);
         }
         else {
             // Check that the desired resource is valid
             try {
+                Log.trace("Resource binding request from {} requested resource value: {}", packet.getFrom(), resource);
                 resource = JID.resourceprep(resource);
             }
             catch (IllegalArgumentException e) {
+                Log.warn("Invalid value requested during resource binding request from {}. Offending value: {}. Returning jid-malformed error to client (stream ID: {}).", packet.getFrom(), resource, session.getStreamID(), e);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.jid_malformed);
                 // Send the error directly since a route does not exist at this point.
@@ -99,6 +100,7 @@ public class IQBindHandler extends IQHandler {
         // Get the token that was generated during the SASL authentication
         AuthToken authToken = session.getAuthToken();
         if (authToken == null) {
+            Log.warn("User {} must be authenticated before attempting to bind a resource. Returning not_authorized error to client (stream ID: {}).", packet.getFrom(), session.getStreamID());
             // User must be authenticated before binding a resource
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.not_authorized);
@@ -108,6 +110,7 @@ public class IQBindHandler extends IQHandler {
         }
         if (authToken.isAnonymous()) {
             // User used ANONYMOUS SASL so initialize the session as an anonymous login
+            Log.trace("Resource binding request from {} on an anonymous session. Setting session as anonymous login.", packet.getFrom());
             session.setAnonymousAuth();
         }
         else {
@@ -116,9 +119,11 @@ public class IQBindHandler extends IQHandler {
             // if we should kick it off or refuse the new connection
             ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
             if (oldSession != null) {
+                Log.trace("Resource binding request from {} using {} that conflicts with a pre-existing session: {}", packet.getFrom(), resource, oldSession.getStreamID());
                 try {
                     int conflictLimit = sessionManager.getConflictKickLimit();
                     if (conflictLimit == SessionManager.NEVER_KICK) {
+                        Log.info("Conflicting resource binding request from {} using {}. Openfire is configured with 'never kick' setting. Returning conflict error to NEW client (stream ID: {}).", packet.getFrom(), resource, session.getStreamID());
                         reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.conflict);
                         // Send the error directly since a route does not exist at this point.
@@ -128,7 +133,7 @@ public class IQBindHandler extends IQHandler {
 
                     int conflictCount = oldSession.incrementConflictCount();
                     if (conflictCount > conflictLimit) {
-                        Log.debug( "Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession );
+                        Log.info("Conflicting resource binding request from {} using {}. Conflict count {} is over the configured limit of {}. Returning conflict error to and closing session of OLD client (stream ID: {}).", packet.getFrom(), conflictCount, conflictLimit, resource, oldSession.getStreamID());
                         StreamError error = new StreamError(StreamError.Condition.conflict);
                         oldSession.deliverRawText(error.toXML());
                         oldSession.close(); // When living on a remote cluster node, this will prevent that session from becoming 'resumable'.
@@ -141,6 +146,7 @@ public class IQBindHandler extends IQHandler {
                         }
                     }
                     else {
+                        Log.info("Conflicting resource binding request from {} using {}. Conflict count {} is NOT over the configured limit of {}. Returning conflict error to NEW client (stream ID: {}).", packet.getFrom(), conflictCount, conflictLimit, resource, session.getStreamID());
                         reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.conflict);
                         // Send the error directly since a route does not exist at this point.
@@ -149,18 +155,25 @@ public class IQBindHandler extends IQHandler {
                     }
                 }
                 catch (Exception e) {
-                    Log.error("Error during login", e);
+                    Log.error("Error during resource binding (resolving resource conflicts) from {} using {} (stream ID: {})", packet.getFrom(), resource, session.getStreamID(), e);
                 }
             }
             // If the connection was not refused due to conflict, log the user in
+            Log.trace("Resource binding request from {} on a non-anonymous session. Accepted resource value {}.", packet.getFrom(), resource);
             session.setAuthToken(authToken, resource);
         }
 
         child.addElement("jid").setText(session.getAddress().toString());
+
         // Send the response directly since a route does not exist at this point.
         session.process(reply);
+        Log.trace("Sent resource binding response to {} (on stream ID: {})", packet.getFrom(), session.getStreamID());
+
         // After the client has been informed, inform all listeners as well.
+        Log.trace("Dispatching 'resource_bound' event after successfully binding resource for {} (on stream ID: {})", packet.getFrom(), session.getStreamID());
         SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
+        Log.trace("Finished dispatching 'resource_bound' event after successfully binding resource for {} (on stream ID: {})", packet.getFrom(), session.getStreamID());
+
         return null;
     }
 

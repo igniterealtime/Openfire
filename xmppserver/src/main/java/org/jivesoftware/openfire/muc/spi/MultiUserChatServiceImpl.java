@@ -400,35 +400,33 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final JID userJid = packet.getFrom();
                 occupantManager.registerActivity(userJid);
                 Log.trace( "Stanza recipient: {}, room name: {}, sender: {}", recipient, roomName, userJid );
-                try (final AutoCloseableReentrantLock.AutoCloseableLock ignored = new AutoCloseableReentrantLock(MultiUserChatServiceImpl.class, userJid.toString()).lock()) {
-                    if ( !packet.getElement().elements(FMUCHandler.FMUC).isEmpty() ) {
-                        Log.trace( "Stanza is a FMUC stanza." );
-                        if (roomName == null) {
-                            Log.warn("Unable to process FMUC stanza, as it does not address a room: {}", packet.toXML());
-                        } else {
-                            final Lock lock = getChatRoomLock(roomName);
-                            lock.lock();
-                            try {
-                                final MUCRoom chatRoom = getChatRoom(roomName);
-                                if (chatRoom != null) {
-                                    chatRoom.getFmucHandler().process(packet);
-                                    // Ensure that other cluster nodes see the changes applied by the method above.
-                                    syncChatRoom(chatRoom);
-                                } else {
-                                    Log.warn("Unable to process FMUC stanza, as room it's addressed to does not exist: {}", roomName);
-                                    // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
-                                }
-                            } finally {
-                                lock.unlock();
-                            }
-                        }
-                    } else if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue() && packet instanceof IQ && ((IQ) packet).isResponse() && (((IQ) packet).getChildElement() != null) && ((IQ) packet).getChildElement().getNamespaceURI().equals(IQMUCvCardHandler.NAMESPACE)) {
-                        Log.trace( "Stanza is a VCard response stanza." );
-                        processVCardResponse((IQ) packet);
+                if ( !packet.getElement().elements(FMUCHandler.FMUC).isEmpty() ) {
+                    Log.trace( "Stanza is a FMUC stanza." );
+                    if (roomName == null) {
+                        Log.warn("Unable to process FMUC stanza, as it does not address a room: {}", packet.toXML());
                     } else {
-                        Log.trace( "Stanza is a regular MUC stanza." );
-                        processRegularStanza(packet);
+                        final Lock lock = getChatRoomLock(roomName);
+                        lock.lock();
+                        try {
+                            final MUCRoom chatRoom = getChatRoom(roomName);
+                            if (chatRoom != null) {
+                                chatRoom.getFmucHandler().process(packet);
+                                // Ensure that other cluster nodes see the changes applied by the method above.
+                                syncChatRoom(chatRoom);
+                            } else {
+                                Log.warn("Unable to process FMUC stanza, as room it's addressed to does not exist: {}", roomName);
+                                // FIXME need to send error back in case of IQ request, and FMUC join. Might want to send error back in other cases too.
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
                     }
+                } else if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue() && packet instanceof IQ && ((IQ) packet).isResponse() && (((IQ) packet).getChildElement() != null) && ((IQ) packet).getChildElement().getNamespaceURI().equals(IQMUCvCardHandler.NAMESPACE)) {
+                    Log.trace( "Stanza is a VCard response stanza." );
+                    processVCardResponse((IQ) packet);
+                } else {
+                    Log.trace( "Stanza is a regular MUC stanza." );
+                    processRegularStanza(packet);
                 }
             }
         }

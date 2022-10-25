@@ -27,7 +27,10 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
 import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +44,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocol,
@@ -95,17 +101,9 @@ public class HttpSessionManager {
 
         this.sessionManager = SessionManager.getInstance();
 
-        final BlockingQueue<Runnable> queue;
-        if (BACKPRESSURE_ENABLED.getValue()) {
-            // Do _not_ use  ThreadPoolExecutor.CallerRunsPolicy, as that can mess up the order in which stanzas are processed!
-            queue = new BlocksOnOfferQueue<>(QUEUE_CAPACITY.getValue());
-        }
-        else {
-            queue = new LinkedBlockingQueue<>(QUEUE_CAPACITY.getValue());
-        }
-
         stanzaWorkerPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
-            queue, new NamedThreadFactory("httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null)
+                new LinkedBlockingQueue<>(), // unbounded task queue
+                new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
         );
 
         if (JMXManager.isEnabled()) {
@@ -147,27 +145,6 @@ public class HttpSessionManager {
         .setChronoUnit(ChronoUnit.SECONDS)
         .setDefaultValue(Duration.ofSeconds(60))
         .setDynamic(false)
-        .build();
-
-    /**
-     * Maximum amount of tasks (roughly: stanzas) that can be queued for processing, before the processing executor
-     * will start to invoke the rejection policy.
-     */
-    public static SystemProperty<Integer> QUEUE_CAPACITY = SystemProperty.Builder.ofType(Integer.class)
-        .setKey("xmpp.httpbind.worker.queue-capacity")
-        .setDynamic(false)
-        .setDefaultValue(Integer.MAX_VALUE)
-        .setMinValue(1)
-        .build();
-
-    /**
-     * Backpressure slows down the provider of tasks when the queue is full, by making the threads invoking
-     * {@link #execute(Runnable)} block until there is room again in the queue.
-     */
-    public static SystemProperty<Boolean> BACKPRESSURE_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.httpbind.worker.backpressure-enabled")
-        .setDynamic(false)
-        .setDefaultValue(false)
         .build();
 
     /**

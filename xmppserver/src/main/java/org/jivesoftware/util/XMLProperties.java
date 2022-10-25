@@ -23,6 +23,7 @@ import org.dom4j.io.SAXReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -65,32 +66,67 @@ public class XMLProperties {
     private final Map<String, Optional<String>> propertyCache = new HashMap<>();
 
     /**
-     * Creates a new empty XMLPropertiesTest object.
+     * Creates a new empty XMLProperties object. The object will only have an empty root element.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
+     *
+     * @throws IOException if an exception occurs initializing the properties
+     * @return an XMLProperties instance that is empty
+     */
+    public static XMLProperties getNonPersistedInstance() throws IOException {
+        return new XMLProperties();
+    }
+
+    /**
+     * Creates a new empty XMLProperties object.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
      *
      * @throws IOException if an error occurs loading the properties.
+     * @deprecated replaced by {@link #getNonPersistedInstance()}
      */
+    @Deprecated // Make 'private' in or after Openfire 4.8.0.
     public XMLProperties() throws IOException {
         file = null;
         document = buildDoc(new StringReader("<root />"));
     }
 
     /**
-     * Creates a new XMLPropertiesTest object.
+     * Creates a new XMLProperties object.
      *
      * @param fileName the full path the file that properties should be read from
      *                 and written to.
      * @throws IOException if an error occurs loading the properties.
+     * @deprecated use XMLProperties(Path) instead
      */
+    @Deprecated // Remove in or after Openfire 4.8.0
     public XMLProperties(String fileName) throws IOException {
         this(Paths.get(fileName));
     }
 
     /**
-     * Loads XML properties from a stream.
+     * Creates a new XMLProperties object with content loaded from a stream.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
      *
      * @param in the input stream of XML.
      * @throws IOException if an exception occurs when reading the stream.
+     * @return an XMLProperties instance populated with data from the stream.
      */
+    public static XMLProperties getNonPersistedInstance(@Nonnull final InputStream in) throws IOException {
+        return new XMLProperties(in);
+    }
+
+    /**
+     * Loads XML properties from a stream.
+     *
+     * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
+     *
+     * @param in the input stream of XML.
+     * @throws IOException if an exception occurs when reading the stream.
+     * @deprecated replaced by {@link #getNonPersistedInstance(InputStream)}
+     */
+    @Deprecated // Make 'private' in or after Openfire 4.8.0.
     public XMLProperties(InputStream in) throws IOException {
         file = null;
         try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
@@ -99,7 +135,7 @@ public class XMLProperties {
     }
 
     /**
-     * Creates a new XMLPropertiesTest object.
+     * Creates a new XMLProperties object.
      *
      * @param file the file that properties should be read from and written to.
      * @throws IOException if an error occurs loading the properties.
@@ -805,7 +841,7 @@ public class XMLProperties {
      */
     private boolean saveProperties() {
         if (file == null) {
-            Log.error("Unable to save XML properties; no file specified");
+            Log.error("Unable to save XML properties", new IllegalStateException("No file specified"));
             return false;
         }
 

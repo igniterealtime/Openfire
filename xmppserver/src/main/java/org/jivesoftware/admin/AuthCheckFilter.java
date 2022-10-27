@@ -336,7 +336,7 @@ public class AuthCheckFilter implements Filter {
     public static boolean passesBlocklist(@Nonnull final ServletRequest req) {
         // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
         // set to 'true' to have the below report the true 'peer' address.
-        final String remoteAddr = req.getRemoteAddr();
+        final String remoteAddr = removeBracketsFromIpv6Address(req.getRemoteAddr());
         final boolean result = !isOnList(IP_ACCESS_BLOCKLIST.getValue(), remoteAddr);
         Log.debug("IP address '{}' {} pass the block list.", remoteAddr, result ? "does" : "does not");
         return result;
@@ -353,7 +353,7 @@ public class AuthCheckFilter implements Filter {
     public static boolean passesAllowList(@Nonnull final ServletRequest req) {
         // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
         // set to 'true' to have the below report the true 'peer' address.
-        final String remoteAddr = req.getRemoteAddr();
+        final String remoteAddr = removeBracketsFromIpv6Address(req.getRemoteAddr());
         final Set<String> allowList = IP_ACCESS_ALLOWLIST.getValue();
         final boolean result = allowList.isEmpty() || isOnList(allowList, remoteAddr);
         Log.debug("IP address '{}' {} pass the allow list.", remoteAddr, result ? "does" : "does not");
@@ -424,5 +424,33 @@ public class AuthCheckFilter implements Filter {
             }
         }
         return false;
+    }
+
+    /**
+     * When the provided input is an IPv6 literal that is enclosed in brackets (the [] style as expressed in
+     * https://tools.ietf.org/html/rfc2732 and https://tools.ietf.org/html/rfc6874), this method returns the value
+     * stripped from those brackets (the IPv6 address, instead of the literal). In all other cases, the input value is
+     * returned.
+     *
+     * @param address The value from which to strip brackets.
+     * @return the input value, stripped from brackets if applicable.
+     */
+    @Nonnull
+    public static String removeBracketsFromIpv6Address(@Nonnull final String address)
+    {
+        final String result;
+        if (address.startsWith("[") && address.endsWith("]")) {
+            result = address.substring(1, address.length()-1);
+            try {
+                Ipv6.parse(result);
+                // The remainder is a valid IPv6 address. Return the original value.
+                return result;
+            } catch (IllegalArgumentException e) {
+                // The remainder isn't a valid IPv6 address. Return the original value.
+                return address;
+            }
+        }
+        // Not a bracket-enclosed string. Return the original input.
+        return address;
     }
 }

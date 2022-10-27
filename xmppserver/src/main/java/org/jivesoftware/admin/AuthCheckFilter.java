@@ -34,6 +34,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.github.jgonian.ipmath.Ipv4;
+import com.github.jgonian.ipmath.Ipv4Range;
+import com.github.jgonian.ipmath.Ipv6;
+import com.github.jgonian.ipmath.Ipv6Range;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -333,7 +337,9 @@ public class AuthCheckFilter implements Filter {
         // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
         // set to 'true' to have the below report the true 'peer' address.
         final String remoteAddr = req.getRemoteAddr();
-        return !IP_ACCESS_BLOCKLIST.getValue().contains(remoteAddr);
+        final boolean result = !isOnList(IP_ACCESS_BLOCKLIST.getValue(), remoteAddr);
+        Log.debug("IP address '{}' {} pass the block list.", remoteAddr, result ? "does" : "does not");
+        return result;
     }
 
     /**
@@ -349,6 +355,74 @@ public class AuthCheckFilter implements Filter {
         // set to 'true' to have the below report the true 'peer' address.
         final String remoteAddr = req.getRemoteAddr();
         final Set<String> allowList = IP_ACCESS_ALLOWLIST.getValue();
-        return allowList.isEmpty() || allowList.contains(remoteAddr);
+        final boolean result = allowList.isEmpty() || isOnList(allowList, remoteAddr);
+        Log.debug("IP address '{}' {} pass the allow list.", remoteAddr, result ? "does" : "does not");
+        return result;
+    }
+
+    /**
+     * Checks if a particular IP address is on a list of addresses.
+     *
+     * The IP address is expected to be an IPv4 or IPv6 address. The list can contain IPv4 and IPv6 addresses, but also
+     * IPv4 and IP46 address ranges. Ranges can be expressed as dash separated strings (eg: "192.168.0.0-192.168.255.255")
+     * or in CIDR notation (eg: "192.168.0.0/16").
+     *
+     * @param list The list of addresses
+     * @param ipAddress the address to check
+     * @return <tt>true</tt> if the address is detected in the list, otherwise <tt>false</tt>.
+     */
+    public static boolean isOnList(@Nonnull final Set<String> list, @Nonnull final String ipAddress) {
+        Ipv4 remoteIpv4;
+        try {
+            remoteIpv4 = Ipv4.of(ipAddress);
+        } catch (IllegalArgumentException e) {
+            Log.trace("Address '{}' is not an IPv4 address.", ipAddress);
+            remoteIpv4 = null;
+        }
+        Ipv6 remoteIpv6;
+        try {
+            remoteIpv6 = Ipv6.of(ipAddress);
+        } catch (IllegalArgumentException e) {
+            Log.trace("Address '{}' is not an IPv6 address.", ipAddress);
+            remoteIpv6 = null;
+        }
+
+        if (remoteIpv4 == null && remoteIpv6 == null) {
+            Log.warn("Unable to parse '{}' as an IPv4 or IPv6 address!", ipAddress);
+        }
+
+        for (final String item : list) {
+            // Check if the remote address is an exact match on the list.
+            if (item.equals(ipAddress)) {
+                return true;
+            }
+
+            // Check if the remote address is a match for an address range on the list.
+            if (remoteIpv4 != null) {
+                Ipv4Range range;
+                try {
+                    range = Ipv4Range.parse(item);
+                } catch (IllegalArgumentException e) {
+                    Log.trace("List entry '{}' is not an IPv4 range.", item);
+                    range = null;
+                }
+                if (range != null && range.contains(remoteIpv4)) {
+                    return true;
+                }
+            }
+            if (remoteIpv6 != null) {
+                Ipv6Range range;
+                try {
+                    range = Ipv6Range.parse(item);
+                } catch (IllegalArgumentException e) {
+                    Log.trace("List entry '{}' is not an IPv6 range.", item);
+                    range = null;
+                }
+                if (range != null && range.contains(remoteIpv6)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

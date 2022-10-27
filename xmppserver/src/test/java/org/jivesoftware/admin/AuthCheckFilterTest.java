@@ -1,9 +1,7 @@
 package org.jivesoftware.admin;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -488,6 +486,66 @@ public class AuthCheckFilterTest {
             // Tear down test fixture.
             AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
         }
+    }
+
+    @Test
+    public void stripBracketsIpv6() throws Exception {
+        // Setup test fixture.
+        final String input = "[0:0:0:0:0:0:0:1]";
+
+        // Execute system under test.
+        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+
+        // Verify result.
+        assertEquals("0:0:0:0:0:0:0:1", result);
+    }
+
+    @Test
+    public void stripBracketsIpv6NoBrackets() throws Exception {
+        // Setup test fixture.
+        final String input = "0:0:0:0:0:0:0:1";
+
+        // Execute system under test.
+        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+
+        // Verify result.
+        assertEquals(input, result);
+    }
+
+    @Test
+    public void stripBracketsIpv4() throws Exception {
+        // Setup test fixture.
+        final String input = "[192.168.0.1]";
+
+        // Execute system under test.
+        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+
+        // Verify result.
+        assertEquals(input, result); // Should only strip brackets from IPv6, not IPv4.
+    }
+
+    @Test
+    public void stripBracketsNonIP() throws Exception {
+        // Setup test fixture.
+        final String input = "[Foo Bar]";
+
+        // Execute system under test.
+        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+
+        // Verify result.
+        assertEquals(input, result); // Should only strip brackets from IPv6, nothing else.
+    }
+
+    @Test
+    public void stripBracketsNonIPNoBrackets() throws Exception {
+        // Setup test fixture.
+        final String input = "Foo Bar";
+
+        // Execute system under test.
+        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+
+        // Verify result.
+        assertEquals(input, result); // Should only strip brackets from IPv6, nothing else.
     }
 
     public static class AdminUserServletAuthenticatorClass implements ServletRequestAuthenticator {

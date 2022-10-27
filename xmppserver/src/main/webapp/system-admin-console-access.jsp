@@ -118,6 +118,7 @@
     pageContext.setAttribute("blockedIPs", errors.isEmpty() ? String.join(", ", AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue()) : blockedIPs);
     pageContext.setAttribute("allowedIPs", errors.isEmpty() ? String.join(", ", AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue()) : allowedIPs);
     pageContext.setAttribute("ignoreExcludes", errors.isEmpty() ? AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.getValue() : ignoreExcludes);
+    pageContext.setAttribute("formattedRemoteAddress", AuthCheckFilter.removeBracketsFromIpv6Address(pageContext.getRequest().getRemoteAddr()));
 
 %>
 
@@ -131,7 +132,7 @@
 <admin:infobox type="warning">
     <fmt:message key="system.admin.console.access.iplists.warning">
         <!-- When AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED is set, this will also show any X-Forwarded-For value. -->
-        <fmt:param><c:out value="${pageContext.request.remoteAddr}"/></fmt:param>
+        <fmt:param><c:out value="${formattedRemoteAddress}"/></fmt:param>
     </fmt:message>
 </admin:infobox>
 

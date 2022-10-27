@@ -24,13 +24,15 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthCheckFilterTest {
 
     private static final String adminUser = "test-admin-user";
     private static final String normalUser = "test-normal-user";
-    private static final String remoteAddr = "a.b.c.d";
+    private static final String remoteAddr = "198.51.100.15";
 
     @Mock private HttpServletRequest request;
     @Mock private HttpSession httpSession;
@@ -166,6 +168,75 @@ public class AuthCheckFilterTest {
     }
 
     @Test
+    public void ipOnList() throws Exception {
+        // Setup test fixture.
+        final String input = "203.0.113.251";
+        final Set<String> list = new HashSet<>();
+        list.add(input);
+
+        // Execute system under test.
+        final boolean result = AuthCheckFilter.isOnList(list, input);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    @Test
+    public void ipNotOnList() throws Exception {
+        // Setup test fixture.
+        final String input = "203.0.113.251";
+        final Set<String> list = new HashSet<>();
+        list.add("192.0.2.2");
+
+        // Execute system under test.
+        final boolean result = AuthCheckFilter.isOnList(list, input);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    @Test
+    public void ipNotOnEmptyList() throws Exception {
+        // Setup test fixture.
+        final String input = "203.0.113.251";
+        final Set<String> list = new HashSet<>();
+
+        // Execute system under test.
+        final boolean result = AuthCheckFilter.isOnList(list, input);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    @Test
+    public void ipOnListRange() throws Exception {
+        // Setup test fixture.
+        final String input = "203.0.113.251";
+        final Set<String> list = new HashSet<>();
+        list.add("203.0.113.25-203.0.113.251");
+
+        // Execute system under test.
+        final boolean result = AuthCheckFilter.isOnList(list, input);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    @Test
+    public void ipOnListCIDR() throws Exception {
+        // Setup test fixture.
+        final String input = "203.0.113.251";
+        final Set<String> list = new HashSet<>();
+        list.add("203.0.113.0/24");
+
+        // Execute system under test.
+        final boolean result = AuthCheckFilter.isOnList(list, input);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    @Test
     public void nonExcludedUrlWillNotErrorWhenListsEmpty() throws Exception {
         // Setup test fixture.
         AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
@@ -212,6 +283,32 @@ public class AuthCheckFilterTest {
     }
 
     @Test
+    public void nonExcludedUrlWillErrorWhenMatchingCIDROnBlocklist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        final String cidr = request.getRemoteAddr().substring(0, request.getRemoteAddr().lastIndexOf('.')) + ".0/24";
+        AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(cidr));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, atLeastOnce()).sendError(anyInt());
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
+    public void nonExcludedUrlWillErrorWhenMatchingRangeOnBlocklist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        final String range = request.getRemoteAddr().substring(0, request.getRemoteAddr().lastIndexOf('.')) + ".0-" + request.getRemoteAddr().substring(0, request.getRemoteAddr().lastIndexOf('.')) + ".255";
+        AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(Collections.singleton(range));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, atLeastOnce()).sendError(anyInt());
+        verify(filterChain, never()).doFilter(any(), any());
+    }
+
+    @Test
     public void excludedUrlWillNotErrorWhenOnBlocklist() throws Exception {
         // Setup test fixture.
         try {
@@ -248,6 +345,44 @@ public class AuthCheckFilterTest {
             // Tear down test fixture.
             AuthCheckFilter.removeExclude(request.getRequestURI().substring(1));
         }
+    }
+
+    @Test
+    public void nonExcludedUrlWillNotErrorWhenOnAllowlist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton(remoteAddr));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, never()).sendError(anyInt());
+        verify(filterChain, atLeastOnce()).doFilter(any(), any());
+    }
+
+    @Test
+    public void nonExcludedUrlWillNotErrorWhenCIDROnAllowlist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        final String cidr = remoteAddr.substring(0, remoteAddr.lastIndexOf('.')) + ".0/24";
+        AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton(cidr));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, never()).sendError(anyInt());
+        verify(filterChain, atLeastOnce()).doFilter(any(), any());
+    }
+
+    @Test
+    public void nonExcludedUrlWillNotErrorWhenRangeOnAllowlist() throws Exception {
+        AuthCheckFilter.SERVLET_REQUEST_AUTHENTICATOR.setValue(AdminUserServletAuthenticatorClass.class);
+        final AuthCheckFilter filter = new AuthCheckFilter(adminManager, loginLimitManager);
+
+        final String range = remoteAddr.substring(0, remoteAddr.lastIndexOf('.')) + ".0-" + remoteAddr.substring(0, remoteAddr.lastIndexOf('.')) + ".255";
+        AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(Collections.singleton(range));
+        filter.doFilter(request, response, filterChain);
+
+        verify(response, never()).sendError(anyInt());
+        verify(filterChain, atLeastOnce()).doFilter(any(), any());
     }
 
     @Test

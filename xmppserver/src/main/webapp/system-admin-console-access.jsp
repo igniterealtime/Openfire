@@ -4,8 +4,11 @@
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="java.util.*" %>
-<%@ page import="java.util.regex.Pattern" %>
 <%@ page import="org.jivesoftware.admin.AuthCheckFilter" %>
+<%@ page import="com.github.jgonian.ipmath.Ipv4" %>
+<%@ page import="com.github.jgonian.ipmath.Ipv4Range" %>
+<%@ page import="com.github.jgonian.ipmath.Ipv6" %>
+<%@ page import="com.github.jgonian.ipmath.Ipv6Range" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -15,6 +18,34 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
+<%! public boolean isValidIpOrRange(String value) {
+    try {
+        Ipv4.parse(value);
+        return true;
+    } catch (IllegalArgumentException e) {
+        // Skip to next validation
+    }
+    try {
+        Ipv6.parse(value);
+        return true;
+    } catch (IllegalArgumentException e) {
+        // Skip to next validation
+    }
+    try {
+        Ipv4Range.parse(value);
+        return true;
+    } catch (IllegalArgumentException e) {
+        // Skip to next validation
+    }
+    try {
+        Ipv6Range.parse(value);
+        return true;
+    } catch (IllegalArgumentException e) {
+        // Skip to next validation
+    }
+    return false;
+}
+%>
 <%  final Map<String, String> errors = new HashMap<>();
 
     // Get parameters
@@ -41,14 +72,10 @@
 
     if (save) {
         // do validation
-        final Pattern pattern = Pattern.compile("(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
-            "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
-            "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-
         final Set<String> blockedSet = new HashSet<>();
         for (final String address : blockedIPs.split("[,\\s]+") ) {
             if (!address.isEmpty()) {
-                if (pattern.matcher(address).matches()) {
+                if (isValidIpOrRange(address)) {
                     blockedSet.add(address);
                 } else {
                     if (errors.containsKey("invalid-blocklist-ips")) {
@@ -62,7 +89,7 @@
         final Set<String> allowedSet = new HashSet<>();
         for (final String address : allowedIPs.split("[,\\s]+") ) {
             if (!address.isEmpty()) {
-                if (pattern.matcher(address).matches()) {
+                if (isValidIpOrRange(address)) {
                     allowedSet.add(address);
                 } else {
                     if (errors.containsKey("invalid-allowlist-ips")) {
@@ -139,6 +166,8 @@
 
 <fmt:message key="system.admin.console.access.iplists.title" var="iplists_boxtitle"/>
 <admin:contentBox title="${iplists_boxtitle}">
+
+    <p><fmt:message key="system.admin.console.access.iplists.help"/></p>
 
     <form action="system-admin-console-access.jsp" method="post">
         <input type="hidden" name="csrf" value="${csrf}">

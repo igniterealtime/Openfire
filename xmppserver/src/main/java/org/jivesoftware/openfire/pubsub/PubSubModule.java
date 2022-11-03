@@ -664,6 +664,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             features.add("http://jabber.org/protocol/pubsub#subscription-options");
             // Publishing options are supported.
             features.add("http://jabber.org/protocol/pubsub#publish-options");
+            // Clients are allowed to set persist_items to true, and max_items to a value higher than 1, so this service can support multiple items.
+            features.add("http://jabber.org/protocol/pubsub#multi-items");
         }
         else if (name == null) {
             // Answer the features of a given node

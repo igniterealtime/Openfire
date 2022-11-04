@@ -46,7 +46,7 @@ public class JiveProperties implements Map<String, String> {
     private static final String LOAD_PROPERTIES = "SELECT name, propValue, encrypted, iv FROM ofProperty";
     private static final String INSERT_PROPERTY = "INSERT INTO ofProperty(name, propValue, encrypted, iv) VALUES(?,?,?,?)";
     private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=?, encrypted=?, iv=? WHERE name=?";
-    private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name LIKE ?";
+    private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name = ? OR name LIKE ?";
 
     private static JiveProperties instance = null;
 
@@ -224,7 +224,7 @@ public class JiveProperties implements Map<String, String> {
             // Also remove any children.
             Collection<String> propNames = getPropertyNames();
             for (String name : propNames) {
-                if (name.startsWith((String)key)) {
+                if (name.startsWith(key + ".")) {
                     properties.remove(name);
                 }
             }
@@ -246,7 +246,7 @@ public class JiveProperties implements Map<String, String> {
         // Also remove any children.
         Collection<String> propNames = getPropertyNames();
         for (String name : propNames) {
-            if (name.startsWith(key)) {
+            if (name.startsWith(key + ".")) {
                 properties.remove(name);
             }
         }
@@ -418,7 +418,8 @@ public class JiveProperties implements Map<String, String> {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_PROPERTY);
-            pstmt.setString(1, name + "%");
+            pstmt.setString(1, name);
+            pstmt.setString(2, name + ".%");
             pstmt.executeUpdate();
         }
         catch (SQLException e) {

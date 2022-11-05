@@ -1,5 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,9 @@ public class CertificateStoreWatcher
 
     private WatchService storeWatcher;
 
-    private final ExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final ExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
+        new NamedThreadFactory("CertstoreWatcher-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY)
+    );
 
     public CertificateStoreWatcher()
     {

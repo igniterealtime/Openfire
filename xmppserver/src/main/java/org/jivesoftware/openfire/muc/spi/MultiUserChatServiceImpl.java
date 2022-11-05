@@ -60,6 +60,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1571,7 +1572,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // A thread pool is used to broadcast concurrently, as well as to limit the execution time of this service.
-        final ExecutorService service = Executors.newFixedThreadPool( Math.min( localOccupants.size(), 10 ) );
+        final ThreadFactory threadFactory = new NamedThreadFactory("MUC-Shutdown-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+        final ExecutorService service = Executors.newFixedThreadPool( Math.min( localOccupants.size(), 10 ), threadFactory );
 
         // Queue all tasks in the executor service.
         for ( final OccupantManager.Occupant localOccupant : localOccupants )

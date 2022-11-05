@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.group.AbstractGroupProvider;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -51,7 +52,9 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     private static final String USER_MEMBERSHIP_CACHE_NAME = "crowdUserMembership";
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ScheduledExecutorService crowdGroupSync = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService crowdGroupSync = Executors.newSingleThreadScheduledExecutor(
+        new NamedThreadFactory("CrowdGroupSync-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY)
+    );
     private static final CrowdManager manager = CrowdManager.getInstance();
 
     private static List<String> groups = new ArrayList<>();

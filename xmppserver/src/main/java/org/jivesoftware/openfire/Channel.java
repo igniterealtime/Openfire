@@ -18,10 +18,12 @@ package org.jivesoftware.openfire;
 
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +66,7 @@ public class Channel<T extends Packet> {
         this.name = name;
         this.channelHandler = channelHandler;
 
-        executor = new ThreadPoolExecutor(1, 8, 15, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        executor = new ThreadPoolExecutor(1, 8, 15, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new NamedThreadFactory("Channel-" + name + "-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY));
     }
 
     /**

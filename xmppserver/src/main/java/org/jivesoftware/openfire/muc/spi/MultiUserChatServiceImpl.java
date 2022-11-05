@@ -59,12 +59,7 @@ import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.JiveProperties;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -89,6 +84,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1600,7 +1596,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
 
         // A thread pool is used to broadcast concurrently, as well as to limit the execution time of this service.
-        final ExecutorService service = Executors.newFixedThreadPool( Math.min( localOccupants.size(), 10 ) );
+        final ThreadFactory threadFactory = new NamedThreadFactory("MUC-Shutdown-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+        final ExecutorService service = Executors.newFixedThreadPool( Math.min( localOccupants.size(), 10 ), threadFactory );
 
         // Queue all tasks in the executor service.
         for ( final OccupantManager.Occupant localOccupant : localOccupants )

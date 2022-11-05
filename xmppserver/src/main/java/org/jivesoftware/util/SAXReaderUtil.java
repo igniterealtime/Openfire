@@ -80,7 +80,8 @@ public final class SAXReaderUtil
                                                             PARSER_SERVICE_CORE_POOL_SIZE.getValue(),
                                                             PARSER_SERVICE_MAX_POOL_SIZE.getValue(),
                                                             PARSER_SERVICE_KEEP_ALIVE_TIME.getValue().toMillis(), TimeUnit.MILLISECONDS,
-                                                            new SynchronousQueue<>());
+                                                            new SynchronousQueue<>(),
+                                                            new NamedThreadFactory("saxReaderUtil-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY));
 
     static
     {

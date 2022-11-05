@@ -26,20 +26,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
@@ -78,7 +72,8 @@ public class PluginMonitor implements PropertyEventListener
             executor.shutdown();
         }
 
-        executor = new ScheduledThreadPoolExecutor( 1 );
+        final ThreadFactory threadFactory = new NamedThreadFactory("PluginMonitorTask-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+        executor = new ScheduledThreadPoolExecutor( 1, threadFactory);
 
         if ( JiveGlobals.getBooleanProperty( "plugins.loading.monitor.enabled", true ) )
         {
@@ -395,8 +390,8 @@ public class PluginMonitor implements PropertyEventListener
                         // execution of this monitor, as during later executions, most plugins will likely already be loaded.
                         final int parallelProcessMax = JiveGlobals.getIntProperty( "plugins.loading.max-parallel", 4 );
                         final int parallelProcessCount = ( pluginManager.isExecuted() ? 1 : parallelProcessMax );
-
-                        final ExecutorService executorService = Executors.newFixedThreadPool( parallelProcessCount );
+                        final ThreadFactory threadFactory = new NamedThreadFactory("PluginMonitorExec-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+                        final ExecutorService executorService = Executors.newFixedThreadPool( parallelProcessCount, threadFactory );
                         try
                         {
                             // Blocks until ready

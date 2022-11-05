@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,9 @@ public class CrowdUserProvider implements UserProvider {
             new String[]{SEARCH_FIELD_USERNAME, SEARCH_FIELD_NAME, SEARCH_FIELD_EMAIL}));
     
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final ScheduledExecutorService crowdUserSync = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService crowdUserSync = Executors.newSingleThreadScheduledExecutor(
+        new NamedThreadFactory("CrowdUserSync-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY)
+    );
     
     private Map<String, org.jivesoftware.openfire.crowd.jaxb.User> usersCache = new TreeMap<>();
     private List<org.jivesoftware.openfire.crowd.jaxb.User> users = new ArrayList<>();

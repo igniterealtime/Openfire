@@ -160,6 +160,39 @@ hr {
     <a href="README.html">Readme</a>|<a href="changelog.html"><strong>Changelog</strong></a>|<a href="LICENSE.html">License</a>
     </div>
 
+<h2>4.7.4 -- <span style="font-weight: normal;">November 9, 2022</span></h2>
+
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2498">OF-2498</a> - Improve performance of MUC, based on stress test profiling</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2499">OF-2499</a> - MUC Room history shouldn't be serialized as part of a MUC Room</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2502">OF-2502</a> - Reduce resource usage of MUC stats collection</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2504">OF-2504</a> - Re-instate MINA JMX monitoring</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2511">OF-2511</a> -Prevent retrieving more MUC messages from DB than needed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2516">OF-2516</a> - Add TX/RX, Remove Priority from session summary page</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2518">OF-2518</a> - Try loading favicons over HTTPS and HTTP</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2524">OF-2524</a> - Improve MUC history load time for single rooms</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2525">OF-2525</a> - Deprecate XMLProperties constructors that can't write back</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2531">OF-2531</a> - Remove unneeded JID-based lock in MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2537">OF-2537</a> - Advertise support for pubsub's "multi-item" feature.</li>
+</ul>
+
+<h2>Story</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2528">OF-2528</a> - Migrate usages of set-output in Github Actions</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2529">OF-2529</a> - Upgrade Apache Commons Text from 1.6 to 1.10</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2415">OF-2415</a> - Openfire Docker image fails to start if an empty plugins directory exists</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2495">OF-2495</a> - Websocket onError handler prevents earlier data to be processed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2509">OF-2509</a> - openfirectl does not store PID</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2512">OF-2512</a> - User lock-out with custom value does not take effect</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2517">OF-2517</a> - "Packet sent" session stat remains 0 for BOSH sessions</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2519">OF-2519</a> - Group JIDs in MUC rooms without preloading causes issues</li>
+</ul>
+
 <h2>4.7.3 -- <span style="font-weight: normal;">August 2, 2022</span></h2>
 
 <h2>Bug</h2>

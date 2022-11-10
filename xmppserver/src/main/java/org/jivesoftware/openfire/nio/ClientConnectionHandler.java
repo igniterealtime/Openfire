@@ -73,7 +73,7 @@ public class ClientConnectionHandler extends ConnectionHandler {
 
     @Override
     int getMaxIdleTime() {
-        return (int) ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().getSeconds();
+        return (int) ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toSeconds();
     }
 
     /**

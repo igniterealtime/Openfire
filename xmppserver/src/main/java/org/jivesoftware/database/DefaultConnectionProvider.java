@@ -104,7 +104,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, username, password);
         final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         poolableConnectionFactory.setValidationQuery(testSQL);
-        poolableConnectionFactory.setValidationQueryTimeout((int)testTimeout.getSeconds());
+        poolableConnectionFactory.setValidationQueryTimeout((int)testTimeout.toSeconds());
         poolableConnectionFactory.setMaxConnLifetimeMillis((long) connectionTimeout.toMillis());
 
         final GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();

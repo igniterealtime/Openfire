@@ -88,7 +88,7 @@ public class HttpBindServlet extends HttpServlet {
             // TODO shouldn't we check if the methods and headers that are used in the request match these?
             response.setHeader("Access-Control-Allow-Methods", String.join(", ", HttpBindManager.HTTP_BIND_CORS_ALLOW_METHODS.getDefaultValue()));
             response.setHeader("Access-Control-Allow-Headers", String.join(", ", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS.getDefaultValue()));
-            response.setHeader("Access-Control-Max-Age", String.valueOf(HttpBindManager.HTTP_BIND_CORS_MAX_AGE.getDefaultValue().getSeconds())); // TODO: replace with 'toSeconds()' after dropping support for Java 8.
+            response.setHeader("Access-Control-Max-Age", String.valueOf(HttpBindManager.HTTP_BIND_CORS_MAX_AGE.getDefaultValue().toSeconds()));
         }
         super.service(request, response);
     }

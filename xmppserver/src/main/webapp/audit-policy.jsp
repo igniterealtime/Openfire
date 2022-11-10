@@ -178,7 +178,7 @@
         maxTotalSize = Integer.toString(auditManager.getMaxTotalSize());
         maxFileSize = Integer.toString(auditManager.getMaxFileSize());
         maxDays = Long.toString(auditManager.getRetention().toDays());
-        logTimeout = Long.toString(auditManager.getLogTimeout().getSeconds());
+        logTimeout = Long.toString(auditManager.getLogTimeout().toSeconds());
         logDir = auditManager.getLogDir();
         StringBuilder ignoreList = new StringBuilder();
         for (String username : auditManager.getIgnoreList()) {

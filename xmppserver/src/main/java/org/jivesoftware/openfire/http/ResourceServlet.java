@@ -85,7 +85,7 @@ public class ResourceServlet extends HttpServlet {
             DateFormat formatter = new SimpleDateFormat("d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
             formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
             response.setHeader("Expires", formatter.format(Instant.now().plus(expiresOffset)));
-            response.setHeader("Cache-Control", "max-age=" + expiresOffset.getSeconds()); // TODO: replace with 'toSeconds' after Openfire drops support for Java 8.
+            response.setHeader("Cache-Control", "max-age=" + expiresOffset.toSeconds());
         }
         else {
             response.setHeader("Expires", "1");

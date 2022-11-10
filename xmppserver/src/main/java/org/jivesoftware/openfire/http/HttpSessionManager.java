@@ -95,7 +95,7 @@ public class HttpSessionManager {
 
         this.sessionManager = SessionManager.getInstance();
 
-        stanzaWorkerPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().getSeconds(), TimeUnit.SECONDS,
+        stanzaWorkerPool = new ThreadPoolExecutor(MIN_POOL_SIZE.getValue(), MAX_POOL_SIZE.getValue(), POOL_KEEP_ALIVE.getValue().toSeconds(), TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(), // unbounded task queue
                 new NamedThreadFactory( "httpbind-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
         );
@@ -334,14 +334,14 @@ public class HttpSessionManager {
         response.addAttribute("sid", session.getStreamID().getID());
         response.addAttribute("secure", Boolean.TRUE.toString());
         response.addAttribute("requests", String.valueOf(session.getMaxRequests()));
-        response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout().getSeconds()));  // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
-        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval().getSeconds())); // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
-        response.addAttribute("wait", String.valueOf(session.getWait().getSeconds())); // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
+        response.addAttribute("inactivity", String.valueOf(session.getInactivityTimeout().toSeconds()));
+        response.addAttribute("polling", String.valueOf(session.getMaxPollingInterval().toSeconds()));
+        response.addAttribute("wait", String.valueOf(session.getWait().getSeconds()));
         if ((session.getMajorVersion() == 1 && session.getMinorVersion() >= 6) ||
             session.getMajorVersion() > 1) {
             response.addAttribute("hold", String.valueOf(session.getHold()));
             response.addAttribute("ack", String.valueOf(session.getLastAcknowledged()));
-            response.addAttribute("maxpause", String.valueOf(session.getMaxPause().getSeconds())); // TODO replace with 'toSeconds' after support for Java 8 and lower is dropped).
+            response.addAttribute("maxpause", String.valueOf(session.getMaxPause().toSeconds()));
             response.addAttribute("ver", session.getMajorVersion() + "." + session.getMinorVersion());
         }
 

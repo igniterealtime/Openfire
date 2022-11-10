@@ -114,7 +114,7 @@ public class ProxyConnectionManager {
         executor = new ThreadPoolExecutor(
             EXECUTOR_CORE_POOL_SIZE.getValue(),
             EXECUTOR_MAX_POOL_SIZE.getValue(),
-            EXECUTOR_POOL_KEEP_ALIVE.getValue().getSeconds(), // TODO: replace with 'toSeconds()' when no longer supporting Java 8.
+            EXECUTOR_POOL_KEEP_ALIVE.getValue().toSeconds(),
             TimeUnit.SECONDS,
             new SynchronousQueue<>(),
             new NamedThreadFactory( "proxy-connection-worker-", null, null, null ) );

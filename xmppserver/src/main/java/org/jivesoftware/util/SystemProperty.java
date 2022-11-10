@@ -47,7 +47,7 @@ public final class SystemProperty<T> {
     static {
         // Populate the map that turns a Duration to a Long based on the ChronoUnit a property should be saved in
         DURATION_TO_LONG.put(ChronoUnit.MILLIS, Duration::toMillis);
-        DURATION_TO_LONG.put(ChronoUnit.SECONDS, Duration::getSeconds);
+        DURATION_TO_LONG.put(ChronoUnit.SECONDS, Duration::toSeconds);
         DURATION_TO_LONG.put(ChronoUnit.MINUTES, Duration::toMinutes);
         DURATION_TO_LONG.put(ChronoUnit.HOURS, Duration::toHours);
         DURATION_TO_LONG.put(ChronoUnit.DAYS, Duration::toDays);

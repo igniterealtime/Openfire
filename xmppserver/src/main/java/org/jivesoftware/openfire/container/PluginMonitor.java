@@ -479,7 +479,9 @@ public class PluginMonitor implements PropertyEventListener
                 for ( Enumeration e = zipFile.entries(); e.hasMoreElements(); )
                 {
                     JarEntry entry = (JarEntry) e.nextElement();
-                    Path entryFile = dir.resolve( entry.getName() ); // ignore possibility for zipslip as this is sanitized for if property is enabled lgtm [java/zipslip]
+                    Path entryFile = dir.resolve( entry.getName() ); /* lgtm[java/zipslip] */
+                    // The line above ignores LGTM alert for ZipSlip as this is sanitized for if property is enabled.
+
                     // Ignore any manifest.mf entries.
                     if ( entry.getName().toLowerCase().endsWith( "manifest.mf" ) )
                     {

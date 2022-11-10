@@ -36,6 +36,7 @@ jobs:
         echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
         OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
         echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+        echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
     - name: Download old Openfire database script
       run: |
         mkdir olddb
@@ -72,6 +73,7 @@ jobs:
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download old Openfire database script
         run: |
           mkdir olddb
@@ -108,6 +110,7 @@ jobs:
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download old Openfire database script
         run: |
           mkdir olddb

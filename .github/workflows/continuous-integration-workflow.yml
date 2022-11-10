@@ -12,30 +12,27 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 1.8, 11, 17 ]
+        java: [ 11, 17 ]
+        distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v1
+      - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }}
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
-      - name: Cache Maven repository
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-java${{ matrix.java }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-java${{ matrix.java }}-maven-
-            ${{ runner.os }}-
+          distribution: ${{ matrix.distribution }}
+          cache: maven
       - name: Build with Maven
         run: ./mvnw -B package -Pcoverage --file pom.xml
       - name: Upload distribution
+        if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v2
         with:
           name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base
       - name: Upload test files
+        if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v2
         with:
           name: test-files
@@ -45,7 +42,7 @@ jobs:
             runConnectivityIntegrationTests
             test.gradle
       - name: Upload coverage report for 'xmppserver' module
-        if: ${{ matrix.java == 1.8 }}
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 }}
         uses: actions/upload-artifact@v2
         with:
           name: Coverage Report for 'xmppserver' module
@@ -59,10 +56,12 @@ jobs:
     needs: build
 
     steps:
+      - name: Set JAVA_HOME to use Java 11
+        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v2
         with:
-          name: distribution-java1.8
+          name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
         uses: actions/download-artifact@v2
@@ -117,19 +116,22 @@ jobs:
     needs: build
 
     steps:
+      - name: Set JAVA_HOME to use Java 11
+        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v2
         with:
-          name: distribution-java1.8
+          name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
         uses: actions/download-artifact@v2
         with:
           name: test-files
       - name: Set up Java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: 11
+          distribution: zulu
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
@@ -144,19 +146,22 @@ jobs:
     needs: build
 
     steps:
+      - name: Set JAVA_HOME to use Java 11
+        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v2
         with:
-          name: distribution-java1.8
+          name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
         uses: actions/download-artifact@v2
         with:
           name: test-files
       - name: Set up Java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: 11
+          distribution: zulu
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
@@ -177,18 +182,12 @@ jobs:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
-      - name: Cache Maven repository
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-java11-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-java11-maven-
-            ${{ runner.os }}-
       - name: Set up Java for publishing
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
           java-version: 11
+          distribution: zulu
+          cache: maven
           server-id: igniterealtime
           server-username: IGNITE_REALTIME_MAVEN_USERNAME
           server-password: IGNITE_REALTIME_MAVEN_PASSWORD

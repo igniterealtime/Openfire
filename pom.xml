@@ -128,17 +128,6 @@
 
     <profiles>
 
-        <!-- OF-2093: Ensure proper cross-compilation, using a compiler flag that's introduced in Java 9. -->
-        <profile>
-            <id>jdk9+</id>
-            <activation>
-                <jdk>[9,)</jdk>
-            </activation>
-            <properties>
-                <maven.compiler.release>8</maven.compiler.release>
-            </properties>
-        </profile>
-
         <profile>
             <id>release</id>
             <build>
@@ -192,7 +181,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <source>1.8</source>
+                            <source>11</source>
                             <quiet>true</quiet>
                             <doclint>none</doclint>
                         </configuration>
@@ -323,8 +312,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>11</source>
+                    <target>11</target>
                 </configuration>
             </plugin>
 

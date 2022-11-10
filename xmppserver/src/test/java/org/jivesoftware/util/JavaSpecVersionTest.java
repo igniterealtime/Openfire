@@ -77,4 +77,31 @@ public class JavaSpecVersionTest
         assertFalse( result );
     }
 
+    @Test
+    public void test17newerThan11() throws Exception
+    {
+        // Setup fixture.
+        final JavaSpecVersion eleven = new JavaSpecVersion( "11" );
+        final JavaSpecVersion seventeen = new JavaSpecVersion( "17" );
+
+        // Execute system under test.
+        final boolean result = seventeen.isNewerThan( eleven );
+
+        // Verify results.
+        assertTrue( result );
+    }
+
+    @Test
+    public void test11notNewerThan17() throws Exception
+    {
+        // Setup fixture.
+        final JavaSpecVersion eleven = new JavaSpecVersion( "11" );
+        final JavaSpecVersion seventeen = new JavaSpecVersion( "17" );
+
+        // Execute system under test.
+        final boolean result = eleven.isNewerThan( seventeen );
+
+        // Verify results.
+        assertFalse( result );
+    }
 }

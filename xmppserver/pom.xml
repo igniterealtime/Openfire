@@ -140,16 +140,16 @@
                             <goal>jspc</goal>
                         </goals>
                         <configuration>
-                            <sourceVersion>1.8</sourceVersion>
-                            <targetVersion>1.8</targetVersion>
+                            <sourceVersion>11</sourceVersion>
+                            <targetVersion>11</targetVersion>
                             <webAppSourceDirectory>${warSourceDirectory}</webAppSourceDirectory>
                             <!-- Merge this web.xml with the generated servlet declarations -->
                             <webXml>${warSourceDirectory}/WEB-INF/web.xml</webXml>
                             <jspc>
                                 <package>org.jivesoftware.openfire.admin</package>
                             </jspc>
-                            <sourceVersion>1.8</sourceVersion>
-                            <targetVersion>1.8</targetVersion>
+                            <sourceVersion>11</sourceVersion>
+                            <targetVersion>11</targetVersion>
                             <keepSources>true</keepSources>
                         </configuration>
                     </execution>

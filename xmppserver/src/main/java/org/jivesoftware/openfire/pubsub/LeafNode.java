@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,16 +360,14 @@ public class LeafNode extends Node {
     }
 
     /**
-     * Sends an IQ result with the list of items published to the node. Item ID and payload
-     * may be included in the result based on the node configuration.
+     * Sends an IQ result with the list of items published to the node. Item ID and payload are always included.
+     * Should only be used for use-cases described in section "6.5 Retrieve Items from a Node" from XEP-0060 (as
+     * opposed to processing of notifications or service discovery, which are allowed to discard payloads).
      *
      * @param originalRequest the IQ packet sent by a subscriber (or anyone) to get the node items.
      * @param publishedItems the list of published items to send to the subscriber.
-     * @param forceToIncludePayload true if the item payload should be include if one exists. When
-     *        false the decision is up to the node.
      */
-    void sendPublishedItems(IQ originalRequest, List<PublishedItem> publishedItems,
-            boolean forceToIncludePayload) {
+    void sendPublishedItems(IQ originalRequest, List<PublishedItem> publishedItems) {
         IQ result = IQ.createResultIQ(originalRequest);
         Element pubsubElem = result.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
         Element items = pubsubElem.addElement("items");
@@ -380,10 +378,7 @@ public class LeafNode extends Node {
             if (isItemRequired()) {
                 item.addAttribute("id", publishedItem.getID());
             }
-            if ((forceToIncludePayload || isPayloadDelivered()) &&
-                    publishedItem.getPayload() != null) {
-                item.add(publishedItem.getPayload().createCopy());
-            }
+            item.add(publishedItem.getPayload().createCopy());
         }
         // Send the result
         getService().send(result);

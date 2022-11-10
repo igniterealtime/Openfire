@@ -30,10 +30,7 @@ public class SessionListener implements HttpSessionListener {
                                                                         .build();
 
      public void sessionCreated(HttpSessionEvent event){
-         // Using Duration#getSeconds() isn't ideal, as that ignores part of the duration (the sign, as well as the
-         // nano-seconds). However, as the value can expected to be a positive integer, this data can safely be ignored.
-         // TODO: After moving to Java 9 or higher, this should be replaced with Duration#toSeconds()
-         event.getSession().setMaxInactiveInterval((int) SESSION_TIMEOUT.getValue().getSeconds());
+         event.getSession().setMaxInactiveInterval((int) SESSION_TIMEOUT.getValue().toSeconds());
      }
 
 

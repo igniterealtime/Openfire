@@ -1103,6 +1103,10 @@ public class PubSubEngine
         router.route(reply);
     }
 
+    /**
+     * Retrieves published items. Should only be used for use-cases described in section "6.5 Retrieve Items from a Node"
+     * from XEP-0060 (as opposed to processing of notifications or service discovery, which are allowed to discard payloads).
+     */
     private void getPublishedItems(PubSubService service, IQ iq, Element itemsElement) {
         String nodeID = itemsElement.attributeValue("node");
         String subID = itemsElement.attributeValue("subid");
@@ -1182,7 +1186,6 @@ public class PubSubEngine
 
         LeafNode leafNode = (LeafNode) node;
         // Get list of items to send to the user
-        boolean forceToIncludePayload = false;
         List<PublishedItem> items;
         String max_items = itemsElement.attributeValue("max_items");
         int recentItems = 0;
@@ -1209,9 +1212,6 @@ public class PubSubEngine
             }
             else {
                 items = new ArrayList<>();
-                // Indicate that payload should be included (if exists) no matter
-                // the node configuration
-                forceToIncludePayload = true;
                 // Get the items as requested by the user
                 for (Iterator it = requestedItems.iterator(); it.hasNext();) {
                     Element element = (Element) it.next();
@@ -1236,7 +1236,7 @@ public class PubSubEngine
         }
 
         // Send items to the user
-        leafNode.sendPublishedItems(iq, items, forceToIncludePayload);
+        leafNode.sendPublishedItems(iq, items);
     }
 
     private void createNode(PubSubService service, IQ iq, Element childElement, Element createElement, DataForm publishOptions) {

@@ -28,6 +28,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -85,16 +86,9 @@
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="muc.room.summary.destroyed" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 
@@ -130,7 +124,7 @@
 <%  } %>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -148,7 +142,7 @@
     if (listPager.getTotalItemCount() < 1) {
 %>
     <tr>
-        <td align="center" colspan="7">
+        <td style="text-align: center" colspan="7">
             <fmt:message key="muc.room.summary.no_room_in_group" />
         </td>
     </tr>
@@ -161,13 +155,13 @@
         MUCRoom room = mucService.getChatRoom(name); // This will load the room on-demand if it's not yet in memory.
         i++;
 %>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-        <td width="1%">
+    <tr>
+        <td style="width: 1%">
             <%= (i-1) %>
         </td>
-        <td width="45%" valign="middle">
+        <td style="width: 45%; vertical-align: middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
-                 <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
+                 <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>" title="<fmt:message key="global.click_edit" />">
                      <%=  StringUtils.escapeHTMLTags(room.getName()) %>
                  </a>
             <% }
@@ -177,7 +171,7 @@
                 </a>
             <% } %>
         </td>
-        <td width="45%" valign="middle">
+        <td style="width: 45%; vertical-align: middle">
             <% if (!"".equals(room.getDescription())) { %>
                 <%= StringUtils.escapeHTMLTags(room.getDescription()) %>
             <% }
@@ -185,16 +179,16 @@
                 &nbsp;
             <% } %>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
                 <% if (room.isPersistent()) { %>
-                <img src="images/tape.gif" width="16" height="16" border="0" alt="<fmt:message key="muc.room.summary.alt_persistent" />">
+                <img src="images/tape.gif" alt="<fmt:message key="muc.room.summary.alt_persistent" />">
                 <% } else { %>
-                <img src="images/blank.gif" width="16" height="16" border="0" alt="<fmt:message key="muc.room.summary.alt_temporary" />">
+                <img src="images/blank.gif" alt="<fmt:message key="muc.room.summary.alt_temporary" />">
                 <% } %>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <% if (room.isLocked()) {%>
-            <img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="muc.room.summary.alt_locked" />">
+            <img src="images/lock.gif" alt="<fmt:message key="muc.room.summary.alt_locked" />">
             <% } else { %>
                 <nobr><%= room.getOccupantsCount() %>
                 <% if (room.getMaxUsers() > 0 ) { %>
@@ -202,15 +196,15 @@
                 <% } %></nobr>
             <% } %>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="17" height="17" border="0" alt=""></a>
+             ><img src="images/edit-16x16.gif" alt="Edit"></a>
         </td>
-        <td width="1%" align="center" style="border-right:1px #ccc solid;">
+        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
             <a href="muc-room-delete.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+             ><img src="images/delete-16x16.gif" alt="Delete"></a>
         </td>
     </tr>
 

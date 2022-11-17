@@ -33,7 +33,7 @@
         <c:set var="pwdKey" value="${pwdKey}${c}"/>
     </c:forEach>
 
-    <table cellpadding="0" cellspacing="0" border="0">
+    <table>
         <tbody>
         <tr>
             <td><label for="loc-key"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>

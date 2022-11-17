@@ -1,5 +1,4 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.Connection" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.component.ExternalComponentConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.component.ExternalComponentManager" %>
@@ -12,7 +11,6 @@
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="gnu.inet.encoding.StringprepException" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page errorPage="error.jsp" %>
@@ -220,7 +218,7 @@
         // 'enable' checkbox for that connection type.
         function applyDisplayable( connectionType )
         {
-            var configBlock, enabled;
+            let configBlock, enabled;
 
             // Select the right configuration block and enable or disable it as defined by the the corresponding checkbox.
             configBlock = document.getElementById( connectionType + "-config" );
@@ -294,15 +292,15 @@
 
         <p><fmt:message key="component.settings.plaintext.info"/></p>
 
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
+        <table>
+            <tr>
                 <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="component.settings.plaintext.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=COMPONENT&connectionMode=plain"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
@@ -314,15 +312,15 @@
 
         <p><fmt:message key="component.settings.legacymode.info"/></p>
 
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
+        <table>
+            <tr>
                 <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled"><fmt:message key="component.settings.legacymode.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=COMPONENT&connectionMode=legacy"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
@@ -337,29 +335,29 @@
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-external-components.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
-        <table cellpadding="3" cellspacing="0" border="0" width="100%" >
-            <tr valign="top">
+        <table>
+            <tr>
                 <td colspan="2">
                     <label for="defaultSecret"><fmt:message key="component.settings.defaultSecret" /></label>&nbsp;
                     <input type="text" size="15" maxlength="70" name="defaultSecret" id="defaultSecret" value="${fn:escapeXml(defaultSecret)}"/>
                 </td>
             </tr>
 
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="permissionFilter" value="blacklist" id="rb03" ${permissionFilter eq "blacklist" ? "checked" : ""}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb03">
                         <b><fmt:message key="component.settings.anyone" /></b> - <fmt:message key="component.settings.anyone_info" />
                     </label>
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%">
+            <tr>
+                <td style="width: 1%;">
                     <input type="radio" name="permissionFilter" value="whitelist" id="rb04" ${permissionFilter eq "whitelist" ? "checked" : ""}>
                 </td>
-                <td width="99%" nowrap>
+                <td nowrap>
                     <label for="rb04">
                         <b><fmt:message key="component.settings.whitelist" /></b> - <fmt:message key="component.settings.whitelist_info" />
                     </label>
@@ -374,32 +372,32 @@
 
     <br>
 
-    <table class="jive-table" cellpadding="0" cellspacing="0" border="0">
+    <table class="jive-table">
         <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="50%" nowrap><fmt:message key="component.settings.subdomain" /></th>
-            <th width="49%" nowrap><fmt:message key="component.settings.secret" /></th>
-            <th width="10%" nowrap><fmt:message key="global.delete" /></th>
+            <th style="width: 1%; white-space: nowrap">&nbsp;</th>
+            <th style="width: 50%; white-space: nowrap"><fmt:message key="component.settings.subdomain" /></th>
+            <th style="width: 39%; white-space: nowrap"><fmt:message key="component.settings.secret" /></th>
+            <th style="width: 1%; white-space: nowrap"><fmt:message key="global.delete" /></th>
         </tr>
         <c:choose>
             <c:when test="${empty allowedComponents}">
                 <tr>
-                    <td align="center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
+                    <td style="text-align: center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
                 </tr>
             </c:when>
             <c:otherwise>
                 <c:forEach var="component" varStatus="status" items="${allowedComponents}">
-                    <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
+                    <tr>
                         <td>${ status.index + 1}</td>
                         <td><c:out value="${component.subdomain}"/></td>
                         <td><c:out value="${component.secret}"/></td>
-                        <td align="center" style="border-right:1px #ccc solid;">
+                        <td style="border-right:1px #ccc solid; text-align: center">
                             <c:url var="deleteurl" value="connection-settings-external-components.jsp">
                                 <c:param name="deleteConf" value="${component.subdomain}"/>
                                 <c:param name="csrf" value="${csrf}"/>
                             </c:url>
                             <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
-                               title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                               title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
                         </td>
                     </tr>
                 </c:forEach>
@@ -411,22 +409,22 @@
 
     <form action="connection-settings-external-components.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
-        <table cellpadding="3" cellspacing="1" border="0">
+        <table>
             <tr>
-                <td nowrap width="1%">
+                <td style="width: 1%; white-space: nowrap">
                     <label for="componentAllowedSubdomain"><fmt:message key="component.settings.subdomain" /></label>
                 </td>
                 <td>
                     <input type="text" size="40" name="subdomain" id="componentAllowedSubdomain" value="${fn:escapeXml(param.containsKey('componentAllowed') and not empty errors ? param[ 'subdomain' ] : '')}"/>
                 </td>
-                <td nowrap width="1%">
+                <td style="width: 1%; white-space: nowrap">
                     <label for="componentAllowedSecret"><fmt:message key="component.settings.secret" /></label>
                 </td>
                 <td>
                     <input type="text" size="15" name="secret" id="componentAllowedSecret" value="${fn:escapeXml(param.containsKey('componentAllowed') and not empty errors ? param[ 'secret' ] : '')}"/>
                 </td>
             </tr>
-            <tr align="center">
+            <tr style="text-align: center">
                 <td colspan="4">
                     <input type="submit" name="componentAllowed" value="<fmt:message key="component.settings.allow" />">
                 </td>
@@ -440,30 +438,30 @@
 <fmt:message key="component.settings.disallowed" var="disallowedTitle"/>
 <admin:contentBox title="${disallowedTitle}">
     <p><fmt:message key="component.settings.disallowed.info" /></p>
-    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" >
+    <table class="jive-table" >
         <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="89%" nowrap><fmt:message key="component.settings.subdomain" /></th>
-            <th width="10%" nowrap><fmt:message key="global.delete" /></th>
+            <th style="width: 1%">&nbsp;</th>
+            <th style="width: 89%; white-space: nowrap"><fmt:message key="component.settings.subdomain" /></th>
+            <th style="width: 10%; white-space: nowrap"><fmt:message key="global.delete" /></th>
         </tr>
         <c:choose>
             <c:when test="${empty blockedComponents}">
                 <tr>
-                    <td align="center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
+                    <td style="text-align: center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
                 </tr>
             </c:when>
             <c:otherwise>
                 <c:forEach var="component" varStatus="status" items="${blockedComponents}">
-                    <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
+                    <tr>
                         <td>${ status.index + 1}</td>
                         <td><c:out value="${component.subdomain}"/></td>
-                        <td align="center" style="border-right:1px #ccc solid;">
+                        <td style="border-right:1px #ccc solid; text-align: center">
                             <c:url var="deleteurl" value="connection-settings-external-components.jsp">
                                 <c:param name="deleteConf" value="${component.subdomain}"/>
                                 <c:param name="csrf" value="${csrf}"/>
                             </c:url>
                             <a href="#" onclick="if (confirm('<fmt:message key="component.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
-                               title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                               title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
                         </td>
                     </tr>
                 </c:forEach>
@@ -475,9 +473,9 @@
 
     <form action="connection-settings-external-components.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
-        <table cellpadding="3" cellspacing="1" border="0">
+        <table>
             <tr>
-                <td nowrap width="1%">
+                <td style="width: 1%; white-space: nowrap">
                     <label for="disallowedSubdomain"><fmt:message key="component.settings.subdomain" /></label>
                 </td>
                 <td>

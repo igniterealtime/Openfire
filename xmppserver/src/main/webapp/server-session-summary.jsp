@@ -60,7 +60,7 @@
     // Get the user manager
     SessionManager sessionManager = webManager.getSessionManager();
 
-    Collection<String> hostnames = new TreeSet<String>();
+    Collection<String> hostnames = new TreeSet<>();
     // Get the incoming session hostnames
     Collection<String> inHostnames = sessionManager.getIncomingServers();
     hostnames.addAll(inHostnames);
@@ -167,7 +167,7 @@
 </p>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -193,7 +193,7 @@
     <%  } %>
 
     <% int count = 0;
-        hostnames = new ArrayList<String>(hostnames).subList(start, maxIndex);
+        hostnames = new ArrayList<>(hostnames).subList(start, maxIndex);
         for (String host : hostnames) {
             count++;
             List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(host);

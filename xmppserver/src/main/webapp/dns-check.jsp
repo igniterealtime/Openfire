@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="java.util.*"
-         errorPage="error.jsp"
-%>
+<%@ page errorPage="error.jsp"%>
+
+<%@ page import="java.util.*"%>
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
@@ -120,7 +120,7 @@
 
         <c:if test="${not empty dnsSrvRecordsClient}">
             <div class="jive-table">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <thead>
                     <tr>
                         <th>&nbsp;</th>
@@ -132,16 +132,8 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClient}" varStatus="varStatus">
-                        <c:choose>
-                            <c:when test="${dnsSrvRecord.host.toLowerCase() eq hostname}">
-                                <c:set var="cssClass" value="jive-highlight"/>
-                            </c:when>
-                            <c:otherwise>
-                                <c:set var="cssClass" value="${varStatus.count % 2 eq 0 ? 'jive-even' : 'jive-odd' }"/>
-                            </c:otherwise>
-                        </c:choose>
-                        <tr class="${cssClass}">
-                            <td width="1%" nowrap><c:out value="${varStatus.count}"/></td>
+                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
@@ -157,7 +149,7 @@
 
         <c:if test="${not empty dnsSrvRecordsClientTLS}">
             <div class="jive-table">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <thead>
                     <tr>
                         <th>&nbsp;</th>
@@ -169,16 +161,8 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClientTLS}" varStatus="varStatus">
-                        <c:choose>
-                            <c:when test="${dnsSrvRecord.host.toLowerCase() eq hostname}">
-                                <c:set var="cssClass" value="jive-highlight"/>
-                            </c:when>
-                            <c:otherwise>
-                                <c:set var="cssClass" value="${varStatus.count % 2 eq 0 ? 'jive-even' : 'jive-odd' }"/>
-                            </c:otherwise>
-                        </c:choose>
-                        <tr class="${cssClass}">
-                            <td width="1%" nowrap><c:out value="${varStatus.count}"/></td>
+                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
@@ -194,7 +178,7 @@
 
         <c:if test="${not empty dnsSrvRecordsServer}">
             <div class="jive-table">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <thead>
                     <tr>
                         <th>&nbsp;</th>
@@ -206,16 +190,8 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServer}" varStatus="varStatus">
-                        <c:choose>
-                            <c:when test="${dnsSrvRecord.host.toLowerCase() eq hostname}">
-                                <c:set var="cssClass" value="jive-highlight"/>
-                            </c:when>
-                            <c:otherwise>
-                                <c:set var="cssClass" value="${varStatus.count % 2 eq 0 ? 'jive-even' : 'jive-odd' }"/>
-                            </c:otherwise>
-                        </c:choose>
-                        <tr class="${cssClass}">
-                            <td width="1%" nowrap><c:out value="${varStatus.count}"/></td>
+                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
@@ -231,7 +207,7 @@
 
         <c:if test="${not empty dnsSrvRecordsServerTLS}">
             <div class="jive-table">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <thead>
                     <tr>
                         <th>&nbsp;</th>
@@ -243,16 +219,8 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServerTLS}" varStatus="varStatus">
-                        <c:choose>
-                            <c:when test="${dnsSrvRecord.host.toLowerCase() eq hostname}">
-                                <c:set var="cssClass" value="jive-highlight"/>
-                            </c:when>
-                            <c:otherwise>
-                                <c:set var="cssClass" value="${varStatus.count % 2 eq 0 ? 'jive-even' : 'jive-odd' }"/>
-                            </c:otherwise>
-                        </c:choose>
-                        <tr class="${cssClass}">
-                            <td width="1%" nowrap><c:out value="${varStatus.count}"/></td>
+                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
@@ -274,21 +242,21 @@
 </p>
 <p>
     <fmt:message key="system.dns.srv.check.example" />
+</p>
 <ul>
     <c:if test="${plaintextClientConfiguration.enabled}">
-        <li><tt>_xmpp-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${plaintextClientConfiguration.port} <c:out value="${hostname}"/>.</tt></li>
+        <li><code>_xmpp-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${plaintextClientConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
     <c:if test="${legacymodeClientConfiguration.enabled}">
-        <li><tt>_xmpps-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${legacymodeClientConfiguration.port} <c:out value="${hostname}"/>.</tt></li>
+        <li><code>_xmpps-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${legacymodeClientConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
     <c:if test="${plaintextServerConfiguration.enabled}">
-        <li><tt>_xmpp-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${plaintextServerConfiguration.port} <c:out value="${hostname}"/>.</tt></li>
+        <li><code>_xmpp-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${plaintextServerConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
     <c:if test="${legacymodeServerConfiguration.enabled}">
-        <li><tt>_xmpps-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${legacymodeServerConfiguration.port} <c:out value="${hostname}"/>.</tt></li>
+        <li><code>_xmpps-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${legacymodeServerConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
 </ul>
-</p>
 <p>
     <fmt:message key="system.dns.srv.check.disclaimer" />
 </p>

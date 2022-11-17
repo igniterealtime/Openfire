@@ -36,6 +36,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%
@@ -107,46 +108,25 @@
 
     <%  if (request.getParameter("addsuccess") != null) { %>
 
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" alt="" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="user.roster.added" />
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
 
     <%  } %>
 
     <%  if (request.getParameter("editsuccess") != null) { %>
 
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" alt="" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="user.roster.edited" />
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
 
     <%  } %>
 
     <%  if (request.getParameter("deletesuccess") != null) { %>
 
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" alt="" width="16" height="16" border="0"></td>
-            <td class="jive-icon-label">
+        <admin:infoBox type="success">
             <fmt:message key="user.roster.deleted" />
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+        </admin:infoBox>
 
     <%  } %>
 
@@ -210,8 +190,8 @@
 <%  } %>
 </p>
 
-<div style="float:right; vertical-align: bottom; padding: 0; margin-bottom: 0; background-color: #ffffff; border: 0.0px solid #005500; vertical-align: middle">
-    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=${usernameUrlEncoded}"><fmt:message key="user.roster.add"/><img style="position: relative; left: 3px; top: 3px" src="images/add-16x16.gif" alt="" width="16" height="16" border="0"></a>
+<div style="float:right; padding: 0; margin-bottom: 0; background-color: #ffffff; border: 0 solid #005500; vertical-align: middle">
+    <a style="color: #007700; font-weight: bold; vertical-align: middle; text-decoration: none" href="user-roster-add.jsp?username=${usernameUrlEncoded}"><fmt:message key="user.roster.add"/><img style="position: relative; left: 3px; top: 3px" src="images/add-16x16.gif" alt=""></a>
 </div>
 
 <p style="margin-bottom: 2px">
@@ -241,7 +221,7 @@
 </p>
 
 <div class="jive-table" style="clear: both">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -258,7 +238,7 @@
         if (roster == null) {
     %>
     <tr>
-        <td colspan="7" align="center">
+        <td colspan="7" style="text-align: center">
             <fmt:message key="error.requested_user_not_found" />
         </td>
     </tr>
@@ -266,7 +246,7 @@
         } else if (rosterCount < 1) {
     %>
     <tr>
-        <td colspan="7" align="center">
+        <td colspan="7" style="text-align: center">
             <i><fmt:message key="user.roster.none_found" /></i>
         </td>
     </tr>
@@ -290,9 +270,9 @@
                     break;
                 }
     %>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
+    <tr>
 
-        <td width="1%">
+        <td style="width: 1%">
             <%= i %>
         </td>
         <td>
@@ -340,18 +320,18 @@
         <td>
             <%= rosterItem.getSubStatus().getName() %>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <a href="user-roster-edit.jsp?username=${usernameUrlEncoded}&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
+             ><img src="images/edit-16x16.gif" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
-        <td width="1%" align="center" style="border-right:1px #ccc solid;">
+        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
             <% if (sharedGroups.isEmpty()) { %>
             <a href="user-roster-delete.jsp?username=${usernameUrlEncoded}&jid=<%= URLEncoder.encode(rosterItem.getJid().toString(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
+             ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />"></a>
             <% } else { %>
-             <img onclick='alert("<fmt:message key="user.roster.cant_delete" />")' src="images/lock.gif" width="16" height="16" border="0" alt="">
+             <img onclick='alert("<fmt:message key="user.roster.cant_delete" />")' src="images/lock.gif" alt="">
             <% } %>
         </td>
     </tr>

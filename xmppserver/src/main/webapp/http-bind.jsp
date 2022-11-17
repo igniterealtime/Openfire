@@ -26,7 +26,7 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="java.util.*" %>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -158,8 +158,8 @@
     </title>
     <meta name="pageID" content="http-bind"/>
     <script>
-        var enabled = ${serverManager.httpBindEnabled ? 'true' : 'false'};
-        var setEnabled = function() {
+        let enabled = ${serverManager.httpBindEnabled ? 'true' : 'false'};
+        let setEnabled = function() {
             $("port").disabled = !enabled;
             $("securePort").disabled = !enabled;
             $("rb03").disabled = !enabled;
@@ -220,16 +220,16 @@
 
     <fmt:message key="httpbind.settings.title" var="general_settings_boxtitle"/>
     <admin:contentBox title="${general_settings_boxtitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tbody>
-                <tr valign="top">
-                    <td width="1%" nowrap>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap">
                         <input type="radio" name="httpBindEnabled" value="true" id="rb02" onclick="enabled = true; setEnabled();" ${serverManager.httpBindEnabled ? "checked" : ""}>
                     </td>
-                    <td width="99%" colspan="2">
+                    <td colspan="2">
                         <label for="rb02"><b><fmt:message key="httpbind.settings.label_enable"/></b> - <fmt:message key="httpbind.settings.label_enable_info"/></label>
 
-                        <table border="0">
+                        <table>
                              <tr>
                                 <td><label for="port"><fmt:message key="httpbind.settings.vanilla_port"/></label></td>
                                 <td><input id="port" type="text" size="5" maxlength="10" name="port" value="${HttpBindManager.HTTP_BIND_PORT.value}" /></td>
@@ -241,11 +241,11 @@
                         </table>
                     </td>
                 </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap>
-                        <input type="radio" name="httpBindEnabled" value="false" id="rb01" onclick="enabled = false; setEnabled();" ${serverManager.httpBindEnabled ? "" : "checked"} %>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap">
+                        <input type="radio" name="httpBindEnabled" value="false" id="rb01" onclick="enabled = false; setEnabled();" ${serverManager.httpBindEnabled ? "" : "checked"}/>
                     </td>
-                    <td width="99%" colspan="2">
+                    <td colspan="2">
                         <label for="rb01"><b><fmt:message key="httpbind.settings.label_disable"/></b> - <fmt:message key="httpbind.settings.label_disable_info"/></label>
                     </td>
                 </tr>
@@ -256,20 +256,20 @@
     <fmt:message key="httpbind.settings.clientauth.boxtitle" var="clientauthboxtitle"/>
     <admin:contentBox title="${clientauthboxtitle}">
         <p><fmt:message key="httpbind.settings.clientauth.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
-            <tr valign="middle">
+        <table class="tlsconfig">
+            <tr>
                 <td>
                     <input type="radio" name="mutualauthentication" value="disabled" id="mutualauthentication-disabled" ${configuration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>
                     <label for="mutualauthentication-disabled"><fmt:message key="httpbind.settings.clientauth.label_disabled"/></label>
                 </td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td>
                     <input type="radio" name="mutualauthentication" value="wanted" id="mutualauthentication-wanted" ${configuration.clientAuth.name() eq 'wanted' ? 'checked' : ''}/>
                     <label for="mutualauthentication-wanted"><fmt:message key="httpbind.settings.clientauth.label_wanted"/></label>
                 </td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td>
                     <input type="radio" name="mutualauthentication" value="needed" id="mutualauthentication-needed" ${configuration.clientAuth.name() eq 'needed' ? 'checked' : ''}/>
                     <label for="mutualauthentication-needed"><fmt:message key="httpbind.settings.clientauth.label_needed"/></label>
@@ -280,15 +280,15 @@
 
     <fmt:message key="httpbind.settings.script.group" var="script_boxtitle"/>
     <admin:contentBox title="${script_boxtitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="middle">
-                <td width="1%" nowrap><input type="radio" name="scriptSyntaxEnabled" value="true" id="rb03" ${serverManager.scriptSyntaxEnabled ? "checked" : ""}></td>
-                <td width="99%"><label for="rb03"><b><fmt:message key="httpbind.settings.script.label_enable" /></b> - <fmt:message key="httpbind.settings.script.label_enable_info" /></label></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><input type="radio" name="scriptSyntaxEnabled" value="true" id="rb03" ${serverManager.scriptSyntaxEnabled ? "checked" : ""}></td>
+                <td><label for="rb03"><b><fmt:message key="httpbind.settings.script.label_enable" /></b> - <fmt:message key="httpbind.settings.script.label_enable_info" /></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><input type="radio" name="scriptSyntaxEnabled" value="false" id="rb04" ${serverManager.scriptSyntaxEnabled ? "" : "checked"}></td>
-                <td width="99%"><label for="rb04"><b><fmt:message key="httpbind.settings.script.label_disable" /></b> - <fmt:message key="httpbind.settings.script.label_disable_info" /></label></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><input type="radio" name="scriptSyntaxEnabled" value="false" id="rb04" ${serverManager.scriptSyntaxEnabled ? "" : "checked"}></td>
+                <td><label for="rb04"><b><fmt:message key="httpbind.settings.script.label_disable" /></b> - <fmt:message key="httpbind.settings.script.label_disable_info" /></label></td>
             </tr>
         </tbody>
         </table>
@@ -297,25 +297,25 @@
     <!-- CORS -->
     <fmt:message key="httpbind.settings.cors.group" var="cors_boxtitle"/>
     <admin:contentBox title="${cors_boxtitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="CORSEnabled" value="true" id="rb05" ${HttpBindManager.HTTP_BIND_CORS_ENABLED.value ? "checked" : ""}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb05"><b><fmt:message key="httpbind.settings.cors.label_enable"/></b> - <fmt:message key="httpbind.settings.cors.label_enable_info"/></label>
-                    <table border="0">
+                    <table>
                         <tr><td><label for="CORSDomains"><fmt:message key="httpbind.settings.cors.domain_list"/></label></td></tr>
                         <tr><td><input id="CORSDomains" type="text" size="80" name="CORSDomains" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_ALLOWED_ORIGINS.valueAsSaved)}"></td></tr>
                     </table>
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="CORSEnabled" value="false" id="rb06" ${HttpBindManager.HTTP_BIND_CORS_ENABLED.value ? "" : "checked"}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb06"><b><fmt:message key="httpbind.settings.cors.label_disable"/></b> - <fmt:message key="httpbind.settings.cors.label_disable_info"/></label>
                 </td>
             </tr>
@@ -327,15 +327,15 @@
     <!-- XFF -->
     <fmt:message key="httpbind.settings.xff.group" var="xff_boxtitle"/>
     <admin:contentBox title="${xff_boxtitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="XFFEnabled" value="true" id="rb07" ${HttpBindManager.HTTP_BIND_FORWARDED.value ? "checked" : ""}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb07"><b><fmt:message key="httpbind.settings.xff.label_enable"/></b> - <fmt:message key="httpbind.settings.xff.label_enable_info"/></label>
-                    <table border="0">
+                    <table>
                         <tr>
                             <td><label for="XFFHeader"><fmt:message key="httpbind.settings.xff.forwarded_for"/></label></td>
                             <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_FOR.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_FOR.value)}"></td>
@@ -355,11 +355,11 @@
                     </table>
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="XFFEnabled" value="false" id="rb08" ${HttpBindManager.HTTP_BIND_FORWARDED.value ? "" : "checked"}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb08"><b><fmt:message key="httpbind.settings.xff.label_disable"/></b> - <fmt:message key="httpbind.settings.xff.label_disable_info"/></label>
                 </td>
             </tr>

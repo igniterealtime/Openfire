@@ -23,6 +23,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -57,16 +58,9 @@
         // Log the event
         webManager.logEvent((privateEnabled ? "enabled" : "disabled")+" private data storage", null);
     %>
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="private.data.settings.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
     <%
     
     }
@@ -86,26 +80,26 @@
         <fmt:message key="private.data.settings.policy" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="privateEnabled" value="true" id="rb01"
                      <%= (privateEnabled ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01">
                     <b><fmt:message key="private.data.settings.enable_storage" /></b> -
                     <fmt:message key="private.data.settings.enable_storage_info" />
                     </label>
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="privateEnabled" value="false" id="rb02"
                      <%= (!privateEnabled ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02">
                     <b><fmt:message key="private.data.settings.disable_storage" /></b> -
                     <fmt:message key="private.data.settings.disable_storage_info" />

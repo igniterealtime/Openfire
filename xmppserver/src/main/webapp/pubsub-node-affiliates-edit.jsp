@@ -167,7 +167,7 @@
     </p>
 
     <div class="jive-table">
-        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+        <table style="width: 100%">
             <thead>
                 <tr>
                     <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
@@ -191,7 +191,7 @@
     </p>
 
     <div class="jive-table">
-        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+        <table style="width: 100%">
             <thead>
                 <tr>
                     <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
@@ -203,7 +203,7 @@
             <tbody>
                 <c:if test="${empty affiliate.subscriptions}">
                     <tr>
-                        <td align="center" colspan="4">
+                        <td style="text-align: center" colspan="4">
                             <fmt:message key="pubsub.node.affiliates.delete.table.no_subscriptions" />
                         </td>
                     </tr>

@@ -29,12 +29,11 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException" %>
 <%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
-<%@ page import="java.time.Instant" %>
 <%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out); %>
 
@@ -88,10 +87,10 @@
         }
     }
 
-    final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
-
     // Formatter for dates
     DateFormat dateFormatter = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+
+    pageContext.setAttribute("nickName", nickName);
 %>
 
 <html>
@@ -108,40 +107,26 @@
 
     <%  if (request.getParameter("deletesuccess") != null) { %>
 
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
-            <fmt:message key="muc.room.occupants.kicked">
-                <fmt:param value="<%= StringUtils.escapeForXML(nickName) %>"/>
-            </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+    <admin:infobox type="success">
+        <fmt:message key="muc.room.occupants.kicked">
+            <fmt:param><c:out value="${nickName}"/></fmt:param>
+        </fmt:message>
+    </admin:infobox>
 
     <%  } %>
 
     <%  if (request.getParameter("deletefailed") != null) { %>
 
-        <div class="jive-error">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
-            <fmt:message key="muc.room.occupants.kickfailed">
-                <fmt:param value="<%= StringUtils.escapeForXML(nickName) %>"/>
-            </fmt:message>
-            </td></tr>
-        </tbody>
-        </table>
-        </div><br>
+    <admin:infobox type="eerror">
+        <fmt:message key="muc.room.occupants.kickfailed">
+            <fmt:param><c:out value="${nickName}"/></fmt:param>
+        </fmt:message>
+    </admin:infobox>
 
     <%  } %>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="muc.room.edit.form.room_id" /></th>
@@ -167,7 +152,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="muc.room.occupants.user" /></th>
@@ -181,10 +166,10 @@
         <% for (MUCRole role : room.getOccupants()) { %>
         <tr>
             <td><%= StringUtils.escapeHTMLTags(role.getUserAddress().toString()) %></td>
-            <td><%= StringUtils.escapeHTMLTags(role.getNickname().toString()) %></td>
+            <td><%= StringUtils.escapeHTMLTags(role.getNickname()) %></td>
             <td><%= StringUtils.escapeHTMLTags(role.getRole().toString()) %></td>
             <td><%= StringUtils.escapeHTMLTags(role.getAffiliation().toString()) %></td>
-            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1&csrf=${csrf}" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" border="0" width="16" height="16"/></a></td>
+            <td><a href="muc-room-occupants.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>&nickName=<%= URLEncoder.encode(role.getNickname(), "UTF-8") %>&kick=1&csrf=${csrf}" title="<fmt:message key="muc.room.occupants.kick"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="muc.room.occupants.kick"/>" /></a></td>
         </tr>
         <% } %>
     </tbody>

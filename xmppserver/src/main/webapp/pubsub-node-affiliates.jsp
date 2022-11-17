@@ -119,7 +119,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
@@ -153,7 +153,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.affiliates.jid" /></th>
@@ -166,7 +166,7 @@
     <tbody>
         <c:if test="${empty affiliates}">
         <tr>
-            <td align="center" colspan="4">
+            <td style="text-align: center" colspan="4">
                 <fmt:message key="pubsub.node.affiliates.table.no_affiliates" />
             </td>
         </tr>
@@ -179,7 +179,7 @@
             <td>
             <c:out value="${affiliate.affiliation.name()}"/>
             </td>
-            <td width="1%" align="center">
+            <td style="width: 1%; text-align: center">
                 <c:url value="pubsub-node-subscribers.jsp" var="url">
                     <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
@@ -188,24 +188,24 @@
                      <c:out value="${affiliate.subscriptions.size()}"/>
                 </a>
             </td>
-            <td width="1%" align="center">
+            <td style="width: 1%; text-align: center">
                 <c:url value="pubsub-node-affiliates-edit.jsp" var="url">
                     <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
                     <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_edit" />">
-                    <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
+                    <img src="images/edit-16x16.gif" alt="">
                 </a>
             </td>
-            <td width="1%" align="center" style="border-right:1px #ccc solid;">
+            <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
                 <c:url value="pubsub-node-affiliates-delete.jsp" var="url">
                     <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
                     <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
-                    <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+                    <img src="images/delete-16x16.gif" alt="">
                 </a>
             </td>
         </tr>

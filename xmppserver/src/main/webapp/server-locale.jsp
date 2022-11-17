@@ -131,7 +131,7 @@
 
         <p><b><fmt:message key="language.choose" />:</b></p>
 
-        <table cellspacing="0" cellpadding="3" border="0">
+        <table>
         <tbody>
             <tr>
                 <td>
@@ -247,7 +247,7 @@
                      id="loc12" />
                 </td>
                 <td>
-                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" border="0" alt="" /></a>
+                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" alt="" /></a>
                 </td>
                 <td>
                     <label for="loc12">Simplified Chinese (zh_CN)</label>

@@ -185,11 +185,11 @@
         // Displays or hides the configuration blocks, based on the status of selected settings.
         function applyDisplayable()
         {
-            var tlsConfigs, displayValue, i, len;
+            let tlsConfigs, displayValue, i, len;
 
             displayValue = ( document.getElementById( "tlspolicy-disabled" ).checked ? "none" : "block" );
 
-            // Select the right configuration block and enable or disable it as defined by the the corresponding checkbox.
+            // Select the right configuration block and enable or disable it as defined by the corresponding checkbox.
             tlsConfigs = document.getElementsByClassName( "tlsconfig" );
             for ( i = 0, len = tlsConfigs.length; i < len; i++ )
             {
@@ -202,7 +202,7 @@
         // Marks all options in a select element as 'selected' (useful prior to form submission)
         function selectAllOptions( selectedId )
         {
-            var select, i, len;
+            let select, i, len;
 
             select = document.getElementById( selectedId );
 
@@ -215,7 +215,7 @@
         // Moves selected option values from one select element to another.
         function moveSelectedFromTo( from, to )
         {
-            var selected, i, len;
+            let selected, i, len;
 
             selected = getSelectValues( document.getElementById( from ) );
 
@@ -228,7 +228,7 @@
         // Return an array of the selected options. argument is an HTML select element
         function getSelectValues( select )
         {
-            var i, len, result;
+            let i, len, result;
 
             result = [];
 
@@ -302,17 +302,17 @@
     <fmt:message key="connection.advanced.settings.tcp.boxtitle" var="tcpboxtitle"/>
     <admin:contentBox title="${tcpboxtitle}">
         
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td width="100%" colspan="2"><input type="checkbox" name="enabled" id="enabled" ${configuration.enabled ? 'checked' : ''}/><label for="enabled"><fmt:message key="connection.advanced.settings.tcp.label_enable"/></label></td>
+        <table>
+            <tr>
+                <td colspan="2"><input type="checkbox" name="enabled" id="enabled" ${configuration.enabled ? 'checked' : ''}/>&nbsp;<label for="enabled"><fmt:message key="connection.advanced.settings.tcp.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="tcpPort" id="tcpPort" value="${configuration.port}"/></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="tcpPort" id="tcpPort" value="${configuration.port}"/></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="readBuffer"><fmt:message key="connection.advanced.settings.tcp.label_readbuffer"/></label></td>
-                <td width="99%"><input type="text" name="readBuffer" id="readBuffer" value="${configuration.maxBufferSize gt 0 ? configuration.maxBufferSize : ''}" readonly/> <fmt:message key="connection.advanced.settings.tcp.label_readbuffer_suffix"/></td>
+            <tr >
+                <td style="width: 1%; white-space: nowrap"><label for="readBuffer"><fmt:message key="connection.advanced.settings.tcp.label_readbuffer"/></label></td>
+                <td><input type="text" name="readBuffer" id="readBuffer" value="${configuration.maxBufferSize gt 0 ? configuration.maxBufferSize : ''}" readonly/> <fmt:message key="connection.advanced.settings.tcp.label_readbuffer_suffix"/></td>
             </tr>
         </table>
 
@@ -321,22 +321,22 @@
     <c:if test="${connectionMode eq 'plain'}">
         <fmt:message key="connection.advanced.settings.starttls.boxtitle" var="starttlsboxtitle"/>
         <admin:contentBox title="${starttlsboxtitle}">
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
+            <table>
+                <tr>
                     <td>
-                        <input type="radio" name="tlspolicy" value="disabled" id="tlspolicy-disabled" ${configuration.tlsPolicy.name() eq 'disabled' ? 'checked' : ''} onclick="applyDisplayable()"/>
+                        <input type="radio" name="tlspolicy" value="disabled" id="tlspolicy-disabled" ${configuration.tlsPolicy.name() eq 'disabled' ? 'checked' : ''} onclick="applyDisplayable()"/>&nbsp;
                         <label for="tlspolicy-disabled"><fmt:message key="connection.advanced.settings.starttls.label_disabled"/></label>
                     </td>
                 </tr>
-                <tr valign="middle">
+                <tr>
                     <td>
-                        <input type="radio" name="tlspolicy" value="optional" id="tlspolicy-optional" ${configuration.tlsPolicy.name() eq 'optional' ? 'checked' : ''} onclick="applyDisplayable()"/>
+                        <input type="radio" name="tlspolicy" value="optional" id="tlspolicy-optional" ${configuration.tlsPolicy.name() eq 'optional' ? 'checked' : ''} onclick="applyDisplayable()"/>&nbsp;
                         <label for="tlspolicy-optional"><fmt:message key="connection.advanced.settings.starttls.label_optional"/></label>
                     </td>
                 </tr>
-                <tr valign="middle">
+                <tr>
                     <td>
-                        <input type="radio" name="tlspolicy" value="required" id="tlspolicy-required" ${configuration.tlsPolicy.name() eq 'required' ? 'checked' : ''} onclick="applyDisplayable()"/>
+                        <input type="radio" name="tlspolicy" value="required" id="tlspolicy-required" ${configuration.tlsPolicy.name() eq 'required' ? 'checked' : ''} onclick="applyDisplayable()"/>&nbsp;
                         <label for="tlspolicy-required"><fmt:message key="connection.advanced.settings.starttls.label_required"/></label>
                     </td>
                 </tr>
@@ -347,22 +347,22 @@
     <fmt:message key="connection.advanced.settings.clientauth.boxtitle" var="clientauthboxtitle"/>
     <admin:contentBox title="${clientauthboxtitle}">
         <p><fmt:message key="connection.advanced.settings.clientauth.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
-            <tr valign="middle">
+        <table class="tlsconfig">
+            <tr>
                 <td>
-                    <input type="radio" name="mutualauthentication" value="disabled" id="mutualauthentication-disabled" ${configuration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>
+                    <input type="radio" name="mutualauthentication" value="disabled" id="mutualauthentication-disabled" ${configuration.clientAuth.name() eq 'disabled' ? 'checked' : ''}/>&nbsp;
                     <label for="mutualauthentication-disabled"><fmt:message key="connection.advanced.settings.clientauth.label_disabled"/></label>
                 </td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td>
-                    <input type="radio" name="mutualauthentication" value="wanted" id="mutualauthentication-wanted" ${configuration.clientAuth.name() eq 'wanted' ? 'checked' : ''}/>
+                    <input type="radio" name="mutualauthentication" value="wanted" id="mutualauthentication-wanted" ${configuration.clientAuth.name() eq 'wanted' ? 'checked' : ''}/>&nbsp;
                     <label for="mutualauthentication-wanted"><fmt:message key="connection.advanced.settings.clientauth.label_wanted"/></label>
                 </td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td>
-                    <input type="radio" name="mutualauthentication" value="needed" id="mutualauthentication-needed" ${configuration.clientAuth.name() eq 'needed' ? 'checked' : ''}/>
+                    <input type="radio" name="mutualauthentication" value="needed" id="mutualauthentication-needed" ${configuration.clientAuth.name() eq 'needed' ? 'checked' : ''}/>&nbsp;
                     <label for="mutualauthentication-needed"><fmt:message key="connection.advanced.settings.clientauth.label_needed"/></label>
                 </td>
             </tr>
@@ -372,15 +372,15 @@
     <fmt:message key="connection.advanced.settings.certchain.boxtitle" var="certchainboxtitle"/>
     <admin:contentBox title="${certchainboxtitle}">
         <p><fmt:message key="connection.advanced.settings.certchain.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
-            <tr valign="middle">
+        <table class="tlsconfig">
+            <tr>
                 <td>
-                    <input type="checkbox" name="accept-self-signed-certificates" id="accept-self-signed-certificates" ${configuration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="accept-self-signed-certificates"><fmt:message key="connection.advanced.settings.certchain.label_selfsigned"/></label>
+                    <input type="checkbox" name="accept-self-signed-certificates" id="accept-self-signed-certificates" ${configuration.acceptSelfSignedCertificates ? 'checked' : ''}/>&nbsp;<label for="accept-self-signed-certificates"><fmt:message key="connection.advanced.settings.certchain.label_selfsigned"/></label>
                 </td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td>
-                    <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/><label for="verify-certificate-validity"><fmt:message key="connection.advanced.settings.certchain.label_validity"/></label>
+                    <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/>&nbsp;<label for="verify-certificate-validity"><fmt:message key="connection.advanced.settings.certchain.label_validity"/></label>
                 </td>
             </tr>
         </table>
@@ -389,14 +389,14 @@
     <fmt:message key="connection.advanced.settings.protocols.boxtitle" var="protocolsboxtitle"/>
     <admin:contentBox title="${protocolsboxtitle}">
         <p><fmt:message key="connection.advanced.settings.protocols.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
+        <table class="tlsconfig">
             <c:forEach var="supportedProtocol" items="${supportedProtocols}">
                 <c:if test="${supportedProtocol ne 'SSLv2Hello'}">
                     <c:set var="idForForm">protocol-<c:out value="${supportedProtocol}"/></c:set>
                     <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
-                    <tr valign="middle">
+                    <tr>
                         <td>
-                            <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/><label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
+                            <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/>&nbsp;<label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
                         </td>
                     </tr>
                 </c:if>
@@ -406,12 +406,12 @@
             <br/>
             <c:set var="supportedProtocol" value="SSLv2Hello"/>
             <p><fmt:message key="connection.advanced.settings.protocols.sslv2hello.info"/></p>
-            <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
+            <table class="tlsconfig">
                 <c:set var="idForForm">protocol-<c:out value="${supportedProtocol}"/></c:set>
                 <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
-                <tr valign="middle">
+                <tr>
                     <td>
-                        <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/><label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
+                        <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/>&nbsp;<label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
                     </td>
                 </tr>
             </table>
@@ -421,7 +421,7 @@
     <fmt:message key="connection.advanced.settings.ciphersuites.boxtitle" var="ciphersuitesboxtitle"/>
     <admin:contentBox title="${ciphersuitesboxtitle}">
         <p><fmt:message key="connection.advanced.settings.ciphersuites.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0" class="tlsconfig">
+        <table class="tlsconfig">
             <tr><th><fmt:message key="connection.advanced.settings.ciphersuites.label_enable"/></th><th></th><th><fmt:message key="connection.advanced.settings.ciphersuites.label_supported"/></th></tr>
             <tr>
                 <td>
@@ -452,10 +452,10 @@
 
     <fmt:message key="connection.advanced.settings.misc.boxtitle" var="miscboxtitle"/>
     <admin:contentBox title="${miscboxtitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="maxThreads"><fmt:message key="connection.advanced.settings.misc.label_workers"/></label></td>
-                <td width="99%"><input type="text" name="maxThreads" id="maxThreads" value="${configuration.maxThreadPoolSize}" readonly/></td>
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="maxThreads"><fmt:message key="connection.advanced.settings.misc.label_workers"/></label></td>
+                <td><input type="text" name="maxThreads" id="maxThreads" value="${configuration.maxThreadPoolSize}" readonly/></td>
             </tr>
         </table>
     </admin:contentBox>

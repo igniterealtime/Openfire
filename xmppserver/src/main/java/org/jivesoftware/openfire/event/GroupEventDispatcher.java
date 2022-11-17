@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  *      as a payload</td></tr>
  * <tr><td>{@link EventType#admin_removed admin_removed}</td><td>A param named {@code admin} with a String username
  *      as a payload</td></tr>
- * <tr valign="top"><td>{@link EventType#group_modified group_modified}</td><td>
+ * <tr><td>{@link EventType#group_modified group_modified}</td><td>
  * <table>
  *     <caption>The params for a group modified event</caption>
  * <tr><td><b>Reason</b></td><td><b>Key</b></td><td><b>Value</b></td></tr>

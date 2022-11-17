@@ -98,9 +98,9 @@
     <div class="jive-contentBox">
     <form action="setup-profile-settings.jsp" name="profileform" method="post">
 
-<table cellpadding="3" cellspacing="2" border="0">
+<table cellpadding="3" cellspacing="2">
 <tr>
-    <td align="center" valign="top">
+    <td style="text-align: center; vertical-align: top">
         <input type="radio" name="mode" value="default" id="rb01" ${not isLDAP ? 'checked' : ''}>
     </td>
     <td>
@@ -109,7 +109,7 @@
     </td>
 </tr>
 <tr>
-    <td align="center" valign="top">
+    <td style="text-align: center; vertical-align: top">
         <input type="checkbox" name="scramOnly" value="scramOnly" id="rb01-0" ${scramOnly ? 'checked' : ''}>
     </td>
     <td>
@@ -118,7 +118,7 @@
     </td>
 </tr>
 <tr>
-    <td align="center" valign="top">
+    <td style="text-align: center; vertical-align: top">
         <input type="radio" name="mode" value="ldap" id="rb02" ${isLDAP ? 'checked' : ''}>
     </td>
     <td>
@@ -130,7 +130,7 @@
 
 <br>
         <div align="right">
-            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save">
         </div>
 
     </form>

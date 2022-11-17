@@ -244,13 +244,13 @@
 
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">
-            <table border="0" cellpadding="0" cellspacing="2">
+            <table cellpadding="0" cellspacing="2">
             <tr>
                 <td colspan="4"><strong><fmt:message key="setup.ldap.server.ldap_server" /></strong></td>
             </tr>
             <c:if test="${initialSetup}">
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><label for="jiveLDAPserverType"><fmt:message key="setup.ldap.server.type" />:</label></td>
+                <td align="right" style="width: 1%; white-space: nowrap"><label for="jiveLDAPserverType"><fmt:message key="setup.ldap.server.type" />:</label></td>
                 <td colspan="3" nowrap>
                     <select name="serverType" size="1" id="jiveLDAPserverType" style="width:90%;">
                         <option value="" ${empty serverType ? "selected" : ""}><fmt:message key="setup.ldap.server.type_select" /></option>
@@ -262,9 +262,9 @@
             </tr>
             </c:if>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap" style="vertical-align:bottom"><fmt:message key="setup.ldap.server.details" />:</td>
+                <td style="width: 1%; white-space: nowrap; text-align: right; vertical-align:bottom"><fmt:message key="setup.ldap.server.details" />:</td>
                 <td colspan="3">
-                    <table cellpadding="0" cellspacing="0" border="0">
+                    <table>
                         <thead>
                         <tr>
                             <td nowrap="nowrap">
@@ -324,7 +324,7 @@
                 </td>
             </tr>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap">
+                <td align="right" style="width: 1%; white-space: nowrap">
                     <label for="starttls"><fmt:message key="setup.ldap.server.starttls" />:</label>
                 </td>
                 <td colspan="3">
@@ -336,7 +336,7 @@
                 </td>
             </tr>
             <tr id="plainTextWarning">
-                <td colspan="4" width="100%">
+                <td colspan="4" style="width: 100%">
                     <script>updateEncryptionSettings();</script>
                     <div class="warning"><fmt:message key="setup.ldap.plaintext" /></div>
                 </td>
@@ -353,14 +353,14 @@
                 <td colspan="4"><strong><fmt:message key="setup.ldap.server.auth" />:</strong></td>
             </tr>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><label for="jiveLDAPadmindn"><fmt:message key="setup.ldap.server.admindn" />:</label></td>
+                <td align="right" style="width: 1%; white-space: nowrap"><label for="jiveLDAPadmindn"><fmt:message key="setup.ldap.server.admindn" />:</label></td>
                 <td colspan="3">
                     <input type="text" name="admindn" id="jiveLDAPadmindn" size="40" maxlength="300" value="${fn:escapeXml(adminDN)}" style="width:90%;">
                     <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.admindn_help"/></span></div>
                 </td>
             </tr>
             <tr>
-                <td align="right" width="1%" nowrap="nowrap"><label for="jiveLDAPadminpwd"><fmt:message key="setup.ldap.server.password" />:</label></td>
+                <td align="right" style="width: 1%; white-space: nowrap"><label for="jiveLDAPadminpwd"><fmt:message key="setup.ldap.server.password" />:</label></td>
                 <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${not empty adminPassword ? fn:escapeXml(adminPassword) : ''}"> <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.password_help"/></span></div></td>
             </tr>
             </table>
@@ -377,7 +377,7 @@
         <!-- BEGIN jiveAdvancedPanelcs (advanced connection settings) -->
         <div class="jiveadvancedPanelcs" id="jiveAdvanced" style="display: none;">
             <div>
-                <table border="0" cellpadding="0" cellspacing="1">
+                <table cellpadding="0" cellspacing="1">
                 <thead>
                 <tr>
                     <th width="10%"></th>
@@ -394,10 +394,10 @@
                     <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
                         <fmt:message key="setup.ldap.server.connection_pool_help" />
                     </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" style="text-align: center">
                         <input type="radio" name="connectionpool" value="true" ${connectionPoolEnabled ? "checked" : ""}>
                     </td>
-                    <td class="jive-advancedBorderBottom" align="center">
+                    <td class="jive-advancedBorderBottom" style="text-align: center">
                         <input type="radio" name="connectionpool" value="false" ${connectionPoolEnabled ? "" : "checked"}>
                     </td>
                 </tr>
@@ -408,10 +408,10 @@
                     <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
                         <fmt:message key="setup.ldap.server.debug_help" />
                     </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" style="text-align: center">
                         <input type="radio" name="debug" value="true" ${debugEnabled ? "checked" : ""}>
                     </td>
-                    <td class="jive-advancedBorderBottom" align="center">
+                    <td class="jive-advancedBorderBottom" style="text-align: center">
                         <input type="radio" name="debug" value="false" ${debugEnabled ? "" : "checked"}>
                     </td>
                 </tr>
@@ -422,10 +422,10 @@
                     <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
                         <fmt:message key="setup.ldap.server.referral_help" />
                     </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" style="text-align: center">
                         <input type="radio" name="referrals" value="true" ${followReferralsEnabled ? "checked" : ""}>
                     </td>
-                    <td class="jive-advancedBorderBottom" align="center">
+                    <td class="jive-advancedBorderBottom" style="text-align: center">
                         <input type="radio" name="referrals" value="false" ${followReferralsEnabled ? "" : "checked"}>
                     </td>
                 </tr>
@@ -436,10 +436,10 @@
                     <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
                         <fmt:message key="setup.ldap.server.alias_dereference_help" />
                     </td>
-                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" align="center">
+                    <td class="jive-advancedBorderBottom jive-advancedBorderRight" style="text-align: center">
                         <input type="radio" name="aliasreferrals" value="true" ${followAliasReferralsEnabled ? "checked" : ""}>
                     </td>
-                    <td class="jive-advancedBorderBottom" align="center">
+                    <td class="jive-advancedBorderBottom" style="text-align: center">
                         <input type="radio" name="aliasreferrals" value="false" ${followAliasReferralsEnabled ? "" : "checked"}>
                     </td>
                 </tr>

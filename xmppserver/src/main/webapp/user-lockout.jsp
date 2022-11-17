@@ -42,8 +42,8 @@
     boolean lock = request.getParameter("lock") != null;
     String username = ParamUtils.getParameter(request,"username");
     String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
-    Long startdelay = ParamUtils.getLongParameter(request,"startdelay",-1); // -1 is immediate, -2 custom
-    Long duration = ParamUtils.getLongParameter(request,"duration",-1); // -1 is infinite, -2 custom
+    long startdelay = ParamUtils.getLongParameter(request,"startdelay",-1); // -1 is immediate, -2 custom
+    long duration = ParamUtils.getLongParameter(request,"duration",-1); // -1 is infinite, -2 custom
     if (startdelay == -2) {
         startdelay = ParamUtils.getLongParameter(request,"startdelay_custom", -1);
     }
@@ -184,20 +184,20 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <% if (LockOutManager.getLockOutProvider().isDelayedStartSupported()) { %>
     <b><fmt:message key="user.lockout.time.startdelay" /></b><br />
-    <input type="radio" name="startdelay" value="-1" checked="checked" /> <fmt:message key="user.lockout.time.immediate" /><br />
-    <input type="radio" name="startdelay" value="60" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1hour" /><br />
-    <input type="radio" name="startdelay" value="1440" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1day" /><br />
-    <input type="radio" name="startdelay" value="10080" /> <fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1week" /><br />
-    <input type="radio" name="startdelay" value="-2" /> <fmt:message key="user.lockout.time.in" /> <input type="text" size="5" maxlength="10" name="startdelay_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
+    <input type="radio" name="startdelay" id="c1" value="-1" checked="checked" /> <label for="c1"><fmt:message key="user.lockout.time.immediate" /></label><br />
+    <input type="radio" name="startdelay" id="c2" value="60" /> <label for="c2"><fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1hour" /></label><br />
+    <input type="radio" name="startdelay" id="c3" value="1440" /> <label for="c3"><fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1day" /></label><br />
+    <input type="radio" name="startdelay" id="c4" value="10080" /> <label for="c4"><fmt:message key="user.lockout.time.in" /> <fmt:message key="user.lockout.time.1week" /></label><br />
+    <input type="radio" name="startdelay" id="c5" value="-2" /> <label for="c5"><fmt:message key="user.lockout.time.in" /></label> <input type="text" size="5" maxlength="10" id="startdelay_custom" name="startdelay_custom" /> <label for="startdelay_custom"><fmt:message key="user.lockout.time.minutes"/></label><br />
     <br />
     <% } %>
     <% if (LockOutManager.getLockOutProvider().isTimeoutSupported()) { %>
     <b><fmt:message key="user.lockout.time.duration" /></b><br />
-    <input type="radio" name="duration" value="-1" checked="checked" /> <fmt:message key="user.lockout.time.forever" /><br />
-    <input type="radio" name="duration" value="60" /> <fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1hour" /><br />
-    <input type="radio" name="duration" value="1440" /> <fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1day" /><br />
-    <input type="radio" name="duration" value="10080" /> <fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1week" /><br />
-    <input type="radio" name="duration" value="-2" /> <fmt:message key="user.lockout.time.for" /> <input type="text" size="5" maxlength="10" name="duration_custom" /> <fmt:message key="user.lockout.time.minutes"/><br />
+    <input type="radio" name="duration" id="c6" value="-1" checked="checked" /> <label for="c6"><fmt:message key="user.lockout.time.forever" /></label><br />
+    <input type="radio" name="duration" id="c7" value="60" /> <label for="c7"><fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1hour" /></label><br />
+    <input type="radio" name="duration" id="c8" value="1440" /> <label for="c8"><fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1day" /></label><br />
+    <input type="radio" name="duration" id="c9" value="10080" /> <label for="c9"><fmt:message key="user.lockout.time.for" /> <fmt:message key="user.lockout.time.1week" /></label><br />
+    <input type="radio" name="duration" id="c0" value="-2" /> <label for="c0"><fmt:message key="user.lockout.time.for" /></label> <input type="text" size="5" maxlength="10" id="duration_custom" name="duration_custom" /> <label for="duration_custom"><fmt:message key="user.lockout.time.minutes"/></label><br />
     <br />
     <% } %>
     <input type="hidden" name="username" value="<%= StringUtils.escapeForXML(username) %>">
@@ -214,8 +214,8 @@
 
 <script>
   function disable() {
-    var limit = document.forms[0].elements.length;
-    for (i=0;i<limit;i++) {
+    let limit = document.forms[0].elements.length;
+    for (let i=0;i<limit;i++) {
       document.forms[0].elements[i].disabled = true;
     }
   }

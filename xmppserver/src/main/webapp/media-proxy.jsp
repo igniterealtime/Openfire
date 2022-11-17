@@ -26,8 +26,9 @@
 <%@ page import="org.jivesoftware.openfire.mediaproxy.RelaySession" %>
 <%@ page import="java.util.Collection" %>
 
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -121,20 +122,9 @@
 
 <% if (success) { %>
 
-<div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr>
-                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" alt="Success"
-                                           border="0"></td>
-                <td class="jive-icon-label">
-                    <fmt:message key="mediaproxy.settings.success"/>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-<br>
+    <admin:infoBox type="success">
+        <fmt:message key="mediaproxy.settings.success"/>
+    </admin:infoBox>
 
 <% } %>
 
@@ -144,14 +134,13 @@
         <fmt:message key="mediaproxy.form.label"/>
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tbody>
-                <tr valign="middle">
-                    <td width="1%" nowrap valign="top">
-                        <input type="radio" name="enabled" value="true" id="rb02"
-                        <%= (enabled ? "checked" : "") %> >
+                <tr>
+                    <td style="width: 1%; white-space: nowrap; vertical-align: top">
+                        <input type="radio" name="enabled" value="true" id="rb02" <%= (enabled ? "checked" : "") %> >
                     </td>
-                    <td width="99%">
+                    <td>
                         <label for="rb02">
                             <b>
                                 <fmt:message key="mediaproxy.form.enabled"/>
@@ -163,59 +152,48 @@
                         <table>
                             <tr>
                                 <td>
-                                    <fmt:message key="mediaproxy.form.idletimeout"/>
-                                    :&nbsp;
+                                    <label for="idleTimeout"><fmt:message key="mediaproxy.form.idletimeout"/>:</label>
                                 </td>
                                 <td>
-                                    <input type="text" size="5" maxlength="8"
-                                           name="idleTimeout"
-                                           value="<%=mediaProxyService.getIdleTime()/1000%>"
-                                           align="left"> &nbsp;<i>
-                                    <fmt:message key="mediaproxy.form.idletimeout.tip"/>
-                                </i>
+                                    <input type="text" size="5" maxlength="8" id="idleTimeout" name="idleTimeout"
+                                           value="<%=mediaProxyService.getIdleTime()/1000%>">&nbsp;
+                                    <i><fmt:message key="mediaproxy.form.idletimeout.tip"/></i>
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <fmt:message key="mediaproxy.form.lifetime"/>
-                                    :&nbsp;
+                                    <label for="lifetime"><fmt:message key="mediaproxy.form.lifetime"/>:</label>
                                 </td>
                                 <td>
-                                    <input type="text" size="5" maxlength="8"
-                                           name="lifetime"
-                                           value="<%=mediaProxyService.getLifetime()%>"
-                                           align="left"> &nbsp;<i>
-                                    <fmt:message key="mediaproxy.form.lifetime.tip"/>
-                                </i>
+                                    <input type="text" size="5" maxlength="8" id="lifetime" name="lifetime"
+                                           value="<%=mediaProxyService.getLifetime()%>">&nbsp;
+                                    <i><fmt:message key="mediaproxy.form.lifetime.tip"/></i>
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <fmt:message key="mediaproxy.form.minport"/>
-                                    :&nbsp;
+                                    <label for="minport"><fmt:message key="mediaproxy.form.minport"/>:</label>
                                 </td>
                                 <td>
-                                    <input type="text" size="7" maxlength="20" name="minport"
+                                    <input type="text" size="7" maxlength="20" id="minport" name="minport"
                                            value="<%=mediaProxyService.getMinPort()%>">
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <fmt:message key="mediaproxy.form.maxport"/>
-                                    :&nbsp;
+                                    <label for="maxport"><fmt:message key="mediaproxy.form.maxport"/>:</label>
                                 </td>
                                 <td>
-                                    <input type="text" size="7" maxlength="20" name="maxport"
+                                    <input type="text" size="7" maxlength="20" id="maxport" name="maxport"
                                            value="<%=mediaProxyService.getMaxPort()%>">
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <fmt:message key="mediaproxy.form.echoport"/>
-                                    :&nbsp;
+                                    <label for="echoport"><fmt:message key="mediaproxy.form.echoport"/>:</label>
                                 </td>
                                 <td>
-                                    <input type="text" size="7" maxlength="20" name="echoport"
+                                    <input type="text" size="7" maxlength="20" id="echoport" name="echoport"
                                            value="<%=mediaProxyService.getEchoPort()%>">
                                 </td>
                             </tr>
@@ -225,12 +203,12 @@
                 <tr>
                     <td>&nbsp;</td>
                 </tr>
-                <tr valign="middle">
-                    <td width="1%" nowrap>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap">
                         <input type="radio" name="enabled" value="false" id="rb01"
                         <%= (!enabled ? "checked" : "") %> >
                     </td>
-                    <td width="99%">
+                    <td>
                         <label for="rb01">
                             <b>
                                 <fmt:message key="mediaproxy.form.disabled"/>
@@ -256,28 +234,28 @@
 </p>
 
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
             <tr>
                 <th>&nbsp;</th>
-                <th nowrap align="left" valign="middle">
+                <th nowrap>
                     <fmt:message key="mediaproxy.summary.session.creator"/>
                 </th>
-                <th nowrap align="left" valign="middle">
+                <th nowrap>
                     <fmt:message key="mediaproxy.summary.session.port"/>
                     A
                 </th>
-                <th nowrap align="left" valign="middle">
+                <th nowrap>
                     <fmt:message key="mediaproxy.summary.session.port"/>
                     B
                 </th>
-                <th nowrap align="left" valign="middle">
+                <th nowrap>
                     <fmt:message key="mediaproxy.summary.session.server"/>
                 </th>
-                <th nowrap align="left" valign="middle">
+                <th nowrap>
                     <fmt:message key="mediaproxy.summary.session.inactivity"/>
                 </th>
-                <th nowrap align="left" valign="middle">
+                <th nowrap>
                     <fmt:message key="mediaproxy.summary.session.type"/>
                 </th>
             </tr>
@@ -289,7 +267,7 @@
                 if (sessions.isEmpty()) {
             %>
             <tr>
-                <td align="center" colspan="7">
+                <td style="text-align: center" colspan="7">
                     <fmt:message key="mediaproxy.summary.session.noactive"/>
                 </td>
             </tr>
@@ -300,26 +278,26 @@
                 for (MediaProxySession proxySession : sessions) {
                     i++;
             %>
-            <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-                <td width="1%">
+            <tr>
+                <td style="width: 1%">
                     <%= i %>
                 </td>
-                <td width="10%" align="left" valign="middle">
+                <td style="width: 10%">
                     <%= StringUtils.escapeHTMLTags(proxySession.getCreator())%>
                 </td>
-                <td width="15%" align="left" valign="middle">
+                <td style="width: 15%">
                     <%=proxySession.getHostA()%>:<%=proxySession.getLocalPortA()%>
                 </td>
-                <td width="15%" align="left" valign="middle">
+                <td style="width: 15%">
                     <%=proxySession.getHostB()%>:<%=proxySession.getLocalPortB()%>
                 </td>
-                <td width="10%" align="left" valign="middle">
+                <td style="width: 10%">
                     <%=proxySession.getLocalhost()%>
                 </td>
-                <td width="20%" align="left" valign="middle">
+                <td style="width: 20%">
                     <%=(System.currentTimeMillis() - proxySession.getTimestamp()) / 1000%>
                 </td>
-                <td width="10%">
+                <td style="width: 10%">
                     <% if (proxySession instanceof RelaySession) { %>
                     Smart Session
                     <% } else { %>

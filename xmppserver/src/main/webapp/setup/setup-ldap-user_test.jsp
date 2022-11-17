@@ -99,7 +99,7 @@
             <c:choose>
                 <c:when test="${not empty attributes}">
 
-            <table width="331" border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
+            <table width="331" cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
                 <tr>
                     <td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.personal" /></td>
                 </tr>
@@ -167,7 +167,7 @@
                 </tr>
             </table>
 
-            <table width="331" border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard">
+            <table width="331" cellpadding="0" cellspacing="1" class="jive-testTable-vcard">
                 <tr>
                     <td colspan="2" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.user.vcard.business" /></td>
                 </tr>

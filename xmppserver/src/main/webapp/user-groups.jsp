@@ -17,29 +17,20 @@
 --%>
 
 <%@ page
-    import="org.jivesoftware.openfire.PresenceManager,
-                 org.jivesoftware.openfire.group.Group,
-                 org.jivesoftware.openfire.group.GroupManager,
+    import="     org.jivesoftware.openfire.group.Group,
                  org.jivesoftware.openfire.group.GroupNotFoundException,
-                 org.jivesoftware.openfire.security.SecurityAuditManager,
                  org.jivesoftware.openfire.user.User,
-                 org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.openfire.user.UserNotFoundException"%>
-<%@ page import="gnu.inet.encoding.Stringprep"%>
-<%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.jivesoftware.util.CookieUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="org.xmpp.packet.Presence"%>
-<%@ page import="java.io.UnsupportedEncodingException"%>
-<%@ page import="java.net.URLDecoder"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.*"%>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib prefix="admin" uri="admin" %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <%
@@ -105,7 +96,7 @@
         webManager.setRowsPerPage("group-summary", range);
     }
 
-    ArrayList<Group> groups = new ArrayList<Group>(webManager.getGroupManager().getGroups());
+    ArrayList<Group> groups = new ArrayList<>(webManager.getGroupManager().getGroups());
     // Remove already joined groups 
     groups.removeAll(userGroups);
     
@@ -118,7 +109,7 @@
         search = request.getParameter("search");
         search = StringUtils.escapeHTMLTags(search);
         // Use the search terms to get the list of groups.
-        groups = new ArrayList<Group>(webManager.getGroupManager().search(search));
+        groups = new ArrayList<>(webManager.getGroupManager().search(search));
         // Count already joined groups in the search result 
         int userGroupCount = 0;
         for(Group group : groups) {
@@ -140,19 +131,9 @@
     
     if(success) {
 %>
-<div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr>
-                <td class="jive-icon"><img src="images/success-16x16.gif"
-                    width="16" height="16" border="0" alt=""></td>
-                <td class="jive-icon-label"><fmt:message
-                        key="user.groups.form.update" /></td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-<br>
+<admin:infoBox type="success">
+    <fmt:message key="user.groups.form.update" />
+</admin:infoBox>
 <%
     }
 %>
@@ -170,7 +151,7 @@
         <b><%=username%>.</b>
     </p>
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
                 <tr>
                     <th>&nbsp;</th>
@@ -184,7 +165,7 @@
                                                             if (userGroups.isEmpty()) {
                 %>
                 <tr>
-                    <td align="center" colspan="6"><fmt:message
+                    <td style="text-align: center" colspan="6"><fmt:message
                             key="group.summary.no_groups" /></td>
                 </tr>
 
@@ -195,8 +176,8 @@
                                                                 String groupName = URLEncoder.encode(group.getName(), "UTF-8");
                                                                 x++;
                 %>
-                <tr class="jive-<%=(((x % 2) == 0) ? "even" : "odd")%>">
-                    <td width="1%" valign="top"><%=x%></td>
+                <tr>
+                    <td  style="width: 1%; vertical-align: top"><%=x%></td>
                     <td><a href="group-edit.jsp?group=<%=groupName%>"><%=StringUtils.escapeHTMLTags(group.getName())%></a>
                         <%
                             if (group.getDescription() != null) {
@@ -205,10 +186,10 @@
     }
  %></td>
 
-                    <td width="5%"><a
+                    <td style="width: 5%"><a
                         href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&delete=<%=groupName%>&csrf=${csrf}"
                         title="<fmt:message key="global.click_delete" />"><img
-                            src="images/delete-16x16.gif" width="16" height="16" border="0"
+                            src="images/delete-16x16.gif"
                             alt="<fmt:message key="global.click_delete" />"></a></td>
                 </tr>
                 <%
@@ -228,14 +209,10 @@
     %>
 
     <form action="user-groups.jsp" method="get" name="searchForm">
-        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+        <table style="width: 100%">
             <tr>
-                <td valign="bottom"><fmt:message
-                        key="group.summary.total_group" /> <b><%=groupCount%></b></td>
-                <td align="right" valign="bottom"><fmt:message
-                        key="group.summary.search" />: <input type="text" size="30"
-                    maxlength="150" name="search"
-                    value="<c:out value='${param.search}'/>"></td>
+                <td style="vertical-align: bottom"><fmt:message key="group.summary.total_group" /> <b><%=groupCount%></b></td>
+                <td style="text-align: right; vertical-align: bottom"><label for="search"><fmt:message key="group.summary.search" />:</label> <input type="text" size="30" maxlength="150" id="search" name="search" value="<c:out value='${param.search}'/>"></td>
             </tr>
         </table>
         <input type="hidden" name="username"
@@ -297,7 +274,7 @@
     %>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
                 <tr>
                     <th>&nbsp;</th>
@@ -312,7 +289,7 @@
                     if (groups.isEmpty()) {
                 %>
                 <tr>
-                    <td align="center" colspan="6"><fmt:message
+                    <td style="text-align: center" colspan="6"><fmt:message
                             key="group.summary.no_groups" /></td>
                 </tr>
 
@@ -323,8 +300,8 @@
                         String groupName = URLEncoder.encode(group.getName(), "UTF-8");
                         i++;
                 %>
-                <tr class="jive-<%=(((i % 2) == 0) ? "even" : "odd")%>">
-                    <td width="1%" valign="top"><%=i%></td>
+                <tr>
+                    <td  style="width: 1%; vertical-align: top"><%=i%></td>
                     <td><a href="group-edit.jsp?group=<%=groupName%>"><%=StringUtils.escapeHTMLTags(group.getName())%></a>
                         <%
                             if (group.getDescription() != null) {
@@ -333,10 +310,10 @@
     }
  %></td>
 
-                    <td width="5%"><a
+                    <td style="width: 5%"><a
                         href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&add=<%=groupName%>&csrf=${csrf}"
                         title="<fmt:message key="global.click_add" />"> <img
-                            src="images/add-16x16.gif" width="16" height="16" border="0"
+                            src="images/add-16x16.gif"
                             alt="<fmt:message key="global.click_add" />"></a></td>
                 </tr>
                 <%

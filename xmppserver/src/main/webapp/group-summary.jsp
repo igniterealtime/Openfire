@@ -84,7 +84,7 @@
 </c:if>
 
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
         <tr>
             <th>&nbsp;</th>
@@ -136,37 +136,35 @@
         <tbody>
         <c:if test="${listPager.totalItemCount < 1}">
             <tr>
-                <td align="center" colspan="6">
+                <td style="text-align: center" colspan="6">
                     <fmt:message key="group.summary.no_groups" />
                 </td>
             </tr>
         </c:if>
         <%--@elvariable id="group" type="org.jivesoftware.openfire.group.Group"--%>
         <c:forEach var="group" items="${listPager.itemsOnCurrentPage}" varStatus="loop">
-        <tr class="${ (loop.index%2)==0 ? 'jive-even' : 'jive-odd'}">
-            <td width="1%">
+        <tr>
+            <td style="width: 1%">
                 <c:out value="${listPager.firstItemNumberOnPage + loop.index}"/>
             </td>
-            <td width="22%">
+            <td style="width: 22%">
                 <a href="group-edit.jsp?group=<c:out value="${group.name}"/>"
                    title='<fmt:message key="global.click_edit"/>'
                 ><c:out value="${group.name}"/></a>
             </td>
-            <td width="50%"><c:out value="${group.description}"/></td>
-            <td width="10%"><c:out value="${group.members.size()}"/></td>
-            <td width="10%"><c:out value="${group.admins.size()}"/></td>
-            <td width="1%">
+            <td style="width: 50%"><c:out value="${group.description}"/></td>
+            <td style="width: 10%"><c:out value="${group.members.size()}"/></td>
+            <td style="width: 10%"><c:out value="${group.admins.size()}"/></td>
+            <td style="width: 1%">
                 <a href="group-edit.jsp?group=<c:out value="${group.name}"/>"
                    title='<fmt:message key="global.click_edit"/>'
-                ><img src="images/edit-16x16.gif"
-                      width="16" height="16" border="0" alt='<fmt:message key="global.click_edit"/>'></a>
+                ><img src="images/edit-16x16.gif" alt='<fmt:message key="global.click_edit"/>'></a>
             </td>
             <c:if test="${canEdit}">
-                <td width="1%">
+                <td style="width: 1%;">
                     <a href="group-delete.jsp?group=<c:out value="${group.name}"/>"
                                    title='<fmt:message key="global.click_delete" />'
-                    ><img src="images/delete-16x16.gif"
-                          width="16" height="16" border="0" alt='<fmt:message key="global.click_delete" />'></a>
+                    ><img src="images/delete-16x16.gif" alt='<fmt:message key="global.click_delete" />'></a>
                 </td>
             </c:if>
         </tr>

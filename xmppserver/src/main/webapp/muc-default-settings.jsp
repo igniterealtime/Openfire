@@ -60,7 +60,7 @@
     }
 
     // Handle a save
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -248,7 +248,7 @@
 
     <fmt:message key="muc.default.settings.title" var="settingsTitle"/>
     <admin:contentBox title="${settingsTitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <colgroup>
                 <col style="width: 1%"/>
                 <col style="width: 99%"/>

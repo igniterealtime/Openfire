@@ -37,38 +37,38 @@
         }
     }
 %>
-<tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
-    <td width="1%" nowrap><%= count %></td>
-    <td width="47%" nowrap>
-        <table cellpadding="0" cellspacing="0" border="0">
+<tr>
+    <td style="width: 1%; white-space: nowrap"><%= count %></td>
+    <td style="width: 47%; white-space: nowrap">
+        <table>
             <tr>
-            <td width="1%" ><img src="getFavicon?host=<%=URLEncoder.encode(host, "UTF-8")%>" width="16" height="16" alt=""></td>
+            <td style="width: 1%" ><img src="getFavicon?host=<%=URLEncoder.encode(host, "UTF-8")%>" width="16" height="16" alt=""></td>
             <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key='session.row.cliked' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
             </tr>
         </table>
     </td>
     <%  if (isSecured) { %>
-    <td width="1%">
-        <img src="images/lock.gif" width="16" height="16" border="0" alt="">
+    <td style="width: 1%">
+        <img src="images/lock.gif" alt="">
     </td>
      <% } else { %>
-    <td width="1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
+    <td style="width: 1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
      <% } %>
     <% if (!inSessions.isEmpty() && outSessions.isEmpty()) { %>
-        <td width="1%">
-            <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
+        <td style="width: 1%">
+            <img src="images/incoming_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
         </td>
-        <td width="10%"><fmt:message key="server.session.connection.incoming" /></td>
+        <td style="width: 10%"><fmt:message key="server.session.connection.incoming" /></td>
     <% } else if (inSessions.isEmpty() && !outSessions.isEmpty()) { %>
-        <td width="1%">
-            <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
+        <td style="width: 1%">
+            <img src="images/outgoing_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
         </td>
-        <td width="10%"><fmt:message key="server.session.connection.outgoing" /></td>
+        <td style="width: 10%"><fmt:message key="server.session.connection.outgoing" /></td>
     <% } else { %>
-        <td width="1%">
-            <img src="images/both_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
+        <td style="width: 1%">
+            <img src="images/both_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
         </td>
-        <td width="10%"><fmt:message key="server.session.connection.both" /></td>
+        <td style="width: 10%"><fmt:message key="server.session.connection.both" /></td>
     <% } %>
 
     <%
@@ -121,17 +121,17 @@
 
     %>
 
-    <td align="center" width="20%" nowrap>
+    <td style="text-align: center; width: 20%" nowrap>
         <%= creationDateString %>
     </td>
-    <td align="center" width="20%" nowrap>
+    <td style="text-align: center; width: 20%" nowrap>
         <%= lastActivityString %>
     </td>
 
-    <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
+    <td style="width: 1%; white-space: nowrap; text-align: center; border-right:1px #ccc solid;">
         <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.cliked_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
-         ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+         ><img src="images/delete-16x16.gif" alt="Delete"></a>
     </td>
 </tr>

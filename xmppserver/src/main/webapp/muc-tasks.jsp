@@ -200,6 +200,9 @@
     pageContext.setAttribute("warnings", warnings);
     pageContext.setAttribute("mucname", mucname);
     pageContext.setAttribute("mucService", mucService);
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("idleSettingSuccess", idleSettingSuccess);
+    pageContext.setAttribute("logSettingSuccess", logSettingSuccess);
 %>
 
 <html>
@@ -211,28 +214,17 @@
 </head>
 <body>
 
-<%  if (idleSettingSuccess || logSettingSuccess) { %>
+<c:if test="${idleSettingSuccess}">
+    <admin:infoBox type="success">
+        <fmt:message key="muc.tasks.update" />
+    </admin:infoBox>
+</c:if>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <%  if (idleSettingSuccess) { %>
-
-            <fmt:message key="muc.tasks.update" />
-
-        <%  } else if (logSettingSuccess) { %>
-
-            <fmt:message key="muc.tasks.log" />
-
-        <%  } %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
+<c:if test="${logSettingSuccess}">
+    <admin:infoBox type="success">
+        <fmt:message key="muc.tasks.log" />
+    </admin:infoBox>
+</c:if>
 
 <!-- Display all errors -->
 <c:forEach var="err" items="${errors}">
@@ -279,28 +271,28 @@
     <input type="hidden" name="mucname" value="<c:out value="${mucname}"/>" />
     <c:set var="idleheader"><fmt:message key="muc.tasks.user_setting" /></c:set>
     <admin:contentBox title="${idleheader}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="checkbox" name="pingEnabled" value="true" id="cb01" ${empty mucService.idleUserPingThreshold ? '' : 'checked'}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="cb01"><fmt:message key="muc.tasks.ping_user" /></label>
-                    <input type="number" min="1" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
+                    <input type="number" min="1" id="pingtime" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
                            value="${empty mucService.idleUserPingThreshold ? '8' : mucService.idleUserPingThreshold.toMinutes()}">
-                    <fmt:message key="global.minutes" />.
+                    <label for="pingtime"><fmt:message key="global.minutes" /></label>.
                 </td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="checkbox" name="kickEnabled" value="true" id="cb02" ${empty mucService.idleUserKickThreshold ? '' : 'checked'}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="cb02"><fmt:message key="muc.tasks.kick_user" /></label>
-                    <input type="number" min="1" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled[1].checked=true;"
+                    <input type="number" min="1" id="idletime" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled[1].checked=true;"
                            value="${empty mucService.idleUserKickThreshold ? '30' : mucService.idleUserKickThreshold.toMinutes()}">
-                    <fmt:message key="global.minutes" />.
+                    <label for="idletime"><fmt:message key="global.minutes" /></label>.
                 </td>
             </tr>
         </tbody>
@@ -321,31 +313,31 @@
         <fmt:message key="muc.tasks.conversation.logging" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0" >
-        <tr valign="middle">
-            <td width="1%" nowrap class="c1">
-                <fmt:message key="muc.tasks.maxbatchsize" />
+        <table >
+        <tr>
+            <td style="width: 1%; white-space: nowrap" class="c1">
+                <label for="maxbatchsize"><fmt:message key="muc.tasks.maxbatchsize" /></label>
             </td>
-            <td width="99%">
-                <input type="number" name="maxbatchsize" size="15" maxlength="50" min="1"
+            <td>
+                <input type="number" id="maxbatchsize" name="maxbatchsize" size="15" maxlength="50" min="1"
                        value="<%= mucService.getLogMaxConversationBatchSize() %>">
             </td>
         </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap class="c1">
-                <fmt:message key="muc.tasks.maxbatchinterval" />
+        <tr>
+            <td style="width: 1%; white-space: nowrap" class="c1">
+                <label for="maxbatchinterval"><fmt:message key="muc.tasks.maxbatchinterval" /></label>
             </td>
-            <td width="99%">
-                <input type="number" name="maxbatchinterval" size="15" maxlength="50" min="0"
+            <td>
+                <input type="number" id="maxbatchinterval" name="maxbatchinterval" size="15" maxlength="50" min="0"
                  value="<%= mucService.getLogMaxBatchInterval().toMillis() %>">
             </td>
         </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap class="c1">
-                <fmt:message key="muc.tasks.batchgrace" />
+        <tr>
+            <td style="width: 1%; white-space: nowrap" class="c1">
+                <label for="batchgrace"><fmt:message key="muc.tasks.batchgrace" /></label>
             </td>
-            <td width="99%">
-                <input type="number" name="batchgrace" size="15" maxlength="50" min="0"
+            <td>
+                <input type="number" id="batchgrace" name="batchgrace" size="15" maxlength="50" min="0"
                        value="<%= mucService.getLogBatchGracePeriod().toMillis() %>">
             </td>
         </tr>

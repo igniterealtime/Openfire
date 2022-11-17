@@ -111,8 +111,8 @@
     - <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
 <%  } %>
- - <fmt:message key="component.session.summary.sessions_per_page" />:
-<select size="1" onchange="location.href='component-session-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
+    - <label for="s1"><fmt:message key="component.session.summary.sessions_per_page" /></label>:
+<select id="s1" size="1" onchange="location.href='component-session-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
     <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
 
@@ -152,7 +152,7 @@
 </p>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -184,50 +184,50 @@
     <%  } %>
 
     <%  int count = 0;
-        sessions = new ArrayList<ComponentSession>(sessions).subList(start, maxIndex);
+        sessions = new ArrayList<>(sessions).subList(start, maxIndex);
         for (ComponentSession componentSession : sessions) {
             count++;
     %>
-    <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
-        <td width="1%" nowrap><%= count %></td>
-        <td width="43%" nowrap>
+    <tr>
+        <td style="width: 1%; white-space: nowrap"><%= count %></td>
+        <td style="width: 43%; white-space: nowrap" nowrap>
             <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= componentSession.getAddress() %></a>
         </td>
-        <td width="1%">
+        <td style="width: 1%">
             <%  if (componentSession.isSecure()) {
                 if (componentSession.getPeerCertificates() != null && componentSession.getPeerCertificates().length > 0) { %>
-            <img src="images/lock_both.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+            <img src="images/lock_both.gif" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
             <%      } else { %>
-            <img src="images/lock.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+            <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
             <%      }
             } else { %>
             <img src="images/blank.gif" width="1" height="1" alt="">
             <%     } %>
         </td>
-        <td width="15%" nowrap>
+        <td style="width: 15%; white-space: nowrap">
             <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getName()) %>
         </td>
-        <td width="10%" nowrap>
+        <td style="width: 10%; white-space: nowrap">
             <%= StringUtils.escapeHTMLTags(componentSession.getExternalComponent().getCategory()) %>
         </td>
-        <td width="10%" nowrap>
-            <table border="0">
-            <tr valign="center">
+        <td style="width: 10%; white-space: nowrap">
+            <table>
+            <tr style="text-align: center">
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
                 if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/msn.gif" width="16" height="16" border="0" alt="MSN"></td>
+                <td><img src="images/msn.gif" alt="MSN"></td>
              <% }
                 else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/aim.gif" width="16" height="16" border="0" alt="AIM"></td>
+                <td><img src="images/aim.gif" alt="AIM"></td>
              <% }
                 else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!"></td>
+                <td><img src="images/yahoo.gif" alt="Yahoo!"></td>
              <% }
                 else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ"></td>
+                <td><img src="images/icq.gif" alt="ICQ"></td>
              <% }
                 else if ("irc".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/irc.gif" width="16" height="16" border="0" alt="IRC"></td>
+                <td><img src="images/irc.gif" alt="IRC"></td>
              <% }
                }
             %>
@@ -256,18 +256,18 @@
             boolean sameCreationDay = nowCal.get(Calendar.DAY_OF_YEAR) == creationCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == creationCal.get(Calendar.YEAR);
             boolean sameActiveDay = nowCal.get(Calendar.DAY_OF_YEAR) == lastActiveCal.get(Calendar.DAY_OF_YEAR) && nowCal.get(Calendar.YEAR) == lastActiveCal.get(Calendar.YEAR);
         %>
-        <td width="9%" nowrap>
+        <td style="width: 9%; white-space: nowrap">
             <%= sameCreationDay ? JiveGlobals.formatTime(creationDate) : JiveGlobals.formatDateTime(creationDate) %>
         </td>
-        <td width="9%" nowrap>
+        <td style="width: 9%; white-space: nowrap">
             <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
         </td>
 
-        <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
+        <td style="width: 1%; white-space: nowrap; border-right:1px #ccc solid; text-align: center">
             <a href="component-session-summary.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>&close=true"
              title="<fmt:message key="session.row.cliked_kill_session" />"
              onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+             ><img src="images/delete-16x16.gif" alt=""></a>
         </td>
     </tr>
     <%  } %>

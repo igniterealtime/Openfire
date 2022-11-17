@@ -31,10 +31,10 @@
 <div id="jive-body" style="left: 0px; padding: 30px 50px 30px 50px;">
 
 
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr valign="top">
+<table>
+<tr>
 
-    <td width="98%">
+    <td style="width: 98%">
 
         <h1>
         <fmt:message key="setup.completed.run" />
@@ -47,7 +47,7 @@
         </p>
 
         <br><br>
-            <div class="jive_setup_launchAdmin" align="center">
+            <div class="jive_setup_launchAdmin" style="text-align: center">
                 <a href="../index.jsp"><fmt:message key="setup.finished.login" /></a>
             </div>
 

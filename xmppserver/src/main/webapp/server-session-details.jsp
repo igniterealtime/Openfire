@@ -19,16 +19,10 @@
 <%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.session.IncomingServerSession,
                  org.jivesoftware.openfire.session.OutgoingServerSession,
-                 org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.StringUtils,
-                 java.text.NumberFormat"
+                 org.jivesoftware.util.ParamUtils"
     errorPage="error.jsp"
 %>
-<%@ page import="org.slf4j.Logger" %>
-<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
-<%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.net.InetAddress" %>
@@ -107,7 +101,7 @@
         </p>
 
         <div class="jive-table">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table>
                 <tr>
                     <th colspan="2">
                         <fmt:message key="server.session.details.domain.title" />
@@ -128,15 +122,15 @@
                     <td>
                         <c:choose>
                             <c:when test="${not empty inByHost and empty outByHost}">
-                                <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
+                                <img src="images/incoming_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
                                 <fmt:message key="server.session.connection.incoming" />
                             </c:when>
                             <c:when test="${empty inByHost and not empty outByHost}">
-                                <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
+                                <img src="images/outgoing_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
                                 <fmt:message key="server.session.connection.outgoing" />
                             </c:when>
                             <c:otherwise>
-                                <img src="images/both_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
+                                <img src="images/both_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
                                 <fmt:message key="server.session.connection.both" />
                             </c:otherwise>
                         </c:choose>
@@ -154,7 +148,7 @@
             <c:set var="outSessions" value="${outByHost[host.key]}"/>
 
             <div class="jive-table">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <tr>
                         <th colspan="2">
                             <fmt:message key="server.session.details.title" />
@@ -176,15 +170,15 @@
                         <td>
                             <c:choose>
                                 <c:when test="${not empty inSessions and empty outSessions}">
-                                    <img src="images/incoming_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
+                                    <img src="images/incoming_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
                                     <fmt:message key="server.session.connection.incoming" />
                                 </c:when>
                                 <c:when test="${empty inSessions and not empty outSessions}">
-                                    <img src="images/outgoing_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
+                                    <img src="images/outgoing_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
                                     <fmt:message key="server.session.connection.outgoing" />
                                 </c:when>
                                 <c:otherwise>
-                                    <img src="images/both_32x16.gif" width="32" height="16" border="0" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
+                                    <img src="images/both_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
                                     <fmt:message key="server.session.connection.both" />
                                 </c:otherwise>
                             </c:choose>
@@ -220,26 +214,26 @@
 
                 <!-- Show details of the incoming sessions for this host -->
                 <c:if test="${not empty inSessions}">
-                    <table cellpadding="3" cellspacing="1" border="0" width="100%">
+                    <table style="width: 100%">
                         <tr>
-                            <th width="35%" colspan="2" nowrap><fmt:message key="server.session.details.incoming_session" /> <fmt:message key="server.session.details.streamid" /></th>
+                            <th style="width: 35%; white-space: nowrap" colspan="2"><fmt:message key="server.session.details.incoming_session" /> <fmt:message key="server.session.details.streamid" /></th>
                             <c:if test="${clusteringEnabled}">
-                                <th width="1%" nowrap><fmt:message key="server.session.details.node"/></th>
+                                <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.node"/></th>
                             </c:if>
-                            <th width="10%" nowrap><fmt:message key="server.session.details.authentication"/></th>
-                            <th width="10%" nowrap><fmt:message key="server.session.details.cipher"/></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.label.creation" /></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.label.last_active" /></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
+                            <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.authentication"/></th>
+                            <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.cipher"/></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.creation" /></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.last_active" /></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.incoming_statistics" /></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.outgoing_statistics" /></th>
                         </tr>
 
                         <c:forEach items="${inSessions}" var="session">
                             <tr>
-                                <td width="1%">
+                                <td style="width: 1%">
                                     <c:choose>
                                         <c:when test="${session.secure}">
-                                            <img src="images/lock.gif" width="16" height="16" border="0" alt="A secure connection">
+                                            <img src="images/lock.gif" alt="A secure connection">
                                         </c:when>
                                         <c:otherwise>
                                             <img src="images/blank.gif" width="1" height="1" alt="Not a secure connection">
@@ -271,8 +265,8 @@
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>
-                                <td align="center" nowrap><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>
-                                <td align="center" nowrap><fmt:formatNumber type="number" value="${session.numServerPackets}"/></td>
+                                <td style="text-align: center" nowrap><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>
+                                <td style="text-align: center" nowrap><fmt:formatNumber type="number" value="${session.numServerPackets}"/></td>
                             </tr>
                         </c:forEach>
                     </table>
@@ -280,26 +274,26 @@
 
                 <!-- Show details of the outgoing sessions for this host -->
                 <c:if test="${not empty outSessions}">
-                    <table cellpadding="3" cellspacing="1" border="0" width="100%">
+                    <table style="width: 100%">
                         <tr>
-                            <th width="35%" colspan="2" nowrap><fmt:message key="server.session.details.outgoing_session" /> <fmt:message key="server.session.details.streamid" /></th>
+                            <th style="width: 35%; white-space: nowrap" colspan="2"><fmt:message key="server.session.details.outgoing_session" /> <fmt:message key="server.session.details.streamid" /></th>
                             <c:if test="${clusteringEnabled}">
-                                <th width="1%" nowrap><fmt:message key="server.session.details.node"/></th>
+                                <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.node"/></th>
                             </c:if>
-                            <th width="10%" nowrap><fmt:message key="server.session.details.authentication"/></th>
-                            <th width="10%" nowrap><fmt:message key="server.session.details.cipher"/></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.label.creation" /></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.label.last_active" /></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
-                            <th width="1%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
+                            <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.authentication"/></th>
+                            <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.cipher"/></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.creation" /></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.last_active" /></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.incoming_statistics" /></th>
+                            <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.outgoing_statistics" /></th>
                         </tr>
 
                         <c:forEach items="${outSessions}" var="session">
                             <tr>
-                                <td width="1%">
+                                <td style="width: 1%">
                                     <c:choose>
                                         <c:when test="${session.secure}">
-                                            <img src="images/lock.gif" width="16" height="16" border="0" alt="A secure connection">
+                                            <img src="images/lock.gif" alt="A secure connection">
                                         </c:when>
                                         <c:otherwise>
                                             <img src="images/blank.gif" width="1" height="1" alt="Not a secure connection">
@@ -331,8 +325,8 @@
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>
-                                <td align="center" nowrap><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>
-                                <td align="center" nowrap><fmt:formatNumber type="number" value="${session.numServerPackets}"/></td>
+                                <td style="text-align: center" nowrap><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>
+                                <td style="text-align: center" nowrap><fmt:formatNumber type="number" value="${session.numServerPackets}"/></td>
                             </tr>
                         </c:forEach>
                      </table>
@@ -345,9 +339,9 @@
         </c:forEach>
 
         <form action="server-session-details.jsp">
-            <center>
+            <div style="text-align: center;">
                 <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
-            </center>
+            </div>
         </form>
 
     </body>

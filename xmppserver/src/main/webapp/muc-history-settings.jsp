@@ -27,6 +27,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%!  // Global vars and methods:
 
@@ -56,7 +57,7 @@
     
     HistoryStrategy historyStrat = mucService.getHistoryStrategy();
 
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -131,16 +132,9 @@
 
 <%  if ("true".equals(request.getParameter("success"))) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="groupchat.history.settings.saved_successfully" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+<admin:infoBox type="success">
+    <fmt:message key="groupchat.history.settings.saved_successfully" />
+</admin:infoBox>
 
 <%  } %>
 
@@ -152,42 +146,42 @@
         <fmt:message key="groupchat.history.settings.legend" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0" >
+        <table >
         <tbody>
-            <tr valign="middle" class="">
-                <td width="1%" nowrap>
+            <tr class="">
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="policy" value="<%= NONE %>" id="rb01"  <%= ((policy==NONE) ? "checked" : "") %> />
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01">
                     <b><fmt:message key="groupchat.history.settings.label1_no_history" /></b>
                     </label><fmt:message key="groupchat.history.settings.label2_no_history" />
                 </td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="policy" value="<%= ALL %>" id="rb02"  <%= ((policy==ALL) ? "checked" : "") %>/>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02">
                     <b><fmt:message key="groupchat.history.settings.label1_entire_history" /></b>
                     </label><fmt:message key="groupchat.history.settings.label2_entire_history" />
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="policy" value="<%= NUMBER %>" id="rb03"  <%= ((policy==NUMBER) ? "checked" : "") %> />
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb03">
                     <b><fmt:message key="groupchat.history.settings.label1_number_messages" /></b>
                     </label><fmt:message key="groupchat.history.settings.label2_number_messages" />
                 </td>
             </tr>
-            <tr valign="middle" class="">
-                <td width="1%" nowrap>&nbsp;</td>
-                <td width="99%">
-                    <input type="text" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <fmt:message key="groupchat.history.settings.messages" />
+            <tr class="">
+                <td style="width: 1%; white-space: nowrap">&nbsp;</td>
+                <td>
+                    <input type="text" id="numMessages" name="numMessages" size="5" maxlength="10" onclick="this.form.policy[2].checked=true;" value="<%= ((numMessages > 0) ? ""+numMessages : "") %>"/> <label for="numMessages"><fmt:message key="groupchat.history.settings.messages" /></label>
                 </td>
             </tr>
         </tbody>

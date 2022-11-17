@@ -109,7 +109,7 @@
         else
         {
             // Try to obtain an int from the provided strings
-            if ( errors.size() == 0 )
+            if ( errors.isEmpty() )
             {
                 try
                 {
@@ -232,7 +232,7 @@
         // 'enable' checkbox for that connection type.
         function applyDisplayable( connectionType )
         {
-            var configBlock, enabled;
+            let configBlock, enabled;
 
             // Select the right configuration block and enable or disable it as defined by the the corresponding checkbox.
             configBlock = document.getElementById( connectionType + "-config" );
@@ -307,15 +307,15 @@
 
         <p><fmt:message key="server2server.settings.boxinfo"/></p>
 
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="server2server.settings.label_enable"/></label></td>
+        <table>
+            <tr>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/>&nbsp;<label for="plaintext-enabled"><fmt:message key="server2server.settings.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_S2S&connectionMode=plain"><fmt:message key="ssl.settings.server.label_custom_info"/>...</a></td>
             </tr>
         </table>
@@ -327,15 +327,15 @@
 
         <p><fmt:message key="ssl.settings.server.legacymode.info"/></p>
 
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled"><fmt:message key="ssl.settings.server.legacymode.label_enable"/></label></td>
+        <table>
+            <tr>
+                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/>&nbsp;<label for="legacymode-enabled"><fmt:message key="ssl.settings.server.legacymode.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_S2S&connectionMode=legacy"><fmt:message key="ssl.settings.server.label_custom_info"/>...</a></td>
             </tr>
         </table>
@@ -352,12 +352,12 @@
     <input type="hidden" name="csrf" value="${csrf}">
     <fmt:message key="server2server.settings.close_settings" var="idleTitle"/>
     <admin:contentBox title="${idleTitle}">
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td width="1%" nowrap>
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="closeEnabled" value="true" id="rb04" ${webManager.sessionManager.serverSessionIdleTime gt -1 ? 'checked' : ''}>
                 </td>
-                <td width="99%">
+                <td>
                     <c:if test="${webManager.sessionManager.serverSessionIdleTime gt -1}">
                         <fmt:parseNumber integerOnly="true" var="minutes">${webManager.sessionManager.serverSessionIdleTime div 60000}</fmt:parseNumber>
                     </c:if>
@@ -367,11 +367,11 @@
                     <label for="idletime"><fmt:message key="global.minutes" /></label>.
                 </td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="closeEnabled" value="false" id="rb03" ${webManager.sessionManager.serverSessionIdleTime gt -1 ? '' : 'checked'}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb03"><fmt:message key="server2server.settings.never_close" /></label>
                 </td>
             </tr>
@@ -390,22 +390,22 @@
 <admin:contentBox title="${allowedTitle}">
     <form action="connection-settings-socket-s2s.jsp" method="post">
         <input type="hidden" name="csrf" value="${csrf}">
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="top">
-                <td width="1%" nowrap>
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="permissionFilter" value="blacklist" id="rb05" ${permissionPolicy eq 'blacklist'? 'checked' : '' }>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb05">
                         <b><fmt:message key="server2server.settings.anyone" /></b> - <fmt:message key="server2server.settings.anyone_info" />
                     </label>
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="permissionFilter" value="whitelist" id="rb06" ${permissionPolicy eq 'whitelist'? 'checked' : ''}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb06">
                         <b><fmt:message key="server2server.settings.whitelist" /></b> - <fmt:message key="server2server.settings.whitelist_info" />
                     </label>
@@ -419,33 +419,33 @@
 
     <form action="connection-settings-socket-s2s.jsp" method="post">
         <input type="hidden" name="csrf" value="${csrf}">
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table class="jive-table">
             <tr>
-                <th width="1%">&nbsp;</th>
-                <th width="70%" nowrap><fmt:message key="server2server.settings.domain" /></th>
-                <th width="19%" nowrap><fmt:message key="server2server.settings.remotePort" /></th>
-                <th width="10%" style="text-align: center"><fmt:message key="global.delete" /></th>
+                <th style="width: 1%">&nbsp;</th>
+                <th style="width: 70%; white-space: nowrap"><fmt:message key="server2server.settings.domain" /></th>
+                <th style="width: 19%; white-space: nowrap"><fmt:message key="server2server.settings.remotePort" /></th>
+                <th style="width: 10%; text-align: center"><fmt:message key="global.delete" /></th>
             </tr>
             <c:choose>
                 <c:when test="${empty allowedServers}">
                     <tr>
-                        <td align="center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
+                        <td style="text-align: center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
                     </tr>
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="server" varStatus="status" items="${allowedServers}">
-                        <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
+                        <tr>
                             <td>${ status.index + 1}</td>
                             <td><c:out value="${server.domain}"/></td>
                             <td><c:out value="${server.remotePort}"/></td>
-                            <td align="center" style="border-right:1px #ccc solid;">
+                            <td style="border-right:1px #ccc solid; text-align: center">
                                 <c:url var="deleteurl" value="connection-settings-socket-s2s.jsp">
                                     <c:param name="deleteConf" value="${server.domain}"/>
                                     <c:param name="csrf" value="${csrf}"/>
                                 </c:url>
                                 <a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
                                    title="<fmt:message key="global.click_delete" />"
-                                        ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                                        ><img src="images/delete-16x16.gif" alt=""></a>
                             </td>
                         </tr>
                     </c:forEach>
@@ -453,7 +453,7 @@
             </c:choose>
         </table>
         <br/>
-        <table cellpadding="3" cellspacing="1" border="0">
+        <table>
             <tr>
                 <td nowrap>
                     <label for="domainAllowed"><fmt:message key="server2server.settings.domain" /></label>
@@ -473,35 +473,35 @@
 <!-- BEGIN 'Not Allowed to Connect' -->
 <fmt:message key="server2server.settings.disallowed" var="disallowedTitle"/>
 <admin:contentBox title="${disallowedTitle}">
-    <table cellpadding="3" cellspacing="1" border="0" width="100%"><tr><td>
+    <table><tr><td>
         <fmt:message key="server2server.settings.disallowed.info" />
     </td></tr></table>
     <p>
-    <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table class="jive-table">
         <tr>
-            <th width="1%">&nbsp;</th>
-            <th width="89%" nowrap><fmt:message key="server2server.settings.domain" /></th>
-            <th width="10%" style="text-align: center"><fmt:message key="global.delete" /></th>
+            <th style="width: 1%;">&nbsp;</th>
+            <th style="width: 89%; white-space: nowrap"><fmt:message key="server2server.settings.domain" /></th>
+            <th style="width: 10%; text-align: center"><fmt:message key="global.delete" /></th>
         </tr>
         <c:choose>
             <c:when test="${empty blockedServers}">
                 <tr>
-                    <td align="center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
+                    <td style="text-align: center" colspan="7"><fmt:message key="server2server.settings.empty_list" /></td>
                 </tr>
             </c:when>
             <c:otherwise>
                 <c:forEach var="server" varStatus="status" items="${blockedServers}">
-                    <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
+                    <tr>
                         <td>${ status.index + 1}</td>
                         <td><c:out value="${server.domain}"/></td>
-                        <td align="center" style="border-right:1px #ccc solid;">
+                        <td style="border-right:1px #ccc solid; text-align: center">
                                 <c:url var="deleteurl" value="connection-settings-socket-s2s.jsp">
                                     <c:param name="deleteConf" value="${server.domain}"/>
                                     <c:param name="csrf" value="${csrf}"/>
                                 </c:url>
                             <a href="#" onclick="if (confirm('<fmt:message key="server2server.settings.confirm_delete" />')) { location.replace('${deleteurl}'); } "
                                title="<fmt:message key="global.click_delete" />"
-                                    ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                                    ><img src="images/delete-16x16.gif" alt=""></a>
                         </td>
                     </tr>
                 </c:forEach>
@@ -511,9 +511,9 @@
     <br>
     <form action="connection-settings-socket-s2s.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
-        <table cellpadding="3" cellspacing="1" border="0" width="100%">
+        <table>
             <tr>
-                <td nowrap width="1%">
+                <td style="width: 1%; white-space: nowrap">
                     <label for="domainBlocked"><fmt:message key="server2server.settings.domain" /></label>
                 </td>
                 <td>

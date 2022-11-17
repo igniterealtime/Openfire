@@ -152,17 +152,17 @@
                     </fmt:message>
                 </p>
 
-                <table cellpadding="3" cellspacing="2" border="0">
+                <table cellpadding="3" cellspacing="2">
                     <c:choose>
                         <c:when test="${jreVersionCompatible}">
                             <tr>
-                                <td><img src="../images/check.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/check.gif" width="13" height="13"></td>
                                 <td><fmt:message key="setup.env.check.jdk"/></td>
                             </tr>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/x.gif" width="13" height="13"></td>
                                 <td><span class="jive-setup-error-text"><fmt:message key="setup.env.check.jdk"/></span></td>
                             </tr>
                         </c:otherwise>
@@ -170,13 +170,13 @@
                     <c:choose>
                         <c:when test="${servlet22Installed}">
                             <tr>
-                                <td><img src="../images/check.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/check.gif" width="13" height="13"></td>
                                 <td><fmt:message key="setup.env.check.servlet"/></td>
                             </tr>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/x.gif" width="13" height="13"></td>
                                 <td><span class="jive-setup-error-text"><fmt:message key="setup.env.check.servlet"/></span></td>
                             </tr>
                         </c:otherwise>
@@ -184,13 +184,13 @@
                     <c:choose>
                         <c:when test="${jsp11Installed}">
                             <tr>
-                                <td><img src="../images/check.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/check.gif" width="13" height="13"></td>
                                 <td><fmt:message key="setup.env.check.jsp"/></td>
                             </tr>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/x.gif" width="13" height="13"></td>
                                 <td><span class="jive-setup-error-text"><fmt:message key="setup.env.check.jsp"/></span></td>
                             </tr>
                         </c:otherwise>
@@ -198,13 +198,13 @@
                     <c:choose>
                         <c:when test="${jiveJarsInstalled}">
                             <tr>
-                                <td><img src="../images/check.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/check.gif" width="13" height="13"></td>
                                 <td><fmt:message key="title"/> <fmt:message key="setup.env.check.class"/></td>
                             </tr>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/x.gif" width="13" height="13"></td>
                                 <td><span class="jive-setup-error-text"><fmt:message key="title"/> <fmt:message key="setup.env.check.class"/></span></td>
                             </tr>
                         </c:otherwise>
@@ -212,13 +212,13 @@
                     <c:choose>
                         <c:when test="${openfireHomeExists}">
                             <tr>
-                                <td><img src="../images/check.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/check.gif" width="13" height="13"></td>
                                 <td><fmt:message key="setup.env.check.jive"/> (<tt><c:out value="${openfireHome}"/></tt>)</td>
                             </tr>
                         </c:when>
                         <c:otherwise>
                             <tr>
-                                <td><img src="../images/x.gif" width="13" height="13" border="0"></td>
+                                <td><img src="../images/x.gif" width="13" height="13"></td>
                                 <td><span class="jive-setup-error-text"><fmt:message key="setup.env.check.not_home"/></span></td>
                             </tr>
                         </c:otherwise>
@@ -315,14 +315,14 @@
 
                             <label for="loc11">
                                 <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="loc11" />
-                                <img src="../images/setup_language_zh_CN.gif" border="0" align="top" />
+                                <img src="../images/setup_language_zh_CN.gif" align="top" />
                                 <b>Simplified Chinese</b> (zh_CN)
                             </label><br>
                         </p>
                     </div>
 
                     <div align="right">
-                        <input type="Submit" name="save" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+                        <input type="Submit" name="save" value="<fmt:message key="global.continue" />" id="jive-setup-save">
                     </div>
                 </form>
 

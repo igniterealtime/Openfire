@@ -84,9 +84,9 @@
 
     // Check the request/response for a login token
 
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
 
-    Boolean login = ParamUtils.getBooleanParameter(request, "login");
+    boolean login = ParamUtils.getBooleanParameter(request, "login");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -174,7 +174,7 @@
     <script>
         <!--
         // break out of frames
-        if (self.parent.frames.length != 0) {
+        if (self.parent.frames.length !== 0) {
             self.parent.location=document.location;
         }
         function updateFields(el) {
@@ -265,7 +265,7 @@
 
     <script>
     <!--
-        if (document.loginForm.username.value == '')  {
+        if (document.loginForm.username.value === '')  {
             document.loginForm.username.focus();
         } else {
             document.loginForm.password.focus();

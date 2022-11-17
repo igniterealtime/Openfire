@@ -81,7 +81,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
@@ -115,7 +115,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col" colspan="2"><fmt:message key="pubsub.node.configuration.details" /></th>

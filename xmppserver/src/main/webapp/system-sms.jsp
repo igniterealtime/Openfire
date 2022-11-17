@@ -26,7 +26,7 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    final Map<String,String> errors = new HashMap<String,String>();
+    final Map<String,String> errors = new HashMap<>();
     if (save) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             errors.put("csrf", "CSRF Failure!");
@@ -55,11 +55,12 @@
     if ( host == null || host.isEmpty() )
     {
         errors.put( "host", "cannot be missing or empty." );
-    }
-    try {
-        JID.domainprep(host);
-    } catch (Exception e) {
-        errors.put("host", "Invalid hostname");
+    } else {
+        try {
+            JID.domainprep(host);
+        } catch (Exception e) {
+            errors.put("host", "Invalid hostname");
+        }
     }
     if ( port < 0 || port > 65535 )
     {
@@ -118,13 +119,13 @@
             <fmt:message key="system.sms.name" var="plaintextboxtitle"/>
             <admin:contentBox title="${plaintextboxtitle}">
 
-                <table width="80%" cellpadding="3" cellspacing="0" border="0">
+                <table style="width: 80%">
                     <tr>
-                        <td width="30%" nowrap>
-                            <fmt:message key="system.sms.host" />:
+                        <td style="width: 30%" nowrap>
+                            <label for="host"><fmt:message key="system.sms.host" />:</label>
                         </td>
                         <td nowrap>
-                            <input type="text" name="host" value="${fn:escapeXml(host)}" size="40" maxlength="150">
+                            <input type="text" id="host" name="host" value="${fn:escapeXml(host)}" size="40" maxlength="150">
                         </td>
                     </tr>
 
@@ -141,10 +142,10 @@
 
                     <tr>
                         <td nowrap>
-                            <fmt:message key="system.sms.port" />:
+                            <label for="port"><fmt:message key="system.sms.port" />:</label>
                         </td>
                         <td nowrap>
-                            <input type="text" name="port" value="${fn:escapeXml(port)}" size="10" maxlength="15">
+                            <input type="text" id="port" name="port" value="${fn:escapeXml(port)}" size="10" maxlength="15">
                         </td>
                     </tr>
                     <c:if test="${ not empty errors['port']}">
@@ -162,11 +163,11 @@
                     <tr><td colspan="2">&nbsp;</td></tr>
 
                     <tr>
-                        <td width="30%" nowrap>
-                            <fmt:message key="system.sms.systemId" />:
+                        <td style="width: 30%" nowrap>
+                            <label for="systemId"><fmt:message key="system.sms.systemId" />:</label>
                         </td>
                         <td nowrap>
-                            <input type="text" name="systemId" value="${fn:escapeXml(systemId)}" size="40" maxlength="150">
+                            <input type="text" id="systemId" name="systemId" value="${fn:escapeXml(systemId)}" size="40" maxlength="150">
                         </td>
                     </tr>
 
@@ -182,11 +183,11 @@
                     </c:if>
 
                     <tr>
-                        <td width="30%" nowrap>
-                            <fmt:message key="system.sms.password" />:
+                        <td style="width: 30%;" nowrap>
+                            <label for="password"><fmt:message key="system.sms.password" />:</label>
                         </td>
                         <td nowrap>
-                            <input type="password" name="password" value="${fn:escapeXml(password)}" size="40" maxlength="8">
+                            <input type="password" id="password" name="password" value="${fn:escapeXml(password)}" size="40" maxlength="8">
                         </td>
                     </tr>
 
@@ -205,11 +206,11 @@
                     <tr><td colspan="2">&nbsp;</td></tr>
 
                     <tr>
-                        <td width="30%" nowrap>
-                            <fmt:message key="system.sms.systemType" />:
+                        <td style="width: 30%" nowrap>
+                            <label for="systemType"><fmt:message key="system.sms.systemType" />:</label>
                         </td>
                         <td nowrap>
-                            <input type="text" name="systemType" value="${fn:escapeXml(systemType)}" size="40" maxlength="150">
+                            <input type="text" id="systemType" name="systemType" value="${fn:escapeXml(systemType)}" size="40" maxlength="150">
                         </td>
                     </tr>
 

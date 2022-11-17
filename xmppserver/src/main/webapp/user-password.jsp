@@ -25,6 +25,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager" />
 <% admin.init(request, response, session, application, out ); %>
 
@@ -60,7 +61,7 @@
     boolean unsupported = false;
     if (update) {
         // Validate the passwords:
-        if (password != null && passwordConfirm != null && password.equals(passwordConfirm)) {
+        if (password != null && password.equals(passwordConfirm)) {
             try {
                 user.setPassword(password);
                 if (!SecurityAuditManager.getSecurityAuditProvider().blockUserEvents()) {
@@ -98,42 +99,21 @@
 
 <%  if (errors) { %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="error">
         <fmt:message key="user.password.error_set_pwd" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if (unsupported) { %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="error">
         <fmt:message key="user.password.error_set_pwd_unsupp" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if (request.getParameter("success") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.password.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 
@@ -148,7 +128,7 @@
 <fieldset>
     <legend><fmt:message key="user.password.change" /></legend>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table style="width: 100%">
     <tbody>
         <tr>
             <td class="c1">
@@ -160,18 +140,18 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.password.new_pwd" />:
+                <label for="password"><fmt:message key="user.password.new_pwd" />:</label>
             </td>
             <td class="c2">
-                <input type="password" name="password" value="" size="20" maxlength="50">
+                <input type="password" id="password" name="password" value="" size="20" maxlength="50">
             </td>
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.password.confirm_new_pwd" />:
+                <label for="passwordConfirm"><fmt:message key="user.password.confirm_new_pwd" />:</label>
             </td>
             <td class="c2">
-                <input type="password" name="passwordConfirm" value="" size="20" maxlength="50">
+                <input type="password" id="passwordConfirm" name="passwordConfirm" value="" size="20" maxlength="50">
             </td>
         </tr>
     </tbody>
@@ -194,8 +174,8 @@ document.passform.password.focus();
 
 <script>
   function disable() {
-    var limit = document.forms[0].elements.length;
-    for (i=0;i<limit;i++) {
+    let limit = document.forms[0].elements.length;
+    for (let i=0;i<limit;i++) {
       document.forms[0].elements[i].disabled = true;
     }
   }

@@ -9,7 +9,6 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page errorPage="error.jsp" %>
@@ -101,7 +100,7 @@
         // 'enable' checkbox for that connection type.
         function applyDisplayable( connectionType )
         {
-            var configBlock, enabled;
+            let configBlock, enabled;
 
             // Select the right configuration block and enable or disable it as defined by the the corresponding checkbox.
             configBlock = document.getElementById( connectionType + "-config" );
@@ -149,15 +148,15 @@
 
         <p><fmt:message key="ssl.settings.client.plaintext.info"/></p>
 
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="ssl.settings.client.plaintext.label_enable"/></label></td>
+        <table>
+            <tr>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/>&nbsp;<label for="plaintext-enabled"><fmt:message key="ssl.settings.client.plaintext.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=plain"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
@@ -169,15 +168,15 @@
 
         <p><fmt:message key="ssl.settings.client.legacymode.info"/></p>
 
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="middle">
-                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled"><fmt:message key="ssl.settings.client.legacymode.label_enable"/></label></td>
+        <table>
+            <tr>
+                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/>&nbsp;<label for="legacymode-enabled"><fmt:message key="ssl.settings.client.legacymode.label_enable"/></label></td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td width="99%"><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
             </tr>
-            <tr valign="middle">
+            <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=legacy"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
@@ -188,19 +187,19 @@
     <fmt:message key="client.connections.settings.idle.title" var="idleTitle" />
     <admin:contentBox title="${idleTitle}">
         <p><fmt:message key="client.connections.settings.idle.info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0" width="100%">
+        <table>
             <tbody>
-            <tr valign="top">
-                <td width="1%" nowrap class="c1">
+            <tr>
+                <td style="width: 1%; white-space: nowrap" class="c1">
                     <input type="radio" name="idleDisco" value="false" ${clientIdle le 0 ? 'checked' : ''} id="IDL01">
                 </td>
-                <td width="99%"><label for="IDL01"><fmt:message key="client.connections.settings.idle.disable" /></label></td>
+                <td><label for="IDL01"><fmt:message key="client.connections.settings.idle.disable" /></label></td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap class="c1">
+            <tr>
+                <td style="width: 1%; white-space: nowrap; vertical-align: top" class="c1">
                     <input type="radio" name="idleDisco" value="true" ${clientIdle gt 0 ? 'checked' : ''} id="IDL02">
                 </td>
-                <td width="99%">
+                <td>
                     <label for="IDL02"><fmt:message key="client.connections.settings.idle.enable" /></label>
                     <br />
                     <c:if test="${clientIdle gt 0}">
@@ -221,19 +220,19 @@
                 <td>
                     <p><fmt:message key="client.connections.settings.ping.info" />
                         <fmt:message key="client.connections.settings.ping.footnote" /></p>
-                    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+                    <table>
                         <tbody>
-                        <tr valign="top">
-                            <td width="1%" nowrap class="c1">
+                        <tr>
+                            <td style="width: 1%; white-space: nowrap" class="c1">
                                 <input type="radio" name="pingIdleClients" value="true" ${pingIdleClients ? 'checked' : ''} id="PNG01">
                             </td>
-                            <td width="99%"><label for="PNG01"><fmt:message key="client.connections.settings.ping.enable" /></label></td>
+                            <td><label for="PNG01"><fmt:message key="client.connections.settings.ping.enable" /></label></td>
                         </tr>
-                        <tr valign="top">
-                            <td width="1%" nowrap class="c1">
+                        <tr>
+                            <td style="width: 1%; white-space: nowrap" class="c1">
                                 <input type="radio" name="pingIdleClients" value="false" ${pingIdleClients ? '' : 'checked'} id="PNG02">
                             </td>
-                            <td width="99%"><label for="PNG02"><fmt:message key="client.connections.settings.ping.disable" /></label></td>
+                            <td><label for="PNG02"><fmt:message key="client.connections.settings.ping.disable" /></label></td>
                         </tr>
                         </tbody>
                     </table>

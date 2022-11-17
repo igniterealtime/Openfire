@@ -32,6 +32,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -45,7 +46,7 @@
     String nickname = ParamUtils.getParameter(request, "nickname");
     String groups = ParamUtils.getParameter(request, "groups");
 
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     // Handle a cancel
     if (cancel) {
         response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
@@ -72,7 +73,7 @@
                 // Load the user's roster object
                 Roster roster = webManager.getRosterManager().getRoster(username);
 
-                List<String> groupList = new ArrayList<String>();
+                List<String> groupList = new ArrayList<>();
                 if (groups != null) {
                     for (String group : groups.split(",")) {
                         groupList.add(group.trim());
@@ -108,6 +109,8 @@
             }
         }
     }
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("success", request.getParameter("success") != null);
 %>
 
 <html>
@@ -127,45 +130,32 @@
 <%--<c:set var="submit" value="${param.create}"/>--%>
 <%--<c:set var="errors" value="${errors}"/>--%>
 
-<%  if (!errors.isEmpty()) { %>
-
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
-            <td class="jive-icon-label">
-
-            <% if (errors.get("general") != null) { %>
-                <fmt:message key="user.roster.add.error_adding_item" />
-            <% } else if (errors.get("usernameAlreadyExists") != null) { %>
-                <fmt:message key="user.roster.add.item_exists" />
-            <% } else if (errors.get("uneditableGroup") != null) { %>
-                <fmt:message key="user.roster.add.uneditable_group" />
-            <% } else if (errors.get("illegalJID") != null) { %>
-                <fmt:message key="user.roster.add.illegal_jid" />
-            <% } %>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-    <br>
-
-<%  } else if (request.getParameter("success") != null) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="user.roster.add.success" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
+<c:choose>
+    <c:when test="${not empty errors}">
+        <c:forEach var="err" items="${errors}">
+            <admin:infobox type="error">
+                <c:choose>
+                    <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                    <c:when test="${err.key eq 'general'}"><fmt:message key="user.roster.add.error_adding_item" /></c:when>
+                    <c:when test="${err.key eq 'usernameAlreadyExists'}"><fmt:message key="user.roster.add.item_exists" /></c:when>
+                    <c:when test="${err.key eq 'uneditableGroup'}"><fmt:message key="user.roster.add.uneditable_group" /></c:when>
+                    <c:when test="${err.key eq 'illegalJID'}"><fmt:message key="user.roster.add.illegal_jid" /></c:when>
+                    <c:otherwise>
+                        <c:if test="${not empty err.value}">
+                            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                        </c:if>
+                        (<c:out value="${err.key}"/>)
+                    </c:otherwise>
+                </c:choose>
+            </admin:infobox>
+        </c:forEach>
+    </c:when>
+    <c:when test="${success}">
+        <admin:infoBox type="success">
+            <fmt:message key="user.roster.add.success" />
+        </admin:infoBox>
+    </c:when>
+</c:choose>
 
 <form name="f" action="user-roster-add.jsp" method="get">
         <input type="hidden" name="csrf" value="${csrf}">
@@ -176,27 +166,27 @@
         <fmt:message key="user.roster.add.new_item" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
         <tr>
-            <td width="1%" nowrap><label for="jidtf"><fmt:message key="user.roster.jid" />:</label> *</td>
-            <td width="99%">
+            <td style="width: 1%; white-space: nowrap"><label for="jidtf"><fmt:message key="user.roster.jid" />:</label> *</td>
+            <td>
                 <input type="text" name="jid" size="30" maxlength="255" value="<%= ((jid!=null) ? StringUtils.escapeForXML(jid) : "") %>"
                  id="jidtf">
             </td>
         </tr>
         <tr>
-            <td width="1%" nowrap>
+            <td style="width: 1%; white-space: nowrap">
                 <label for="nicknametf"><fmt:message key="user.roster.nickname" />:</label></td>
-            <td width="99%">
+            <td>
                 <input type="text" name="nickname" size="30" maxlength="255" value="<%= ((nickname!=null) ? StringUtils.escapeForXML(nickname) : "") %>"
                  id="nicknametf">
             </td>
         </tr>
         <tr>
-            <td width="1%" nowrap>
+            <td style="width: 1%; white-space: nowrap">
                 <label for="groupstf"><fmt:message key="user.roster.groups" />:</label></td>
-            <td width="99%">
+            <td>
                 <input type="text" name="groups" size="30" maxlength="255" value="<%= ((groups!=null) ? StringUtils.escapeForXML(groups) : "") %>"
                  id="groupstf">
             </td>

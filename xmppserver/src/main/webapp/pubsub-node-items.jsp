@@ -150,7 +150,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
@@ -184,7 +184,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.items.id" /></th>
@@ -197,7 +197,7 @@
     <tbody>
         <c:if test="${empty node.publishedItems}">
         <tr>
-            <td align="center" colspan="5">
+            <td style="text-align: center" colspan="5">
                 <fmt:message key="pubsub.node.items.table.no_items" />
             </td>
         </tr>
@@ -216,7 +216,7 @@
             <td>
             <c:out value="${item.payloadXML}"/>
             </td>
-            <td width="1%" align="center" style="border-right:1px #ccc solid;">
+            <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
                <c:url value="pubsub-node-items.jsp" var="url">
                     <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="deleteID" value="${item.ID}" />
@@ -224,7 +224,7 @@
                     <c:param name="owner" value="${owner}"/>
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
-                    <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+                    <img src="images/delete-16x16.gif" alt="">
                 </a>
             </td>
         </tr>

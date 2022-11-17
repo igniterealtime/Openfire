@@ -25,6 +25,7 @@
                  java.util.*"
 %>
 <%@ page import="org.apache.logging.log4j.Level" %>
+<%@ page import="java.util.stream.Collectors" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -42,35 +43,29 @@
 
     static final String[] REFRESHES = {NONE,"10","30","60","90"};
 
-    private static HashMap parseCookie(Cookie cookie) {
+    private static HashMap<String, String> parseCookie(Cookie cookie) {
         if (cookie == null || cookie.getValue() == null) {
-            return new HashMap();
+            return new HashMap<>();
         }
         StringTokenizer tokenizer = new StringTokenizer(cookie.getValue(),"&");
-        HashMap<String, String> valueMap = new HashMap<String, String>();
+        HashMap<String, String> valueMap = new HashMap<>();
         while (tokenizer.hasMoreTokens()) {
             String tok = tokenizer.nextToken();
             int pos = tok.indexOf("=");
             if (pos > 0) {
                 String name = tok.substring(0,pos);
-                String value = tok.substring(pos+1,tok.length());
+                String value = tok.substring(pos+1);
                 valueMap.put(name,value);
             }
         }
         return valueMap;
     }
 
-    private static void saveCookie(HttpServletResponse response, HashMap cookie) {
-        StringBuffer buf = new StringBuffer();
-        for (Iterator iter=cookie.keySet().iterator(); iter.hasNext();) {
-            String name = (String)iter.next();
-            String value = (String)cookie.get(name);
-            buf.append(name).append("=").append(value);
-            if (iter.hasNext()) {
-                buf.append("&");
-            }
-        }
-        Cookie newCookie = new Cookie("jiveforums.admin.logviewer",buf.toString());
+    private static void saveCookie(HttpServletResponse response, HashMap<String, String> cookie) {
+        final String value = cookie.entrySet().stream()
+            .map(entry -> entry.getKey() + "=" + entry.getValue())
+            .collect(Collectors.joining("&"));
+        Cookie newCookie = new Cookie("jiveforums.admin.logviewer", value);
         newCookie.setPath("/");
         newCookie.setMaxAge(60*60*24*30); // one month
         response.addCookie(newCookie);
@@ -79,14 +74,14 @@
     private static boolean hasLogfileChanged(HttpServletRequest request, HttpServletResponse response, File logDir)
     {
         // Get the cookie associated with the log files
-        HashMap cookie = parseCookie(CookieUtils.getCookie(request,"jiveforums.admin.logviewer"));
-        HashMap<String,String> newCookie = new HashMap<String,String>();
+        HashMap<String, String> cookie = parseCookie(CookieUtils.getCookie(request,"jiveforums.admin.logviewer"));
+        HashMap<String, String> newCookie = new HashMap<>();
         // Check for the value in the cookie:
         String key = "logfile.size";
         long savedSize = 0L;
         if (cookie.containsKey(key)) {
             try {
-                savedSize = Long.parseLong((String) cookie.get(key));
+                savedSize = Long.parseLong(cookie.get(key));
             }
             catch (NumberFormatException nfe) {
             }
@@ -197,14 +192,10 @@
         <title><fmt:message key="logviewer.title"/></title>
         <meta name="pageID" content="server-logs"/>
         <meta name="helpPage" content="use_the_server_logs.html"/>
-    </head>
-    <body>
 
 <%  if (refreshParam != null && !NONE.equals(refreshParam)) { %>
     <meta http-equiv="refresh" content="<%= ParamUtils.getIntParameter(request,"refresh",10) %>">
 <%  } %>
-
-<div id="logviewer">
 
 <style>
 SELECT, INPUT {
@@ -232,22 +223,26 @@ IFRAME {
     border : 1px #666 solid;
 }
 </style>
+</head>
+    <body>
+
+    <div id="logviewer">
 
 <form action="logviewer.jsp" name="logViewer" method="get">
 
 <div class="logviewer">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <tbody>
     <tr>
-        <td class="jive-spacer" width="1%">&nbsp;</td>
-        <td class="jive-tab-active" width="1%">
+        <td class="jive-spacer" style="width: 1%">&nbsp;</td>
+        <td class="jive-tab-active" style="width: 1%">
             <a href="logviewer.jsp"
             ><fmt:message key="logviewer.openfire" /></a>
             <span class="new">
             <%= (hasLogfileChanged?"*":"") %>
             </span>
         </td>
-        <td class="jive-stretch" width="98%" align="right" nowrap>
+        <td class="jive-stretch" style="width: 98%" align="right" nowrap>
             &nbsp;
         </td>
     </tr>
@@ -261,15 +256,15 @@ IFRAME {
 %>
 
 <div class="log-info">
-<table cellpadding="6" cellspacing="0" border="0" width="100%">
+<table style="width: 100%">
 <tbody>
     <tr>
         <td>
-            <table cellpadding="3" cellspacing="0" border="0" width="100%">
+            <table style="width: 98%; margin: 10px;">
             <tr>
                 <td nowrap><fmt:message key="logviewer.log" /></td>
                 <td nowrap><b><%= StringUtils.escapeHTMLTags(logFile.getName()) %></b> (<%= byteFormatter.format(logFile.length()) %>) (<a href="logviewer.jsp?saveLog=true"><fmt:message key="logviewer.download" /></a>)</td>
-                <td width="96%" rowspan="3">&nbsp;</td>
+                <td style="width: 96%" rowspan="3">&nbsp;</td>
                 <td nowrap><fmt:message key="logviewer.order" /></td>
                 <td nowrap>
                     <input type="radio" name="mode" value="asc"<%= ("asc".equals(mode)?" checked":"") %>
@@ -285,10 +280,9 @@ IFRAME {
                 <td nowrap>
                     <span><%= dateFormatter.format(lastMod) %></span>
                 </td>
-                <td nowrap><fmt:message key="logviewer.line" /></td>
+                <td nowrap><label for="lines"><fmt:message key="logviewer.line" /></label></td>
                 <td nowrap>
-                    <select name="lines" size="1"
-                     onchange="this.form.submit();">
+                    <select id="lines" name="lines" size="1" onchange="this.form.submit();">
                         <% for (String aLINES : LINES) {
                             String selected = (aLINES.equals(numLinesParam)) ? " selected" : "";
                         %>
@@ -310,7 +304,7 @@ IFRAME {
                             document.logViewer.saveLog.value = 'false';
                             document.logViewer.emailLog.value = 'false';
 
-                            var t = eval("document.logViewer." + log);
+                            let t = eval("document.logViewer." + log);
                             t.value = 'true';
                         }
                         // -->
@@ -321,18 +315,18 @@ IFRAME {
                     <input type="hidden" name="emailLog" value="false">
                     <input type="hidden" name="csrf" value="${csrf}">
                     <div class="buttons">
-                    <table cellpadding="0" cellspacing="0" border="0">
+                    <table>
                     <tbody>
                         <tr>
                             <td class="icon">
-                                <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"><img src="images/delete-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_clear" />"></a>
+                                <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"><img src="images/delete-16x16.gif" alt="<fmt:message key="logviewer.alt_clear" />"></a>
                             </td>
                             <td class="icon-label">
                                 <a href="#" onclick="if (confirm('<fmt:message key="logviewer.confirm" />')) {setLog('clearLog'); document.logViewer.submit(); return true;} else { return false; }"
                                  ><fmt:message key="logviewer.clear" /></a>
                             </td>
                             <td class="icon">
-                                <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" border="0" alt="<fmt:message key="logviewer.alt_mark" />"></a>
+                                <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"><img src="images/mark-16x16.gif" alt="<fmt:message key="logviewer.alt_mark" />"></a>
                             </td>
                             <td class="icon-label">
                                 <a href="#" onclick="setLog('markLog'); document.logViewer.submit(); return true;"
@@ -343,9 +337,9 @@ IFRAME {
                     </table>
                     </div>
                 </td>
-                <td nowrap><fmt:message key="logviewer.show"/></td>
+                <td nowrap><label for="log"><fmt:message key="logviewer.show"/></label></td>
                 <td nowrap>
-                    <select size="1" name="log" onchange="this.form.submit();">
+                    <select size="1" id="log" name="log" onchange="this.form.submit();">
                         <option value="all" <%=log.equals("all") ?"selected":""%>><fmt:message key="logviewer.all"/></option>
                         <option value="trace" <%=log.equals("trace") ?"selected":""%>><fmt:message key="logviewer.trace"/></option>
                         <option value="debug" <%=log.equals("debug") ?"selected":""%>><fmt:message key="logviewer.debug"/></option>
@@ -359,33 +353,33 @@ IFRAME {
             <tr>
                 <td colspan="3">
 
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <table>
                     <tr>
-                        <td width="1%" nowrap>
+                        <td style="width: 1%; white-space: nowrap">
                             <fmt:message key="logviewer.trace_log" />: &nbsp;
                         </td>
-                        <td width="1%">
+                        <td style="width: 1%">
                             <input id="de01" type="radio" name="traceEnabled" value="true" <%= traceEnabled ? " checked" : "" %>>
                         </td>
-                        <td width="1%" nowrap>
+                        <td style="width: 1%; white-space: nowrap">
                             <label for="de01"><fmt:message key="logviewer.enabled" /></label> &nbsp;
                         </td>
-                        <td width="1%">
+                        <td style="width: 1%">
                             <input id="de02" type="radio" name="traceEnabled" value="false" <%= traceEnabled ? "" : " checked" %>>
                         </td>
-                        <td width="1%" nowrap>
+                        <td style="width: 1%; white-space: nowrap">
                             <label for="de02"><fmt:message key="logviewer.disabled" /></label> &nbsp;
                         </td>
-                        <td width="1%">
+                        <td style="width: 1%">
                             <input type="submit" name="" value="<fmt:message key="global.save_changes" />">
                         </td>
-                        <td width="94%">&nbsp;</td>
+                        <td style="width: 94%">&nbsp;</td>
                     </tr>
                     </table>
                 </td>
-                <td nowrap><fmt:message key="global.refresh" />:</td>
+                <td nowrap><label for="refresh"><fmt:message key="global.refresh" />:</label></td>
                 <td nowrap>
-                    <select size="1" name="refresh" onchange="this.form.submit();">
+                    <select size="1" id="refresh" name="refresh" onchange="this.form.submit();">
                         <% for (String aREFRESHES : REFRESHES) {
                             String selected = aREFRESHES.equals(refreshParam) ? " selected" : "";
                         %>
@@ -412,8 +406,8 @@ IFRAME {
 
 <br><br>
 
-<iframe src="log.jsp?log=<%= URLEncoder.encode(log) %>&mode=<%= URLEncoder.encode(mode) %>&lines=<%= ("All".equals(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
-    frameborder="0" height="600" width="100%" marginheight="0" marginwidth="0" scrolling="auto"></iframe>
+<iframe src="log.jsp?log=<%= URLEncoder.encode(log, "UTF-8") %>&mode=<%= URLEncoder.encode(mode, "UTF-8") %>&lines=<%= ("All".equals(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
+    frameborder="0" height="600" style="width: 100%" marginheight="0" marginwidth="0" scrolling="auto"></iframe>
 
 </form>
 

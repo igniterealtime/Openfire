@@ -46,7 +46,7 @@
 
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String alternateJIDString = ParamUtils.getParameter(request,"alternateJID");
-    JID alternateJID = null;
+    JID alternateJID;
     if (alternateJIDString != null && alternateJIDString.trim().length() > 0 ) {
         // OF-526: Ignore invalid alternative JIDs.
         try {
@@ -111,7 +111,7 @@
 <fieldset>
     <legend><fmt:message key="muc.room.delete.destructon_title" /></legend>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table style="width: 100%">
     <tbody>
         <tr>
             <td class="c1">
@@ -123,18 +123,18 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="muc.room.delete.reason" />
+                <label for="reason"><fmt:message key="muc.room.delete.reason" /></label>
             </td>
             <td>
-                <input type="text" size="50" maxlength="150" name="reason">
+                <input type="text" size="50" maxlength="150" id="reason" name="reason">
             </td>
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="muc.room.delete.alternate_address" />
+                <label for="alternateJID"><fmt:message key="muc.room.delete.alternate_address" /></label>
             </td>
             <td>
-                <input type="text" size="30" maxlength="150" name="alternateJID">
+                <input type="text" size="30" maxlength="350" id="alternateJID" name="alternateJID">
             </td>
         </tr>
     </tbody>

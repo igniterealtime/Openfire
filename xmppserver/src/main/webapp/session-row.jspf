@@ -28,20 +28,20 @@
 
 <%  } else { %>
 
-    <tr class="jive-<%= (((count % 2) == 0) ? "even" : "odd") %>">
+    <tr>
 
 <%  } %>
 
-    <td width="1%" nowrap><%= count %></td>
-    <td width="10%" nowrap>
+    <td style="width: 1%; white-space: nowrap"><%= count %></td>
+    <td style="width: 10%; white-space: nowrap">
         <%  String name = sess.getAddress().getNode(); %>
             <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key='session.row.cliked' />"
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
-    <td width="15%" nowrap>
+    <td style="width: 15%; white-space: nowrap">
         <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
     </td>
-    <td width="15%" nowrap>
+    <td style="width: 15%; white-space: nowrap">
         <% if (sess.getSoftwareVersion() != null) {
             String version = sess.getSoftwareVersion().get("version");
             if (version != null) { %>
@@ -82,14 +82,14 @@
 
         <%  } %>
     </td>
-    <td width="1%">
+    <td style="width: 1%">
         <%  if (isDetached) { %>
                     <img src="images/working-16x16.gif" width="1" height="1" alt="">
         <%  } else if (sess.isSecure()) {
                 if (sess.getPeerCertificates() != null && sess.getPeerCertificates().length > 0) { %>
-                    <img src="images/lock_both.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+                    <img src="images/lock_both.gif" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
         <%      } else { %>
-                    <img src="images/lock.gif" width="16" height="16" border="0" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+                    <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
         <%      }
             } else { %>
                     <img src="images/blank.gif" width="1" height="1" alt="">
@@ -99,17 +99,17 @@
         String _stat = sess.getPresence().getStatus();
         if (!sess.getPresence().isAvailable()) {
      %>
-        <td width="1%"
-            ><img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key='user.properties.offline' />" alt="<fmt:message key='user.properties.offline' />"
+        <td style="width: 1%"
+            ><img src="images/user-clear-16x16.gif" title="<fmt:message key='user.properties.offline' />" alt="<fmt:message key='user.properties.offline' />"
             ></td>
-        <td width="46%">
+        <td style="width: 46%">
                 <fmt:message key="user.properties.offline" />
         </td>
       <%  } else if (_show == Presence.Show.away) { %>
-        <td width="1%"
-            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.away' />" alt="<fmt:message key='session.details.away' />"
+        <td style="width: 1%"
+            ><img src="images/im_away.gif" title="<fmt:message key='session.details.away' />" alt="<fmt:message key='session.details.away' />"
             ></td>
-        <td width="46%">
+        <td style="width: 46%">
             <%  if (_stat != null) { %>
 
                 <%= StringUtils.escapeHTMLTags(_stat) %>
@@ -123,19 +123,19 @@
 
     <%  } else if (_show == Presence.Show.chat) { %>
 
-        <td width="1%"
-            ><img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.chat_available' />" alt="<fmt:message key='session.details.chat_available' />"
+        <td style="width: 1%"
+            ><img src="images/im_free_chat.gif" title="<fmt:message key='session.details.chat_available' />" alt="<fmt:message key='session.details.chat_available' />"
             ></td>
-        <td width="46%">
+        <td style="width: 46%">
             <fmt:message key="session.details.chat_available" />
         </td>
 
     <%  } else if (_show == Presence.Show.dnd) { %>
 
-        <td width="1%"
-            ><img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.not_disturb' />" alt="<fmt:message key='session.details.not_disturb' />"
+        <td style="width: 1%"
+            ><img src="images/im_dnd.gif" title="<fmt:message key='session.details.not_disturb' />" alt="<fmt:message key='session.details.not_disturb' />"
             ></td>
-        <td width="46%">
+        <td style="width: 46%">
             <%  if (_stat != null) { %>
 
                 <%= StringUtils.escapeHTMLTags(sess.getPresence().getStatus()) %>
@@ -149,19 +149,19 @@
 
     <%  } else if (_show == null) { %>
 
-        <td width="1%"
-            ><img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.online' />" alt="<fmt:message key='session.details.online' />"
+        <td style="width: 1%"
+            ><img src="images/im_available.gif" title="<fmt:message key='session.details.online' />" alt="<fmt:message key='session.details.online' />"
             ></td>
-        <td width="46%">
+        <td style="width: 46%">
             <fmt:message key="session.details.online" />
         </td>
 
     <%  } else if (_show == Presence.Show.xa) { %>
 
-        <td width="1%"
-            ><img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key='session.details.extended' />" alt="<fmt:message key='session.details.extended' />"
+        <td style="width: 1%"
+            ><img src="images/im_away.gif" title="<fmt:message key='session.details.extended' />" alt="<fmt:message key='session.details.extended' />"
             ></td>
-        <td width="46%">
+        <td style="width: 46%">
             <%  if (_stat != null) { %>
 
                 <%= StringUtils.escapeHTMLTags(sess.getPresence().getStatus()) %>
@@ -175,20 +175,20 @@
 
     <%  } else { %>
 
-        <td colspan="2" width="46%">
+        <td colspan="2" style="width: 46%">
             <fmt:message key="session.details.unknown" />
         </td>
 
     <%  } %>
 
-    <td width="1%" nowrap>
+    <td style="width: 1%; white-space: nowrap">
         <%= NumberFormat.getNumberInstance().format(sess.getNumClientPackets()) %>
     </td>
-    <td width="1%" nowrap>
+    <td style="width: 1%; white-space: nowrap">
         <%= NumberFormat.getNumberInstance().format(sess.getNumServerPackets()) %>
     </td>
 
-    <td width="1%" nowrap>
+    <td style="width: 1%; white-space: nowrap">
         <%
             if (isDetached) { %>
                 <fmt:message key="session.details.sm-detached"/>
@@ -202,10 +202,10 @@
 
     </td>
 
-    <td width="1%" nowrap align="center" style="border-right:1px #ccc solid;">
+    <td style="width: 1%; white-space: nowrap; text-align: center; border-right:1px #ccc solid;">
         <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.cliked_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
-         ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+         ><img src="images/delete-16x16.gif" alt=""></a>
     </td>
 </tr>

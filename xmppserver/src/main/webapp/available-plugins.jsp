@@ -13,19 +13,11 @@
   - limitations under the License.
 --%>
 
-<%@ page errorPage="error.jsp" import="org.jivesoftware.openfire.XMPPServer,
-                                       org.jivesoftware.openfire.container.Plugin,
-                                       org.jivesoftware.openfire.container.PluginManager,
-                                       org.jivesoftware.openfire.container.PluginMetadataHelper,
-                                       org.jivesoftware.openfire.update.AvailablePlugin"
-    %>
+<%@ page errorPage="error.jsp" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
 <%@ page import="org.jivesoftware.util.*" %>
-<%@ page import="java.nio.file.Path" %>
-<%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Date" %>
-<%@ page import="java.util.List" %>
-<%@ page import="org.jivesoftware.openfire.container.PluginMetadata" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -97,17 +89,6 @@
     padding: 5px;
 }
 
-.row-header {
-    text-align: left;
-    font-family: verdana, arial, helvetica, sans-serif;
-    font-size: 8pt;
-    font-weight: bold;
-    border-color: #ccc;
-    border-style: solid;
-    border-width: 1px 1px 1px 0;
-    padding: 5px;
-}
-
 .table-header-left {
     text-align: left;
     font-family: verdana, arial, helvetica, sans-serif;
@@ -148,10 +129,10 @@
 <script src="dwr/interface/downloader.js"></script>
 <script>
 
-    var downloading;
+    let downloading;
     function downloadPlugin(url, version, id) {
         downloading = true;
-        document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
+        document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" alt="Downloading..."/>';
         document.getElementById(id).style.background = "#FFFFCC";
         setTimeout("startDownload('" + url + "','" + version + "','" + id + "')", 1000);
     }
@@ -165,7 +146,7 @@
         let statusRow = document.getElementById(status.hashCode + "-row");
         let pluginRow = document.getElementById(status.hashCode);
         if (!status.successfull) {
-            document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/add-16x16.gif" border="0"/>';
+            document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/add-16x16.gif" alt="Download complete."/>';
             pluginRow.style.background = "#FFFFFF";
             document.getElementById("errorMessage").style.display = '';
             pluginRow.style.display = '';
@@ -209,12 +190,12 @@
     }
 
     function updatePluginsList(){
-        document.getElementById("reloaderID").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
+        document.getElementById("reloaderID").innerHTML = '<img src="images/working-16x16.gif" alt="Updating..."/>';
         downloader.updatePluginsList(pluginsListUpdated);
     }
 
     function updatePluginsListNow(){
-        document.getElementById("reloader2").innerHTML = '<img src="images/working-16x16.gif" border="0"/>';
+        document.getElementById("reloader2").innerHTML = '<img src="images/working-16x16.gif" alt="Updating..."/>';
         downloader.updatePluginsList(pluginsListUpdated);
     }
 
@@ -253,7 +234,7 @@
             </div>
 
             <div class="light-gray-border" style="padding:10px;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <thead>
                         <tr style="background:#eee;">
                             <td class="table-header-left">&nbsp;</td>
@@ -269,41 +250,41 @@
                         <c:choose>
                             <c:when test="${empty notInstalledPlugins}">
                                 <tr>
-                                    <td align="center" colspan="8"><fmt:message key="plugin.available.no_plugin"/></td>
+                                    <td colspan="8" style="text-align: center"><fmt:message key="plugin.available.no_plugin"/></td>
                                 </tr>
                             </c:when>
                             <c:otherwise>
                                 <c:forEach items="${notInstalledPlugins}" var="notInstalledPlugin">
                                     <tr id="${notInstalledPlugin.hashCode}">
-                                        <td width="1%" class="line-bottom-border">
+                                        <td style="width: 1%" class="line-bottom-border">
                                             <c:choose>
                                                 <c:when test="${not empty notInstalledPlugin.icon}">
                                                     <img src="${fn:escapeXml(notInstalledPlugin.icon)}" width="16" height="16" alt="Plugin">
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+                                                    <img src="images/plugin-16x16.gif" alt="Plugin">
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td width="20%" nowrap class="line-bottom-border">
+                                        <td style="width: 20%" nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.name}">
                                                 <c:out value="${notInstalledPlugin.name}"/>
                                             </c:if>
                                         </td>
-                                        <td nowrap valign="top" class="line-bottom-border">
+                                        <td nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.readme}">
-                                                <a href="${fn:escapeXml(notInstalledPlugin.readme)}"><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+                                                <a href="${fn:escapeXml(notInstalledPlugin.readme)}"><img src="images/doc-readme-16x16.gif" alt="README"></a>
                                             </c:if>
                                             <c:if test="${not empty notInstalledPlugin.changelog}">
-                                                <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+                                                <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"><img src="images/doc-changelog-16x16.gif" alt="changelog"></a>
                                             </c:if>
                                         </td>
-                                        <td width="60%" class="line-bottom-border">
+                                        <td style="width: 60%" class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.description}">
                                                 <c:out value="${notInstalledPlugin.description}"/>
                                             </c:if>
                                         </td>
-                                        <td width="5%" nowrap valign="top" class="line-bottom-border">
+                                        <td style="width: 5%" nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.version}">
                                                 <c:out value="${notInstalledPlugin.version}"/>
                                             </c:if>
@@ -311,29 +292,29 @@
                                                 <br><c:out value="${notInstalledPlugin.releaseDate}"/>
                                             </c:if>
                                         </td>
-                                        <td width="15%" nowrap valign="top" class="line-bottom-border">
+                                        <td style="width: 15%" nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.author}">
                                                 <c:out value="${notInstalledPlugin.author}"/>
                                             </c:if>
                                         </td>
-                                        <td width="15%" nowrap valign="top" class="line-bottom-border" align="right">
+                                        <td style="width: 15%; text-align: right" nowrap class="line-bottom-border">
                                             <c:out value="${admin:byteFormat( notInstalledPlugin.fileSize )}"/>
                                         </td>
-                                        <td width="1%" align="center" valign="top" class="line-bottom-border">
+                                        <td style="width: 1%; text-align: center" class="line-bottom-border">
                                             <a href="javascript:downloadPlugin('${fn:escapeXml(notInstalledPlugin.downloadURL)}', '${notInstalledPlugin.version}', '${notInstalledPlugin.hashCode}')">
                                                 <span id="${notInstalledPlugin.hashCode}-image">
-                                                    <img src="images/add-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="plugin.available.download" />">
+                                                    <img src="images/add-16x16.gif" alt="<fmt:message key="plugin.available.download" />">
                                                 </span>
                                             </a>
                                         </td>
                                     </tr>
-                                    <tr id="${notInstalledPlugin.hashCode}-row" style="display:none;background: #E7FBDE;">
-                                        <td width="1%" class="line-bottom-border">
+                                    <tr id="${notInstalledPlugin.hashCode}-row" style="display:none; background: #E7FBDE;">
+                                        <td style="width: 1%" class="line-bottom-border">
                                             <img src="${fn:escapeXml(notInstalledPlugin.icon)}" width="16" height="16" alt=""/>
                                         </td>
                                         <td colspan="6" nowrap class="line-bottom-border">${admin:escapeHTMLTags(notInstalledPlugin.name)} <fmt:message key="plugin.available.installation.success" /></td>
-                                        <td class="line-bottom-border" align="center">
-                                            <img src="images/success-16x16.gif" height="16" width="16" alt=""/>
+                                        <td class="line-bottom-border" style="text-align: center">
+                                            <img src="images/success-16x16.gif" alt=""/>
                                         </td>
                                     </tr>
                                 </c:forEach>

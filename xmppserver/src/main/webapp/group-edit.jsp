@@ -24,7 +24,6 @@
 <%@ page import="org.jivesoftware.openfire.user.UserManager"%>
 <%@ page import="org.jivesoftware.openfire.user.UserNotFoundException"%>
 <%@ page import="org.jivesoftware.util.CookieUtils"%>
-<%@ page import="org.jivesoftware.util.Log"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.jivesoftware.util.ListPager" %>
@@ -337,8 +336,8 @@
     pageContext.setAttribute( "listPager", listPager );
     pageContext.setAttribute("searchName", searchName);
 
-    final List<Group> groups = new ArrayList(groupManager.getGroups());
-    Collections.sort(groups, Comparator.comparing(Group::getName));
+    final List<Group> groups = new ArrayList<>(groupManager.getGroups());
+    groups.sort(Comparator.comparing(Group::getName));
     pageContext.setAttribute("groups", groups);
 %>
 
@@ -404,17 +403,17 @@
             <admin:infobox type="info"><fmt:message key="group.read_only"/></admin:infobox>
         </c:if>
 
-        <table width="80%" cellpadding="3" cellspacing="0" border="0">
-            <tr valign="top">
-                <td width="1%" nowrap>
+        <table style="width: 80%">
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <label for="gname"><fmt:message key="group.create.group_name" /></label> *
                 </td>
-                <td width="99%">
+                <td>
                     <input type="text" name="name" size="50" maxlength="50" value="${fn:escapeXml(group.name)}" id="gname" ${webManager.groupManager.readOnly ? 'readonly' : ''} />
                 </td>
             </tr>
             <c:if test="${not empty errors['name'] or not empty errors['alreadyExists']}">
-                <tr valign="top">
+                <tr>
                     <td></td>
                     <td>
                         <span class="jive-error-text">
@@ -424,16 +423,16 @@
                     </td>
                 </tr>
             </c:if>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
                 </td>
-                <td width="99%">
+                <td>
                     <textarea name="description" cols="75" rows="3" maxlength="255" id="gdesc" ${webManager.groupManager.readOnly ? 'readonly' : ''}><c:out value="${group.description}"/></textarea>
                 </td>
             </tr>
             <c:if test="${not empty errors['description']}">
-                <tr valign="top">
+                <tr>
                     <td></td>
                     <td>
                         <span class="jive-error-text"><fmt:message key="group.create.invalid_description" /></span>
@@ -441,7 +440,7 @@
                 </tr>
             </c:if>
             <c:if test="${not webManager.groupManager.readOnly}">
-                <tr valign="top">
+                <tr>
                     <td></td>
                     <td>
                         <input type="submit" name="updateDetails" value="<fmt:message key="global.save_settings" />">
@@ -469,20 +468,20 @@
             <fmt:message key="group.edit.share_content" />
         </p>
 
-        <table width="80%" cellpadding="3" cellspacing="0" border="0">
+        <table style="width: 80%">
             <tr>
-                <td width="1%">
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="enableRosterGroups" value="false" id="rb201" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "checked" : ""} onClick="toggleReadOnly();">
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
                 </td>
             </tr>
             <tr>
-                <td width="1%" valign="top">
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
                     <input type="radio" name="enableRosterGroups" value="true" id="rb202" ${empty group.properties['sharedRoster.showInRoster'] or group.properties['sharedRoster.showInRoster'] eq 'nobody' ? "" : "checked"} onClick="toggleReadOnly();"">
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>
 
                     <div id="jive-roster">
@@ -493,34 +492,34 @@
                         </c:if>
                         </p>
                         <p><b><fmt:message key="group.edit.share_with"/></b></p>
-                        <table cellpadding="2" cellspacing="0" border="0" width="100%">
+                        <table>
                             <tr>
-                                <td width="1%" nowrap>
+                                <td style="width: 1%; white-space: nowrap">
                                     <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.sharedWith eq "nobody" ) or ( group.sharedWith eq "usersOfGroups" and empty groupNames ) ? "checked" : "" }>
                                 </td>
-                                <td width="99%">
+                                <td>
                                     <label for="rb001"><fmt:message key="group.edit.share_group_only" /></label>
                                 </td>
                             </tr>
                             <tr>
-                                <td width="1%" nowrap>
+                                <td style="width: 1%; white-space: nowrap">
                                     <input type="radio" name="showGroup" value="everybody" id="rb002" ${group.sharedWith eq "everybody" ? "checked" : ""}>
                                 </td>
-                                <td width="99%">
+                                <td>
                                     <label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
                                 </td>
                             </tr>
                             <tr>
-                                <td width="1%" nowrap>
+                                <td style="width: 1%; white-space: nowrap">
                                     <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.sharedWith eq "usersOfGroups" and not empty groupNames ? "checked" : ""}>
                                 </td>
-                                <td width="99%">
+                                <td>
                                     <label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
                                 </td>
                             </tr>
                             <tr>
-                                <td width="1%" nowrap></td>
-                                <td width="99%">
+                                <td style="width: 1%; white-space: nowrap"></td>
+                                <td>
                                     <select name="groupNames" id="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;"
                                             multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
 
@@ -540,8 +539,8 @@
                 </td>
             </tr>
             <tr>
-                <td width="1%"></td>
-                <td width="99%">
+                <td style="width: 1%; white-space: nowrap"></td>
+                <td>
                     <input type="submit" name="updateContactListSettings" value="<fmt:message key="group.edit.share_save" />">
                 </td>
             </tr>
@@ -570,12 +569,12 @@
             <input type="hidden" name="addMember" value="addMember"/>
             ${listPager.hiddenFields}
 
-            <table cellpadding="3" cellspacing="1" border="0" style="margin: 0 0 8px 0;">
+            <table style="margin: 0 0 8px 0;">
                 <tr>
-                    <td nowrap width="1%">
+                    <td style="width: 1%; white-space: nowrap">
                         <fmt:message key="group.edit.add_user" />
                     </td>
-                    <td nowrap class="c1" align="left">
+                    <td class="c1" style="text-align: left; white-space: nowrap">
                          <input type="text" size="45" name="username"/>
                         &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
                     </td>
@@ -605,14 +604,14 @@
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="group" value="${fn:escapeXml(param.group)}"/>
         ${listPager.hiddenFields}
-        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="80%">
+        <table class="jive-table" style="width: 80%">
             <tr>
                 <th>&nbsp;</th>
                 <th nowrap><fmt:message key="group.edit.username" /></th>
                 <th nowrap><fmt:message key="group.edit.name" /></th>
                 <c:if test="${not webManager.groupManager.readOnly}">
-                    <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
-                    <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
+                    <th style="width: 1%; white-space: nowrap" class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
+                    <th style="width: 1%; white-space: nowrap" class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
                 </c:if>
             </tr>
 
@@ -620,7 +619,7 @@
 
             <c:if test="${listPager.totalItemCount == 0}">
                 <tr>
-                    <td align="center" colspan="5">
+                    <td style="text-align: center" colspan="5">
                         <br>
                         <fmt:message key="group.edit.user_hint" />
                         <br>
@@ -651,9 +650,9 @@
                 </tr>
             </c:if>
             <%--@elvariable id="member" type="org.xmpp.packet.JID"--%>
-            <c:forEach var="member" items="${listPager.itemsOnCurrentPage}" varStatus="status">
-                <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
-                    <td width="1%">
+            <c:forEach var="member" items="${listPager.itemsOnCurrentPage}">
+                <tr>
+                    <td style="width: 1%">
 
                         <c:choose>
                             <c:when test="${webManager.XMPPServer.isLocal(member)}">
@@ -661,24 +660,24 @@
                                     <c:when test="${webManager.userManager.isRegisteredUser(member, false) and webManager.presenceManager.isAvailable(webManager.userManager.getUser(member))}">
                                         <c:choose>
                                             <c:when test="${empty webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show}">
-                                                <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
+                                                <img src="images/im_available.gif" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                                             </c:when>
                                             <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'chat'}">
-                                                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                                                <img src="images/im_free_chat.gif" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                                             </c:when>
                                             <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'away'}">
-                                                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                                                <img src="images/im_away.gif" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                                             </c:when>
                                             <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'xa'}">
-                                                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                                                <img src="images/im_away.gif" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                                             </c:when>
                                             <c:when test="${webManager.presenceManager.getPresence(webManager.userManager.getUser(member)).show == 'dnd'}">
-                                                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                                                <img src="images/im_dnd.gif" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                                             </c:when>
                                         </c:choose>
                                     </c:when>
                                     <c:otherwise>
-                                        <img src="images/im_unavailable.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
+                                        <img src="images/im_unavailable.gif" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
                                     </c:otherwise>
                                 </c:choose>
                             </c:when>
@@ -696,7 +695,7 @@
                                 </a>
                             </c:when>
                             <c:otherwise>
-                                <c:out value="${member}"/> <font color="red"><b>*</b></font>
+                                <c:out value="${member}"/> <span style="color: red; "><b>*</b></span>
                             </c:otherwise>
                         </c:choose>
                     </td>
@@ -706,10 +705,10 @@
                         </c:if>
                     </td>
                     <c:if test="${not webManager.groupManager.readOnly}">
-                        <td align="center">
+                        <td style="text-align: center">
                             <input type="checkbox" name="admin" value="${fn:escapeXml(member)}" ${group.admins.contains(member) ? 'checked' : ''}>
                         </td>
-                        <td align="center">
+                        <td style="text-align: center">
                             <input type="checkbox" name="delete" value="${fn:escapeXml(member)}">
                         </td>
                     </c:if>
@@ -719,10 +718,10 @@
             <c:if test="${ ( listPager.totalItemCount != 0 ) and (not webManager.groupManager.readOnly)}">
                 <tr>
                     <td colspan="3">&nbsp;</td>
-                    <td align="center">
+                    <td style="text-align: center">
                         <input type="submit" name="updateMember" value="Update">
                     </td>
-                    <td align="center">
+                    <td style="text-align: center">
                         <input type="submit" name="removeMember" value="Remove">
                     </td>
                 </tr>
@@ -730,7 +729,7 @@
         </table>
 
         <c:if test="${showRemoteJIDsWarning}">
-            <span class="jive-description"><font color="red">* <fmt:message key="group.edit.note" /></font></span>
+            <span class="jive-description"><span style="color: red; ">* <fmt:message key="group.edit.note" /></span></span>
         </c:if>
 
     </form>
@@ -751,7 +750,7 @@
 <script>
     function toggleReadOnly()
     {
-        var disabled = document.getElementById('rb201').checked;
+        let disabled = document.getElementById('rb201').checked;
 
         document.getElementById( 'groupDisplayName' ).disabled = disabled;
         document.getElementById( 'rb001' ).disabled = disabled;

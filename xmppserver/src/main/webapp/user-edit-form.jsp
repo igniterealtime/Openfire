@@ -31,6 +31,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -41,7 +42,7 @@
     String name = ParamUtils.getParameter(request,"name");
     String email = ParamUtils.getParameter(request,"email");
     boolean isAdmin = ParamUtils.getBooleanParameter(request,"isadmin");
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
     if (save) {
@@ -102,6 +103,9 @@
             return;
         }
     }
+
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("success", success);
 %>
 
 <html>
@@ -111,43 +115,31 @@
         <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
     </head>
     <body>
-<%  if (!errors.isEmpty()) { %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
-            <td class="jive-icon-label">
-
-            <% if (errors.get("name") != null) { %>
-                <fmt:message key="user.create.invalid_name" />
-            <% } else if (errors.get("email") != null) { %>
-                <fmt:message key="user.create.invalid_email" />
-            <% } else if (errors.get("csrf") != null) { %>
-                CSRF Failure!
-            <% } %>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-    <br>
-
-<%  } else if (success) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="user.edit.form.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
+    <c:choose>
+        <c:when test="${not empty errors}">
+            <c:forEach var="err" items="${errors}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                        <c:when test="${err.key eq 'name'}"><fmt:message key="user.create.invalid_name" /></c:when>
+                        <c:when test="${err.key eq 'email'}"><fmt:message key="user.create.invalid_email" /></c:when>
+                        <c:otherwise>
+                            <c:if test="${not empty err.value}">
+                                <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                            </c:if>
+                            (<c:out value="${err.key}"/>)
+                        </c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:forEach>
+        </c:when>
+        <c:when test="${success}">
+            <admin:infoBox type="success">
+                <fmt:message key="user.edit.form.update" />
+            </admin:infoBox>
+        </c:when>
+    </c:choose>
 
 <p>
 <fmt:message key="user.edit.form.info" />
@@ -162,7 +154,7 @@
 <fieldset>
     <legend><fmt:message key="user.edit.form.property" /></legend>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table style="width: 100%">
     <tbody>
         <tr>
             <td class="c1">
@@ -174,29 +166,29 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.create.name" />: <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %>
+                <label for="name"><fmt:message key="user.create.name" />: <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></label>
             </td>
             <td>
-                <input type="text" size="30" maxlength="150" name="name"
+                <input type="text" size="30" maxlength="150" id="name" name="name"
                  value="<%= StringUtils.escapeForXML(user.getName()) %>">
             </td>
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="user.create.email" />: <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %>
+                <label for="email"><fmt:message key="user.create.email" />: <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></label>
             </td>
             <td>
-                <input type="text" size="30" maxlength="150" name="email"
+                <input type="text" size="30" maxlength="150" id="email" name="email"
                  value="<%= ((user.getEmail()!=null) ? StringUtils.escapeForXML(user.getEmail()) : "") %>">
             </td>
         </tr>
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
         <tr>
             <td class="c1">
-                <fmt:message key="user.create.isadmin" />
+                <label for="isadmin"><fmt:message key="user.create.isadmin" /></label>
             </td>
             <td>
-                <input type="checkbox" name="isadmin"<%= AdminManager.getInstance().isUserAdmin(user.getUsername(), false) ? " checked='checked'" : "" %>>
+                <input type="checkbox" id="isadmin" name="isadmin"<%= AdminManager.getInstance().isUserAdmin(user.getUsername(), false) ? " checked='checked'" : "" %>>
                 (<fmt:message key="user.create.admin_info"/>)
             </td>
         </tr>

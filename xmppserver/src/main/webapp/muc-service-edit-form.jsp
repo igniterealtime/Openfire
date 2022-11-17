@@ -28,6 +28,7 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%
    // Handle a cancel
@@ -83,17 +84,22 @@
     // Handle a save
     Map<String,String> errors = new HashMap<>();
     if (save) {
-        // Make sure that the MUC Service is lower cased.
-        mucname = mucname.toLowerCase();
-
-        // do validation
-        if (mucname == null || mucname.indexOf('.') >= 0 || mucname.length() < 1) {
+        if (mucname == null) {
             errors.put("mucname","mucname");
-        } else {
-            try {
-                mucname = JID.domainprep(mucname);
-            } catch (Exception e) {
-                errors.put("mucname", e.getMessage());
+        }
+        else {
+            // Make sure that the MUC Service is lower cased.
+            mucname = mucname.toLowerCase();
+
+            // do validation
+            if (mucname.indexOf('.') >= 0 || mucname.length() < 1) {
+                errors.put("mucname", "mucname");
+            } else {
+                try {
+                    mucname = JID.domainprep(mucname);
+                } catch (Exception e) {
+                    errors.put("mucname", e.getMessage());
+                }
             }
         }
         if (errors.isEmpty()) {
@@ -148,6 +154,9 @@
 
 	muckeep = muccleanupdays<=0;
 	mucpreload = mucpreloaddays>0;
+
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("success", success);
 %>
 
 <html>
@@ -162,13 +171,13 @@
 <meta name="helpPage" content="edit_group_chat_service_properties.html"/>    
 <script>
 	function checkMUCKeep() {
-		var toggle = document.getElementsByName('muckeep');
-		var inputCleanups = document.getElementsByName('muccleanupdays');
+		let toggle = document.getElementsByName('muckeep');
+		let inputCleanups = document.getElementsByName('muccleanupdays');
 		inputCleanups[0].disabled = toggle[0].checked;
 	}
 	function checkMUCPreload() {
-        var toggle = document.getElementsByName('mucpreload');
-        var days = document.getElementsByName('mucpreloaddays');
+        let toggle = document.getElementsByName('mucpreload');
+        let days = document.getElementsByName('mucpreloaddays');
         days[0].disabled = !toggle[0].checked;
 	}
 </script>
@@ -179,38 +188,30 @@
 <fmt:message key="groupchat.service.properties.introduction" />
 </p>
 
-<%  if (success) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+<c:choose>
+    <c:when test="${not empty errors}">
+        <c:forEach var="err" items="${errors}">
+            <admin:infobox type="error">
+                <c:choose>
+                    <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                    <c:when test="${err.key eq 'mucname'}"><fmt:message key="groupchat.service.properties.error_service_name" /></c:when>
+                    <c:when test="${err.key eq 'already_exists'}"><fmt:message key="groupchat.service.properties.error_already_exists" /></c:when>
+                    <c:otherwise>
+                        <c:if test="${not empty err.value}">
+                            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                        </c:if>
+                        (<c:out value="${err.key}"/>)
+                    </c:otherwise>
+                </c:choose>
+            </admin:infobox>
+        </c:forEach>
+    </c:when>
+    <c:when test="${success}">
+        <admin:infoBox type="success">
             <fmt:message key="groupchat.service.properties.saved_successfully" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } else if (errors.size() > 0) { %>
-
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-            <% if (errors.get("mucname") != null) { %>
-                <fmt:message key="groupchat.service.properties.error_service_name" />
-            <% } %>
-            <% if (errors.get("already_exists") != null) { %>
-                <fmt:message key="groupchat.service.properties.error_already_exists" />
-            <% } %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
+        </admin:infoBox>
+    </c:when>
+</c:choose>
 
 <!-- BEGIN 'Service Name'-->
 <form action="muc-service-edit-form.jsp" method="post">
@@ -226,14 +227,14 @@
         <fmt:message key="groupchat.service.properties.legend" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
                 <td class="c1">
-                   <fmt:message key="groupchat.service.properties.label_service_name" />
+                   <label for="mucname"><fmt:message key="groupchat.service.properties.label_service_name" /></label>
                 </td>
                 <td>
                     <% if (create) { %>
-                    <input type="text" size="30" maxlength="150" name="mucname" value="<%= (mucname != null ? StringUtils.escapeForXML(mucname) : "") %>">
+                    <input type="text" size="30" maxlength="150" id="mucname" name="mucname" value="<%= (mucname != null ? StringUtils.escapeForXML(mucname) : "") %>">
 
                     <%  if (errors.get("mucname") != null) { %>
 
@@ -249,10 +250,10 @@
             </tr>
             <tr>
                 <td class="c1">
-                   <fmt:message key="groupchat.service.properties.label_service_description" />
+                   <label for="mucdesc"><fmt:message key="groupchat.service.properties.label_service_description" /></label>
                 </td>
                 <td>
-                    <input type="text" size="30" maxlength="150" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
+                    <input type="text" size="30" maxlength="150" id="mucdesc" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
                 </td>
             </tr>
         </table>
@@ -268,38 +269,38 @@
         <fmt:message key="groupchat.service.properties.memory_management.legend" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
                 <td class="c1">
-                    <fmt:message key="groupchat.service.properties.label_service_preload" />
+                    <label for="mucpreload"><fmt:message key="groupchat.service.properties.label_service_preload" /></label>
                 </td>
                 <td>
-                    <input type="checkbox" name="mucpreload" <%= mucpreload ? "checked" : "" %> onClick="checkMUCPreload();">
+                    <input type="checkbox" id="mucpreload" name="mucpreload" <%= mucpreload ? "checked" : "" %> onClick="checkMUCPreload();">
                 </td>
             </tr>
             <tr>
                 <td class="c1">
-                    <fmt:message key="groupchat.service.properties.label_service_preloaddays" />
+                    <label for="mucpreloaddays"><fmt:message key="groupchat.service.properties.label_service_preloaddays" /></label>
                 </td>
                 <td>
-                    <input type="number" size="4" maxlength="3" name="mucpreloaddays" <%= mucpreload ? "" : "disabled" %> value="<%= mucpreloaddays %>">
+                    <input type="number" size="4" maxlength="3" id="mucpreloaddays" name="mucpreloaddays" <%= mucpreload ? "" : "disabled" %> value="<%= mucpreloaddays %>">
                 </td>
             </tr>
 
             <tr>
                 <td class="c1">
-                   <fmt:message key="groupchat.service.properties.label_service_muckeep" />
+                   <label for="muckeep"><fmt:message key="groupchat.service.properties.label_service_muckeep" /></label>
                 </td>
                 <td>
-                    <input type="checkbox" name="muckeep" <%= muckeep ? "checked" : "" %> onClick="checkMUCKeep();">
+                    <input type="checkbox" id="muckeep" name="muckeep" <%= muckeep ? "checked" : "" %> onClick="checkMUCKeep();">
                 </td>
             </tr>
             <tr>
                 <td class="c1">
-                   <fmt:message key="groupchat.service.properties.label_service_cleanupdays" />
+                   <label for="muccleanupdays"><fmt:message key="groupchat.service.properties.label_service_cleanupdays" /></label>
                 </td>
                 <td>
-                    <input type="number" size="4" maxlength="3" name="muccleanupdays" <%= muckeep ? "disabled" : "" %> value="<%= muccleanupdays %>">
+                    <input type="number" size="4" maxlength="3" id="muccleanupdays" name="muccleanupdays" <%= muckeep ? "disabled" : "" %> value="<%= muccleanupdays %>">
                 </td>
             </tr>
         </table>

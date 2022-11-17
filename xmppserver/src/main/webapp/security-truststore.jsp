@@ -62,7 +62,7 @@
         pageContext.setAttribute( "connectionType", connectionType );
         pageContext.setAttribute( "trustStore", trustStore );
 
-        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
+        final Set<ConnectionType> sameStoreConnectionTypes = Collections.emptySet(); // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
         pageContext.setAttribute( "sameStoreConnectionTypes", sameStoreConnectionTypes );
 
         final Map<String, X509Certificate> certificates = trustStore.getAllCertificates();
@@ -147,19 +147,19 @@
                 </fmt:message>
             </p>
 
-            <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table class="jive-table" style="width: 100%">
                 <thead>
                     <tr>
                         <th>
                             <fmt:message key="ssl.signing-request.organization"/> <small>(<fmt:message key="ssl.certificates.alias"/>)</small>
                         </th>
-                        <th width="20%">
+                        <th style="width: 20%">
                             <fmt:message key="ssl.certificates.valid-between"/>
                         </th>
                         <th>
                             <fmt:message key="ssl.certificates.algorithm"/>
                         </th>
-                        <th width="1%">
+                        <th style="width: 1%">
                             <fmt:message key="global.delete"/>
                         </th>
                     </tr>
@@ -168,7 +168,7 @@
                 <tbody>
                     <c:choose>
                         <c:when test="${empty certificates}">
-                            <tr valign="top">
+                            <tr>
                                 <td colspan="5"><em>(<fmt:message key="global.none"/>)</em></td>
                             </tr>
                         </c:when>
@@ -193,7 +193,7 @@
                                     </c:choose>
                                 </c:forEach>
 
-                                <tr valign="top">
+                                <tr>
                                     <td>
                                         <c:url var="url" value="security-certificate-details.jsp">
                                             <c:param name="connectionType" value="${connectionType}"/>
@@ -230,10 +230,10 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td width="2%">
+                                    <td style="width: 2%">
                                         <c:out value="${certificate.publicKey.algorithm}"/>
                                     </td>
-                                    <td width="1" align="center">
+                                    <td style="width: 1%; text-align: center">
                                         <c:url var="url" value="security-truststore.jsp">
                                             <c:param name="connectionType" value="${connectionType}"/>
                                             <c:param name="alias" value="${alias}"/>
@@ -243,7 +243,7 @@
                                         <a href="<c:out value="${url}"/>"
                                            title="<fmt:message key="global.click_delete"/>"
                                            onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
-                                                ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                                                ><img src="images/delete-16x16.gif" alt=""></a>
                                     </td>
                                 </tr>
                             </c:forEach>

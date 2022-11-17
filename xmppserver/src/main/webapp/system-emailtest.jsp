@@ -28,6 +28,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -53,7 +54,7 @@
     Exception mex = null;
 
     // Validate input
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -152,8 +153,8 @@
     <body>
 
 <script>
-var clicked = false;
-function checkClick(el) {
+let clicked = false;
+function checkClick() {
     if (!clicked) {
         clicked = true;
         return true;
@@ -168,21 +169,12 @@ function checkClick(el) {
 
 <%  if (JiveGlobals.getProperty("mail.smtp.host") == null) { %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
-                <fmt:message key="system.emailtest.no_host">
-                    <fmt:param value="<a href=\"system-email.jsp\">"/>
-                    <fmt:param value="</a>"/>
-                </fmt:message>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
+    <admin:infoBox type="error">
+        <fmt:message key="system.emailtest.no_host">
+            <fmt:param value="<a href=\"system-email.jsp\">"/>
+            <fmt:param value="</a>"/>
+        </fmt:message>
+    </admin:infoBox>
 
 <%  } %>
 
@@ -190,47 +182,31 @@ function checkClick(el) {
 
     <%  if (success) { %>
 
-        <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr>
-                <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-                <td class="jive-icon-label"><fmt:message key="system.emailtest.success" /></td>
-            </tr>
-        </tbody>
-        </table>
-        </div>
+        <admin:infoBox type="success">
+            <fmt:message key="system.emailtest.success" />
+        </admin:infoBox>
 
     <%  } else { %>
 
-        <div class="jive-error">
-        <table cellpadding="0" cellspacing="0" border="0">
-        <tbody>
-            <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label">
-                <fmt:message key="system.emailtest.failure" />
-                <%  if (mex != null) { %>
-                    <%  if (mex instanceof AuthenticationFailedException) { %>
-                        <fmt:message key="system.emailtest.failure_authentication" />                        
-                    <%  } else { %>
-                        (Message: <%= StringUtils.escapeHTMLTags(mex.getMessage()) %>)
-                    <%  } %>
-                <%  } %>
-            </td></tr>
-        </tbody>
-        </table>
-        </div>
-
+        <%  if (mex != null) { %>
+        <%  if (mex instanceof AuthenticationFailedException) { %>
+            <admin:infoBox type="error">
+                <fmt:message key="system.emailtest.failure_authentication" />
+            </admin:infoBox>
+            <%  } else {
+                pageContext.setAttribute("authFailText", "(Message: "+mex.getMessage()+")");%>
+            <admin:infoBox type="error">
+                <c:out value="${authFailText}"/>
+            </admin:infoBox>
+            <%  } %>
+        <%  } %>
     <%  } %>
-
-    <br>
-
 <%  } %>
 
 <form action="system-emailtest.jsp" method="post" name="f" onsubmit="return checkClick(this);">
         <input type="hidden" name="csrf" value="${csrf}">
 
-<table cellpadding="3" cellspacing="0" border="0">
+<table>
 <tbody>
     <tr>
         <td>
@@ -262,34 +238,34 @@ function checkClick(el) {
             <input type="hidden" name="from" value="<%= StringUtils.escapeForXML(from) %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername())%>"><fmt:message key="system.emailtest.update-address" /></a>)
+            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8")%>"><fmt:message key="system.emailtest.update-address" /></a>)
             </span>
         </td>
     </tr>
     <tr>
         <td>
-            <fmt:message key="system.emailtest.to" />:
+            <label for="to"><fmt:message key="system.emailtest.to" />:</label>
         </td>
         <td>
-            <input type="text" name="to" value="<%= ((to != null) ? StringUtils.escapeForXML(to) : "") %>"
+            <input type="text" id="to" name="to" value="<%= ((to != null) ? StringUtils.escapeForXML(to) : "") %>"
              size="40" maxlength="100">
         </td>
     </tr>
     <tr>
         <td>
-            <fmt:message key="system.emailtest.subject" />:
+            <label for="subject"><fmt:message key="system.emailtest.subject" />:</label>
         </td>
         <td>
-            <input type="text" name="subject" value="<%= ((subject != null) ? StringUtils.escapeForXML(subject) : "") %>"
+            <input type="text" id="subject" name="subject" value="<%= ((subject != null) ? StringUtils.escapeForXML(subject) : "") %>"
              size="40" maxlength="100">
         </td>
     </tr>
-    <tr valign="top">
+    <tr>
         <td>
-            <fmt:message key="system.emailtest.body" />:
+            <label for="body"><fmt:message key="system.emailtest.body" />:</label>
         </td>
         <td>
-            <textarea name="body" cols="45" rows="5" wrap="virtual"><%= StringUtils.escapeHTMLTags(body) %></textarea>
+            <textarea id="body" name="body" cols="45" rows="5" wrap="virtual"><%= StringUtils.escapeHTMLTags(body) %></textarea>
         </td>
     </tr>
     <tr>

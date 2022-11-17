@@ -18,6 +18,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%@ page import="org.jivesoftware.openfire.ConnectionManager,
                  org.jivesoftware.openfire.SessionManager,
@@ -51,13 +52,12 @@
     boolean managerEnabled = ParamUtils.getBooleanParameter(request,"managerEnabled");
     int port = ParamUtils.getIntParameter(request,"port", 0);
     String defaultSecret = ParamUtils.getParameter(request,"defaultSecret");
-    boolean updateSucess = false;
+    boolean updateSuccess = false;
 
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
 
-
     // Update the session kick policy if requested
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -115,7 +115,7 @@
                 // Log the event
                 webManager.logEvent("enabled connection manager settings", "port = "+port);
             }
-            updateSucess = true;
+            updateSuccess = true;
         }
     }
 
@@ -133,6 +133,8 @@
             defaultSecret = ConnectionMultiplexerManager.getDefaultSecret();
         }
     }
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("updateSuccess", updateSuccess);
 %>
 
 <p>
@@ -142,93 +144,78 @@
 </fmt:message>
 </p>
 
-<%  if (!errors.isEmpty()) { %>
-
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
-            <td class="jive-icon-label">
-
-            <% if (errors.get("port") != null) { %>
-                <fmt:message key="connection-manager.settings.valid.port" />
-            <% } else if (errors.get("defaultSecret") != null) { %>
-                <fmt:message key="connection-manager.settings.valid.defaultSecret" />
-            <% } %>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-    <br>
-
-<%  } else if (updateSucess) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="connection-manager.settings.confirm.updated" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
+<c:choose>
+    <c:when test="${not empty errors}">
+        <c:forEach var="err" items="${errors}">
+            <admin:infobox type="error">
+                <c:choose>
+                    <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                    <c:when test="${err.key eq 'port'}"><fmt:message key="connection-manager.settings.valid.port" /></c:when>
+                    <c:when test="${err.key eq 'defaultSecret'}"><fmt:message key="connection-manager.settings.valid.defaultSecret" /></c:when>
+                    <c:otherwise>
+                        <c:if test="${not empty err.value}">
+                            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                        </c:if>
+                        (<c:out value="${err.key}"/>)
+                    </c:otherwise>
+                </c:choose>
+            </admin:infobox>
+        </c:forEach>
+    </c:when>
+    <c:when test="${updateSuccess}">
+        <admin:infoBox type="success">
+            <fmt:message key="connection-manager.settings.confirm.updated" />
+        </admin:infoBox>
+    </c:when>
+</c:choose>
 
 <form action="connection-managers-settings.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
 
 <fieldset>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table>
     <tbody>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="managerEnabled" value="false" id="rb01"
-                 <%= (!managerEnabled ? "checked" : "") %>>
+        <tr>
+            <td style="width: 1%; white-space: nowrap">
+                <input type="radio" name="managerEnabled" value="false" id="rb01" <%= (!managerEnabled ? "checked" : "") %>>
             </td>
-            <td width="99%">
+            <td>
                 <label for="rb01">
                 <b><fmt:message key="connection-manager.settings.label_disable" /></b> - <fmt:message key="connection-manager.settings.label_disable_info" />
                 </label>
             </td>
         </tr>
-        <tr valign="middle">
-            <td width="1%" nowrap>
-                <input type="radio" name="managerEnabled" value="true" id="rb02"
-                 <%= (managerEnabled ? "checked" : "") %>>
+        <tr>
+            <td style="width: 1%; white-space: nowrap">
+                <input type="radio" name="managerEnabled" value="true" id="rb02" <%= (managerEnabled ? "checked" : "") %>>
             </td>
-            <td width="99%">
+            <td>
                 <label for="rb02">
                 <b><fmt:message key="connection-manager.settings.label_enable" /></b> - <fmt:message key="connection-manager.settings.label_enable_info" />
                 </label>
             </td>
         </tr>
-        <tr valign="top">
-            <td width="1%" nowrap>
+        <tr>
+            <td style="width: 1%; white-space: nowrap">
                 &nbsp;
             </td>
-            <td width="99%">
-                <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="top">
-                    <td width="1%" align="right" nowrap class="c1">
-                        <fmt:message key="connection-manager.settings.port" />
+            <td>
+                <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap; text-align: right;" class="c1">
+                        <label for="port"><fmt:message key="connection-manager.settings.port" /></label>
                     </td>
-                    <td width="99%">
-                        <input type="text" size="10" maxlength="50" name="port"
-                         value="<%= port %>">
+                    <td>
+                        <input type="text" size="10" maxlength="50" id="port" name="port" value="<%= port %>">
                     </td>
                 </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap align="right" class="c1">
-                        <fmt:message key="connection-manager.settings.defaultSecret" />
+                <tr>
+                    <td style="width: 1%; white-space: nowrap; text-align: right;" class="c1">
+                        <label for="defaultSecret"><fmt:message key="connection-manager.settings.defaultSecret" /></label>
                     </td>
-                    <td width="99%">
-                        <input type="password" size="30" maxlength="150" name="defaultSecret"
-                         value="<%= ((defaultSecret != null) ? StringUtils.hash(defaultSecret) : "") %>">
+                    <td>
+                        <input type="password" size="30" maxlength="150" id="defaultSecret" name="defaultSecret" value="<%= ((defaultSecret != null) ? StringUtils.hash(defaultSecret) : "") %>">
                     </td>
                 </tr>
                 </table>
@@ -275,11 +262,11 @@
     </fmt:message>
 </b>
 <br>
-<table cellpadding="0" cellspacing="0" border="0" width="100%" class="connectionManagers">
+<table class="connectionManagers">
     <tr class="head">
         <td><strong><fmt:message key="connection-manager.details.name" /></strong></td>
         <td><strong><fmt:message key="connection-manager.details.address" /></strong></td>
-        <td align="center" width="15%"><strong><fmt:message key="connection-manager.details.sessions" /></strong></td>
+        <td style="text-align: center; width: 15%"><strong><fmt:message key="connection-manager.details.sessions" /></strong></td>
     </tr>
 <tbody>
 <%
@@ -289,7 +276,7 @@
     if (connectionManagers.isEmpty()) {
 %>
     <tr>
-        <td width="100%" colspan="3" align="center" nowrap><fmt:message key="connection-manager.details.no-managers-connected" /></td>
+        <td colspan="3" style="text-align: center; white-space: nowrap"><fmt:message key="connection-manager.details.no-managers-connected" /></td>
     </tr>
 <% } else {
     for (String managerName : connectionManagers) {
@@ -301,9 +288,9 @@
         String hostName = sessions.get(0).getHostName();
 %>
 <tr>
-    <td><img src="images/connection-manager_16x16.gif" width="16" height="16" border="0" alt="" align="absmiddle"><%= managerName%></td>
+    <td><img src="images/connection-manager_16x16.gif" alt="Connection Manager"><%= managerName%></td>
     <td><%= hostAddress %> / <%= hostName %></td>
-    <td align="center"><%= multiplexerManager.getNumConnectedClients(managerName)%></td>
+    <td style="text-align: center"><%= multiplexerManager.getNumConnectedClients(managerName)%></td>
 </tr>
 <%
         }

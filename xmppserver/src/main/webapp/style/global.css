@@ -602,6 +602,12 @@ pre, tt {
 }
 
 /* tables */
+.jive-table table {
+    width: 100%;
+}
+table.jive-table {
+    width: 100%;
+}
 .jive-table {
     border-color:#CCCCCC;
     border-style:solid;
@@ -642,10 +648,10 @@ pre, tt {
     font-family:arial,helvetica,sans-serif;
     font-size:10pt;
 }
-.jive-table .jive-odd td {
+.jive-table tr:nth-child(odd) td {
     background-color:#FFFFFF;
 }
-.jive-table .jive-even td {
+.jive-table tr:nth-child(even) td {
     background-color:#FBFBFB;
 }
 .jive-table .jive-highlight td {

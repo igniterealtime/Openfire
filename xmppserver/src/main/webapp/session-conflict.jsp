@@ -18,6 +18,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.openfire.*,
@@ -47,7 +48,7 @@
     }
 
     // Update the session kick policy if requested
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -77,16 +78,9 @@
             }
             %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="session.conflict.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
             <%
           
@@ -109,34 +103,34 @@
         <fmt:message key="session.conflict.policy" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="middle">
-                <td valign="top" width="1%">
+            <tr>
+                <td  style="width: 1%; vertical-align: top">
                     <input type="radio" name="kickPolicy" value="0" id="rb01"
                      <%= ((kickPolicy==0) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01"><b><fmt:message key="session.conflict.always_kick" /></b></label> -
                     <fmt:message key="session.conflict.always_kick_info" />
                 </td>
             </tr>
-            <tr valign="middle">
-                <td valign="top" width="1%">
+            <tr>
+                <td  style="width: 1%; vertical-align: top">
                     <input type="radio" name="kickPolicy" value="<%= SessionManager.NEVER_KICK %>" id="rb02"
                      <%= ((kickPolicy==SessionManager.NEVER_KICK) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02"><b><fmt:message key="session.conflict.never_kick" /></b></label> -
                     <fmt:message key="session.conflict.never_kick_info" />
                 </td>
             </tr>
-            <tr valign="middle">
-                <td valign="top" width="1%">
+            <tr>
+                <td  style="width: 1%; vertical-align: top">
                     <input type="radio" name="kickPolicy" value="1" id="rb04"
                      <%= ((kickPolicy==1) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb04"><b><fmt:message key="session.conflict.allow_one" /></b></label> -
                     <fmt:message key="session.conflict.resource_conflict" />
                 </td>
@@ -147,23 +141,23 @@
            assignedKickPolicy = true;
         }
     %>
-            <tr valign="middle">
-                <td valign="top" width="1%">
+            <tr>
+                <td  style="width: 1%; vertical-align: top">
                     <input type="radio" name="kickPolicy" value="<%= Integer.MAX_VALUE %>" id="rb03"
                      onfocus="this.form.kickValue.focus();"
                      <%= ((assignedKickPolicy) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb03"><b><fmt:message key="session.conflict.kick_value" /></b></label> -
                     <fmt:message key="session.conflict.kick_value_info" />
 
                 </td>
             </tr>
-            <tr valign="middle">
-                <td width="1%">
+            <tr>
+                <td style="width: 1%">
                     &nbsp;
                 </td>
-                <td width="99%">
+                <td>
                     <%  if (errors.get("kickValue") != null) { %>
                         <span class="jive-error-text">
                         <fmt:message key="session.conflict.enter_value" />

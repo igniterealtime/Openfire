@@ -26,6 +26,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%!
     final int DEFAULT_RANGE = 15;
@@ -60,24 +61,17 @@
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="muc.service.summary.deleted" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 <% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() < 1) { %>
 
     <div class="jive-info">
-    <table cellpadding="0" cellspacing="0" border="0">
+    <table>
     <tbody>
-        <tr><td class="jive-icon"><img src="images/info-16x16.gif" width="16" height="16" border="0" alt=""></td>
+        <tr><td class="jive-icon"><img src="images/info-16x16.gif" alt=""></td>
         <td class="jive-icon-label">
         <fmt:message key="muc.service.summary.no_services_warning" />
         </td></tr>
@@ -156,7 +150,7 @@
 <%  } %>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -175,7 +169,7 @@
     if (services.isEmpty()) {
 %>
     <tr>
-        <td align="center" colspan="7">
+        <td style="text-align: center" colspan="7">
             <fmt:message key="muc.service.summary.no_services" />
         </td>
     </tr>
@@ -190,31 +184,31 @@
         }
         i++;
 %>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-        <td width="1%">
+    <tr>
+        <td style="width: 1%">
             <%= i %>
         </td>
-        <td width="23%">
+        <td style="width: 23%">
             <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(service.getServiceName())) %></a>
         </td>
-        <td width="33%">
+        <td style="width: 20%">
             <%= StringUtils.escapeHTMLTags(service.getDescription()) %> &nbsp;
         </td>
-        <td width="5%">
+        <td style="width: 5%">
             <a href="muc-room-summary.jsp?mucname==<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>
         </td>
-        <td width="5%">
+        <td style="width: 5%">
             <%= service.getNumberConnectedUsers() %>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
+             ><img src="images/edit-16x16.gif" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
-        <td width="1%" align="center" style="border-right:1px #ccc solid;">
+        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
             <a href="muc-service-delete.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
+             ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />"></a>
         </td>
     </tr>
 

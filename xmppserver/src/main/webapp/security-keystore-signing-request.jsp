@@ -7,9 +7,7 @@
 <%@page import="java.security.PrivateKey"%>
 <%@page import="org.jivesoftware.openfire.keystore.IdentityStore"%>
 <%@page import="java.security.KeyStore"%>
-<%@page import="org.bouncycastle.asn1.x500.X500Name"%>
 <%@page import="org.bouncycastle.asn1.x500.style.BCStyle"%>
-<%@page import="org.bouncycastle.asn1.x509.Extension"%>
 <%@page import="org.bouncycastle.asn1.x500.X500NameBuilder"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
@@ -18,7 +16,6 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
-<%@ page import="org.jivesoftware.openfire.keystore.CertificateUtils" %>
 <%@ page import="java.util.Set" %>
 <%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="java.time.Duration" %>
@@ -42,7 +39,7 @@
     final String countryCode        = ParamUtils.getParameter(request, "country");
     final String connectionTypeText = ParamUtils.getParameter( request, "connectionType" );
 
-    final Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -194,51 +191,51 @@
         <p>
             <fmt:message key="ssl.signing-request.issuer_information_info"/>
         </p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tbody>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <label for="namef">
                             <fmt:message key="ssl.signing-request.name"/>
                             :</label>
                     </td>
-                    <td width="99%">
+                    <td>
                         <input type="text" name="name" size="50" maxlength="75"
                                value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>" id="namef" disabled="disabled">
                     </td>
                 </tr>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <label for="ouf"><fmt:message key="ssl.signing-request.organizational_unit"/>:</label></td>
-                    <td width="99%">
+                    <td>
                         <input type="text" name="ou" size="50" maxlength="75" value="<%= ((organizationalUnit!=null) ? StringUtils.escapeForXML(organizationalUnit) : "") %>" id="ouf">
                     </td>
                 </tr>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <label for="of"><fmt:message key="ssl.signing-request.organization"/>:</label></td>
-                    <td width="99%">
+                    <td>
                         <input type="text" name="o" size="50" maxlength="75" value="<%= ((organization!=null) ? StringUtils.escapeForXML(organization) : "") %>" id="of">
                     </td>
                 </tr>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <label for="cityf"><fmt:message key="ssl.signing-request.city"/>:</label></td>
-                    <td width="99%">
+                    <td>
                         <input type="text" name="city" size="50" maxlength="75" value="<%= ((city!=null) ? StringUtils.escapeForXML(city) : "") %>" id="cityf">
                     </td>
                 </tr>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <label for="statef"><fmt:message key="ssl.signing-request.state"/>:</label></td>
-                    <td width="99%">
+                    <td>
                         <input type="text" name="state" size="30" maxlength="75" value="<%= ((state!=null) ? StringUtils.escapeForXML(state) : "") %>" id="statef">
                     </td>
                 </tr>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <label for="countryf"><fmt:message key="ssl.signing-request.country"/>:</label></td>
-                    <td width="99%">
+                    <td>
                         <input type="text" name="country" size="2" maxlength="2" value="<%= ((countryCode!=null) ? StringUtils.escapeForXML(countryCode) : "") %>" id="countryf">
                     </td>
                 </tr>

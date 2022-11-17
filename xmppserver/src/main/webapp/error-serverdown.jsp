@@ -18,6 +18,7 @@
     // Title of this page
     String title = AdminConsole.getAppName() + " " +LocaleUtils.getLocalizedString("error.serverdown.title");
     pageinfo.setTitle(title);
+    pageContext.setAttribute("title", title);
 %>
 <!DOCTYPE html>
 
@@ -31,14 +32,14 @@
 <body>
 
 <div id="jive-header">
-<table cellpadding="0" cellspacing="0" width="100%" border="0">
+<table>
 <tbody>
     <tr>
      <td>
-         <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.admin_console" />">
+         <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" alt="<%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.admin_console" />">
      </td>
-     <td align="right">
-         <table cellpadding="0" cellspacing="0" border="0">
+     <td style="text-align: right">
+         <table>
          <tr>
              <td>&nbsp;</td>
              <td class="info">
@@ -53,18 +54,18 @@
 </div>
 
 <div id="jive-main">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <tbody>
-    <tr valign="top">
-        <td width="1%">
+    <tr>
+        <td style="width: 1%">
             <div id="jive-sidebar">
-                <img src="<%= path %>/images/blank.gif" width="5" height="1" border="0" alt="">
+                <img src="<%= path %>/images/blank.gif" width="5" height="1" alt="">
             </div>
         </td>
-        <td width="99%" id="jive-content">
+        <td id="jive-content">
 
         <div id="jive-title">
-            <%= title %>
+            <c:out value="${title}"/>
         </div>
 
         <p>

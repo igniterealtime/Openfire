@@ -74,7 +74,7 @@
 </p>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th colspan="2">
@@ -115,16 +115,16 @@
             <c:if test="${componentSession.externalComponent.category eq 'gateway'}">
                 <c:choose>
                     <c:when test="${componentSession.externalComponent.type eq 'msn'}">
-                        <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
+                        <img src="images/msn.gif" alt="MSN">&nbsp;
                     </c:when>
                     <c:when test="${componentSession.externalComponent.type eq 'aim'}">
-                        <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
+                        <img src="images/aim.gif" alt="AIM">&nbsp;
                     </c:when>
                     <c:when test="${componentSession.externalComponent.type eq 'yahoo'}">
-                        <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
+                        <img src="images/yahoo.gif" alt="Yahoo!">&nbsp;
                     </c:when>
                     <c:when test="${componentSession.externalComponent.type eq 'icq'}">
-                        <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
+                        <img src="images/icq.gif" alt="ICQ">&nbsp;
                     </c:when>
                 </c:choose>
             </c:if>
@@ -191,7 +191,7 @@
         if (!componentSession.getSoftwareVersion().isEmpty()) {
     %>
         <div class="jive-table">
-            <table cellpadding="3" cellspacing="1" border="0" width="100%">
+            <table>
                 <thead>
                     <tr>
                         <th colspan="2">
@@ -201,7 +201,7 @@
                 </thead>
                 <tbody>
                     <% 
-                        Map<String, String> treeMap = new TreeMap<String, String>(componentSession.getSoftwareVersion());
+                        Map<String, String> treeMap = new TreeMap<>(componentSession.getSoftwareVersion());
                         for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
                             <tr>
                                 <td class="c1">
@@ -224,9 +224,9 @@
     <%} %>
 <br>
 <form action="component-session-details.jsp">
-<center>
+<div style="text-align: center;">
 <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
-</center>
+</div>
 </form>
 
     </body>

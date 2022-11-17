@@ -32,6 +32,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -50,7 +51,7 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     if (create) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             create = false;
@@ -165,6 +166,8 @@
             }
         }
     }
+    pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("success", request.getParameter("success") != null);
 %>
 
 <html>
@@ -186,55 +189,37 @@
 <%--<c:set var="submit" value="${param.create}"/>--%>
 <%--<c:set var="errors" value="${errors}"/>--%>
 
-<%  if (!errors.isEmpty()) { %>
-
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
-            <td class="jive-icon-label">
-
-            <% if (errors.get("general") != null) { %>
-                <fmt:message key="user.create.error_creating_account" />
-            <% } else if (errors.get("username") != null) { %>
-                <fmt:message key="user.create.invalid_username" />
-            <% } else if (errors.get("usernameAlreadyExists") != null) { %>
-                <fmt:message key="user.create.user_exist" />
-            <% } else if (errors.get("name") != null) { %>
-                <fmt:message key="user.create.invalid_name" />
-            <% } else if (errors.get("email") != null) { %>
-                <fmt:message key="user.create.invalid_email" />
-            <% } else if (errors.get("password") != null) { %>
-                <fmt:message key="user.create.invalid_password" />
-            <% } else if (errors.get("passwordMatch") != null) { %>
-                <fmt:message key="user.create.invalid_match_password" />
-            <% } else if (errors.get("passwordConfirm") != null) { %>
-                <fmt:message key="user.create.invalid_password_confirm" />
-            <% } else if (errors.get("groupNotFound")!= null){%>
-                <fmt:message key="user.create.invalid_group" />
-            <% }%>
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-    <br>
-
-<%  } else if (request.getParameter("success") != null) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="user.create.created_success" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
-
-<%  } %>
+<c:choose>
+    <c:when test="${not empty errors}">
+        <c:forEach var="err" items="${errors}">
+            <admin:infobox type="error">
+                <c:choose>
+                    <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                    <c:when test="${err.key eq 'general'}"><fmt:message key="user.create.error_creating_account" /></c:when>
+                    <c:when test="${err.key eq 'username'}"><fmt:message key="user.create.invalid_username" /></c:when>
+                    <c:when test="${err.key eq 'usernameAlreadyExists'}"><fmt:message key="user.create.user_exist" /></c:when>
+                    <c:when test="${err.key eq 'name'}"><fmt:message key="user.create.invalid_name" /></c:when>
+                    <c:when test="${err.key eq 'email'}"><fmt:message key="user.create.invalid_email" /></c:when>
+                    <c:when test="${err.key eq 'password'}"><fmt:message key="user.create.invalid_password" /></c:when>
+                    <c:when test="${err.key eq 'passwordMatch'}"><fmt:message key="user.create.invalid_match_password" /></c:when>
+                    <c:when test="${err.key eq 'passwordConfirm'}"><fmt:message key="user.create.invalid_password_confirm" /></c:when>
+                    <c:when test="${err.key eq 'groupNotFound'}"><fmt:message key="user.create.invalid_group" /></c:when>
+                    <c:otherwise>
+                        <c:if test="${not empty err.value}">
+                            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                        </c:if>
+                        (<c:out value="${err.key}"/>)
+                    </c:otherwise>
+                </c:choose>
+            </admin:infobox>
+        </c:forEach>
+    </c:when>
+    <c:when test="${success}">
+        <admin:infoBox type="success">
+            <fmt:message key="user.create.created_success" />
+        </admin:infoBox>
+    </c:when>
+</c:choose>
 
 <form name="f" action="user-create.jsp" method="get">
     <input type="hidden" name="csrf" value="${csrf}">
@@ -243,26 +228,26 @@
         <fmt:message key="user.create.new_user" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
         <tr>
-            <td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
-            <td width="99%">
+            <td style="width: 1%; white-space: nowrap"><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
+            <td>
                 <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>"
                  id="usernametf" autocomplete="off">
             </td>
         </tr>
         <tr>
-            <td width="1%" nowrap><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
-            <td width="99%">
+            <td style="width: 1%; white-space: nowrap"><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
+            <td>
                 <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>"
                  id="nametf">
             </td>
         </tr>
         <tr>
-            <td width="1%" nowrap>
+            <td style="width: 1%; white-space: nowrap">
                 <label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
-            <td width="99%">
+            <td>
                 <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : "") %>"
                  id="emailtf">
             </td>
@@ -271,16 +256,16 @@
             <td nowrap>
                 <label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
             </td>
-            <td width="99%">
+            <td>
                 <input type="password" name="password" value="" size="20" maxlength="75"
                  id="passtf">
             </td>
         </tr>
         <tr>
-            <td width="1%" nowrap>
+            <td style="width: 1%; white-space: nowrap">
                 <label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
             </td>
-            <td width="99%">
+            <td>
                 <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
                  id="confpasstf">
             </td>
@@ -288,10 +273,10 @@
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
         <tr>
             <td class="c1">
-                <fmt:message key="user.create.isadmin" />
+                <label for="isadmin"><fmt:message key="user.create.isadmin" /></label>
             </td>
             <td>
-                <input type="checkbox" name="isadmin">
+                <input type="checkbox" id="isadmin" name="isadmin">
                 (<fmt:message key="user.create.admin_info"/>)
             </td>
         </tr>
@@ -301,7 +286,7 @@
             <td class="c1">
                 <label for="grouptf"><fmt:message key="user.create.group"/>:</label>
             </td>
-            <td width="99%">
+            <td>
                 <input type="text" name="group" size="30" maxlength="75" value="<%= ((group!=null) ? StringUtils.escapeForXML(group) : "") %>"
                        id="grouptf">
             </td>
@@ -335,8 +320,8 @@ if (UserManager.getUserProvider().isReadOnly()) { %>
 
 <script>
   function disable() {
-    var limit = document.forms[0].elements.length;
-    for (i=0;i<limit;i++) {
+    let limit = document.forms[0].elements.length;
+    for (let i=0;i<limit;i++) {
       document.forms[0].elements[i].disabled = true;
     }
   }

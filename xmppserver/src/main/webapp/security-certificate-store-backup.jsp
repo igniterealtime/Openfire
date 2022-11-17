@@ -64,7 +64,7 @@
             pageContext.setAttribute( "backupPaths", backupPaths );
 
             // Log the event
-            webManager.logEvent( "Created backup of key store files.", String.join( System.lineSeparator(), backupPaths.stream().map( Path::toString ).collect( Collectors.toList() ) ) );
+            webManager.logEvent( "Created backup of key store files.", backupPaths.stream().map( Path::toString ).collect(Collectors.joining(System.lineSeparator())));
         }
         catch ( IOException ex )
         {
@@ -109,17 +109,14 @@
 
 <p>
     <fmt:message key="ssl.certificates.store-backup.info"/>
-
-    <form action="security-certificate-store-backup.jsp" method="post">
-        <input type="hidden" name="csrf" value="${csrf}">
-
-        <br/>
-
-        <input type="submit" name="backup" value="<fmt:message key="ssl.certificates.store-backup.create-backup" />">
-
-    </form>
-
 </p>
+
+<br/>
+
+<form action="security-certificate-store-backup.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
+    <input type="submit" name="backup" value="<fmt:message key="ssl.certificates.store-backup.create-backup" />">
+</form>
 
 
 </body>

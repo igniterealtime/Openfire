@@ -39,7 +39,7 @@
     String jid = ParamUtils.getParameter(request, "jid");
     String nickname = ParamUtils.getParameter(request, "nickname");
     String groups = ParamUtils.getParameter(request, "groups");
-    Integer sub = ParamUtils.getIntParameter(request, "sub", 0);
+    int sub = ParamUtils.getIntParameter(request, "sub", 0);
     boolean save = ParamUtils.getBooleanParameter(request, "save");
 
     // Handle a cancel
@@ -67,7 +67,7 @@
     pageContext.setAttribute("csrf", csrfParam);
     // Handle a roster item delete:
     if (save) {
-        List<String> groupList = new ArrayList<String>();
+        List<String> groupList = new ArrayList<>();
         if (groups != null) {
             for (String group : groups.split(",")) {
                 groupList.add(group.trim());
@@ -103,7 +103,7 @@
 <fieldset>
     <legend><fmt:message key="user.roster.item.settings" /></legend>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table style="width: 100%">
     <tbody>
         <tr>
             <td class="c1">

@@ -33,6 +33,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <%  // Get parameters
     String username = ParamUtils.getParameter(request,"username");
     boolean send = ParamUtils.getBooleanParameter(request,"send");
@@ -70,7 +71,7 @@
     SessionManager sessionManager = webManager.getSessionManager();
 
     // Handle the request to send a message:
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -151,28 +152,21 @@
 
 <%  if (success) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.message.send" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 
 <script>
 function updateSelect(el) {
     if (el.checked) {
-        for (var e=0; e<el.form.jid.length; e++) {
+        for (let e=0; e<el.form.jid.length; e++) {
             el.form.jid[e].selected = true;
         }
     }
     else {
-        for (var e=0; e<el.form.jid.length; e++) {
+        for (let e=0; e<el.form.jid.length; e++) {
             el.form.jid[e].selected = false;
         }
     }
@@ -198,7 +192,7 @@ function updateSelect(el) {
         <fmt:message key="user.message.send_admin_msg" />
     </div>-->
     <div class="jive-contentBox" style="-moz-border-radius: 3px;">
-        <table cellpadding="3" cellspacing="1" border="0" width="600">
+        <table style="width: 600px">
 
         <tr><td colspan=3 class="text" style="padding-bottom: 10px;">
         <%   if (user == null) { %>
@@ -213,7 +207,7 @@ function updateSelect(el) {
         </td></tr>
         <tr>
             <td class="jive-label">
-                <fmt:message key="user.message.to" />:
+                <label for="jid"><fmt:message key="user.message.to" />:</label>
             </td>
             <td>
                 <%  if (user == null) { %>
@@ -229,7 +223,7 @@ function updateSelect(el) {
 
                     <%  } else { %>
 
-                        <select size="2" name="jid" multiple>
+                        <select size="2" id="jid" name="jid" multiple>
 
                         <%
                             for (ClientSession clisess : sessions) {
@@ -259,9 +253,9 @@ function updateSelect(el) {
                 <%  } %>
             </td>
         </tr>
-        <tr valign="top">
+        <tr>
             <td class="jive-label">
-                <fmt:message key="user.message.message" />:
+                <label for="message"><fmt:message key="user.message.message" />:</label>
             </td>
             <td>
                 <%  if (errors.get("message") != null) { %>
@@ -272,7 +266,7 @@ function updateSelect(el) {
                     <br>
 
                 <%  } %>
-                <textarea name="message" cols="55" rows="5" wrap="virtual"></textarea>
+                <textarea id="message" name="message" cols="55" rows="5" wrap="virtual"></textarea>
             </td>
         </tr>
         </table>

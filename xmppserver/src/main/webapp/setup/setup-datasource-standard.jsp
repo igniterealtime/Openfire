@@ -243,7 +243,7 @@ function checkSubmit() {
 <form action="setup-datasource-standard.jsp" method="post" name="dbform" onsubmit="return checkSubmit();">
 <input type="hidden" name="csrf" value="${csrf}">
 
-<table cellpadding="3" cellspacing="2" border="0">
+<table cellpadding="3" cellspacing="2">
 <tr>
     <td nowrap align="right"><label for="presets"><fmt:message key="setup.datasource.standard.label" /></label>:</td>
     <td>
@@ -257,7 +257,7 @@ function checkSubmit() {
         </select>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="driver"><fmt:message key="setup.datasource.standard.jdbc" /></label>
     </td>
@@ -271,7 +271,7 @@ function checkSubmit() {
         </c:if>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="serverURL"><fmt:message key="setup.datasource.standard.url" /></label>
     </td>
@@ -286,7 +286,7 @@ function checkSubmit() {
     </td>
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="username"><fmt:message key="setup.datasource.standard.username" /></label>
     </td>
@@ -300,7 +300,7 @@ function checkSubmit() {
         </c:if>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="password"><fmt:message key="setup.datasource.standard.password" /></label>
     </td>
@@ -315,7 +315,7 @@ function checkSubmit() {
     </td>
 </tr>
 <tr><td colspan="2">&nbsp;</td></tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="minConnections"><fmt:message key="setup.datasource.standard.min_connections" /></label>
     </td>
@@ -329,7 +329,7 @@ function checkSubmit() {
         </c:if>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="maxConnections"><fmt:message key="setup.datasource.standard.max_connections" /></label>
     </td>
@@ -343,7 +343,7 @@ function checkSubmit() {
         </c:if>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td nowrap align="right">
         <label for="connectionTimeout"><fmt:message key="setup.datasource.standard.timeout" /></label>
     </td>
@@ -363,7 +363,7 @@ function checkSubmit() {
 
         <div align="right"><div class="jive-description" style="padding-bottom:10px;">
             <fmt:message key="setup.datasource.standard.note" /></div>
-            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save">
         </div>
     </form>
 

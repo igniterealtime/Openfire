@@ -27,7 +27,7 @@
     }
 
     // Handle a search execute:
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     if (search) {
         User user = null;
         try {
@@ -60,11 +60,11 @@
   <input type="hidden" name="search" value="true"/>
   <fieldset>
     <legend><fmt:message key="user.search.search_user" /></legend>
-    <table cellpadding="3" cellspacing="1" border="0" width="600">
+    <table style="width: 600px;">
       <tr class="c1">
-        <td width="1%" nowrap><fmt:message key="user.create.username" />:</td>
+        <td style="width: 1%; white-space: nowrap"><label for="username"><fmt:message key="user.create.username" />:</label></td>
         <td class="c2">
-          <input type="text" name="username" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>" size="30" maxlength="75"/>
+          <input type="text" id="username" name="username" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>" size="30" maxlength="75"/>
         </td>
       </tr>
      <tr><td colspan="2" nowrap><input type="submit" name="search" value="<fmt:message key="user.search.search" />"/><input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"/></td>

@@ -67,17 +67,17 @@
 
         <c:choose>
             <c:when test="${empty errorDetail}">
-                <table border="0" cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
+                <table cellpadding="0" cellspacing="1" class="jive-testTable-vcard" style="margin-right: 5px;">
                     <tr>
                         <td width="19%" class="jive-testpanel-vcard-header"><fmt:message key="group.summary.page_name" /></td>
                         <td width="80%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-description" /></td>
-                        <td width="1%" class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-members" /></td>
+                        <td style="width: 1%"  class="jive-testpanel-vcard-header"><fmt:message key="setup.ldap.group.test.label-members" /></td>
                     </tr>
                     <c:forEach items="${groups}" var="group">
                         <tr>
-                            <td valign="top" class="jive-testpanel-vcard-value"><c:out value="${group.name}"/></td>
-                            <td valign="top" class="jive-testpanel-vcard-value"><c:out value="${group.description}"/></td>
-                            <td valign="top" class="jive-testpanel-vcard-value"><c:out value="${group.members}"/></td>
+                            <td style="vertical-align: top" class="jive-testpanel-vcard-value"><c:out value="${group.name}"/></td>
+                            <td style="vertical-align: top" class="jive-testpanel-vcard-value"><c:out value="${group.description}"/></td>
+                            <td style="vertical-align: top" class="jive-testpanel-vcard-value"><c:out value="${group.members}"/></td>
                         </tr>
                     </c:forEach>
                 </table>

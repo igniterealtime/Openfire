@@ -145,7 +145,7 @@
 <fieldset>
     <legend><fmt:message key="pubsub.node.delete.details_title" /></legend>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table style="width: 100%">
     <tbody>
         <tr>
             <td class="c1">

@@ -41,7 +41,7 @@
     }
 
     // Validate input
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -136,14 +136,14 @@
 
         <form action="system-smstest.jsp" method="post">
 
-            <table cellpadding="3" cellspacing="0" border="0">
+            <table>
                 <tbody>
                     <tr>
                         <td>
-                            <fmt:message key="system.smstest.recipient" />:
+                            <label for="recipient"><fmt:message key="system.smstest.recipient" />:</label>
                         </td>
                         <td>
-                            <input type="text" name="recipient" value="${fn:escapeXml(recipient)}"size="40" maxlength="100">
+                            <input type="text" id="recipient" name="recipient" value="${fn:escapeXml(recipient)}" size="40" maxlength="100">
                         </td>
                     </tr>
 
@@ -158,12 +158,12 @@
                         </tr>
                     </c:if>
 
-                    <tr valign="top">
+                    <tr>
                         <td>
-                            <fmt:message key="system.smstest.message" />:
+                            <label for="message"><fmt:message key="system.smstest.message" />:</label>
                         </td>
                         <td>
-                            <textarea name="message" cols="45" rows="5" maxlength="140" wrap="virtual"><c:out value="${message}"/></textarea>
+                            <textarea id="message" name="message" cols="45" rows="5" maxlength="140" wrap="virtual"><c:out value="${message}"/></textarea>
                         </td>
                     </tr>
 

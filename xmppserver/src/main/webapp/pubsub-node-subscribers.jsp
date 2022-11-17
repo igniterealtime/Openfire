@@ -146,7 +146,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
@@ -180,7 +180,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
@@ -194,7 +194,7 @@
     <tbody>
         <c:if test="${empty node.allSubscriptions}">
         <tr>
-            <td align="center" colspan="6">
+            <td style="text-align: center" colspan="6">
                 <fmt:message key="pubsub.node.subscribers.table.no_subscribers" />
             </td>
         </tr>
@@ -217,7 +217,7 @@
             <td>
             <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.expire}" />
             </td>
-            <td width="1%" align="center" style="border-right:1px #ccc solid;">
+            <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
                 <c:url value="pubsub-node-subscribers.jsp" var="url">
                     <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="deleteID" value="${subscription.ID}" />
@@ -225,7 +225,7 @@
                     <c:param name="owner" value="${owner}"/>
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
-                    <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+                    <img src="images/delete-16x16.gif" alt="">
                 </a>
             </td>
         </tr>

@@ -124,9 +124,9 @@
 <input type="hidden" name="csrf" value="${csrf}">
 <input type="hidden" name="next" value="true">
 
-<table cellpadding="3" cellspacing="2" border="0">
+<table cellpadding="3" cellspacing="2">
 <tr>
-    <td align="center" valign="top">
+    <td style="text-align: center; vertical-align: top">
         <input type="radio" name="mode" value="standard" id="rb02" ${mode eq 'standard' ? 'checked' : ''}>
     </td>
     <td>
@@ -137,7 +137,7 @@
 
 <c:if test="${not embeddedMode}">
     <tr>
-        <td align="center" valign="top">
+        <td style="text-align: center; vertical-align: top">
             <input type="radio" name="mode" value="jndi" id="rb03" ${mode eq 'jndi' ? 'checked' : ''}>
         </td>
         <td>
@@ -148,7 +148,7 @@
 </c:if>
 
 <tr>
-    <td align="center" valign="top">
+    <td style="text-align: center; vertical-align: top">
         <input type="radio" name="mode" value="embedded" id="rb01" ${mode eq 'embedded' ? 'checked' : ''}>
     </td>
     <td>
@@ -162,7 +162,7 @@
 
 
         <div align="right">
-            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save">
         </div>
     </form>
 

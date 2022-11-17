@@ -19,8 +19,7 @@
 <%@ page import="org.jivesoftware.openfire.group.Group,
                  org.jivesoftware.openfire.group.GroupAlreadyExistsException,
                  org.jivesoftware.openfire.security.SecurityAuditManager,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.Log"
+                 org.jivesoftware.util.StringUtils"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
@@ -32,6 +31,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <%  webManager.init(request, response, session, application, out); %>
@@ -45,7 +45,7 @@
     String name = ParamUtils.getParameter(request, "name");
     String description = ParamUtils.getParameter(request, "description", true);
     
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -164,20 +164,9 @@
 <c:set var="submit" value="${param.create}"/>
 
 <%  if (errors.get("general") != null) { %>
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon">
-                <img src="images/error-16x16.gif" width="16" height="16" border="0" alt="">
-            </td>
-            <td class="jive-icon-label">
-                <fmt:message key="group.create.error" />
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div><br>
+<admin:infoBox type="error">
+    <fmt:message key="group.create.error" />
+</admin:infoBox>
 <%  } %>
 
 <% if (webManager.getGroupManager().isReadOnly()) { %>
@@ -222,12 +211,12 @@
         <% } %>
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
-    <tr valign="top">
-        <td width="1%" nowrap>
+        <table>
+    <tr>
+        <td style="width: 1%; white-space: nowrap">
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *
         </td>
-        <td width="99%">
+        <td>
             <input type="text" name="name" size="30" maxlength="50"
              value="<%= ((name != null) ? StringUtils.escapeForXML(name) : "") %>" id="gname">
         </td>
@@ -235,9 +224,9 @@
 
     <%  if (errors.get("name") != null || errors.get("groupAlreadyExists") != null) { %>
 
-        <tr valign="top">
-            <td width="1%" nowrap>&nbsp;</td>
-            <td width="99%">
+        <tr>
+            <td style="width: 1%; white-space: nowrap">&nbsp;</td>
+            <td>
                 <%  if (errors.get("name") != null) { %>
                     <span class="jive-error-text"><fmt:message key="group.create.invalid_group_name" /></span>
                 <%  } else if (errors.get("groupAlreadyExists") != null) { %>
@@ -248,11 +237,11 @@
 
     <%  } %>
 
-    <tr valign="top">
-        <td width="1%" nowrap>
+    <tr>
+        <td style="width: 1%; white-space: nowrap">
             <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
         </td>
-        <td width="99%">
+        <td>
             <textarea name="description" cols="30" rows="3" maxlength="255" id="gdesc"
              ><%= ((description != null) ? StringUtils.escapeHTMLTags(description) : "") %></textarea>
         </td>
@@ -260,11 +249,11 @@
 
     <%  if (errors.get("description") != null) { %>
 
-        <tr valign="top">
-            <td width="1%" nowrap>
+        <tr>
+            <td style="width: 1%; white-space: nowrap">
                 &nbsp;
             </td>
-            <td width="99%">
+            <td>
                 <span class="jive-error-text"><fmt:message key="group.create.invalid_description" /></span>
             </td>
         </tr>
@@ -304,8 +293,8 @@ if (webManager.getGroupManager().isReadOnly()) { %>
 
 <script>
   function disable() {
-var limit = document.forms[0].elements.length;
-for (i=0;i<limit;i++) {
+let limit = document.forms[0].elements.length;
+for (let i=0;i<limit;i++) {
   document.forms[0].elements[i].disabled = true;
 }
   }

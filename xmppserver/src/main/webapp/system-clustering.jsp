@@ -18,6 +18,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%@ page import="org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
@@ -35,21 +36,13 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ page import="java.text.DecimalFormat" %>
-<%@ page import="java.util.Arrays" %>
-<%@ page import="java.util.Collection" %>
-<%@ page import="java.util.Date" %>
-<%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterEventListener" %>
 <%@ page import="java.util.concurrent.Semaphore" %>
 <%@ page import="java.util.concurrent.TimeUnit" %>
-<%@ page import="org.jivesoftware.openfire.cluster.GetClusteredVersions" %>
 <%@ page import="org.jivesoftware.openfire.cluster.NodeID" %>
 <%@ page import="com.google.common.collect.Table" %>
 <%@ page import="com.google.common.collect.HashBasedTable" %>
-<%@ page import="java.util.Set" %>
-<%@ page import="java.util.TreeSet" %>
-<%@ page import="java.util.ArrayList" %>
-<%@ page import="java.util.List" %>
+<%@ page import="java.util.*" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -168,7 +161,7 @@
 
     final List<ClusterNodeInfo> clusterNodesInfo = new ArrayList<>(ClusterManager.getNodesInfo());
     // Sort them so they are always consistent in order
-    clusterNodesInfo.sort((o1, o2) -> o1.getHostName().compareTo(o2.getHostName()));
+    clusterNodesInfo.sort(Comparator.comparing(ClusterNodeInfo::getHostName));
     // Get some basic statistics from the cluster nodes
     // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
     Collection<Map<String, Object>> statistics =
@@ -226,44 +219,27 @@
 
 <%  if (update) {
         if (updateSuccess) { %>
-
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
         <% if (ClusterManager.isClusteringStarted()) { %>
+        <admin:infoBox type="success">
             <fmt:message key="system.clustering.enabled" />
+        </admin:infoBox>
         <% } else { %>
+        <admin:infoBox type="success">
             <fmt:message key="system.clustering.disabled" />
-        <%
-            }
-        %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+        </admin:infoBox>
+        <% } %>
 
-<%  } else { %>
+    <%  } else { %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""/></td>
-            <td class="jive-icon-label">
-                <fmt:message key="system.clustering.failed-start" />
-            </td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
-    <br>
-<%  }
-} else if (!clusteringAvailable) {
+    <admin:infoBox type="error">
+        <fmt:message key="system.clustering.failed-start" />
+    </admin:infoBox>
+
+    <%  }
+    } else if (!clusteringAvailable) {
 %>
     <div class="warning">
-    <table cellpadding="0" cellspacing="0" border="0" >
+    <table >
     <tbody>
         <tr>
             <td class="jive-icon-label">
@@ -271,7 +247,7 @@
             </td>
         </tr>
         <tr>
-        <td valign="top" align="left" colspan="2">
+        <td style="vertical-align: top; text-align: left" colspan="2">
             <% if (usingEmbeddedDB) { %>
                 <span><fmt:message key="system.clustering.using-embedded-db"/></span>
             <% } else if (maxClusterNodes == 0) { %>
@@ -294,25 +270,25 @@
         <fmt:message key="system.clustering.enabled.legend" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
             <tr>
-                <td width="1%" valign="top" nowrap>
+                <td  style="width: 1%; vertical-align: top" nowrap>
                     <input type="radio" name="clusteringEnabled" value="false" id="rb01"
                      <%= (!clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01">
                     <b><fmt:message key="system.clustering.label_disable" /></b> - <fmt:message key="system.clustering.label_disable_info" />
                     </label>
                 </td>
             </tr>
             <tr>
-                <td width="1%" valign="top" nowrap>
+                <td  style="width: 1%; vertical-align: top" nowrap>
                     <input type="radio" name="clusteringEnabled" value="true" id="rb02"
                      <%= (clusteringEnabled ? "checked" : "") %> <%= clusteringAvailable ? "" : "disabled" %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02">
                     <b><fmt:message key="system.clustering.label_enable" /></b> - <fmt:message key="system.clustering.label_enable_info" /> <b><fmt:message key="system.clustering.label_enable_info2" /></b> 
                     </label>
@@ -341,7 +317,7 @@
         </fmt:message>
     </p>
 
-      <table cellpadding="3" cellspacing="2" border="0">
+      <table>
           <thead>
               <tr>
                   <th colspan="2">
@@ -362,7 +338,7 @@
                   <th style="text-align:center;">
                       <fmt:message key="system.clustering.overview.memory"/>
                   </th>
-                  <th width="90%" class="last">&nbsp;</th>
+                  <th style="width: 90%" class="last">&nbsp;</th>
               </tr>
           </thead>
           <tbody>
@@ -372,8 +348,7 @@
                             XMPPServer.getInstance().getNodeID().equals(nodeInfo.getNodeID());
                     String nodeID = Base64.encodeBytes(nodeInfo.getNodeID().toByteArray(), Base64.URL_SAFE);
                     Map<String, Object> nodeStats = null;
-                    for (Object stat : statistics) {
-                        Map<String, Object> statsMap = (Map<String, Object>) stat;
+                    for (Map<String, Object> statsMap : statistics) {
                         if (statsMap == null) {
                             continue;
                         }
@@ -384,13 +359,13 @@
                         }
                     }
             %>
-              <tr class="<%= (isLocalMember ? "local" : "") %>" valign="middle">
-                  <td align="center" width="1%">
+              <tr class="<%= (isLocalMember ? "local" : "") %>" style="vertical-align: middle">
+                  <td style="width: 1%; text-align: center">
                       <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8.name()) %>"
                        title="Click for more details"
-                       ><img src="images/server-network-24x24.gif" width="24" height="24" border="0" alt=""></a>
+                       ><img src="images/server-network-24x24.gif" width="24" height="24" alt=""></a>
                   </td>
-                  <td class="jive-description" nowrap width="1%" valign="middle">
+                  <td class="jive-description" style="width: 1%; white-space: nowrap; vertical-align: middle">
                       <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8.name()) %>">
                       <%  if (isLocalMember) { %>
                           <b><%= nodeInfo.getHostName() %></b>
@@ -400,20 +375,20 @@
                       <br />
                       <%= nodeInfo.getNodeID() %>
                   </td>
-                  <td class="jive-description" nowrap width="1%" valign="middle">
+                  <td class="jive-description" style="width: 1%; white-space: nowrap; vertical-align: middle">
                       <%= JiveGlobals.formatDateTime(new Date(nodeInfo.getJoinedTime())) %>
                   </td>
-                  <td class="jive-description" nowrap width="1%" valign="middle">
+                  <td class="jive-description" style="width: 1%; white-space: nowrap; vertical-align: middle">
                       <%= nodeStats != null ? nodeStats.get(GetBasicStatistics.CLIENT) : "N/A" %>
                   </td>
-                  <td class="jive-description" nowrap width="1%" valign="middle">
+                  <td class="jive-description" style="width: 1%; white-space: nowrap; vertical-align: middle">
                       <%= nodeStats != null ? nodeStats.get(GetBasicStatistics.INCOMING) : "N/A" %>
                   </td>
-                  <td class="jive-description" nowrap width="1%" valign="middle">
+                  <td class="jive-description" style="width: 1%; white-space: nowrap; vertical-align: middle">
                       <%= nodeStats != null ? nodeStats.get(GetBasicStatistics.OUTGOING) : "N/A" %>
                   </td>
-                  <td class="jive-description" nowrap width="75%" valign="middle">
-                  <table width="100%">
+                  <td class="jive-description" style="width: 75%; vertical-align: middle">
+                  <table style="width: 100%">
                     <tr>
                       <%
                           int percent = 0;
@@ -427,29 +402,29 @@
                                 memory = mbFormat.format(usedMemory) + " MB of " + mbFormat.format(maxMemory) + " MB used";
                           }
                       %>
-                        <td width="30%">
+                        <td style="width: 20%">
                           <div class="bar">
-                          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px #666 solid;">
+                          <table style="width: 100%; border:1px #666 solid;">
                           <tr>
                               <%  if (percent == 0) { %>
 
-                                  <td width="100%"><img src="images/percent-bar-left.gif" width="30" height="4" border="0" alt=""></td>
+                                  <td style="width: 100%"><img src="images/percent-bar-left.gif" width="30" height="4" alt=""></td>
 
                               <%  } else { %>
 
                                   <%  if (percent >= 90) { %>
 
-                                      <td width="<%= percent %>%" background="images/percent-bar-used-high.gif"
-                                          ><img src="images/blank.gif" width="1" height="4" border="0" alt=""></td>
+                                      <td style="width: <%= percent %>%; background-image: url('images/percent-bar-used-high.gif')"
+                                          ><img src="images/blank.gif" width="1" height="4" alt=""></td>
 
                                   <%  } else { %>
 
-                                      <td width="<%= percent %>%" background="images/percent-bar-used-low.gif"
-                                          ><img src="images/blank.gif" width="1" height="4" border="0" alt=""></td>
+                                      <td style="width: <%= percent %>%; background-image: url('images/percent-bar-used-low.gif')"
+                                          ><img src="images/blank.gif" width="1" height="4" alt=""></td>
 
                                   <%  } %>
-                                  <td width="<%= (100-percent) %>%" background="images/percent-bar-left.gif"
-                                      ><img src="images/blank.gif" width="1" height="4" border="0" alt=""></td>
+                                  <td style="width: <%= (100-percent) %>%; background-image: url('images/percent-bar-left.gif')"
+                                      ><img src="images/blank.gif" width="1" height="4" alt=""></td>
                               <%  } %>
                           </tr>
                           </table>
@@ -461,11 +436,11 @@
                       </tr>
                     </table>
                   </td>
-                  <td width="20%">&nbsp;</td>
+                  <td style="width: 20%">&nbsp;</td>
               </tr>
               <% }
               } else if (ClusterManager.isClusteringStarting()) { %>
-              <tr valign="middle" align="middle" class="local">
+              <tr style="text-align: center" class="local">
                   <td colspan=8>
                       <fmt:message key="system.clustering.starting">
                           <fmt:param value="<a href=\"system-clustering.jsp\">"/>
@@ -503,7 +478,7 @@
                         style="width: 1%">
                         <c:out value="${pluginVersions.get('Openfire', clusterNodeInfo.nodeID)}"/>
                         <c:if test="${pluginVersions.get('Openfire', localNodeID) != pluginVersions.get('Openfire', clusterNodeInfo.nodeID)}">
-                            <img src="images/warning-16x16.gif" width="16" height="16" alt="Warning">
+                            <img src="images/warning-16x16.gif" alt="Warning">
                         </c:if>
                     </td>
                 </c:forEach>
@@ -519,7 +494,7 @@
                                 style="width: 1%">
                                 <c:out value="${pluginVersions.get(plugin, clusterNodeInfo.nodeID)}"/>
                                 <c:if test="${pluginVersions.get(plugin, localNodeID) != pluginVersions.get(plugin, clusterNodeInfo.nodeID)}">
-                                    <img src="images/warning-16x16.gif" width="16" height="16" alt="Warning">
+                                    <img src="images/warning-16x16.gif" alt="Warning">
                                 </c:if>
                             </td>
                         </c:forEach>

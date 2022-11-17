@@ -101,7 +101,7 @@
 <fieldset>
     <legend><fmt:message key="muc.service.delete.destructon_title" /></legend>
     <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table style="width: 100%">
     <tbody>
         <tr>
             <td class="c1">
@@ -113,10 +113,10 @@
         </tr>
         <tr>
             <td class="c1">
-                <fmt:message key="muc.service.delete.reason" />
+                <label for="reason"><fmt:message key="muc.service.delete.reason" /></label>
             </td>
             <td>
-                <input type="text" size="50" maxlength="150" name="reason">
+                <input type="text" size="50" maxlength="150" id="reason" name="reason">
             </td>
         </tr>
     </tbody>

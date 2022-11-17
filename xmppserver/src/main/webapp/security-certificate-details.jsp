@@ -38,7 +38,7 @@
     final String storePurposeText = ParamUtils.getParameter( request, "connectionType" );
     final boolean isTrustStore    = ParamUtils.getBooleanParameter( request, "isTrustStore" );
 
-    final Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<>();
 
     ConnectionType connectionType;
     try
@@ -147,7 +147,7 @@
     </p>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
                 <tr>
                     <th colspan="2">
@@ -171,7 +171,7 @@
     <br/>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
             <tr>
                 <th colspan="2">
@@ -208,7 +208,7 @@
         <br/>
 
         <div class="jive-table">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table>
                 <thead>
                 <tr>
                     <th colspan="2">
@@ -266,7 +266,7 @@
     <br/>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
             <tr>
                 <th colspan="2">
@@ -316,7 +316,7 @@
     <br/>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
             <tr>
                 <th colspan="2">
@@ -353,7 +353,7 @@
         <br/>
 
         <div class="jive-table">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table>
                 <thead>
                 <tr>
                     <th colspan="2">
@@ -411,7 +411,7 @@
     <br/>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
                 <tr>
                     <th colspan="2">
@@ -438,7 +438,7 @@
                         <td><%= sigParams.toString() %></td>
                     </tr>
                 </c:if>
-                <tr valign="top">
+                <tr>
                     <%
                         final X509Certificate certificate = (X509Certificate) pageContext.getAttribute("certificate");
                         final String hex = bytesToHex(certificate.getSignature());
@@ -465,7 +465,7 @@
     <br/>
 
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
             <tr>
                 <th>
@@ -478,7 +478,7 @@
                 <%
                     final String pemRepresentation = CertificateManager.toPemRepresentation( (X509Certificate) pageContext.getAttribute( "certificate" ) );
                 %>
-                <td class="c1" align="center">
+                <td class="c1" style="text-align: center">
                     <textarea readonly cols="72" rows="<%= pemRepresentation.split( "\n" ).length + 5 %>"><%= pemRepresentation %></textarea>
                 </td>
             </tr>

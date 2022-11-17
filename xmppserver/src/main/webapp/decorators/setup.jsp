@@ -25,7 +25,7 @@
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="org.jivesoftware.admin.AdminConsole" %>
 
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://www.opensymphony.com/sitemesh/decorator" prefix="decorator" %>
@@ -145,10 +145,10 @@
 
 
             <div id="jive-main">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table style="width: 100%">
                     <tbody>
-                        <tr valign="top">
-                            <td width="1%">
+                        <tr style="vertical-align: top">
+                            <td style="width: 1%">
                                 <div id="jive-sidebar-container">
                                     <div id="jive-sidebar-box">
 
@@ -185,7 +185,7 @@
                                                 <ul id="jive-sidebar-progress">
                                                     <%  if (!showPreloginSidebar) { %>
                                                     <li class="category"><fmt:message key="setup.sidebar.title" /></li>
-                                                    <li><img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13" border="0"></li>
+                                                    <li><img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13"></li>
                                                     <%  } %>
                                                     <%  for (int i=0; i<names.length; i++) { %>
                                                         <%  if (currentStep < i) { %>
@@ -207,7 +207,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td width="99%" id="jive-content">
+                            <td id="jive-content">
 
                 <!-- BEGIN jive-body -->
 

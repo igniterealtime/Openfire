@@ -73,7 +73,7 @@
 
 <p><fmt:message key="global.pages"/>: [ ${listPager.pageLinks} ]</p>
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
         <tr>
             <th nowrap><label for="searchName"><fmt:message key="server.properties.name"/></label></th>
@@ -173,14 +173,9 @@
         </tr>
         </thead>
         <tbody>
-        <c:set var="rowClass" value="jive-even"/>
         <c:forEach var="property" items="${listPager.itemsOnCurrentPage}">
             <%--@elvariable id="property" type="org.jivesoftware.admin.servlet.SystemPropertiesServlet.CompoundProperty"--%>
-            <c:choose>
-                <c:when test="${rowClass == 'jive-even'}"><c:set var="rowClass" value="jive-odd"/></c:when>
-                <c:otherwise><c:set var="rowClass" value="jive-even"/></c:otherwise>
-            </c:choose>
-            <tr class="${rowClass}">
+            <tr>
                 <td class="nameColumn">
                         <%--
                         Note; wrap the property key (and value) in a span so it's easy to extract it in JavaScript
@@ -223,7 +218,7 @@
                     <c:if test="${property.systemProperty}">
                         <c:choose>
                             <c:when test="${property.dynamic}">
-                                <img src="images/check-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_dynamic"/>">
+                                <img src="images/check-16x16.gif" alt="<fmt:message key="server.properties.alt_dynamic"/>">
                             </c:when>
                             <c:when test="${!property.dynamic}">
                                 <img src="images/orange-dash_16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_static"/>">
@@ -237,7 +232,7 @@
                 <td style="text-align:center">
                     <c:choose>
                         <c:when test="${property.setByUser}">
-                            <img src="images/check-16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_setbyuser"/>">
+                            <img src="images/check-16x16.gif" alt="<fmt:message key="server.properties.alt_setbyuser"/>">
                         </c:when>
                         <c:otherwise>
                             <img src="images/orange-dash_16x16.gif" width="16" height="16" alt="<fmt:message key="server.properties.alt_default"/>">
@@ -255,7 +250,7 @@
                     <c:choose>
                         <c:when test="${property.encrypted}">
                             <img src="images/lock.gif" width="16" height="16"
-                                 alt="<fmt:message key="server.properties.alt_encrypted"/>" border="0">
+                                 alt="<fmt:message key="server.properties.alt_encrypted"/>">
                         </c:when>
                         <c:otherwise>
                             <img class="clickable"
@@ -282,7 +277,7 @@
 ${listPager.jumpToPageForm}
 
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
         <tr>
             <th colspan="2">
@@ -292,7 +287,7 @@ ${listPager.jumpToPageForm}
         </tr>
         </thead>
         <tbody>
-        <tr valign="top">
+        <tr>
             <td>
                 <label for="editPropertyName">
                     <fmt:message key="server.properties.name"/>:
@@ -302,7 +297,7 @@ ${listPager.jumpToPageForm}
                 <input type="text" id="editPropertyName" name="propName" size="40" maxlength="100">
             </td>
         </tr>
-        <tr valign="top">
+        <tr>
             <td>
                 <label for="editPropertyValue">
                     <fmt:message key="server.properties.value"/>:
@@ -312,7 +307,7 @@ ${listPager.jumpToPageForm}
                 <textarea id="editPropertyValue" cols="45" rows="5" name="propValue" wrap="soft"></textarea>
             </td>
         </tr>
-        <tr valign="top">
+        <tr>
             <td>
                 <label for="defaultPropertyValue">
                     <fmt:message key="server.properties.default"/>:
@@ -322,7 +317,7 @@ ${listPager.jumpToPageForm}
                 <span id="defaultPropertyValue"></span>
             </td>
         </tr>
-        <tr valign="top">
+        <tr>
             <td>
                 <fmt:message key="server.properties.encryption"/>:
             </td>
@@ -372,14 +367,14 @@ ${listPager.jumpToPageForm}
 
     function doEdit(imgObject, hidden, encrypted, nullValue) {
         document.getElementById("editPropertyName").value = getKey(imgObject);
-        var valueField = document.getElementById("editPropertyValue");
+        let valueField = document.getElementById("editPropertyValue");
         if (encrypted || hidden || nullValue) {
             valueField.value = "";
         } else {
             valueField.value = imgObject.parentNode.parentNode.childNodes[3].childNodes[1].textContent;
         }
 
-        var defaultValueField = document.getElementById("defaultPropertyValue");
+        let defaultValueField = document.getElementById("defaultPropertyValue");
         defaultValueField.innerText = imgObject.parentNode.parentNode.childNodes[5].childNodes[0].textContent.trim();
 
         document.getElementById(encrypted ? "editPropertyEncryptTrue" : "editPropertyEncryptFalse").checked = true;
@@ -403,15 +398,15 @@ ${listPager.jumpToPageForm}
     }
 
     function submitEditForm(save) {
-        var action = save ? "save" : "cancel";
-        var key = document.getElementById("editPropertyName").value;
+        let action = save ? "save" : "cancel";
+        let key = document.getElementById("editPropertyName").value;
         if (key.trim() === "") {
             <%-- There's no need to submit the form --%>
             return;
         }
         if (save) {
-            var value = document.getElementById("editPropertyValue").value;
-            var encrypt = document.getElementById("editPropertyEncryptTrue").checked;
+            let value = document.getElementById("editPropertyValue").value;
+            let encrypt = document.getElementById("editPropertyEncryptTrue").checked;
             submitActionForm(action, key, value, encrypt);
         } else {
             submitActionForm(action, key);
@@ -419,7 +414,7 @@ ${listPager.jumpToPageForm}
     }
 
     function submitActionForm(action, key, value, encrypt) {
-        var form = document.getElementById("actionForm");
+        let form = document.getElementById("actionForm");
         form["action"].value = action;
         form["key"].value = key;
         if(typeof value !== "undefined") {

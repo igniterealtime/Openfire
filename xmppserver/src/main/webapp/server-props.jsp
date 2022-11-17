@@ -32,6 +32,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
@@ -80,7 +81,7 @@
 
     XMPPServer server = webManager.getXMPPServer();
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -96,11 +97,12 @@
     if (save) {
         if (serverName == null) {
             errors.put("serverName", "");
-        }
-        try {
-            JID.domainprep(serverName);
-        } catch (Exception e) {
-            errors.put("serverName", "");
+        } else {
+            try {
+                JID.domainprep(serverName);
+            } catch (Exception e) {
+                errors.put("serverName", "");
+            }
         }
         if (port < 1) {
             errors.put("port", "");
@@ -207,33 +209,29 @@
         <meta name="pageID" content="server-settings"/>
     </head>
     <body>
-
-<style>
-.c1 {
-    width : 30%;
-}
-</style>
-
+    <style>
+        .jive-table thead tr th:first-child,
+        .jive-table tbody tr td:first-child {
+            width: 1%;
+            white-space: nowrap;
+            padding-right: 0.5em;
+        }
+    </style>
 <p>
 <fmt:message key="server.props.info" />
 </p>
 
-<%  if ("true".equals(request.getParameter("success"))) { %>
+<%  if ("true".equals(request.getParameter("success"))) {
+        pageContext.setAttribute("restart", "true".equals(request.getParameter("restart")));
+%>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <%  if ("true".equals(request.getParameter("restart"))) { %>
-            <fmt:message key="server.props.update" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="server.props.update2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).
-        <%  } else { %>
-            <fmt:message key="server.props.update.norestart" />.
-        <%  } %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+<admin:infoBox type="success">
+    <c:choose>
+        <c:when test="${restart}"><fmt:message key="server.props.update" /> <b><fmt:message key="global.restart" /></b> <fmt:message key="server.props.update2" /> <a href="index.jsp"><fmt:message key="global.server_status" /></a>).</c:when>
+        <c:otherwise><fmt:message key="server.props.update.norestart" />.</c:otherwise>
+    </c:choose>
+    <fmt:message key="private.data.settings.update" />
+</admin:infoBox>
 
 <%  } %>
 
@@ -241,7 +239,7 @@
         <input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th colspan="2">
@@ -251,11 +249,11 @@
 </thead>
 <tbody>
     <tr>
-        <td class="c1">
-            <fmt:message key="server.props.name" />
+        <td>
+            <label for="serverName"><fmt:message key="server.props.name" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="serverName" value="<%= (serverName != null) ? StringUtils.escapeForXML(serverName) : "" %>"
+        <td>
+            <input type="text" id="serverName" name="serverName" value="<%= (serverName != null) ? StringUtils.escapeForXML(serverName) : "" %>"
              size="30" maxlength="150">
             <%  if (errors.containsKey("serverName")) { %>
                 <br>
@@ -268,11 +266,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-             <fmt:message key="server.props.server_port" />
+        <td>
+             <label for="serverPort"><fmt:message key="server.props.server_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="serverPort" value="<%= (serverPort > 0 ? String.valueOf(serverPort) : "") %>"
+        <td>
+            <input type="text" id="serverPort" name="serverPort" value="<%= (serverPort > 0 ? String.valueOf(serverPort) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("serverPort")) { %>
                 <br>
@@ -285,11 +283,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-            <fmt:message key="server.props.server_ssl_port" />
+        <td>
+            <label for="serverSslPort"><fmt:message key="server.props.server_ssl_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="serverSslPort" value="<%= (serverSslPort > 0 ? String.valueOf(serverSslPort) : "") %>"
+        <td>
+            <input type="text" id="serverSslPort" name="serverSslPort" value="<%= (serverSslPort > 0 ? String.valueOf(serverSslPort) : "") %>"
                    size="5" maxlength="5">
             <%  if (errors.containsKey("serverSslPort")) { %>
             <br>
@@ -302,11 +300,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-             <fmt:message key="server.props.component_port" />
+        <td>
+             <label for="componentPort"><fmt:message key="server.props.component_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="componentPort" value="<%= (componentPort > 0 ? String.valueOf(componentPort) : "") %>"
+        <td>
+            <input type="text" id="componentPort" name="componentPort" value="<%= (componentPort > 0 ? String.valueOf(componentPort) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("componentPort")) { %>
                 <br>
@@ -319,11 +317,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-             <fmt:message key="server.props.port" />
+        <td>
+             <label for="port"><fmt:message key="server.props.port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="port" value="<%= (port > 0 ? String.valueOf(port) : "") %>"
+        <td>
+            <input type="text" id="port" name="port" value="<%= (port > 0 ? String.valueOf(port) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("port")) { %>
                 <br>
@@ -341,24 +339,18 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
+        <td>
               <fmt:message key="server.props.ssl" />
         </td>
-        <td class="c2">
-            <table cellpadding="0" cellspacing="0" border="0">
+        <td>
+            <table>
             <tbody>
                 <tr>
-                    <td>
-                        <input type="radio" name="sslEnabled" value="true" <%= (sslEnabled ? "checked" : "") %>
-                         id="SSL01">
-                    </td>
+                    <td><input type="radio" name="sslEnabled" value="true" <%= (sslEnabled ? "checked" : "") %> id="SSL01"></td>
                     <td><label for="SSL01"><fmt:message key="server.props.enable" /></label></td>
                 </tr>
                 <tr>
-                    <td>
-                        <input type="radio" name="sslEnabled" value="false" <%= (!sslEnabled ? "checked" : "") %>
-                         id="SSL02">
-                    </td>
+                    <td><input type="radio" name="sslEnabled" value="false" <%= (!sslEnabled ? "checked" : "") %> id="SSL02"></td>
                     <td><label for="SSL02"><fmt:message key="server.props.disable" /></label></td>
                 </tr>
             </tbody>
@@ -366,11 +358,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-             <fmt:message key="server.props.ssl_port" />
+        <td>
+             <label for="sslPort"><fmt:message key="server.props.ssl_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="sslPort" value="<%= (sslPort > 0 ? String.valueOf(sslPort) : "") %>"
+        <td>
+            <input type="text" id="sslPort" name="sslPort" value="<%= (sslPort > 0 ? String.valueOf(sslPort) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("sslPort")) { %>
                 <br>
@@ -384,11 +376,11 @@
     </tr>
 <% if (XMPPServer.getInstance().isStandAlone()){ %>
     <tr>
-        <td class="c1">
-            <fmt:message key="server.props.admin_port" />
+        <td>
+            <label for="embeddedPort"><fmt:message key="server.props.admin_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "") %>"
+        <td>
+            <input type="text" id="embeddedPort" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("embeddedPort")) { %>
                 <br>
@@ -406,11 +398,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-            <fmt:message key="server.props.admin_secure_port" />
+        <td>
+            <label for="embeddedSecurePort"><fmt:message key="server.props.admin_secure_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="embeddedSecurePort" value="<%= (embeddedSecurePort > 0 ? String.valueOf(embeddedSecurePort) : "") %>"
+        <td>
+            <input type="text" id="embeddedSecurePort" name="embeddedSecurePort" value="<%= (embeddedSecurePort > 0 ? String.valueOf(embeddedSecurePort) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("embeddedSecurePort")) { %>
                 <br>
@@ -424,24 +416,18 @@
     </tr>
 <% } %>
     <tr>
-        <td class="c1">
+        <td>
               <fmt:message key="server.props.jmx_enabled" />
         </td>
-        <td class="c2">
-            <table cellpadding="0" cellspacing="0" border="0">
+        <td>
+            <table>
             <tbody>
                 <tr>
-                    <td>
-                        <input type="radio" name="jmxEnabled" value="true" <%= (jmxEnabled ? "checked" : "") %>
-                         id="JMX01">
-                    </td>
+                    <td><input type="radio" name="jmxEnabled" value="true" <%= (jmxEnabled ? "checked" : "") %> id="JMX01"></td>
                     <td><label for="JMX01"><fmt:message key="server.props.enable" /></label></td>
                 </tr>
                 <tr>
-                    <td>
-                        <input type="radio" name="jmxEnabled" value="false" <%= (!jmxEnabled ? "checked" : "") %>
-                         id="JMX02">
-                    </td>
+                    <td><input type="radio" name="jmxEnabled" value="false" <%= (!jmxEnabled ? "checked" : "") %> id="JMX02"></td>
                     <td><label for="JMX02"><fmt:message key="server.props.disable" /></label></td>
                 </tr>
             </tbody>
@@ -449,24 +435,18 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
+        <td>
               <fmt:message key="server.props.jmx_secure" />
         </td>
-        <td class="c2">
-            <table cellpadding="0" cellspacing="0" border="0">
+        <td>
+            <table>
             <tbody>
                 <tr>
-                    <td>
-                        <input type="radio" name="jmxSecure" value="true" <%= (jmxSecure ? "checked" : "") %>
-                         id="JMX03">
-                    </td>
+                    <td><input type="radio" name="jmxSecure" value="true" <%= (jmxSecure ? "checked" : "") %> id="JMX03"></td>
                     <td><label for="JMX03"><fmt:message key="server.props.enable" /></label></td>
                 </tr>
                 <tr>
-                    <td>
-                        <input type="radio" name="jmxSecure" value="false" <%= (!jmxSecure ? "checked" : "") %>
-                         id="JMX04">
-                    </td>
+                    <td><input type="radio" name="jmxSecure" value="false" <%= (!jmxSecure ? "checked" : "") %> id="JMX04"></td>
                     <td><label for="JMX04"><fmt:message key="server.props.disable" /></label></td>
                 </tr>
             </tbody>
@@ -474,11 +454,11 @@
         </td>
     </tr>
     <tr>
-        <td class="c1">
-             <fmt:message key="server.props.jmx_port" />
+        <td>
+             <label for="jmxPort"><fmt:message key="server.props.jmx_port" /></label>
         </td>
-        <td class="c2">
-            <input type="text" name="jmxPort" value="<%= (jmxPort > 0 ? String.valueOf(jmxPort) : "") %>"
+        <td>
+            <input type="text" id="jmxPort" name="jmxPort" value="<%= (jmxPort > 0 ? String.valueOf(jmxPort) : "") %>"
              size="5" maxlength="5">
             <%  if (errors.containsKey("jmxPort")) { %>
                 <br>

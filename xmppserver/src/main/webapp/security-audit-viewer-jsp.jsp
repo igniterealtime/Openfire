@@ -10,6 +10,15 @@
 <head>
     <title><fmt:message key="security.audit.viewer.title"/></title>
     <meta name="pageID" content="security-audit-viewer"/>
+    <style>
+        /* Override the even/odd coloring of jive-table, as on this page, each 'row' consists of two TR elements (one this is hidden). */
+        .jive-table tr:nth-child(4n) td, .jive-table tr:nth-child(4n-1) td {
+            background: #FFFFFF;
+        }
+        .jive-table tr:nth-child(4n-2) td, .jive-table tr:nth-child(4n-3) td {
+            background: #FBFBFB;
+        }
+    </style>
 </head>
 <body>
 <c:choose>
@@ -41,7 +50,7 @@
 
 <p><fmt:message key="global.pages"/>: [ ${listPager.pageLinks} ]</p>
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
         <tr>
             <th nowrap><fmt:message key="security.audit.viewer.id" /></th>
@@ -136,14 +145,10 @@
         </tr>
         </thead>
         <tbody>
-        <c:set var="rowClass" value="jive-even"/>
         <c:forEach var="event" items="${listPager.itemsOnCurrentPage}">
             <%--@elvariable id="event" type="org.jivesoftware.openfire.security.SecurityAuditEvent"--%>
-            <c:choose>
-                <c:when test="${rowClass == 'jive-even'}"><c:set var="rowClass" value="jive-odd"/></c:when>
-                <c:otherwise><c:set var="rowClass" value="jive-even"/></c:otherwise>
-            </c:choose>
-            <tr class="${rowClass}">
+
+            <tr>
                 <td><c:out value="${event.msgID}"/></td>
                 <td><c:out value="${event.username}"/></td>
                 <td><c:out value="${event.node}"/></td>
@@ -160,7 +165,7 @@
                 </td>
                 <td><c:out value="${admin:formatDateTime(event.eventStamp)}"/></td>
             </tr>
-            <tr class="${rowClass}" id='detailsRow<c:out value="${event.msgID}"/>' style="display:none">
+            <tr id='detailsRow<c:out value="${event.msgID}"/>' style="display:none">
                 <td colspan="5"><c:out value="${event.details}"/></td>
             </tr>
         </c:forEach>

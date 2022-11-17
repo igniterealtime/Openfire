@@ -136,7 +136,7 @@
 <p><fmt:message key="global.pages" />: [ ${listPager.pageLinks} ]</p>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -198,27 +198,27 @@
         <td></td>
         <td nowrap>
             <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_NODE_IDENTIFIER)}" size="20" value="${fn:escapeXml(searchNodeId)}"/>
-            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+            <img src="images/search-16x16.png" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
             <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_NODE_NAME)}" size="20" value="${fn:escapeXml(searchNodeName)}"/>
-            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+            <img src="images/search-16x16.png" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
             <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_NODE_DESCRIPTION)}" size="20" value="${fn:escapeXml(searchNodeDescription)}"/>
-            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+            <img src="images/search-16x16.png" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
             <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_ITEM_COUNT)}" size="20" value="${fn:escapeXml(searchItemCount)}"/>
-            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+            <img src="images/search-16x16.png" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
             <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_AFFILIATE_COUNT)}" size="20" value="${fn:escapeXml(searchAffiliateCount)}"/>
-            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+            <img src="images/search-16x16.png" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <td nowrap>
             <input type="search" id="${fn:escapeXml(PubsubNodeResultFilter.FILTER_SUBSCRIBER_COUNT)}" size="20" value="${fn:escapeXml(searchSubscriberCount)}"/>
-            <img src="images/search-16x16.png" width="16" height="16" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
+            <img src="images/search-16x16.png" alt="search" title="search" style="vertical-align: middle;" onclick="submitForm();">
         </td>
         <c:if test="${not PEPMode}">
             <td></td>
@@ -231,7 +231,7 @@
 
 <c:if test="${listPager.filteredItemCount lt 1}">
     <tr>
-        <td align="center" colspan="${PEPMode ? 8 : 9}">
+        <td style="text-align: center" colspan="${PEPMode ? 8 : 9}">
             <c:choose>
                 <c:when test="${listPager.filtered}"><fmt:message key="pubsub.node.summary.table.no_nodes_matching" /></c:when>
                 <c:otherwise><fmt:message key="pubsub.node.summary.table.no_nodes" /></c:otherwise>
@@ -243,20 +243,20 @@
 <%--@elvariable id="node" type="org.jivesoftware.openfire.pubsub.Node"--%>
 <c:forEach var="node" items="${listPager.itemsOnCurrentPage}" varStatus="loop">
 
-    <tr class="${ (loop.index%2)==0 ? 'jive-even' : 'jive-odd'}">
-        <td width="1%">
+    <tr>
+        <td style="width: 1%">
             <c:out value="${listPager.firstItemNumberOnPage + loop.index}"/>
         </td>
-        <td width="1%" valign="middle">
+        <td style="width: 1%; vertical-align: middle">
             <c:out value="${node.nodeID}"/>
         </td>
-        <td nowrap width="1%" valign="middle">
+        <td style="width: 1%; white-space: nowrap" valign="middle">
             <c:out value="${node.name}"/>
         </td>
-        <td valign="middle">
+        <td style="vertical-align: middle">
             <c:out value="${node.description}"/>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <c:url value="pubsub-node-items.jsp" var="url">
                 <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
@@ -265,7 +265,7 @@
                 <c:out value="${node.publishedItems.size()}" />
             </a>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <c:url value="pubsub-node-affiliates.jsp" var="url">
                 <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
@@ -274,7 +274,7 @@
                 <c:out value="${node.allAffiliates.size()}" />
             </a>
         </td>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <c:url value="pubsub-node-subscribers.jsp" var="url">
                 <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
@@ -284,31 +284,31 @@
             </a>
         </td>
         <c:if test="${not PEPMode}" >
-            <td width="1%" align="center">
+            <td style="width: 1%; text-align: center">
                 <c:url value="pubsub-node-edit.jsp" var="url">
                     <c:param name="nodeID" value="${node.nodeID}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_edit" />">
-                    <img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="">
+                    <img src="images/edit-16x16.gif" alt="">
                 </a>
             </td>
         </c:if>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <c:url value="pubsub-node-configuration.jsp" var="url">
                 <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}" title="<fmt:message key="pubsub.node.summary.click_config" />">
-                <img src="images/info-16x16.gif" width="16" height="16" border="0" alt="">
+                <img src="images/info-16x16.gif" alt="">
             </a>
         </td>
-        <td width="1%" align="center" style="border-right:1px #ccc solid;">
+        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
             <c:url value="pubsub-node-delete.jsp" var="url">
                 <c:param name="nodeID" value="${node.nodeID}" />
                 <c:param name="owner" value="${owner}" />
             </c:url>
             <a href="${url}" title="<fmt:message key="global.click_delete" />">
-                <img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="">
+                <img src="images/delete-16x16.gif" alt="">
             </a>
         </td>
     </tr>

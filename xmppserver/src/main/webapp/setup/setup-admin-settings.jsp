@@ -72,7 +72,7 @@
     }
 
     // Error checks
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     if (doContinue) {
         if (password == null) {
             errors.put("password", "password");
@@ -323,7 +323,7 @@ function checkClick() {
 <form action="setup-admin-settings.jsp" name="acctform" method="post" onsubmit="return checkClick();">
     <input type="hidden" name="csrf" value="${csrf}"/>
 
-<table cellpadding="3" cellspacing="2" border="0">
+<table cellpadding="3" cellspacing="2">
 
 <%
     // If the current password is "admin", don't show the text box for them to type
@@ -350,7 +350,7 @@ function checkClick() {
             <input type="hidden" name="password" value="admin">
         </c:when>
         <c:otherwise>
-            <tr valign="top">
+            <tr>
                 <td class="jive-label">
                     <label for="password"><fmt:message key="setup.admin.settings.current_password" /></label>
                 </td>
@@ -392,7 +392,7 @@ function checkClick() {
     pageContext.setAttribute( "currentEmail", currentEmail );
 %>
 
-<tr valign="top">
+<tr>
     <td class="jive-label" align="right">
         <label for="email"><fmt:message key="setup.admin.settings.email" /></label>
     </td>
@@ -414,7 +414,7 @@ function checkClick() {
         </c:choose>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td class="jive-label" align="right">
         <label for="newPassword"><fmt:message key="setup.admin.settings.new_password" /></label>
     </td>
@@ -436,7 +436,7 @@ function checkClick() {
         </c:choose>
     </td>
 </tr>
-<tr valign="top">
+<tr>
     <td class="jive-label" align="right">
         <label for="newPasswordConfirm"><fmt:message key="setup.admin.settings.confirm_password" /></label>
     </td>
@@ -454,8 +454,8 @@ function checkClick() {
 
 <br>
         <div align="right">
-            <input type="submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
-            <input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip" border="0">
+            <input type="submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save">
+            <input type="submit" name="doSkip" value="<fmt:message key="setup.admin.settings.skip_this_step" />" id="jive-setup-skip">
         </div>
 
     </form>
@@ -518,7 +518,7 @@ document.acctform.newPassword.focus();
 
     <!-- Admin Table -->
 
-<table cellpadding="3" cellspacing="2" border="0" style="margin-bottom: 1em;">
+<table cellpadding="3" cellspacing="2" style="margin-bottom: 1em;">
     <tr>
         <td class="jive-label">
             <label for="administrator"><fmt:message key="setup.admin.settings.add.administrator" />:</label>
@@ -546,13 +546,13 @@ document.acctform.newPassword.focus();
         <c:if test="${not empty authorizedJIDs}">
             <!-- List of admins -->
             <div class="jive-table">
-            <table cellpadding="0" cellspacing="0" border="0">
+            <table>
             <tr>
-                <th width="1%" nowrap>&nbsp;</th>
+                <th style="width: 1%; white-space: nowrap">&nbsp;</th>
                 <th nowrap><fmt:message key="setup.admin.settings.administrator" /></th>
-                <th width="1%" nowrap><fmt:message key="global.test" /></th>
+                <th style="width: 1%; white-space: nowrap"><fmt:message key="global.test" /></th>
                 <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
-                    <th width="1%" nowrap><fmt:message key="setup.admin.settings.remove" /></th>
+                    <th style="width: 1%; white-space: nowrap"><fmt:message key="setup.admin.settings.remove" /></th>
                 </c:if>
             </tr>
 
@@ -562,10 +562,10 @@ document.acctform.newPassword.focus();
                     <td>
                         <c:out value="${authJID.node}"/>
                     </td>
-                    <td width="1%" align="center">
+                    <td style="width: 1%; text-align: center">
                         <a href="setup-admin-settings.jsp?ldap=true&test=true&username=${admin:urlEncode(authJID.node)}&csrf=${csrf}"
                            title="<fmt:message key="global.click_test" />"
-                        ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" border="0" alt="<fmt:message key="global.click_test" />"></a>
+                        ><img src="../images/setup_btn_gearplay.gif" width="14" height="14" alt="<fmt:message key="global.click_test" />"></a>
                     </td>
                     <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
                         <td>
@@ -576,7 +576,7 @@ document.acctform.newPassword.focus();
             </c:forEach>
 
             <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
-                <tr valign="top">
+                <tr>
                     <td>
                        &nbsp;
                     </td>
@@ -596,7 +596,7 @@ document.acctform.newPassword.focus();
 
      <div align="right">
     <br/>
-  <input type="submit" name="ldapFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" border="0" style="display:none;">
+  <input type="submit" name="ldapFinished" value="<fmt:message key="global.continue" />"  id="jive-setup-save" style="display:none;">
           </div>
  </form>
 

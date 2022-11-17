@@ -96,8 +96,8 @@
                 <input type="hidden" name="ldap" value="true">
                 <input type="hidden" name="test" value="true">
                 <input type="hidden" name="username" value="${admin:urlEncode(username)}">
-                <table cellpadding="3" cellspacing="2" border="0">
-                    <tr valign="top">
+                <table cellpadding="3" cellspacing="2">
+                    <tr>
                         <td class="jive-label">
                             <fmt:message key="setup.admin.settings.administrator" />:
                         </td>
@@ -108,7 +108,7 @@
                             &nbsp;
                         </td>
                     </tr>
-                    <tr valign="top">
+                    <tr>
                         <td class="jive-label">
                             <fmt:message key="setup.ldap.server.password" />:
                         </td>

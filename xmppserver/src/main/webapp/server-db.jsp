@@ -21,7 +21,6 @@
                  org.jivesoftware.database.DefaultConnectionProvider"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.util.JiveConstants" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.sql.Connection" %>
 <%@ page import="java.sql.DatabaseMetaData" %>
@@ -54,7 +53,7 @@
 </p>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th colspan="2"><fmt:message key="server.db.connect_info" /></th>
@@ -181,7 +180,7 @@
 <br/><br/>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th colspan="2"><fmt:message key="server.db.pool_info" /></th>
@@ -276,11 +275,11 @@
             <%= activeConnections %> (<fmt:message key="server.db.connections.active"/>),
             <%= idleConnections %> (<fmt:message key="server.db.connections.available"/>),
             <%= maxConnections %> (<fmt:message key="server.db.connections.max"/>)<br/>
-            <table border="0" cellspacing="0" cellpadding="0" width="250px" style="margin: 8px; font-size: 50%">
+            <table style="width: 250px; margin: 8px; font-size: 50%">
                 <tr>
-                    <% if (activePercent > 0) { %><td style="border: 1px solid #000000; background-color: #ffffaa" width="<%= activePercent %>%">&nbsp;</td><% } %>
-                    <% if (idlePercent > 0) { %><td style="border: 1px solid #000000; background-color: #aaffaa" width="<%= idlePercent %>%">&nbsp;</td><% } %>
-                    <td style="border: 1px solid #000000; background-color: #eeeeee" width="<%= unopenedPercent %>%">&nbsp;</td>
+                    <% if (activePercent > 0) { %><td style="border: 1px solid #000000; background-color: #ffffaa; width: <%= activePercent %>%">&nbsp;</td><% } %>
+                    <% if (idlePercent > 0) { %><td style="border: 1px solid #000000; background-color: #aaffaa; width: <%= idlePercent %>%">&nbsp;</td><% } %>
+                    <td style="border: 1px solid #000000; background-color: #eeeeee; width: <%= unopenedPercent %>%">&nbsp;</td>
                 </tr>
             </table>
         </td>
@@ -325,12 +324,10 @@
 %>
 
     <br/><br/>
-    <table border="0">
+    <table>
         <tr>
-            <td valign="center">
-                <a href="server-db-stats.jsp"><img src="images/arrow_right_blue.gif" width="24" height="24" border="0" alt="<fmt:message key="server.db_stats.title" />" /></a>
-            </td>
-            <td valign="center"><a href="server-db-stats.jsp"><fmt:message key="server.db_stats.title" /></a></td>
+            <td><a href="server-db-stats.jsp"><img src="images/arrow_right_blue.gif" width="24" height="24" alt="<fmt:message key="server.db_stats.title" />" /></a></td>
+            <td><a href="server-db-stats.jsp"><fmt:message key="server.db_stats.title" /></a></td>
         </tr>
     </table>
 

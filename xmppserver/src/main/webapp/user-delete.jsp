@@ -129,8 +129,8 @@
 
 <script>
   function disable() {
-    var limit = document.forms[0].elements.length;
-    for (i=0;i<limit;i++) {
+    let limit = document.forms[0].elements.length;
+    for (let i=0;i<limit;i++) {
       document.forms[0].elements[i].disabled = true;
     }
   }

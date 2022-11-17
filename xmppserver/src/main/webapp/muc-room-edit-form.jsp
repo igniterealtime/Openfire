@@ -448,7 +448,7 @@
                 <fmt:message key="muc.room.edit.form.info" />
             </p>
             <div class="jive-table">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table>
                     <thead>
                     <tr>
                         <th scope="col"><fmt:message key="muc.room.edit.form.room_id" /></th>
@@ -510,10 +510,10 @@
         <input type="hidden" name="create" value="${create}">
         <input type="hidden" name="roomconfig_persistentroom" value="${persistentRoom}">
 
-    <table width="100%" border="0">
+    <table style="width: 100%">
         <tr>
-            <td width="70%">
-                <table width="100%" border="0">
+            <td style="width: 70%">
+                <table style="width: 100%">
                 <tbody>
                     <tr>
                         <c:choose>
@@ -568,7 +568,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td valign="top"><fmt:message key="muc.room.edit.form.broadcast" />:</td>
+                        <td style="vertical-align: top"><fmt:message key="muc.room.edit.form.broadcast" />:</td>
                         <td>
                             <input name="roomconfig_presencebroadcast" type="checkbox" value="true" id="moderator" ${broadcastModerator ? 'checked' : ''}>
                             <label for="moderator"><fmt:message key="muc.room.edit.form.moderator" /></label>
@@ -609,10 +609,10 @@
                 </tbody>
                 </table>
             </td>
-            <td width="30%" valign="top">
+            <td style="width: 100%; vertical-align: top">
                 <fieldset>
                     <legend><fmt:message key="muc.room.edit.form.room_options" /></legend>
-                    <table width="100%"  border="0">
+                    <table style="width: 100%">
                     <tbody>
                         <tr>
                             <td><input type="checkbox" name="roomconfig_publicroom" value="true" id="public" ${publicRoom ? 'checked' : ''}>
@@ -655,7 +655,7 @@
                 </fieldset>
             </td>
         </tr>
-        <tr align="center">
+        <tr style="text-align: center">
             <td colspan="2"><input type="submit" name="Submit" value="<fmt:message key="global.save_changes" />">
             <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
         </tr>

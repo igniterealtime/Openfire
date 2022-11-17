@@ -215,10 +215,10 @@
 
 <%  } %>
 
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <tbody>
-    <tr valign="top">
-        <td width="99%">
+    <tr>
+        <td>
             <fmt:message key="session.summary.active" />: <b>${listPager.totalItemCount}</b>
             <c:if test="${listPager.filtered}">
                 <fmt:message key="session.summary.filtered_session_count" />: <c:out value="${listPager.filteredItemCount}"/>
@@ -230,7 +230,7 @@
             -- <fmt:message key="session.summary.sessions_per_page" />:
             ${listPager.pageSizeSelection}
         </td>
-        <td width="1%" nowrap>
+        <td style="width: 1%; white-space: nowrap">
             <label for="refresh"><fmt:message key="global.refresh" />:</label>
             <select size="1" id="refresh" name="refresh" onchange="submitForm();">
             <%  for (int j=0; j<REFRESHES.length; j++) {
@@ -250,7 +250,7 @@
 
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>

@@ -21,7 +21,6 @@
 <%@ page import="org.jivesoftware.openfire.Connection"%>
 <%@ page import="org.jivesoftware.openfire.JMXManager" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
@@ -34,7 +33,6 @@
 <%@ page import="org.jivesoftware.util.LocaleUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
-<%@ page import="java.text.DecimalFormat" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
 <%@ page import="org.xmpp.packet.JID" %>
@@ -81,10 +79,6 @@
 
     ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
 
-    // Network interface (if any) is configured for all ports on the server
-    AdminConsolePlugin adminConsolePlugin =
-            (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin");
-
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
@@ -108,22 +102,24 @@
 
     <c:if test="${not empty serverUpdate}">
         <div class="warning">
-            <table cellpadding="0" cellspacing="0" border="0" >
+            <table >
                 <tbody>
                 <tr>
                     <td class="jive-icon-label">
                         <b><fmt:message key="index.update.alert" /></b><br/><br/>
                     </td>
                 </tr>
-                <td valign="top" align="left" colspan="2">
-                    <span><fmt:message key="index.update.info">
-                        <fmt:param value="${serverUpdate.latestVersion}" />
-                        <fmt:param value="<a href=\"${serverUpdate.URL}\">" />
-                        <fmt:param value="</a>"/>
-                        <fmt:param value="<a href=\"${serverUpdate.changelog}\">"/>
-                        <fmt:param value="</a>"/>
-                    </fmt:message></span>
-                </td>
+                <tr>
+                    <td>
+                        <span><fmt:message key="index.update.info">
+                            <fmt:param value="${serverUpdate.latestVersion}" />
+                            <fmt:param value="<a href=\"${serverUpdate.URL}\">" />
+                            <fmt:param value="</a>"/>
+                            <fmt:param value="<a href=\"${serverUpdate.changelog}\">"/>
+                            <fmt:param value="</a>"/>
+                        </fmt:message></span>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
@@ -192,14 +188,14 @@
 <p>
 <fmt:message key="index.title.info" />
 </p>
-<table border="0" width="100%">
-    <td valign="top">
+<table style="width: 100%">
+    <td>
 
         <!-- <div class="jive-table"> -->
-        <table border="0" cellpadding="2" cellspacing="2" width="100%" class="info-table">
+        <table class="info-table">
         <thead>
             <tr>
-                <th colspan="2" align="left" class="info-header"><fmt:message key="index.properties" /></th>
+                <th colspan="2" class="info-header"><fmt:message key="index.properties" /></th>
             </tr>
         </thead>
         <tbody>
@@ -247,14 +243,14 @@
                     <% final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_C2S ); %>
                     <% try { %>
                     <% if (!identityStore.containsDomainCertificate()) {%>
-                    <img src="images/warning-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
+                    <img src="images/warning-16x16.gif" width="12" height="12" alt="<fmt:message key="index.certificate-warning" />" title="<fmt:message key="index.certificate-warning" />">&nbsp;
                     <% } %>
                     <% } catch (Exception e) { %>
-                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
+                    <img src="images/error-16x16.gif" width="12" height="12" alt="<fmt:message key="index.certificate-error" />" title="<fmt:message key="index.certificate-error" />">&nbsp;
                     <% } %>
                     <c:out value="${webManager.serverInfo.XMPPDomain}"/>
                     <% try { String whatevs = JID.domainprep(webManager.getXMPPServer().getServerInfo().getXMPPDomain()); } catch (Exception e) { %>
-                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.domain-stringprep-error" />" title="<fmt:message key="index.domain-stringprep-error" />">&nbsp;
+                    <img src="images/error-16x16.gif" width="12" height="12" alt="<fmt:message key="index.domain-stringprep-error" />" title="<fmt:message key="index.domain-stringprep-error" />">&nbsp;
                     <% } %>
                 </td>
             </tr>
@@ -262,7 +258,7 @@
         </tbody>
         <thead>
             <tr>
-                <th colspan="2" align="left" class="info-header"><fmt:message key="index.environment" /></th>
+                <th colspan="2" class="info-header"><fmt:message key="index.environment" /></th>
             </tr>
         </thead>
         <tbody>
@@ -294,7 +290,7 @@
                 <td class="c2">
                     <c:out value="${webManager.serverInfo.hostname}"/>
                     <% try { String whatevs = JID.domainprep(webManager.getXMPPServer().getServerInfo().getHostname()); } catch (Exception e) { %>
-                    <img src="images/error-16x16.gif" width="12" height="12" border="0" alt="<fmt:message key="index.hostname-stringprep-error" />" title="<fmt:message key="index.hostname-stringprep-error" />">&nbsp;
+                    <img src="images/error-16x16.gif" width="12" height="12" alt="<fmt:message key="index.hostname-stringprep-error" />" title="<fmt:message key="index.hostname-stringprep-error" />">&nbsp;
                     <% } %>
                     <%  // Determine if the DNS configuration for this XMPP domain needs to be evaluated.
                         final String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
@@ -315,7 +311,7 @@
                         }
                         if ( dnsIssue ) {
                         %>
-                        <img src="images/warning-16x16.gif" width="12" height="12" border="0">
+                        <img src="images/warning-16x16.gif" width="12" height="12" alt="DNS configuration appears to be missing or incorrect.">
                             <fmt:message key="index.dns-warning">
                                 <fmt:param><a href='dns-check.jsp'></fmt:param>
                                 <fmt:param></a></fmt:param>
@@ -346,26 +342,26 @@
                 <td class="c1"><fmt:message key="index.memory" /></td>
                 <td>
 
-                <table cellpadding="0" cellspacing="0" border="0" width="300">
-                <tr valign="middle">
-                    <td width="99%" valign="middle">
+                <table style="width: 300px">
+                <tr>
+                    <td style="vertical-align: middle">
                         <div class="bar">
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px #666 solid;">
+                        <table style="border:1px #666 solid; width: 100%">
                         <tr>
                             <c:choose>
                                 <c:when test="${memoryUsageAfterLastGC.percent >= 90}">
-                                    <td width="${memoryUsageAfterLastGC.percent}%" background="images/percent-bar-used-high.gif"><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
+                                    <td style="height: 1em; width: ${memoryUsageAfterLastGC.percent}%; background-image: url('images/percent-bar-used-high.gif'); background-size: cover"></td>
                                 </c:when>
                                 <c:when test="${memoryUsageAfterLastGC.percent > 0}">
-                                    <td width="${memoryUsageAfterLastGC.percent}%" background="images/percent-bar-used-low.gif"><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
+                                    <td style="height: 1em; width: ${memoryUsageAfterLastGC.percent}%; background-image: url('images/percent-bar-used-low.gif'); background-size: cover"></td>
                                 </c:when>
                             </c:choose>
-                            <td width="${100 - memoryUsageAfterLastGC.percent}%" background="images/percent-bar-left.gif"><img src="images/blank.gif" width="1" height="8" border="0" alt=""></td>
+                            <td style="height: 1em; width: ${100 - memoryUsageAfterLastGC.percent}%; background-image: url('images/percent-bar-left.gif'); background-size: cover"></td>
                         </tr>
                         </table>
                         </div>
                     </td>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <div style="padding-left:6px;" class="c2">
                             <fmt:message key="index.memory_usage_description">
                                 <fmt:param><fmt:formatNumber type="number" minFractionDigits="2" maxFractionDigits="2" value="${memoryUsageAfterLastGC.usedMemory}"/></fmt:param>
@@ -383,7 +379,7 @@
         <!-- </div> -->
     </td>
     <% if (rssEnabled) { %>
-    <td valign="top" width="40%"> 
+    <td style="vertical-align: top; width: 40%">
         <div id="jive-latest-activity">
 
             <a href="<%= blogFeedRSS %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
@@ -415,9 +411,9 @@
                 %><div class="jive-bottom-line"></div><%
                 if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
 
-                    List entries = lastBlogFeed.getEntries();
+                    List<SyndEntry> entries = lastBlogFeed.getEntries();
                     for (int i = 0; i < entries.size() && i < 7; i++) {
-                        SyndEntry entry = (SyndEntry) entries.get(i); %>
+                        SyndEntry entry = entries.get(i); %>
                         <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
                         <span class="jive-blog-date"><%= JiveGlobals.formatDate(entry.getPublishedDate())%></span></h5>
                     <% }
@@ -437,13 +433,13 @@
 
 <div id="jive-title"><fmt:message key="index.server_port" /></div>
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
-        <th width="100"><fmt:message key="ports.interface" /></th>
-        <th width="1"><fmt:message key="ports.port" /></th>
-        <th width="1">&nbsp;</th>
-        <th width="130"><fmt:message key="ports.type" /></th>
+        <th style="width: 100px;"><fmt:message key="ports.interface" /></th>
+        <th style="width: 1px;"><fmt:message key="ports.port" /></th>
+        <th style="width: 1px;">&nbsp;</th>
+        <th style="width: 130px;"><fmt:message key="ports.type" /></th>
         <th><fmt:message key="ports.description" /></th>
     </tr>
 </thead>
@@ -474,7 +470,7 @@
             <% if ( connectionListener.getTLSPolicy().equals( Connection.TLSPolicy.disabled ) ) { %>
             <img src="images/blank.gif" width="1" height="1" alt=""/>
             <% } else { %>
-            <img src="images/lock.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/>
+            <img src="images/lock.gif" alt="<fmt:message key="ports.secure.alt" />" title="<fmt:message key="ports.secure.alt" />"/>
             <% } %>
         </td>
         <td>
@@ -618,7 +614,7 @@
         <td><%= interfaceName %></td>
         <td><%= JMXManager.getPort() %></td>
         <td><% if (JMXManager.isSecure()) {
-            %><img src="images/user.gif" width="16" height="16" border="0" alt="<fmt:message key="ports.jmx_console.alt" />" title="<fmt:message key="ports.jmx_console.alt" />"/><%
+            %><img src="images/user.gif" alt="<fmt:message key="ports.jmx_console.alt" />" title="<fmt:message key="ports.jmx_console.alt" />"/><%
         } else {
             %><img src="images/blank.gif" width="1" height="1" alt=""><% }
         %></td>

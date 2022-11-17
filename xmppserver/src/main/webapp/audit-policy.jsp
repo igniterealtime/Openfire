@@ -28,6 +28,7 @@
 <%@ page import="java.time.Duration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -59,7 +60,7 @@
     // Get an audit manager:
     AuditManager auditManager = XMPPServer.getInstance().getAuditManager();
 
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
     boolean csrfStatus = true;
@@ -122,11 +123,11 @@
         if (errors.size() == 0){
             if (ignore == null){
                 // remove all ignored users
-                auditManager.setIgnoreList(new ArrayList<String>());
+                auditManager.setIgnoreList(new ArrayList<>());
             }
             else {
                 // Set the new ignore list
-                Collection<String> newIgnoreList = new HashSet<String>(ignore.length());
+                Collection<String> newIgnoreList = new HashSet<>(ignore.length());
                 StringTokenizer tokenizer = new StringTokenizer(ignore, ", \t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String tok = tokenizer.nextToken();
@@ -155,20 +156,13 @@
         // All done, redirect
         %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="audit.policy.settings.saved_successfully" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
         <%
         }
-        else if (csrfStatus == false) {
+        else if (!csrfStatus) {
         %>
     <admin:infobox type="error"><fmt:message key="global.csrf.failed" /></admin:infobox>
         <%
@@ -211,42 +205,42 @@
         <fmt:message key="audit.policy.policytitle" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="auditEnabled" value="false" id="rb01"
                      <%= (!auditEnabled ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01">
                     <b><fmt:message key="audit.policy.label_disable_auditing" /></b> <fmt:message key="audit.policy.label_disable_auditing_info" />
                     </label>
                 </td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="auditEnabled" value="true" id="rb02"
                      <%= (auditEnabled ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02">
                     <b><fmt:message key="audit.policy.label_enable_auditing" /></b> <fmt:message key="audit.policy.label_enable_auditing_info" />
                     </label>
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     &nbsp;
                 </td>
-                <td width="99%">
-                    <table cellpadding="3" cellspacing="0" border="0">
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <fmt:message key="audit.policy.log_directory" />
+                <td>
+                    <table>
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap" class="c1">
+                            <label for="logDir"><fmt:message key="audit.policy.log_directory" /></label>
                         </td>
-                        <td width="99%">
-                            <input type="text" size="50" maxlength="150" name="logDir"
+                        <td>
+                            <input type="text" size="50" maxlength="150" id="logDir" name="logDir"
                              value="<%= ((logDir != null) ? StringUtils.escapeForXML(logDir) : "") %>">
 
                         <%  if (errors.get("logDir") != null) { %>
@@ -259,12 +253,12 @@
 
                         </td>
                     </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <fmt:message key="audit.policy.maxtotal_size" />
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap" class="c1">
+                            <label for="maxTotalSize"><fmt:message key="audit.policy.maxtotal_size" /></label>
                         </td>
-                        <td width="99%">
-                            <input type="text" size="15" maxlength="50" name="maxTotalSize"
+                        <td>
+                            <input type="text" size="15" maxlength="50" id="maxTotalSize" name="maxTotalSize"
                              value="<%= ((maxTotalSize != null) ? StringUtils.escapeForXML(maxTotalSize) : "") %>">
 
                         <%  if (errors.get("maxTotalSize") != null) { %>
@@ -277,12 +271,12 @@
 
                         </td>
                     </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <fmt:message key="audit.policy.maxfile_size" />
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap" class="c1">
+                            <label for="maxFileSize"><fmt:message key="audit.policy.maxfile_size" /></label>
                         </td>
-                        <td width="99%">
-                            <input type="text" size="15" maxlength="50" name="maxFileSize"
+                        <td>
+                            <input type="text" size="15" maxlength="50" id="maxFileSize" name="maxFileSize"
                              value="<%= ((maxFileSize != null) ? StringUtils.escapeForXML(maxFileSize) : "") %>">
 
                         <%  if (errors.get("maxFileSize") != null) { %>
@@ -295,12 +289,12 @@
 
                         </td>
                     </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <fmt:message key="audit.policy.maxdays_number" />
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap" class="c1">
+                            <label for="maxDays"><fmt:message key="audit.policy.maxdays_number" /></label>
                         </td>
-                        <td width="99%">
-                            <input type="text" size="15" maxlength="50" name="maxDays"
+                        <td>
+                            <input type="text" size="15" maxlength="50" id="maxDays" name="maxDays"
                              value="<%= ((maxDays != null) ? StringUtils.escapeForXML(maxDays) : "") %>">
 
                             <%  if (errors.get("maxDays") != null) { %>
@@ -313,12 +307,12 @@
 
                         </td>
                     </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <fmt:message key="audit.policy.flush_interval" />
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap" class="c1">
+                            <label for="logTimeout"><fmt:message key="audit.policy.flush_interval" /></label>
                         </td>
-                        <td width="99%">
-                            <input type="text" size="15" maxlength="50" name="logTimeout"
+                        <td>
+                            <input type="text" size="15" maxlength="50" id="logTimeout" name="logTimeout"
                              value="<%= ((logTimeout != null) ? StringUtils.escapeForXML(logTimeout) : "") %>">
 
                         <%  if (errors.get("logTimeout") != null) { %>
@@ -331,44 +325,44 @@
 
                         </td>
                     </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap" class="c1">
                             <fmt:message key="audit.policy.packet_audit" />
                         </td>
-                        <td width="99%">
+                        <td>
 
-                            <table cellpadding="4" cellspacing="0" border="0" width="100%">
-                            <tr valign="top">
-                                <td width="1%" nowrap>
+                            <table>
+                            <tr>
+                                <td style="width: 1%; white-space: nowrap">
                                     <input type="checkbox" name="auditMessages" id="cb01"
                                      onclick="this.form.auditEnabled[1].checked=true;"
                                      <%= (auditMessages ? "checked" : "") %>>
                                 </td>
-                                <td width="99%">
+                                <td>
                                     <label for="cb01">
                                     <b><fmt:message key="audit.policy.label_audit_messenge_packets" /></b>
                                     </label>
                                 </td>
                             </tr>
-                            <tr valign="top">
-                                <td width="1%" nowrap>
+                            <tr>
+                                <td style="width: 1%; white-space: nowrap">
                                     <input type="checkbox" name="auditPresence" id="cb02"
                                      onclick="this.form.auditEnabled[1].checked=true;"
                                      <%= (auditPresence ? "checked" : "") %>>
                                 </td>
-                                <td width="99%">
+                                <td>
                                     <label for="cb02">
                                     <b><fmt:message key="audit.policy.label_audit_presence_packets" /></b>
                                     </label>
                                 </td>
                             </tr>
-                            <tr valign="top">
-                                <td width="1%" nowrap>
+                            <tr>
+                                <td style="width: 1%; white-space: nowrap">
                                     <input type="checkbox" name="auditIQ" id="cb03"
                                      onclick="this.form.auditEnabled[1].checked=true;"
                                      <%= (auditIQ ? "checked" : "") %>>
                                 </td>
-                                <td width="99%">
+                                <td>
                                     <label for="cb03">
                                     <b><fmt:message key="audit.policy.label_audit_iq_packets" /></b>
                                     </label>
@@ -377,12 +371,12 @@
                             </table>
                         </td>
                     </tr>
-                    <tr valign="top">
-                        <td width="1%" nowrap class="c1">
-                            <fmt:message key="audit.policy.ignore" />
+                    <tr style="vertical-align: top;">
+                        <td style="width: 1%; white-space: nowrap" class="c1">
+                            <label for="ignore"><fmt:message key="audit.policy.ignore" /></label>
                         </td>
-                        <td width="99%">
-                            <textarea name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? StringUtils.escapeHTMLTags(ignore) : "") %></textarea>
+                        <td>
+                            <textarea id="ignore" name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? StringUtils.escapeHTMLTags(ignore) : "") %></textarea>
                             <%  if (errors.get("ignore") != null) { %>
 
                                 <span class="jive-error-text">
@@ -397,12 +391,12 @@
             </tr>
         </tbody>
         </table>
-        <table border="0">
-            <tr valign="top">
-                <td width="1%" nowrap class="c1">
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap" class="c1">
                     <fmt:message key="audit.policy.queued_packets" />
                 </td>
-                <td width="99%">
+                <td>
                      <%= auditManager.getAuditor().getQueuedPacketsNumber() %>
                 </td>
             </tr>

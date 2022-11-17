@@ -28,6 +28,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -37,13 +38,13 @@
         <title><fmt:message key="system.cache.title"/></title>
         <meta name="pageID" content="system-cache"/>
         <script>
-        var selected = false;
-        var cbstate = '';
+        let selected = false;
+        let cbstate = '';
         function handleCBClick(el) {
-            var theform = el.form;
-            for (var i=0; i<theform.elements.length; i++) {
-                var theel = theform.elements[i];
-                if (theel.name == 'cacheID') {
+            let theform = el.form;
+            for (let i=0; i<theform.elements.length; i++) {
+                let theel = theform.elements[i];
+                if (theel.name === 'cacheID') {
                     theel.checked = !selected;
                     toggleHighlight(theel);
                 }
@@ -53,38 +54,33 @@
             updateControls(theform);
         }
         function setCBState(theform) {
-            for (var i=0; i<theform.elements.length; i++) {
-                var theel = theform.elements[i];
-                if (theel.name == 'cacheID') {
+            for (let i=0; i<theform.elements.length; i++) {
+                let theel = theform.elements[i];
+                if (theel.name === 'cacheID') {
                     cbstate += theel.checked;
                 }
             }
         }
         function clearCBs(theform) {
-            for (var i=0; i<theform.elements.length; i++) {
-                var theel = theform.elements[i];
-                if (theel.name == 'cacheID') {
+            for (let i=0; i<theform.elements.length; i++) {
+                let theel = theform.elements[i];
+                if (theel.name === 'cacheID') {
                     theel.checked = false;
                 }
             }
         }
         function updateControls(theform) {
-            var currentState = '';
-            for (var i=0; i<theform.elements.length; i++) {
-                var theel = theform.elements[i];
-                if (theel.name == 'cacheID') {
+            let currentState = '';
+            for (let i=0; i<theform.elements.length; i++) {
+                let theel = theform.elements[i];
+                if (theel.name === 'cacheID') {
                     currentState += theel.checked;
                 }
             }
-            if (currentState != cbstate) {
-                theform.clear.disabled = false;
-            }
-            else {
-                theform.clear.disabled = true;
-            }
+            theform.clear.disabled = currentState === cbstate;
         }
         function toggleHighlight(el) {
-            var r = null;
+            let r = null;
             if (el.parentNode && el.parentNode.parentNode) {
                 r = el.parentNode.parentNode;
             }
@@ -140,16 +136,9 @@
 
 <%  if (doClearCache) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="system.cache.cleared" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 
@@ -173,17 +162,17 @@
         <input type="hidden" name="csrf" value="${csrf}">
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
-        <th width="39%" nowrap><fmt:message key="system.cache.head.name" /></th>
-        <th width="10%" nowrap><fmt:message key="system.cache.head.max" /></th>
-        <th width="10%" nowrap><fmt:message key="system.cache.head.lifetime" /></th>
-        <th width="10%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.current" /></th>
-        <th width="10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
-        <th width="20%" nowrap style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
-        <th width="20%" nowrap style="text-align: center;"><fmt:message key="system.cache.head.culls" /><br/>3/6/12 <fmt:message key="global.hours" /></th>
-        <th width="1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
+        <th style="width: 39%" nowrap><fmt:message key="system.cache.head.name" /></th>
+        <th style="width: 10%" nowrap><fmt:message key="system.cache.head.max" /></th>
+        <th style="width: 10%" nowrap><fmt:message key="system.cache.head.lifetime" /></th>
+        <th style="width: 10%; text-align: center;" nowrap colspan="2"><fmt:message key="system.cache.head.current" /></th>
+        <th style="width: 10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
+        <th style="width: 20%; text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
+        <th style="width: 20%; text-align: center;" nowrap><fmt:message key="system.cache.head.culls" /><br/>3/6/12 <fmt:message key="global.hours" /></th>
+        <th style="width: 1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
     </tr>
 </thead>
 <tbody>
@@ -223,9 +212,9 @@
 %>
     <tr>
         <td class="c1">
-            <table cellpadding="0" cellspacing="0" border="0">
+            <table>
             <tr>
-                <td class="icon"><img src="images/cache-16x16.gif" width="16" height="16" alt="" border="0"></td>
+                <td style="width: 1%;" class="icon"><img src="images/cache-16x16.gif" alt=""></td>
                 <td><a href="SystemCacheDetails.jsp?cacheName=<%=java.net.URLEncoder.encode(cache.getName(), "UTF-8")%>"><%= StringUtils.escapeHTMLTags(cache.getName()) %></a></td>
             </tr>
             </table>
@@ -272,7 +261,7 @@
             N/A
             <% } %>
         </td>
-        <td width="1%" class="c5">
+        <td style="width: 1%" class="c5">
             <% if ( canPurge ) {%>
             <input type="checkbox" name="cacheID" value="<%= i %>" onclick="updateControls(this.form);toggleHighlight(this);">
             <% } %>
@@ -281,14 +270,14 @@
 
 <%  } %>
 
-<tr bgcolor="#eeeeee">
-    <td align="right" class="c1">
+<tr style="background-color: #EEEEEE">
+    <td style="text-align: right" class="c1">
         <fmt:message key="system.cache.total" />
     </td>
     <td class="c2">
         <%= mbFormat.format(overallTotal/(1024.0*1024.0)) %> MB
     </td>
-    <td align="right" colspan="7">
+    <td style="text-align: right" colspan="7">
         <input type="submit" name="clear" value="<fmt:message key="system.cache.clear-selected" />" disabled>
     </td>
 </tr>

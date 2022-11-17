@@ -77,9 +77,9 @@
 
     // Check the request/response for a login token
 
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
 
-    Boolean login = ParamUtils.getBooleanParameter(request, "login");
+    boolean login = ParamUtils.getBooleanParameter(request, "login");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -129,7 +129,7 @@
     <script>
         <!--
         // break out of frames
-        if (self.parent.frames.length != 0) {
+        if (self.parent.frames.length !== 0) {
             self.parent.location = document.location;
         }
 
@@ -158,11 +158,11 @@
     <input type="hidden" name="login" value="true">
     <input type="hidden" name="csrf" value="${csrf}">
 
-    <div align="center">
+    <div style="text-align: center">
         <!-- BEGIN login box -->
         <div id="jive-loginBox">
 
-            <div align="center" id="jive-loginTable">
+            <div style="text-align: center" id="jive-loginTable">
 
             <span id="jive-login-header"
                   style="background: transparent url(images/login_logo.gif) no-repeat left; padding: 29px 0 10px 205px;">
@@ -170,18 +170,17 @@
             </span>
 
                 <div style="text-align: center; width: 380px;">
-                    <table cellpadding="0" cellspacing="0" border="0" align="center">
+                    <table style="text-align: center">
                         <tr>
-                            <td align="right" class="loginFormTable">
+                            <td style="text-align: right" class="loginFormTable">
 
-                                <table cellpadding="2" cellspacing="0" border="0">
+                                <table>
                                     <noscript>
                                         <tr>
                                             <td colspan="3">
-                                                <table cellpadding="0" cellspacing="0" border="0">
-                                                    <tr valign="top">
-                                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""
-                                                                 vspace="2"></td>
+                                                <table>
+                                                    <tr>
+                                                        <td><img src="images/error-16x16.gif" alt="" style="margin-top:2px; margin-bottom: 2px;"></td>
                                                         <td>
                                                             <div class="jive-error-text" style="padding-left:5px; color:#cc0000;">
                                                                 <fmt:message key="login.error"/></div>
@@ -194,10 +193,10 @@
                                     <% if (errors.size() > 0) { %>
                                     <tr>
                                         <td colspan="3">
-                                            <table cellpadding="0" cellspacing="0" border="0">
+                                            <table>
                                                 <% for (String error : errors.values()) { %>
-                                                <tr valign="top">
-                                                    <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""
+                                                <tr>
+                                                    <td><img src="images/error-16x16.gif" alt=""
                                                              vspace="2"></td>
                                                     <td>
                                                         <div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><%= error%>
@@ -217,10 +216,10 @@
                                     </tr>
                                     <tr>
                                         <td><input type="text" name="token" size="35" maxlength="80" id="u01"></td>
-                                        <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;">
+                                        <td style="text-align: center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;">
                                         </td>
                                     </tr>
-                                    <tr valign="top">
+                                    <tr>
                                         <td class="jive-login-label"><label for="u01"><fmt:message key="login.token"/></label></td>
                                         <td>&nbsp;</td>
                                     </tr>
@@ -228,8 +227,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td align="right">
-                                <div align="right" id="jive-loginVersion">
+                            <td style="text-align: right">
+                                <div style="text-align: right" id="jive-loginVersion">
                                     <%= AdminConsole.getAppName() %>, <fmt:message key="login.version"/>: <%= AdminConsole
                                     .getVersionString() %>
                                 </div>

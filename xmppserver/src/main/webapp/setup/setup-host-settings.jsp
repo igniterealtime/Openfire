@@ -196,12 +196,12 @@
         <form action="setup-host-settings.jsp" name="f" method="post">
             <input type="hidden" name="csrf" value="${csrf}">
 
-<table cellpadding="3" cellspacing="0" border="0">
-<tr valign="top">
-    <td width="1%" nowrap align="right">
+<table>
+<tr>
+    <td style="width: 1%; white-space: nowrap" align="right">
         <label for="domain"><fmt:message key="setup.host.settings.domain" /></label>
     </td>
-    <td width="99%">
+    <td>
         <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${not empty domain ? fn:escapeXml(domain) : ''}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.domain.help" /></span></div>
         <c:if test="${not empty errors['domain']}">
@@ -211,11 +211,11 @@
         </c:if>
     </td>
 </tr>
-<tr valign="top">
-    <td width="1%" nowrap align="right">
+<tr>
+    <td style="width: 1%; white-space: nowrap" align="right">
         <label for="fqdn"><fmt:message key="setup.host.settings.fqdn" /></label>
     </td>
-    <td width="99%">
+    <td>
         <input type="text" size="30" maxlength="150" name="fqdn" id="fqdn" value="${not empty fqdn ? fn:escapeXml(fqdn) : ''}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.fqdn.help" /></span></div>
         <c:if test="${not empty errors['fqdn']}">
@@ -227,11 +227,11 @@
 </tr>
 
 <c:if test="${xmppServer.standAlone}">
-<tr valign="top">
-    <td width="1%" nowrap align="right">
+<tr>
+    <td style="width: 1%; white-space: nowrap" align="right">
         <label for="embeddedPort"><fmt:message key="setup.host.settings.port" /></label>
     </td>
-    <td width="99%">
+    <td>
         <input type="number" min="1" max="65535" size="6" maxlength="6" name="embeddedPort" id="embeddedPort" value="${not empty embeddedPort ? embeddedPort : 9090}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.port_number" /></span></div>
         <c:if test="${not empty errors['embeddedPort']}">
@@ -241,11 +241,11 @@
         </c:if>
     </td>
 </tr>
-<tr valign="top">
-    <td width="1%" nowrap align="right">
+<tr>
+    <td style="width: 1%; white-space: nowrap" align="right">
         <label for="securePort"><fmt:message key="setup.host.settings.secure_port" /></label>
     </td>
-    <td width="99%">
+    <td>
         <input type="number" min="1" max="65535" size="6" maxlength="6" name="securePort" id="securePort" value="${not empty securePort ? securePort : 9091}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.secure_port_number" /></span></div>
         <c:if test="${not empty errors['securePort']}">
@@ -255,21 +255,21 @@
         </c:if>
     </td>
 </tr>
-<tr valign="top">
-    <td width="1%" nowrap align="right">
+<tr>
+    <td style="width: 1%; white-space: nowrap" align="right">
         <fmt:message key="setup.host.settings.encryption_algorithm" />
     </td>
-    <td width="99%">
+    <td>
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.encryption_algorithm_info" /></span></div><br /><br />
         <input type="radio" name="encryptionAlgorithm" value="Blowfish" id="Blowfish" checked><label for="Blowfish"><fmt:message key="setup.host.settings.encryption_blowfish" /></label><br /><br />
         <input type="radio" name="encryptionAlgorithm" value="AES" id="AES"><label for="AES"><fmt:message key="setup.host.settings.encryption_aes" /></label><br /><br />
     </td>
 </tr>
-<tr valign="top">
-    <td width="1%" nowrap align="right">
+<tr>
+    <td style="width: 1%; white-space: nowrap" align="right">
         <label for="encryptionKey"><fmt:message key="setup.host.settings.encryption_key" /></label>
     </td>
-    <td width="99%">
+    <td>
         <input type="password" size="50" name="encryptionKey" id="encryptionKey"/><br /><br />
         <input type="password" size="50" name="encryptionKey1" id="encryptionKey1" />
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.encryption_key_info"/></span></div>
@@ -287,7 +287,7 @@
 
 
         <div align="right">
-            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+            <input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save">
         </div>
     </form>
 

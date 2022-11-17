@@ -36,6 +36,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
 <%  // Get parameters //
@@ -71,8 +72,8 @@
     }
 
     PresenceManager presenceManager = webManager.getPresenceManager();
-    Boolean lockedOut = false;
-    Boolean pendingLockOut = false;
+    boolean lockedOut = false;
+    boolean pendingLockOut = false;
     if (webManager.getLockOutManager().getDisabledStatus(username) != null) {
         // User is locked out. Check if he is locket out now
         if (webManager.getLockOutManager().isAccountDisabled(username)) {
@@ -82,6 +83,7 @@
             pendingLockOut = true;
         }
     }
+    pageContext.setAttribute("username", username);
 %>
 
 <html>
@@ -99,73 +101,40 @@
 
 <%  if (request.getParameter("success") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.properties.created" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if (request.getParameter("locksuccess") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.properties.locksuccess" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if (request.getParameter("unlocksuccess") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.properties.unlocksuccess" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if (request.getParameter("editsuccess") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.properties.update" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <% } else if (user == null) { %>
-    <div class="warning">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-        <td class="jive-icon-label">
-            <fmt:message key="error.specific_user_not_found">
-                <fmt:param value="<%= StringUtils.escapeHTMLTags(username)%>" />
-            </fmt:message>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+
+    <admin:infoBox type="warning">
+        <fmt:message key="error.specific_user_not_found">
+            <fmt:param><c:out value="${username}"/></fmt:param>
+        </fmt:message>
+    </admin:infoBox>
+
 <%  } %>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th colspan="2">
@@ -176,7 +145,7 @@
 <tbody>
     <% if (user == null) { %>
     <tr>
-        <td colspan="2" align="center">
+        <td colspan="2" style="text-align: center">
             <fmt:message key="error.requested_user_not_found" />
         </td>
     </tr>
@@ -187,8 +156,8 @@
         </td>
         <td>
             <%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %>
-            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" align="top" height="16" width="16" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
-            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" align="top" height="16" width="16" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
+            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
+            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
     </tr>
     <tr>
@@ -200,24 +169,24 @@
                     Presence presence = presenceManager.getPresence(user);
             %>
                 <% if (presence.getShow() == null) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
+                <img src="images/user-green-16x16.gif" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.chat) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                <img src="images/user-green-16x16.gif" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.away) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                <img src="images/user-yellow-16x16.gif" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.xa) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                <img src="images/user-yellow-16x16.gif" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.dnd) { %>
-                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                <img src="images/user-red-16x16.gif" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <% } %>
 
             <%  } else { %>
 
-                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.offline" />">
+                <img src="images/user-clear-16x16.gif" alt="<fmt:message key="user.properties.offline" />">
                 (<fmt:message key="user.properties.offline" />)
 
             <%  } %>
@@ -305,7 +274,7 @@
 <% if (user != null) { %>
     <br>
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
                 <tr>
                     <th colspan="2"><fmt:message key="user.properties.additional_properties" /></th>

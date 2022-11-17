@@ -29,6 +29,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -52,7 +53,7 @@
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     // Handle a save
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -67,7 +68,7 @@
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
-    List<JID> allowedJIDs = new ArrayList<JID>();
+    List<JID> allowedJIDs = new ArrayList<>();
     try {
         if (userJID != null && userJID.trim().length() > 0) {
             String allowedJID;
@@ -141,42 +142,21 @@
 
 <%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.user_removed" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if ("true".equals(request.getParameter("addsuccess"))) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.user_added" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } else if ("true".equals(request.getParameter("success"))) { %>
 
-    <div class="jive-success">
-        <table cellpadding="0" cellspacing="0" border="0">
-            <tbody>
-            <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-                <td class="jive-icon-label">
-                    <fmt:message key="groupchat.admins.settings.saved_successfully"/>
-                </td></tr>
-            </tbody>
-        </table>
-    </div><br>
+    <admin:infoBox type="success">
+        <fmt:message key="groupchat.admins.settings.saved_successfully"/>
+    </admin:infoBox>
 
 <%  } else if (errors.size() > 0) {  
         if (delete) {
@@ -184,16 +164,9 @@
         }
 %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="error">
         <fmt:message key="groupchat.admins.error_adding" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 
@@ -223,11 +196,11 @@
         <br><br>
 
         <div class="jive-table" style="width:400px;">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table>
             <thead>
                 <tr>
                     <th width="99%"><fmt:message key="groupchat.admins.column_user" /></th>
-                    <th width="1%" nowrap><fmt:message key="groupchat.admins.column_remove" /></th>
+                    <th style="width: 1%; white-space: nowrap"><fmt:message key="groupchat.admins.column_remove" /></th>
                 </tr>
             </thead>
             <tbody>
@@ -246,7 +219,7 @@
                     String jidDisplay = isGroup ? ((GroupJID)jid).getGroupName() : jid.toString();
                 %>
                     <tr>
-                        <td width="99%">
+                        <td>
                           <% if (isGroup) { %>
                             <img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="groupchat.admins.group" />" alt="<fmt:message key="groupchat.admins.group" />"/>
                           <% } else { %>
@@ -256,11 +229,11 @@
                           <%= StringUtils.escapeForXML(jidDisplay)%>
                           </a>
                         </td>
-                        <td width="1%" align="center">
+                        <td style="width: 1%; text-align: center">
                             <a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>&amp;csrf=<%= URLEncoder.encode(csrfParam) %>"
                              title="<fmt:message key="groupchat.admins.dialog.title" />"
                              onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
-                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                             ><img src="images/delete-16x16.gif" alt=""></a>
                         </td>
                     </tr>
 
@@ -281,23 +254,23 @@
         <fmt:message key="groupchat.admins.passwordpolicy.legend" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tbody>
             <tr>
-                <td width="1%">
+                <td style="width: 1%">
                     <input type="radio" name="requirePassword" value="false" id="pp01"
                         <%= ((!mucService.isPasswordRequiredForSysadminsToJoinRoom()) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="pp01"><fmt:message key="groupchat.admins.passwordpolicy.join-without-password.legend" /></label>
                 </td>
             </tr>
             <tr>
-                <td width="1%">
+                <td style="width: 1%">
                     <input type="radio" name="requirePassword" value="true" id="pp02"
                         <%= ((mucService.isPasswordRequiredForSysadminsToJoinRoom()) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="pp02"><fmt:message key="groupchat.admins.passwordpolicy.join-requires-password.legend" /></label>
                 </td>
             </tr>

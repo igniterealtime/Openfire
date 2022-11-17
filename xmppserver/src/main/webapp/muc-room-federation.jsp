@@ -202,7 +202,7 @@
 
 <div class="jive-table">
     <div class="jive-table">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table>
             <thead>
             <tr>
                 <th scope="col"><fmt:message key="muc.room.edit.form.room_id" /></th>
@@ -261,11 +261,11 @@
 
     <p><fmt:message key="muc.room.federation.form.descr" /></p>
 
-    <table cellpadding="3" cellspacing="0" border="0">
-        <tr valign="middle">
+    <table>
+        <tr>
             <td colspan="2"><input type="checkbox" name="fmuc-enabled" id="fmuc-enabled" ${room.fmucEnabled ? 'checked' : ''}/> <label for="fmuc-enabled"><fmt:message key="muc.room.federation.form.enabled"/></label></td>
         </tr>
-        <tr valign="middle">
+        <tr>
             <td><label for="roomconfig_fmuc_outbound_jid"><fmt:message key="muc.room.federation.form.outbound_jid" /></label>:</td>
             <td><input name="roomconfig_fmuc_outbound_jid" id="roomconfig_fmuc_outbound_jid" value="${empty fmucOutboundJID ? "" : fn:escapeXml(fmucOutboundJID)}" type="text" size="40"></td>
         </tr>
@@ -284,7 +284,7 @@
 </p>
 
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
         <tr>
             <th scope="col">Remote MUC address</th>
@@ -307,8 +307,8 @@
             <td colspan="2">
                 Outbound, federation being established...
             </td>
-            <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoinProgress.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+            <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
+                <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoinProgress.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
             </td>
         </tr>
         </c:if>
@@ -332,8 +332,8 @@
                         <c:otherwise>&nbsp;</c:otherwise>
                     </c:choose>
                 </td>
-                <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
+                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(room.fmucHandler.outboundJoin.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
                 </td>
             </tr>
             <!-- Add rows for all occupants beyond the first one. -->
@@ -369,11 +369,9 @@
                         </c:when>
                         <c:otherwise>&nbsp;</c:otherwise>
                     </c:choose>
-
-                    <c:out value="${occupant}"/>
                 </td>
-                <td width="1%" align="center" style="border-right:1px #ccc solid;">
-                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
+                    <a href="muc-room-federation.jsp?roomJID=${admin:urlEncode(roomJIDBare)}&stopSession=${admin:urlEncode(inboundJoin.peer)}&csrf=${csrf}" title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
                 </td>
             </tr>
             <!-- Add rows for all occupants beyond the first one. -->

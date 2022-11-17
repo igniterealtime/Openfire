@@ -71,7 +71,7 @@
     The wizard along with in-line help will guide you through the rest of the process.
     <a href="#activedirectory">Specific tips</a> for working with Active Directory are noted below.
 
-    <img src="images/setup_ldap.png" alt="LDAP settup" width="710" height="400" vspace="10">
+    <img src="images/setup_ldap.png" alt="LDAP setup" width="710" height="400" style="margin-top:10px; margin-bottom: 10px;">
     <br clear="left"/>
 
     If you have already completed the setup process but need to enable LDAP integration, you
@@ -123,7 +123,7 @@ servers, some of which are detailed below:
 </ul>
 
 
-<div align="center"><img src="images/active_directory.png" width="629" height="414"></div>
+<div style="text-align: center"><img src="images/active_directory.png" width="629" height="414"></div>
 
 
 <h3>Manually Editing the Config File</h3>
@@ -331,7 +331,7 @@ servers, some of which are detailed below:
     &lt;/jive&gt;
 </pre>
 
-<p><a name=""><h2>Custom Search Filter</h2></a></p>
+<h2>Custom Search Filter</h2>
 
 <p>By default, Openfire will load all objects under the baseDN that
     have the attribute specified by <tt>ldap.usernameField</tt>. In the
@@ -356,7 +356,7 @@ servers, some of which are detailed below:
 
     <pre>&lt;searchFilter&gt;&lt;![CDATA[(&(sAMAccountName={0})(|(givenName=GEORGE)(givenName=admin)))]]&gt;&lt;/searchFilter&gt;</pre>
 
-    <p><a name="ctxFactory"><h2>Custom Inital Context Factory</h2></a></p>
+    <h2 id="ctxFactory">>Custom Inital Context Factory</h2>
 
     <p>
 
@@ -371,7 +371,7 @@ servers, some of which are detailed below:
   &lt;/ldap&gt;</pre>
     </p>
 
-    <p><a name="connectionPool"><h2>Connection Pooling</h2></a></p>
+    <h2 id="connectionPool">Connection Pooling</h2>
 
     The default LDAP provider (Sun's) support pooling of connections to the LDAP
     server. Connection pooling can greatly improve performance, especially on
@@ -402,7 +402,7 @@ servers, some of which are detailed below:
     If SSL LDAP mode is enabled, you must set a system property to enable pooling of
     SSL LDAP connections.</p>
 
-<p><a name="vcard"><h2>LDAP vCard Integration</h2></a></p>
+<h2 id="vcard">LDAP vCard Integration</h2>
 
 <p>The LDAP vCard provider will expose LDAP profile information as vCard data for XMPP
 clients that support the XMPP vCard extension. First, enable the provider:</p>

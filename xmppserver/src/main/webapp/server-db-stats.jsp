@@ -114,7 +114,7 @@
 
 <form action="server-db-stats.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-    <table cellpadding="3" cellspacing="1" border="0">
+    <table cellpadding="3" cellspacing="1">
     <tr>
         <td>
             <input type="radio" name="enableStats" value="true" id="rb01" <%= ((showQueryStats) ? "checked":"") %>>
@@ -139,7 +139,7 @@
 
     <form action="server-db-stats.jsp">
         <input type="hidden" name="csrf" value="${csrf}">
-        <table cellpadding="3" cellspacing="5" border="0">
+        <table cellpadding="3" cellspacing="5">
         <tr>
             <td>
                 <fmt:message key="server.db_stats.refresh" />:
@@ -178,9 +178,9 @@
 
     <ul>
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
+    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
         <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.select)) %></td>
@@ -215,9 +215,9 @@
 
     <br />
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table bgcolor="#aaaaaa" style="width: 100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"left\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
             out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
@@ -245,9 +245,9 @@
 
     <ul>
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
+    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
         <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.insert)) %></td>
@@ -282,9 +282,9 @@
 
     <br />
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table bgcolor="#aaaaaa" style="width: 100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
             out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
@@ -312,9 +312,9 @@
 
     <ul>
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
+    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
         <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.update)) %></td>
@@ -349,9 +349,9 @@
 
     <br />
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table bgcolor="#aaaaaa" style="width: 100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
             out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
@@ -379,9 +379,9 @@
 
     <ul>
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" border="0" width="100%">
+    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.operations" /></td>
         <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.delete)) %></td>
@@ -416,9 +416,9 @@
 
     <br />
 
-    <table bgcolor="#aaaaaa" cellpadding="0" cellspacing="0" border="0" width="600">
+    <table bgcolor="#aaaaaa" width="600">
     <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="0" border="0" width="100%">
+    <table bgcolor="#aaaaaa" style="width: 100%">
     <tr bgcolor="#ffffff"><td>
     <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
             out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");

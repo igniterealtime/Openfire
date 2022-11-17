@@ -22,6 +22,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
@@ -40,7 +41,7 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
 
     if (save) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
@@ -127,31 +128,17 @@
 
 <%  if ("true".equals(request.getParameter("success"))) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label"><fmt:message key="system.email.update_success" /></td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
+    <admin:infoBox type="success">
+        <fmt:message key="system.email.update_success" />
+    </admin:infoBox>
 
 <%  } %>
 
 <%  if (errors.size() > 0) { %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr>
-            <td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-            <td class="jive-icon-label"><fmt:message key="system.email.update_failure" /></td>
-        </tr>
-    </tbody>
-    </table>
-    </div>
+    <admin:infoBox type="error">
+        <fmt:message key="system.email.update_failure" />
+    </admin:infoBox>
 
 <%	} %>
 
@@ -164,13 +151,13 @@
         <fmt:message key="system.email.name" />
     </div>
     <div class="jive-contentBox">
-        <table width="80%" cellpadding="3" cellspacing="0" border="0">
+        <table style="width: 80%;">
         <tr>
-            <td width="30%" nowrap>
-                <fmt:message key="system.email.mail_host" />:
+            <td style="width: 30%" nowrap>
+                <label for="host"><fmt:message key="system.email.mail_host" />:</label>
             </td>
             <td nowrap>
-                <input type="text" name="host" value="<%= (host != null)? StringUtils.escapeForXML(host):"" %>" size="40" maxlength="150">
+                <input type="text" id="host" name="host" value="<%= (host != null)? StringUtils.escapeForXML(host):"" %>" size="40" maxlength="150">
             </td>
         </tr>
 
@@ -189,10 +176,10 @@
 
         <tr>
             <td nowrap>
-                <fmt:message key="system.email.server_port" />:
+                <label for="port"><fmt:message key="system.email.server_port" />:</label>
             </td>
             <td nowrap>
-                <input type="text" name="port" value="<%= (port > 0) ? String.valueOf(port) : "" %>" size="10" maxlength="15">
+                <input type="text" id="port" name="port" value="<%= (port > 0) ? String.valueOf(port) : "" %>" size="10" maxlength="15">
             </td>
         </tr>
         <tr>
@@ -212,27 +199,27 @@
 
         <tr>
             <td nowrap>
-                <fmt:message key="system.email.server_username" />:
+                <label for="server_username"><fmt:message key="system.email.server_username" />:</label>
             </td>
             <td nowrap>
-                <input type="text" name="server_username" value="<%= (username != null) ? StringUtils.escapeForXML(username) : "" %>" size="40" maxlength="150">
+                <input type="text" id="server_username" name="server_username" value="<%= (username != null) ? StringUtils.escapeForXML(username) : "" %>" size="40" maxlength="150">
             </td>
         </tr>
         <tr>
             <td nowrap>
-                <fmt:message key="system.email.server_password" />:
+                <label for="server_password"><fmt:message key="system.email.server_password" />:</label>
             </td>
             <td nowrap>
-                <input type="password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
+                <input type="password" id="server_password" name="server_password" value="<%= (password != null) ? StringUtils.hash(password) : "" %>" size="40" maxlength="150">
             </td>
         </tr>
 
         <tr>
             <td nowrap>
-                <fmt:message key="system.email.ssl" />:
+                <label for="ssl"><fmt:message key="system.email.ssl" />:</label>
             </td>
             <td nowrap>
-                <input type="checkbox" name="ssl"<%= (ssl) ? " checked" : "" %>>
+                <input type="checkbox" id="ssl" name="ssl"<%= (ssl) ? " checked" : "" %>>
             </td>
         </tr>
         </table>

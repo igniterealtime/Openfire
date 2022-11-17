@@ -81,10 +81,10 @@
     <fmt:message key="server2server.settings.testing.boxtitle" var="s2sTitle"/>
     <admin:contentBox title="${s2sTitle}">
         <form action="server-connectiontest.jsp" method="post">
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="middle">
-                    <td width="1%" nowrap><label for="server2server-testing-domain"><fmt:message key="server2server.settings.testing.domain"/></label></td>
-                    <td width="99%">
+            <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-domain"><fmt:message key="server2server.settings.testing.domain"/></label></td>
+                    <td>
                         <input type="hidden" name="csrf" value="${csrf}"/>
                         <input type="text" name="server2server-testing-domain" id="server2server-testing-domain" value="${s2sDomain}">
                         <input type="submit" name="s2s-test" value="<fmt:message key="global.test" />">
@@ -92,21 +92,21 @@
                 </tr>
 
                 <c:if test="${s2sTest}">
-                    <tr valign="middle">
-                        <td width="1%" nowrap><label for="server2server-testing-stanzas"><fmt:message key="server2server.settings.testing.xmpp"/></label></td>
-                        <td width="99%">
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-stanzas"><fmt:message key="server2server.settings.testing.xmpp"/></label></td>
+                        <td>
                             <textarea name="server2server-testing-stanzas" id="server2server-testing-stanzas" style="width: 100%" rows="12"><c:out value="${stanzas}" /></textarea>
                         </td>
                     </tr>
-                    <tr valign="middle">
-                        <td width="1%" nowrap><label for="server2server-testing-certs"><fmt:message key="server2server.settings.testing.certificates"/></label></td>
-                        <td width="99%">
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-certs"><fmt:message key="server2server.settings.testing.certificates"/></label></td>
+                        <td>
                             <textarea name="server2server-testing-certs" id="server2server-testing-certs" style="width: 100%" rows="12"><c:out value="${certs}" /></textarea>
                         </td>
                     </tr>
-                    <tr valign="middle">
-                        <td width="1%" nowrap><label for="server2server-testing-logs"><fmt:message key="server2server.settings.testing.logs"/></label></td>
-                        <td width="99%">
+                    <tr>
+                        <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-logs"><fmt:message key="server2server.settings.testing.logs"/></label></td>
+                        <td>
                             <textarea name="server2server-testing-logs" id="server2server-testing-logs" style="width: 100%" rows="12"><c:out value="${logs}" /></textarea>
                         </td>
                     </tr>

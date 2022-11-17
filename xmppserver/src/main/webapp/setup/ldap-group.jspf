@@ -217,7 +217,7 @@
         <!-- BEGIN jive-contentBox_bluebox -->
         <div class="jive-contentBox_bluebox">
 
-            <table border="0" cellpadding="0" cellspacing="2">
+            <table cellpadding="0" cellspacing="2">
             <tr>
             <td colspan="2"><strong><fmt:message key="setup.ldap.group_mapping" /></strong></td>
             </tr>
@@ -244,7 +244,7 @@
             <!-- BEGIN jiveAdvancedPanelu (advanced user mapping settings) -->
                 <div class="jiveadvancedPanelu" id="jiveAdvanced" style="display: none;">
                     <div>
-                        <table border="0" cellpadding="0" cellspacing="2">
+                        <table cellpadding="0" cellspacing="2">
                         <tr>
                         <td align="right"><fmt:message key="setup.ldap.group.posix" />:</td>
                         <td><span style="float: left;">
@@ -273,14 +273,14 @@
 
             <!-- BEGIN right-aligned buttons -->
             <div align="right">
-                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test" border="0">
+                <input type="Submit" name="test" value="<fmt:message key="setup.ldap.test" />" id="jive-setup-test">
 
                 <c:choose>
                     <c:when test="${initialSetup}">
-                        <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue"/>" id="jive-setup-save" border="0">
+                        <input type="Submit" name="save" value="<fmt:message key="setup.ldap.continue"/>" id="jive-setup-save">
                     </c:when>
                     <c:otherwise>
-                        <input type="Submit" name="save" value="<fmt:message key="global.save_settings"/>" id="jive-setup-save" border="0">
+                        <input type="Submit" name="save" value="<fmt:message key="global.save_settings"/>" id="jive-setup-save">
                     </c:otherwise>
                 </c:choose>
             </div>

@@ -33,7 +33,7 @@
 <% webManager.init( request, response, session, application, out ); %>
 
 <%
-    Map<String, String> errors = new HashMap<String, String>();
+    Map<String, String> errors = new HashMap<>();
     FileTransferProxy transferProxy = XMPPServer.getInstance().getFileTransferProxy();
 
     boolean isUpdated = request.getParameter( "update" ) != null;
@@ -57,7 +57,7 @@
 
     if ( isUpdated )
     {
-        if ( hardcodedAddress != null && !hardcodedAddress.matches( "^[A-Za-z0-9-\\.]+$" ) )
+        if ( hardcodedAddress != null && !hardcodedAddress.matches( "^[A-Za-z0-9-.]+$" ) )
         {
             errors.put( "address", "" );
         }
@@ -144,15 +144,15 @@
 <form action="file-transfer-proxy.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
     <admin:contentBox title="${title}">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tbody>
-            <tr valign="top">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="proxyEnabled" value="true" id="rb02" ${fileTransferProxy.proxyEnabled ? 'checked' : ''}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02"><b><fmt:message key="filetransferproxy.settings.label_enable"/></b>- <fmt:message key="filetransferproxy.settings.label_enable_info"/></label>
-                    <table border="0">
+                    <table>
                         <tr>
                             <td><label for="port"><fmt:message key="filetransferproxy.settings.label_port"/></label></td>
                             <td><input type="text" size="5" maxlength="10" id="port" name="port" value="${port}"></td>
@@ -166,11 +166,11 @@
                     </table>
                 </td>
             </tr>
-            <tr valign="middle">
-                <td width="1%" nowrap>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
                     <input type="radio" name="proxyEnabled" value="false" id="rb01" ${fileTransferProxy.proxyEnabled ? '' : 'checked'}>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01"><b><fmt:message key="filetransferproxy.settings.label_disable"/></b> - <fmt:message key="filetransferproxy.settings.label_disable_info"/></label>
                 </td>
             </tr>

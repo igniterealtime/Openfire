@@ -30,6 +30,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -69,15 +70,11 @@
     MultiUserChatService mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
 
     // Handle a save
-    Map<String,String> errors = new HashMap<String,String>();
+    Map<String,String> errors = new HashMap<>();
     if (save) {
         if (openPerms) {
             // Remove all users who have the ability to create rooms
-            List<JID> removeables = new ArrayList<JID>();
             for (JID user : mucService.getUsersAllowedToCreate()) {
-                removeables.add(user);
-            }
-            for (JID user : removeables) {
                 mucService.removeUserAllowedToCreate(user);
             }
             mucService.setRoomCreationRestricted(false);
@@ -95,7 +92,7 @@
         }
     }
 
-    List<JID> allowedJIDs = new ArrayList<JID>();
+    List<JID> allowedJIDs = new ArrayList<>();
     try {
         if (userJID != null && userJID.trim().length() > 0) {
             String allowedJID;
@@ -107,7 +104,7 @@
             }
             else {
                 String username = JID.escapeNode(userJID.substring(0, userJID.indexOf('@')));
-                String rest = userJID.substring(userJID.indexOf('@'), userJID.length());
+                String rest = userJID.substring(userJID.indexOf('@'));
                 allowedJID = username + rest.trim();
             }
             allowedJIDs.add(GroupJID.fromString(allowedJID.trim()).asBareJID());
@@ -167,41 +164,27 @@
         }
 %>
 
-    <div class="jive-error">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <fmt:message key="muc.create.permission.error" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+<admin:infoBox type="error">
+    <fmt:message key="muc.create.permission.error" />
+</admin:infoBox>
 
-<%  } else if (success || addsuccess || deletesuccess) { %>
+<%  } else if (success) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
-        <%  if (success) { %>
+<admin:infoBox type="success">
+    <fmt:message key="muc.create.permission.update" />
+</admin:infoBox>
 
-            <fmt:message key="muc.create.permission.update" />
+<%  } else if (addsuccess) { %>
 
-        <%  } else if (addsuccess) { %>
+<admin:infoBox type="success">
+    <fmt:message key="muc.create.permission.add_user" />
+</admin:infoBox>
 
-            <fmt:message key="muc.create.permission.add_user" />
+<%  } else if (deletesuccess) { %>
 
-        <%  } else if (deletesuccess) { %>
-
-            <fmt:message key="muc.create.permission.user_removed" />
-
-        <%  } %>
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+<admin:infoBox type="success">
+    <fmt:message key="muc.create.permission.user_removed" />
+</admin:infoBox>
 
 <%  } %>
 
@@ -213,24 +196,24 @@
         <fmt:message key="muc.create.permission.policy" />
     </div>
     <div class="jive-contentBox">
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
         <tbody>
             <tr>
-                <td width="1%">
+                <td style="width: 1%">
                     <input type="radio" name="openPerms" value="true" id="rb01"
                      <%= ((!mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb01"><fmt:message key="muc.create.permission.anyone_created" /></label>
                 </td>
             </tr>
             <tr>
-                <td width="1%">
+                <td style="width: 1%">
                     <input type="radio" name="openPerms" value="false" id="rb02"
                      onfocus="this.form.userJID.focus();"
                      <%= ((mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
-                <td width="99%">
+                <td>
                     <label for="rb02"><fmt:message key="muc.create.permission.specific_created" /></label>
                 </td>
             </tr>
@@ -276,11 +259,11 @@
         </p>
 
         <div class="jive-table" style="width:400px;">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table>
             <thead>
                 <tr>
-                    <th width="99%">User/Group</th>
-                    <th width="1%">Remove</th>
+                    <th style="width: 99%">User/Group</th>
+                    <th>Remove</th>
                 </tr>
             </thead>
             <tbody>
@@ -299,20 +282,20 @@
                         String jidDisplay = isGroup ? ((GroupJID)jid).getGroupName() : jid.toString();
                 %>
                     <tr>
-                        <td width="99%">
+                        <td>
                           <% if (isGroup) { %>
-                            <img src="images/group.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.group" />" alt="<fmt:message key="muc.create.permission.group" />"/>
+                            <img src="images/group.gif" title="<fmt:message key="muc.create.permission.group" />" alt="<fmt:message key="muc.create.permission.group" />"/>
                           <% } else { %>
-                            <img src="images/user.gif" width="16" height="16" align="top" title="<fmt:message key="muc.create.permission.user" />" alt="<fmt:message key="muc.create.permission.user" />"/>
+                            <img src="images/user.gif" title="<fmt:message key="muc.create.permission.user" />" alt="<fmt:message key="muc.create.permission.user" />"/>
                           <% } %>
-                          <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode()) %>">
+                          <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode(), "UTF-8") %>">
                           <%= jidDisplay %></a>
                         </td>
-                        <td width="1%" align="center">
+                        <td style="width: 1%; text-align: center">
                             <a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&csrf=${csrf}&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
                              title="<fmt:message key="muc.create.permission.click_title" />"
                              onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
-                             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                             ><img src="images/delete-16x16.gif" alt=""></a>
                         </td>
                     </tr>
 

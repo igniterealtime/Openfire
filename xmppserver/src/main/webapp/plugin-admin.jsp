@@ -317,7 +317,7 @@ tr.lowerhalf > td:last-child {
     function downloadComplete(status) {
         document.getElementById(status.hashCode + "-row").style.display = 'none';
         document.getElementById(status.hashCode + "-update").style.display = '';
-        document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" border="0" alt=""/>';
+        document.getElementById(status.hashCode + "-image").innerHTML = '<img src="images/success-16x16.gif" alt=""/>';
         document.getElementById(status.hashCode + "-text").innerHTML = '<fmt:message key="plugin.admin.update.complete" />';
         document.getElementById(status.hashCode + "-version").innerHTML = '<span style="text-decoration: line-through;">' + document.getElementById(status.hashCode + "-version").innerHTML + '</span><br>' + status.version;
     }
@@ -367,7 +367,7 @@ tr.lowerhalf > td:last-child {
 <p>
 
 <div class="light-gray-border" style="padding:10px;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%" class="update">
+<table style="width: 100%" class="update">
  <tr style="background:#eee;">
 
     <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
@@ -383,7 +383,7 @@ tr.lowerhalf > td:last-child {
 <!-- If only the admin plugin is installed, show "none". -->
 <c:if test="${plugins.size() eq 1}">
     <tr>
-        <td align="center" colspan="8" style="padding:5px;"><fmt:message key="plugin.admin.no_plugin"/></td>
+        <td style="text-align: center; padding:5px;" colspan="8"><fmt:message key="plugin.admin.no_plugin"/></td>
     </tr>
 </c:if>
 <c:forEach items="${plugins}" var="entry">
@@ -409,56 +409,56 @@ tr.lowerhalf > td:last-child {
             </c:otherwise>
         </c:choose>
 
-        <tr valign="top" class="${colorClass} ${shapeClass}">
-            <td width="1%">
+        <tr class="${colorClass} ${shapeClass}">
+            <td style="width: 1%">
                 <c:choose>
                     <c:when test="${not empty plugin.icon}">
                         <img src="geticon?plugin=${admin:urlEncode(plugin.canonicalName)}&showIcon=true&decorator=none" width="16" height="16" alt="Plugin">
                     </c:when>
                     <c:otherwise>
-                        <img src="images/plugin-16x16.gif" width="16" height="16" alt="Plugin">
+                        <img src="images/plugin-16x16.gif" alt="Plugin">
                     </c:otherwise>
                 </c:choose>
             </td>
-            <td width="20%" nowrap valign="top">
+            <td style="width: 20%; white-space: nowrap; vertical-align: top">
                 <c:out value="${plugin.name}"/>
             </td>
-            <td nowrap valign="top">
+            <td style="white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.readme}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"><img src="images/doc-readme-16x16.gif" width="16" height="16" border="0" alt="README"></a>
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"><img src="images/doc-readme-16x16.gif" alt="README"></a>
                 </c:if>
                 <c:if test="${not empty plugin.changelog}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"><img src="images/doc-changelog-16x16.gif" width="16" height="16" border="0" alt="changelog"></a>
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"><img src="images/doc-changelog-16x16.gif" alt="changelog"></a>
                 </c:if>
             </td>
-            <td width="60%" valign="top">
+            <td style="width: 60%; vertical-align: top">
                 <c:if test="${not empty plugin.description}">
                     <c:out value="${plugin.description}"/>
                 </c:if>
             </td>
-            <td width="5%" nowrap valign="top">
+            <td style="width: 5%; white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.version}">
                     <span <c:if test="${not empty update}">id="${update.hashCode()}-version"</c:if>>
                     <c:out value="${plugin.version}"/>
                     </span>
                 </c:if>
             </td>
-            <td width="15%" nowrap valign="top">
+            <td style="width: 15%; white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.author}">
                     <c:out value="${plugin.author}"/>
                 </c:if>
             </td>
-            <td width="1%" style="text-align: center" valign="top">
+            <td style="width: 1%; text-align: center; vertical-align: top">
                 <c:if test="${pluginManager.isLoaded(plugin.canonicalName)}">
                     <a href="plugin-admin.jsp?csrf=${csrf}&reloadplugin=${admin:urlEncode( plugin.canonicalName )}"
                        title="<fmt:message key="plugin.admin.click_reload" />"
-                    ><img src="images/refresh-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.refresh" /> ${plugin.name}"></a>
+                    ><img src="images/refresh-16x16.gif" alt="<fmt:message key="global.refresh" /> ${plugin.name}"></a>
                 </c:if>
             </td>
-            <td width="1%" style="text-align: center" valign="top">
+            <td style="width: 1%; text-align: center; vertical-align: top">
                 <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?csrf=${csrf}&deleteplugin=${admin:urlEncode( plugin.canonicalName )}'); } "
                    title="<fmt:message key="global.click_delete" />"
-                        ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.delete" /> ${plugin.name}"></a>
+                        ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.delete" /> ${plugin.name}"></a>
             </td>
         </tr>
 
@@ -509,7 +509,7 @@ tr.lowerhalf > td:last-child {
                 <td>
                     <table>
                         <tr>
-                            <td><a href="javascript:download('${update.URL}', '${update.latestVersion}', '${update.hashCode()}')"><img src="images/icon_update-16x16.gif" width="16" height="16" border="0" alt="changelog"></a></td>
+                            <td><a href="javascript:download('${update.URL}', '${update.latestVersion}', '${update.hashCode()}')"><img src="images/icon_update-16x16.gif" alt="changelog"></a></td>
                             <td><a href="javascript:download('${update.URL}', '${update.latestVersion}', '${update.hashCode()}')"><span class="small-label"><fmt:message key="plugin.admin.update" /></span></a></td>
                         </tr>
                     </table>
@@ -519,10 +519,10 @@ tr.lowerhalf > td:last-child {
             </tr>
 
             <tr id="${update.hashCode()}-update" style="display:none;" class="${colorClass} lowerhalf">
-                <td colspan="8" align="center">
+                <td colspan="8" style="text-align: center">
                     <table>
                         <tr>
-                            <td id="${update.hashCode()}-image"><img src="images/working-16x16.gif" border="0" alt=""/></td>
+                            <td id="${update.hashCode()}-image"><img src="images/working-16x16.gif" alt=""/></td>
                             <td id="${update.hashCode()}-text" class="table-font"><fmt:message key="plugin.admin.updating" /></td>
                         </tr>
                     </table>

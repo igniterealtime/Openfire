@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <!--
 Parameters:
@@ -14,21 +15,21 @@ detailPreFix - property prefix for additional detail to be displayed against the
 
 <script>
     function clearSelected(id) {
-        var elements = document.getElementById(id).options;
+        let elements = document.getElementById(id).options;
 
-        for (var i = 0; i < elements.length; i++) {
+        for (let i = 0; i < elements.length; i++) {
             elements[i].selected = false;
         }
     }
 
     function deleteTableRow(rowId) {
-        var row = document.getElementById(rowId);
+        let row = document.getElementById(rowId);
         row.parentNode.removeChild(row);
     }
 
     function detect_enter_keyboard(event) {
 
-        var key_board_keycode = event.which || event.keyCode;
+        let key_board_keycode = event.which || event.keyCode;
         if (key_board_keycode === 13) {
             event.preventDefault();
             var target = event.target || event.srcElement;
@@ -39,22 +40,12 @@ detailPreFix - property prefix for additional detail to be displayed against the
 </script>
 <c:if test="${not empty errors}">
     <c:forEach var="error" items="${errors}">
-        <div class="jive-error">
-            <table cellpadding="0" cellspacing="0" border="0">
-                <tbody>
-                    <tr>
-                        <td class="jive-icon"><img src="images/error-16x16.gif"
-                            width="16" height="16" border="0" alt=""></td>
-                        <td class="jive-icon-label"><c:out value="${error.value}" />
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <br>
+        <admin:infoBox type="error">
+            <c:out value="${error.value}" />
+        </admin:infoBox>
     </c:forEach>
 </c:if>
-<table cellpadding="3" cellspacing="0" border="0" width="1%">
+<table style="width: 1%;">
     <tbody>
         <c:forEach var="field" items="${requestScope.fields}">
             <c:if test="${not requestScope.nonDisplayFields.contains(field.variable)}">
@@ -64,13 +55,13 @@ detailPreFix - property prefix for additional detail to be displayed against the
                     <td nowrap style="min-width: 300px"><label style="font-weight: bold" for="${fieldId}"><c:out value="${field.label}"/></label></td>
                     <c:choose>
                         <c:when test="${field.type.name() eq 'boolean_type'}">
-                            <td width="1%" rowspan="2"><input type="checkbox" name="${fieldId}" id="${fieldId}" ${field.firstValue == 1 ? 'checked="checked"' : '' } /></td>
+                            <td style="width: 1%" rowspan="2"><input type="checkbox" name="${fieldId}" id="${fieldId}" ${field.firstValue == 1 ? 'checked="checked"' : '' } /></td>
                         </c:when>
                         <c:when test="${field.type.name() eq 'text_single'}">
-                            <td width="1%" rowspan="2"><input type="text" name="${fieldId}" id="${fieldId}" value="${fn:escapeXml(field.firstValue)}" style="width: 200px;" /></td>
+                            <td style="width: 1%" rowspan="2"><input type="text" name="${fieldId}" id="${fieldId}" value="${fn:escapeXml(field.firstValue)}" style="width: 200px;" /></td>
                         </c:when>
                         <c:when test="${field.type.name() eq 'list_single'}">
-                            <td width="1%" rowspan="2"><select name="${fieldId}" id="${fieldId}" style="width: 200px;">
+                            <td style="width: 1%" rowspan="2"><select name="${fieldId}" id="${fieldId}" style="width: 200px;">
                                     <c:forEach var="option" items="${field.options}">
                                         <option value="${fn:escapeXml(option.value)}" ${option.value == field.firstValue ? 'selected' : '' }>
                                             <c:out value="${option.label ? option.label : option.value}"/>
@@ -79,7 +70,7 @@ detailPreFix - property prefix for additional detail to be displayed against the
                             </select></td>
                         </c:when>
                         <c:when test="${isList and not empty field.options}">
-                            <td width="1%" rowspan="2"><select name="${fieldId}" id="${fieldId}" style="width: 200px;" multiple>
+                            <td style="width: 1%" rowspan="2"><select name="${fieldId}" id="${fieldId}" style="width: 200px;" multiple>
                                     <c:forEach var="option" items="${field.options}">
                                         <option value="${fn:escapeXml(option.value)}" ${ field.values.contains(option.value) ? 'selected' : '' }>
                                             <c:out value="${option.label ? option.label : option.value }"/>
@@ -93,7 +84,7 @@ detailPreFix - property prefix for additional detail to be displayed against the
                         <c:when test="${isList and empty field.options}">
                             <td rowspan="2">
                                 <div class="jive-table">
-                                    <table id="${fieldId}" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                    <table id="${fieldId}" style="width: 100%">
                                         <thead>
                                             <tr>
                                                 <th scope="col"><fmt:message key="pubsub.form.${listTypes[field.variable]}" /></th>

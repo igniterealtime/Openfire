@@ -96,10 +96,10 @@
         UserManager.ALLOW_FUTURE_USERS.setValue( futureUsersEnabled );
 
         // Build a Map with the allowed IP addresses
-        Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
+        Pattern pattern = Pattern.compile("(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                 "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
                 "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        Set<String> allowedSet = new HashSet<String>();
+        Set<String> allowedSet = new HashSet<>();
         StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
@@ -109,7 +109,7 @@
         }
         
 
-        Set<String> allowedAnonymousSet = new HashSet<String>();
+        Set<String> allowedAnonymousSet = new HashSet<>();
         StringTokenizer tokens1 = new StringTokenizer(allowedAnonymIPs, ", ");
         while (tokens1.hasMoreTokens()) {
             String address = tokens1.nextToken().trim();
@@ -118,7 +118,7 @@
             }
         }
 
-        Set<String> blockedSet = new HashSet<String>();
+        Set<String> blockedSet = new HashSet<>();
         StringTokenizer tokens2 = new StringTokenizer(blockedIPs, ", ");
         while (tokens2.hasMoreTokens()) {
             String address = tokens2.nextToken().trim();
@@ -212,14 +212,14 @@
         <c:if test="${readOnly}">
             <admin:infoBox type="info"><fmt:message key="reg.settings.inband_account_readonly" /></admin:infoBox>
         </c:if>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
-                <td width="99%"><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -<fmt:message key="reg.settings.auto_create_user" /></label></td>
+                <td style="width: 1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
+                <td><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -<fmt:message key="reg.settings.auto_create_user" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>
-                <td width="99%"><label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label></td>
+                <td style="width: 1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>
+                <td><label for="rb02"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.not_auto_create" /></label></td>
             </tr>
         </table>
     </admin:contentBox>
@@ -230,14 +230,14 @@
         <c:if test="${readOnly}">
             <admin:infoBox type="info"><fmt:message key="reg.settings.change_password_readonly" /></admin:infoBox>
         </c:if>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td width="1%"><input type="radio" name="canChangePassword" value="true" id="rb03" ${canChangePassword ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
-                <td width="99%"><label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.can_change" /></label></td>
+                <td style="width: 1%"><input type="radio" name="canChangePassword" value="true" id="rb03" ${canChangePassword ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
+                <td><label for="rb03"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.can_change" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="canChangePassword" value="false" id="rb04" ${canChangePassword ? '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>
-                <td width="99%"><label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.cannot_change" /></label></td>
+                <td style="width: 1%"><input type="radio" name="canChangePassword" value="false" id="rb04" ${canChangePassword ? '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>
+                <td><label for="rb04"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.cannot_change" /></label></td>
             </tr>
         </table>
     </admin:contentBox>
@@ -245,14 +245,14 @@
     <fmt:message key="reg.settings.anonymous_login" var="anonymous_login_boxtitle"/>
     <admin:contentBox title="${anonymous_login_boxtitle}">
         <p><fmt:message key="reg.settings.anonymous_login_info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td width="1%"><input type="radio" name="anonLogin" value="true" id="rb05" ${anonLogin ? 'checked' : ''}></td>
-                <td width="99%"><label for="rb05"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label></td>
+                <td style="width: 1%"><input type="radio" name="anonLogin" value="true" id="rb05" ${anonLogin ? 'checked' : ''}></td>
+                <td><label for="rb05"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.anyone_login" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="anonLogin" value="false" id="rb06" ${anonLogin ? '' : 'checked'}></td>
-                <td width="99%"><label for="rb06"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label></td>
+                <td style="width: 1%"><input type="radio" name="anonLogin" value="false" id="rb06" ${anonLogin ? '' : 'checked'}></td>
+                <td><label for="rb06"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.only_registered_login" /></label></td>
             </tr>
         </table>
     </admin:contentBox>
@@ -260,22 +260,22 @@
     <fmt:message key="reg.settings.allowed_ips" var="allowed_ips_boxtitle"/>
     <admin:contentBox title="${allowed_ips_boxtitle}">
         <p><fmt:message key="reg.settings.allowed_ips_blocked_info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td valign='top'><b><fmt:message key="reg.settings.ips_blocked" /></b></td>
-                <td><textarea name="blockedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty blockedIPs}"><c:out value="${blockedIPs}"/></c:if></textarea></td>
+                <td style="vertical-align: top"><b><label for="blockedIPs"><fmt:message key="reg.settings.ips_blocked" /></label></b></td>
+                <td><textarea id="blockedIPs" name="blockedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty blockedIPs}"><c:out value="${blockedIPs}"/></c:if></textarea></td>
             </tr>
         </table>
 
         <p><fmt:message key="reg.settings.allowed_ips_info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td valign='top'><b><fmt:message key="reg.settings.ips_all" /></b></td>
-                <td><textarea name="allowedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedIPs}"><c:out value="${allowedIPs}"/></c:if></textarea></td>
+                <td style="vertical-align: top"><b><label for="allowedIPs"><fmt:message key="reg.settings.ips_all" /></label></b></td>
+                <td><textarea id="allowedIPs" name="allowedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedIPs}"><c:out value="${allowedIPs}"/></c:if></textarea></td>
             </tr>
             <tr>
-                <td valign='top'><b><fmt:message key="reg.settings.ips_anonymous" /></b></td>
-                <td><textarea name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedAnonymIPs}"><c:out value="${allowedAnonymIPs}"/></c:if></textarea></td>
+                <td style="vertical-align: top"><b><label for="allowedAnonymIPs"><fmt:message key="reg.settings.ips_anonymous" /></label></b></td>
+                <td><textarea id="allowedAnonymIPs" name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedAnonymIPs}"><c:out value="${allowedAnonymIPs}"/></c:if></textarea></td>
             </tr>
         </table>
     </admin:contentBox>
@@ -283,14 +283,14 @@
     <fmt:message key="reg.settings.future_users" var="future_users_boxtitle"/>
     <admin:contentBox title="${future_users_boxtitle}">
         <p><fmt:message key="reg.settings.future_users_info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td width="1%"><input type="radio" name="futureUsersEnabled" value="true" id="rb07" ${futureUsersEnabled ? 'checked' : ''}></td>
-                <td width="99%"><label for="rb07"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.future_users_enabled" /></label></td>
+                <td style="width: 1%"><input type="radio" name="futureUsersEnabled" value="true" id="rb07" ${futureUsersEnabled ? 'checked' : ''}></td>
+                <td><label for="rb07"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.future_users_enabled" /></label></td>
             </tr>
             <tr>
-                <td width="1%"><input type="radio" name="futureUsersEnabled" value="false" id="rb08" ${futureUsersEnabled ? '' : 'checked'}></td>
-                <td width="99%"><label for="rb08"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.future_users_disabled" /></label></td>
+                <td style="width: 1%"><input type="radio" name="futureUsersEnabled" value="false" id="rb08" ${futureUsersEnabled ? '' : 'checked'}></td>
+                <td><label for="rb08"><b><fmt:message key="reg.settings.disable" /></b> - <fmt:message key="reg.settings.future_users_disabled" /></label></td>
             </tr>
         </table>
     </admin:contentBox>
@@ -298,15 +298,15 @@
     <fmt:message key="reg.settings.sasl_mechanisms" var="sasl_mechanism_boxtitle"/>
     <admin:contentBox title="${sasl_mechanism_boxtitle}">
         <p><fmt:message key="reg.settings.sasl_mechanisms_info" /></p>
-        <table class="jive-table" cellpadding="3" cellspacing="0" border="0">
+        <table class="jive-table">
             <tr>
-                <th align="center" width="1%"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_enabled" /></th>
-                <th align="left" width="20%"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_name" /></th>
-                <th align="left"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_description" /></th>
-                <th align="center" width="5%" style="text-align: center"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_implementation" /></th>
-                <th align="center" width="5%" style="text-align: center"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_supported" /></th>
+                <th style="width: 1%; text-align: center"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_enabled" /></th>
+                <th style="width: 20%; text-align: left"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_name" /></th>
+                <th style="text-align: left"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_description" /></th>
+                <th style="width: 5%; text-align: left"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_implementation" /></th>
+                <th style="width: 5%; text-align: left"><fmt:message key="reg.settings.sasl_mechanisms_columntitle_supported" /></th>
             </tr>
-            <c:forEach items="${saslConsideredOrImplementedMechanisms}" var="mechanism" varStatus="status">
+            <c:forEach items="${saslConsideredOrImplementedMechanisms}" var="mechanism">
                 <c:set var="idForForm">mech-enabled-<c:out value="${mechanism}"/></c:set>
                 <c:set var="description"><fmt:message key="reg.settings.description.${mechanism}" /></c:set>
                 <c:choose>
@@ -317,12 +317,12 @@
                 <c:set var="enabled" value="${saslEnabledMechanisms.contains(mechanism)}"/>
                 <c:set var="implemented" value="${saslImplementedMechanisms.contains(mechanism)}"/>
                 <c:set var="supported" value="${saslSupportedMechanisms.contains(mechanism)}"/>
-                <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
-                    <td align="center"><input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/></td>
-                    <td align="left"><label for="${idForForm}"><c:out value="${mechanism}"/></label></td>
-                    <td align="left"><c:out value="${description}"/></td>
-                    <td align="center"><c:if test="${implemented}"><img src="images/check-16x16.gif" width="16" height="16" border="0" alt=""/></c:if></td>
-                    <td align="center"><c:if test="${supported}"><img src="images/check-16x16.gif" width="16" height="16" border="0" alt=""/></c:if></td>
+                <tr>
+                    <td style="text-align: center"><input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/></td>
+                    <td style="text-align: left"><label for="${idForForm}"><c:out value="${mechanism}"/></label></td>
+                    <td style="text-align: left"><c:out value="${description}"/></td>
+                    <td style="text-align: center"><c:if test="${implemented}"><img src="images/check-16x16.gif" alt=""/></c:if></td>
+                    <td style="text-align: center"><c:if test="${supported}"><img src="images/check-16x16.gif" alt=""/></c:if></td>
                 </tr>
             </c:forEach>
         </table>

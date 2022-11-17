@@ -18,7 +18,6 @@
 
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.*"%>
 <%@ page import="org.jivesoftware.openfire.privacy.PrivacyListProvider" %>
@@ -73,7 +72,7 @@
         <c:otherwise>
             <c:forEach items="${privacyLists}" var="privacyList">
                 <div class="jive-table">
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                    <table>
                         <thead>
                             <tr>
                                 <th>&nbsp;</th>
@@ -86,11 +85,11 @@
                                     <fmt:message key="user.privacylists.no_items_on_list" />
                                 </c:when>
                                 <c:otherwise>
-                                    <c:forEach items="${privacyList.items}" var="item" varStatus="status">
-                                        <tr class="${ ( (status.index + 1) % 2 ) eq 0 ? 'jive-even' : 'jive-odd'}">
-                                            <td width="1%" valign="top"><c:out value="${item.order}"/></td>
-                                            <td width="1%"><c:choose><c:when test="${item.allow}"><fmt:message key="user.privacylist.allow" /></c:when><c:otherwise><fmt:message key="user.privacylist.deny" /></c:otherwise></c:choose></td>
-                                            <td width="1%"><c:out value="${item.type}"/></td>
+                                    <c:forEach items="${privacyList.items}" var="item">
+                                        <tr>
+                                            <td  style="width: 1%; vertical-align: top"><c:out value="${item.order}"/></td>
+                                            <td style="width: 1%"><c:choose><c:when test="${item.allow}"><fmt:message key="user.privacylist.allow" /></c:when><c:otherwise><fmt:message key="user.privacylist.deny" /></c:otherwise></c:choose></td>
+                                            <td style="width: 1%"><c:out value="${item.type}"/></td>
                                             <td><c:choose>
                                                 <c:when test="${item.type eq 'jid'}"><c:out value="${item.JID}"/></c:when>
                                                 <c:when test="${item.type eq 'group'}"><c:out value="${item.group}"/></c:when>

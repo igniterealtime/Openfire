@@ -86,14 +86,9 @@
         </tr>
         </thead>
         <tbody>
-        <c:set var="rowClass" value="jive-even"/>
         <c:forEach var="entry" items="${listPager.itemsOnCurrentPage}">
             <%--@elvariable id="entry" type="java.util.Map.Entry"--%>
-            <c:choose>
-                <c:when test="${rowClass == 'jive-even'}"><c:set var="rowClass" value="jive-odd"/></c:when>
-                <c:otherwise><c:set var="rowClass" value="jive-even"/></c:otherwise>
-            </c:choose>
-            <tr class="${rowClass}">
+            <tr>
                 <td>
                     <%--
                     Note; wrap the property key (and value) in a span so it's easy to extract it in JavaScript
@@ -133,14 +128,14 @@ ${listPager.jumpToPageForm}
     ${listPager.pageFunctions}
 
     function doDelete(imgObject) {
-        var key = imgObject.parentNode.parentNode.childNodes[1].childNodes[1].textContent;
-        var action;
+        let key = imgObject.parentNode.parentNode.childNodes[1].childNodes[1].textContent;
+        let action;
         if (confirm('<fmt:message key="system.cache-details.delete_confirm"/>'.replace('{0}', key))) {
             action = 'delete'
         } else {
             action = 'cancel'
         }
-        var form = document.getElementById("actionForm");
+        let form = document.getElementById("actionForm");
         form["action"].value = action;
         form["key"].value = key;
         form.submit();

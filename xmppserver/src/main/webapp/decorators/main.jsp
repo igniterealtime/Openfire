@@ -132,10 +132,10 @@
             </div>
 
             <div id="jive-main">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <table style="width: 100%">
                     <tbody>
-                        <tr valign="top">
-                            <td width="1%">
+                        <tr style="vertical-align: top">
+                            <td style="width: 1%">
                                 <div id="jive-sidebar-container">
                                     <div id="jive-sidebar-box">
                                         <div id="jive-sidebar">
@@ -150,12 +150,12 @@
                                                 </admin:subsidebar>
                                             </admin:sidebar>
                                             <br>
-                                            <img src="<%= path %>/images/blank.gif" width="150" height="1" border="0" alt="">
+                                            <img src="<%= path %>/images/blank.gif" width="150" height="1" alt="">
                                         </div>
                                     </div>
                                 </div>
                             </td>
-                            <td width="99%" id="jive-content">
+                            <td id="jive-content">
 
 
                                 <%  if (message != null) { %>

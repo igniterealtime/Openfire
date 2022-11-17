@@ -1,6 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.openfire.pubsub.LeafNode,
-                 org.jivesoftware.openfire.pubsub.Node,
+<%@ page import="org.jivesoftware.openfire.pubsub.Node,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
                  org.jivesoftware.openfire.pubsub.PubSubServiceInfo.listType,
                  org.jivesoftware.util.CookieUtils,
@@ -61,7 +60,7 @@
     DataForm form = node.getConfigurationForm();
 
     //Field that will not be returned to the server, i.e. cannot be edited on this page
-    ArrayList<String> nonReturnFields = new ArrayList<String>();
+    ArrayList<String> nonReturnFields = new ArrayList<>();
     //This is the parent collection, this form is not a great way to edit this,
     //and the back end has issues when the root Collection is the parent.
     nonReturnFields.add("pubsub#collection");
@@ -75,7 +74,7 @@
     nonReturnFields.add("pubsub#replyroom");
 
     //nodes that will not be displayed in the form.
-    ArrayList<String> nonDisplayFields = new ArrayList<String>();
+    ArrayList<String> nonDisplayFields = new ArrayList<>();
     //changing nodes from leaf to collection is a bad idea, but the value is required in the returned form.
     nonDisplayFields.add("pubsub#node_type");
 
@@ -124,10 +123,10 @@
         <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
         <script>
         function clearSelected(name){
-            var elements = document.getElementById(name).options;
+            let elements = document.getElementById(name).options;
 
-            for(var i = 0; i < elements.length; i++){
-              elements[i].selected = false;
+            for(let i = 0; i < elements.length; i++){
+                elements[i].selected = false;
             }
           }
         </script>
@@ -165,7 +164,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <thead>
         <tr>
             <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>

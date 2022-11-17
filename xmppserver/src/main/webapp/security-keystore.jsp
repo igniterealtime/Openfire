@@ -1,6 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@page import="org.jivesoftware.util.StringUtils"%>
-<%@page import="java.security.PrivateKey"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
@@ -68,7 +67,7 @@
         pageContext.setAttribute( "connectionType", connectionType );
         pageContext.setAttribute( "identityStore", identityStore );
 
-        final Set<ConnectionType> sameStoreConnectionTypes = Collections.EMPTY_SET; // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
+        final Set<ConnectionType> sameStoreConnectionTypes = Collections.emptySet(); // TODO FIXME: SSLConfig.getInstance().getOtherPurposesForSameStore( connectionType );
         pageContext.setAttribute( "sameStoreConnectionTypes", sameStoreConnectionTypes );
 
         final Map<String, X509Certificate> certificates = identityStore.getAllCertificates();
@@ -161,7 +160,7 @@
     pageContext.setAttribute( "restartNeeded", restartNeeded );
 
     boolean offerUpdateIssuer = false;
-    Map<String, String> signingRequests = new LinkedHashMap<String, String>();
+    Map<String, String> signingRequests = new LinkedHashMap<>();
 %>
 
 <html>
@@ -242,14 +241,14 @@
             </fmt:message>
         </p>
 
-        <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="100%">
+        <table class="jive-table" style="width: 100%">
             <thead>
                 <tr>
                     <th>
                         <fmt:message key="ssl.certificates.identity"/>
                         <small>(<fmt:message key="ssl.certificates.alias"/>)</small>
                     </th>
-                    <th width="20%">
+                    <th style="width: 20%">
                         <fmt:message key="ssl.certificates.valid-between"/>
                     </th>
                     <th colspan="2">
@@ -258,7 +257,7 @@
                     <th>
                         <fmt:message key="ssl.certificates.algorithm"/>
                     </th>
-                    <th width="1%">
+                    <th style="width: 1%">
                         <fmt:message key="global.delete"/>
                     </th>
                 </tr>
@@ -266,7 +265,7 @@
             <tbody>
                 <c:choose>
                     <c:when test="${empty certificates}">
-                        <tr valign="top">
+                        <tr>
                             <td colspan="5"><em>(<fmt:message key="global.none"/>)</em></td>
                         </tr>
                     </c:when>
@@ -290,7 +289,7 @@
                               }
 
                             %>
-                            <tr valign="top">
+                            <tr>
                                 <td>
                                     <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=false" title="<fmt:message key='session.row.cliked'/>">
                                         <c:forEach items="${identities}" var="currentItem" varStatus="stat">
@@ -318,35 +317,35 @@
                                     </c:choose>
                                 </td>
                                 <% if (isSelfSigned && !isSigningPending) { %>
-                                <td width="1%"><img src="images/certificate_warning-16x16.png" width="16" height="16" border="0"
+                                <td style="width: 1%"><img src="images/certificate_warning-16x16.png"
                                                     alt="<fmt:message key="ssl.certificates.keystore.self-signed.info"/>"
                                                     title="<fmt:message key="ssl.certificates.keystore.self-signed.info"/>"></td>
-                                <td width="1%" nowrap>
+                                <td style="width: 1%; white-space: nowrap">
                                     <fmt:message key="ssl.certificates.self-signed"/>
                                 </td>
                                 <% } else if (isSigningPending) { %>
-                                <td width="1%"><img src="images/certificate_warning-16x16.png" width="16" height="16" border="0"
+                                <td style="width: 1%"><img src="images/certificate_warning-16x16.png"
                                                     alt="<fmt:message key="ssl.certificates.keystore.signing-pending.info"/>"
                                                     title="<fmt:message key="ssl.certificates.keystore.signing-pending.info"/>"></td>
-                                <td width="1%" nowrap>
+                                <td style="width: 1%; white-space: nowrap">
                                     <fmt:message key="ssl.certificates.signing-pending"/>
                                 </td>
                                 <% } else { %>
-                                <td width="1%"><img src="images/certificate_ok-16x16.png" width="16" height="16" border="0"
+                                <td style="width: 1%"><img src="images/certificate_ok-16x16.png"
                                                     alt="<fmt:message key="ssl.certificates.keystore.ca-signed.info"/>"
                                                     title="<fmt:message key="ssl.certificates.keystore.ca-signed.info"/>"></td>
-                                <td width="1%" nowrap>
+                                <td style="width: 1%; white-space: nowrap">
                                     <fmt:message key="ssl.certificates.ca-signed"/>
                                 </td>
                                 <% } %>
-                                <td width="2%">
+                                <td style="width: 2%">
                                     <c:out value="${certificate.publicKey.algorithm}"/>
                                 </td>
-                                <td width="1" align="center">
+                                <td style="width: 1%; text-align: center">
                                     <a href="security-keystore.jsp?csrf=${csrf}&alias=${alias}&connectionType=${connectionType}&delete=true"
                                        title="<fmt:message key="global.click_delete"/>"
                                        onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
-                                            ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt=""></a>
+                                            ><img src="images/delete-16x16.gif" alt=""></a>
                                 </td>
                             </tr>
 
@@ -358,11 +357,11 @@
                                 <tr>
                                     <td colspan="5">
                                   <span class="jive-description">
-                                  <fmt:message key="ssl.certificates.truststore.ca-reply"/>
+                                  <label for="reply"><fmt:message key="ssl.certificates.truststore.ca-reply"/></label>
                                   </span>
-                                        <textarea name="reply" rows="8" style="width:100%;font-size:8pt;" wrap="virtual"></textarea>
+                                        <textarea id="reply" name="reply" rows="8" style="width:100%;font-size:8pt;" wrap="virtual"></textarea>
                                     </td>
-                                    <td valign="bottom">
+                                    <td style="vertical-align: bottom">
                                         <input type="submit" name="install" value="<fmt:message key="global.save"/>">
                                     </td>
                                 </tr>
@@ -396,7 +395,7 @@
     <p>
         <fmt:message key="ssl.signing-request.requests_info"/>
     </p>
-    <table cellpadding="3" cellspacing="2" border="0">
+    <table>
         <thead>
         <tr>
             <th>
@@ -410,7 +409,7 @@
         <tbody>
         <% for (Map.Entry<String, String> entry : signingRequests.entrySet()) { %>
         <tr>
-            <td valign="top">
+            <td style="vertical-align: top">
                 <%= entry.getKey() %>
             </td>
             <td style="font-family: monospace;">

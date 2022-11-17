@@ -46,11 +46,10 @@
         String d = input.substring(0,19);
         // try to parse it
         try {
-            StringBuffer buf = new StringBuffer(input.length());
+            StringBuilder buf = new StringBuilder(input.length());
             synchronized (formatter) {
                 Date date = formatter.parse(d);
-                buf.append("<span class=\"date\" title=\"").append(formatter.format(date))
-                        .append("\">");
+                buf.append("<span class=\"date\" title=\"").append(formatter.format(date)).append("\">");
             }
             buf.append(d).append("</span>");
             buf.append(input.substring(19));
@@ -239,6 +238,7 @@
     <style>
     .log TABLE {
         border : 1px #ccc solid;
+        border-collapse: collapse;
     }
     .log TH {
         font-family : verdana, arial, sans-serif;
@@ -285,13 +285,13 @@
 <body>
 
 <div class="log">
-<table cellpadding="1" cellspacing="0" border="0" width="100%" style="line-height: 100%;">
+<table style="line-height: 100%;">
 <tr>
     <th class="head-num"><fmt:message key="log.line" /></th>
     <th>&nbsp;</th>
 </tr>
 <tr>
-    <td width="1%" nowrap class="num">
+    <td style="width: 1%; white-space: nowrap" class="num">
         <%  if ("asc".equals(mode)) { %>
             <%  for (int j=start+1; j<=numLines; j++) { %>
                 <%= j %><br>
@@ -302,7 +302,7 @@
             <%  } %>
         <%  } %>
     </td>
-    <td width="99%" class="line" style="white-space: nowrap">
+    <td class="line" style="white-space: nowrap">
         <% for (String line1 : lines) {
             if (line1 != null) {
         %>

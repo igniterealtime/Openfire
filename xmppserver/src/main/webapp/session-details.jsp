@@ -126,7 +126,7 @@
 </p>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th colspan="2">
@@ -310,38 +310,38 @@
                 }
                 if (!currentSess.getPresence().isAvailable()) {
             %>
-                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
+                <img src="images/user-clear-16x16.gif" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
                 <fmt:message key="user.properties.offline" />
             <%
                 } else if (show == Presence.Show.away) {
             %>
-                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                <img src="images/im_away.gif" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <fmt:message key="session.details.away" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.chat) {
             %>
-                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                <img src="images/im_free_chat.gif" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <fmt:message key="session.details.chat_available" /> <%= statusTxt %>
             <%
                 } else if (show == Presence.Show.dnd) {
             %>
 
-                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                <img src="images/im_dnd.gif" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <fmt:message key="session.details.not_disturb" /> <%= statusTxt %>
 
             <%
                 } else if (show == null) {
             %>
 
-                <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.online" />" alt="<fmt:message key="session.details.online" />">
+                <img src="images/im_available.gif" title="<fmt:message key="session.details.online" />" alt="<fmt:message key="session.details.online" />">
                 <fmt:message key="session.details.online" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.xa) {
             %>
 
-                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                <img src="images/im_away.gif" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <fmt:message key="session.details.extended" /> <%= statusTxt %>
 
             <%
@@ -415,7 +415,7 @@
     <br>
 
     <div class="jive-table">
-        <table cellpadding="3" cellspacing="1" border="0" width="100%">
+        <table style="width: 100%">
             <thead>
                 <tr>
                     <th colspan="2">
@@ -425,7 +425,7 @@
             </thead>
             <tbody>
                 <% 
-                    Map<String, String> treeMap = new TreeMap<String, String>(currentSess.getSoftwareVersion());
+                    Map<String, String> treeMap = new TreeMap<>(currentSess.getSoftwareVersion());
                     for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
                         <tr>
                             <td class="c1">
@@ -453,7 +453,7 @@
 <br>
 
 <div class="jive-table">
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
+    <table style="width: 100%">
         <thead>
         <tr>
             <th colspan="2">
@@ -507,7 +507,7 @@
     </p>
 
     <div class="jive-table">
-    <table cellpadding="3" cellspacing="1" border="0" width="100%">
+    <table style="width: 100%">
     <tr>
         <th>&nbsp;</th>
         <th><fmt:message key="session.details.name" /></th>
@@ -536,18 +536,18 @@
 
     <br>
 
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
     <tr>
-        <td width="1%" nowrap>
+        <td style="width: 1%; white-space: nowrap">
 
             <div class="jive-table">
-            <table cellpadding="0" cellspacing="0" border="0">
-            <tr class="jive-current"><td><img src="images/blank.gif" width="12" height="12" border="0" alt=""></td></tr>
+            <table>
+            <tr class="jive-current"><td><img src="images/blank.gif" width="12" height="12" alt=""></td></tr>
             </table>
             </div>
 
         </td>
-        <td width="99%">
+        <td>
 
             &nbsp; = <fmt:message key="session.details.session_detail" />
 
@@ -561,7 +561,7 @@
 
 <form action="session-details.jsp" type="post">
 <input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
-<center>
+<div style="text-align: center;">
 <%--<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>--%>
 <%----%>
 <%--    <input type="submit" name="message" value="Message this Session">--%>
@@ -574,7 +574,7 @@
     <% } %>
     <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
 
-</center>
+</div>
 </form>
 
     </body>

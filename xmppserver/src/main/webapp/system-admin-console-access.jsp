@@ -174,17 +174,17 @@
         <input type="hidden" name="csrf" value="${csrf}">
 
         <p><fmt:message key="system.admin.console.access.iplists.blocklist.info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td valign='top'><b><label for="blockedIPs"><fmt:message key="system.admin.console.access.iplists.blocklist.label" /></label></b></td>
+                <td style="vertical-align: top"><b><label for="blockedIPs"><fmt:message key="system.admin.console.access.iplists.blocklist.label" /></label></b></td>
                 <td><textarea name="blockedIPs" id="blockedIPs" cols="40" rows="3"><c:if test="${not empty blockedIPs}"><c:out value="${blockedIPs}"/></c:if></textarea></td>
             </tr>
         </table>
 
         <p><fmt:message key="system.admin.console.access.iplists.allowlist.info" /></p>
-        <table cellpadding="3" cellspacing="0" border="0">
+        <table>
             <tr>
-                <td valign='top'><b><label for="allowedIPs"><fmt:message key="system.admin.console.access.iplists.allowlist.label" /></label></b></td>
+                <td style="vertical-align: top"><b><label for="allowedIPs"><fmt:message key="system.admin.console.access.iplists.allowlist.label" /></label></b></td>
                 <td><textarea name="allowedIPs" id="allowedIPs" cols="40" rows="3"><c:if test="${not empty allowedIPs}"><c:out value="${allowedIPs}"/></c:if></textarea></td>
             </tr>
         </table>

@@ -24,7 +24,7 @@
     final String certificate       = ParamUtils.getParameter(request, "certificate");
     final String storePurposeText  = ParamUtils.getParameter(request, "connectionType");
 
-    final Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<>();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
@@ -95,11 +95,9 @@
 
 <html>
 <head>
-<head>
     <title><fmt:message key="ssl.import.certificate.truststore.boxtitle"/></title>
     <meta name="pageID" content="security-certificate-store-management"/>
     <meta name="subPageID" content="sidebar-certificate-store-${fn:toLowerCase(connectionType)}-trust-store"/>
-</head>
 </head>
 <body>
 
@@ -150,20 +148,20 @@
         <input type="hidden" name="csrf" value="${csrf}">
         <fmt:message key="ssl.import.certificate.truststore.boxtitle" var="title"/>
         <admin:contentBox title="${title}">
-            <table cellpadding="3" cellspacing="0" border="0">
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
+            <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap" class="c1">
                         <label for="alias"><fmt:message key="ssl.signing-request.alias"/></label>
                     </td>
-                    <td width="99%">
-                        <input type="text" size="30" maxlength="100" name="alias" id="alias" value="<c:out value='${param.alias}'/>"">
+                    <td>
+                        <input type="text" size="30" maxlength="100" name="alias" id="alias" value="<c:out value='${param.alias}'/>">
                     </td>
                 </tr>
-                <tr valign="top">
-                    <td width="1%" nowrap class="c1">
+                <tr>
+                    <td style="width: 1%; white-space: nowrap" class="c1">
                         <label for="certificate"><fmt:message key="ssl.import.certificate.keystore.certificate"/></label>
                     </td>
-                    <td width="99%">
+                    <td>
                         <textarea name="certificate" id="certificate" cols="80" rows="20" wrap="virtual"><c:if test="${not empty param.certificate}"><c:out value="${param.certificate}"/></c:if></textarea>
                     </td>
                 </tr>

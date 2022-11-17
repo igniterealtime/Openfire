@@ -2,7 +2,6 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.openfire.container.Plugin" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
-<%@ page import="org.jivesoftware.openfire.container.PluginMetadataHelper" %>
 <%@ page import="java.nio.file.Path" %>
 <%@ page import="java.io.*" %><%--
   - Copyright (C) 2017 Ignite Realtime Foundation. All rights reserved.

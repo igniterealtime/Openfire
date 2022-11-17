@@ -114,7 +114,7 @@
 </p>
 
 <div class="jive-table">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <table>
         <thead>
         <tr>
             <th nowrap><fmt:message key="muc.room_cache.room_name" /></th>
@@ -130,24 +130,22 @@
             if (allRooms.isEmpty()) {
         %>
         <tr>
-            <td align="center" colspan="7">
+            <td style="text-align: center" colspan="7">
                 <fmt:message key="muc.service.summary.no_services" />
             </td>
         </tr>
 
         <%
             }
-            int i = 0;
             for (String roomName : allRoomNames) {
                 MUCRoom localRoom = roomsLocal.get(roomName);
                 MUCRoom clusteredRoom = roomsClustered.get(roomName);
-                i++;
         %>
-        <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-            <td width="10%">
+        <tr>
+            <td style="width: 10%;">
                 <%= roomName %>
             </td>
-            <td width="15%" align="right">
+            <td style="width: 15%; text-align: right">
                 <fmt:message key="muc.room_cache.description" /><br/>
                 <fmt:message key="muc.room_cache.topic" /><br/>
                 <fmt:message key="muc.room_cache.occupants" /><br/>
@@ -156,7 +154,7 @@
                 <fmt:message key="muc.room_cache.admins" /><br/>
                 <fmt:message key="muc.room_cache.members" /><br/>
             </td>
-            <td width="20%">
+            <td style="width: 20%;">
                 <%
                     if (localRoom != null) {
                         Set<String> occupants = localRoom.getOccupants().stream().map(role -> role.getNickname() + ":" + role.getUserAddress().toFullJID()).collect(Collectors.toSet());
@@ -181,7 +179,7 @@
                     }
                 %>
             </td>
-            <td width="20%">
+            <td style="width: 20%;">
                 <%
                     if (clusteredRoom != null) {
                         Set<String> occupants = clusteredRoom.getOccupants().stream().map(role -> role.getNickname() + ":" + role.getUserAddress().toFullJID()).collect(Collectors.toSet());
@@ -206,7 +204,7 @@
                     }
                 %>
             </td>
-            <td width="35%">
+            <td style="width: 35%;">
                 <%
                     final Map<NodeID, Set<OccupantManager.Occupant>> occupantsRegistrationForThisRoom = occupantsByNodeByRoom.get(roomName);
                     if (occupantsRegistrationForThisRoom != null) {

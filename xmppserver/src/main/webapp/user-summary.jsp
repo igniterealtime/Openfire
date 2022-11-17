@@ -32,6 +32,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib prefix="admin" uri="admin" %>
 
 <%!
     final int DEFAULT_RANGE = 100;
@@ -70,16 +71,9 @@
 
 <%  if (request.getParameter("deletesuccess") != null) { %>
 
-    <div class="jive-success">
-    <table cellpadding="0" cellspacing="0" border="0">
-    <tbody>
-        <tr><td class="jive-icon"><img src="images/success-16x16.gif" width="16" height="16" border="0" alt=""></td>
-        <td class="jive-icon-label">
+    <admin:infoBox type="success">
         <fmt:message key="user.summary.deleted" />
-        </td></tr>
-    </tbody>
-    </table>
-    </div><br>
+    </admin:infoBox>
 
 <%  } %>
 
@@ -152,7 +146,7 @@
 <%  } %>
 
 <div class="jive-table">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<table>
 <thead>
     <tr>
         <th>&nbsp;</th>
@@ -176,7 +170,7 @@
     if (users.isEmpty()) {
 %>
     <tr>
-        <td align="center" colspan="7">
+        <td style="text-align: center" colspan="7">
             <fmt:message key="user.summary.not_user" />
         </td>
     </tr>
@@ -186,8 +180,8 @@
     int i = start;
     for (User user : users) {
         i++;
-        Boolean lockedOut = false;
-        Boolean pendingLockOut = false;
+        boolean lockedOut = false;
+        boolean pendingLockOut = false;
         if (webManager.getLockOutManager().getDisabledStatus(user.getUsername()) != null) {
             // User is locked out. Check if its locked out now!
             if (webManager.getLockOutManager().isAccountDisabled(user.getUsername())) {
@@ -197,48 +191,48 @@
                 pendingLockOut = true;
             }
         }
-        Boolean isAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
+        boolean isAdmin = AdminManager.getInstance().isUserAdmin(user.getUsername(), false);
 %>
-    <tr class="jive-<%= (((i%2)==0) ? "even" : "odd") %>">
-        <td width="1%">
+    <tr>
+        <td style="width: 1%">
             <%= i %>
         </td>
-        <td width="1%" align="center" valign="middle">
+        <td style="width: 1%; text-align: center;  vertical-align: middle">
             <%  if (presenceManager.isAvailable(user)) {
                     Presence presence = presenceManager.getPresence(user);
             %>
                 <% if (presence.getShow() == null) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
+                <img src="images/user-green-16x16.gif" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.chat) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                <img src="images/user-green-16x16.gif" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.away) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                <img src="images/user-yellow-16x16.gif" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.xa) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                <img src="images/user-yellow-16x16.gif" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.dnd) { %>
-                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                <img src="images/user-red-16x16.gif" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <% } %>
 
             <%  } else { %>
 
-                <img src="images/user-clear-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.offline" />">
+                <img src="images/user-clear-16x16.gif" alt="<fmt:message key="user.properties.offline" />">
 
             <%  } %>
         </td>
-        <td width="23%">
+        <td style="width: 20%">
             <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a>
-            <% if (isAdmin) { %><img src="/images/star-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
-            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
-            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" height="16" width="16" align="top" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
+            <% if (isAdmin) { %><img src="/images/star-16x16.gif" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
+            <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
+            <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
         </td>
-        <td width="23%">
+        <td style="width: 20%">
             <%= StringUtils.escapeHTMLTags(user.getName()) %> &nbsp;
         </td>
-        <td width="15%">
+        <td style="width: 15%">
             <%
                 Collection<Group> groups = webManager.getGroupManager().getGroups(user);
                 if (groups.isEmpty()) {
@@ -258,10 +252,10 @@
                 }
             %>
         </td>
-        <td width="12%">
+        <td style="width: 12%">
             <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
         </td>
-        <td width="23%">
+        <td style="width: 23%">
             <% if (presenceManager.isAvailable(user)) { %>
             <fmt:message key="session.details.online" />
             <% } else {
@@ -275,15 +269,15 @@
         </td>
          <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>
-        <td width="1%" align="center">
+        <td style="width: 1%; text-align: center">
             <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
+             ><img src="images/edit-16x16.gif" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
-        <td width="1%" align="center" style="border-right:1px #ccc solid;">
+        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
             <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
+             ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />"></a>
         </td>
         <% } %>
     </tr>

@@ -25,7 +25,7 @@
     final String certificate      = ParamUtils.getParameter(request, "certificate");
     final String storePurposeText = ParamUtils.getParameter(request, "connectionType");
 
-    final Map<String, String> errors = new HashMap<String, String>();
+    final Map<String, String> errors = new HashMap<>();
 
     ConnectionType connectionType;
     try
@@ -133,20 +133,20 @@
     <c:set var="title"><fmt:message key="ssl.import.certificate.keystore.private-key.title"/></c:set>
     <admin:contentBox title="${title}">
         <p><fmt:message key="ssl.import.certificate.keystore.private-key.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="top">
-                <td width="1%" nowrap class="c1">
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap" class="c1">
                     <label for="passPhrase"><fmt:message key="ssl.import.certificate.keystore.pass-phrase" /></label>
                 </td>
-                <td width="99%">
+                <td>
                     <input type="text" size="60" maxlength="200" name="passPhrase" id="passPhrase" value="<c:out value="${param.passPhrase}"/>">
                 </td>
             </tr>
-            <tr valign="top">
-                <td width="1%" nowrap class="c1">
+            <tr>
+                <td style="width: 1%; white-space: nowrap" class="c1">
                     <label for="privateKey"><fmt:message key="ssl.import.certificate.keystore.private-key" /></label>
                 </td>
-                <td width="99%">
+                <td>
                     <textarea name="privateKey" id="privateKey" cols="80" rows="15" wrap="virtual"><c:if test="${not empty param.privateKey}"><c:out value="${param.privateKey}"/></c:if></textarea>
                 </td>
             </tr>
@@ -156,12 +156,12 @@
     <c:set var="title"><fmt:message key="ssl.import.certificate.keystore.certificate.title"/></c:set>
     <admin:contentBox title="${title}">
         <p><fmt:message key="ssl.import.certificate.keystore.certificate.info"/></p>
-        <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="top">
-                <td width="1%" nowrap class="c1">
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap" class="c1">
                     <label for="certificate"><fmt:message key="ssl.import.certificate.keystore.certificate" /></label>
                 </td>
-                <td width="99%">
+                <td>
                     <textarea name="certificate" id="certificate" cols="80" rows="15" wrap="virtual"><c:if test="${not empty param.certificate}"><c:out value="${param.certificate}"/></c:if></textarea>
                 </td>
             </tr>

@@ -144,7 +144,7 @@
     </c:when>
     <c:otherwise>
 
-    <table cellpadding="3" cellspacing="3" border="0">
+    <table cellpadding="3" cellspacing="3">
     <tr>
         <td><input type="radio" name="jndiNameMode" value="custom"></td>
         <td>

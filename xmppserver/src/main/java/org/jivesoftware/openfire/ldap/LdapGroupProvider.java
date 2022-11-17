@@ -190,7 +190,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                     Collection<JID> admins = tmpGroup.getAdmins();
                     String description = tmpGroup.getDescription();
                     String name = tmpGroup.getName();
-                    ArrayList<JID> members = new ArrayList<JID>();
+                    ArrayList<JID> members = new ArrayList<>();
                     members.addAll(tmpGroup.getMembers());
     
                     //now load the rest

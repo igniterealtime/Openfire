@@ -5,7 +5,6 @@
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfiguration" %>
 <%@ page import="java.io.File" %>
-<%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>

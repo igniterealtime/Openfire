@@ -73,31 +73,31 @@
 
         </div>-->
         <div class="jive-contentBox" style="-moz-border-radius: 3px;">
-            <table cellpadding="3" cellspacing="3" border="0">
+            <table>
             <tbody>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <input id="rb1" type="radio" ${isLdap ? 'disabled' : 'readonly'} ${isLdap ? '' : 'checked'}
                     </td>
-                    <td width="99%">
+                    <td>
                         <label for="rb1"><b><fmt:message key="setup.profile.default" /></b> - <fmt:message key="setup.profile.default_description" /></label>
                     </td>
                 </tr>
                 <tr>
-                    <td width="1%" nowrap>
+                    <td style="width: 1%; white-space: nowrap">
                         <input id="rb2" type="radio" ${isLdap ? 'disabled' : 'readonly'} ${isLdap ? 'checked' : ''}
                     </td>
-                    <td width="99%">
+                    <td>
                         <label for="rb2"><b><fmt:message key="setup.profile.ldap" /></b> - <fmt:message key="setup.profile.ldap_description" /></label>
                     </td>
                 </tr>
                 <c:if test="${isLdap}">
                     <tr>
-                        <td width="1%" nowrap>
+                        <td style="width: 1%; white-space: nowrap">
                             &nbsp;
                         </td>
-                        <td width="99%">
-                            <table class="jive-table" cellpadding="0" cellspacing="0" border="0" width="98%" align="right">
+                        <td>
+                            <table class="jive-table" style="width: 98%; text-align: right">
                             <thead>
                                 <tr>
                                     <th colspan="2"><fmt:message key="profile-settings.ldap_mapping_info" /></th>
@@ -141,7 +141,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="2" align="center">
+                        <td colspan="2" style="text-align: center">
                             <input type="submit" name="ldapedit" value="<fmt:message key="server.properties.edit" />">
                         </td>
                     </tr>

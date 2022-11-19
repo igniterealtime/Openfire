@@ -1,52 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Openfire: Plugin Developer Guide</title>
-<link href="style.css" rel="stylesheet" type="text/css">
+    <title>Openfire: Plugin Developer Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
-<div id="pageContainer">
+<article>
 
-<a name="top"></a>
-
-    <div id="pageHeader">
-        <div id="logo"></div>
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
         <h1>Openfire Plugin Developer Guide</h1>
-    </div>
-    <div class="navigation">
+    </header>
+
+    <nav>
         <a href="index.html">&laquo; Back to documentation index</a>
-    </div>
+    </nav>
 
-    <div id="pageBody">
+    <section id="intro">
 
+        <h2>Introduction</h2>
 
-<h2>Introduction</h2>
+        <p>
+            Plugins enhance the functionality of Openfire. This document is a developer's guide for creating plugins.
+        </p>
+        <p>
+            The plugin development is based on <a href="https://maven.apache.org/index.html">Apache Maven</a>.
+        </p>
 
-<p>
-Plugins enhance the functionality of Openfire. This document is a
-developer's guide for creating plugins.
-</p>
-<p>The plugin development is now based on <a href="https://maven.apache.org/index.html">Maven</a>(instead of Ant)</p>
+        <p>Topics that are covered in this document:</p>
 
-<h2>What is Maven</h2>
-<p>
-Maven is a project management tool which can manage the complete building life cycle.
-Maven simplifies and standardizes the project build process. by handling compilation, testing, library dependency, distribution, documentation and team collaboration.
-The Maven developers claim that Maven is more than just a build tool. We can think of Maven as a build tool with more features.
-Maven provides developers ways to manage project(Builds,Test,Documentation,Reporting,Dependencies,Releases,Distribution,Mailing List).
-</p>
+        <nav>
+            <ul>
+                <li><a href="#maven">What is Maven?</a></li>
+                <li><a href="#structure">Structure of a Plugin</a></li>
+                <li><a href="#best-practices">General Plugin Best Practices</a></li>
+                <li><a href="#admin-console">Modifying the Admin Console</a></li>
+                <li><a href="#admin-console-best-practices">Admin Console Best Practices</a></li>
+                <li><a href="#writing-pages">Writing Pages for the Admin Console</a></li>
+                <li><a href="#i18n">Using i18n in your Plugins</a></li>
+                <li><a href="#plugin-building">Building the plugin</a></li>
+                <li><a href="#implementation">Implementing Your Plugin</a></li>
+                <li><a href="#admin-tags">Openfire admin tags</a></li>
+                <li><a href="#csrf">CSRF protection</a></li>
+                <li><a href="#faq">Plugin FAQ</a></li>
+            </ul>
+        </nav>
 
-<h2>Structure of a Plugin</h2>
-<p>
-Plugins live in the <tt>plugins</tt> directory of <tt>openfireHome</tt>. When a plugin
-is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
-plugin directory are as follows:
-</p>
+    </section>
 
-<fieldset>
-    <legend>Plugin Structure</legend>
-<pre>myplugin/
+    <section id="maven">
+
+        <h2>What is Maven?</h2>
+        <p>
+            Maven is a project management tool which can manage the complete building life cycle.
+            Maven simplifies and standardizes the project build process. by handling compilation, testing, library dependency, distribution, documentation and team collaboration.
+            The Maven developers claim that Maven is more than just a build tool. We can think of Maven as a build tool with more features.
+            Maven provides developers ways to manage project (Builds, Test, Documentation, Reporting, Dependencies, Releases, Distribution, Mailing List).
+        </p>
+
+    </section>
+
+    <section id="structure">
+
+    <h2>Structure of a Plugin</h2>
+    <p>
+        Plugins live in the <code>plugins</code> directory of <code>openfireHome</code>. When a plugin
+        is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
+        plugin directory are as follows:
+    </p>
+
+    <fieldset>
+        <legend>Plugin Structure</legend>
+        <pre>myplugin/
  |- pom.xml         &lt;- Plugin description/configuration file of the Maven project (allows you to define the POM (Project Object Model) used by Maven).
  |- plugin.xml      &lt;- Plugin definition file
  |- readme.html     &lt;- Optional readme file for plugin, which will be displayed to end users
@@ -63,23 +89,22 @@ plugin directory are as follows:
         |- WEB-INF/
             |- web.xml           &lt;- Generated web.xml containing compiled JSP entries
             |- web-custom.xml    &lt;- Optional user-defined web.xml for custom servlets
-        |- images/
+        |- images/</pre>
+        </fieldset>
 
-</pre>
-</fieldset>
+        <p>
+            The <code>web</code> directory exists for plugins that need to add content to the Openfire Admin Console.
+            Further details are below.
+        </p>
 
-<p>The <tt>web</tt> directory exists for plugins that need to add content
-to the Openfire Admin Console. Further details are below.</p>
+        <p>
+            The <code>plugin.xml</code> file specifies the main Plugin class. A sample
+            file might look like the following:
+        </p>
 
-<p>
-The <tt>plugin.xml</tt> file specifies the main Plugin class. A sample
-file might look like the following:
-</p>
-
-<fieldset>
-
-    <legend>Sample plugin.xml</legend>
-<pre class="xml">
+        <fieldset>
+            <legend>Example plugin.xml content</legend>
+            <pre><code>
 &lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;plugin&gt;
     <span class="comment">&lt;!-- Main plugin class --&gt;</span>
@@ -92,7 +117,7 @@ file might look like the following:
 
     &lt;version&gt;1.0&lt;/version&gt;
     &lt;date&gt;07/21/2006&lt;/date&gt;
-    &lt;url&gt;http://www.igniterealtime.org/projects/openfire/plugins.jsp&lt;/url&gt;
+    &lt;url&gt;https://www.igniterealtime.org/projects/openfire/plugins.jsp&lt;/url&gt;
     &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
     &lt;licenseType&gt;gpl&lt;/licenseType&gt;
 
@@ -100,87 +125,101 @@ file might look like the following:
     &lt;adminconsole&gt;
         <span class="comment">&lt;!-- More on this below --&gt;</span>
     &lt;/adminconsole&gt;
-&lt;/plugin&gt;
-</pre>
-</fieldset>
+&lt;/plugin&gt;</code></pre>
+        </fieldset>
 
-<p>The meta-data fields that can be set in the plugin.xml file:
+        <p>
+            The meta-data fields that can be set in the plugin.xml file:
+        </p>
 
-<ul>
-    <li>name -- the name of the plugin.</li>
-    <li>description -- the description of the plugin.</li>
-    <li>author -- the author of the plugin.</li>
-    <li>version -- the version of the plugin.</li>
-    <li>date -- the date the plugin was released. The date must be in the form MM/dd/yyyy, such
-          as 07/21/2006.</li>
+        <dl>
+            <dt>name</dt>
+            <dd>the name of the plugin.</dd>
 
-    <li>url -- a URL where additional information about the plugin is available.</li>
-    <li>minServerVersion -- the minimum version of Openfire required
-          to run the plugin (supported by Openfire 2.1.2 and later). If the
-          server version is less than the required value, the plugin will not be started.</li>
-    <li>priorToServerVersion -- the server version up, but not including, on which this plugin can run.</li>
-    <li>minJavaVersion -- the minimum Java specification version the plugin needs to run.</li>
-    <li>databaseKey -- if the plugin requires it's own database tables, the databaseKey element should
-            be set with a schema key name (often the same name as the plugin). Database
-            schema files for each supported database should then be placed in the <tt>database</tt>
-            directory of the plugin. For example, given the key "foo", schema files would be called
-            "foo_mysql.sql", "foo_oracle.sql", etc.  We recommend that you prefix your tables with
-            "of" (openfire) to avoid conflicts with possible other applications installed in the same
-            database.  The scripts should make an entry into the ofVersion table using the key so that
-            schema version information can be tracked, e.g.:<br><br>
+            <dt>description</dt>
+            <dd>the description of the plugin.</dd>
 
-            <tt>INSERT INTO ofVersion (name, version) VALUES ('foo', 0);</tt><br><br>
-    </li>
-    <li>databaseVersion -- the database schema version (if a database schema is defined). New plugins
-            with a database schema should start at version 0. If future versions of the plugin
-            require updates to the schema, those updates can be defined by creating sub-directories
-            in the <tt>database/upgrade</tt> directory for each version number. For example, the directories
-            <tt>database/upgrade/1</tt> and <tt>database/upgrade/2</tt> would contain scripts such as
-            "foo_mysql.sql" and "foo_oracle.sql" that contain the relevant database changes for each
-            version. Each script should update version information in the ofVersion table, e.g.:<br><br>
+            <dt>author</dt>
+            <dd>the author of the plugin.</dd>
 
-            <tt>UPDATE ofVersion set version=1 where name='foo';</tt><br><br>
+            <dt>version</dt>
+            <dd>the version of the plugin.</dd>
 
-    </li>
-    <li>parentPlugin -- the name of the parent plugin (given as "foo" for the "foo.jar" plugin).
-            When a plugin has a parent plugin, the parent plugin's class loader will be used instead
-            of creating a new class loader. This lets plugins work together more closely. A
-            child plugin will not function without its parent present.</li>
-    <li>licenseType -- indicates the license agreement that the plugin is governed by. Valid
-            values are:<ul>
-                <li>"commercial": the plugin is released under a commercial license agreement.</li>
-                <li>"gpl": the plugin is released under the GNU Public License (GPL).</li>
-                <li>"apache": the plugin is released under the Apache license.</li>
-                <li>"internal": the plugin is for internal use at an organization only and will
-                    not be re-distributed.</li>
-                <li>"other": the plugin is released under a license agrement that doesn't fall into
-                    one of the other categories. The license agreement should be details in the
-                    plugin's Readme.</li>
-            </ul>
-            If the license type is not set, it is assumed to be other.</li>
-</ul>
+            <dt>date</dt>
+            <dd>the date the plugin was released. The date must be in the form yyyy-MM-dd, such as 2006-07-21.</dd>
 
-Several additional files can be present in the plugin to provide additional information to
-end-users (all placed in the main plugin directory):
-<ul>
-    <li><tt>readme.html</tt> -- Optional readme file for plugin, which will be displayed to end users.</li>
+            <dt>url</dt>
+            <dd>a URL where additional information about the plugin is available.</dd>
 
-    <li><tt>changelog.html</tt> -- Optional changelog file for plugin, which will be displayed to end users.</li>
-    <li><tt>logo_small.png</tt> -- Optional small (16x16) icon associated with the plugin. It can also be a .gif file.</li>
-    <li><tt>logo_large.png</tt> -- Optional large (32x32) icon associated with the plugin. It can also be a .gif file.</li>
-</ul>
+            <dt>minServerVersion</dt>
+            <dd>the minimum version of Openfire required to run the plugin (supported by Openfire 2.1.2 and later). If
+                the server version is less than the required value, the plugin will not be started.</dd>
 
-<p>Your plugin class must be implement the
-<tt><a href="javadoc/org/jivesoftware/openfire/container/Plugin.html">Plugin</a></tt>
-interface from the <a href="javadoc/index.html">Openfire API</a> as
-well as have a default (no argument) contructor. The Plugin interface has
-methods for initializing and destroying the plugin.
-</p>
+            <dt>priorToServerVersion</dt>
+            <dd>the server version up, but not including, on which this plugin can run.</dd>
 
-<fieldset>
-    <legend>Sample plugin implementation</legend>
-<pre class="java">
-package org.example;
+            <dt>minJavaVersion</dt>
+            <dd>the minimum Java specification version the plugin needs to run.</dd>
+
+            <dt>databaseKey</dt>
+            <dd>if the plugin requires it's own database tables, the databaseKey element should be set with a schema key
+                name (often the same name as the plugin). Database schema files for each supported database should then
+                be placed in the <code>database</code> directory of the plugin. For example, given the key "foo", schema
+                files would be called "foo_mysql.sql", "foo_oracle.sql", etc.  We recommend that you prefix your tables
+                with "of" (openfire) to avoid conflicts with possible other applications installed in the same database.
+                The scripts should make an entry into the ofVersion table using the key so that schema version
+                information can be tracked, e.g.:
+
+                <pre>INSERT INTO ofVersion (name, version) VALUES ('foo', 0);</pre></dd>
+
+            <dt>databaseVersion</dt>
+            <dd>the database schema version (if a database schema is defined). New plugins with a database schema should
+                start at version 0. If future versions of the plugin require updates to the schema, those updates can be
+                defined by creating sub-directories in the <code>database/upgrade</code> directory for each version
+                number. For example, the directories <code>database/upgrade/1</code> and <code>database/upgrade/2</code>
+                would contain scripts such as "foo_mysql.sql" and "foo_oracle.sql" that contain the relevant database
+                changes for each version. Each script should update version information in the ofVersion table, e.g.:
+
+                <pre>UPDATE ofVersion set version=1 where name='foo';</pre></dd>
+
+            <dt>parentPlugin</dt>
+            <dd>the name of the parent plugin (given as "foo" for the "foo.jar" plugin). When a plugin has a parent
+                plugin, the parent plugin's class loader will be used instead of creating a new class loader. This lets
+                plugins work together more closely. A child plugin will not function without its parent present.</dd>
+
+            <dt>licenseType</dt>
+            <dd>indicates the license agreement that the plugin is governed by. Valid values are:
+                <ul>
+                    <li>"commercial": the plugin is released under a commercial license agreement.</li>
+                    <li>"gpl": the plugin is released under the GNU Public License (GPL).</li>
+                    <li>"apache": the plugin is released under the Apache license.</li>
+                    <li>"internal": the plugin is for internal use at an organization only and will not be re-distributed.</li>
+                    <li>"other": the plugin is released under a license agreement that doesn't fall into one of the other
+                        categories. The license agreement should be details in the plugin's Readme.</li>
+                </ul>
+                If the license type is not set, it is assumed to be other.</dd>
+        </dl>
+
+        <p>
+            Several additional files can be present in the plugin to provide additional information to
+            end-users (all placed in the main plugin directory):
+        </p>
+        <dl>
+            <dt><code>readme.html</code></dt><dd>readme file for plugin, which will be displayed to end users.</dd>
+            <dt><code>changelog.html</code></dt><dd>Optional changelog file for plugin, which will be displayed to end users.</dd>
+            <dt><code>logo_small.png</code></dt><dd>Optional small (16x16) icon associated with the plugin. It can also be a .gif file.</dd>
+            <dt><code>logo_large.png</code></dt><dd>Optional large (32x32) icon associated with the plugin. It can also be a .gif file.</dd>
+        </dl>
+
+        <p>
+            Your plugin class must be implement the <code><a href="javadoc/org/jivesoftware/openfire/container/Plugin.html">Plugin</a></code>
+            interface from the <a href="javadoc/index.html">Openfire API</a> as well as have a default (no argument)
+            constructor. The Plugin interface has methods for initializing and destroying the plugin.
+        </p>
+
+        <fieldset>
+            <legend>Example plugin implementation</legend>
+            <pre><code>package org.example;
 
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -193,58 +232,67 @@ import java.io.File;
 public class ExamplePlugin implements Plugin {
 
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        <span class="comment">// Your code goes here</span>
+        // Your code goes here
 
     }
 
     public void destroyPlugin() {
-        <span class="comment">// Your code goes here</span>
+        // Your code goes here
     }
-}
-</pre>
-</fieldset>
+}</code></pre>
+        </fieldset>
 
-<h3>General Plugin Best Practices</h3>
+    </section>
 
-<p>When choosing a package name for your plugin, we recommend that you choose
-something distinctive to you and/or your organization to help avoid conflicts
-as much as possible.  For example, if everyone went with org.example.PluginName,
-even if PluginName was different, you might start running into some conflicts
-here and there between class names.  This is especially true when working with
-clustering.</p>.
+    <section id="best-practices">
 
-<h2>Modifying the Admin Console</h2>
+        <h2>General Plugin Best Practices</h2>
 
-<p>Plugins can add tabs, sections, and pages to the admin console. There
-are a several steps to accomplishing this:
+        <p>
+            When choosing a package name for your plugin, we recommend that you choose something distinctive to you
+            and/or your organization to help avoid conflicts as much as possible.  For example, if everyone went with
+            org.example.PluginName, even if PluginName was different, you might start running into some conflicts
+            here and there between class names. This is especially true when working with clustering.
+        </p>
 
-<ul>
-    <li>An &lt;adminconsole/&gt; section must be added to the
-            <tt>plugin.xml</tt> file.
-    </li>
+    </section>
 
-    <li>JSP files must be compiled and put into the classpath of the
-        plugin. A <tt>web.xml</tt> file containing the compiled JSP
-        servlet entries must be put into the <tt>web/</tt> directory
-        of the plugin. <i>Note:</i> the Openfire build script
-        can assist with compiling JSPs and creating the web.xml. This
-        is detailed below.
-    </li>
-    <li>Any images required by your JSP pages must live in <tt>web/images/</tt>
-        directory. Only GIF and PNG images are supported.
-    </li>
+    <section id="admin-console">
 
-</ul>
+        <h2>Modifying the Admin Console</h2>
 
-<p>The <tt>&lt;adminconsole /&gt;</tt> section of <tt>plugin.xml</tt> defines additional
-tabs, sections and entries in the Admin Console framework. A sample
-<tt>plugin.xml</tt> file might look like the following:</p>
+        <p>
+            Plugins can add tabs, sections, and pages to the admin console. There are a several steps to accomplishing
+            this:
+        </p>
 
-<fieldset>
-    <legend>Sample plugin.xml</legend>
+        <ul>
+            <li>
+                An <code>&lt;adminconsole /&gt;</code> section must be added to the <code>plugin.xml</code> file.
+            </li>
+            <li>
+                JSP files must be compiled and put into the classpath of the plugin. A <code>web.xml</code> file
+                containing the compiled JSP servlet entries must be put into the <code>web/</code> directory of the
+                plugin.<br/>
+                <strong>Note:</strong> the Openfire build script can assist with compiling JSPs and creating the
+                web.xml. This is detailed below.
+            </li>
+            <li>
+                Any images required by your JSP pages must live in <code>web/images/</code> directory. Only GIF and PNG
+                images are supported.
+            </li>
+        </ul>
 
-<pre class="xml">
-&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+        <p>
+            The <code>&lt;adminconsole /&gt;</code> section of <code>plugin.xml</code> defines additional tabs, sections
+            and entries in the Admin Console framework. A sample <code>plugin.xml</code> file might look like the
+            following:
+        </p>
+
+        <fieldset>
+            <legend>Example plugin.xml content</legend>
+
+            <pre><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;plugin&gt;
     <span class="comment">&lt;!-- Main plugin class --&gt;</span>
     &lt;class&gt;org.example.ExamplePlugin&lt;/class&gt;
@@ -266,137 +314,215 @@ tabs, sections and entries in the Admin Console framework. A sample
         &lt;/tab&gt;
 
     &lt;/adminconsole&gt;
-&lt;/plugin&gt;
-</pre>
-</fieldset>
+&lt;/plugin&gt;</code></pre>
+        </fieldset>
 
-<p>
-In this example, we've defined a new tab "Example", a sidebar section "My Plugin" and two pages: "My Plugin Admin"
-and "My Plugin Overview". We've registered <tt>my-plugin-admin.jsp</tt> respectively <tt>my-plugin-overview.jsp</tt>
-as the pages.
-</p>
-<p>
-By default, the tabs, sidebars and pages will be presented in the order in which they are defined. You can, however,
-define explicit ordering by adding an "order" attribute to each element. It's numeric value defines order. If no
-order is specified, the value 0 (zero) is used as a default. In the example above, the items are ordered using this
-construct. In the admin console, the "My Plugin Overview" page will be presented before the "My Plugin Admin" page,
-as its 'order' value is lower. If neither item had defined the 'order' attribute, the presentation of both pages
-would have been reversed (as it would have used to order in which the pages are defined in XML).
-</p>
-<p>
-You can override existing tabs, sections, and items by using the existing id attribute values in your own
-<tt>&lt;adminconsole&gt;</tt> definition.
-</p>
+        <p>
+            In this example, we've defined a new tab "Example", a sidebar section "My Plugin" and two pages:
+            "My Plugin Admin" and "My Plugin Overview". We've registered <code>my-plugin-admin.jsp</code> respectively
+            <code>my-plugin-overview.jsp</code> as the pages.
+        </p>
+        <p>
+            By default, the tabs, sidebars and pages will be presented in the order in which they are defined. You can,
+            however, define explicit ordering by adding an "order" attribute to each element. It's numeric value defines
+            order. If no order is specified, the value 0 (zero) is used as a default. In the example above, the items
+            are ordered using this construct. In the admin console, the "My Plugin Overview" page will be presented
+            before the "My Plugin Admin" page, as its 'order' value is lower. If neither item had defined the 'order'
+            attribute, the presentation of both pages  would have been reversed (as it would have used to order in which
+            the pages are defined in XML).
+        </p>
+        <p>
+            You can override existing tabs, sections, and items by using the existing id attribute values in your own
+            <code>&lt;adminconsole&gt;</code> definition.
+        </p>
 
-<h3>Admin Console Best Practices</h3>
+    </section>
 
-There are several best practices to consider when making changes to
-the Openfire admin console via a plugin. The general theme is
-that plugins should integrate seamlessly:
+    <section id="admin-console-best-practices">
 
-<ul>
-        <li>Integrate into existing tabs and sidebar sections whenever possible
-            instead of creating your own. Only create new tabs for very
-            significant new functionality.
-        <li>Don't use the word "plugin" in names of tabs, sidebars and items.
-            For example, instead of having an item called "Gateway Plugin", it
-            could be called "Gateway Settings".
-        <li>Try to match the UI of the existing admin console in your custom
-            plugin pages.
-        <li>There is no need to create an admin console entry to show plugin
-            meta-data. Instead, let Openfire inform the user about which
-            plugins are installed and provide plugin management.
-</ul>
+        <h2>Admin Console Best Practices</h2>
 
-<h3>Writing Pages for the Admin Console</h3>
+        <p>
+            There are several best practices to consider when making changes to the Openfire admin console via a plugin.
+            The general theme is that plugins should integrate seamlessly:
+        </p>
+        <ul>
+            <li>Integrate into existing tabs and sidebar sections whenever possible
+                instead of creating your own. Only create new tabs for very
+                significant new functionality.
+            <li>Don't use the word "plugin" in names of tabs, sidebars and items.
+                For example, instead of having an item called "Gateway Plugin", it
+                could be called "Gateway Settings".
+            <li>Try to match the UI of the existing admin console in your custom
+                plugin pages.
+            <li>There is no need to create an admin console entry to show plugin
+                meta-data. Instead, let Openfire inform the user about which
+                plugins are installed and provide plugin management.
+        </ul>
 
-<p>
+    </section>
 
-Openfire uses the <a href="http://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
-framework to decorate pages in the admin console. A globally-defined decorator is applied to
-each page in order to render the final output, as in the following diagram:</p>
-<br>
-<div style="text-align: center"><img src="images/sitemesh.png" width="484" height="372" alt="Sitemesh"></div>
-<br><br>
-<p>
-Creating pages that work with Sitemesh is easy. Simply create valid HTML pages and then
-use meta tags to send instructions to Sitemesh. When rendering the output, Sitemesh will
-use the instructions you provide to render the decorator along with any content in the
-body of your HTML page. The following meta tags can be used:
-<ul>
-    <li><b>pageID</b> -- the ID of the page, which must match an entry in the admin console
-    XML described above. Either a pageID or subPageID <b>must</b> be specified.</li>
+    <section id="writing-pages">
 
-    <li><b>subPageID</b> -- the ID of the sub-page, which must match an entry in the
-    admin console XML described above. Sub-pages are used for administrative actions
-    related to a parent page ID. For example, editing or deleting a particular group.
-    Either a pageID or subPageID <b>must</b> be specified.</li>
-    <li><b>extraParams</b> (Optional) -- extra parameters that should be passed in to the page.
-    For example, on a page to delete a group it might be the ID of the group. Parameters
-    must be URL encoded.</li>
-    <li><b>decorator</b> (Optional) -- overrides the Sitemesh decorator to use for the page.
-    A decorator named <tt>none</tt> is available that will simply render the page
-    without a decorator.</li>
+        <h2>Writing Pages for the Admin Console</h2>
 
-</ul>
+        <p>
+            Openfire uses the <a href="https://www.opensymphony.com/sitemesh/" target="_blank">Sitemesh</a>
+            framework to decorate pages in the admin console. A globally-defined decorator is applied to
+            each page in order to render the final output, as in the following diagram:
+        </p>
 
-The following HTML snippet demonstrates a valid page:
+        <figure class="inline-right">
+            <img src="images/sitemesh.png" width="484" height="372" alt="Decorating a page with the Sitemesh framework">
+            <figcaption>Decorating a page with the Sitemesh framework.</figcaption>
+        </figure>
 
-<fieldset>
-    <legend>Sample HTML</legend>
-<pre>
-   &lt;html&gt;
+        <p>
+            Creating pages that work with Sitemesh is easy. Simply create valid HTML pages and then
+            use meta tags to send instructions to Sitemesh. When rendering the output, Sitemesh will
+            use the instructions you provide to render the decorator along with any content in the
+            body of your HTML page. The following meta tags can be used:
+        </p>
+        
+        <dl>
+            <dt>pageID</dt>
+            <dd>the ID of the page, which must match an entry in the admin console XML described above. Either a pageID
+                or subPageID <b>must</b> be specified.</dd>
+
+            <dt>subPageID</dt>
+            <dd>the ID of the sub-page, which must match an entry in the admin console XML described above. Sub-pages
+                are used for administrative actions related to a parent page ID. For example, editing or deleting a
+                particular group. Either a pageID or subPageID <b>must</b> be specified.</dd>
+
+            <dt>extraParams</dt>
+            <dd>(Optional) extra parameters that should be passed in to the page. For example, on a page to delete a
+                group it might be the ID of the group. Parameters must be URL encoded.</dd>
+
+            <dt>decorator</dt>
+            <dd>(Optional) overrides the Sitemesh decorator to use for the page. A decorator named <code>none</code> is
+                available that will simply render the page without a decorator.</dd>
+        </dl>
+
+        <p>
+            The following HTML snippet demonstrates a valid page:
+        </p>
+
+        <fieldset>
+            <legend>Example HTML</legend>
+
+            <pre><code>&lt;html&gt;
    &lt;head&gt;
        &lt;title&gt;My Plugin Page&lt;/title&gt;
-
        &lt;meta name="pageID" content="myPluginPage"/&gt;
    &lt;/head&gt;
    &lt;body&gt;
         Body here!
    &lt;/body&gt;
-   &lt;/html&gt;
-</pre>
+&lt;/html&gt;</code></pre>
+        </fieldset>
 
-</fieldset>
+    </section>
 
-<h4>Using i18n in your Plugins</h4>
-<p>
-It's possible to translate your plugin into multiple languages (i18n). To do so, use the following
-procedure:
-<ul>
-    <li>Create a "i18n" directory in the root directory of your plugin.</li>
-    <li>Add each resource file using the %[plugin_name]%_i18n "_" language ".properties"
-        naming convention, where [plugin_name] is the name of the plugin directory. See the
-        <a href="translator-guide.html">translator guide</a> for more information about resource
-        bundles.</li>
-    <li>Convert Strings in your JSP files to refer to the internationalized keys. For example:
+    <section id="i18n">
 
-        <pre>
-        &lt;%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %&gt;
-        &lt;%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %&gt;
-        ...
-        &lt;fmt:message key="some.key.name" /&gt;
-        </pre>
-    </li>
-    <li>Internationalize Strings in your Java files using the LocaleUtils class:<br>
-        <tt>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</tt>
-    </li>
-    <li>Internationalize Strings in your plugin.xml file using the ${var} format:<br>
-        <tt>&lt;sidebar id="gateways" name="${plugin.sidebar.name}" description="${plugin.sidebar.description}"&gt;</tt><br>
-        <tt>&lt;description&gt;${plugin.description}&lt;/description&gt;</tt>
-    </li>
-</ul>
+        <h2>Using i18n in your Plugins</h2>
+        <p>
+            It's possible to translate your plugin into multiple languages (i18n). To do so, use the following
+            procedure:
+        <ul>
+            <li>Create a "i18n" directory in the root directory of your plugin.</li>
+            <li>Add each resource file using the %[plugin_name]%_i18n "_" language ".properties" naming convention,
+                where [plugin_name] is the name of the plugin directory. See the
+                <a href="translator-guide.html">translator guide</a> for more information about resource bundles.</li>
+            <li>Convert Strings in your JSP files to refer to the internationalized keys. For example:
 
-<h2>Using the Openfire Build Script</h2>
+            <pre><code>&lt;%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %&gt;
+&lt;%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %&gt;
+...
+&lt;fmt:message key="some.key.name" /&gt;</code></pre>
+            </li>
+            <li>
+                Internationalize Strings in your Java files using the LocaleUtils class:
 
-<p>
-The Openfire build script will help you build and develop plugins. It
-looks for plugin development directories in the following format:
-</p>
+                <pre>org.jivesoftware.util.LocaleUtils.getLocalizedString("some.key.name", "[plugin_name]");</pre>
+            </li>
+            <li>
+                Internationalize Strings in your plugin.xml file using the ${var} format:
+                <pre><code>&lt;sidebar id="gateways" name="${plugin.sidebar.name}" description="${plugin.sidebar.description}"&gt;
+&lt;description&gt;${plugin.description}&lt;/description&gt;</code></pre>
+            </li>
+        </ul>
 
-<fieldset>
-    <legend>Plugin Structure</legend>
-<pre>myplugin/
+    </section>
+
+    <section id="plugin-building">
+
+        <h2>Building the plugin</h2>
+
+        <p>
+            Your plugin project should define a Maven pom.xml file to build plugins. Your plugin can inherit from an
+            Openfire provided parent pom. This can be obtained through Ignite's Maven repository. An example of such
+            a pom file is shown below.
+        </p>
+
+        <fieldset>
+            <legend>Example Plugin pom.xml file</legend>
+            <pre><code>&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+                                xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
+    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+    &lt;parent&gt;
+        &lt;artifactId&gt;plugins&lt;/artifactId&gt;
+        &lt;groupId&gt;org.igniterealtime.openfire&lt;/groupId&gt;
+        &lt;version&gt;4.7.0&lt;/version&gt;
+    &lt;/parent&gt;
+
+    &lt;groupId&gt;org.example.openfire&lt;/groupId&gt;
+    &lt;artifactId&gt;demo&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
+
+    &lt;build&gt;
+        &lt;plugins&gt;
+            &lt;plugin&gt;
+                &lt;artifactId&gt;maven-assembly-plugin&lt;/artifactId&gt;
+            &lt;/plugin&gt;
+            &lt;!-- Compiles the Openfire Admin Console JSP pages. Remove this if the plugin has no JSP pages --&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.eclipse.jetty&lt;/groupId&gt;
+                &lt;artifactId&gt;jetty-jspc-maven-plugin&lt;/artifactId&gt;
+            &lt;/plugin&gt;
+        &lt;/plugins&gt;
+    &lt;/build&gt;
+
+    &lt;repositories&gt;
+        &lt;!-- Where we obtain dependencies (such as the parent project). --&gt;
+        &lt;repository&gt;
+            &lt;id&gt;igniterealtime&lt;/id&gt;
+            &lt;name&gt;Ignite Realtime Repository&lt;/name&gt;
+            &lt;url&gt;https://igniterealtime.org/archiva/repository/maven/&lt;/url&gt;
+        &lt;/repository&gt;
+    &lt;/repositories&gt;
+
+    &lt;pluginRepositories&gt;
+        &lt;!-- Typically used to retrieve Maven plugins used by this project. This
+             is also used to obtain the dependencies _used by_ plugins
+             (eg: openfire-plugin-assembly-descriptor) --&gt;
+        &lt;pluginRepository&gt;
+            &lt;id&gt;igniterealtime&lt;/id&gt;
+            &lt;name&gt;Ignite Realtime Repository&lt;/name&gt;
+            &lt;url&gt;https://igniterealtime.org/archiva/repository/maven/&lt;/url&gt;
+        &lt;/pluginRepository&gt;
+    &lt;/pluginRepositories&gt;
+
+&lt;/project&gt;</code></pre>
+        </fieldset>
+        <p>
+            The Maven pom.xml will help you build and develop plugins. It should look for plugin development directories
+            in the following format:
+        </p>
+
+        <fieldset>
+            <legend>Plugin Structure</legend>
+            <pre><code>myplugin/
  |- plugin.xml      &lt;- Plugin definition file
  |- readme.html     &lt;- Optional readme file for plugin
  |- changelog.html  &lt;- Optional changelog file for plugin
@@ -414,82 +540,112 @@ looks for plugin development directories in the following format:
          |- *.jsp      &lt;- JSPs your plugin uses for the admin console
          |- images/    &lt;- Any images your JSP pages need (optional)
          |- WEB-INF
-             |- web.xml    &lt;- Optional file where custom servlets can be registered
-
-</pre>
+             |- web.xml    &lt;- Optional file where custom servlets can be registered</code></pre>
 </fieldset>
 
-<p>The build script will compile source files and JSPs and create a valid
-plugin structure and JAR file. Put your plugin directories in the <tt>src/plugins</tt>
-directory of the source distribution and then use <tt>ant plugins</tt> to
-build your plugins.</p>
+        <p>
+            To build the plugin, build the maven 'package' goal. Typically, this is done as such:
+        </p>
 
-<p>Any JAR files your plugin needs during compilation should be put
-into the <tt>lib</tt> directory. These JAR files will also be copied into
-the plugin's generated <tt>lib</tt> directory as part of the build process.</p>
+        <pre>mvn clean package</pre>
 
-<p>If you create a src/web/WEB-INF/web.xml file, any servlets registered there
-will be initialized when the plugin starts up. Only servlet registrations and servlet
-mappings will be honored from the web.xml file. Note: this feature is implemented by
-merging your custom web.xml file into the web.xml file generated by the JSP compilation
-process.</p>
+        <p>
+            When the build succeeds, the <code>target/</code> folder in your project will have serveral files. One file
+            is named <code>PLUGINNAME-openfire-plugin-assembly.jar</code>. This is the Openfire plugin
+        </p>
+        <p>
+            <b>Note: </b> Before you provide the plugin jar file to Openfire, it must be renamed! Remove
+            <code>-heapdump-openfire-plugin-assembly</code> from the file name. For example: a file named
+            <code>demo-openfire-plugin-assembly.jar</code> should be renamed to <code>demo.jar</code>
+        </p>
 
-<h2>Implementing Your Plugin</h2>
+        <p>
+            If you create a src/web/WEB-INF/web.xml file, any servlets registered there will be initialized when the
+            plugin starts up. Only servlet registrations and servlet  mappings will be honored from the web.xml file.
+            Note: this feature is implemented by merging your custom web.xml file into the web.xml file generated by the
+            JSP compilation process.
+        </p>
 
-<p>Plugins have full access to the Openfire API. This provides a tremendous
-amount of flexibility for what plugins can accomplish. However, there are several integration
-points that are the most common:
+    </section>
 
-<ol>
-    <li>Register a plugin as a <a href="javadoc/org/xmpp/component/Component.html">Component</a>.
- Components receive all packets addressed to a particular sub-domain. For example,
- <tt>test_component.example.com</tt>. So, a packet sent to <tt>joe@test_component.example.com</tt> would
- be delivered to the component. Note that the sub-domains defined as components are unrelated to DNS entries
- for sub-domains. All XMPP routing at the socket level is done using the primary server domain (example.com in the
- example above); sub-domains are only used for routing within the XMPP server.
+    <section id="implementation">
 
-    <li>Register a plugin as an <a href="javadoc/org/jivesoftware/openfire/IQHandler.html">IQHandler</a>. IQ handlers respond to IQ packets with a particular element name and
-  namespace. The following code snippet demonstrates how to register an IQHandler:
+        <h2>Implementing Your Plugin</h2>
 
-  <pre>
+        <p>
+            Plugins have full access to the Openfire API. This provides a tremendous amount of flexibility for what
+            plugins can accomplish. However, there are several integration points that are the most common:
+        </p>
 
-  IQHandler myHandler = new MyIQHander();
-  IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
-  iqRouter.addHandler(myHandler);
-  </pre>
+        <h4>Register a plugin as a <a href="javadoc/org/xmpp/component/Component.html">Component</a>.</h4>
+        <p>
+            Components receive all packets addressed to a particular sub-domain. For example,
+            <code>test_component.example.com</code>. So, a packet sent to <code>joe@test_component.example.com</code>
+            would be delivered to the component. Note that the sub-domains defined as components are unrelated to DNS
+            entries for sub-domains. All XMPP routing at the socket level is done using the primary server domain
+            (example.com in the example above); sub-domains are only used for routing within the XMPP server.
+        </p>
 
-    <li>Register a plugin as a <a href="javadoc/org/jivesoftware/openfire/interceptor/PacketInterceptor.html">
-    PacketInterceptor</a> to receive all packets being sent through the system and
-    optionally reject them. For example, an interceptor could reject all messages that contained
-    profanity or flag them for review by an administrator.</li>
-    <li>You can store persistent plugin settings as Openfire properties using the
-    JiveGlobals.getProperty(String) and JiveGlobals.setProperty(String, String) methods. Make
-    your plugin a property listener to listen for changes to its properties by implementing the
-    <tt>org.jivesoftware.util.PropertyEventListener</tt> method.
-    You can register your plugin as a listener using the PropertyEventDispatcher.addListener(PropertyEventListener)
-    method. Be sure to unregister your plugin as a listener in your plugin's destroyPlugin() method.
+        <h4>Register a plugin as an <a href="javadoc/org/jivesoftware/openfire/IQHandler.html">IQHandler</a></h4>
+        <p>
+            IQ handlers respond to IQ packets with a particular element name and namespace. The following code snippet
+            demonstrates how to register an IQHandler:
 
+        <fieldset>
+            <legend>Registering an IQHandler</legend>
+            <pre><code>IQHandler myHandler = new MyIQHander();
+IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
+iqRouter.addHandler(myHandler);</code></pre>
+        </fieldset>
 
-</ol>
+        <h4>Register a plugin as a <a href="javadoc/org/jivesoftware/openfire/interceptor/PacketInterceptor.html">PacketInterceptor</a></h4>
+        <p>
+            Register the plugin as a PacketInterceptor to receive all packets being sent through the system and
+            optionally reject them. For example, an interceptor could reject all messages that contained profanity or
+            flag them for review by an administrator.
+        </p>
 
-<h2>Openfire admin tags</h2>
-        Openfire provides useful JSP tags that can be used. To enable them on a JSP page, simply add:<br>
-        <code>&lt;%@ taglib uri="admin" prefix="admin" %&gt;</code>
-        <br>to the top of your JSP page. The tags include:
-        <ul>
-            <li><code>&lt;admin:ASN1DER value="${ASN.1 DER certificate as a byte[]}"/&gt;</code> (since Openfire 4.0.0)
-                will display an ASN.1 DER encoded certificate in an HTML table.</li>
-            <li><code>&lt;admin:FlashMessage/&gt;</code> (since Openfire 4.5.0) will display up to three suitably
-                decorated session attributes on the rendered page. The keys of these session attributes are defined by
-                <code>FlashMessageTag.SUCCESS_MESSAGE_KEY</code>, <code>WARNING_MESSAGE_KEY</code> and
-                <code>ERROR_MESSAGE_KEY</code>. This allows messages to be displayed to the user when navigating between
-                pages.</li>
-        </ul>
+        <h3>Persisting settings</h3>
+        <p>
+            You can store persistent plugin settings as Openfire properties using the <code>JiveGlobals.getProperty(String)</code>
+            and <code>JiveGlobals.setProperty(String, String)</code> methods. Make your plugin a property listener to
+            listen for changes to its properties by implementing the <code>org.jivesoftware.util.PropertyEventListener</code>
+            method. You can register your plugin as a listener using the <code>PropertyEventDispatcher.addListener(PropertyEventListener)</code>
+            method. Be sure to unregister your plugin as a listener in your plugin's <code>destroyPlugin()</code> method.
+        </p>
+
+    </section>
+
+    <section id="admin-tags">
+
+        <h2>Openfire admin tags</h2>
+
+        <p>
+            Openfire provides useful JSP tags that can be used. To enable them on a JSP page, simply add:
+            <code>&lt;%@ taglib uri="admin" prefix="admin" %&gt;</code> to the top of your JSP page. The tags include:
+        </p>
+        <dl>
+            <dt><code>&lt;admin:ASN1DER/&gt;</code></dt>
+            <dd>will display an ASN.1 DER encoded certificate (provided as a byte array) in an HTML table. (since Openfire 4.0.0)</dd>
+
+            <dt><code>&lt;admin:FlashMessage/&gt;</code></dt>
+            <dd>will display up to three suitably decorated session attributes on the rendered page. The keys of these
+                session attributes are defined by <code>FlashMessageTag.SUCCESS_MESSAGE_KEY</code>,
+                <code>WARNING_MESSAGE_KEY</code> and <code>ERROR_MESSAGE_KEY</code>. This allows messages to be displayed
+                to the user when navigating between pages. (since Openfire 4.5.0)</dd>
+        </dl>
+
+    </section>
+
+    <section id="csrf">
 
         <h2>CSRF protection</h2>
-        Admin pages are liable to <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF attacks</a>.
-        Openfire provides facilities to aid plugin authors to protect against these attacks on their admin pages. To
-        enable CSRF protection:
+
+        <p>
+            Admin pages are liable to <a href="https://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF attacks</a>.
+            Openfire provides facilities to aid plugin authors to protect against these attacks on their admin pages. To
+            enable CSRF protection:
+        </p>
         <ol>
             <li>Set the plugin.xml <code>minServerVersion</code> to 4.5.0 or above as this is when support was added.</li>
             <li>Set the plugin.xml <code>csrfProtectionEnabled</code> to <code>true</code> to enable CSRF protection for
@@ -503,33 +659,51 @@ points that are the most common:
                 enabled for GET requests</li>
             <li>Ensure that any form submitted in the admin page has a field called <code>csrf</code> whose value is that
             defined by the request attribute "csrf" - for example:<br>
-                <code>&lt;input name="csrf" value="&lt;c:out value="${csrf}"/&gt;" type="hidden"&gt;</code></li>
+                <pre><code>&lt;input name="csrf" value="&lt;c:out value="${csrf}"/&gt;" type="hidden"&gt;</code></pre></li>
         </ol>
-        If a CSRF attack is detected, the admin page will be reloaded (with a simple HTTP GET request) with
-        the session attribute <code>FlashMessageTag.ERROR_MESSAGE_KEY</code> set to indicate the problem - it's
-        therefore advised to include the <code>&lt;admin:FlashMessage/&gt;</code> at the top of your JSP page.
+        <p>
+            If a CSRF attack is detected, the admin page will be reloaded (with a simple HTTP GET request) with
+            the session attribute <code>FlashMessageTag.ERROR_MESSAGE_KEY</code> set to indicate the problem - it's
+            therefore advised to include the <code>&lt;admin:FlashMessage/&gt;</code> at the top of your JSP page.
+        </p>
+        <p>
+            <strong>NOTE</strong>: It is still important to ensure that all your output is properly escaped using
+            <code>&lt;c:out&gt;</code> tags or the equivalent.
+        </p>
 
-        <p><strong>NOTE</strong>: It is still important to ensure that all your output is properly escaped using
-        <code>&lt;c:out&gt;</code> tags or the equivalent.</p>
+    </section>
 
-<h2>Plugin FAQ</h2>
+    <section id="faq">
 
-<b>Can I deploy a plugin as a directory instead of a JAR?</b>
-<p>No, all plugins must be deployed as JAR or WAR files. When a JAR or WAR is not present for the plugin,
-Openfire assumes that the file has been deleted and that the users wants to destroy the plugin,
-so it also deletes the directory.</p>
+        <h2>Plugin FAQ</h2>
 
-<b>I've made a change to an existing plugin but can't get it to install when I upload it. Why?</b>
-<p>Naming is important. The uploaded JAR must match name with the plugin (i.e. the POM artifactId). For example, the Monitoring 
-and Archiving Plugin must be uploaded as <code>monitoring.jar</code> rather than <code>my_better_monitoring.jar</code>. <br/>
-If you're compiling using the <code>maven-assembly-plugin</code>, be sure to look at the config in the <a href="https://github.com/igniterealtime/openfire-exampleplugin/blob/main/pom.xml">example plugin</a>.</p>
+        <h4>Can I deploy a plugin as a directory instead of a JAR?</h4>
+        <p>
+            No, all plugins must be deployed as JAR or WAR files. When a JAR or WAR is not present for the plugin,
+            Openfire assumes that the file has been deleted and that the users wants to destroy the plugin,
+            so it also deletes the directory.
+        </p>
 
-<br>
-<br>
+        <h4>I've made a change to an existing plugin but can't get it to install when I upload it. Why?</h4>
+        <p>
+            Naming is important. The uploaded JAR must match name with the plugin (i.e. the POM artifactId). For example,
+            the Monitoring and Archiving Plugin must be uploaded as <code>monitoring.jar</code> rather than
+            <code>my_better_monitoring.jar</code>.
+        </p>
+        <p>
+            If you're compiling using the <code>maven-assembly-plugin</code>, be sure to look at the config in the
+            <a href="https://github.com/igniterealtime/openfire-exampleplugin/blob/main/pom.xml">example plugin</a>.
+        </p>
 
-    </div>
+    </section>
 
-</div>
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
 
+</article>
 </body>
 </html>

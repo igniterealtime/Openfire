@@ -1,81 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Openfire: Customization Guide</title>
-<link href="style.css" rel="stylesheet" type="text/css">
+    <title>Openfire: Customization Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
-<div id="pageContainer">
+<article>
 
-<a name="top"></a>
-
-    <div id="pageHeader">
-        <div id="logo"></div>
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
         <h1>Customization Guide</h1>
-    </div>
-    <div class="navigation">
+    </header>
+
+    <nav>
         <a href="index.html">&laquo; Back to documentation index</a>
-    </div>
+    </nav>
 
-    <div id="pageBody">
+    <section id="intro">
 
-     <p>
-        Openfire provides ways to customize application code as well as the Admin console,
-        while maintaining that code in a separate location from the distribution source.
-        The base code and custom code are integrated during the build process.
-     </p>
-
-        <h2><a name="mysql">File Structure</a></h2>
-
-        <p>To customize files, create the following file structure in your <tt>openfireHome</tt>
-        directory (where all the source files are on your filesystem).
-        </p>
-
-        <pre>custom/
-        | - i18n/                    &lt;- Directory to place translation files to be overridden
-        | - conf/                    &lt;- Directory to place configuration files to be overridden
-        | - lib/                     &lt;- Directory to place any private or 3rd prty jar files
-        | - source/                  &lt;- Directory to place java source files to be overridden
-        | - webapp/                  &lt;- Directory to place any web file (image, CSS or jsp)
-        </pre>
+        <h2>Introduction</h2>
 
         <p>
-            In the <tt>custom/conf</tt> directory, mirror the contents under the <tt>src/conf</tt> directory.
-            Any files you place under <tt>custom/conf</tt> will override the current conf files under conf
-            in the build. For example, to override the <tt>openfire.xml</tt> config file, you would place a
-            openfire.xml file under the directory <tt>custom/conf/</tt>.
+            Openfire provides ways to customize application code as well as the Admin console,
+            while maintaining that code in a separate location from the distribution source.
+            The base code and custom code are integrated during the build process.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#file-structure">File Structure</a>
+                <li><a href="#build">Build</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="file-structure">
+
+        <h2>File Structure</h2>
+
+        <p>
+            To customize files, create the following file structure in your <code>openfireHome</code> directory (where
+            all the source files are on your filesystem).
+        </p>
+
+        <fieldset>
+            <legend>Openfire 'home' directory structure</legend>
+            <pre>custom/
+    | - i18n/                    &lt;- Directory to place translation files to be overridden
+    | - conf/                    &lt;- Directory to place configuration files to be overridden
+    | - lib/                     &lt;- Directory to place any private or 3rd party jar files
+    | - source/                  &lt;- Directory to place java source files to be overridden
+    | - webapp/                  &lt;- Directory to place any web file (image, CSS or jsp)</pre>
+        </fieldset>
+
+        <p>
+            In the <code>custom/conf</code> directory, mirror the contents under the <code>src/conf</code> directory.
+            Any files you place under <code>custom/conf</code> will override the current conf files under conf
+            in the build. For example, to override the <code>openfire.xml</code> config file, you would place a
+            openfire.xml file under the directory <code>custom/conf/</code>.
         </p>
 
         <p>
-            Any files you place under the <tt>custom/lib</tt> directory will be placed along side the other
-            jar files under the <tt>openfire/lib/</tt> directory. For example, if you require a 3rd party 
-            jar file for use with changes you made under <tt>custom/source/</tt>, you would place the
-            jar file in <tt>custom/lib/</tt> and it will be placed in the <tt>lib/</tt> in the build.
+            Any files you place under the <code>custom/lib</code> directory will be placed along side the other
+            jar files under the <code>openfire/lib/</code> directory. For example, if you require a 3rd party 
+            jar file for use with changes you made under <code>custom/source/</code>, you would place the
+            jar file in <code>custom/lib/</code> and it will be placed in the <code>lib/</code> in the build.
         </p>
 
         <p>
-            In the <tt>custom/source</tt> directory, mirror the contents under the <tt>src/java</tt> directory.
-            Any files you place under <tt>custom/source</tt> will override the current source files in the build.
-            For example, to override the class <tt>org.jivesoftware.openfire.Channel</tt> you would place a 
-            Channel.java file under the directory <tt>custom/source/org/jivesoftware/openfire/</tt>.
+            In the <code>custom/source</code> directory, mirror the contents under the <code>src/java</code> directory.
+            Any files you place under <code>custom/source</code> will override the current source files in the build.
+            For example, to override the class <code>org.jivesoftware.openfire.Channel</code> you would place a 
+            Channel.java file under the directory <code>custom/source/org/jivesoftware/openfire/</code>.
         </p>
 
         <p>
-            In the <tt>custom/webapp</tt> directory, mirror the contents of the <tt>src/web</tt> directory.  
+            In the <code>custom/webapp</code> directory, mirror the contents of the <code>src/web</code> directory.  
             Any files you place there will override the current source files in the build.  For example, 
-            if you want to modify <tt>src/web/login.jsp</tt> then add login.jsp to the directory 
-            <tt>custom/webapp</tt>.
+            if you want to modify <code>src/web/login.jsp</code> then add login.jsp to the directory 
+            <code>custom/webapp</code>.
         </p>
 
         <p>
-            In the <tt>custom/resources/jar</tt> directory, mirror the contents of the <tt>src/resources/jar</tt>
+            In the <code>custom/resources/jar</code> directory, mirror the contents of the <code>src/resources/jar</code>
             directory. Any files you place there will override the current source files in the build. These files will
             be placed in the root of the generated Openfire.jar file.
         </p>
 
         <p>
-            In the <tt>custom/resources/nativeAuth</tt> directory, mirror the contents of the <tt>src/resources/nativeAuth</tt>
+            In the <code>custom/resources/nativeAuth</code> directory, mirror the contents of the <code>src/resources/nativeAuth</code>
             directory. Any files you place there will override the current source files in the build.
         </p>
 
@@ -86,19 +103,33 @@
 
         <p>
             The texts that are used in the administration panel (as well as some other texts) are taken from various
-            translation files under the <tt>src/i18n</tt> directory. To customize such a file, a file by the same name
-            can be added in the <tt>custom/i18n</tt> directory. The build process will merge both files, which you to
+            translation files under the <code>src/i18n</code> directory. To customize such a file, a file by the same name
+            can be added in the <code>custom/i18n</code> directory. The build process will merge both files, which you to
             add your own properties, as well as override existing properties, without the need to copy all properties
             that aren't of interest to you.
         </p>
 
+    </section>
+
+    <section id="build">
+
         <h2>Build</h2>
-        <p>Simply build the application as normal.  You may need to run the ant <tt>clean</tt>
+
+        <p>
+            Simply build the application as normal. You may need to run the ant <code>clean</code>
             task for your changes to be picked up.
         </p>
-    </div>
 
-</div>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
 
 </body>
 </html>

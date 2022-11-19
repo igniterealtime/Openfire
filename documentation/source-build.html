@@ -1,253 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Openfire: Building the Source</title>
-<link href="style.css" rel="stylesheet" type="text/css">
+    <title>Openfire: Building the Source</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 
 <body>
 
-<div id="pageContainer">
+<article>
 
-<a name="top"></a>
-
-    <div id="pageHeader">
-        <div id="logo"></div>
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
         <h1>Building the Source</h1>
-    </div>
-    <div class="navigation">
+    </header>
+
+    <nav>
         <a href="index.html">&laquo; Back to documentation index</a>
-    </div>
-    
-    <div id="pageBody">
+    </nav>
 
+    <section id="intro">
 
-<p>This document provides detailed information for developers that wish to
-compile and make changes to the Openfire source code.</p>
+        <h2>Introduction</h2>
 
-<p>For additional developer resources, please visit:
-<a href="http://www.igniterealtime.org">
-http://www.igniterealtime.org</a>. The Openfire build process is based on Apache Maven. Visit the
-<a href="https://maven.apache.org/">Maven website</a>
-for more information.
+        <p>
+            This document provides detailed information for developers that wish to compile and make changes to the
+            Openfire source code.
+        </p>
+        <p>
+            For additional developer resources, please visit: <a href="https://www.igniterealtime.org">https://www.igniterealtime.org</a>.
+        </p>
+        <p>
+            The Openfire build process is based on Apache Maven. Visit the <a href="https://maven.apache.org/">Maven website</a>
+            for more information.
+        </p>
 
-<p>
-This documentation is divided into three sections:
-<ol>
- <li> <a href="#source">Source</a> -- get te Openfire source code.
-    <li> <a href="#setup">Setup</a> -- how to setup your environment for Openfire development.
-    <li> <a href="#phases">Build Phases</a> -- tasks that can be performed using the build program.
+        <p>
+            This documentation is divided into three sections:
+        </p>
 
-</ol>
-
-<p><a name="source"><b><font color="#0066cc">1.</font> Get the Openfire Source</b></a><p>
-
-You can get the Openfire source code by downloading a source distribution or
-by checking out the source code from CVS. Instructions for both options can
-be found on the <a href="http://www.igniterealtime.org/downloads/source.jsp">source page</a>. 
-
-<p><a name="setup"><b><font color="#0066cc">2.</font> Setup Your Environment</b></a><p>
-
-Getting your machine ready for development requires a few steps. Wherever
-possible, instructions are provided for both Unix/Linux and Windows users.
-<p>
-
-<b><a name="javaSetup">Configure Java for Openfire</a></b>
-<ul>
-    Java 8 (JDK 1.8) must be installed and setup on your machine. To test the installation,
-    open a shell in a Unix or a MS-DOS prompt in Windows. Check your version of
-    Java with "java -version" -- it must version 1.8 or greater.
-    If Java isn't installed, download a copy from the
-    <a href="http://www.oracle.com/technetwork/java/javase/overview/index.html">Java website</a>.
-    <p>
-    <font color="red">Important!</font> -- the Openfire build tool needs to know
-    where Java is installed on your system. You must configure the "JAVA_HOME"
-    environment variable to point to the correct directory. Instructions on
-    how to set this variable for various platforms are as follows:
-    <p>
-    <ul>
-        <li> Unix/Linux
+        <nav>
             <ol>
+                <li><a href="#source">Source</a> -- get te Openfire source code.
+                <li><a href="#setup">Setup</a> -- how to setup your environment for Openfire development.
+                <li><a href="#phases">Build Phases</a> -- tasks that can be performed using the build program.
+            </ol>
+        </nav>
 
-                <li>Edit the ".profile" file in your home directory (or
-                    corresponding file for your shell).
-                <li>Set the JAVA_HOME environment variable by adding the
-                    following line to the file:
-                    <p><span class="code">
-                    export JAVA_HOME=/usr/local/jdk1.8
-                    </span>
-                    <p>
-                    The value "/usr/local/jdk1.8" should be replaced with your actual
+    </section>
+
+    <section id="source">
+
+        <h2>Get the Openfire Source</h2>
+
+        <p>
+            You can get the Openfire source code by downloading a source distribution or by checking out the source code
+            from the <a href="https://github.com/igniterealtime/Openfire">Openfire Github repository</a>. Instructions
+            for both options can be found on the <a href="https://www.igniterealtime.org/downloads/source.jsp">source page</a>.
+        </p>
+
+    </section>
+
+    <section id="setup">
+
+        <h2>Setup Your Environment</h2>
+
+        <p>
+            Getting your machine ready for development requires a few steps. Wherever possible, instructions are
+            provided for both Unix/Linux and Windows users.
+        </p>
+
+        <section id="javaSetup">
+
+            <h3>Configure Java for Openfire</h3>
+
+            <p>
+                Java 11 (JDK 11) must be installed and setup on your machine. To test the installation, open a shell in
+                a Unix or a command prompt in Windows. Check your version of Java with "java -version" -- it must
+                version 11 or greater.
+            </p>
+
+            <p>
+                <span style="color: red; ">Important!</span> -- the Openfire build tool needs to know
+                where Java is installed on your system. You must configure the "JAVA_HOME"
+                environment variable to point to the correct directory. Instructions on
+                how to set this variable for various platforms are as follows:
+            </p>
+
+            <h4>Unix/Linux</h4>
+
+            <ol>
+                <li>Edit the ".profile" file in your home directory (or corresponding file for your shell).
+                <li>Set the JAVA_HOME environment variable by adding the following line to the file:
+                    <pre>export JAVA_HOME=/usr/local/jdk11</pre>
+                    The value "/usr/local/jdk11" should be replaced with your actual
                     Java directory. Be sure there are no spaces after the end of
                     the directory name. Do not add an extra slash after the directory name.
                 <li>Save changes to the file and then "source" it:
-                    <p><span class="code">
-                    source .profile
-                    </span>
-                    <p>
-
+                    <pre>source .profile</pre>
                     The JAVA_HOME variable should now be configured correctly.
             </ol>
-        <p>
-        <li> WindowsNT/2000/XP
+
+            <h4>Microsoft Windows</h4>
             <ol>
-                <li>Navigate to your desktop and right click on "My Computer";
-                    choose properties.
-                <li>Select the "Advanced" tab and click on the
-                    "Environment Variables" button.
+                <li>Navigate to your desktop and right click on "My Computer"; choose properties.
+                <li>Select the "Advanced" tab and click on the "Environment Variables" button.
                 <li>Click the "New..." button in the System variables section.
                     Enter the variable name "JAVA_HOME" and set the variable
                     value to the full path of your Java installation. For example,
-                    "c:\jdk1.8". Be sure to not add an extra slash to the end
+                    "c:\jdk11". Be sure to not add an extra slash to the end
                     of the directory name.
-                <li>Click "OK" in all of the menus to accept the changes.
+                <li>Click "OK" in all the menus to accept the changes.
                 <li>Close any open command prompt windows. The next time you
                     open a command prompt, the "JAVA_HOME" variable will be set
                     correctly.
             </ol>
+
+        </section>
+
+        <section id="maven">
+
+            <h3>Install the Maven Build Tool</h3>
+
+            <p>
+                The Openfire build process uses Maven, so that tool must be installed and configured on your computer.
+                First download Maven from: <a href="https://maven.apache.org/">https://maven.apache.org</a>. Next,
+                follow the <a href="https://maven.apache.org/users/index.html">usage instructions</a>.
+            </p>
+
+            <h4>Test building with Maven</h4>
+
+            <p>
+                Navigate into the root directory of this distribution named via the command-line. In that directory,
+                invoke the build tool to compile the Openfire source code:
+            </p>
+            <pre>mvn compile</pre>
+            <p>
+                If the build tool is invoked correctly and Openfire compiles, you've correctly
+                configured Maven and your copy of the Openfire source distribution.
+            </p>
+
+        </section>
+
+    </section>
+
+    <section id="phases">
+
+        <h2>Build Phases</h2>
+
         <p>
+            Openfire conforms to the standard Maven build process. For a full list of the commands please review the
+            Apache Maven documentation. For more complete help on several commands, read the documentation below.
+        </p>
+        <p>
+            To execute a build phase, type <code>mvn "phase"</code> where "phase" is one of the keywords listed below:
+        </p>
+        <ul>
+            <li><a href="#clean">clean</a>
+            <li><a href="#compile">compile</a>
+            <li><a href="#test">test</a>
+            <li><a href="#package">package</a>
+        </ul>
+        <p>
+            Note that you can combine several phases, for example: <code>mvn clean package</code>.
+            When a phase is given, Maven will execute every phase in the sequence up to and
+            including the one defined. For example, when the 'package' phase is executed, the
+            'compile' and 'test' phases are also executed (but the 'clean' phase is not, unless
+            specified explicitly). Please refer to the Maven documentation for more details.
+        </p>
 
-        <li> Windows95/98
-            <ol>
-                <li>Open your autoexec.bat file (often at "c:\autoexec.bat") using Notepad.
-                <li>Add a line to the end of the file that resembles the following:
-                    <p><span class="code">
-                    set JAVA_HOME=c:\jdk1.8
-                    </span>
-                    <p>
-                    The value "c:\jdk1.8" should be replaced with your actual
-                    Java directory. Be sure there are no spaces between
-                    the "=" sign or after the end of the directory name. Do
-                    not add an extra slash after the directory name.
-                <li>Save changes to autoexec.bat and restart your computer.
-            </ol>
+        <section id="clean">
 
-    </ul>
-</ul>
+            <h3>clean</h3>
 
-<p><b><a name="maven">Install the Maven Build Tool</a></b><p>
+            <p>Cleans all artifacts of the build process.</p>
 
-The Openfire build process uses Maven, so that tool must be installed
-and configured on your computer. First download Maven from: 
-<a href="https://maven.apache.org/">https://maven.apache.org</a>. Next, follow
-the <a href="https://maven.apache.org/users/index.html">usage instructions</a>.
+            <fieldset>
+                <legend>Syntax</legend>
+                <pre><code>mvn clean</code></pre>
+            </fieldset>
 
-<p><b><a name="checkout">Test the Build </a></b><p>
-<ul>
-Navigate into the root direcotry of this distribution named via the command-line.<p>
+        </section>
 
-<p>
-Now, invoke the build tool to compile the Openfire source code: <span class="code">mvn compile</span>
+        <section id="compile">
 
-If the build tool is invoked correctly and Openfire compiles, you've correctly
-configured your copy of the Openfire source distribution.
+            <h3>compile</h3>
 
-</ul>
+            <p>Builds Openfire components into the <code>target</code> directory of each module.</p>
 
-<p><b>Finished!</b><p>
-<ul>
-If you've gotten this far, you've finished setting up the Openfire source
-distribution.
-</ul>
+            <fieldset>
+                <legend>Syntax</legend>
+                <pre><code>mvn compile</code></pre>
+            </fieldset>
 
-<br><br>
+        </section>
 
-<p><b><a name="phases"><font color="#0066cc">3.</font> Build Phases</a></b><p>
+        <section id="test">
 
-    Openfire conforms to the standard Maven build process. For a full list of the
-    commands please review the Apache Maven documentation. For more complete help
-    on several commands, read the documentation below.
+            <h3>test</h3>
 
-    <br><br>
+            <p>Builds Openfire components, and runs all unit tests.</p>
 
-    To execute a build pahse, type <code>mvn "phase"</code> where "phase" is
-    one of the keywords listed below:
+            <fieldset>
+                <legend>Syntax</legend>
+                <pre><code>mvn test</code></pre>
+            </fieldset>
 
-    <ul>
-        <li><a href="#clean">clean</a>
-        <li><a href="#compile">compile</a>
-        <li><a href="#test">test</a>
-        <li><a href="#package">package</a>
-    </ul>
-
-    <br><br>
-
-    Note that you can combine several phases, for example: <code>mvn clean package</code>.
-    When a phase is given, Maven will execute every phase in the sequence up to and
-    including the one defined. For example, when the 'package' phase is executed, the 
-    'compile' and 'test' phases are also executed (but the 'clean' phase is not, unless
-    specified explicitly). Please refer to the Maven documentation for more details.
-
-<p>
+        </section>
 
 
-<!--CLEAN-->
-<p><b><a name="clean">clean</a></b>
-<ul>
-<i>Syntax:</i><p>
+        <section id="package">
 
-<span class="code"> mvn clean <br></span>
+            <h3>package</h3>
 
-<p><i>Description:</i></p>
+            <p>
+                Builds Openfire components, runs all unit tests, and creates a distributable package
+                in the <code>distribution</code> module. You can then launch Openfire using the scripts in
+                <code>distribution/target/distribution-base/bin</code>.
+            </p>
 
-Cleans all artifacts of the build process.<p>
+            <fieldset>
+                <legend>Syntax</legend>
+                <pre><code>mvn package</code></pre>
+            </fieldset>
 
-<p>[<a href="#phases">return to task list</a>]
-</ul>
+        </section>
 
+    </section>
 
-<!--COMPILE-->
-<p><b><a name="compile">compile</a></b>
-<ul>
-<i>Syntax:</i><p>
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
 
-<span class="code"> mvn compile <br></span>
-
-<p><i>Description:</i></p>
-
-Builds Openfire components (including plugins) into the <tt>target</tt> directory of each module.
-
-<p>[<a href="#phases">return to task list</a>]
-</ul>
-
-<!--TEST-->
-<p><b><a name="test">test</a></b>
-
-<ul>
-<i>Syntax:</i><p>
-
-<span class="code"> mvn test <br></span>
-
-<p><i>Description:</i></p>
-
-Builds Openfire components, and runs all unit tests.
-
-<p>[<a href="#phases">return to task list</a>]
-
-</ul>
-
-<!--TEST-->
-<p><b><a name="package">package</a></b>
-
-<ul>
-<i>Syntax:</i><p>
-
-<span class="code"> mvn package <br></span>
-
-<p><i>Description:</i></p>
-
-Builds Openfire components, runs all unit tests, and creates a distributable package 
-in the <tt>distribution</tt> module. You can then launch
-Openfire using the scripts in <tt>distribution/target/distribution-base/bin</tt>.
-
-<p>[<a href="#phases">return to task list</a>]
-
-</ul>
-
-
-    </div>
-
-</div>
+</article>
 
 </body>
 </html>

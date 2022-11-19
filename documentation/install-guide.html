@@ -1,86 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Openfire: Installation Guide</title>
-<link href="style.css" rel="stylesheet" type="text/css">
+    <title>Openfire: Installation Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
+        dd {
+            margin-left: 18em;
+        }
+        dt {
+            width: 18em;
+        }
+    </style>
 </head>
 <body>
 
-<div id="pageContainer">
+<article>
 
-<a name="top"></a>
-
-    <div id="pageHeader">
-        <div id="logo"></div>
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
         <h1>Installation Guide</h1>
-    </div>
-    <div class="navigation">
+    </header>
+
+    <nav>
         <a href="index.html">&laquo; Back to documentation index</a>
-    </div>
-    
-    <div id="pageBody">
+    </nav>
 
-<p>Openfire is a powerful instant messaging (IM) and chat
-server that implements the XMPP protocol. This document will guide 
-you through installing Openfire. For a full list of features and more information, please
-visit the Openfire website: <a href="http://www.igniterealtime.org/projects/openfire/"
- target="_top">http://www.igniterealtime.org/projects/openfire/</a></p>
+    <section id="intro">
 
-<h2>Installation</h2>
-<ul>
-<h3>Windows</h3>
-<p>Select Openfire installer that is better suiting you (with or without Java JRE, x86 or x64). Run the installer. The application will be installed to <tt>C:\Program Files\Openfire</tt> by default.</p>
+        <h2>Introduction</h2>
 
-<p><b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it has to be run with Run as administrator option, to be able to write changes to config and embedded database (if used) stored in <tt>C:\Program files\Openfire\</tt> folder. If Openfire is running via launcher without Run as administrator option from Program files, it can't get proper permissions to write changes. It shows errors (in red) when running the launcher and during the setup will require the current password for the administrator account (although this is a new installation and normally it doesn't ask for it). This is an effect of missing permissions and Openfire not being able to initialize the database and other resources.</p>
- <p><b>Since 4.1.5 Openfire installs and runs the service automatically (also opens the browser and loads the web setup page). The launcher (if one wants to use it) is also made to run in elevated mode, so one don't need to run it as administrator manually. But you shouldn't use the launcher, if the service is running. Because this will create a conflict.</b></p>
-    
- <h3>Linux</h3>
- 
- <p>Choose one of the provided installers (x86 or x64, with or without Java JRE, rpm, deb or tar.gz).</p>
+        <p>
+            Openfire is a powerful instant messaging (IM) and chat server that implements the XMPP protocol. This
+            document will guide  you through installing Openfire. For a full list of features and more information,
+            please visit the Openfire website:
+            <a href="https://www.igniterealtime.org/projects/openfire/" target="_top">https://www.igniterealtime.org/projects/openfire/</a>
+        </p>
 
-    If using rpm, run it using your package manager to install Openfire to <tt>/opt/openfire</tt>:
-        <p><tt>rpm -ivh openfire_X_Y_Z.rpm</tt></p>
+        <p>
+            <b>Note:</b> Openfire installers do not contain a bundled Java runtime (JRE). Therefore, you must have a
+            JDK or JRE installed on your system. Openfire 4.3 (also 4.2 and older versions) requires Java 8. Starting
+            with 4.4 version Openfire also supports Java 11. Openfire 4.8 and later require Java 11 and no longer run
+            with older versions of Java. You can check your java version by typing <code>java -version</code> at the
+            command line.
+        </p>
 
- If using deb, run it to install Openfire to <tt>/usr/share/openfire</tt>:
-    <p><tt>dpkg -i openfire_X_Y_Z.deb</tt></p>
+        <p>To complete the installation of Openfire, you'll need to perform each of the following steps:</p>
 
- If using the tar.gz, extract the archive to <tt>/opt</tt> or <tt>/usr/bin</tt>:
- <p><tt>tar -xzvf openfire_X_Y_Z.tar.gz<br>
- mv openfire /opt</tt></p>
+        <nav>
+            <ul>
+                <li><a href="#installation">Installation</a>
+                    <ul>
+                        <li><a href="#installation-windows">Windows</a></li>
+                        <li><a href="#installation-linux">Linux</a></li>
+                        <li><a href="#installation-macos">macOS</a></li>
+                    </ul>
+                </li>
+                <li><a href="#setup-overview">Setup Overview</a>
+                    <ul>
+                        <li><a href="#database">Database</a></li>
+                        <li><a href="#config">Setup</a></li>
+                        <li><a href="#autosetup">Autosetup</a></li>
+                        <li><a href="#tools">Admin Console</a></li>
+                    </ul>
+                </li>
+            </ul>
 
-    <h3>macOS</h3>
-    <p>Install Openfire using dmg installer. This should install Openfire into <tt>/usr/local/openfire</tt>. Then you can run it via cmd or with the launcher.</p>
+        </nav>
 
- <p><b>Note:</b> some Openfire installers do not contain a bundled Java runtime (JRE). Therefore, you must have JDK or JRE installed on your system. Openfire 4.3 (also 4.2 and older versions) requires Java 8. Starting with 4.4 version Openfire also supports Java 11.
-     You can check your java version by typing "java -version" at the command line. We suggest using OpenJDK, which is usually provided as a package on Linux or you can download it for various platforms from <a href="https://adoptopenjdk.net/">AdoptOpenJDK</a>.</p>
+        <p>This document also includes information on:</p>
 
-  </ul>
-<h2>Setup Overview</h2>
-<p>To complete the installation of Openfire, you'll need to
-perform each of the following steps: </p>
-<ol>
-  <li><a href="#database">Database</a> - if you choose to use an external database, you must
- prepare your database for Openfire. </li>
-  <li><a href="#config">Setup</a> - Use the built-in web-based setup
-tool to setup and verify the server configuration.</li>
+        <nav>
+            <ul>
+                <li><a href="#windows">Running Openfire on Windows</a></li>
+                <li><a href="#unix">Running Openfire in Linux/Unix</a></li>
+                <li><a href="#plugins">Installing and using plugins</a></li>
+                <li><a href="#firewall">Configuring a firewall</a>
+            </ul>
+        </nav>
 
-  <li><a href="#tools">Admin Console</a> - use the web-based admin tool to
-manage the server.</li>
-</ol>
+    </section>
 
-<p>This document also includes information on:</p>
+    <section id="installation">
 
-<ul>
-    <li><a href="#windows">Running under Windows</a>
-    <li><a href="#unix">Running under Unix/Linux</a>
+        <h2>Installation</h2>
 
-    <li><a href="#plugins">Installing and using plugins</a>
-</ul>
+        <section id="installation-windows">
 
-<h2><a name="distribution">Files in the Distribution</a></h2>
-<p> The files in your distribution should be as follows (some
-sub-directories omitted for brevity): </p>
-<pre>openfire/
+            <h3>Windows</h3>
+
+            <p>
+                Select Openfire installer that is better suiting you (x86 or x64). Run the installer. The application
+                will be installed to <code>C:\Program Files\Openfire</code> by default.
+            </p>
+
+            <p>
+                <b>Note:</b> On Windows systems we suggest using a service to run Openfire (read the Windows Service
+                section below). When using Openfire Launcher on Windows Vista or newer with UAC protection enabled, it
+                has to be run with Run as administrator option, to be able to write changes to config and embedded
+                database (if used) stored in <code>C:\Program files\Openfire\</code> folder. If Openfire is running via
+                the launcher without the 'Run as administrator' option from Program files, it can't get proper
+                permissions to write changes. It shows errors (in red) when running the launcher and during the setup
+                will require the current password for the administrator account (although this is a new installation.
+                Normally it doesn't ask for it). This is an effect of missing permissions and Openfire not being able to
+                initialize the database and other resources.
+            </p>
+
+            <p>
+                <b>
+                    Since 4.1.5 Openfire installs and runs the service automatically (also opens the browser and loads
+                    the web setup page). The launcher (if one wants to use it) is also made to run in elevated mode, so
+                    one don't need to run it as administrator manually. But you shouldn't use the launcher, if the
+                    service is running. Because this will create a conflict.
+                </b>
+            </p>
+
+        </section>
+
+        <section id="installation-linux">
+
+            <h3>Linux</h3>
+
+            <p>
+                Choose one of the provided installers (x86 or x64, rpm, deb or tar.gz).
+            </p>
+
+            <p>
+                If using rpm, run it using your package manager to install Openfire to <code>/opt/openfire</code>:
+            </p>
+
+            <pre>rpm -ivh openfire_X_Y_Z.rpm</pre>
+
+            <p>
+                If using deb, run it to install Openfire to <code>/usr/share/openfire</code>:
+            </p>
+
+            <pre>dpkg -i openfire_X_Y_Z.deb</pre>
+
+            <p>
+                If using the tar.gz, extract the archive to <code>/opt</code> or <code>/usr/bin</code>:
+            </p>
+
+            <pre><code>tar -xzvf openfire_X_Y_Z.tar.gz
+mv openfire /opt</code></pre>
+
+        </section>
+
+        <section id="installation-macos">
+
+            <h3>macOS</h3>
+
+            <p>
+                Install Openfire using dmg installer. This should install Openfire into <code>/usr/local/openfire</code>.
+                Then you can run it via cmd or with the launcher.
+            </p>
+
+        </section>
+
+    </section>
+
+    <section id="setup-overview">
+
+        <h2>Setup Overview</h2>
+
+        <section id="distribution">
+
+            <h3>Files in the Distribution</h3>
+
+            <p>The files in your distribution should be as follows (some subdirectories omitted for brevity):</p>
+
+            <fieldset>
+                <legend>Openfire distribution directory layout</legend>
+            <pre>openfire/
  |- readme.html
  |- license.html
  |- conf/
@@ -88,58 +178,73 @@ sub-directories omitted for brevity): </p>
  |- jre/
  |- lib/
  |- plugins/
-     |- admin/
+ |    |- admin/
  |- resources/
-     |-database/
-     |-security/
+ |    |-database/
+ |    |-security/
  |- documentation/</pre>
+            </fieldset>
 
-<ul> 
-     <li>The <tt>conf</tt> directory is where Openfire stores
-configuration files.</li>
+            <ul>
+                <li>The <code>conf</code> directory is where Openfire stores configuration files.</li>
+                <li>The <code>bin</code> directory contains the server executables. Depending on which distribution you installed, different executables will be available.</li>
+                <li>The <code>jre</code> directory contains a Java runtime that is bundled with the Windows and RPM versions of Openfire.</li>
+                <li>The <code>lib</code> directory contains libraries necessary for running Openfire.</li>
+                <li>The <code>plugins</code> directory contains server plugins. By default, Openfire ships with a web-based admin console plugin and a search plugin.</li>
+                <li>The <code>resources/database</code> directory contains SQL schema files to create new Openfire databases, as well as upgrade scripts for existing installations.</li>
+                <li>The <code>resources/security</code> directory is where Openfire maintains keystores to support SSL connection security.</li>
+                <li>The <code>documentation</code> directory contains server documentation.</li>
+            </ul>
 
-  <li>The <tt>bin</tt> directory contains the server executables. Depending
-on which distribution you installed, different executables will be available.</li>
-  <li>The <tt>jre</tt> directory contains a Java runtime that is bundled with the Windows and RPM versions of Openfire.</li>
-  <li>The <tt>lib</tt> directory contains libraries necessary for
-running Openfire.</li>
+        </section>
 
-  <li>The <tt>plugins</tt> directory contains server plugins. By
-default, Openfire ships with a web-based admin console plugin.</li>
-  <li>The <tt>resources/database</tt> directory contains SQL schema files to
-create new Openfire databases, as well as upgrade scripts for
-existing installations. </li>
-  <li>The <tt>resources/security</tt> directory is where Openfire
-maintains keystores to support SSL connection security.</li>
+        <section id="database">
 
-  <li>The <tt>documentation</tt> directory contains server
-documentation.</li>
-</ul><p>
+            <h3>Setup the Database</h3>
 
-<h2><a name="database">Setup the Database</a></h2>
-<p>Openfire can store its data in an embedded database or you can choose to use
-an external database such as MySQL or Oracle. If you would like to use an external database,
-you must prepare it before proceeding with installation. View the <a href="database.html">database
-setup</a> documentation for more information.</p>
+            <p>
+                Openfire can store its data in an embedded database or you can choose to use an external database such
+                as MySQL or Oracle. If you would like to use an external database, you must prepare it before proceeding
+                with installation. View the <a href="database.html">database setup</a> documentation for more information.
+            </p>
 
-<h2><a name="config"></a>Setup the Server</h2>
-<p>A web-based, "wizard" driven setup and configuration tool is built
-into Openfire. Simply launch Openfire (platform-specific instructions below) and use a web browser to
-connect to the admin console. The default port for the
-web-based admin console is 9090. If you are on the same machine as Openfire, the
-following URL will usually work: 
-<a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>. Initial setup and administration can also be done
-from a remote computer using LAN IP address instead or hostname if it is resolvable by the remote computer.
-Windows Server administrators should add http://127.0.0.1 address to Internet Explorer's Trusted Sites list, if
-Enhanced Security configuration is enabled in Internet Explorer. Otherwise they will get a blank screen.</p>
+        </section>
 
-<h3><a name="autosetup"></a>Autosetup</h3>
-<p>As an alternative to the web-based "wizard" driven setup described above, Openfire can be configured by provisioning it
-with a specially crafted <tt>openfire.xml</tt> file.</p>
-<p>If <tt>&lt;setup&gt;true&lt;>/setup&gt;</tt> does not exist in <tt>openfire.xml</tt> (i.e. setup is not complete, and a block
-does exist called <tt>&lt;autosetup&gt;</tt> with a <tt>&lt;run&gt;true&lt;/run&gt;</tt> property inside it, that looks like this:</p>
-<tt><pre>
-    &lt;autosetup&gt;
+        <section id="config">
+
+            <h3>Setup the Server</h3>
+
+            <p>
+                A web-based, "wizard" driven setup and configuration tool is built into Openfire. Simply launch Openfire
+                (platform-specific instructions below) and use a web browser to connect to the admin console. The
+                default port for the web-based admin console is 9090. If you are on the same machine as Openfire, the
+                following URL will usually work: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>. Initial
+                setup and administration can also be done from a remote computer using LAN IP address instead or
+                hostname if it is resolvable by the remote computer. Windows Server administrators might need to add the
+                http://127.0.0.1 address to browser's Trusted Sites list, if Enhanced Security configuration is enabled,
+                to prevent getting a blank screen.
+            </p>
+
+        </section>
+
+        <section>
+
+            <h3 id="autosetup">Autosetup</h3>
+
+            <p>
+                As an alternative to the web-based "wizard" driven setup described above, Openfire can be configured by
+                provisioning it with a specially crafted <code>openfire.xml</code> file.
+            </p>
+
+            <p>
+                If <code>&lt;setup&gt;true&lt;>/setup&gt;</code> does not exist in <code>openfire.xml</code> (i.e. setup is not
+                complete, and a block does exist called <code>&lt;autosetup&gt;</code> with a <code>&lt;run&gt;true&lt;/run&gt;</code>
+                property inside it, that looks like this:
+            </p>
+
+            <fieldset>
+                <legend>Example autosetup configuration in openfire.xml</legend>
+            <pre><code>&lt;autosetup&gt;
         &lt;run&gt;true&lt;/run&gt;
         &lt;locale&gt;en&lt;/locale&gt;
         &lt;xmpp&gt;
@@ -191,158 +296,243 @@ does exist called <tt>&lt;autosetup&gt;</tt> with a <tt>&lt;run&gt;true&lt;/run&
                 &lt;/roster&gt;
             &lt;/user1&gt;
         &lt;/users&gt;
-    &lt;/autosetup&gt;
-</pre></tt>
-<p>Then setup will be run on first launch, and the <tt>&lt;autosetup/&gt;</tt> section will be deleted from <tt>openfire.xml</tt></p>
-<p>Note that autosetup provides less options to setup Openfire as compared to using the setup wizard.</p>
+    &lt;/autosetup&gt;</code></pre>
+            </fieldset>
 
-<h2><a name="tools">Admin Console</a></h2>
-<p>After completing the above steps, Openfire will be configured
-and you can use the web-based admin console to administer
-the server. The URL should be the same as you used to setup the server
-unless you changed the port during the setup.<br>
-</p>
+            <p>
+                Then setup will be run on first launch, and the <code>&lt;autosetup/&gt;</code> section will be deleted from
+                <code>openfire.xml</code>
+            </p>
 
-<hr>
+            <p>
+                Note that autosetup provides fewer options to setup Openfire as compared to using the setup wizard.
+            </p>
 
-<h2><a name="windows">Running Openfire on Windows</a></h2>
+        </section>
 
-<p>Since 4.1.5 version Openfire automatically installs and runs the service (and opens the browser with the web setup page). But you can also use the launcher, if you need to 
-(service has to be stopped before running the launcher). If you used the Openfire installer, a shortcut for starting the 
-graphical launcher is provided in your Start Menu. Otherwise, run openfire.exe in the <tt>bin/</tt> directory of your
-Openfire installation. A button on the launcher allows you to automatically open your web browser to the correct URL 
-to finish setting up the server: 
-</p>
+        <section id="tools">
 
-<h3>Windows Service</h3>
-<p>As of 4.1.5 Openfire installs the service automatically. But if you are using older version or want to reinstall the service,
-you can use the <tt>openfire-service.exe</tt> executable in the <tt>bin</tt> directory of the installation to install or uninstall
-the service.
+            <h3>Admin Console</h3>
 
-</p>
+            <p>
+                After completing the above steps, Openfire will be configured through, and you can use the web-based admin
+                console to administer the server. The URL should be the same as you used to setup the server unless you
+                changed the port during the setup.
+            </p>
 
-From a console window, you can run the following commands:
-<ul>
-        <li><tt>openfire-service /install</tt> -- installs the service.
-        <li><tt>openfire-service /uninstall</tt> -- uninstalls the service.
-        <li><tt>openfire-service /start</tt> -- starts the service
-        <li><tt>openfire-service /stop</tt> -- stops the service.
+        </section>
 
-</ul>
+    </section>
 
-<p>
-<div style="text-align: center">
-<img src="images/windows_service.png" alt="Windows Service" width="557" height="223" style="text-align: center">
-</div>
-</p>
+    <hr>
 
-<p>You can also use the Services tool in the Windows Control Panel to start and
-stop the service.</p>
+    <section id="windows">
 
-<p>Note: the graphical launcher is not compatible with the Windows service. If you install the service, you should use service controls
-as described above to control the server rather than the graphical launcher.</p>
+        <h2>Running Openfire on Windows</h2>
 
-<p><b>Upgrading Note:</b> you should stop Openfire service before running the installer to upgrade to the newer version. Starting
-with 4.1.5 version Openfire will automatically stop and reinstall the service when upgrading with the installer.</p>
+        <p>
+            Since 4.1.5 version Openfire automatically installs and runs the service (and opens the browser with the web
+            setup page). But you can also use the launcher, if you need to (service has to be stopped before running the
+            launcher). If you used the Openfire installer, a shortcut for starting the graphical launcher is provided in
+            your Start Menu. Otherwise, run openfire.exe in the <code>bin/</code> directory of your Openfire
+            installation. A button on the launcher allows you to automatically open your web browser to the correct URL
+            to finish setting up the server: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>
+        </p>
 
-<h3>Custom Parameters</h3>
+        <section>
 
-<p>Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize
-    the runtime environment of Openfire. You can do this by creating openfire.vmoptions files in the bin/
-    directory of your Openfire installation. For the Windows service, you'd create a new text
-    file called openfire-service.vmoptions. Each parameter to the VM should be on a new line of
-    the file. For example, to set the minimum heap size to 512 MB and max VM heap size to 1024 MB, you'd use:
+            <h3>Windows Service</h3>
 
-<pre>-Xms512m
--Xmx1024m</pre>
+            <figure class="inline-right">
+                <img src="images/windows_service.png" alt="Windows Service" width="557" height="223">
+                <figcaption>Windows Service commands in a console windows.</figcaption>
+            </figure>
+            <p>
+                As of 4.1.5 Openfire installs the service automatically. But if you are using older version or want to
+                reinstall the service, you can use the <code>openfire-service.exe</code> executable in the
+                <code>bin</code> directory of the installation to install or uninstall the service.
+            </p>
+            <p>
+                From a console window, you can run the following commands:
+            </p>
+            <dl>
+                <dt><code>openfire-service /install</code></dt>
+                <dd>installs the service.</dd>
 
-To create parameters for the normal launcher, create a file called openfired.vmoptions (since
-    the openfire.exe launcher invokes the openfired.exe executable to actually start the server).</p>
+                <dt><code>openfire-service /uninstall</code></dt>
+                <dd>uninstalls the service.</dd>
 
-<h2><a name="unix">Running Openfire in Linux/Unix</a></h2>
+                <dt><code>openfire-service /start</code></dt>
+                <dd>starts the service</dd>
 
-If you are running on a Red Hat or Red Hat like system (CentOS, Fedora, etc), we recommend using the
-RPM as it contains some custom handling of the standard Red Hat like environment.  Assuming that you
-have used the RPM, you can start and stop Openfire using the <tt>/etc/init.d/openfire</tt> script.
+                <dt><code>openfire-service /stop</code></dt>
+                <dd>stops the service.</dd>
+            </dl>
+            <p>
+                You can also use the Services tool in the Windows Control Panel to start and stop the service.
+            </p>
+            <p>
+                <b>Note:</b> the graphical launcher is not compatible with the Windows service. If you install the
+                service, you should use service controls as described above to control the server rather than the
+                graphical launcher.
+            </p>
+            <p>
+                <b>Upgrading Note:</b> you should stop Openfire service before running the installer to upgrade to the
+                newer version. Starting with 4.1.5 version Openfire will automatically stop and reinstall the service
+                when upgrading with the installer.
+            </p>
 
-<p>
-<tt>
-# /etc/init.d/openfire<br>
-Usage /etc/init.d/openfire {start|stop|restart|status|condrestart|reload}<br>
-# /etc/init.d/openfire start<br>
-Starting openfire:
-</tt>
-</p>
+        </section>
 
+        <section>
 
-If you are running on a different Linux/Unix varient, and/or you have used the .tar.gz 'installer',
-you can start and stop Openfire using the <tt>bin/openfire</tt> script in your Openfire installation:
+            <h3>Custom Parameters</h3>
 
-<p>
-<tt>
-# ./openfire<br>
+            <p>
+                Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize the runtime
+                environment of Openfire. You can do this by creating a <code>openfire.vmoptions</code> file in the
+                <code>bin/</code> directory of your Openfire installation. For the Windows service, you'd create a new
+                text file called <code>openfire-service.vmoptions</code>.
+            </p>
 
-Usage: ./openfire {start|stop}<br>
-# ./openfire start<br>
-Starting openfire
-</tt></p>
+            <p>
+                Each parameter to the VM should be on a new line of the file. For example, to set the minimum heap size
+                to 512 MB and max VM heap size to 1024 MB, you'd use:
+            </p>
 
-If you would like to install Openfire as a service, two scripts are provided in the <tt>bin/extra</tt>
-directory:
-<ul>
-    <li>redhat-postinstall.sh --   automatically installs Openfire as a service on Red Hat. It does so by creating a "jive" user and then copying the openfired script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
-    <li>openfired -- script to run Openfire as a service. You must manually configure this script. See the comments in
-the script for additional details.</li>
-</ul>
-<b>It is not recommended that you use either of these scripts if you installed via RPM.  The RPM has already taken care of what these scripts take care of.</b>
+            <pre><code>-Xms512m
+-Xmx1024m</code></pre>
 
-<h3>Custom Parameters</h3>
+            <p>
+                To create parameters for the normal launcher, create a file called <code>openfired.vmoptions</code>
+                (since the openfire.exe launcher invokes the openfired.exe executable to actually start the server).
+            </p>
 
-<p>Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize
-    the runtime environment of Openfire. If you installed via RPM, you can customize this by
-    editing /etc/sysconfig/openfire and looking at the OPENFIRE_OPTS option.  If you installed
-    via .tar.gz, you will need to tweak your startup script to fit your needs.</p>
+        </section>
 
-<h2><a name="plugins">Plugins</a></h2>
+    </section>
 
-Plugins add additional features and protocol support to Openfire. After setting up your
-Openfire installation, you may want to download and install plugins to enhance your
-server. Plugins can be downloaded from the
-<a href="http://www.igniterealtime.org/projects/openfire/plugins.jsp">plugins page</a> on igniterealtime.org
-or directly inside the administration console.
+    <section id="unix">
 
-<h3>Installing Plugins</h3>
+        <h2>Running Openfire in Linux/Unix</h2>
 
-<p>If you download a plugin from inside the Openfire administration console, it will automatically
-be installed. If you manually download the plugin (packaged as a .jar file), you can deploy it
-by copying the plugin file to the <tt>plugins/</tt> directory of your Openfire installation. A
-plugin monitor will automatically extract the plugin into a directory and install the plugin in Openfire.
-You may also use the "upload plugin" feature in the admin console (under the Plugins tab) to load
-a plugin from your local file system to the server.</p>
+        <p>
+            If you are running on a Red Hat or Red Hat like system (CentOS, Fedora, etc.), we recommend using the RPM
+            distributable, as it contains some custom handling of the standard Red Hat like environment. Assuming that
+            you have used the RPM, you can start and stop Openfire using the <code>/etc/init.d/openfire</code> script.
+        </p>
+        <pre><code># /etc/init.d/openfire
+Usage /etc/init.d/openfire {start|stop|restart|status|condrestart|reload}
+# /etc/init.d/openfire start
+Starting openfire:</code></pre>
+        <p>
+            If you are running on a different Linux/Unix variant, and/or you have used the .tar.gz 'installer', you can
+            start and stop Openfire using the <code>bin/openfire</code> script in your Openfire installation:
+        </p>
+        <pre><code># ./openfire
 
-<p><strong>Note:</strong> For nearly all plugins, a restart of the Openfire
-server software is not required.  You should be able to install and remove
-plugins on-demand without impacting Openfire.</p>
+Usage: ./openfire {start|stop}
+# ./openfire start
+Starting openfire</code></pre>
+        <p>
+            If you would like to install Openfire as a service, two scripts are provided in the <code>bin/extra</code>
+            directory:
+        </p>
+        <ul>
+            <li><code>redhat-postinstall.sh</code> -- automatically installs Openfire as a service on Red Hat. It does so by creating a "jive" user and then copying the openfired script to your init.d directory. This script must be run as root. Please see the comments in the script for additional information.</li>
+            <li><code>openfired</code> -- script to run Openfire as a service. You must manually configure this script. See the comments in  the script for additional details.</li>
+        </ul>
+        <p>
+            <b>
+                It is not recommended that you use either of these scripts if you installed via RPM. The RPM has already
+                taken care of what these scripts take care of.
+            </b>
+        </p>
 
+        <section>
 
-<h3>Managing Plugins</h3>
+            <h3>Custom Parameters</h3>
 
-Plugins can be managed inside the Openfire admin console. You can also manually delete a plugin at any time by
-deleting its JAR file (Openfire will automatically remove the plugin from memory and delete it's directory when you
-do so).
-    
-<h2><a name="plugins">Firewall</a></h2>
-    
-Server's administrator should open TCP port 5222 for incoming connections for XMPP clients to be able to connect to Openfire.
-Additionally an administrator can also open TCP 9090 (for http) and TCP 9091 (for https), if there is a need to remotely administrate
-Openfire connecting to its Admin Console. We recommend only using 9091 port as it is an encrypted connection. For server to server
-connections one should also open TCP 5269 port and for secure HTTP-BIND connections TCP 7443 port. Port number can be different, if
-the default configuration has been changed by an administrator. All ports used by Openfire can be found on the first page of 
-Admin Console in the Server Ports section.
+            <p>
+                Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize the runtime
+                environment of Openfire. If you installed via RPM, you can customize this by editing
+                <code>/etc/sysconfig/openfire</code> and looking at the OPENFIRE_OPTS option. If you installed via
+                .tar.gz, you will need to tweak your startup script to fit your needs.
+            </p>
 
-    </div>
+        </section>
 
-</div>
+    </section>
+
+    <section id="plugins">
+
+        <h2>Plugins</h2>
+
+        <p>
+            Plugins add additional features and protocol support to Openfire. After setting up your Openfire
+            installation, you may want to download and install plugins to enhance your server. Plugins can be downloaded
+            from the <a href="https://www.igniterealtime.org/projects/openfire/plugins.jsp">plugins page</a> on
+            igniterealtime.org or directly inside the administration console.
+        </p>
+
+        <section>
+
+            <h3>Installing Plugins</h3>
+
+            <p>
+                If you download a plugin from inside the Openfire administration console, it will automatically
+                be installed. If you manually download the plugin (packaged as a .jar file), you can deploy it
+                by copying the plugin file to the <code>plugins/</code> directory of your Openfire installation. A
+                plugin monitor will automatically extract the plugin into a directory and install the plugin in Openfire.
+                You may also use the "upload plugin" feature in the admin console (under the Plugins tab) to load
+                a plugin from your local file system to the server.
+            </p>
+
+            <p>
+                <strong>Note:</strong> For nearly all plugins, a restart of the Openfire server software is not required.
+                You should be able to install and remove plugins on-demand without impacting Openfire.
+            </p>
+
+        </section>
+
+        <section>
+
+            <h3>Managing Plugins</h3>
+
+            <p>
+                Plugins can be managed inside the Openfire admin console. You can also manually delete a plugin at any
+                time by deleting its JAR file (Openfire will automatically remove the plugin from memory and delete its
+                directory when you do so).
+            </p>
+
+        </section>
+
+    </section>
+
+    <section id="firewall">
+
+        <h2>Firewall</h2>
+
+        <p>
+            Server's administrator should open TCP ports 5222 and 7443 for incoming connections for XMPP clients to be
+            able to connect to Openfire. Additionally, an administrator can also open TCP 9090 (for http) and TCP 9091
+            (for https), if there is a need to remotely administrate Openfire connecting to its Admin Console. We
+            recommend only using 9091 port as it is an encrypted connection. For server to server connections one should
+            also open TCP 5269 port and for secure HTTP-BIND connections TCP 7443 port. Port number can be different, if
+            the default configuration has been changed by an administrator. All ports used by Openfire can be found on
+            the first page of Admin Console in the Server Ports section.
+        </p>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
 
 </body>
 </html>

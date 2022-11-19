@@ -1,46 +1,134 @@
 /* global font and body settings */
 body {
-    font-size : 100%;
+    font-family: arial, helvetica, sans-serif;
+    font-size: 10pt;
     background-color : #d3d6d9;
-    padding: 0px;
+    padding: 0;
     color: #333333;
-    margin: 0px 0px 30px 0px;
+    margin: 0 0 3em 0;
 }
-body, td, th {
-    font-family : arial, helvetica, sans-serif;
-    font-size : 10pt;
-}
-pre, tt, code {
-    font-family : courier new, monospaced;
-    font-size : 9pt;
-}
-#pageContainer {
+
+article {
     display: block;
     position: relative;
-    clear: all;
+    clear: both;
     background-color: #fff;
     border: 1px solid #999;
-    padding: 40px;
-    margin: 30px;
+    padding: 3em;
+    margin: 2em;
     -moz-border-radius: 6px;
     border-radius: 6px;
 }
-#pageHeader {
+
+header {
     display: block;
     position: relative;
-    height: 80px;
+    height: 5rem;
     background-color: #e7eaee;
     border: 1px solid #cccccc;
     border-bottom: none;
-    -moz-border-radius: 5px 5px 0px 0px;
-    border-radius: 5px 5px 0px 0px;
-    margin: 10px 0px 0px 0px;
-}
-#pageBody {
-    margin: 0px 18px 0px 20px;
+    -moz-border-radius: 5px 5px 0 0;
+    border-radius: 5px 5px 0 0;
+    margin: 1em 0 0 0;
 }
 
+header > h1 {
+    position: relative;
+    margin: 0 0 0 1em;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
 
+header > img {
+    float: right;
+    display: block;
+    position: relative;
+    width: 135px;
+    height: 40px;
+    overflow: hidden;
+    margin: 0 1em 0 0 ;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+footer {
+    height: 2rem;
+    margin-top: 2em;
+    border-top: 0.5rem solid #335588;
+    text-align: right;
+    display: block;
+    position: relative;
+    background-color: #e7eaee;
+    border-bottom: 1px solid #cccccc;
+    border-bottom: none;
+    -moz-border-radius: 0 0 5px 5px;
+    border-radius: 0 0 5px 5px;
+}
+
+footer p {
+    color: #670e15;
+    position: relative;
+    margin: 0 1em 0 0;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+footer p a:link { color: #670e15; }
+footer p a:visited { color: #670e15; }
+footer p a:hover { color: #670e15; }
+footer p nav a:active { color: #670e15; }
+
+article > nav {
+    display: block;
+    position: relative;
+    height: 2em;
+    background-color: #335588;
+    border: 1px solid #cccccc;
+    border-top: none;
+    color: #ffffff;
+    font-size: 11px;
+    line-height: 1.9em;
+    padding: 0 0 0 0;
+    margin: 0 0 2em 0;
+    overflow: hidden;
+}
+
+article > nav a {
+    margin: 0 0 0 2em;
+}
+
+article > nav a:link { color: #ffffff; }
+article > nav a:visited { color: #ffffff; }
+article > nav a:hover { color: #ffffff; }
+article > nav a:active { color: #ffffff; }
+
+article > section {
+    margin-right: 2em;
+    margin-left: 2em;
+}
+
+section > h3 {
+    margin-left: 2em;
+}
+
+section > h4 {
+    margin-left: 2.5em;
+}
+
+section > p {
+    margin-left: 2.5em;
+}
+
+section > pre {
+    margin-left: 5em;
+}
+
+section > dl {
+    margin-left: 2.5em;
+}
 
 /* anchors */
 a:link {
@@ -57,43 +145,6 @@ a:active {
     color: #7a1d42;
 }
 
-
-
-/* page header elements (logo and navigation) */
-#logo {
-    display: block;
-    position: relative;
-    background: url(images/header_logo.gif) no-repeat;
-    width: 135px;
-    height: 40px;
-    margin: 21px 20px 0px 0px;
-    overflow: hidden;
-    float: right;
-}
-.navigation {
-    display: block;
-    position: relative;
-    height: 20px;
-    background-color: #335588;
-    border: 1px solid #cccccc;
-    border-top: none;
-    color: #ffffff;
-    font-size: 11px;
-    line-height: 18px;
-    padding: 0px 0px 0px 0px;
-    margin: 0px 0px 25px 0px;
-    overflow: hidden;
-}
-.navigation a {
-    margin: 0px 0px 0px 20px;
-}
-.navigation a:link { color: #ffffff; }
-.navigation a:visited { color: #ffffff; }
-.navigation a:hover { color: #ffffff; }
-.navigation a:active { color: #ffffff; }
-
-
-
 /* headings */
 h1 {
     display: block;
@@ -101,63 +152,96 @@ h1 {
     font-size : 1.7em;
     font-weight : bold;
     color: #670e15;
-    padding: 0px;
-    margin: 30px 0px 0px 20px;
+    padding: 0;
+    margin: 2em 0 0 2em;
 }
 h2 {
     font-size : 1.3em;
     font-weight : bold;
-    margin: 40px 0px 6px 0px;
-    padding: 0px;
+    margin: 2em 0 1em 0;
+    padding: 0;
     color: #335588;
 }
 h3 {
     font-size : 1.1em;
     font-weight : bold;
-    margin: 25px 0px 3px 0px;
-    padding: 0px;
+    margin: 2em 0 1em 0;
+    padding: 0;
     color: #334466;
 }
 h4 {
     font-size : 1.0em;
     font-style: italic;
-    margin: 25px 0px 3px 0px;
+    margin: 2em 0 1em 0;
 }
 
 
 
 /* general elements */
-p {
-    margin: 0px 0px 15px 0px;
+
+pre, tt, code {
+    font-family: monospace;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #060;
 }
 
-ul {
-    margin: 5px 0px 15px 35px;
+ul, ol {
+    margin: 1em;
 }
+
 li {
-    padding-bottom : 4px;
+    margin: 0.4em 0;
 }
-tt {
-    font-family : courier new;
-    font-weight : bold;
-    color : #060;
+
+dt {
+    float: left;
+    clear: left;
+    width: 14em;
+    text-align: left;
+    font-weight: bold;
+    color: #060;
 }
+dd {
+    margin: 0 0 0 14em;
+    padding: 0 0 0.5em 0;
+}
+
 hr {
     display: block;
     height: 1px;
     background-color: #999999;
     border: none;
-    margin: 40px 0px 20px 0px;
+    margin: 3em 0 2em 0;
 }
-img {
-    width: 90%;
-    object-fit: contain;
-  }
 
+figure {
+    width: 90%;
+    text-align: center;
+    font-style: italic;
+    font-size: smaller;
+    text-indent: 0;
+    margin: 0.5em;
+    padding: 0.5em;
+}
+
+figure figcaption {
+    margin-top: 0.5em;
+}
+
+figure.inline-right {
+    float: right;
+    width: 40%;
+}
+
+figure img {
+    max-width: 95%;
+    filter: drop-shadow(.1rem .1rem .1rem black);
+}
 
 fieldset pre {
     padding : 1em;
-    margin : 0px;
+    margin : 0;
 }
 fieldset {
     margin-left : 2em;
@@ -170,6 +254,10 @@ fieldset {
 
 
 /* classes */
+.short-tab {
+    display: inline-block;
+    width: 3.5em;
+}
 .comment {
     color : #666;
     font-style : italic;
@@ -190,17 +278,17 @@ fieldset {
     width: auto;
     border : 1px #ccc solid;
     padding : 6px;
-    margin : 10px 20px 10px 20px;
+    margin : 1em 2em 1em 2em;
 }
 .note {
-    font-family : verdana;
+    font-family: verdana, serif;
     font-size : 0.85em;
     color : #600;
     text-decoration : none;
     font-weight : bold;
 }
 .nav, .nav a {
-    font-family : verdana;
+    font-family: verdana, serif;
     font-size : 0.85em;
     color : #600;
     text-decoration : none;
@@ -221,19 +309,23 @@ fieldset {
     font-weight: 300;
 }
 .toc {
-    right: 5px;
+    right: .5em;
 }
 
 
 table.dbtable {
+    margin-top: 3em;
     border : 1px #ccc solid;
     width : 600px;
+}
+table.dbtable td {
+    vertical-align: top;
 }
 tr, th {
     border-bottom : 1px #ccc solid;
 }
 th, td {
-    padding-right : 15px;
+    padding-right : 1em;
 }
 th {
     text-align : left;
@@ -244,10 +336,3 @@ th {
 .primary-key {
     background-color : #ffc;
 }
-
-
-/* Protocol support specific styles */
-.supported { background-color: #D0FFCB }
-.partially_supported { background-color: #FEFF94 } 
-.unsupported { background-color: #FFB4B4 }
-

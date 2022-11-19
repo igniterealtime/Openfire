@@ -1,324 +1,451 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Openfire: Database Installation Guide</title>
-<link href="style.css" rel="stylesheet" type="text/css">
+    <title>Openfire: Database Installation Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
-<div id="pageContainer">
+<article>
 
-<a name="top"></a>
-
-    <div id="pageHeader">
-        <div id="logo"></div>
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
         <h1>Database Installation Guide</h1>
-    </div>
-    <div class="navigation">
+    </header>
+
+    <nav>
         <a href="index.html">&laquo; Back to documentation index</a>
-    </div>
-    
-    <div id="pageBody">
+    </nav>
 
-<p>Openfire stores all data in a back-end database. If you choose to not use the embedded
-database, you must setup and manage an external database for the application.
-This document provides setup instructions for all of the currently supported databases.
-</p>
-<p>
-JDBC drivers are required for Openfire to communicate with your database. Suggested
-drivers for particular databases are noted below where applicable. Openfire bundles JDBC
-drivers for MySQL, Postgres, Microsoft SQL Server, and HSQLDB.
-</p>
-<p>
-All supported database schemas can be found in the <tt>resources/database</tt> directory of the
-Openfire installation.
-</p>
+    <section id="intro">
 
-<p>Note that additional databases besides the ones in this list may be supported.
-Please check the distribution for a database schema for your database or
-consider creating a schema yourself if one isn't provided.
-</p>
-<p>
-Choose your database from the list below for setup details:
-</p>
-<ul>
-    <li> <a href="#mysql">MySQL</a>
-    <li> <a href="#oracle">Oracle</a>
-    <li> <a href="#sqlserver">Microsoft SQL Server</a>
-    <li> <a href="#postgres">PostgreSQL</a>
-    <li> <a href="#db2">IBM DB2</a>
-    <li> <a href="#hsql">HSQLDB</a>
-</ul>
+        <h2>Introduction</h2>
+        <p>
+            Openfire stores all data in a back-end database. If you choose to not use the embedded database, you must
+            setup and manage an external database for the application. This document provides setup instructions for all
+            the currently supported databases.
+        </p>
+        <p>
+            JDBC drivers are required for Openfire to communicate with your database. Suggested drivers for particular
+            databases are noted below where applicable. Openfire bundles JDBC drivers for MySQL, Postgres, Microsoft
+            SQL Server, and HSQLDB.
+        </p>
+        <p>
+            All supported database schemas can be found in the <code>resources/database</code> directory of the
+            Openfire installation.
+        </p>
+        <p>
+            Note that additional databases besides the ones in this list may be supported. Please check the distribution
+            for a database schema for your database or consider creating a schema yourself if one isn't provided.
+        </p>
+        <p>
+            Choose your database from the list below for setup details:
+        </p>
 
-<h2><a name="mysql">MySQL</a></h2>
-<ul>
-    <b>JDBC Drivers</b><p>
+        <nav>
+            <ul>
+                <li><a href="#mysql">MySQL</a></li>
+                <li><a href="#oracle">Oracle</a></li>
+                <li><a href="#sqlserver">Microsoft SQL Server</a></li>
+                <li><a href="#postgres">PostgreSQL</a></li>
+                <li><a href="#db2">IBM DB2</a></li>
+                <li><a href="#hsql">HSQLDB</a></li>
+            </ul>
+        </nav>
+    </section>
 
-    The JDBC driver for MySQL is bundled with Openfire, so you do not need
-    to download and install a separate driver.
-    
-    <p>
-    In the Openfire setup tool, use the following values:<p><ul>
-        <li>driver: <tt>com.mysql.jdbc.Driver</tt>
-        <li>server: <tt>jdbc:mysql://HOSTNAME/DATABASENAME</tt>
-    </ul><p>
-        
-    where HOSTNAME and DATABASENAME are the actual values for you server.
-    In many cases <tt>localhost</tt> is a suitable value for HOSTNAME when
-    your database is running on the same server as your webserver.
+    <section id="mysql">
 
-    <p><b>Setup Instructions</b><p>
-    <ol>
-        <li>Make sure that you are using recent and supported by Oracle MySQL version <a href="#note1">&sup1;</a>.
-        <li>Create a database for the Openfire tables:<br>
-        <code>mysqladmin create DATABASENAME</code><br>
-        (note: "DATABASENAME" can be something like 'openfire')
+        <h2>MySQL</h2>
 
-        <li>Import the schema file from the <tt>resources/database</tt> directory of the installation folder:<br>
-        Unix/Linux: <code>cat openfire_mysql.sql | mysql DATABASENAME;</code>
-        <br>   
-        Windows: <code>type openfire_mysql.sql | mysql DATABASENAME;</code>
-        
-        <li>Start the Openfire setup tool, and use the appropriate JDBC connection
-            settings.
-    </ol>
-    
-    <p><b>Character Encoding Issues</b><p>
-    
-    MySQL does not have proper Unicode support, which makes supporting data
-    in non-Western languages difficult. However, the MySQL JDBC driver has a workaround
-    which can be enabled by adding <tt>?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8</tt>
-    to the URL of the JDBC driver. You can edit the conf/openfire.xml file to add this value.
+        <section id="mysql-jdbc-drivers">
 
-    <p>Note: If the mechanism you use to configure a JDBC URL is XML-based, you will need to use the XML character
-    literal &amp;amp; to separate configuration parameters, as the ampersand is a reserved character for XML.</p>
-    
-    <p><b>Further Help</b><p>
+            <h3>JDBC Drivers</h3>
 
-    If you need help setting up MySQL, refer to the 
-    following sites:<p>
-    
-    <a href="https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html"> MySQL Connector/J Configuration Properties </a><br>
-    </p>
-</ul>
-
-<p><h2><a name="oracle">Oracle</a></h2><p><ul>
-
-    <b>JDBC Drivers</b><p>
-
-    The Oracle JDBC drivers cannot readily be distributed with Openfire, so must be manually downloaded from
-    <a href="https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html">Oracle's website</a>.
-     
-    Various versions of the drivers are available, but the most recent driver compatible with your version of Oracle is
-    recommended for use with Openfire. Copy the JDBC driver to the <tt>lib/</tt> directory of your Openfire installation.
-    
-    <p>
-    In the Openfire web-based setup tool, use the following values:<p>
-    
-    <ul>
-        <li>driver: <tt>oracle.jdbc.driver.OracleDriver</tt>
-        <li>server: <tt>jdbc:oracle:thin:@HOST:PORT/SERVICE</tt>
-    </ul><p>
-        
-    where HOST, PORT and SERVICE are the actual values for you server.
-    In many cases <code>localhost</code> and <code>1521</code>
-    are suitable values for HOST and PORT when
-    your database is running on the same server as your webserver.
-    Ask your DBA for the service name.
-
-    <p><b>Setup Instructions</b><p>
-    
-    First, create a "Jive" user or some other user
-    that will "own" the Jive tables. This isn't necessary, but doing so
-    will allow your tables to exist in a seperate tablespace.
-    <p>
-    Next import the schema from the <tt>resources/database</tt> directory of the installation
-    using sqlplus (or your favorite Oracle tool such
-    as Toad). For sqlplus: copy the "openfire_oracle.sql" file to the same
-    directory where sqlplus is installed (should be something like 
-    /Oracle/Ora81/bin/). Next, log into sqlplus and then execute the command:<br>
-        <code>@ openfire_oracle</code><br>
-    That will import the schema file. Your database is now setup.</p>
-</ul>
-
-<p><h2><a name="sqlserver">Microsoft SQL Server</a></h2><p>
-
-<ul>
-    <p><b>SQL Server</b></p>
-    <b>JDBC Drivers</b><p>
-
-    Openfire bundles two SQL Server compatible JDBC drivers.
-    <ul>
-        <li>The <a href="http://www.freetds.org/">Free TDS JDBC driver</a></li>
-        <ul>
-            <li>driver -- <tt>net.sourceforge.jtds.jdbc.Driver</tt>
-            <li>server -- <tt>jdbc:jtds:sqlserver://HOSTNAME:PORTNUMBER/DATABASENAME;appName=Openfire</tt>
-        </ul>
-        <li>The <a href="https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server">Microsoft JDBC driver</a></li>
-        <ul>
-            <li>driver -- <tt>com.microsoft.sqlserver.jdbc.SQLServerDriver</tt>
-            <li>server -- <tt>jdbc:sqlserver://HOSTNAME:PORTNUMBER;databaseName=DATABASENAME;applicationName=Openfire</tt>
-        </ul>
-    </ul>
-    You can use either of these, but the Microsoft driver is more up to date.
-
-    <p>
-    For the above server settings, HOSTNAME is the host name or IP address of your database server,
-    PORTNUMBER is the port that SQL Server is listening on (normally 1433)
-    and DATABASENAME is the name of the database (this parameter is optional).
-
-    <p><b>Setup Instructions</b><p>
-
-    <ol>
-        <li>Create a new database using Enterprise Manager if you do not already have
-            a database you want to use. You may wish to name the database "openfire".
-        <li>Create a user to access the database if you do not already have one you'd
-            like to use. Consider making the default database for the user be the
-            one you created in step 1.
-        <li>Proceed to the Openfire setup tool and use the appropriate JDBC settings
-            when prompted.
-   </ol>
-</ul>     
-
-<p><h2><a name="postgres">PostgreSQL</a></h2><p>
-
-<ul>
-    <b>JDBC Drivers</b>
-    <p>
-    The JDBC driver for PostgreSQL is bundled with Openfire, so you do not need
-    to download and install a separate driver.
-    <p>
-    In the Openfire web-based setup tool, use the following values:<p><ul>
-        <li>driver -- <tt>org.postgresql.Driver</tt>
-        <li>server -- <tt>jdbc:postgresql://HOSTNAME:PORTNUMBER/DATABASENAME</tt>
-    </ul><p>
-        
-    If left out, host defaults to localhost (not 127.0.0.1) for HOST-NAME and 5432 for PORT-NUMBER.
-    
-    <p>
-    <b>Setup Instructions</b>
-
-<p>A general best practice is to create a PostgreSQL user dedicated for Openfire's use.  This user
-need not be a super-user, but should own the dedicated database used by Openfire.</p>
-
-    <p>
-    <ol>
-      <li>Create a user for Openfire to connect as
-      <br /><code>createuser -P openfireuser</code>
-      </li>
-      <li>Create the database owned by this openfireuser. For example, using the 
-        PostgreSQL <code>&quot;createdb&quot;</code> utility:
-        <br>
-        <code>createdb -E UNICODE -O openfireuser openfire</code></li>
-      <li>Proceed with Openfire install setup via the admin console, the setup process with install the schema.</li>
-    </ol>
-</ul>
-
-<p><h2><a name="db2">IBM DB2 7</a></h2><p><ul>
-
-    <b>JDBC Drivers</b>
-    <p>
-    Use the JDBC 1.2 compliant driver, db2java.zip (1293KB),
-    located in the <nobr>"%DB2PATH%\java2"</nobr> directory. Copy the JDBC driver to the <tt>lib/</tt>
-    directory of your Openfire installation.
-    <p>
-    Values for the config file are:
-    <ul>
-        <li>driver: <code>COM.ibm.db2.jdbc.app.DB2Driver</code>
-        <li>server: <code>jdbc:db2:[DB NAME, e.g. JIVE]</code>
-    </ul>
-    If you are using a remote database you need to use the following values for the config file are:
-    <ul>
-        <li>driver: <code>COM.ibm.db2.jdbc.net.DB2Driver</code>
-        <li>server: <code>jdbc:db2:[DB NAME, e.g. JIVE]</code>
-    </ul>
-    <p>
-    <b>Setup Instructions</b>
-    <p>
-    You have to create a new database (e.g. JIVE) or use an existing 
-    one. Connect to the database using any valid username allowed to create
-    tables and indexes. Keep in mind that DB2 UDB applies the user name 
-    as the table schema. Use the same user when you configure Jive with
-    the administration interface. Commands are as follows:
-    <p>
-    <code>DB2 CREATE DB JIVE ALIAS JIVE<br>
-    DB2 CONNECT TO JIVE USER [DBUSER] USING [DBPASSWORD]</code><br>
-    (or you can use the Command Center GUI)
-    <p>
-    Start the DB2 command window (in Windows), or the user's shell in 
-    Unix and import the schema in the <tt>resources/database</tt> directory of the
-    installation with:<p>
-        <code>db2 -tvf openfire_db2.sql</code>
-    <p>
-    Or, use the DB2 Command Center and run the script
-    through the "Replication Sources" folder in the Database tree.
-    
-    <p>
-    The database is now setup.
-    </p>
-</ul>
-
-<p><h2><a name="hsql">HSQLDB</a></h2><p><ul>
-
-    <b>Special Note</b>
-    <p>
-    Openfire bundles hsqldb as its embedded database. If you choose to use the embedded database,
-    it can be configured via the Openfire installer. If you have a stand-alone installation
-    of HSQLDB, follow the instructions below to connect to it.
-    </p>
-
-    <b>JDBC Drivers</b>
-    <p>
-    Because hsqldb is embedded in Openfire, there is no need to download the
-    JDBC driver separately. Values for the config file are:
-    <ul>
-        <li>driver: <code>org.hsqldb.jdbcDriver</code>
-        <li>server: <code>jdbc:hsqldb:PATH_TO_DB_FILES/DB_NAME</code>
-    </ul>
-    <p>
-    For example, the server URL might be <tt>jdbc:hsqldb:../database/defaultdb</tt>
-    <p>
-    <b>Setup Instructions</b>
-    <p>
-    Create a database for the Openfire tables. This assumes you have HSQLDB installed
-    in its own directory and working correctly.
-    <ol>
-        <li>
-        Run the HSQLDB Database Manager by navigating to the folder where
-        hsqldb.jar is located and type the following
-        <ul>
             <p>
-            <code>
-            java -cp hsqldb.jar org.hsqldb.util.DatabaseManager
-            </code>
+                The JDBC driver for MySQL is bundled with Openfire, so you do not need to download and install a separate driver.
             </p>
-        </ul>
-        then hit enter. You will now see a GUI application. Note, you will not see a hsqldb.jar
-        in the Openfire distribution - this is referring to the hsqldb.jar from the HSQLDB
-        distribution.
-    
-        <li>
-        When prompted with the connect window, enter <tt>org.hsqldb.jdbcDriver</tt>
-        as the Driver, and specify the URL of your database in
-        the URL field. The default password is already entered.
-    
-        <li>Now copy and paste the contents of <tt>openfire_hsql.sql</tt> from
-        the <tt>resources/database</tt> directory of the installation into the
-        command window, and hit execute.  If no errors are
-        reported, then your database is setup properly.
-    
-        <li>Finally, you should change the username and password login for your
-        database: just open the .script file in your
-        database folder and change the appropriate values. Make sure that you
-        don't use a blank password, as Openfire will not accept
-        one.
-    </li>
-    </ol>
-</ul>
+            <p>
+                In the Openfire setup tool, use the following values:
+            </p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>com.mysql.jdbc.Driver</code></li>
+                <li><span class="short-tab">server:</span> <code>jdbc:mysql://HOSTNAME/DATABASENAME</code></li>
+            </ul>
+            <p>
+                where HOSTNAME and DATABASENAME are the actual values for you server. In many cases
+                <code>localhost</code> is a suitable value for HOSTNAME when your database is running on the same
+                server as your webserver.
+            </p>
 
-    </div>
+        </section>
 
-</div>
+        <section id="mysql-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+
+            <ol>
+                <li>
+                    Make sure that you are using recent and supported by Oracle MySQL version.
+                </li>
+                <li>
+                    Create a database for the Openfire tables:
+
+                    <ul style="list-style: none">
+                        <li><code>mysqladmin create DATABASENAME</code></li>
+                    </ul>
+
+                    (note: "DATABASENAME" can be something like 'openfire')
+                </li>
+
+                <li>
+                    Import the schema file from the <code>resources/database</code> directory of the installation folder:
+
+                    <ul style="list-style: none">
+                        <li>Unix/Linux: <code>cat openfire_mysql.sql | mysql DATABASENAME;</code></li>
+                        <li>Windows: <code>type openfire_mysql.sql | mysql DATABASENAME;</code></li>
+                    </ul>
+                </li>
+
+                <li>Start the Openfire setup tool, and use the appropriate JDBC connection settings.</li>
+            </ol>
+
+        </section>
+
+        <section id="mysql-character-encoding-issues">
+
+            <h3>Character Encoding Issues</h3>
+
+            <p>
+                MySQL does not have proper Unicode support, which makes supporting data in non-Western languages
+                difficult. However, the MySQL JDBC driver has a workaround which can be enabled by adding this value to
+                the URL of the JDBC driver:
+            </p>
+            <ul style="list-style: none">
+                <li><code>?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8</code></li>
+            </ul>
+            <p>
+                You can edit the conf/openfire.xml file to add this value.
+            </p>
+            <p>
+                Note: If the mechanism you use to configure a JDBC URL is XML-based, you will need to use the XML
+                character literal <code>&amp;amp;</code> to separate configuration parameters, as the ampersand is a
+                reserved character for XML.
+            </p>
+
+        </section>
+
+        <section id="mysql-further-help">
+
+            <h3>Further Help</h3>
+
+            <p>
+                If you need help setting up MySQL, refer to the following site:
+            </p>
+            <ul>
+                <li><a href="https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html">MySQL Connector/J Configuration Properties </a></li>
+            </ul>
+
+        </section>
+
+    </section>
+
+    <section id="oracle">
+
+        <h2>Oracle</h2>
+
+        <section id="oracle-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+
+            <p>
+                The Oracle JDBC drivers cannot readily be distributed with Openfire, so must be manually downloaded
+                from <a href="https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html">Oracle's website</a>.
+                Various versions of the drivers are available, but the most recent driver compatible with your version
+                of Oracle is recommended for use with Openfire. Copy the JDBC driver to the <code>lib/</code> directory
+                of your Openfire installation.
+            </p>
+
+            <p>
+                In the Openfire web-based setup tool, use the following values:
+            <p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>oracle.jdbc.driver.OracleDriver</code></li>
+                <li><span class="short-tab">server:</span> <code>jdbc:oracle:thin:@HOST:PORT/SERVICE</code></li>
+            </ul>
+            <p>
+                where HOST, PORT and SERVICE are the actual values for you server. In many cases <code>localhost</code>
+                and <code>1521</code> are suitable values for HOST and PORT when your database is running on the same
+                server as your webserver. Ask your DBA for the service name.
+            </p>
+
+        </section>
+
+        <section id="oracle-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+            <ol>
+                <li>
+                    Create an "Openfire" user or some other user that will "own" the Openfire tables. This isn't
+                    necessary, but doing so will allow your tables to exist in a separate tablespace.
+                </li>
+                <li>
+                    Import the schema from the <code>resources/database</code> directory of the installation
+                    using sqlplus (or your favorite Oracle tool such as Toad). For sqlplus: copy the
+                    <code>openfire_oracle.sql</code> file to the same directory where sqlplus is installed (should be
+                    something like <code>/Oracle/Ora81/bin/</code>). Next, log into sqlplus and then execute the command:
+
+                    <ul>
+                        <li style="list-style: none"><code>@ openfire_oracle</code></li>
+                    </ul>
+
+                    That will import the schema file. Your database is now setup.
+                </li>
+            </ol>
+        </section>
+
+    </section>
+
+    <section id="sqlserver">
+
+        <h2>Microsoft SQL Server</h2>
+
+        <section id="sqlserver-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+            <p>
+                Openfire bundles two SQL Server compatible JDBC drivers.
+            </p>
+            <ol>
+                <li>
+                    The <a href="https://www.freetds.org/">Free TDS JDBC driver</a>
+                    <ul style="list-style: none">
+                        <li><span class="short-tab">driver:</span> <code>net.sourceforge.jtds.jdbc.Driver</code></li>
+                        <li><span class="short-tab">server:</span> <code>jdbc:jtds:sqlserver://HOSTNAME:PORTNUMBER/DATABASENAME;appName=Openfire</code></li>
+                    </ul>
+                </li>
+                <li>
+                    The <a href="https://docs.microsoft.com/en-us/sql/connect/jdbc/microsoft-jdbc-driver-for-sql-server">Microsoft JDBC driver</a>
+                    <ul style="list-style: none">
+                        <li><span class="short-tab">driver:</span> <code>com.microsoft.sqlserver.jdbc.SQLServerDriver</code></li>
+                        <li><span class="short-tab">server:</span> <code>jdbc:sqlserver://HOSTNAME:PORTNUMBER;databaseName=DATABASENAME;applicationName=Openfire</code></li>
+                    </ul>
+                </li>
+            </ol>
+            <p>
+                You can use either of these, but the Microsoft driver is more up to date.
+            </p>
+            <p>
+                For the above server settings, HOSTNAME is the host name or IP address of your database server,
+                PORTNUMBER is the port that SQL Server is listening on (normally 1433) and DATABASENAME is the name
+                of the database (this parameter is optional).
+            </p>
+
+        </section>
+
+        <section id="sqlserver-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+
+            <ol>
+                <li>
+                    Create a new database using Enterprise Manager if you do not already have a database you want to
+                    use. You may wish to name the database "openfire".
+                </li>
+                <li>
+                    Create a user to access the database if you do not already have one you'd like to use. Consider
+                    making the default database for the user be the one you created in step 1.
+                </li>
+                <li>
+                    Proceed to the Openfire setup tool and use the appropriate JDBC settings when prompted.
+                </li>
+            </ol>
+
+        </section>
+
+    </section>
+
+    <section id="postgres">
+
+        <h2>PostgreSQL</h2>
+
+        <section id="postgres-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+
+            <p>
+                The JDBC driver for PostgreSQL is bundled with Openfire, so you do not need to download and install a
+                separate driver.
+            </p>
+            <p>
+                In the Openfire web-based setup tool, use the following values:
+            </p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>org.postgresql.Driver</code></li>
+                <li><span class="short-tab">server:</span> <code>jdbc:postgresql://HOSTNAME:PORTNUMBER/DATABASENAME</code></li>
+            </ul>
+            <p>
+                If left out, host defaults to localhost (not 127.0.0.1) for HOSTNAME and 5432 for PORT-NUMBER.
+            </p>
+
+        </section>
+
+        <section id="postgres-setup-instruction">
+
+            <h3>Setup Instructions</h3>
+
+            <p>
+                A general best practice is to create a PostgreSQL user dedicated for Openfire's use. This user need not
+                be a super-user, but should own the dedicated database used by Openfire.
+            </p>
+            <ol>
+                <li>
+                    Create a user for Openfire to connect as:
+
+                    <ul><li style="list-style: none">
+                        <code>createuser -P openfireuser</code>
+                    </li></ul>
+                </li>
+                <li>
+                    Create the database owned by this openfire user. For example, using the PostgreSQL
+                    <code>&quot;createdb&quot;</code> utility:
+                    <ul>
+                        <li style="list-style: none">
+                            <code>createdb -E UNICODE -O openfireuser openfire</code>
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    Proceed with Openfire install setup via the admin console, the setup process with install the schema.
+                </li>
+            </ol>
+
+        </section>
+
+    </section>
+
+    <section id="db2">
+
+        <h2>IBM DB2 7</h2>
+
+        <section id="db2-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+            <p>
+                Use the JDBC 1.2 compliant driver, db2java.zip (1293KB), located in the <nobr>"%DB2PATH%\java2"</nobr>
+                directory. Copy the JDBC driver to the <code>lib/</code> directory of your Openfire installation.
+            </p>
+            <p>
+                Values for the config file are:
+            </p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>COM.ibm.db2.jdbc.app.DB2Driver</code></li>
+                <li><span class="short-tab">server:</span> <code>jdbc:db2:[DB NAME, e.g. OPENFIRE]</code></li>
+            </ul>
+
+        </section>
+
+        <section id="db2-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+            <ol>
+                <li>
+                    You have to create a new database (e.g. OPENFIRE) or use an existing one. Connect to the database
+                    using any valid username allowed to create tables and indexes. Keep in mind that DB2 UDB applies the
+                    username as the table schema. Use the same user when you configure Openfire with the administration
+                    interface. Commands are as follows:
+                    <pre><code>DB2 CREATE DB OPENFIRE ALIAS OPENFIRE
+DB2 CONNECT TO OPENFIRE USER [DBUSER] USING [DBPASSWORD]</code></pre>
+                    (or you can use the Command Center GUI)
+                </li>
+                <li>
+                    Start the DB2 command window (in Windows), or the user's shell in Unix and import the schema in the
+                    <code>resources/database</code> directory of the installation with:
+                    <pre>db2 -tvf openfire_db2.sql</pre>
+                    Or, use the DB2 Command Center and run the script through the "Replication Sources" folder in the
+                    Database tree.
+                </li>
+            </ol>
+
+        </section>
+
+    </section>
+
+    <section id="hsql">
+
+        <h2>HSQLDB</h2>
+
+        <b>Special Note</b>
+        <p>
+            Openfire bundles hsqldb as its embedded database. If you choose to use the embedded database, it can
+            be configured via the Openfire installer. If you have a stand-alone installation of HSQLDB, follow
+            the instructions below to connect to it.
+        </p>
+
+        <section id="hsql-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+            <p>
+                Because hsqldb is embedded in Openfire, there is no need to download the JDBC driver separately.
+                Values for the config file are:
+            </p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>org.hsqldb.jdbcDriver</code></li>
+                <li><span class="short-tab">server:</span> <code>dbc:hsqldb:PATH_TO_DB_FILES/DB_NAME</code></li>
+            </ul>
+            <p>
+                For example, the server URL might be <code>jdbc:hsqldb:../database/defaultdb</code>
+            </p>
+
+        </section>
+
+        <section id="hsql-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+            <ol>
+                <li>
+                    Create a database for the Openfire tables. This assumes you have HSQLDB installed in its own
+                    directory and working correctly.
+                </li>
+                <li>
+                    Run the HSQLDB Database Manager by navigating to the folder where hsqldb.jar is located and type
+                    the following:
+                    <ul style="list-style: none">
+                        <li>
+                            <code>java -cp hsqldb.jar org.hsqldb.util.DatabaseManager</code>
+                        </li>
+                    </ul>
+                    then hit enter. You will now see a GUI application. Note, you will not see a hsqldb.jar
+                    in the Openfire distribution - this is referring to the hsqldb.jar from the HSQLDB distribution.
+                </li>
+                <li>
+                    When prompted with the connect window, enter <code>org.hsqldb.jdbcDriver</code> as the Driver,
+                    and specify the URL of your database in the URL field. The default password is already entered.
+                </li>
+                <li>
+                    Now copy and paste the contents of <code>openfire_hsql.sql</code> from the
+                    <code>resources/database</code> directory of the installation into the command window, and hit
+                    execute. If no errors are reported, then your database is setup properly.
+                </li>
+                <li>
+                    Finally, you should change the username and password login for your database: just open the
+                    <code>.script</code> file in your database folder and change the appropriate values. Make sure
+                    that you don't use a blank password, as Openfire will not accept one.
+                </li>
+            </ol>
+
+        </section>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
 
 </body>
 </html>

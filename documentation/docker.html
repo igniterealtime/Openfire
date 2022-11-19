@@ -5,29 +5,54 @@
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div id="pageContainer">
-        <a name="top"></a>
-        <div id="pageHeader">
-            <div id="logo"></div>
-            <h1>Docker Guide</h1>
-        </div>
-        <div class="navigation">
-            <a href="index.html">&laquo; Back to documentation index</a>
-        </div>
-    
-        <div id="pageBody">
-            <h2>Introduction</h2>
-            <p>Openfire can be deployed as part of a container architecture. This document covers how the official images are built, how to deploy them, and how you can build your own.</p>
 
-            <h2>Builds</h2>
-            <p>The official builds of Openfire for Docker come from GitHub. When a tag is pushed, a new image is built by the CI and uploaded to Docker Hub with the same tag. Any push to the main branch is built and pushed to the 'latest' tag on Docker Hub, and whilst every effort made, these should be considered potentially unstable.</p>
-            <p>You can build the container image locally as you might any other, using <pre>docker build . -t openfire:mytag</pre>. Note that Openfire is a large application in a monorepo with a sizeable number of dependencies, and as such doesn't use a multi-stage build for Docker. Instead it builds an image from an already compiled repository. For more repeatable builds, try <pre>build/docker/buildWithDocker.sh</pre>.</p>
+<article>
 
-            <h2>Usage</h2>
-            <p>You can run a simple container with <pre>docker run --rm -d -p 5222:5222 -p 5269:5269 -p 7070:7070 -p 7443:7443 -p 9090:9090 igniterealtime/openfire:sometag</pre> and configure for the internal database. You can add volumes to achieve persistance between restarts and upgrades.</p>
-            <p>For more complex or productionised setups, you could use docker-compose.
-                <pre>
-openfire:
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Docker Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>Openfire can be deployed as part of a container architecture. This document covers how the official images are built, how to deploy them, and how you can build your own.</p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#builds">Builds</a></li>
+                <li><a href="#usage">Usage</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="builds">
+        <h2>Builds</h2>
+        <p>The official builds of Openfire for Docker come from GitHub. When a tag is pushed, a new image is built by the CI and uploaded to Docker Hub with the same tag. Any push to the main branch is built and pushed to the 'latest' tag on Docker Hub, and whilst every effort made, these should be considered potentially unstable.</p>
+        <p>You can build the container image locally as you might any other, using:</p>
+        <pre>docker build . -t openfire:mytag</pre>
+        <p>Note that Openfire is a large application in a monorepo with a sizeable number of dependencies, and as such doesn't use a multi-stage build for Docker. Instead it builds an image from an already compiled repository. For more repeatable builds, try:</p>
+        <pre>build/docker/buildWithDocker.sh</pre>
+    </section>
+
+    <section id="usage">
+        <h2>Usage</h2>
+        <p>You can run a simple container with:</p>
+        <pre>docker run --rm -d -p 5222:5222 -p 5269:5269 -p 7070:7070 -p 7443:7443 -p 9090:9090 igniterealtime/openfire:sometag</pre>
+        <p>and configure for the internal database. You can add volumes to achieve persistence between restarts and upgrades.</p>
+        <p>For more complex or productionised setups, you could use docker-compose.</p>
+
+        <fieldset>
+            <legend>Example docker configuration</legend>
+            <pre><code>openfire:
     image: "igniterealtime/openfire:sometag"
     ports:
       - "5222:5222"
@@ -40,10 +65,21 @@ openfire:
     volumes:
       - ./data/conf:/var/lib/openfire/conf
       - ./wait-for-it.sh:/wait-for-it.sh
-    command: ["/wait-for-it.sh", "postgres_service:5432", "--", "/sbin/entrypoint.sh"]
-                </pre>
-            In this example, we've used <a href="https://github.com/vishnubob/wait-for-it/blob/master/wait-for-it.sh">wait-for-it</a> to allow a postgres database service (not shown) to finish launching prior to starting Openfire. This allows us to have premade files in /data/conf with which to launch Openfire.
-            </p>
-        </div>  
-    </div>
+    command: ["/wait-for-it.sh", "postgres_service:5432", "--", "/sbin/entrypoint.sh"]</code></pre>
+        </fieldset>
+
+        <p>In this example, we've used <a href="https://github.com/vishnubob/wait-for-it/blob/master/wait-for-it.sh">wait-for-it</a> to allow a postgres database service (not shown) to finish launching prior to starting Openfire. This allows us to have premade files in /data/conf with which to launch Openfire.</p>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
 </body>
+</html>

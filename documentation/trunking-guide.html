@@ -5,45 +5,73 @@
     <link href="style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <div id="pageContainer">
-        <a name="top"></a>
-        <div id="pageHeader">
-            <div id="logo"></div>
-            <h1>Trunking Guide</h1>
-        </div>
-        <div class="navigation">
-            <a href="index.html">&laquo; Back to documentation index</a>
-        </div>
-    
-        <div id="pageBody">
-            <h2 id="introduction">Introduction</h2>
-            <p>Openfire can be configured to act as a gateway to transfer data between other XMPP domains. This document covers what the use-cases for such a setup, how to configure this functionality, and what known caveats with this approach are.</p>
 
-            <h2 id="use-cases">Use cases</h2>
-            <p>The trunking functionality of Openfire is typically used in one of two scenarios:</p>
-            <ol>
-                <li>Connection Mediation (allow data to flow between remote XMPP domains)</li>
-                <li>Data Monitoring / Filtering (ensure that only allowable data enters or leaves an XMPP domain</li>
-            </ol>
+<article>
 
-            <h3 id="use-case-connection-mediation">Use Case: Connection Mediation</h3>
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Trunking Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+        <p>Openfire can be configured to act as a gateway to transfer data between other XMPP domains. This document covers what the use-cases for such a setup, how to configure this functionality, and what known caveats with this approach are.</p>
+
+        <p>
+            The following sections are available in this document:
+        </p>
+        <nav>
+            <ul>
+                <li><a href="#use-cases">Use Cases</a>
+                    <ul>
+                        <li><a href="#use-case-connection-mediation">Connection Mediation</a></li>
+                        <li><a href="#use-case-data-monitoring-and-filtering">Data Monitoring / Filtering </a></li>
+                    </ul>
+                </li>
+                <li><a href="#setup">Setup</a>
+                    <ul>
+                        <li><a href="#setup-example">Full Example</a></li>
+                    </ul>
+                </li>
+                <li><a href="#caveats">Caveats</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="use-cases">
+
+        <h2>Use cases</h2>
+
+        <p>The trunking functionality of Openfire is typically used in one of two scenarios:</p>
+        <ol>
+            <li>Connection Mediation (allow data to flow between remote XMPP domains)</li>
+            <li>Data Monitoring / Filtering (ensure that only allowable data enters or leaves an XMPP domain</li>
+        </ol>
+
+        <section id="use-case-connection-mediation">
+
+            <h3>Use Case: Connection Mediation</h3>
             <p>
                 The architecture of an XMPP network is similar to email; anyone can run their own XMPP domain and there is no central master domain. This federated open system approach allows users to interoperate with others on any domain. When users of
                 one domain address data to users of another domain, servers of each domain will establish point-to-point connections between each-other, over which the data is exchanged. Multiple domains connecting to each other in a point-to-point manner
                 creates a mesh-style network, as illustrated in <a href="#figure-1">figure 1</a>.
             </p>
 
-            <div style="text-align: center;">
-                <figure id="figure-1" style="display: inline-block;">
-                    <img src="images/network-mesh.svg" alt="Mesh-style Network" style="width:30em;">
-                    <figcaption>Figure 1 - Mesh-style Network.</figcaption>
-                </figure>
+            <figure id="figure-2" class="inline-right">
+                <img src="images/network-hub-and-spoke.svg" alt="Hub-and-Spoke Network">
+                <figcaption>Figure 2 - Hub-and-Spoke Network.</figcaption>
+            </figure>
 
-                <figure id="figure-2" style="display: inline-block;">
-                    <img src="images/network-hub-and-spoke.svg" alt="Hub-and-Spoke Network" style="width:30em;">
-                    <figcaption>Figure 2 - Hub-and-Spoke Network.</figcaption>
-                </figure>
-            </div>
+            <figure id="figure-1">
+                <img src="images/network-mesh.svg" alt="Mesh-style Network">
+                <figcaption>Figure 1 - Mesh-style Network.</figcaption>
+            </figure>
 
             <p>
                 In certain environments, it is undesirable to have a mesh-style network. When, for example, it is hard or undesirable to create and maintain many technical connections, or when central auditing of data is desirable
@@ -56,7 +84,11 @@
                 server-to-server connections with each individual XMPP domain in the network, passing stanzas from one domain to another, and vice versa.
             </p>
 
-            <h3 id="use-case-data-monitoring-and-filtering">Use Case: Data Monitoring / Filtering</h3>
+        </section>
+
+        <section id="use-case-data-monitoring-and-filtering">
+
+            <h3>Use Case: Data Monitoring / Filtering</h3>
             <p>
                 Openfire, in trunking mode, can be deployed as a border filtering device, to check the releasability of data that is exposed from within one network to another.
             </p>
@@ -66,104 +98,123 @@
                 only appropriately labelled messages are exchanged between the XMPP domains, rejecting, for example, messages labelled 'TOP SECRET' sent from an internal XMPP domain to an unrecognized or untrusted XMPP domain.
             </p>
 
-            <h2 id="setup">Setup</h2>
-            <p>
-                The essence in getting an Openfire instance to act as a Trunking entity in your network is to have all other XMPP domains connect to this server, when they intend to connect to another remote domain. The Trunking entity needs to be configured to accept
-                stanzas for the target domain. This is typically achieved through DNS manipulation. It will then process the data, and pass it on to the target domain.
-            </p>
+        </section>
 
-            <p>
-                The server that is sending the message will attempt to establish a server-to-server connection with the target server. The sending server perform DNS lookups based on the domain name of the target server. The results of this lookup must be manipulated
-                in such a way that the resulting IP address is that of the trunking server. Openfire can facilitate such DNS manipulation, as it allows DNS lookups to be skipped in favor of preconfigured hard-coded values. To configure such values, the
-                property <tt>dnsutil.dnsOverride</tt> can be used. Note that these changes are needed only on the server(s) that send data through the trunking server. The trunking server itself should not need them.
-            </p>
-            <p>
-                The expected format of the value of the <tt>dnsutil.dnsOverride</tt> property is a comma-sparated list of <code>{HOST,IP:PORT}</code>. Note that whitespace is not allowed, as shown in <a href="#example-dnsutil-propvalue">example 1</a>:
-            </p>
+    </section>
 
-            <div style="text-align: center;">
-                <figure id="example-dnsutil-propvalue" style="margin: 2em;">
-                    <code style="padding: 10px; border: 3px solid #e7eaee; border-radius: 5px">{saturn.example.org,198.51.100.4:5269},{jupiter.example.com,198.51.100.4:5269}</code>
-                    <figcaption style="margin-top: 1.5em;">Example 1: <tt>dnsutil.dnsOverride</tt> property value, mapping two hostnames to the same IP address and port.</figcaption>
-                </figure>
-            </div>
+    <section id="setup">
 
-            <p>
-                To enable the trunking functionality in Openfire, the property <tt>xmpp.gateway.enabled</tt> needs to be set to <code>true</code>, and the property <tt>xmpp.gateway.domains</tt> needs to be populated with a (comma-separated) list of XMPP domain names of remote XMPP domains that the Openfire server will forward data to.
-            </p>
+        <h2>Setup</h2>
+        <p>
+            The essence in getting an Openfire instance to act as a Trunking entity in your network is to have all other XMPP domains connect to this server, when they intend to connect to another remote domain. The Trunking entity needs to be configured to accept
+            stanzas for the target domain. This is typically achieved through DNS manipulation. It will then process the data, and pass it on to the target domain.
+        </p>
 
-            <h3 id="setup-example">Full example</h3>
+        <p>
+            The server that is sending the message will attempt to establish a server-to-server connection with the target server. The sending server perform DNS lookups based on the domain name of the target server. The results of this lookup must be manipulated
+            in such a way that the resulting IP address is that of the trunking server. Openfire can facilitate such DNS manipulation, as it allows DNS lookups to be skipped in favor of preconfigured hard-coded values. To configure such values, the
+            property <code>dnsutil.dnsOverride</code> can be used. Note that these changes are needed only on the server(s) that send data through the trunking server. The trunking server itself should not need them.
+        </p>
+        <p>
+            The expected format of the value of the <code>dnsutil.dnsOverride</code> property is a comma-sparated list of <code>{HOST,IP:PORT}</code>. Note that whitespace is not allowed, as shown in <a href="#example-dnsutil-propvalue">example 1</a>:
+        </p>
+
+        <fieldset id="example-dnsutil-propvalue">
+            <legend>Example 1: <code>dnsutil.dnsOverride</code> property value, mapping two hostnames to the same IP address and port.</legend>
+            <code>{saturn.example.org,198.51.100.4:5269},{jupiter.example.com,198.51.100.4:5269}</code>
+        </fieldset>
+
+        <p>
+            To enable the trunking functionality in Openfire, the property <code>xmpp.gateway.enabled</code> needs to be set to <code>true</code>, and the property <code>xmpp.gateway.domains</code> needs to be populated with a (comma-separated) list of XMPP domain names of remote XMPP domains that the Openfire server will forward data to.
+        </p>
+
+        <section id="setup-example">
+
+            <h3>Full example</h3>
 
             <p>
                 Let us imagine three XMPP domains, each domain consisting of one Openfire server. For simplicity's sake, we assume that the fully qualified domain name of each server is equal to the XMPP domain name that it serves:
             </p>
 
             <ul>
-                <li><tt>saturn.example.org</tt> (<code>203.0.113.2</code>)</li>
-                <li><tt>trunk.example.com</tt> (<code>198.51.100.4</code>)</li>
-                <li><tt>mercury.example.net</tt> (<code>233.252.0.6</code>)</li>
+                <li><code>saturn.example.org</code> (<code>203.0.113.2</code>)</li>
+                <li><code>trunk.example.com</code> (<code>198.51.100.4</code>)</li>
+                <li><code>mercury.example.net</code> (<code>233.252.0.6</code>)</li>
             </ul>
 
             <p>
-                The objective of this example is to allow users of the domains <tt>saturn.example.org</tt> and <tt>mercury.example.net</tt> to exchange XMPP stanzas without their servers creating direct connections to each-other, instead using <tt>trunk.example.com</tt> as a gateway.
+                The objective of this example is to allow users of the domains <code>saturn.example.org</code> and <code>mercury.example.net</code> to exchange XMPP stanzas without their servers creating direct connections to each-other, instead using <code>trunk.example.com</code> as a gateway.
                 To achieve this, the following three steps are needed:
             </p>
 
             <ol>
                 <li>
                     <p>
-                        Openfire at <tt>trunk.example.com</tt> needs to be configured to allow trunking to both XMPP domains. To achieve this, it's property <tt>xmpp.gateway.domains</tt> is configured to use this value: <code>saturn.example.org,mercury.example.net</code>
+                        Openfire at <code>trunk.example.com</code> needs to be configured to allow trunking to both XMPP domains. To achieve this, it's property <code>xmpp.gateway.domains</code> is configured to use this value: <code>saturn.example.org,mercury.example.net</code>
                     </p>
                 </li>
                 <li>
                     <p>
-                        When a user of <tt>saturn.example.org</tt> sends a stanza to one of the users of <tt>mercury.example.net</tt>, <tt>saturn.example.org</tt> will attempt to establish a server-to-server connection to <tt>mercury.example.net</tt>. The objective here is to
-                        ensure that <tt>saturn.example.org</tt> is made to believe that the IP address of <tt>mercury.example.net</tt> is <code>198.51.100.4</code>, instead of its actual address <code>233.252.0.6</code>. This will cause the server-to-server connection to be established
-                        to <tt>trunk.example.org</tt> instead of to <tt>mercury.example.net</tt>. To this end, the property <tt>dnsutil.dnsOverride</tt> is configured with the following value on <tt>saturn.example.org</tt>: <code>{mercury.example.net,198.51.100.4:5269}</code>
+                        When a user of <code>saturn.example.org</code> sends a stanza to one of the users of <code>mercury.example.net</code>, <code>saturn.example.org</code> will attempt to establish a server-to-server connection to <code>mercury.example.net</code>. The objective here is to
+                        ensure that <code>saturn.example.org</code> is made to believe that the IP address of <code>mercury.example.net</code> is <code>198.51.100.4</code>, instead of its actual address <code>233.252.0.6</code>. This will cause the server-to-server connection to be established
+                        to <code>trunk.example.org</code> instead of to <code>mercury.example.net</code>. To this end, the property <code>dnsutil.dnsOverride</code> is configured with the following value on <code>saturn.example.org</code>: <code>{mercury.example.net,198.51.100.4:5269}</code>
                     </p>
 
-                    <div style="text-align: center;">
-                        <figure id="figure-dns-override">
-                            <img src="images/network-dns-override.svg" alt="Illustration of usage of DNS override." style="padding: 10px; border: 3px solid #e7eaee; border-radius: 5px; width:60em;">
-                            <figcaption>Figure 3: DNS override of mercury's IP address as observed by saturn.</figcaption>
-                        </figure>
-                    </div>
+                    <figure id="figure-dns-override">
+                        <img src="images/network-dns-override.svg" alt="Illustration of usage of DNS override." style="padding: 10px; border: 3px solid #e7eaee; border-radius: 5px; width:60em;">
+                        <figcaption>Figure 3: DNS override of mercury's IP address as observed by saturn.</figcaption>
+                    </figure>
+
                 </li>
                 <li>
                     <p>
-                        Typically, users will want to be able to respond to messages that they receive. To allow users of <tt>mercury.example.net</tt> to send back messages to users of <tt>saturn.example.org</tt>, a configuration change needs to be applied on <tt>mercury.example.net</tt>:
-                        it needs to resolve the IP address of <tt>saturn.example.org</tt> to a value that equals that of the trunking server: <code>198.51.100.4</code>. Similar to what was done on the other server, the property <tt>dnsutil.dnsOverride</tt> on <tt>mercury.example.net</tt> is
+                        Typically, users will want to be able to respond to messages that they receive. To allow users of <code>mercury.example.net</code> to send back messages to users of <code>saturn.example.org</code>, a configuration change needs to be applied on <code>mercury.example.net</code>:
+                        it needs to resolve the IP address of <code>saturn.example.org</code> to a value that equals that of the trunking server: <code>198.51.100.4</code>. Similar to what was done on the other server, the property <code>dnsutil.dnsOverride</code> on <code>mercury.example.net</code> is
                         configured with the value: <code>{saturn.example.org,198.51.100.4:5269}</code>
                     </p>
                 </li>
             </ol>
 
             <p>
-                These steps are all that is needed to finish the configuration in this basic example. Both servers will connect to the trunk when sending data to each-other. The trunk (which <em>does not</em> override DNS using the <tt>dnsutil.dnsOverride</tt> property) will accept the stanzas
+                These steps are all that is needed to finish the configuration in this basic example. Both servers will connect to the trunk when sending data to each-other. The trunk (which <em>does not</em> override DNS using the <code>dnsutil.dnsOverride</code> property) will accept the stanzas
                 from either server, and route them to the intended target server.
             </p>
+        </section>
 
-            <h2 id="caveats">Caveats</h2>
+    </section>
 
-            <p>Openfire was originally not specifically designed for trunking functionality. This introduces a couple of caveats.</p>
-            <ul>
-                <li>
-                    <b>Depends on dialback (mostly)</b>
-                    <p>
-                        XMPP Server-to-server connections can be authenticated in a number of ways. For trunking functionality to work, the trunk must successfully authenticate with the originating server as the target server. Openfire's Dialback authentication mechanism has been modified to
-                        support this use-case.
-                    </p>
-                    <p>
-                        A different, commonly used authentication mechanism for server-to-server connections is based on TLS, using the SASL EXTERNAL mechanism to present end-entity certificates. Given the DNS trickery <a href="#setup">described earlier</a>, an originating server will assume
-                        it is connecting to the recipient server, but instead connects to the trunking server. During TLS-based authentication, the certificate of the trunking server will be presented to the originating server, where it expects to receive the certificate of the recipient server.
-                        Usage of TLS with SASL EXTERNAL authentication typically leads to authentication failures.
-                    </p>
-                </li>
-                <li>
-                    <b>Confusing diagnostics</b>
-                    <p>Openfire's log and diagnostics can misrepresent the source and/or target addresses of data. Both servers on the endpoints of a stanza exchange will mostly appear to be communicating with each-other directly, not showing much (if any) details of the trunking server being an intermediate.</p>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <section id="caveats">
+
+        <h2 >Caveats</h2>
+
+        <p>Openfire was originally not specifically designed for trunking functionality. This introduces a couple of caveats.</p>
+        <ul>
+            <li>
+                <b>Depends on dialback (mostly)</b>
+                <p>
+                    XMPP Server-to-server connections can be authenticated in a number of ways. For trunking functionality to work, the trunk must successfully authenticate with the originating server as the target server. Openfire's Dialback authentication mechanism has been modified to
+                    support this use-case.
+                </p>
+                <p>
+                    A different, commonly used authentication mechanism for server-to-server connections is based on TLS, using the SASL EXTERNAL mechanism to present end-entity certificates. Given the DNS trickery <a href="#setup">described earlier</a>, an originating server will assume
+                    it is connecting to the recipient server, but instead connects to the trunking server. During TLS-based authentication, the certificate of the trunking server will be presented to the originating server, where it expects to receive the certificate of the recipient server.
+                    Usage of TLS with SASL EXTERNAL authentication typically leads to authentication failures.
+                </p>
+            </li>
+            <li>
+                <b>Confusing diagnostics</b>
+                <p>Openfire's log and diagnostics can misrepresent the source and/or target addresses of data. Both servers on the endpoints of a stanza exchange will mostly appear to be communicating with each-other directly, not showing much (if any) details of the trunking server being an intermediate.</p>
+            </li>
+        </ul>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
 </body>

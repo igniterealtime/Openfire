@@ -147,7 +147,7 @@
         <table>
             <tbody>
             <tr>
-                <td style="width: 1%; white-space: nowrap">
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
                     <input type="radio" name="proxyEnabled" value="true" id="rb02" ${fileTransferProxy.proxyEnabled ? 'checked' : ''}>
                 </td>
                 <td>

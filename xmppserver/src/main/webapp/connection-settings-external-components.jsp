@@ -442,7 +442,7 @@
         <tr>
             <th style="width: 1%">&nbsp;</th>
             <th style="width: 89%; white-space: nowrap"><fmt:message key="component.settings.subdomain" /></th>
-            <th style="width: 10%; white-space: nowrap"><fmt:message key="global.delete" /></th>
+            <th style="width: 10%; text-align: center; white-space: nowrap"><fmt:message key="global.delete" /></th>
         </tr>
         <c:choose>
             <c:when test="${empty blockedComponents}">

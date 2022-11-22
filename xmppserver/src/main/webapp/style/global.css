@@ -140,6 +140,10 @@ select, input {
     font-family:verdana,arial,sans-serif;
     font-size:8pt;
 }
+input[type=checkbox], input[type=radio] {
+    margin-right: 0.2rem;
+}
+
 iframe {
     border:1px solid #999999;
 }
@@ -602,6 +606,9 @@ pre, tt {
 }
 
 /* tables */
+label {
+    margin: unset; /* Undoing a bit of Bootstrap magic. */
+}
 .jive-table table {
     width: 100%;
 }
@@ -883,6 +890,12 @@ a.cal:hover {
 .jive-contentBox table th {
     background-color:#eeeeee;
     padding:4px;
+}
+.jive-contentBox table td label {
+    vertical-align: text-bottom;
+}
+.jive-contentBox table th label {
+    vertical-align: text-bottom;
 }
 th.jive-table-th-center {
     text-align:center;

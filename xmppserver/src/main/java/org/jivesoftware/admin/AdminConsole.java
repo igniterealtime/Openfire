@@ -324,6 +324,10 @@ public class AdminConsole {
             if (appLogoImage != null) {
                 Element existingLogoImage = (Element)generatedModel.selectSingleNode(
                         "//adminconsole/global/logo-image");
+                if (existingLogoImage == null) {
+                    existingLogoImage = ((Element)generatedModel.selectSingleNode("//adminconsole/global"))
+                        .addElement("logo-image");
+                }
                 existingLogoImage.setText(appLogoImage.getText());
                 if (appLogoImage.attributeValue("plugin") != null) {
                     existingLogoImage.addAttribute("plugin", appLogoImage.attributeValue("plugin"));
@@ -333,6 +337,10 @@ public class AdminConsole {
             if (appLoginImage != null) {
                 Element existingLoginImage = (Element)generatedModel.selectSingleNode(
                         "//adminconsole/global/login-image");
+                if (existingLoginImage == null) {
+                    existingLoginImage = ((Element)generatedModel.selectSingleNode("//adminconsole/global"))
+                        .addElement("login-image");
+                }
                 existingLoginImage.setText(appLoginImage.getText());
                 if (appLoginImage.attributeValue("plugin") != null) {
                     existingLoginImage.addAttribute("plugin", appLoginImage.attributeValue("plugin"));

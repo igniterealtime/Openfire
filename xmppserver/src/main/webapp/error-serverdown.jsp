@@ -35,9 +35,11 @@
 <table>
 <tbody>
     <tr>
+     <% if (AdminConsole.getLogoImage() != null) { %>
      <td>
          <img src="<%= path %>/<%= AdminConsole.getLogoImage() %>" alt="<%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.admin_console" />">
      </td>
+     <% }%>
      <td style="text-align: right">
          <table>
          <tr>

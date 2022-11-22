@@ -304,7 +304,7 @@
         
         <table>
             <tr>
-                <td colspan="2"><input type="checkbox" name="enabled" id="enabled" ${configuration.enabled ? 'checked' : ''}/>&nbsp;<label for="enabled"><fmt:message key="connection.advanced.settings.tcp.label_enable"/></label></td>
+                <td colspan="2"><input type="checkbox" name="enabled" id="enabled" ${configuration.enabled ? 'checked' : ''}/><label for="enabled"><fmt:message key="connection.advanced.settings.tcp.label_enable"/></label></td>
             </tr>
             <tr>
                 <td style="width: 1%; white-space: nowrap"><label for="tcpPort"><fmt:message key="ports.port"/></label></td>
@@ -375,12 +375,12 @@
         <table class="tlsconfig">
             <tr>
                 <td>
-                    <input type="checkbox" name="accept-self-signed-certificates" id="accept-self-signed-certificates" ${configuration.acceptSelfSignedCertificates ? 'checked' : ''}/>&nbsp;<label for="accept-self-signed-certificates"><fmt:message key="connection.advanced.settings.certchain.label_selfsigned"/></label>
+                    <input type="checkbox" name="accept-self-signed-certificates" id="accept-self-signed-certificates" ${configuration.acceptSelfSignedCertificates ? 'checked' : ''}/><label for="accept-self-signed-certificates"><fmt:message key="connection.advanced.settings.certchain.label_selfsigned"/></label>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/>&nbsp;<label for="verify-certificate-validity"><fmt:message key="connection.advanced.settings.certchain.label_validity"/></label>
+                    <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/><label for="verify-certificate-validity"><fmt:message key="connection.advanced.settings.certchain.label_validity"/></label>
                 </td>
             </tr>
         </table>
@@ -396,7 +396,7 @@
                     <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
                     <tr>
                         <td>
-                            <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/>&nbsp;<label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
+                            <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/><label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
                         </td>
                     </tr>
                 </c:if>
@@ -411,7 +411,7 @@
                 <c:set var="enabled" value="${configuration.encryptionProtocols.contains(supportedProtocol)}"/>
                 <tr>
                     <td>
-                        <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/>&nbsp;<label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
+                        <input type="checkbox" name="${idForForm}" id="${idForForm}" ${enabled ? 'checked' : ''}/><label for="${idForForm}"><c:out value="${supportedProtocol}"/></label>
                     </td>
                 </tr>
             </table>

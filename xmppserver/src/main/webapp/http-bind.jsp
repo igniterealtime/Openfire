@@ -223,7 +223,7 @@
         <table>
             <tbody>
                 <tr>
-                    <td style="width: 1%; white-space: nowrap">
+                    <td style="width: 1%; white-space: nowrap; vertical-align: top">
                         <input type="radio" name="httpBindEnabled" value="true" id="rb02" onclick="enabled = true; setEnabled();" ${serverManager.httpBindEnabled ? "checked" : ""}>
                     </td>
                     <td colspan="2">
@@ -242,7 +242,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td style="width: 1%; white-space: nowrap">
+                    <td style="width: 1%; white-space: nowrap; vertical-align: top">
                         <input type="radio" name="httpBindEnabled" value="false" id="rb01" onclick="enabled = false; setEnabled();" ${serverManager.httpBindEnabled ? "" : "checked"}/>
                     </td>
                     <td colspan="2">
@@ -300,7 +300,7 @@
         <table>
         <tbody>
             <tr>
-                <td style="width: 1%; white-space: nowrap">
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
                     <input type="radio" name="CORSEnabled" value="true" id="rb05" ${HttpBindManager.HTTP_BIND_CORS_ENABLED.value ? "checked" : ""}>
                 </td>
                 <td>
@@ -312,7 +312,7 @@
                 </td>
             </tr>
             <tr>
-                <td style="width: 1%; white-space: nowrap">
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
                     <input type="radio" name="CORSEnabled" value="false" id="rb06" ${HttpBindManager.HTTP_BIND_CORS_ENABLED.value ? "" : "checked"}>
                 </td>
                 <td>
@@ -330,7 +330,7 @@
         <table>
         <tbody>
             <tr>
-                <td style="width: 1%; white-space: nowrap">
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
                     <input type="radio" name="XFFEnabled" value="true" id="rb07" ${HttpBindManager.HTTP_BIND_FORWARDED.value ? "checked" : ""}>
                 </td>
                 <td>

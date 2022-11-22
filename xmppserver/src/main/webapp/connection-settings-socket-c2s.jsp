@@ -150,7 +150,7 @@
 
         <table>
             <tr>
-                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/>&nbsp;<label for="plaintext-enabled"><fmt:message key="ssl.settings.client.plaintext.label_enable"/></label></td>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="ssl.settings.client.plaintext.label_enable"/></label></td>
             </tr>
             <tr>
                 <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
@@ -170,7 +170,7 @@
 
         <table>
             <tr>
-                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/>&nbsp;<label for="legacymode-enabled"><fmt:message key="ssl.settings.client.legacymode.label_enable"/></label></td>
+                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled"><fmt:message key="ssl.settings.client.legacymode.label_enable"/></label></td>
             </tr>
             <tr>
                 <td style="width: 1%; white-space: nowrap"><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>

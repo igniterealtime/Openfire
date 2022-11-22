@@ -30,15 +30,6 @@ public class AdminConsoleTest {
     }
 
     @Test
-    @Ignore
-    public void testGetGlobalProps() throws Exception {
-        String name = AdminConsole.getAppName();
-        String image = AdminConsole.getLogoImage();
-        assertEquals("Openfire", name);
-        assertEquals("images/header-title.gif", image);
-    }
-
-    @Test
     public void testModifyGlobalProps() throws Exception {
         // Add a new stream to the AdminConsole:
         try (InputStream in = getClass().getResourceAsStream("/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-01.xml")) {

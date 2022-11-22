@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Wildfire to Openfire Upgrade Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Wildfire to Openfire Upgrade Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>This document provides the steps to follow in order to upgrade a Wildfire 3.2 installation into an
+            Openfire installation. If you need to update an old version of Wildfire then first update it to
+            Wildfire 3.2 following the standard steps described in the <a href="upgrade-guide.html">upgrade guide</a>
+            and the <a href="wildfire-ent-3_2_0-upgrade.html">Upgrade guide to Wildfire Enterprise 3.2.0</a> if you are using the Enterprise Edition.
+        </p>
+        <p>
+            This document describes the upgrade process for these environments/distributions:
+        </p>
+        <nav>
+            <ul>
+                <li><a href="#windows">Windows</a></li>
+                <li><a href="#rpm">Unix/Linux (RPM)</a></li>
+                <li><a href="#tar">Zip/Tar.gz</a></li>
+                <li><a href="#mac">Mac OS (DMG)</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <section id="windows">
+
+        <h2>Windows</h2>
+        <ol>
+            <li>Stop the server</li>
+            <li>Back up setup</li>
+            <li>If running as a service, remove the old service: <code>wildfire-service /uninstall</code></li>
+            <li>Install 3.3.0</li>
+            <li>Delete <code>conf/openfire.xml</code> and rename <code>conf/wildfire.xml</code> to <code>conf/openfire.xml</code></li>
+            <li>Search for <code>org.jivesoftware.wildfire.</code> and replace with <code>org.jivesoftware.openfire.</code> in <code>conf/openfire.xml</code></li>
+            <li>If using embedded database then rename <code>embedded-db\wildfire\*</code> files to <code>embedded-db\openfire\*</code></li>
+            <li>Delete all jar files in the plugin folder and drop new versions of plugins</li>
+            <li>Start up the server using new launch scripts localed in <code>bin</code></li>
+            <li>Optionally install as a service again: <code>openfire-service /install</code></li>
+        </ol>
+
+    </section>
+
+    <section id="rpm">
+
+        <h2>Unix/Linux (RPM)</h2>
+        <ol>
+            <li>Stop the server</li>
+            <li>Back up setup</li>
+            <li>Run <code>rpm -ivf openfire_3_3_0.rpm</code></li>
+            <li>Go to <code>/opt/openfire</code> and copy configuration from old setup
+            <ol>
+                <li>Copy <code>conf/wildfire.xml</code> and rename it to <code>conf/openfire.xml</code></li>
+                <li>Search for <code>org.jivesoftware.wildfire.</code> and replace with <code>org.jivesoftware.openfire.</code> in <code>conf/openfire.xml</code></li>
+                <li>If using embedded database then copy and rename <code>embedded-db\wildfire\*</code> files to <code>embedded-db\openfire\*</code></li>
+                <li>Copy new version of plugins to <code>opt/openfire/plugins</code> (except admin folder)</li>
+                <li>Copy old certificates from <code>resources/security/</code> to same location in <code>openfire</code></li>
+            </ol>
+            </li>
+            <li>If running as a service update service to use new scripts located in <code>bin</code></li>
+            <li>Start up the server using new launch scripts located in <code>bin</code></li>
+            <li>To uninstall Wildfire run <code>rpm -e wildfire</code></li>
+        </ol><br>
+
+    </section>
+
+    <section id="tar">
+
+        <h2>Zip/Tar.gz</h2>
+        This process is similar to the RPM except that step 3 is replaced with:<br>
+        <ol start="3">
+            <li>Unzip content to <code>/opt/openfire</code> (unix/linux) or <code>C:\Program Files\openfire</code> (windows)</li>
+        </ol>
+
+    </section>
+
+    <section id="mac">
+
+        <h2>Mac OS (DMG)</h2>
+        <ol>
+            <li>Install Openfire using the .pkg installer</li>
+            <li>Use the System Preferences pane to turn Openfire off</li>
+            <li>For steps 4-8 assume paths are relative to <code>/usr/local</code></li>
+            <li>Copy <code>wildfire/conf/wildfire.xml</code> to <code>openfire/conf/openfire.xml</code></li>
+            <li>Search for <code>org.jivesoftware.wildfire.</code> and replace with <code>org.jivesoftware.openfire.</code> in <code>conf/openfire.xml</code></li>
+            <li>If using embedded database then copy and rename <code>embedded-db\wildfire\*</code> files to <code>embedded-db\openfire\*</code></li>
+            <li>Copy new version of plugins to <code>openfire/plugins</code> (except admin folder)</li>
+            <li>Copy old certificates from <code>resources/security/</code> to same location in <code>openfire</code></li>
+            <li>Use the System Preferences pane to turn Openfire back on</li>
+        </ol>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+</body>
+</html>

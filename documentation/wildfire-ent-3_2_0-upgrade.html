@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Upgrade guide to Wildfire Enterprise 3.2.0</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Upgrade guide to Wildfire Enterprise 3.2.0</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section>
+
+        <section style="border: orange 1px solid; background-color: #FFFFCC; padding: 2em">
+            This documentation describes an upgrade process to a (very) outdated version of Openfire. There should be
+            little, if any, reason to follow this guide. Refer to <a href="upgrade-guide.html">the upgrade guide</a>
+            for generic documentation to update to the last version of Openfire.
+        </section>
+
+        <p>As of Wildfire Enterprise 3.2.0 the enterprise plugin and Fastpath plugin were merged into
+            the enterprise plugin. Follow these steps to upgrade your existing installation:
+        </p>
+
+        <h2>For Wildfire Enterprise 3.1.0 or previous:</h2>
+        <ol>
+            <li>Upgrade to Wildfire Enterprise 3.1.1.</li>
+            <li>Follow  the steps in the next section.</li>
+        </ol>
+
+        <h2>For Wildfire Enterprise 3.1.1:</h2>
+        <ol>
+            <li>Stop the server and make a backup of:
+            <ol>
+                <li>the database where Wildfire is installed</li>
+                <li>the <i>enterprise</i> folder under <i>wildfireHome</i></li>
+                <li>the <i>index</i> folder under <i>wildfireHome</i></li>
+                <li>optional: the enterprise and fastpath plugins located in the plugins folderv
+            </ol>
+            </li>
+            <li>Download the latest version of Wildfire Enterprise and copy it to the <i>plugins</i> folder.</li>
+            <li>Start the server. The new version of the plugin will be loaded and the database will be updated.</li>
+            <li>Fastpath tables were replaced with new tables so you may want to <b>import existing data</b> from the old Fastpath version to the new Fastpath version. Follow these steps to import existing data:
+            <ol>
+                <li>Stop the server.</li>
+                <li>Go to [wildfireHome]/plugins/enterprise/database/upgrade/4 to find the import plugins.</li>
+                <li>Execute the corresponding <i>import_*.sql</i> database script depending on your database.</li>
+                <li>Start the server, log into the admin console and verify that workgroup settings were imported.</li>
+            </ol>
+            </li>
+        </ol>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

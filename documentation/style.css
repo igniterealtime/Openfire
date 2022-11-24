@@ -130,6 +130,15 @@ section > dl {
     margin-left: 2.5em;
 }
 
+aside {
+    width: 30%;
+    padding-left: 15px;
+    margin-left: 15px;
+    float: right;
+    font-style: italic;
+    background-color: #e7eaee;
+}
+
 /* anchors */
 a:link {
     color: #11568c;
@@ -194,17 +203,19 @@ li {
     margin: 0.4em 0;
 }
 
+dl {
+    display: grid;
+    grid-template-columns: max-content auto;
+}
+
 dt {
-    float: left;
-    clear: left;
-    width: 14em;
-    text-align: left;
+    grid-column-start: 1;
     font-weight: bold;
     color: #060;
 }
+
 dd {
-    margin: 0 0 0 14em;
-    padding: 0 0 0.5em 0;
+    grid-column-start: 2;
 }
 
 hr {

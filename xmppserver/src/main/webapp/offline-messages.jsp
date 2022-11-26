@@ -140,7 +140,7 @@
             manager.setQuota((int)(quota*1024));
 
             // Log the event
-            webManager.logEvent("edited offline message settings", "quote = "+quota+"\ntype = "+manager.getType());
+            webManager.logEvent("edited offline message settings", "quota = "+quota+"\ntype = "+manager.getType());
 %>
 <c:set var="success" value="true" />
 <%
@@ -180,8 +180,8 @@
             quota = 0;
         }
 
-        pageContext.setAttribute( "offlinechecktimer", OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue() );
-        pageContext.setAttribute( "daystolive", OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue() );
+        pageContext.setAttribute( "offlinechecktimer", OfflineMessageStore.OFFLINE_AUTOCLEAN_CHECKINTERVAL.getValue().toMinutes() );
+        pageContext.setAttribute( "daystolive", OfflineMessageStore.OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue().toDays() );
         pageContext.setAttribute( "offlinecleaner", OfflineMessageStore.OFFLINE_AUTOCLEAN_ENABLE.getValue()?"true":"" );
     }
     pageContext.setAttribute("errors", errors);
@@ -347,7 +347,7 @@
                         </b>
                     </td>
                     <td>
-                        <input type="number" min="1" name="offlinechecktimer" id="offlinechecktimer" size="5" value="${offlinechecktimer.toMinutes()}">
+                        <input type="number" min="1" name="offlinechecktimer" id="offlinechecktimer" size="5" value="${offlinechecktimer}">
                     </td>
                 </tr>
                 <tr>
@@ -364,7 +364,7 @@
                         </b>
                     </td>
                     <td>
-                        <input type="number" min="1" name="daystolive" id="daystolive" size="5" value="${daystolive.toDays()}">
+                        <input type="number" min="1" name="daystolive" id="daystolive" size="5" value="${daystolive}">
                     </td>
                 </tr>
             </tbody>

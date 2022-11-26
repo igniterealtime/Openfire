@@ -332,9 +332,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 // Restore default timeout
                 socket.setSoTimeout(soTimeout);
 
-                log.debug( "Processing stream features of the remote domain..." );
                 Element features = reader.parseDocument().getRootElement();
                 if (features != null) {
+                    log.debug( "Processing stream features of the remote domain: {}", features.asXML() );
                     if (directTLS) {
                         log.debug( "We connected to the remote server using direct TLS. Authenticate the connection with SASL..." );
                         LocalOutgoingServerSession answer = authenticate(domainPair, connection, reader, openingStream, features, id);
@@ -348,7 +348,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         log.debug( "Unable to authenticate the connection with SASL." );
                     } else {
                         log.debug( "Check if both us as well as the remote server have enabled STARTTLS and/or dialback ..." );
-                        final boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_POLICY, true);
+                        final boolean useTLS = connection.getTlsPolicy() == Connection.TLSPolicy.optional || connection.getTlsPolicy() == Connection.TLSPolicy.required;
                         if (useTLS && features.element("starttls") != null) {
                             log.debug( "Both us and the remote server support the STARTTLS feature. Secure and authenticate the connection with TLS & SASL..." );
                             LocalOutgoingServerSession answer = secureAndAuthenticate(domainPair, connection, reader, openingStream);

@@ -27,7 +27,6 @@ import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -121,8 +120,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             // Get the stream ID for the new session
             StreamID streamID = SessionManager.getInstance().nextStreamID();
             // Create a server Session for the remote server
-            LocalIncomingServerSession session =
-                    SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
+            LocalIncomingServerSession session = SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
+            Log.debug("Creating new session with stream ID '{}' for local '{}' to peer '{}'.", streamID, toDomain, fromDomain);
 
             // Send the stream header
             StringBuilder openingStream = new StringBuilder();
@@ -143,7 +142,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             } else {
                 openingStream.append('>');
             }
-            
+
+            Log.trace("Outbound opening stream: {}", openingStream);
             connection.deliverRawText(openingStream.toString());
 
             if (serverVersion[0] >= 1) {        	
@@ -171,15 +171,15 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             StringBuilder sb = new StringBuilder();
             
-            if (serverVersion[0] >= 1) {        	
-                // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
-                // Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443) 
+            if (serverVersion[0] >= 1) {
+                Log.trace("Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)");
+
                 sb.append("<stream:features>");
 
-                if (!directTLS && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_POLICY, true)) {
+                if (!directTLS && (connection.getTlsPolicy() == Connection.TLSPolicy.required || connection.getTlsPolicy() == Connection.TLSPolicy.optional)) {
                     sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
                     if (!ServerDialback.isEnabled()) {
-                        // Server dialback is disabled so TLS is required
+                        Log.debug("Server dialback is disabled so TLS is required");
                         sb.append("<required/>");
                     }
                     sb.append("</starttls>");
@@ -195,11 +195,14 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 }
 
                 sb.append("</stream:features>");
+            } else {
+                Log.debug("Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443)");
             }
-            
+
+            Log.trace("Outbound feature advertisement: {}", sb);
             connection.deliverRawText(sb.toString());
 
-            // Set the domain or subdomain of the local server targeted by the remote server
+            Log.trace("Set the domain or subdomain of the local server targeted by the remote server: {}", serverName);
             session.setLocalDomain(serverName);
             return session;
         }

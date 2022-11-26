@@ -62,6 +62,7 @@ public class DNSUtil {
             String property = JiveGlobals.getProperty("dnsutil.dnsOverride");
             if (property != null) {
                 dnsOverride = decode(property);
+                dnsOverride.forEach((domain, override) -> logger.info("Detected DNS override configuration for {} to {}", domain, override));
             }
         }
         catch (Exception e) {
@@ -108,6 +109,7 @@ public class DNSUtil {
                 hostAddress = dnsOverride.get("*");
             }
             if (hostAddress != null) {
+                logger.debug("Answering lookup for domain '{}' from DNS override property. Returning: {}", domain, hostAddress);
                 results.add(hostAddress);
                 return results;
             }

@@ -16,6 +16,10 @@
 
 package org.jivesoftware.openfire;
 
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.IQResultListenerTask;
@@ -32,6 +36,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SentryWrap;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -88,6 +93,27 @@ public class IQRouter extends BasicModule {
      * @throws NullPointerException If the packet is null
      */
     public void route(IQ packet) {
+        try {
+            SentryWrap.span(() -> {
+                try {
+                    Element child = packet.getChildElement();
+                    Sentry.configureScope(scope -> {
+                        if (child != null) {
+                            scope.setTag("xmlns.iq", child.getNamespaceURI());
+                        }
+                        scope.setTag("iq.type", packet.getType().toString());
+                    });
+                } catch (Exception e) {
+                    // Swallow
+                }
+                this.wrappedRoute(packet);
+            }, "IQRouter.route", "function");
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
+    }
+
+    private void wrappedRoute(IQ packet) {
         if (packet == null) {
             throw new NullPointerException();
         }

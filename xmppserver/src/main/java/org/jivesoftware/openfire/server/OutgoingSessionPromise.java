@@ -25,6 +25,9 @@ import java.util.concurrent.locks.Lock;
 
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
@@ -37,6 +40,7 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SentryWrap;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
@@ -248,12 +252,24 @@ public class OutgoingSessionPromise {
 
         @Override
         public void run() {
+            try {
+                SentryWrap.transaction(this::wrappedRun, "net.s2s.outgoing", "net.s2s");
+            } catch (Exception ignored) {
+            }
+        }
+
+        private void wrappedRun() throws Exception {
+            Sentry.configureScope((s) -> {
+                s.setTag("domain.local", domainPair.getLocal());
+                s.setTag("domain.remote", domainPair.getRemote());
+            });
             Log.debug("Start for {}", domainPair);
             RoutableChannelHandler channel;
             try {
-                channel = establishConnection();
+                channel = SentryWrap.span(() -> establishConnection(), "establishConnection", "function");
             } catch (Exception e) {
                 Log.warn("An exception occurred while trying to establish a connection for {}", domainPair, e);
+                Sentry.captureException(e);
                 channel = null;
             }
 
@@ -261,29 +277,32 @@ public class OutgoingSessionPromise {
             // stanzas are queued while we process the queue, by first synchronizing on the same mutex that should be
             // used to guards #queue(). That will cause to-be-queued stanzas to be sent directly over the now
             // established connection after we've finished processing all queued stanzas below.
-            synchronized (getMutex(domainPair)) {
-                Log.trace("Purging queue for {}", domainPair);
-                Packet packet;
-                while ((packet = packetQueue.poll()) != null) {
-                    if (channel != null) {
-                        // A connection to the remote server was created so get the route and purge the packet queue.
-                        try {
-                            Log.trace("Routing queued stanza: {}", packet);
-                            channel.process(packet);
-                        } catch (Exception e) {
-                            Log.debug("Error sending packet to domain '{}': {}", domainPair.getRemote(), packet, e);
-                            returnErrorToSender(packet);
+            RoutableChannelHandler finalChannel = channel;
+            SentryWrap.span(() -> {
+                    synchronized (getMutex(domainPair)) {
+                        Log.trace("Purging queue for {}", domainPair);
+                        Packet packet;
+                        while ((packet = packetQueue.poll()) != null) {
+                            if (finalChannel != null) {
+                                // A connection to the remote server was created so get the route and purge the packet queue.
+                                try {
+                                    Log.trace("Routing queued stanza: {}", packet);
+                                    finalChannel.process(packet);
+                                } catch (Exception e) {
+                                    Log.debug("Error sending packet to domain '{}': {}", domainPair.getRemote(), packet, e);
+                                    returnErrorToSender(packet);
+                                }
+                            } else {
+                                // A connection to the remote server failed. Return an error for all queued stanzas.
+                                Log.trace("Bouncing queued stanza: {}", packet);
+                                returnErrorToSender(packet);
+                            }
                         }
-                    } else {
-                        // A connection to the remote server failed. Return an error for all queued stanzas.
-                        Log.trace("Bouncing queued stanza: {}", packet);
-                        returnErrorToSender(packet);
-                    }
-                }
 
-                // Remove the processor to ensure that it cannot accept new stanzas to be queued.
-                packetsProcessors.remove(domainPair);
-            }
+                        // Remove the processor to ensure that it cannot accept new stanzas to be queued.
+                        packetsProcessors.remove(domainPair);
+                    }
+                }, "purge queue", "span");
             Log.trace("Finished processing {}", domainPair);
         }
 
@@ -295,7 +314,7 @@ public class OutgoingSessionPromise {
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
-                created = LocalOutgoingServerSession.authenticateDomain(domainPair);
+                created = SentryWrap.span(() -> LocalOutgoingServerSession.authenticateDomain(domainPair), "LocalOutgoingServerSession.authenticateDomain", "function");
             } finally {
                 lock.unlock();
             }

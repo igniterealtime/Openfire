@@ -16,6 +16,10 @@
 
 package org.jivesoftware.openfire.handler;
 
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import org.dom4j.Element;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -25,6 +29,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SentryWrap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -57,6 +62,23 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
 
     @Override
     public void process(Packet packet) throws PacketException {
+        try {
+            IQ iq = (IQ) packet;
+            SentryWrap.span(() -> {
+                Sentry.configureScope(scope -> {
+                    scope.setTag("xmlns.iq", this.getInfo().getNamespace());
+                    scope.setTag("iq.type", iq.getType().toString());
+                });
+                this.wrappedProcess(packet);
+            }, "IQRouter.route", "function");
+        } catch (PacketException e) {
+            throw e;
+        } catch (Exception e) {
+            Sentry.captureException(e);
+        }
+    }
+
+    void wrappedProcess(Packet packet) throws PacketException {
         IQ iq = (IQ) packet;
         try {
             IQ reply = handleIQ(iq);

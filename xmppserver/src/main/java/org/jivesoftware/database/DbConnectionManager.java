@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.MissingResourceException;
 
+import io.sentry.Sentry;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -176,6 +177,12 @@ public class DbConnectionManager {
                     // connection unless profiling is enabled. If yes, wrap the
                     // connection with a profiled connection.
                     if (!profilingEnabled) {
+                        if (Sentry.isEnabled()) {
+                            // Ah, but Sentry is live, so let's profile anyway.
+                            profilingEnabled = true;
+                            ProfiledConnection.start();
+                            return new ProfiledConnection(con);
+                        }
                         return con;
                     } else {
                         return new ProfiledConnection(con); 

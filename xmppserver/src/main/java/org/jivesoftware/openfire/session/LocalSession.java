@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.session;
 
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -27,12 +30,14 @@ import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.net.TLSStreamHandler;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SentryWrap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLSession;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.*;
@@ -399,6 +404,13 @@ public abstract class LocalSession implements Session {
 
     @Override
     public void process(Packet packet) {
+        try {
+            SentryWrap.transaction(() -> processWrapped(packet), this.getClass().getName() + ".process " + packet.getElement().getName(), "function");
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void processWrapped(Packet packet) {
         // Check that the requested packet can be processed
         if (canProcess(packet)) {
             // Perform the actual processing of the packet. This usually implies sending

@@ -16,9 +16,14 @@
 
 package org.jivesoftware.database;
 
+import io.sentry.ISpan;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
+
 import java.sql.*;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Wraps a Connection object and collects statistics about the database queries
@@ -632,6 +637,95 @@ public class ProfiledConnection extends AbstractConnection {
         return new TimedCallableStatement(connection.prepareCall(sql, i, i1), sql);
     }
 
+    protected <T> T wrap(Callable<T> fn, String sql, Type type) throws SQLException {
+        long t1 = System.currentTimeMillis();
+        T result;
+        ISpan span = null;
+        if (Sentry.getSpan() != null) {
+            span = Sentry.getSpan().startChild("db", sql);
+        }
+        try {
+            result = fn.call();
+        } catch (SQLException e) {
+            if (span != null) {
+                span.setStatus(SpanStatus.INTERNAL_ERROR);
+            }
+            throw e;
+        } catch (Exception e) {
+            if (span != null) {
+                span.setStatus(SpanStatus.UNKNOWN_ERROR);
+            }
+            throw new RuntimeException(e);
+        } finally {
+            if (span != null) {
+                span.finish();
+            }
+        }
+        long t2 = System.currentTimeMillis();
+
+        switch (type) {
+            case select:
+                addQuery(Type.select, sql, t2 - t1);
+                break;
+            case update:
+                addQuery(Type.update, sql, t2 - t1);
+                break;
+            case insert:
+                addQuery(Type.insert, sql, t2 - t1);
+                break;
+            case delete:
+                addQuery(Type.delete, sql, t2 - t1);
+                break;
+        }
+
+        return result;
+    }
+
+    protected <T> T wrap(Callable<T> fn, String sql) throws SQLException {
+        long t1 = System.currentTimeMillis();
+        T result;
+        ISpan span = null;
+        if (Sentry.getSpan() != null) {
+            span = Sentry.getSpan().startChild("db", sql);
+        }
+        try {
+            result = fn.call();
+        } catch (SQLException e) {
+            if (span != null) {
+                span.setStatus(SpanStatus.INTERNAL_ERROR);
+            }
+            throw e;
+        } catch (Exception e) {
+            if (span != null) {
+                span.setStatus(SpanStatus.UNKNOWN_ERROR);
+            }
+            throw new RuntimeException(e);
+        } finally {
+            if (span != null) {
+                span.finish();
+            }
+        }
+        long t2 = System.currentTimeMillis();
+
+        // determine the type of query
+        String sqlL = sql.toLowerCase().trim();
+
+        if (sqlL.startsWith("insert")) {
+            addQuery(Type.insert, sql, t2 - t1);
+        }
+        else if (sqlL.startsWith("update")) {
+            addQuery(Type.update, sql, t2 - t1);
+        }
+        else if (sqlL.startsWith("delete")) {
+            addQuery(Type.delete, sql, t2 - t1);
+        }
+        else {
+            addQuery(Type.select, sql, t2 - t1);
+        }
+        return result;
+    }
+
+
     /**
      * An implementation of the Statement interface that wraps an underlying
      * Statement object and performs timings of the database queries. The class
@@ -639,7 +733,7 @@ public class ProfiledConnection extends AbstractConnection {
      */
     class TimedStatement extends StatementWrapper {
 
-        private Statement stmt;
+        private final Statement stmt;
 
         /**
          * Creates a new TimedStatement that wraps {@code stmt}.
@@ -652,73 +746,15 @@ public class ProfiledConnection extends AbstractConnection {
         }
 
         public boolean execute(String sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            boolean result = stmt.execute(sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> stmt.execute(sql), sql);
         }
 
         public ResultSet executeQuery(String sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            ResultSet result = stmt.executeQuery(sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> stmt.executeQuery(sql), sql);
         }
 
         public int executeUpdate(String sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            int result = stmt.executeUpdate(sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> stmt.executeUpdate(sql), sql);
         }
     }
 
@@ -729,7 +765,7 @@ public class ProfiledConnection extends AbstractConnection {
      */
     class TimedPreparedStatement extends PreparedStatementWrapper {
 
-        private String sql;
+        private final String sql;
         private Type type = Type.select;
 
         public TimedPreparedStatement(PreparedStatement pstmt, String sql) {
@@ -754,78 +790,21 @@ public class ProfiledConnection extends AbstractConnection {
         }
 
         public boolean execute() throws SQLException {
-            // Perform timing of this method.
-            long t1 = System.currentTimeMillis();
-            boolean result = pstmt.execute();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> pstmt.execute(), sql, type);
         }
 
         /*
          * This is one of the methods that we wish to time
          */
         public ResultSet executeQuery() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            ResultSet result = pstmt.executeQuery();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> pstmt.executeQuery(), sql, type);
         }
 
         /*
          * This is one of the methods that we wish to time
          */
         public int executeUpdate() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = pstmt.executeUpdate();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> pstmt.executeUpdate(), sql, type);
         }
 
         // The following methods are from the Statement class - the
@@ -833,97 +812,19 @@ public class ProfiledConnection extends AbstractConnection {
         // without these this class won't compile
 
         public boolean execute(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            boolean result = pstmt.execute(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, _sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> pstmt.execute(_sql), _sql);
         }
 
         public int[] executeBatch() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int[] result = pstmt.executeBatch();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> pstmt.executeBatch(), sql, type);
         }
 
         public ResultSet executeQuery(String _sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            ResultSet result = pstmt.executeQuery(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, _sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> pstmt.executeQuery(_sql), _sql);
         }
 
         public int executeUpdate(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = pstmt.executeUpdate(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, _sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> pstmt.executeUpdate(_sql), _sql);
         }
     }
 
@@ -934,7 +835,7 @@ public class ProfiledConnection extends AbstractConnection {
      */
     class TimedCallableStatement extends CallableStatementWrapper {
 
-        private String sql;
+        private final String sql;
         private Type type = Type.select;
 
         public TimedCallableStatement(CallableStatement cstmt, String sql) {
@@ -959,78 +860,21 @@ public class ProfiledConnection extends AbstractConnection {
         }
 
         public boolean execute() throws SQLException {
-            // Perform timing of this method.
-            long t1 = System.currentTimeMillis();
-            boolean result = cstmt.execute();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> cstmt.execute(), sql, type);
         }
 
         /*
          * This is one of the methods that we wish to time
          */
         public ResultSet executeQuery() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            ResultSet result = cstmt.executeQuery();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> cstmt.executeQuery(), sql, type);
         }
 
         /*
          * This is one of the methods that we wish to time
          */
         public int executeUpdate() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = cstmt.executeUpdate();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> cstmt.executeUpdate(), sql, type);
         }
 
         // The following methods are from the Statement class - the
@@ -1038,97 +882,19 @@ public class ProfiledConnection extends AbstractConnection {
         // without these this class won't compile
 
         public boolean execute(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            boolean result = cstmt.execute(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, _sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> cstmt.execute(_sql), _sql);
         }
 
         public int[] executeBatch() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int[] result = cstmt.executeBatch();
-            long t2 = System.currentTimeMillis();
-
-            switch (type) {
-                case select:
-                    addQuery(Type.select, sql, t2 - t1);
-                    break;
-                case update:
-                    addQuery(Type.update, sql, t2 - t1);
-                    break;
-                case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
-                    break;
-                case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
-                    break;
-            }
-            return result;
+            return wrap(() -> cstmt.executeBatch(), sql, type);
         }
 
         public ResultSet executeQuery(String _sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
-            ResultSet result = cstmt.executeQuery(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, _sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> cstmt.executeQuery(_sql), _sql);
         }
 
         public int executeUpdate(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
-            int result = cstmt.executeUpdate(_sql);
-            long t2 = System.currentTimeMillis();
-
-            // determine the type of query
-            String sqlL = _sql.toLowerCase().trim();
-
-            if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
-            }
-            else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
-            }
-            else {
-                addQuery(Type.select, _sql, t2 - t1);
-            }
-            return result;
+            return wrap(() -> cstmt.executeUpdate(_sql), _sql);
         }
     }
 }

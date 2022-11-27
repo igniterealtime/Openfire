@@ -16,12 +16,14 @@
 
 package org.jivesoftware.openfire.spi;
 
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.container.BasicModule;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.util.SentryWrap;
+import org.xmpp.packet.*;
 
 /**
  * An uber router that can handle any packet type.<p>
@@ -55,6 +57,12 @@ public class PacketRouterImpl extends BasicModule implements PacketRouter {
      */
     @Override
     public void route(Packet packet) {
+        try {
+            SentryWrap.span(() -> this.wrappedRoute(packet), "PacketRouter.route " + packet.getTo().getDomain(), "function");
+        } catch (Exception ignored) {
+        }
+    }
+    private void wrappedRoute(Packet packet) {
         if (packet instanceof Message) {
             route((Message)packet);
         }

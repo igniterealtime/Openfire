@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<Configuration monitorInterval="30">
+<Configuration monitorInterval="30" status="WARN" packages="io.sentry.log4j2">
     <Appenders>
         <!-- Modifying this appender is likely to break the log viewer that is part of the Openfire admin console.
            - If you'd like to have a differently formatted log file, it is advisable to create a new log file, by
@@ -18,6 +18,8 @@
         <Console name="console" target="SYSTEM_OUT">
             <PatternLayout pattern="%msg{nolookups}%n%throwable{0}"/>
         </Console>
+
+        <Sentry name="sentry" minimumBreadcrumbLevel="DEBUG" minimumEventLevel="ERROR" />
         
     </Appenders>
 
@@ -33,8 +35,9 @@
         <!-- OF-506: Jetty INFO messages are generally not useful. Ignore them by default. -->
         <Logger name="org.eclipse.jetty" level="warn"/>
 
-        <Root level="info">
+        <Root level="debug">
             <AppenderRef ref="openfire"/>
+            <AppenderRef ref="sentry"/>
         </Root>
     </Loggers>
 </Configuration>

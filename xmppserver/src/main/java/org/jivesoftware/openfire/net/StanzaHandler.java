@@ -16,6 +16,11 @@
 
 package org.jivesoftware.openfire.net;
 
+import io.sentry.Hub;
+import io.sentry.IHub;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.protocol.User;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -39,6 +44,7 @@ import org.xmpp.packet.*;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.UnknownHostException;
 import java.util.List;
 
 /**
@@ -95,6 +101,8 @@ public abstract class StanzaHandler {
      */
     private PacketRouter router;
 
+    private boolean sentryStarted = false;
+
     /**
      * Creates a dedicated reader for a socket.
      *
@@ -111,85 +119,125 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-        boolean initialStream = stanza.startsWith("<stream:stream");
-        if (!sessionCreated || initialStream) {
-            if (!initialStream) {
-                // Ignore <?xml version="1.0"?>
+        if (!sentryStarted) {
+            sentryStarted = true;
+            Sentry.pushScope();
+            Sentry.startSession();
+            Sentry.configureScope(scope -> {
+                User u = new User();
+                try {
+                    u.setIpAddress(connection.getHostAddress());
+                } catch (UnknownHostException e) {
+                    // Ignore this.
+                }
+                scope.setUser(u);
+            });
+        }
+        Sentry.pushScope();
+        ITransaction trans = Sentry.startTransaction("Any", "element", true);
+        Sentry.configureScope(scope -> {
+            scope.setTag("session.type", "c2s");
+        });
+        if (session != null && session.getAddress() != null) {
+            Sentry.configureScope(scope -> {
+                User u = scope.getUser();
+                if (u == null) {
+                    u = new User();
+                    try {
+                        u.setIpAddress(connection.getHostAddress());
+                    } catch (UnknownHostException e) {
+                        // Ignore this.
+                    }
+                }
+                u.setUsername(session.getAddress().toBareJID());
+                scope.setUser(u);
+            });
+        }
+        Log.info("Started transaction, Sentry is {}", Sentry.isEnabled() ? "ENABLED" : "Disabled");
+        try {
+            boolean initialStream = stanza.startsWith("<stream:stream");
+            if (!sessionCreated || initialStream) {
+                if (!initialStream) {
+                    Sentry.configureScope(scope -> scope.setTransaction("XMLPI"));
+                    // Ignore <?xml version="1.0"?>
+                    return;
+                }
+                Sentry.configureScope(scope -> scope.setTransaction("StreamOpen"));
+                // Found an stream:stream tag...
+                if (!sessionCreated) {
+                    sessionCreated = true;
+                    MXParser parser = reader.getXPPParser();
+                    parser.setInput(new StringReader(stanza));
+                    createSession(parser);
+                } else if (startedTLS) {
+                    startedTLS = false;
+                    tlsNegotiated();
+                } else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
+                    startedSASL = false;
+                    saslSuccessful();
+                } else if (waitingCompressionACK) {
+                    waitingCompressionACK = false;
+                    compressionSuccessful();
+                }
                 return;
             }
-            // Found an stream:stream tag...
-            if (!sessionCreated) {
-                sessionCreated = true;
-                MXParser parser = reader.getXPPParser();
-                parser.setInput(new StringReader(stanza));
-                createSession(parser);
-            }
-            else if (startedTLS) {
-                startedTLS = false;
-                tlsNegotiated();
-            }
-            else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
-                startedSASL = false;
-                saslSuccessful();
-            }
-            else if (waitingCompressionACK) {
-                waitingCompressionACK = false;
-                compressionSuccessful();
-            }
-            return;
-        }
 
-        // Verify if end of stream was requested
-        if (stanza.equals("</stream:stream>")) {
-            if (session != null) {
-                session.getStreamManager().formalClose();
-                Log.debug( "Closing session as an end-of-stream was received: {}", session );
-                session.close();
+            // Verify if end of stream was requested
+            if (stanza.equals("</stream:stream>")) {
+                Sentry.configureScope(scope -> scope.setTransaction("StreamClose"));
+                if (session != null) {
+                    session.getStreamManager().formalClose();
+                    Log.debug("Closing session as an end-of-stream was received: {}", session);
+                    session.close();
+                }
+                return;
             }
-            return;
-        }
-        // Ignore <?xml version="1.0"?> stanzas sent by clients
-        if (stanza.startsWith("<?xml")) {
-            return;
-        }
-        // Create DOM object from received stanza
-        Element doc = reader.read(new StringReader(stanza)).getRootElement();
-        if (doc == null) {
-            // No document found.
-            return;
-        }
-        String tag = doc.getName();
-        if ("starttls".equals(tag)) {
-            // Negotiate TLS
-            if (negotiateTLS()) {
-                startedTLS = true;
+            // Ignore <?xml version="1.0"?> stanzas sent by clients
+            if (stanza.startsWith("<?xml")) {
+                Sentry.configureScope(scope -> scope.setTransaction("XMLPI"));
+                return;
             }
-            else {
-                connection.close();
-                session = null;
+            // Create DOM object from received stanza
+            Element doc = reader.read(new StringReader(stanza)).getRootElement();
+            if (doc == null) {
+                // No document found.
+                return;
             }
-        }
-        else if ("auth".equals(tag)) {
-            // User is trying to authenticate using SASL
-            startedSASL = true;
-            // Process authentication stanza
-            saslStatus = SASLAuthentication.handle(session, doc);
-        } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
-            // User is responding to SASL challenge. Process response
-            saslStatus = SASLAuthentication.handle(session, doc);
-        }
-        else if ("compress".equals(tag)) {
-            // Client is trying to initiate compression
-            if (compressClient(doc)) {
-                // Compression was successful so open a new stream and offer
-                // resource binding and session establishment (to client sessions only)
-                waitingCompressionACK = true;
+            String tag = doc.getName();
+            String xmlns = doc.getNamespaceURI();
+            Sentry.configureScope(scope -> scope.setTransaction("{" + xmlns + "}" + tag));
+            if ("starttls".equals(tag)) {
+                // Negotiate TLS
+                if (negotiateTLS()) {
+                    startedTLS = true;
+                } else {
+                    connection.close();
+                    session = null;
+                }
+            } else if ("auth".equals(tag)) {
+                // User is trying to authenticate using SASL
+                startedSASL = true;
+                // Process authentication stanza
+                saslStatus = SASLAuthentication.handle(session, doc);
+            } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
+                // User is responding to SASL challenge. Process response
+                saslStatus = SASLAuthentication.handle(session, doc);
+            } else if ("compress".equals(tag)) {
+                // Client is trying to initiate compression
+                if (compressClient(doc)) {
+                    // Compression was successful so open a new stream and offer
+                    // resource binding and session establishment (to client sessions only)
+                    waitingCompressionACK = true;
+                }
+            } else if (isStreamManagementStanza(doc)) {
+                session.getStreamManager().process(doc);
+            } else {
+                Sentry.configureScope(scope -> scope.setTag("stanza", tag));
+                process(doc);
             }
-        } else if (isStreamManagementStanza(doc)) {
-            session.getStreamManager().process( doc );
-        }
-        else {
-            process(doc);
+        } finally {
+            trans.finish();
+            Sentry.popScope();
         }
     }
 
@@ -359,6 +407,15 @@ public abstract class StanzaHandler {
         if ( packet.getTo() == null && PROPERTY_OVERWRITE_EMPTY_TO.getValue() ) {
             packet.setTo( packet.getFrom().asBareJID() );
         }
+        Sentry.configureScope(scope -> {
+            scope.setTag("stanza", "iq");
+            scope.setTag("type", packet.getType().toString());
+            if (packet.getType() == IQ.Type.set) {
+                scope.setTransaction("IQ set {" + packet.getChildElement().getNamespaceURI() + "}" + packet.getChildElement().getName());
+            } else if (packet.getType() == IQ.Type.get) {
+                scope.setTransaction("IQ get {" + packet.getChildElement().getNamespaceURI() + "}" + packet.getChildElement().getName());
+            }
+        });
 
         router.route(packet);
         session.incrementClientPacketCount();

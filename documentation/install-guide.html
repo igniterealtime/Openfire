@@ -221,7 +221,7 @@ mv openfire /opt</code></pre>
                 following URL will usually work: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>. Initial
                 setup and administration can also be done from a remote computer using LAN IP address instead or
                 hostname if it is resolvable by the remote computer. Windows Server administrators might need to add the
-                http://127.0.0.1 address to browser's Trusted Sites list, if Enhanced Security configuration is enabled,
+                http://127.0.0.1 address to browser's Trusted Sites list, if Enhanced Security Configuration is enabled,
                 to prevent getting a blank screen.
             </p>
 
@@ -238,7 +238,7 @@ mv openfire /opt</code></pre>
 
             <p>
                 If <code>&lt;setup&gt;true&lt;>/setup&gt;</code> does not exist in <code>openfire.xml</code> (i.e. setup is not
-                complete, and a block does exist called <code>&lt;autosetup&gt;</code> with a <code>&lt;run&gt;true&lt;/run&gt;</code>
+                complete), and a block <em>does</em> exist called <code>&lt;autosetup&gt;</code> with a <code>&lt;run&gt;true&lt;/run&gt;</code>
                 property inside it, that looks like this:
             </p>
 
@@ -519,7 +519,8 @@ Starting openfire</code></pre>
             (for https), if there is a need to remotely administrate Openfire connecting to its Admin Console. We
             recommend only using 9091 port as it is an encrypted connection. For server to server connections one should
             also open TCP 5269 port and for secure HTTP-BIND connections TCP 7443 port. Port number can be different, if
-            the default configuration has been changed by an administrator. All ports used by Openfire can be found on
+            the default configuration has been changed by an administrator. Additional ports may also be in use by 
+            Openfire or by plugins to provide additional features. The full list of ports used by Openfire can be found on
             the first page of Admin Console in the Server Ports section.
         </p>
 

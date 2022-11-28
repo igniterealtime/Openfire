@@ -30,11 +30,11 @@
         <p>
             Openfire uses a database to store most of the data that it needs to persist. Openfire can use both an
             embedded database and variety of external databases, as explained in the <a href="database.html">Database Installation Guide</a>.
-            For many applications, these options suffice. For others, where performance and redundancy is of high
+            For many applications, these options suffice. For others, where performance or resilience is of high
             importance, it can be desired to use a <em>clustered</em> database.
         </p>
         <p>
-            Most of the implementation details of configuring and using a clustered database (to be used by Openfire) is
+            Most of the implementation details of configuring and using a clustered database server is
             specific to the vendor of your database. There is only a limited amount of generically available
             configuration in Openfire that is directly geared towards having a database cluster. This document will
             describe those, and will complement that with descriptions of generic approaches and best practices. You
@@ -75,10 +75,10 @@
         </p>
         <dl>
             <dt>Reliability</dt>
-            <dd>Minimize the impact of a single database server that becomes unavailable (for example: after a crash, or through scheduled maintenance).</dd>
+            <dd>Minimize the impact of a single database server that becomes unavailable (e.g. software or hardware failure, scheduled maintenance).</dd>
 
             <dt>Scalability</dt>
-            <dd>Optimize the speed of database functionality</dd>
+            <dd>Improve the speed of database operations by spreading or targeting load</dd>
         </dl>
     </section>
 
@@ -92,7 +92,7 @@
         </p>
         <dl>
             <dt>active/active</dt>
-            <dd>All database servers in the database cluster can equally read and write the data.</dd>
+            <dd>All database servers in the database cluster can equally read and write the data, exchanging data with each other to maintain state.</dd>
 
             <dt>active/passive</dt>
             <dd>Only one database server (the 'primary') is used for writing data, which replicates the data to the other, passive, servers ('replicas') in the database cluster.</dd>
@@ -106,6 +106,8 @@
             Replication of the 'active/passive' type is typically easier to set up, and, as long as the authoritative
             server remains available, typically does not compromise on data validity constraints. However, this
             approach can be less fault-tolerant, especially when unexpected outages of the authoritative server occur.
+            Depending on the vendor's functionality and the configuration, a passive server may become the active
+            automatically, or may need manual "promotion" to become the primary server.
         </p>
 
     </section>
@@ -121,7 +123,6 @@
         </p>
         <dl>
             <dt>MySQL</dt><dd><code>jdbc:mysql://HOSTNAME:3306/DATABASENAME</code></dd>
-            <dt>Oracle</dt><dd><code>jdbc:oracle:thin:@HOSTNAME:1521:SID</code></dd>
             <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire</code></dd>
             <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://HOSTNAME:5432/DATABASENAME</code></dd>
         </dl>
@@ -139,8 +140,8 @@
         </p>
         <dl>
             <dt>MySQL</dt><dd><code>jdbc:mysql://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME?failOverReadOnly=false</code></dd>
-            <dt>Oracle</dt><dd><span style="color: red;">TBD</span></dd>
-            <dt>Microsoft SQL Server</dt><dd><span style="color: red;">TBD</span></dd>
+            <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire;multiSubnetFailover=true</code></dd>
+            <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://PRIMARYHOSTNAME:5432,SECONDARYHOSTNAME:5432/DATABASENAME?targetServerType=primary</code></dd>
         </dl>
 
         <section>
@@ -149,10 +150,8 @@
 
             <ul>
                 <li><a href="https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-multi-host-connections.html">MySQL Connector/J 8.0 Developer Guide: Multi-Host Connections</a></li>
-                <li><a href="https://docs.oracle.com/en/database/oracle/oracle-database/21/jjdbc/application-continuity.html#GUID-9298BB8C-0E93-44BF-BA26-A615940C0C84">Oracle Database
-                    JDBC Developer's Guide and Reference: About Configuring Oracle JDBC for Application Continuity for Java</a></li>
-                <li><a href="https://jdbc.postgresql.org/documentation/use/#connection-fail-over">PostgreSQL JDBC: Connection failover</a></li>  
-                <li><span style="color: red;">TBD: complete this for all (?) supported vendors.</span></li>
+                <li><a href="https://learn.microsoft.com/en-us/sql/connect/jdbc/jdbc-driver-support-for-high-availability-disaster-recovery?view=sql-server-ver16">Microsoft SQL Server: JDBC driver support for High Availability, disaster recovery</a></li>
+                <li><a href="https://jdbc.postgresql.org/documentation/use/#connection-fail-over">PostgreSQL JDBC: Connection failover</a></li>
             </ul>
 
         </section>
@@ -171,7 +170,7 @@
         <p>
             When using a load balancer, all Openfire servers connect not directly to the database servers, but to the
             load balancer instead. Based on its configuration, it will forward the connection to one of the available
-            database servers.
+            database servers. This has the advantage of not leaking/embedding the clustering configuration into Openfire.
         </p>
 
         <aside>
@@ -201,19 +200,18 @@
 
             <p>
                 In database clusters that are based on an active/active replication type, load balancing is relatively
-                straight-forward, as all database servers are generally able to any request. In clusters that use an
+                straight-forward, as all database servers are generally able to service any request. In clusters that use an
                 active/passive replication type, data modifications ('writes'), can only be processed by the primary
                 server. Data reads can typically be processed by all the replica database servers, provided that they
-                do not lag behind.
+                do not lag behind (i.e. offer a guarantee that the read will contain data that was just written to the
+                active server).
             </p>
             <p>
                 Openfire does not distinguish between 'read' or 'write' database queries
                 (<a href="https://igniterealtime.atlassian.net/browse/OF-2546">yet?</a>): it does not explicitly allow
-                for different database-configuration to be used when processing a query of either type.
-            </p>
-            <p>
-                When configuring Openfire to connect to only the primary database servers, the role of the replica
-                server is essentially that of being a passive backup, or possibly a hot-standby.
+                for different database-configuration to be used when processing a query of either type. When configuring
+                Openfire to connect to only the primary database servers, the role of the replica server is essentially
+                that of being a passive backup, or possibly a hot-standby.
             </p>
             <p>
                 Certain load balancers, such as <a href="https://proxysql.com/">ProxySQL</a>, are able to inspect

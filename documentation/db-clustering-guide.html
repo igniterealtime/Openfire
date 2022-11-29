@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Clustered Database Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Clustered Database Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <aside>
+            <p>
+                The embedded database of Openfire cannot be clustered. This guide only applies to databases that are external to Openfire.
+            </p>
+        </aside>
+
+        <h2>Introduction</h2>
+
+        <p>
+            Openfire uses a database to store most of the data that it needs to persist. Openfire can use both an
+            embedded database and variety of external databases, as explained in the <a href="database.html">Database Installation Guide</a>.
+            For many applications, these options suffice. For others, where performance or resilience is of high
+            importance, it can be desired to use a <em>clustered</em> database.
+        </p>
+        <p>
+            Most of the implementation details of configuring and using a clustered database server is
+            specific to the vendor of your database. There is only a limited amount of generically available
+            configuration in Openfire that is directly geared towards having a database cluster. This document will
+            describe those, and will complement that with descriptions of generic approaches and best practices. You
+            will need to cross-reference these with the clustering-related documentation of your database vendor.
+        </p>
+        <p>
+            This document describes approaches to have Openfire interact with a clustered database. The document is
+            broken down in these sections:
+        </p>
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a></li>
+                <li><a href="#replication-types">Replication Types</a></li>
+                <li><a href="#connecting">Connecting Openfire to the database cluster</a></li>
+                <li><a href="#loadbalancer">Using a load balancer</a>
+                    <ul>
+                        <li><a href="#loadbalancer-availability">Load balancing based on server availability</a></li>
+                        <li><a href="#loadbalancer-querytype">Load balancing based on query type</a></li>
+                    </ul>
+                </li>
+                <li><a href="#example-activeactive-mysql-galera">Example setup: active/active setup with MySQL Galera</a></li>
+                <li><a href="#example-activepassive-postgres-repmgr">Example setup: active/passive setup with Postgres and Repmgr</a></li>
+                <li><a href="#example-activepassive-mariadb-haproxy">Example setup: active/passive setup with MariaDB and HA Proxy</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            The term "database clustering" is somewhat ambiguous. The specific definition is often left to the
+            interpretation of the vendor of your database product. Generally speaking, "database clustering" aims to
+            improve one or more of the following characteristics:
+        </p>
+        <dl>
+            <dt>Reliability</dt>
+            <dd>Minimize the impact of a single database server that becomes unavailable (e.g. software or hardware failure, scheduled maintenance).</dd>
+
+            <dt>Scalability</dt>
+            <dd>Improve the speed of database operations by spreading or targeting load</dd>
+        </dl>
+    </section>
+
+    <section id="replication-types">
+
+        <h2>Replication Types</h2>
+
+        <p>
+            Replication is the manner in which database servers that make up a cluster synchronize data amongst
+            themselves. There are a couple of commonly used approaches by database vendors to replicate data:
+        </p>
+        <dl>
+            <dt>active/active</dt>
+            <dd>All database servers in the database cluster can equally read and write the data, exchanging data with each other to maintain state.</dd>
+
+            <dt>active/passive</dt>
+            <dd>Only one database server (the 'primary') is used for writing data, which replicates the data to the other, passive, servers ('replicas') in the database cluster.</dd>
+        </dl>
+        <p>
+            The 'active/active' replication type generally allows for a lot of flexibility: any server automatically
+            replaces one if its siblings that becomes unavailable. However: creating a fully 'active/active' setup is
+            often hard to accomplish. Sometimes, guarantees around data validity are different, or less strict.
+        </p>
+        <p>
+            Replication of the 'active/passive' type is typically easier to set up, and, as long as the authoritative
+            server remains available, typically does not compromise on data validity constraints. However, this
+            approach can be less fault-tolerant, especially when unexpected outages of the authoritative server occur.
+            Depending on the vendor's functionality and the configuration, a passive server may become the active
+            automatically, or may need manual "promotion" to become the primary server.
+        </p>
+
+    </section>
+
+    <section id="connecting">
+
+        <h2>Connecting Openfire to the database cluster</h2>
+
+        <p>
+            The <a href="database.html">Database Installation Guide</a> describes how Openfire is configured to connect
+            to a database. Primarily, a <abbr title="Java DataBase Connectivity">JDBC</abbr> URL is used to define
+            most of the configuration. This URL varies depending on your database vendor. These are some examples:
+        </p>
+        <dl>
+            <dt>MySQL</dt><dd><code>jdbc:mysql://HOSTNAME:3306/DATABASENAME</code></dd>
+            <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire</code></dd>
+            <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://HOSTNAME:5432/DATABASENAME</code></dd>
+        </dl>
+        <p>
+            Many (but not all!) solutions for database clustering involve exposing the database cluster on more than one
+            database server address. Often, each database server in the cluster is uniquely addressable. Many database
+            vendors allow you to supply more than one server address in the JDBC URL.
+        </p>
+        <p>
+            As shown above, JDBC URLs for non-clustered database connections differ greatly depending on the database
+            vendor. The addition of cluster-specific configuration such as the definition of multiple hosts, or the
+            desired replication type, adds even more variation. When you want to define the JDBC URL that is used to
+            configure Openfire for database clustering, you will need to refer to the vendor-provided documentation.
+            Some example JDBC URLs that define more than one database server, as well as additional configuration:
+        </p>
+        <dl>
+            <dt>MySQL</dt><dd><code>jdbc:mysql://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME?failOverReadOnly=false</code></dd>
+            <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire;multiSubnetFailover=true</code></dd>
+            <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://PRIMARYHOSTNAME:5432,SECONDARYHOSTNAME:5432/DATABASENAME?targetServerType=primary</code></dd>
+        </dl>
+
+        <section>
+
+            <h4>Links to vendor-specific documentation</h4>
+
+            <ul>
+                <li><a href="https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-multi-host-connections.html">MySQL Connector/J 8.0 Developer Guide: Multi-Host Connections</a></li>
+                <li><a href="https://learn.microsoft.com/en-us/sql/connect/jdbc/jdbc-driver-support-for-high-availability-disaster-recovery?view=sql-server-ver16">Microsoft SQL Server: JDBC driver support for High Availability, disaster recovery</a></li>
+                <li><a href="https://jdbc.postgresql.org/documentation/use/#connection-fail-over">PostgreSQL JDBC: Connection failover</a></li>
+            </ul>
+
+        </section>
+
+    </section>
+
+    <section id="loadbalancer">
+
+        <h2>Using a load balancer</h2>
+
+        <p>
+            When attempting to connect Openfire to a set of database servers, it can be beneficial to have an
+            intermediary entity managing the connections from Openfire to the database servers. A traditional load
+            balancer can offer benefits, while more specialized load balancers can offer even more features.
+        </p>
+        <p>
+            When using a load balancer, all Openfire servers connect not directly to the database servers, but to the
+            load balancer instead. Based on its configuration, it will forward the connection to one of the available
+            database servers. This has the advantage of not leaking/embedding the clustering configuration into Openfire.
+        </p>
+
+        <aside>
+            <p>
+                When using traditional load balancers, failure detection is ofter performed by health checks implemented
+                as connectivity probes. These probes might not be robust enough, as database servers can respond to
+                connection requests, while being unable to process data.
+            </p>
+        </aside>
+
+        <section id="loadbalancer-availability">
+
+            <h3>Load balancing based on server availability</h3>
+
+            <p>
+                By using a traditional load balancer, a lot of flexibility can be introduced in the network design.
+                A core concepts of most load balancers is failure detection, but many load balancers also allow the
+                servers that they are servicing to be disabled, or put in a 'maintenance mode', where connections are
+                gracefully drained.
+            </p>
+
+        </section>
+
+        <section id="loadbalancer-querytype">
+
+            <h3>Load balancing based on query type</h3>
+
+            <p>
+                In database clusters that are based on an active/active replication type, load balancing is relatively
+                straight-forward, as all database servers are generally able to service any request. In clusters that use an
+                active/passive replication type, data modifications ('writes'), can only be processed by the primary
+                server. Data reads can typically be processed by all the replica database servers, provided that they
+                do not lag behind (i.e. offer a guarantee that the read will contain data that was just written to the
+                active server).
+            </p>
+            <p>
+                Openfire does not distinguish between 'read' or 'write' database queries
+                (<a href="https://igniterealtime.atlassian.net/browse/OF-2546">yet?</a>): it does not explicitly allow
+                for different database-configuration to be used when processing a query of either type. When configuring
+                Openfire to connect to only the primary database servers, the role of the replica server is essentially
+                that of being a passive backup, or possibly a hot-standby.
+            </p>
+            <p>
+                Certain load balancers, such as <a href="https://proxysql.com/">ProxySQL</a>, are able to inspect
+                queries and route writes to primaries, while distributing reads to the replicas. Using such a solution
+                allows for distribution of load related to the database queries.
+            </p>
+
+        </section>
+
+    </section>
+
+
+    <section id="example-activeactive-mysql-galera">
+
+        <h2>Example setup: active/active setup with MySQL Galera</h2>
+
+        <span style="color: red;">TBD: disclaimer: not battle-hardened. Example only. Refer to vendors.</span>
+
+        <p>
+            <span style="color: red;">pros, cons, setup</span>
+        </p>
+
+    </section>
+
+    <section id="example-activepassive-postgres-repmgr">
+
+        <h2>Example setup: active/passive setup with Postgres and Repmgr</h2>
+
+        <span style="color: red;">TBD: disclaimer: not battle-hardened. Example only. Refer to vendors.</span>
+
+        <p>
+            <span style="color: red;">pros, cons, setup</span>
+        </p>
+
+    </section>
+
+    <section id="example-activepassive-mariadb-haproxy">
+
+        <h2>Example setup: active/passive setup with MariaDB and HA Proxy</h2>
+
+        <span style="color: red;">TBD: disclaimer: not battle-hardened. Example only. Refer to vendors.</span>
+
+        <p>
+            <span style="color: red;">pros, cons, setup</span>
+        </p>
+
+    </section>
+
+    <span style="color: darkorange;">Consider adding a variant based on SQLProxy to get selects on replicated nodes</span>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

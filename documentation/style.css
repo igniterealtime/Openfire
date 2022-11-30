@@ -213,10 +213,12 @@ dt {
     grid-column-start: 1;
     font-weight: bold;
     color: #060;
+    margin-bottom: 0.5em;
 }
 
 dd {
     grid-column-start: 2;
+    margin-bottom: 0.5em;
 }
 
 hr {

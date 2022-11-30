@@ -301,6 +301,18 @@ fieldset {
     text-decoration : none;
     font-weight : bold;
 }
+.disclaimer {
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+    margin-left: 1.5em;
+    font-style: italic;
+}
+
+.disclaimer strong {
+    color : #600;
+    font-weight : bold;
+}
+
 .nav, .nav a {
     font-family: verdana, serif;
     font-size : 0.85em;

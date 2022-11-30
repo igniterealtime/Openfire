@@ -59,9 +59,7 @@
                         <li><a href="#loadbalancer-querytype">Load balancing based on query type</a></li>
                     </ul>
                 </li>
-                <li><a href="#example-activeactive-mysql-galera">Example setup: active/active setup with MySQL Galera</a></li>
-                <li><a href="#example-activepassive-postgres-repmgr">Example setup: active/passive setup with Postgres and Repmgr</a></li>
-                <li><a href="#example-activepassive-mariadb-haproxy">Example setup: active/passive setup with MariaDB and HA Proxy</a></li>
+                <li><a href="#example-activepassive-postgres-repmgr">Example setup: active/passive setup with PostgreSQL and Repmgr</a></li>
             </ul>
         </nav>
 
@@ -258,44 +256,92 @@
 
     </section>
 
-
-    <section id="example-activeactive-mysql-galera">
-
-        <h2>Example setup: active/active setup with MySQL Galera</h2>
-
-        <span style="color: red;">TBD: disclaimer: not battle-hardened. Example only. Refer to vendors.</span>
-
-        <p>
-            <span style="color: red;">pros, cons, setup</span>
-        </p>
-
-    </section>
-
     <section id="example-activepassive-postgres-repmgr">
 
-        <h2>Example setup: active/passive setup with Postgres and Repmgr</h2>
+        <h2>Example setup: active/passive setup with PostgreSQL and Repmgr</h2>
 
-        <span style="color: red;">TBD: disclaimer: not battle-hardened. Example only. Refer to vendors.</span>
-
-        <p>
-            <span style="color: red;">pros, cons, setup</span>
+        <p class="disclaimer">
+            <strong>For illustrative purposes only.</strong> The architecture in this example is for informational and
+            discussion purposes only. It does not intent to define a 'production-grade' solution.
         </p>
 
-    </section>
-
-    <section id="example-activepassive-mariadb-haproxy">
-
-        <h2>Example setup: active/passive setup with MariaDB and HA Proxy</h2>
-
-        <span style="color: red;">TBD: disclaimer: not battle-hardened. Example only. Refer to vendors.</span>
-
         <p>
-            <span style="color: red;">pros, cons, setup</span>
+            The following documents an architecture in which a cluster of Openfire servers interact with a cluster of
+            PostgreSQL database servers. <a href="https://repmgr.org/">Repmgr</a> is used to manage the replication
+            within the database cluster. Automatic fail-over is realised by a combination of Repmgr detecting outages
+            and promoting a secondary server as the primary, and specific JDBC URL configuration, instructing Openfire
+            to prefer connecting to whatever is the primary server.
         </p>
 
-    </section>
+        <h3>Characteristics</h3>
 
-    <span style="color: darkorange;">Consider adding a variant based on SQLProxy to get selects on replicated nodes</span>
+        <dl>
+            <dt>Improved redundancy</dt>
+            <dd>Data will be available in more than one database, allowing for more fault-tolerant disaster recovery.</dd>
+
+            <dt>Unchanged scalability</dt>
+            <dd>Similar to working with a non-clustered database, Openfire interacts with a singular database server.
+                This configuration does not introduce significant additional database capacity or performance. The added
+                overhead of running a database cluster is largely compensated by using asynchronous replication.</dd>
+
+            <dt>Active/passive replication</dt>
+            <dd>Openfire will interact with only one database server. That server replicates it state to another server,
+                that is used as a hot-standby for automatic fail-over.</dd>
+
+            <dt>Asynchronous replication</dt>
+            <dd>Replication from the primary to secondary servers is asynchronous (although configurable). This improves
+                the time taken for queries (particularly non-read queries) as their execution does not need to be
+                delayed until secondary servers have acknowledged the change. The downside of this is that secondary
+                servers can "lag behind" the primary, which introduces the risk of data loss in a disaster recovery
+                scenario.</dd>
+
+            <dt>Automatic fail-over</dt>
+            <dd>In case of scheduled or unscheduled outage of the primary database server, repmgr will promote the
+                secondary database server. Although some database queries performed by Openfire can fail, it should
+                continue to operate in all but the most exceptional cases.
+            </dd>
+
+            <dt>Split-brain protection</dt>
+            <dd>When a database server that previously crashed becomes available again, Openfire should not attempt to
+                use that server again, as now, that server no longer is the primary server. To prevent Openfire from
+                using the first server defined in the JDBC URL, use the <code>targetServerType</code> JDBC parameter
+                with an appropriate value.</dd>
+        </dl>
+
+        <h3>Database configuration</h3>
+
+        <p style="color: darkorange">TODO: Describe configuration of two PostgreSQL servers managed by repmgr.</p>
+
+        <h3>Openfire configuration</h3>
+
+        <p>
+            To install the Openfire servers, follow the <a href="install-guide.html">Openfire Installation Guide</a> as
+            well as the documentation of the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=hazelcast">
+            Hazelcast plugin for Openfire</a>.
+        </p>
+
+        <p>
+            When configuring the database connection for Openfire, use a JDBC URL that defines the addresses for both
+            the primary and secondary database servers, as shown in the example below. The <code>targetServerType</code>
+            parameter (as documented in <a href="https://jdbc.postgresql.org/documentation/use/">PostgreSQL's JDBC Driver
+            documentation</a>) should be configured to instruct Openfire to connect to the database server marked as
+            'primary' by repmgr. Without this configuration, Openfire will attempt to connect to the server that is
+            configured first. This can lead to problems (eg: a split-brain scenario) when that server suffers from an
+            outage, after which it recovers (at which time it is unlikely to have a complete data set).
+        </p>
+
+        <fieldset>
+            <legend>JDBC URL syntax for clustered PostgreSQL</legend>
+            <pre><code>jdbc:postgresql://PRIMARYHOSTNAME:5432,SECONDARYHOSTNAME:5432/DATABASENAME?targetServerType=primary</code></pre>
+        </fieldset>
+
+        <p style="color: darkorange">TODO: Illustrate configuration of two Openfire servers.</p>
+
+        <h3>Automatic fail-over & recovery test</h3>
+
+        <p style="color: darkorange">TODO: illustrate how to induce a failure of the primary database server, check that Openfire remains operational, restore the failed database server, and check again that Openfire remains operational.</p>
+
+    </section>
 
     <footer>
         <p>

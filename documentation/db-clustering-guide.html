@@ -47,7 +47,11 @@
         <nav>
             <ul>
                 <li><a href="#background">Background</a></li>
-                <li><a href="#replication-types">Replication Types</a></li>
+                <li><a href="#replication-types">Replication Types</a>
+                    <ul>
+                        <li><a href="#replication-types-synchronicity">Synchronous versus asynchronous replication</a></li>
+                    </ul>
+                </li>
                 <li><a href="#connecting">Connecting Openfire to the database cluster</a></li>
                 <li><a href="#loadbalancer">Using a load balancer</a>
                     <ul>
@@ -108,6 +112,37 @@
             approach can be less fault-tolerant, especially when unexpected outages of the authoritative server occur.
             Depending on the vendor's functionality and the configuration, a passive server may become the active
             automatically, or may need manual "promotion" to become the primary server.
+        </p>
+
+        <h3 id="replication-types-synchronicity">Synchronous versus asynchronous replication</h3>
+
+        <p>
+            A common characteristic of an active/passive replication configuration is that the primary distributes data
+            to the replicas in an asynchronous, one-way manner. Unlike to <em>synchronous</em> replication (in which a
+            commit that is performed on the primary typically blocks until all other cluster nodes have acknowledged
+            that they have replicated the data), asynchronous replication typically makes no guarantees as to when
+            certain data becomes available on replicas. Asynchronous replicas can thus "lag behind": they do not offer
+            any guarantee that a read will contain data that was just written to the active server.
+        </p>
+
+        <p>
+            Some database vendors support replication types that offer a mix of these characteristics of asynchronous
+            and synchronous replication. MySQL's <em>semi-synchronous</em> replication, for example, will cause a
+            commit to the primary block until least one replica acknowledges the data.
+        </p>
+
+        <aside>
+            <p>Openfire expects data to be available on all database servers, after it has been written to one.</p>
+        </aside>
+
+        <p>
+            When Openfire is configured to use a database cluster, it treats the database as a singular logical entity.
+            After it applies a change to the database, it expects that change to be visible to subsequent
+            transactions/queries, irrespectively of the Openfire cluster node that makes the database request, or the
+            database server that processes the request. For this reason, Openfire, in its normal operation mode, should
+            not interact with database servers that use an asynchronous replication type. Database servers that are
+            populated through asynchronous replication should only be used for standby/backup purposes, or for custom,
+            non-Openfire functionality that needs to use Openfire data (such as analytics and reporting).
         </p>
 
     </section>
@@ -202,9 +237,8 @@
                 In database clusters that are based on an active/active replication type, load balancing is relatively
                 straight-forward, as all database servers are generally able to service any request. In clusters that use an
                 active/passive replication type, data modifications ('writes'), can only be processed by the primary
-                server. Data reads can typically be processed by all the replica database servers, provided that they
-                do not lag behind (i.e. offer a guarantee that the read will contain data that was just written to the
-                active server).
+                server. Data reads can typically be processed by all the replica database servers,
+                <a href="#replication-types-synchronicity">provided that replication is synchronous</a>.
             </p>
             <p>
                 Openfire does not distinguish between 'read' or 'write' database queries
@@ -214,8 +248,9 @@
                 that of being a passive backup, or possibly a hot-standby.
             </p>
             <p>
-                Certain load balancers, such as <a href="https://proxysql.com/">ProxySQL</a>, are able to inspect
-                queries and route writes to primaries, while distributing reads to the replicas. Using such a solution
+                Certain load balancers, such as <a href="https://proxysql.com/">ProxySQL</a> and
+                <a href="https://mariadb.com/resources/datasheets/mariadb-maxscale/">MariaDB MaxScale</a> are able to
+                inspect queries and route writes to primaries, while distributing reads to the replicas. Using such a solution
                 allows for distribution of load related to the database queries.
             </p>
 

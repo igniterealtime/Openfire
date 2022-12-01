@@ -328,8 +328,9 @@
             example by copying it to an empty folder, and running <code>docker compose up -d</code> in a terminal.
         </p>
 
-        <pre>
-version: '3.7'
+        <fieldset>
+            <legend>Example Docker Compose file</legend>
+            <pre><code>version: '3.7'
 
 services:
 
@@ -365,8 +366,8 @@ services:
       - REPMGR_PARTNER_NODES=db-1,db-2:5432
       - REPMGR_NODE_NAME=db-2
       - REPMGR_NODE_NETWORK_NAME=db-2
-      - REPMGR_PORT_NUMBER=5432
-        </pre>
+      - REPMGR_PORT_NUMBER=5432</code></pre>
+        </fieldset>
 
         <h3>Openfire configuration</h3>
 
@@ -411,27 +412,28 @@ services:
             Alternatively, if configuring via autosetup in openfire.xml:
         </p>
 
-        <pre><code>
-<jive>
+        <fieldset>
+            <legend>Example openfire.xml configuration showin autosetup snippet</legend>
+        <pre><code>&lt;jive&gt;
     ...
-    <autosetup>
+    &lt;autosetup&gt;
         ...
-        <database>
-            <mode>standard</mode>
-            <defaultProvider>
-              <driver>org.postgresql.Driver</driver>
-              <serverURL>jdbc:postgresql://potato:5432,potato:5433/openfire?targetServerType=primary</serverURL>
-              <username>openfire</username>
-              <password>openfireuserpassword</password>
-              <minConnections>5</minConnections>
-              <maxConnections>25</maxConnections>
-              <connectionTimeout>1.0</connectionTimeout>
-            </defaultProvider>
-        </database>
+        &lt;database&gt;
+            &lt;mode&gt;standard&lt;/mode&gt;
+            &lt;defaultProvider&gt;
+              &lt;driver&gt;org.postgresql.Driver&lt;/driver&gt;
+              &lt;serverURL&gt;jdbc:postgresql://potato:5432,potato:5433/openfire?targetServerType=primary&lt;/serverURL&gt;
+              &lt;username&gt;openfire&lt;/username&gt;
+              &lt;password&gt;openfireuserpassword&lt;/password&gt;
+              &lt;minConnections&gt;5&lt;/minConnections&gt;
+              &lt;maxConnections&gt;25&lt;/maxConnections&gt;
+              &lt;connectionTimeout&gt;1.0&lt;/connectionTimeout&gt;
+            &lt;/defaultProvider&gt;
+        &lt;/database&gt;
         ...
-    </autosetup>
-</jive>
-        </code></pre>
+    &lt;/autosetup&gt;
+&lt;/jive&gt;</code></pre>
+        </fieldset>
 
         <p style="color: darkorange">TODO: Illustrate configuration of two Openfire servers.</p>
 

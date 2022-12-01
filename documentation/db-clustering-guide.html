@@ -413,7 +413,7 @@ services:
         </p>
 
         <fieldset>
-            <legend>Example openfire.xml configuration showin autosetup snippet</legend>
+            <legend>Example openfire.xml configuration showing autosetup snippet</legend>
         <pre><code>&lt;jive&gt;
     ...
     &lt;autosetup&gt;
@@ -435,11 +435,67 @@ services:
 &lt;/jive&gt;</code></pre>
         </fieldset>
 
-        <p style="color: darkorange">TODO: Illustrate configuration of two Openfire servers.</p>
+        <p class="note">
+            Note: If configuring the openfire.xml directly (e.g. for automatic provisioning of Openfire servers) the same
+            settings are valid outside the autosetup tag.
+        </p>
+
+        <p>
+            With both servers initialised to talk to the database, move on to configuring Openfire Clustering, by installing
+            the Hazelcast plugin and following the readme.
+        </p>
+
+        <figure>
+            <a href="images/setup_pgcluster_install_hazelcast.png"><img src="images/setup_pgcluster_install_hazelcast.png"
+                                                                        alt="Installing the Hazelcast plugin"></a>
+            <figcaption>Installing the Hazelcast plugin</figcaption>
+        </figure>
+
+        <p>Once the Hazelcast plugin is installed, enable Openfire's clustering in Server > Server Manager > Clustering.</p>
+
+        <figure>
+            <a href="images/setup_pgcluster_enable_clustering.png"><img src="images/setup_pgcluster_enable_clustering.png"
+                                                                        alt="Enable clustering in Openfire"></a>
+            <figcaption>Enable clustering in Openfire</figcaption>
+        </figure>
+
+        <p>
+            The networking configuration for Hazelcast is environment-sensitive. By default, it uses multicast, and may
+            well work out-of-the-box. If not, the
+            <a href="https://www.igniterealtime.org/projects/openfire/plugins/2.6.1/hazelcast/readme.html">docs</a>
+            include instructions on how to override those defaults to suit your local network.
+        </p>
+
+        <p>
+            Once configured, you will have a pair of clustered Openfire servers, resilient to a single Openfire server
+            failure, backed by a pair of clustered PostgreSQL servers, resilient to a single database server failure.
+        </p>
 
         <h3>Automatic fail-over & recovery test</h3>
 
-        <p style="color: darkorange">TODO: illustrate how to induce a failure of the primary database server, check that Openfire remains operational, restore the failed database server, and check again that Openfire remains operational.</p>
+        <p>
+            Given that we've got a containerised database environment, stopping and starting databases is easy to test. Run
+            <code>docker container stop `docker ps -q --filter "name=db-1"`</code> to stop the primary database server.
+            Continued use of the Admin console before and after this should continue without interruption. Checking logs
+            on the remaining database server should show the server being promoted to Primary.
+        </p>
+
+        <figure>
+            <a href="images/setup_pgcluster_second_primary.png"><img src="images/setup_pgcluster_second_primary.png"
+                                                                        alt="Second PostreSQL server being promoted to primary"></a>
+            <figcaption>Second PostreSQL server being promoted to primary</figcaption>
+        </figure>
+
+        <p>
+            Restoring the first database server should see it connect to the second (now primary) server, and recover. At
+            this point you can repeat the test for either server and see Openfire continue to operate without interruption.
+        </p>
+
+        <figure>
+            <a href="images/setup_pgcluster_recovery.png"><img src="images/setup_pgcluster_recovery.png"
+                                                                     alt="Restored PostreSQL server cloning from primary"></a>
+            <figcaption>Restored PostreSQL server cloning from primary</figcaption>
+        </figure>
 
     </section>
 

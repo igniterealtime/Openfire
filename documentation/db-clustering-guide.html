@@ -258,7 +258,7 @@
 
     <section id="example-activepassive-postgres-repmgr">
 
-        <h2>Example setup: active/passive setup with PostgreSQL and Repmgr</h2>
+        <h2>Example setup: active/passive setup with PostgreSQL and repmgr</h2>
 
         <p class="disclaimer">
             <strong>For illustrative purposes only.</strong> The architecture in this example is for informational and
@@ -267,10 +267,10 @@
 
         <p>
             The following documents an architecture in which a cluster of Openfire servers interact with a cluster of
-            PostgreSQL database servers. <a href="https://repmgr.org/">Repmgr</a> is used to manage the replication
-            within the database cluster. Automatic fail-over is realised by a combination of Repmgr detecting outages
-            and promoting a secondary server as the primary, and specific JDBC URL configuration, instructing Openfire
-            to prefer connecting to whatever is the primary server.
+            PostgreSQL database servers. <a href="https://repmgr.org/">repmgr</a> is used to manage the replication
+            within the database cluster. Automatic fail-over is realised by a combination of repmgr detecting outages
+            and promoting a secondary server as the primary, and using a specific JDBC URL configuration in Openfire
+            to prefer connecting to whichever is the primary server.
         </p>
 
         <h3>Characteristics</h3>
@@ -292,7 +292,7 @@
             <dd>Replication from the primary to secondary servers is asynchronous (although configurable). This improves
                 the time taken for queries (particularly non-read queries) as their execution does not need to be
                 delayed until secondary servers have acknowledged the change. The downside of this is that secondary
-                servers can "lag behind" the primary, which introduces the risk of data loss in a disaster recovery
+                servers can "lag behind" the primary, which introduces a risk of small data loss in a disaster recovery
                 scenario.</dd>
 
             <dt>Automatic fail-over</dt>
@@ -310,7 +310,63 @@
 
         <h3>Database configuration</h3>
 
-        <p style="color: darkorange">TODO: Describe configuration of two PostgreSQL servers managed by repmgr.</p>
+        <p>
+            Full PostgreSQL cluster installation and configuration is beyond the scope of this document. For this example
+            we're using a containerised cluster using PostreSQL + repmgr bundled by Bitnami (see
+            <a href="https://hub.docker.com/r/bitnami/postgresql-repmgr">Docker Hub</a>). Here, two PostgreSQL servers are
+            created and configured with
+            <a href="https://www.postgresql.org/docs/current/warm-standby.html#STREAMING-REPLICATION">Streaming Replication</a>,
+            launching the first server as the designated initial primary server.
+        </p>
+
+        <p>
+            Below is an example Docker Compose file describing the two container instances for the example environment.
+            This is <em>not a production-ready example</em>. For example, there are no volumes defined for data persistence,
+            no backups configured, no external heathchecks, and no attempt to secure traffic moving across the Docker
+            network. It describes the simplest configuration of two machines, creating users for operation (one each for
+            an administrator, for openfire and for repmgr to use), and configuring repmgr for each machine. Launch this
+            example by copying it to an empty folder, and running <code>docker compose up -d</code> in a terminal.
+        </p>
+
+        <pre>
+version: '3.7'
+
+services:
+
+  db-1:
+    image: bitnami/postgresql-repmgr:14.6.0
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=adminuserpasswordforserver1
+      - POSTGRESQL_USERNAME=openfire
+      - POSTGRESQL_PASSWORD=openfireuserpassword
+      - POSTGRESQL_DATABASE=openfire
+      - REPMGR_PASSWORD=repmgruserpassword
+      - REPMGR_PRIMARY_HOST=db-1
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=db-1,db-2:5432
+      - REPMGR_NODE_NAME=db-1
+      - REPMGR_NODE_NETWORK_NAME=db-1
+      - REPMGR_PORT_NUMBER=5432
+
+  db-2:
+    image: bitnami/postgresql-repmgr:14.6.0
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=adminuserpasswordforserver2
+      - POSTGRESQL_USERNAME=openfire
+      - POSTGRESQL_PASSWORD=openfireuserpassword
+      - POSTGRESQL_DATABASE=openfire
+      - REPMGR_PASSWORD=repmgruserpassword
+      - REPMGR_PRIMARY_HOST=db-1
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=db-1,db-2:5432
+      - REPMGR_NODE_NAME=db-2
+      - REPMGR_NODE_NETWORK_NAME=db-2
+      - REPMGR_PORT_NUMBER=5432
+        </pre>
 
         <h3>Openfire configuration</h3>
 
@@ -332,8 +388,50 @@
 
         <fieldset>
             <legend>JDBC URL syntax for clustered PostgreSQL</legend>
-            <pre><code>jdbc:postgresql://PRIMARYHOSTNAME:5432,SECONDARYHOSTNAME:5432/DATABASENAME?targetServerType=primary</code></pre>
+            <pre><code>jdbc:postgresql://PRIMARYHOSTNAME:PORT,SECONDARYHOSTNAME:PORT/DATABASENAME?targetServerType=primary</code></pre>
         </fieldset>
+
+        <p>
+            Given the above PostgreSQL docker setup, and the above JDBC example, assuming the containers are running on a
+            machine named DOCKERHOST, the correct JDBC connection string would be:
+        </p>
+
+        <fieldset>
+            <pre><code>jdbc:postgresql://DOCKERHOST:5432,DOCKERHOST:5433/openfire?targetServerType=primary</code></pre>
+        </fieldset>
+
+        <p>Example:</p>
+
+        <figure>
+            <a href="images/setup_pgcluster_jdbc.png"><img src="images/setup_pgcluster_jdbc.png" alt="Configuring Openfire to connect to a PostgreSQL cluster"></a>
+            <figcaption>Configuring Openfire to connect to a PostgreSQL cluster</figcaption>
+        </figure>
+
+        <p>
+            Alternatively, if configuring via autosetup in openfire.xml:
+        </p>
+
+        <pre><code>
+<jive>
+    ...
+    <autosetup>
+        ...
+        <database>
+            <mode>standard</mode>
+            <defaultProvider>
+              <driver>org.postgresql.Driver</driver>
+              <serverURL>jdbc:postgresql://potato:5432,potato:5433/openfire?targetServerType=primary</serverURL>
+              <username>openfire</username>
+              <password>openfireuserpassword</password>
+              <minConnections>5</minConnections>
+              <maxConnections>25</maxConnections>
+              <connectionTimeout>1.0</connectionTimeout>
+            </defaultProvider>
+        </database>
+        ...
+    </autosetup>
+</jive>
+        </code></pre>
 
         <p style="color: darkorange">TODO: Illustrate configuration of two Openfire servers.</p>
 

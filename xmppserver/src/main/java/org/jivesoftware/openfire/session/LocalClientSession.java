@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -217,6 +218,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             connection.close(new StreamError(StreamError.Condition.not_authorized));
             return null;
         }
+
+        // Retrieve list of namespaces declared in current element (OF-2556)
+        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
 
         // Default language is English ("en").
         Locale language = Locale.forLanguageTag("en");

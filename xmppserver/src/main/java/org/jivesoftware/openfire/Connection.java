@@ -16,16 +16,20 @@
 
 package org.jivesoftware.openfire;
 
+import org.dom4j.Namespace;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a connection on the server.
@@ -33,7 +37,17 @@ import java.security.cert.Certificate;
  * @author Iain Shigeoka
  */
 public interface Connection extends Closeable {
-    
+
+    /**
+     * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
+     * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
+     * stanzas or other elements that are defined in that namespace (eg: are prefixed), these namespaces are recorded
+     * here.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2556">Issue OF-2556</a>
+     */
+    Set<Namespace> additionalNamespaces = new HashSet<>();
+
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -367,6 +381,33 @@ public interface Connection extends Closeable {
      * @return The desired configuration for the connection (never null).
      */
     ConnectionConfiguration getConfiguration();
+
+    /**
+     * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
+     * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
+     * stanzas or other elements that are defined in that namespace (eg: are prefixed), these namespaces are recorded
+     * here.
+     *
+     * @return A collection that contains all non-default namespaces that the peer defined when last opening a new stream.
+     */
+    @Nonnull
+    default Set<Namespace> getAdditionalNamespaces() {
+        return additionalNamespaces;
+    }
+
+    /**
+     * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
+     * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
+     * stanzas or other elements that are defined in that namespace (eg: are prefixed), these namespaces are recorded
+     * here.
+     *
+     * @param additionalNamespaces A collection that contains all non-default namespaces that the peer defined when last
+     *                            opening a new stream.
+     */
+    default void setAdditionalNamespaces(@Nonnull final Set<Namespace> additionalNamespaces) {
+        this.additionalNamespaces.clear();
+        this.additionalNamespaces.addAll(additionalNamespaces);
+    }
 
     /**
      * Enumeration of possible compression policies required to interact with the server.

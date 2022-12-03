@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
@@ -40,6 +41,7 @@ import org.xmpp.packet.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS
@@ -152,8 +154,28 @@ public abstract class StanzaHandler {
         if (stanza.startsWith("<?xml")) {
             return;
         }
-        // Create DOM object from received stanza
-        Element doc = reader.read(new StringReader(stanza)).getRootElement();
+
+        Log.trace("Create DOM object from received stanza");
+        Element doc;
+        final Set<Namespace> namespaces = connection.getAdditionalNamespaces();
+        if (namespaces.isEmpty()) {
+            doc = reader.read(new StringReader(stanza)).getRootElement();
+        } else {
+            // When the peer defined namespace prefixes on the 'stream' element, other than the default namespaces, then
+            // these need to be 'put back' for the parser to be able to parse any data that is prefixed with those. The
+            // only known case occurring 'in the wild' for this is Dialback, but it's valid XML / XMPP regardless). Re-
+            // establishing those prefixes is achieved by wrapping the data-to-be-parsed in a dummy root element on which
+            // the prefixes are defined. After the data has been parsed, the dummy root element is discarded. See OF-2556.
+            Log.trace("Connection defined namespace prefixes on its original 'stream' element.");
+            final StringBuilder sb = new StringBuilder();
+            sb.append("<stream ");
+            namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));
+            sb.append(">").append(stanza).append("</stream>");
+
+            doc = reader.read(new StringReader(sb.toString())).getRootElement().elementIterator().next();
+            doc.detach();
+        }
+
         if (doc == null) {
             // No document found.
             return;

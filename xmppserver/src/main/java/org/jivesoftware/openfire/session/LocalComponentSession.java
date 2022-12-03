@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.SessionManager;
@@ -75,6 +76,9 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         boolean allowMultiple = xpp.getAttributeValue("", "allowMultiple") != null;
 
         Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: {}", domain);
+
+        // Retrieve list of namespaces declared in current element (OF-2556)
+        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
 
         // Default answer header in case of an error
         StringBuilder sb = new StringBuilder();

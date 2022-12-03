@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.session;
 
 import org.dom4j.Element;
+import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -65,6 +66,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     public static LocalConnectionMultiplexerSession createSession(String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
         String domain = xpp.getAttributeValue("", "to");
+
+        // Retrieve list of namespaces declared in current element (OF-2556)
+        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
 
         Log.debug("LocalConnectionMultiplexerSession: [ConMng] Starting registration of new connection manager for domain: " + domain);
 

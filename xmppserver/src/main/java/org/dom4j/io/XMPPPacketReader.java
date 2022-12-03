@@ -16,10 +16,13 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p><code>XMPPPacketReader</code> is a Reader of DOM4J documents that
@@ -75,6 +78,30 @@ public class XMPPPacketReader {
 
     public XMPPPacketReader(DocumentFactory factory) {
         this.factory = factory;
+    }
+
+    /**
+     * Retrieves a collection of namespaces declared in the current element that the parser is on, that are not defined
+     * in {@link #IGNORED_NAMESPACE_ON_STANZA}
+     *
+     * @param xpp the parser
+     * @return A collection of namespaces
+     * @throws XmlPullParserException
+     */
+    @Nonnull
+    public static Set<Namespace> getNamespacesOnCurrentElement(XmlPullParser xpp) throws XmlPullParserException
+    {
+        final Set<Namespace> results = new HashSet<>();
+        final int nsStart = xpp.getNamespaceCount(xpp.getDepth()-1);
+        final int nsEnd = xpp.getNamespaceCount(xpp.getDepth());
+        for (int i = nsStart; i < nsEnd; i++) {
+            final String prefix = xpp.getNamespacePrefix(i);
+            final String ns = xpp.getNamespaceUri(i);
+            if (prefix != null && !XMPPPacketReader.IGNORED_NAMESPACE_ON_STANZA.contains(ns)) {
+                results.add(Namespace.get(prefix, ns));
+            }
+        }
+        return results;
     }
 
 

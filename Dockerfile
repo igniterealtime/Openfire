@@ -1,4 +1,4 @@
-FROM openjdk:11-jre
+FROM openjdk:16-bullseye
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \

@@ -19,6 +19,7 @@ package org.jivesoftware.openfire;
 import com.google.common.reflect.ClassPath;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.sentry.Sentry;
 import org.apache.logging.log4j.LogManager;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JNDIDataSourceProvider;
@@ -358,6 +359,12 @@ public class XMPPServer {
     }
 
     private void initialize() throws FileNotFoundException {
+        String sentryDsn = System.getProperty("sentry.dsn");
+        Sentry.init(options -> {
+            options.setDsn(sentryDsn == null ? "" : sentryDsn);
+            options.setTracesSampleRate(1.0);
+            options.setDebug(true);
+        });
         locateOpenfire();
 
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {

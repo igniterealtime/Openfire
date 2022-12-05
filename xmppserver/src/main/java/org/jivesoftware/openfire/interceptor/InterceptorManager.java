@@ -16,8 +16,13 @@
 
 package org.jivesoftware.openfire.interceptor;
 
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.SentryWrap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
@@ -265,7 +270,7 @@ public class InterceptorManager {
         {
             try
             {
-                interceptor.interceptPacket( packet, session, read, processed );
+                SentryWrap.span(() -> interceptor.interceptPacket( packet, session, read, processed ), interceptor.getClass() + (processed ? " post-" : " pre-") + (read ? "read" : "write") ,"interceptor");
             }
             catch ( PacketRejectedException e )
             {

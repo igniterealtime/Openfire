@@ -18,6 +18,10 @@
 package org.jivesoftware.openfire.spi;
 
 import com.google.common.collect.Multimap;
+import io.sentry.ISpan;
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQRouter;
@@ -48,6 +52,7 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SentryWrap;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheUtil;
@@ -593,6 +598,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      *         {@code false} otherwise.
      */
     private boolean routeToRemoteDomain(JID jid, Packet packet) {
+        try {
+            return SentryWrap.span(() -> this.wrappedRouteToRemoteDomain(jid, packet), "RoutingTableImpl.routeToRemoteDomain " + jid.getDomain(), "function");
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean wrappedRouteToRemoteDomain(JID jid, Packet packet) {
         if ( !JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
         {
             // Disallow anonymous local users to send data to other domains than the local domain.

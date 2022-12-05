@@ -60,5 +60,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/i4jruntime.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-log4j2</artifactId>
+            <version>6.4.0</version>
+        </dependency>
+
     </dependencies>
 </project>

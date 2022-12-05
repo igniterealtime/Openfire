@@ -24,9 +24,13 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
 
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.SentryWrap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -57,6 +61,7 @@ class BlockingReadingMode extends SocketReadingMode {
      */
     @Override
     public void run() {
+        Sentry.startSession();
         try {
             final InputStream inputStream;
             if (socketReader.directTLS ) {
@@ -69,7 +74,7 @@ class BlockingReadingMode extends SocketReadingMode {
 
             // Read in the opening tag and prepare for packet stream
             try {
-                socketReader.createSession();
+                SentryWrap.transaction(() -> socketReader.createSession(), "socketReader.createSession", "net.s2s");
             }
             catch (IOException e) {
                 Log.debug("Error creating session", e);
@@ -102,6 +107,7 @@ class BlockingReadingMode extends SocketReadingMode {
             if (socketReader.session != null) {
                 Log.warn(LocaleUtils.getLocalizedString("admin.error.stream") + ". Session: " +
                         socketReader.session, e);
+                Sentry.captureException(e);
             }
         }
         finally {
@@ -123,6 +129,7 @@ class BlockingReadingMode extends SocketReadingMode {
                 Log.debug(LocaleUtils.getLocalizedString("admin.error.connection") + socket.toString());
             }
             socketReader.shutdown();
+            Sentry.endSession();
         }
     }
 
@@ -185,7 +192,7 @@ class BlockingReadingMode extends SocketReadingMode {
                 }
             }
             else {
-                socketReader.process(doc);
+                SentryWrap.transaction(() -> socketReader.process(doc), "{" + doc.getNamespaceURI() + "}" + doc.getName(), "element");
             }
         }
     }

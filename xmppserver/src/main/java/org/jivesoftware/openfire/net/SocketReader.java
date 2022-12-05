@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.List;
 
+import io.sentry.ITransaction;
+import io.sentry.Sentry;
+import io.sentry.SpanStatus;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -148,12 +151,17 @@ public abstract class SocketReader implements Runnable {
         if (doc == null) {
             return;
         }
-       
         String tag = doc.getName();
+        Sentry.configureScope(scope -> scope.setTag("session.type", "s2s"));
         if ("message".equals(tag)) {
             Message packet;
             try {
                 packet = new Message(doc);
+                Sentry.configureScope(scope -> {
+                    scope.setTag("stanza.from", packet.getFrom().toBareJID());
+                    scope.setTag("stanza.to", packet.getTo().toBareJID());
+                });
+                Sentry.setTransaction(tag + " type='" + (packet.getType() == null ? "(null)" : packet.getType()).toString() + "'");
             }
             catch(IllegalArgumentException e) {
                 Log.debug("SocketReader: Rejecting packet. JID malformed", e);
@@ -172,6 +180,11 @@ public abstract class SocketReader implements Runnable {
             Presence packet;
             try {
                 packet = new Presence(doc);
+                Sentry.configureScope(scope -> {
+                    scope.setTag("stanza.from", packet.getFrom().toBareJID());
+                    scope.setTag("stanza.to", packet.getTo().toBareJID());
+                });
+                Sentry.setTransaction(tag + " type='" + (packet.getType() == null ? "(null)" : packet.getType()).toString() + "'");
             }
             catch (IllegalArgumentException e) {
                 Log.debug("SocketReader: Rejecting packet. JID malformed", e);
@@ -217,8 +230,12 @@ public abstract class SocketReader implements Runnable {
             IQ packet;
             try {
                 packet = getIQ(doc);
-            }
-            catch(IllegalArgumentException e) {
+                Sentry.configureScope(scope -> {
+                    scope.setTag("stanza.from", packet.getFrom().toBareJID());
+                    scope.setTag("stanza.to", packet.getTo().toBareJID());
+                });
+                Sentry.setTransaction(tag + " type='" + packet.getType().toString() + "'");
+            } catch (IllegalArgumentException e) {
                 Log.debug("SocketReader: Rejecting packet. JID malformed", e);
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();

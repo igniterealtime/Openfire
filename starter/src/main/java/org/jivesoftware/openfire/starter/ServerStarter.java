@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.starter;
 
 import java.io.File;
 
+import io.sentry.Sentry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,12 @@ public class ServerStarter {
     private static final String DEFAULT_LIB_DIR = "../lib";
 
     public static void main(String [] args) {
+        String sentryDsn = System.getProperty("sentry.dsn");
+        Sentry.init(options -> {
+            options.setDsn(sentryDsn == null ? "" : sentryDsn);
+            options.setTracesSampleRate(1.0);
+            options.setDebug(true);
+        });
         new ServerStarter().start();
     }
 

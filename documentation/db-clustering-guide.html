@@ -393,20 +393,14 @@ services:
         </fieldset>
 
         <p>
-            Given the above PostgreSQL docker setup, and the above JDBC example, assuming the containers are running on a
-            machine named DOCKERHOST, the correct JDBC connection string would be:
+            Given the above PostgreSQL docker setup, and the above JDBC example, assuming the containers are running on
+            the local machine, a correct JDBC connection string might look like this:
+
+            <figure>
+                <a href="images/setup_pgcluster_jdbc.png"><img src="images/setup_pgcluster_jdbc.png" alt="Configuring Openfire to connect to a PostgreSQL cluster"></a>
+                <figcaption>Configuring Openfire to connect to a PostgreSQL cluster</figcaption>
+            </figure>
         </p>
-
-        <fieldset>
-            <pre><code>jdbc:postgresql://DOCKERHOST:5432,DOCKERHOST:5433/openfire?targetServerType=primary</code></pre>
-        </fieldset>
-
-        <p>Example:</p>
-
-        <figure>
-            <a href="images/setup_pgcluster_jdbc.png"><img src="images/setup_pgcluster_jdbc.png" alt="Configuring Openfire to connect to a PostgreSQL cluster"></a>
-            <figcaption>Configuring Openfire to connect to a PostgreSQL cluster</figcaption>
-        </figure>
 
         <p>
             Alternatively, if configuring via autosetup in openfire.xml:
@@ -422,7 +416,7 @@ services:
             &lt;mode&gt;standard&lt;/mode&gt;
             &lt;defaultProvider&gt;
               &lt;driver&gt;org.postgresql.Driver&lt;/driver&gt;
-              &lt;serverURL&gt;jdbc:postgresql://potato:5432,potato:5433/openfire?targetServerType=primary&lt;/serverURL&gt;
+              &lt;serverURL&gt;jdbc:postgresql://localhost:5432,127.0.0.1:5433/openfire?targetServerType=primary&lt;/serverURL&gt;
               &lt;username&gt;openfire&lt;/username&gt;
               &lt;password&gt;openfireuserpassword&lt;/password&gt;
               &lt;minConnections&gt;5&lt;/minConnections&gt;

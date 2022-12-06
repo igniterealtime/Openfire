@@ -221,6 +221,7 @@
                                 <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.node"/></th>
                             </c:if>
                             <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.authentication"/></th>
+                            <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.tls_version"/></th>
                             <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.cipher"/></th>
                             <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.creation" /></th>
                             <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.last_active" /></th>
@@ -262,6 +263,7 @@
                                             <fmt:message key="server.session.details.tlsauth"/>
                                         </c:otherwise>
                                     </c:choose>
+                                <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>
@@ -281,6 +283,7 @@
                                 <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.details.node"/></th>
                             </c:if>
                             <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.authentication"/></th>
+                            <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.tls_version"/></th>
                             <th style="width: 10%; white-space: nowrap"><fmt:message key="server.session.details.cipher"/></th>
                             <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.creation" /></th>
                             <th style="width: 1%; white-space: nowrap"><fmt:message key="server.session.label.last_active" /></th>
@@ -322,6 +325,7 @@
                                         <fmt:message key="server.session.details.tlsauth"/>
                                     </c:otherwise>
                                     </c:choose>
+                                <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td nowrap><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>

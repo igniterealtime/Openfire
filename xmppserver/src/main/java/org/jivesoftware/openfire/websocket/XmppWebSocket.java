@@ -183,8 +183,21 @@ public class XmppWebSocket {
         return wsSession != null && wsSession.isOpen();
     }
 
+    @Deprecated // Remove in Openfire 4.9 or later.
     synchronized boolean isWebSocketSecure() {
+        return isWebSocketEncrypted();
+    }
+
+    synchronized boolean isWebSocketEncrypted() {
         return wsSession != null && wsSession.isSecure();
+    }
+
+    synchronized String getTLSProtocolName() {
+        return wsSession == null ? null : wsSession.getProtocolVersion();
+    }
+
+    synchronized String getCipherSuiteName() {
+        return wsSession == null ? null : "unknown";
     }
 
     synchronized void closeWebSocket()

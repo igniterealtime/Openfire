@@ -146,9 +146,9 @@ public class ConnectionConfiguration
 
     /**
      * A boolean that indicates if the current validity of certificates (based on their 'notBefore' and 'notAfter'
-     * property values) is used when they are used to establish an encrypted connection..
+     * property values) is used when they are used to establish an encrypted connection.
      *
-     * @return true when certificates are required to be valid to establish a secured connection, otherwise false.
+     * @return true when certificates are required to be valid to establish an encrypted connection, otherwise false.
      */
     public boolean isVerifyCertificateValidity()
     {

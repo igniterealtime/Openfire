@@ -23,16 +23,14 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.net.SocketConnection;
-import org.jivesoftware.openfire.net.TLSStreamHandler;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLSession;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.*;
@@ -488,10 +486,16 @@ public abstract class LocalSession implements Session {
     }
 
     @Override
+    @Deprecated // Remove in Openfire 4.9 or later.
     public boolean isSecure() {
+        return isEncrypted();
+    }
+
+    @Override
+    public boolean isEncrypted() {
         return Optional.ofNullable(conn)
-                .map(Connection::isSecure)
-                .orElse(Boolean.FALSE);
+            .map(Connection::isEncrypted)
+            .orElse(Boolean.FALSE);
     }
 
     @Override
@@ -536,7 +540,7 @@ public abstract class LocalSession implements Session {
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +
             '}';
@@ -564,23 +568,20 @@ public abstract class LocalSession implements Session {
                 .orElse(Boolean.FALSE);
     }
 
-    /**
-     * Returns a String representing the Cipher Suite Name, or "NONE".
-     * @return String
-     */
     @Override
+    @Nonnull
+    public String getTLSProtocolName() {
+        return Optional.ofNullable(conn)
+            .map(c -> c.getTLSProtocolName().orElse("NONE"))
+            .orElse("NONE");
+    }
+
+    @Override
+    @Nonnull
     public String getCipherSuiteName() {
-        SocketConnection s = (SocketConnection)getConnection();
-        if (s != null) {
-            TLSStreamHandler t = s.getTLSStreamHandler();
-            if (t != null) {
-                SSLSession ssl = t.getSSLSession();
-                if (ssl != null) {
-                    return ssl.getCipherSuite();
-                }
-            }
-        }
-        return "NONE";
+        return Optional.ofNullable(conn)
+            .map(c -> c.getCipherSuiteName().orElse("NONE"))
+            .orElse("NONE");
     }
 
     @Override

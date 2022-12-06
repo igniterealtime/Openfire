@@ -35,6 +35,7 @@ import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -44,10 +45,7 @@ import java.net.UnknownHostException;
 import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -95,7 +93,7 @@ public class SocketConnection implements Connection {
     private PacketDeliverer backupDeliverer;
 
     private LocalSession session;
-    private boolean secure;
+    private boolean isEncrypted;
     private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
     private int majorVersion = 1;
@@ -125,16 +123,16 @@ public class SocketConnection implements Connection {
      *
      * @param backupDeliverer the packet deliverer this connection will use when socket is closed.
      * @param socket the socket to represent.
-     * @param isSecure true if this is a secure connection.
+     * @param isEncrypted true if this is a encrypted connection.
      * @throws java.io.IOException if there was a socket error while sending the packet.
      */
-    public SocketConnection(PacketDeliverer backupDeliverer, Socket socket, boolean isSecure)
+    public SocketConnection(PacketDeliverer backupDeliverer, Socket socket, boolean isEncrypted)
             throws IOException {
         if (socket == null) {
             throw new NullPointerException("Socket channel must be non-null");
         }
 
-        this.secure = isSecure;
+        this.isEncrypted = isEncrypted;
         this.socket = socket;
         // DANIELE: Modify socket to use channel
         if (socket.getChannel() != null) {
@@ -155,10 +153,10 @@ public class SocketConnection implements Connection {
     }
 
     /**
-     * Returns the stream handler responsible for securing the plain connection and providing
+     * Returns the stream handler responsible for encrypting the plain connection and providing
      * the corresponding input and output streams.
      *
-     * @return the stream handler responsible for securing the plain connection and providing
+     * @return the stream handler responsible for encrypting the plain connection and providing
      *         the corresponding input and output streams.
      */
     public TLSStreamHandler getTLSStreamHandler() {
@@ -166,8 +164,8 @@ public class SocketConnection implements Connection {
     }
 
     public void startTLS(boolean clientMode, boolean directTLS) throws IOException {
-        if (!secure) {
-            secure = true;
+        if (!isEncrypted) {
+            isEncrypted = true;
 
             // Prepare for TLS
             final ClientAuth clientAuth;
@@ -344,8 +342,14 @@ public class SocketConnection implements Connection {
     }
 
     @Override
+    @Deprecated // Remove in Openfire 4.9 or later.
     public boolean isSecure() {
-        return secure;
+        return isEncrypted();
+    }
+
+    @Override
+    public boolean isEncrypted() {
+        return isEncrypted;
     }
 
     @Override
@@ -360,9 +364,9 @@ public class SocketConnection implements Connection {
 
     /**
      * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to secure their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
-     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * are required to encrypt their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
+     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
      * last case.
      *
      * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
@@ -370,6 +374,22 @@ public class SocketConnection implements Connection {
     @Override
     public void setTlsPolicy(TLSPolicy tlsPolicy) {
         this.tlsPolicy = tlsPolicy;
+    }
+
+    @Override
+    public Optional<String> getTLSProtocolName()
+    {
+        return Optional.ofNullable(tlsStreamHandler)
+            .map(TLSStreamHandler::getSSLSession)
+            .map(SSLSession::getProtocol);
+    }
+
+    @Override
+    public Optional<String> getCipherSuiteName()
+    {
+        return Optional.ofNullable(tlsStreamHandler)
+            .map(TLSStreamHandler::getSSLSession)
+            .map(SSLSession::getCipherSuite);
     }
 
     @Override

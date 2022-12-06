@@ -72,6 +72,9 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         else if (operation == Operation.getNumServerPackets) {
             result = getSession().getNumServerPackets();
         }
+        else if (operation == Operation.getTLSProtocolName) {
+            result = getSession().getTLSProtocolName();
+        }
         else if (operation == Operation.getCipherSuiteName) {
             result = getSession().getCipherSuiteName();
         }
@@ -110,8 +113,8 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         else if (operation == Operation.isClosed) {
             result = getSession().isClosed();
         }
-        else if (operation == Operation.isSecure) {
-            result = getSession().isSecure();
+        else if (operation == Operation.isEncrypted) {
+            result = getSession().isEncrypted();
         }
         else if (operation == Operation.getHostAddress) {
             try {
@@ -155,12 +158,14 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         getLastActiveDate,
         getNumClientPackets,
         getNumServerPackets,
+        getTLSProtocolName,
         getCipherSuiteName,
         getPeerCertificates,
         getSoftwareVersion,
         close,
         isClosed,
-        isSecure,
+        @Deprecated isSecure, // Replaced with 'isEncrypted', replace in Openfire 4.9 or later.
+        isEncrypted,
         getHostAddress,
         getHostName,
         validate,

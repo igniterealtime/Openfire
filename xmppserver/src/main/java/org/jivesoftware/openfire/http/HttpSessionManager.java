@@ -208,7 +208,7 @@ public class HttpSessionManager {
             defaultInactivityTimeout = INACTIVITY_TIMEOUT.getValue();
         }
         HttpSession session = createSession(connection, Locale.forLanguageTag(body.getLanguage()), wait, body.getHold(),
-            connection.isSecure(), POLLING_INTERVAL.getValue(), MAX_REQUESTS.getValue(), MAX_PAUSE.getValue(),
+            connection.isEncrypted(), POLLING_INTERVAL.getValue(), MAX_REQUESTS.getValue(), MAX_PAUSE.getValue(),
             defaultInactivityTimeout, body.getMajorVersion(), body.getMinorVersion());
 
         session.resetInactivityTimeout();
@@ -310,14 +310,14 @@ public class HttpSessionManager {
         .build();
 
     private HttpSession createSession(HttpConnection connection, Locale language, Duration wait,
-                                      int hold, boolean isSecure, Duration maxPollingInterval,
+                                      int hold, boolean isEncrypted, Duration maxPollingInterval,
                                       int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
                                       int majorVersion, int minorVersion) throws UnauthorizedException, UnknownHostException
     {
         // Create a ClientSession for this user.
         StreamID streamID = SessionManager.getInstance().nextStreamID();
         // Send to the server that a new client session has been created
-        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language, wait, hold, isSecure,
+        HttpSession session = sessionManager.createClientHttpSession(streamID, connection, language, wait, hold, isEncrypted,
                                                                      maxPollingInterval, maxRequests, maxPause,
                                                                      defaultInactivityTimeout, majorVersion, minorVersion);
         // Register that the new session is associated with the specified stream ID

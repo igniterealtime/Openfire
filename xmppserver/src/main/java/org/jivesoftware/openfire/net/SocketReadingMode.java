@@ -57,11 +57,11 @@ abstract class SocketReadingMode {
     abstract void run();
 
     /**
-     * Tries to secure the connection using TLS. If the connection is secured then reset
-     * the parser to use the new secured reader. But if the connection failed to be secured
+     * Tries to encrypt the connection using TLS. If the connection is encrypted then reset
+     * the parser to use the new encrypted reader. But if the connection failed to be encrypted
      * then send a <failure> stanza and close the connection.
      *
-     * @return true if the connection was secured.
+     * @return true if the connection was encryped.
      */
     protected boolean negotiateTLS() {
         if (socketReader.connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
@@ -71,7 +71,7 @@ abstract class SocketReadingMode {
             Log.warn("TLS requested by initiator when TLS was never offered by server. Closing connection: {}", socketReader.connection);
             return false;
         }
-        // Client requested to secure the connection using TLS. Negotiate TLS.
+        // Client requested to encrypt the connection using TLS. Negotiate TLS.
         try {
             // This code is only used for s2s
             socketReader.connection.startTLS(false, false);
@@ -116,10 +116,10 @@ abstract class SocketReadingMode {
 
     protected boolean authenticateClient(Element doc) throws DocumentException, IOException,
             XmlPullParserException {
-        // Ensure that connection was secured if TLS was required
+        // Ensure that connection was encrypted if TLS was required
         if (socketReader.connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !socketReader.connection.isSecure()) {
-            socketReader.closeNeverSecuredConnection();
+                !socketReader.connection.isEncrypted()) {
+            socketReader.closeNeverEncryptedConnection();
             return false;
         }
 

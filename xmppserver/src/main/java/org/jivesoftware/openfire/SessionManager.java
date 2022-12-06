@@ -445,7 +445,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param language The language to use for the session
      * @param wait The longest time it is permissible to wait for a response.
      * @param hold The maximum number of simultaneous waiting requests.
-     * @param isSecure True if all connections on this session should be secured, and false if they should not.
+     * @param isEncrypted True if all connections on this session should be encrypted, and false if they should not.
      * @param maxPollingInterval The max interval within which a client can send polling requests.
      * @param maxRequests The max number of requests it is permissible for the session to have open at any one time.
      * @param maxPause The maximum length of a temporary session pause (in seconds) that the client MAY request.
@@ -457,7 +457,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @throws UnknownHostException if no IP address for the peer could be found,
      */
     public HttpSession createClientHttpSession(StreamID id, HttpConnection connection, Locale language, Duration wait,
-                                               int hold, boolean isSecure, Duration maxPollingInterval,
+                                               int hold, boolean isEncrypted, Duration maxPollingInterval,
                                                int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
                                                int majorVersion, int minorVersion)
         throws UnauthorizedException, UnknownHostException
@@ -468,7 +468,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         final PacketDeliverer backupDeliverer = ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
         final HttpSession.HttpVirtualConnection vConnection = new HttpSession.HttpVirtualConnection(connection.getRemoteAddr(), backupDeliverer, ConnectionType.SOCKET_C2S);
-        final HttpSession session = new HttpSession(vConnection, serverName, id, connection.getRequestId(), connection.getPeerCertificates(), language, wait, hold, isSecure,
+        final HttpSession session = new HttpSession(vConnection, serverName, id, connection.getRequestId(), connection.getPeerCertificates(), language, wait, hold, isEncrypted,
                                               maxPollingInterval, maxRequests, maxPause, defaultInactivityTimeout, majorVersion, minorVersion);
         vConnection.init(session);
         vConnection.registerCloseListener(clientSessionListener, session);

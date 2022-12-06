@@ -31,7 +31,6 @@ import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
-import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
@@ -119,9 +118,9 @@ public class HttpSession extends LocalClientSession {
     private final int hold;
 
     /**
-     * Sets whether the initial request on the session was secure.
+     * Sets whether the initial request on the session was encrypted (eg: using HTTPS instead of HTTP).
      */
-    private final boolean isSecure;
+    private final boolean isEncrypted;
 
     /**
      * Sets the max interval within which a client can send polling requests. If more than one
@@ -200,7 +199,7 @@ public class HttpSession extends LocalClientSession {
 
     public HttpSession(HttpVirtualConnection vConnection, String serverName,
                        StreamID streamID, long requestId, X509Certificate[] sslCertificates, Locale language,
-                       Duration wait, int hold, boolean isSecure, Duration maxPollingInterval,
+                       Duration wait, int hold, boolean isEncrypted, Duration maxPollingInterval,
                        int maxRequests, Duration maxPause, Duration defaultInactivityTimeout,
                        int majorVersion, int minorVersion) throws UnknownHostException
     {
@@ -210,7 +209,7 @@ public class HttpSession extends LocalClientSession {
         this.sslCertificates = sslCertificates;
         this.wait = wait;
         this.hold = hold;
-        this.isSecure = isSecure;
+        this.isEncrypted = isEncrypted;
         this.maxPollingInterval = maxPollingInterval;
         this.maxRequests = maxRequests;
         this.maxPause = maxPause;
@@ -317,15 +316,15 @@ public class HttpSession extends LocalClientSession {
     }
 
     /**
-     * Returns true if all connections on this session should be secured, and false if they should
+     * Returns true if all connections on this session should be encrypted, and false if they should
      * not.
      *
-     * @return true if all connections on this session should be secured, and false if they should
+     * @return true if all connections on this session should be encrypted, and false if they should
      *         not.
      */
     @Override
-    public boolean isSecure() {
-        return isSecure;
+    public boolean isEncrypted() {
+        return isEncrypted;
     }
 
     /**
@@ -496,9 +495,9 @@ public class HttpSession extends LocalClientSession {
         final StreamID streamid = getStreamID();
 
         // Check if security restraints are observed.
-        if (isSecure && !connection.isSecure()) {
-            throw new HttpBindException("Session was started from secure connection, all " +
-                "connections on this session must be secured.", BoshBindingError.badRequest);
+        if (isEncrypted && !connection.isEncrypted()) {
+            throw new HttpBindException("Session was started from encrypted connection, all " +
+                "connections on this session must be encrypted.", BoshBindingError.badRequest);
         }
 
         synchronized (connectionQueue)
@@ -1301,6 +1300,16 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
+        public Optional<String> getTLSProtocolName() {
+            return Optional.of("unknown"); // FIXME: determine the correct value.
+        }
+
+        @Override
+        public Optional<String> getCipherSuiteName() {
+            return Optional.of("unknown"); // FIXME: determine the correct value.
+        }
+
+        @Override
         public ConnectionConfiguration getConfiguration() {
             if (configuration == null) {
                 final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
@@ -1469,7 +1478,7 @@ public class HttpSession extends LocalClientSession {
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +
             ", isInitialized=" + isInitialized() +

@@ -145,7 +145,13 @@ public abstract class VirtualConnection implements Connection {
     }
 
     @Override
+    @Deprecated // Remove in Openfire 4.9 or later.
     public boolean isSecure() {
+        return isEncrypted();
+    }
+
+    @Override
+    public boolean isEncrypted() {
         // Return false since TLS is not used for virtual connections
         return false;
     }

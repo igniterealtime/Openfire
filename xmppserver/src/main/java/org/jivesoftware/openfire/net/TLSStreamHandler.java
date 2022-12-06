@@ -40,7 +40,7 @@ import java.util.List;
 
 /**
  * TLSStreamHandler is responsible for securing plain connections by negotiating TLS. By creating
- * a new instance of this class the plain connection will be secured.
+ * a new instance of this class the plain connection will be encrypted.
  *
  * @author Hao Chen
  */
@@ -88,12 +88,12 @@ public class TLSStreamHandler {
     private static ByteBuffer hsBB = ByteBuffer.allocate(0);
 
     /**
-     * Creates a new TLSStreamHandler and secures the plain socket connection. When connecting
+     * Creates a new TLSStreamHandler and encrypt the plain socket connection. When connecting
      * to a remote server then {@code clientMode} will be <code>true</code> and
      * {@code remoteServer} is the server name of the remote server. Otherwise {@code clientMode}
      * will be <code>false</code> and  {@code remoteServer} null.
      *
-     * @param socket the plain socket connection to secure
+     * @param socket the plain socket connection to encrypt
      * @param configuration the configuration for the connection
      * @param clientMode boolean indicating if this entity is a client or a server.
      * @throws java.io.IOException if an exception occurs

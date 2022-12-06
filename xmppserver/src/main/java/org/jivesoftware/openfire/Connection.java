@@ -29,6 +29,7 @@ import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,8 +38,7 @@ import java.util.Set;
  * @author Iain Shigeoka
  */
 public interface Connection extends Closeable {
-
-    /**
+/**
      * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
      * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
      * stanzas or other elements that are defined in that namespace (eg: are prefixed), these namespaces are recorded
@@ -47,7 +47,6 @@ public interface Connection extends Closeable {
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2556">Issue OF-2556</a>
      */
     Set<Namespace> additionalNamespaces = new HashSet<>();
-
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -206,8 +205,19 @@ public interface Connection extends Closeable {
      * Returns true if this connection is secure.
      *
      * @return true if the connection is secure (e.g. SSL/TLS)
+     * @deprecated Renamed. Use {@link #isEncrypted()} instead.
      */
+    @Deprecated // Remove in Openfire 4.9 or later.
     boolean isSecure();
+
+    /**
+     * Returns true if this connection is encrypted.
+     *
+     * @return true if the connection is encrypted (e.g. uses SSL/TLS)
+     */
+    default boolean isEncrypted() {
+        return isSecure();
+    }
 
     /**
      * Registers a listener for close event notification. Registrations after
@@ -312,9 +322,9 @@ public interface Connection extends Closeable {
 
     /**
      * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to secure their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
-     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * are required to encrypt their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
+     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
      * last case.
      *
      * @return whether TLS is mandatory, optional or is disabled.
@@ -323,14 +333,28 @@ public interface Connection extends Closeable {
 
     /**
      * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to secure their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to secure their connections
-     * using TLS. Their connections will be closed if they try to secure the connection. in this
+     * are required to encrypt their connections or otherwise their connections will be closed.
+     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
+     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
      * last case.
      *
      * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
      */
     void setTlsPolicy(TLSPolicy tlsPolicy);
+
+    /**
+     * Returns the TLS protocol name used by the connection of the session, if any.
+     *
+     * @return a TLS protocol (version) name.
+     */
+    Optional<String> getTLSProtocolName();
+
+    /**
+     * Returns the TLS cipher suite name used by the connection of the session, if any.
+     *
+     * @return cipher suite name.
+     */
+    Optional<String> getCipherSuiteName();
 
     /**
      * Returns the packet deliverer to use when delivering a packet over the socket fails. The
@@ -343,7 +367,7 @@ public interface Connection extends Closeable {
     PacketDeliverer getPacketDeliverer();
 
     /**
-     * Secures the plain connection by negotiating TLS with the other peer. In a server-2-server
+     * Encrypts the plain connection by negotiating TLS with the other peer. In a server-2-server
      * connection the server requesting the TLS negotiation will be the client and the other server
      * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
      * negotiation must pass <code>true</code> in the {@code clientMode} parameter and the server
@@ -354,7 +378,7 @@ public interface Connection extends Closeable {
      *
      * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
      * @param directTLS boolean indicating if the negotiation is directTLS (true) or startTLS (false).
-     * @throws Exception if an error occured while securing the connection.
+     * @throws Exception if an error occurred while encrypting the connection.
      */
     void startTLS(boolean clientMode, boolean directTLS) throws Exception;
 
@@ -432,13 +456,13 @@ public interface Connection extends Closeable {
     enum TLSPolicy {
 
         /**
-         * TLS is required to interact with the server. Entities that do not secure their
+         * TLS is required to interact with the server. Entities that do not encrypt their
          * connections using TLS will get a stream error and their connections will be closed.
          */
         required,
 
         /**
-         * TLS is optional to interact with the server. Entities may or may not secure their
+         * TLS is optional to interact with the server. Entities may or may not encrypt their
          * connections using TLS.
          */
         optional,

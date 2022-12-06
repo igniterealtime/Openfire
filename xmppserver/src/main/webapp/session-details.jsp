@@ -294,6 +294,24 @@
             %>
         </td>
     </tr>
+    <% if (currentSess.isEncrypted()) { %>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.tls_version" />:
+        </td>
+        <td>
+            <%=StringUtils.escapeHTMLTags(currentSess.getTLSProtocolName())%>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.cipher" />:
+        </td>
+        <td>
+            <%=StringUtils.escapeHTMLTags(currentSess.getCipherSuiteName())%>
+        </td>
+    </tr>
+    <% } %>
     <tr>
         <td class="c1">
             <fmt:message key="session.details.presence" />:

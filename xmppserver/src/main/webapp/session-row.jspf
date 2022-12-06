@@ -85,11 +85,11 @@
     <td style="width: 1%">
         <%  if (isDetached) { %>
                     <img src="images/working-16x16.gif" width="1" height="1" alt="">
-        <%  } else if (sess.isSecure()) {
+        <%  } else if (sess.isEncrypted()) {
                 if (sess.getPeerCertificates() != null && sess.getPeerCertificates().length > 0) { %>
                     <img src="images/lock_both.gif" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
         <%      } else { %>
-                    <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+                    <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />: <%= sess.getTLSProtocolName() + " (" + sess.getCipherSuiteName() +")" %>" alt="<fmt:message key='session.row.cliked_ssl' />: <%= sess.getTLSProtocolName() + " (" + sess.getCipherSuiteName() +")" %>">
         <%      }
             } else { %>
                     <img src="images/blank.gif" width="1" height="1" alt="">

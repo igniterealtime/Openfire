@@ -90,7 +90,7 @@ public class LocalServerSession extends LocalSession implements ServerSession {
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", isUsingServerDialback=" + isUsingServerDialback() +
             '}';

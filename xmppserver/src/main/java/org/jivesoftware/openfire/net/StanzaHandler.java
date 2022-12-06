@@ -220,10 +220,10 @@ public abstract class StanzaHandler {
             return;
         }
 
-        // Ensure that connection was secured if TLS was required
+        // Ensure that connection was encrypted if TLS was required
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isSecure()) {
-            closeNeverSecuredConnection();
+                !connection.isEncrypted()) {
+            closeNeverEncryptedConnection();
             return;
         }
 
@@ -440,11 +440,11 @@ public abstract class StanzaHandler {
     abstract boolean processUnknowPacket(Element doc) throws UnauthorizedException;
 
     /**
-     * Tries to secure the connection using TLS. If the connection is secured then reset
-     * the parser to use the new secured reader. But if the connection failed to be secured
+     * Tries to encrypt the connection using TLS. If the connection is encrypted then reset
+     * the parser to use the new encrypted reader. But if the connection failed to be encrypted
      * then send a <failure> stanza and close the connection.
      *
-     * @return true if the connection was secured.
+     * @return true if the connection was encrypted.
      */
     private boolean negotiateTLS() {
         if (connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
@@ -454,7 +454,7 @@ public abstract class StanzaHandler {
             Log.warn("TLS requested by initiator when TLS was never offered by server. Closing connection: {}", connection);
             return false;
         }
-        // Client requested to secure the connection using TLS. Negotiate TLS.
+        // Client requested to encrypt the connection using TLS. Negotiate TLS.
         try {
             startTLS();
         }
@@ -624,12 +624,23 @@ public abstract class StanzaHandler {
     /**
      * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
      * closing the connection a stream error will be sent to the entity.
+     *
+     * @deprecated Renamed. Use {@link #closeNeverEncryptedConnection()}
      */
+    @Deprecated // remove in Openfire 4.9 or later.
     void closeNeverSecuredConnection() {
+        closeNeverEncryptedConnection();
+    }
+
+    /**
+     * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
+     * closing the connection a stream error will be sent to the entity.
+     */
+    void closeNeverEncryptedConnection() {
         // Send a stream error and close the underlying connection.
         connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was established."));
         // Log a warning so that admins can track this case from the server side
-        Log.warn("TLS was required by the server and connection was never secured. Closing connection: {}", connection);
+        Log.warn("TLS was required by the server and connection was never encrypted. Closing connection: {}", connection);
     }
 
     /**
@@ -672,7 +683,7 @@ public abstract class StanzaHandler {
 
         }
         // Create the correct session based on the sent namespace. At this point the server
-        // may offer the client to secure the connection. If the client decides to secure
+        // may offer the client to encrypt the connection. If the client decides to encrypt
         // the connection then a <starttls> stanza should be received
         else if (!createSession(xpp.getNamespace(null), serverName, xpp, connection)) {
             // http://xmpp.org/rfcs/rfc6120.html#streams-error-conditions-invalid-namespace

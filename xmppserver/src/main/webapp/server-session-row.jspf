@@ -19,23 +19,30 @@
  --%>
 
 <% // Show the secured icon only if ALL sessions are secure
-    boolean isSecured = true;
+    boolean isEncrypted = true;
+    Set<String> tlsProtocolNames = new HashSet<>();
+    Set<String> cipherSuiteNames = new HashSet<>();
     // Check if all incoming sessions are secured
     for (org.jivesoftware.openfire.session.IncomingServerSession inSession : inSessions) {
-        if (!inSession.isSecure()) {
-            isSecured = false;
+        if (!inSession.isEncrypted()) {
+            isEncrypted = false;
             break;
         }
+        tlsProtocolNames.add(inSession.getTLSProtocolName());
+        cipherSuiteNames.add(inSession.getCipherSuiteName());
     }
     // Check if outgoing session is secured (only if incoming sessions are secured)
-    if (isSecured) {
+    if (isEncrypted) {
         for (org.jivesoftware.openfire.session.OutgoingServerSession outSession : outSessions) {
-            if (!outSession.isSecure()) {
-                isSecured = false;
+            if (!outSession.isEncrypted()) {
+                isEncrypted = false;
                 break;
             }
+            tlsProtocolNames.add(outSession.getTLSProtocolName());
+            cipherSuiteNames.add(outSession.getCipherSuiteName());
         }
     }
+    String isEncryptedAltText = isEncrypted ? String.join(", ", tlsProtocolNames) + " - " + String.join(", ", cipherSuiteNames): "";
 %>
 <tr>
     <td style="width: 1%; white-space: nowrap"><%= count %></td>
@@ -47,9 +54,9 @@
             </tr>
         </table>
     </td>
-    <%  if (isSecured) { %>
+    <%  if (isEncrypted) { %>
     <td style="width: 1%">
-        <img src="images/lock.gif" alt="">
+        <img src="images/lock.gif" alt="<%=isEncryptedAltText%>">
     </td>
      <% } else { %>
     <td style="width: 1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>

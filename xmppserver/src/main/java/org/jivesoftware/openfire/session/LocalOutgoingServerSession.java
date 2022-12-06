@@ -238,7 +238,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     /**
      * Establishes a new outgoing session to a remote domain. If the remote domain supports TLS and SASL then the new
-     * outgoing connection will be secured with TLS and authenticated  using SASL. However, if TLS or SASL is not
+     * outgoing connection will be encrypted with TLS and authenticated using SASL. However, if TLS or SASL is not
      * supported by the remote domain or if an error occurred while securing or authenticating the connection using SASL
      * then server dialback will be used.
      *
@@ -340,8 +340,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         LocalOutgoingServerSession answer = authenticate(domainPair, connection, reader, openingStream, features, id);
                         if (answer != null) {
                             log.debug( "Successfully authenticated the connection with SASL)!" );
-                            // Everything went fine so return the secured and
-                            // authenticated connection
+                            // Everything went fine so return the encrypted and authenticated connection.
                             log.debug( "Successfully created new session!" );
                             return answer;
                         }
@@ -350,16 +349,16 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         log.debug( "Check if both us as well as the remote server have enabled STARTTLS and/or dialback ..." );
                         final boolean useTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_POLICY, true);
                         if (useTLS && features.element("starttls") != null) {
-                            log.debug( "Both us and the remote server support the STARTTLS feature. Secure and authenticate the connection with TLS & SASL..." );
-                            LocalOutgoingServerSession answer = secureAndAuthenticate(domainPair, connection, reader, openingStream);
+                            log.debug( "Both us and the remote server support the STARTTLS feature. Encrypt and authenticate the connection with TLS & SASL..." );
+                            LocalOutgoingServerSession answer = encryptAndAuthenticate(domainPair, connection, reader, openingStream);
                             if (answer != null) {
-                                log.debug( "Successfully secured/authenticated the connection with TLS/SASL)!" );
+                                log.debug( "Successfully encrypted/authenticated the connection with TLS/SASL)!" );
                                 // Everything went fine so return the secured and
                                 // authenticated connection
                                 log.debug( "Successfully created new session!" );
                                 return answer;
                             }
-                            log.debug( "Unable to secure and authenticate the connection with TLS & SASL." );
+                            log.debug( "Unable to encrypt and authenticate the connection with TLS & SASL." );
                         }
                         else if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
                             log.debug("I have no StartTLS yet I must TLS");
@@ -444,11 +443,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
     }
 
-    private static LocalOutgoingServerSession secureAndAuthenticate(DomainPair domainPair, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream) throws Exception {
-        final Logger log = LoggerFactory.getLogger(Log.getName() + "[Secure connection for: " + domainPair + "]" );
+    private static LocalOutgoingServerSession encryptAndAuthenticate(DomainPair domainPair, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream) throws Exception {
+        final Logger log = LoggerFactory.getLogger(Log.getName() + "[Encrypt connection for: " + domainPair + "]" );
         Element features;
 
-        log.debug( "Securing and authenticating connection ...");
+        log.debug( "Encrypting and authenticating connection ...");
 
         log.debug( "Indicating we want TLS and wait for response." );
         connection.deliverRawText( "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>" );
@@ -467,12 +466,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 log.debug("TLS negotiation failed: " + e.getMessage());
                 throw e;
             }
-            log.debug( "TLS negotiation was successful. Connection secured. Proceeding with authentication..." );
+            log.debug( "TLS negotiation was successful. Connection encrypted. Proceeding with authentication..." );
             if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
                 if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
                     log.debug( "SASL authentication failed. Will continue with dialback." );
                 } else {
-                    log.warn( "Unable to authenticated the connection: SASL authentication failed (and dialback is not available)." );
+                    log.warn( "Unable to authenticate the connection: SASL authentication failed (and dialback is not available)." );
                     return null;
                 }
             }
@@ -494,12 +493,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 return authenticate( domainPair, connection, reader, openingStream, features, id );
             }
             else {
-                log.debug( "Failed to secure and authenticate connection: neither SASL mechanisms nor SERVER DIALBACK were offered by the remote host." );
+                log.debug( "Failed to encrypt and authenticate connection: neither SASL mechanisms nor SERVER DIALBACK were offered by the remote host." );
                 return null;
             }
         }
         else {
-            log.debug( "Failed to secure and authenticate connection: <proceed> was not received!" );
+            log.debug( "Failed to encrypt and authenticate connection: <proceed> was not received!" );
             return null;
         }
     }
@@ -556,10 +555,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
 
         if ( result != null ) {
-            log.debug( "Successfully secured and authenticated connection!" );
+            log.debug( "Successfully encrypted and authenticated connection!" );
             return result;
         } else {
-            log.warn( "Unable to secure and authenticate connection: Exhausted all options." );
+            log.warn( "Unable to encrypt and authenticate connection: Exhausted all options." );
             return null;
         }
     }
@@ -774,7 +773,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", isUsingServerDialback=" + isUsingServerDialback() +
             ", outgoingDomainPairs=" + getOutgoingDomainPairs().stream().map( DomainPair::toString ).collect(Collectors.joining(", ", "{", "}")) +

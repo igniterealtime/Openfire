@@ -118,7 +118,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
 
         // Retrieve list of namespaces declared in current element (OF-2556)
-        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
+        connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
 
         try {
             // Get the stream ID for the new session

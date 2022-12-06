@@ -78,7 +78,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         Log.debug("LocalComponentSession: [ExComp] Starting registration of new external component for domain: {}", domain);
 
         // Retrieve list of namespaces declared in current element (OF-2556)
-        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
+        connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
 
         // Default answer header in case of an error
         StringBuilder sb = new StringBuilder();

@@ -220,7 +220,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         // Retrieve list of namespaces declared in current element (OF-2556)
-        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
+        connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
 
         // Default language is English ("en").
         Locale language = Locale.forLanguageTag("en");

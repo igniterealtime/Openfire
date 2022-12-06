@@ -68,7 +68,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         String domain = xpp.getAttributeValue("", "to");
 
         // Retrieve list of namespaces declared in current element (OF-2556)
-        connection.setAdditionalNamespaces(XMPPPacketReader.getNamespacesOnCurrentElement(xpp));
+        connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
 
         Log.debug("LocalConnectionMultiplexerSession: [ConMng] Starting registration of new connection manager for domain: " + domain);
 

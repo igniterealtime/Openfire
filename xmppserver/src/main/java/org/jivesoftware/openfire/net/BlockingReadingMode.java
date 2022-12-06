@@ -25,7 +25,6 @@ import java.net.SocketException;
 import java.nio.channels.AsynchronousCloseException;
 
 import org.dom4j.Element;
-import org.dom4j.QName;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,9 @@ import org.xmpp.packet.StreamError;
  * sequentially.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 class BlockingReadingMode extends SocketReadingMode {
 
     private static final Logger Log = LoggerFactory.getLogger(BlockingReadingMode.class);

@@ -19,7 +19,7 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
-import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -226,7 +226,7 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        if ( getType() == ConnectionType.SOCKET_S2S )
+        if (ConnectionSettings.Server.USE_OLD_IO.getValue() && getType() == ConnectionType.SOCKET_S2S )
         {
             connectionAcceptor = new LegacyConnectionAcceptor( generateConnectionConfiguration() );
         }
@@ -551,7 +551,7 @@ public class ConnectionListener
      *
      * @param policy an encryption policy (not null).
      */
-    public void setTLSPolicy( SocketConnection.TLSPolicy policy )
+    public void setTLSPolicy( Connection.TLSPolicy policy )
     {
         final Connection.TLSPolicy oldPolicy = getTLSPolicy();
         if ( oldPolicy.equals( policy ) )

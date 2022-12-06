@@ -46,7 +46,9 @@ import java.util.concurrent.ThreadPoolExecutor;
  * by changing the property <b>xmpp.server.processing.max.threads</b>.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance. Currently only in use for s2s.
  */
+@Deprecated
 public class ServerSocketReader extends SocketReader {
 
     private static final Logger Log = LoggerFactory.getLogger(ServerSocketReader.class);

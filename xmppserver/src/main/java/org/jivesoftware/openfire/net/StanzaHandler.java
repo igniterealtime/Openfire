@@ -113,36 +113,45 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
+        Log.trace("Processing: {}", stanza);
         boolean initialStream = stanza.startsWith("<stream:stream");
         if (!sessionCreated || initialStream) {
             if (!initialStream) {
-                // Ignore <?xml version="1.0"?>
+                Log.trace("Ignore <?xml version=\"1.0\"?>");
                 return;
             }
-            // Found an stream:stream tag...
+            Log.trace("Found an stream:stream tag...");
             if (!sessionCreated) {
+                Log.trace("Creating session...");
                 sessionCreated = true;
                 MXParser parser = reader.getXPPParser();
                 parser.setInput(new StringReader(stanza));
                 createSession(parser);
             }
             else if (startedTLS) {
+                Log.trace("TLS established...");
                 startedTLS = false;
                 tlsNegotiated();
             }
             else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
+                Log.trace("SASL established...");
                 startedSASL = false;
                 saslSuccessful();
             }
             else if (waitingCompressionACK) {
+                Log.trace("Compression established...");
                 waitingCompressionACK = false;
                 compressionSuccessful();
+            }
+            else {
+                Log.trace("Ignoring stanza.");
             }
             return;
         }
 
         // Verify if end of stream was requested
         if (stanza.equals("</stream:stream>")) {
+            Log.trace("End of stream was requested. Formally closing a session, if it is still open. Session not null? {}", session != null);
             if (session != null) {
                 session.getStreamManager().formalClose();
                 Log.debug( "Closing session as an end-of-stream was received: {}", session );
@@ -152,6 +161,7 @@ public abstract class StanzaHandler {
         }
         // Ignore <?xml version="1.0"?> stanzas sent by clients
         if (stanza.startsWith("<?xml")) {
+            Log.trace("Ignore <?xml version=\"1.0\"?> stanzas sent by clients");
             return;
         }
 
@@ -177,40 +187,43 @@ public abstract class StanzaHandler {
         }
 
         if (doc == null) {
-            // No document found.
+            Log.trace("No document found.");
             return;
         }
         String tag = doc.getName();
         if ("starttls".equals(tag)) {
-            // Negotiate TLS
+            Log.trace("Negotiate TLS...");
             if (negotiateTLS()) {
+                Log.trace("Started TLS negotiation.");
                 startedTLS = true;
             }
             else {
+                Log.trace("failure to start TLS negotiation.");
                 connection.close();
                 session = null;
             }
         }
         else if ("auth".equals(tag)) {
-            // User is trying to authenticate using SASL
+            Log.trace("User is trying to authenticate using SASL. Process authentication stanza.");
             startedSASL = true;
-            // Process authentication stanza
             saslStatus = SASLAuthentication.handle(session, doc);
         } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
-            // User is responding to SASL challenge. Process response
+            Log.trace("User is responding to SASL challenge. Process response");
             saslStatus = SASLAuthentication.handle(session, doc);
         }
         else if ("compress".equals(tag)) {
-            // Client is trying to initiate compression
+            Log.trace("Client is trying to initiate compression");
             if (compressClient(doc)) {
                 // Compression was successful so open a new stream and offer
                 // resource binding and session establishment (to client sessions only)
                 waitingCompressionACK = true;
             }
         } else if (isStreamManagementStanza(doc)) {
+            Log.trace("Client is sending stream management stasnza.");
             session.getStreamManager().process( doc );
         }
         else {
+            Log.trace("Delegate processing of stanza to process()");
             process(doc);
         }
     }

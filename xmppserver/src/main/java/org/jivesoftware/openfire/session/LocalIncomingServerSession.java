@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -36,6 +37,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -70,6 +72,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     
     private static final Logger Log = LoggerFactory.getLogger(LocalIncomingServerSession.class);
 
+    private static final String ETHERX_NAMESPACE = "http://etherx.jabber.org/streams";
+
     /**
      * List of domains, subdomains and virtual hostnames of the remote server that were
      * validated with this server. The remote server is allowed to send packets to this
@@ -92,6 +96,138 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     /**
      * Creates a new session that will receive packets. The new session will be authenticated
      * before being returned. If the authentication process fails then the answer will be
+     * {@code null}.
+     *
+     * @param serverName hostname of this server.
+     * @param xpp pull parser that is processing data sent by the remote server.
+     * @param connection the new established connection with the remote server.
+     * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing the XML.
+     */
+    public static LocalIncomingServerSession createSession(@Nonnull final String serverName, @Nonnull final XmlPullParser xpp, @Nonnull final Connection connection) throws XmlPullParserException
+    {
+        if (!xpp.getName().equals("stream")) {
+            throw new XmlPullParserException(
+                LocaleUtils.getLocalizedString("admin.error.bad-stream"));
+        }
+
+        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE))
+        {
+            throw new XmlPullParserException(LocaleUtils.getLocalizedString(
+                "admin.error.bad-namespace"));
+        }
+
+        // FIXME: add a 'is allowed' check to see if the remote server isn't blocked.
+
+        String version = xpp.getAttributeValue("", "version");
+        String fromDomain = xpp.getAttributeValue("", "from");
+        String toDomain = xpp.getAttributeValue("", "to");
+        int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+
+        if (toDomain == null) {
+            toDomain = serverName;
+        }
+
+        // Retrieve list of namespaces declared in current element.
+        connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
+
+        try {
+            // Get the stream ID for the new session
+            StreamID streamID = SessionManager.getInstance().nextStreamID();
+            Log.debug("Create a server Session for the remote domain: {}", fromDomain);
+            LocalIncomingServerSession session =
+                SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
+
+            // Send the stream header
+            StringBuilder openingStream = new StringBuilder();
+            openingStream.append("<stream:stream");
+            openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            openingStream.append(" xmlns=\"jabber:server\"");
+            openingStream.append(" from=\"").append(toDomain).append("\"");
+            if (fromDomain != null) {
+                openingStream.append(" to=\"").append(fromDomain).append("\"");
+            }
+            openingStream.append(" id=\"").append(streamID).append("\"");
+
+            // OF-443: Not responding with a 1.0 version in the stream header when federating with older
+            // implementations appears to reduce connection issues with those domains (patch by Marcin Cieślak).
+            if (serverVersion[0] >= 1) {
+                openingStream.append(" version=\"1.0\">");
+            } else {
+                openingStream.append('>');
+            }
+
+            Log.trace("Sending open stream response: {}", openingStream);
+            connection.deliverRawText(openingStream.toString());
+
+            if (serverVersion[0] >= 1) {
+                // Indicate the TLS policy to use for this connection
+                Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
+                boolean hasCertificates = false;
+                try {
+                    hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
+                }
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
+                }
+                if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
+                    Log.error("Server session rejected. TLS is required but no certificates " +
+                        "were created.");
+                    return null;
+                }
+                connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
+            }
+
+            // Indicate the compression policy to use for this connection
+            connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
+
+            if (serverVersion[0] >= 1) {
+                Log.debug("Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)");
+                StringBuilder sb = new StringBuilder();
+                sb.append("<stream:features>");
+
+                if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.legacyMode) {
+                    sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                    if (!ServerDialback.isEnabled()) {
+                        // Server dialback is disabled so TLS is required
+                        sb.append("<required/>");
+                    }
+                    sb.append("</starttls>");
+                }
+
+                // Include available SASL Mechanisms
+                sb.append(SASLAuthentication.getSASLMechanisms(session));
+
+                if (ServerDialback.isEnabled()) {
+                    // Also offer server dialback (when TLS is not required). Server dialback may be offered
+                    // after TLS has been negotiated and a self-signed certificate is being used
+                    sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
+                }
+
+                sb.append("</stream:features>");
+
+                Log.trace("Sending stream features: {}", openingStream);
+                connection.deliverRawText(sb.toString());
+
+            } else {
+                // Sending features to Openfire < 3.7.1 confuses it too - OF-443)
+                Log.debug("Don't offer stream-features to pre-1.0 servers, as it confuses them. Reported version: {}", version);
+            }
+
+            // Set the domain or subdomain of the local server targeted by the remote server
+            session.setLocalDomain(serverName);
+            return session;
+        }
+        catch (Exception e) {
+            Log.error("Error establishing connection from remote server: {}", connection, e);
+            connection.close(new StreamError(StreamError.Condition.internal_server_error));
+            return null;
+        }
+    }
+
+    /**
+     * Creates a new session that will receive packets. The new session will be authenticated
+     * before being returned. If the authentication process fails then the answer will be
      * {@code null}.<p>
      *
      * @param serverName hostname of this server.
@@ -103,7 +239,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      *         a Server Dialback authentication process.
      * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing the XML.
      * @throws java.io.IOException if an input/output error occurs while using the connection.
+     * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance.
      */
+    @Deprecated
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
         XmlPullParser xpp = reader.getXPPParser();

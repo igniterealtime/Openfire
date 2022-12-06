@@ -41,8 +41,6 @@ import org.xmpp.packet.*;
  * The connection used for receiving packets will use a ServerStanzaHandler since the other
  * connection will not receive packets.<p>
  *
- * TODO Finish migration of s2s to use NIO instead of blocking threads. Migrate from ServerSocketReader.
- *
  * @author Gaston Dombiak
  */
 public class ServerStanzaHandler extends StanzaHandler {
@@ -64,6 +62,7 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+        Log.trace("Processing 'unknown' packet");
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {
@@ -98,12 +97,11 @@ public class ServerStanzaHandler extends StanzaHandler {
     @Override
     boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
             throws XmlPullParserException {
-        // TODO Finish implementation
-        /*if ("jabber:server".equals(namespace)) {
+        if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
-            session = LocalIncomingServerSession.createSession(serverName, reader, connection);
+            session = LocalIncomingServerSession.createSession(serverName, xpp, connection);
             return true;
-        }*/
+        }
         return false;
     }
 

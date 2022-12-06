@@ -68,6 +68,12 @@ public final class ConnectionSettings {
 
     public static final class Server {
 
+        public static final SystemProperty<Boolean> USE_OLD_IO = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.server.enable-old-io")
+            .setDefaultValue(false)
+            .setDynamic(false)
+            .build();
+
         public static final String SOCKET_ACTIVE = "xmpp.server.socket.active";
         public static final String PORT = "xmpp.server.socket.port";
         public static final String OLD_SSLPORT = "xmpp.server.socket.ssl.port";

@@ -44,7 +44,9 @@ import org.xmpp.packet.*;
  * stream element and will then keep reading and routing the received packets.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 public abstract class SocketReader implements Runnable {
 
     private static final Logger Log = LoggerFactory.getLogger(SocketReader.class);

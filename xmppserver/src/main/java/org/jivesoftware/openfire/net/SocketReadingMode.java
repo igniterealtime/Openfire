@@ -33,7 +33,9 @@ import java.net.Socket;
  * Abstract class for {@link BlockingReadingMode}.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
+@Deprecated
 abstract class SocketReadingMode {
 
     private static final Logger Log = LoggerFactory.getLogger(SocketReadingMode.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@
 package dom.io;
 
 import org.dom4j.Document;
+import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.xmlpull.v1.XmlPullParser;
 
 import java.io.StringReader;
+import java.util.Set;
 
 /**
  * Unit tests that verify the functionality of {@link XMPPPacketReader}
@@ -143,7 +146,7 @@ public class XMPPPacketReaderTest
     }
 
     /**
-     * Check that a websocket connection woudl also work.
+     * Check that a websocket connection would also work.
      */
     @Test
     public void testStripNamespacesForWebsocket() throws Exception
@@ -160,5 +163,159 @@ public class XMPPPacketReaderTest
         // Verify result.
         Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
         Assert.assertTrue( "'jabber:client' should occur after 'something:else'", result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
+    }
+
+    /**
+     * Verify that {@link XMPPPacketReader#getPrefixedNamespacesOnCurrentElement(XmlPullParser)} returns a prefix and
+     * namespace declaration on the element that the parser is currently on.
+     */
+    @Test
+    public void test_GetNamespacesOnCurrentElement_CustomNamespace() throws Exception
+    {
+        // Setup test fixture.
+        packetReader.getXPPParser().resetInput();
+        final String input = "<message xmlns:unittest='custom:namespace'/>";
+
+        packetReader.getXPPParser().setInput(new StringReader(input));
+        int type;
+        do { // Progress parsing to the root element.
+            type = packetReader.getXPPParser().next();
+        } while (type != XmlPullParser.START_TAG || !"message".equals(packetReader.getXPPParser().getName()));
+
+        // Execute system under test.
+        final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
+
+        // Verify results.
+        Assert.assertEquals(1, namespacesOnCurrentElement.size());
+        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+    }
+
+    /**
+     * Verify that {@link XMPPPacketReader#getPrefixedNamespacesOnCurrentElement(XmlPullParser)} does not return a
+     * default namespace declaration on the element that the parser is currently on.
+     */
+    @Test
+    public void test_GetNamespacesOnCurrentElement_DefaultNamespace() throws Exception
+    {
+        // Setup test fixture.
+        packetReader.getXPPParser().resetInput();
+        final String input = "<message xmlns='default:namespace'/>";
+
+        packetReader.getXPPParser().setInput(new StringReader(input));
+        int type;
+        do { // Progress parsing to the root element.
+            type = packetReader.getXPPParser().next();
+        } while (type != XmlPullParser.START_TAG || !"message".equals(packetReader.getXPPParser().getName()));
+
+        // Execute system under test.
+        final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
+
+        // Verify results.
+        Assert.assertEquals(0, namespacesOnCurrentElement.size());
+    }
+
+    /**
+     * Verify that {@link XMPPPacketReader#getPrefixedNamespacesOnCurrentElement(XmlPullParser)} does not return a
+     * prefix and namespace declaration on the element that the parser is currently on, if the namespace matches one of
+     * the namespaces in {@link XMPPPacketReader#IGNORED_NAMESPACE_ON_STANZA}.
+     */
+    @Test
+    public void test_GetNamespacesOnCurrentElement_IgnoredNamespace() throws Exception
+    {
+        // Setup test fixture.
+        packetReader.getXPPParser().resetInput();
+        final String input = "<message xmlns:unittest='jabber:client'/>";
+
+        packetReader.getXPPParser().setInput(new StringReader(input));
+        int type;
+        do { // Progress parsing to the root element.
+            type = packetReader.getXPPParser().next();
+        } while (type != XmlPullParser.START_TAG || !"message".equals(packetReader.getXPPParser().getName()));
+
+        // Execute system under test.
+        final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
+
+        // Verify results.
+        Assert.assertEquals(0, namespacesOnCurrentElement.size());
+    }
+
+    /**
+     * Verify that {@link XMPPPacketReader#getPrefixedNamespacesOnCurrentElement(XmlPullParser)} only returns a prefix
+     * and namespace declaration on the element that the parser is currently on, when that element also declares data
+     * that is to be ignored.
+     */
+    @Test
+    public void test_GetNamespacesOnCurrentElement_MixedNamespace() throws Exception
+    {
+        // Setup test fixture.
+        packetReader.getXPPParser().resetInput();
+        final String input = "<stream xmlns='custom:default:namespace' xmlns:xmpp='jabber:client' xmlns:unittest='custom:namespace'/>";
+
+        packetReader.getXPPParser().setInput(new StringReader(input));
+        int type;
+        do { // Progress parsing to the root element.
+            type = packetReader.getXPPParser().next();
+        } while (type != XmlPullParser.START_TAG || !"stream".equals(packetReader.getXPPParser().getName()));
+
+        // Execute system under test.
+        final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
+
+        // Verify results.
+        Assert.assertEquals(1, namespacesOnCurrentElement.size());
+        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+    }
+
+    /**
+     * Verify that {@link XMPPPacketReader#getPrefixedNamespacesOnCurrentElement(XmlPullParser)} does not return data
+     * that is declared on a child element of the element that the parser is currently on.
+     */
+    @Test
+    public void test_GetNamespacesOnCurrentElement_MixedNamespace_WithChildElement() throws Exception
+    {
+        // Setup test fixture.
+        packetReader.getXPPParser().resetInput();
+        final String input = "<stream xmlns='custom:default:namespace' xmlns:xmpp='jabber:client' xmlns:unittest='custom:namespace'>" +
+            "  <child xmlns:foo='bar'/>" +
+            "</stream>";
+
+        packetReader.getXPPParser().setInput(new StringReader(input));
+        int type;
+        do { // Progress parsing to the root element.
+            type = packetReader.getXPPParser().next();
+        } while (type != XmlPullParser.START_TAG || !"stream".equals(packetReader.getXPPParser().getName()));
+
+        // Execute system under test.
+        final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
+
+        // Verify results.
+        Assert.assertEquals(1, namespacesOnCurrentElement.size());
+        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+    }
+
+    /**
+     * Verify that {@link XMPPPacketReader#getPrefixedNamespacesOnCurrentElement(XmlPullParser)} does not return data
+     * that is declared on a parent element of the element that the parser is currently on.
+     */
+    @Test
+    public void test_GetNamespacesOnCurrentElement_MixedNamespace_OnChildElement() throws Exception
+    {
+        // Setup test fixture.
+        packetReader.getXPPParser().resetInput();
+        final String input = "<stream xmlns:foo='bar'>" +
+            "  <child xmlns='custom:default:namespace' xmlns:xmpp='jabber:client' xmlns:unittest='custom:namespace'/>" +
+            "</stream>";
+
+        packetReader.getXPPParser().setInput(new StringReader(input));
+        int type;
+        do { // Progress parsing to CHILD element.
+            type = packetReader.getXPPParser().next();
+        } while (type != XmlPullParser.START_TAG || !"child".equals(packetReader.getXPPParser().getName()));
+
+        // Execute system under test.
+        final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
+
+        // Verify results.
+        Assert.assertEquals(1, namespacesOnCurrentElement.size());
+        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
     }
 }

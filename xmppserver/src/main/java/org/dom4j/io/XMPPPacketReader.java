@@ -82,14 +82,15 @@ public class XMPPPacketReader {
 
     /**
      * Retrieves a collection of namespaces declared in the current element that the parser is on, that are not defined
-     * in {@link #IGNORED_NAMESPACE_ON_STANZA}
+     * in {@link #IGNORED_NAMESPACE_ON_STANZA}, and that are not the default namespace (the namespaces returned all have
+     * a defined prefix).
      *
      * @param xpp the parser
      * @return A collection of namespaces
-     * @throws XmlPullParserException
+     * @throws XmlPullParserException On any problem thrown by the XML parser.
      */
     @Nonnull
-    public static Set<Namespace> getNamespacesOnCurrentElement(XmlPullParser xpp) throws XmlPullParserException
+    public static Set<Namespace> getPrefixedNamespacesOnCurrentElement(XmlPullParser xpp) throws XmlPullParserException
     {
         final Set<Namespace> results = new HashSet<>();
         final int nsStart = xpp.getNamespaceCount(xpp.getDepth()-1);

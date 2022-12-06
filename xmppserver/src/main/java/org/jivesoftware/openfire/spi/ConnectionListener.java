@@ -760,9 +760,9 @@ public class ConnectionListener
 
     /**
      * A boolean that indicates if the current validity of certificates (based on their 'notBefore' and 'notAfter'
-     * property values) is used when they are used to establish an encrypted connection..
+     * property values) is used when they are used to establish an encrypted connection.
      *
-     * @return true when certificates are required to be valid to establish a secured connection, otherwise false.
+     * @return true when certificates are required to be valid to establish a encrypted connection, otherwise false.
      */
     public boolean verifyCertificateValidity()
     {
@@ -782,9 +782,9 @@ public class ConnectionListener
 
     /**
      * Configures if the current validity of certificates (based on their 'notBefore' and 'notAfter' property values) is
-     * used when they are used to establish an encrypted connection..
+     * used when they are used to establish an encrypted connection.
      *
-     * @param verify true when certificates are required to be valid to establish a secured connection, otherwise false.
+     * @param verify true when certificates are required to be valid to establish a encrypted connection, otherwise false.
      */
     public void setVerifyCertificateValidity( boolean verify )
     {

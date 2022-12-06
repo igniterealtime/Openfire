@@ -515,26 +515,26 @@ public class AdminConsolePlugin implements Plugin {
                 XMPPServer.getInstance().getServerInfo().getXMPPDomain() :
                 getBindInterface();
         boolean isPlainStarted = false;
-        boolean isSecureStarted = false;
+        boolean isEncryptedStarted = false;
 
         for (Connector connector : adminServer.getConnectors()) {
             if (((ServerConnector) connector).getPort() == adminPort) {
                 isPlainStarted = true;
             }
             else if (((ServerConnector) connector).getPort() == adminSecurePort) {
-                isSecureStarted = true;
+                isEncryptedStarted = true;
             }
 
         }
 
-        if (isPlainStarted && isSecureStarted) {
+        if (isPlainStarted && isEncryptedStarted) {
             log(listening + ":" + System.getProperty("line.separator") +
                     "  http://" + hostname + ":" +
                     adminPort + System.getProperty("line.separator") +
                     "  https://" + hostname + ":" +
                     adminSecurePort);
         }
-        else if (isSecureStarted) {
+        else if (isEncryptedStarted) {
             log(listening + " https://" + hostname + ":" + adminSecurePort);
         }
         else if (isPlainStarted) {

@@ -194,11 +194,11 @@
             <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= componentSession.getAddress() %></a>
         </td>
         <td style="width: 1%">
-            <%  if (componentSession.isSecure()) {
+            <%  if (componentSession.isEncrypted()) {
                 if (componentSession.getPeerCertificates() != null && componentSession.getPeerCertificates().length > 0) { %>
             <img src="images/lock_both.gif" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
             <%      } else { %>
-            <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />" alt="<fmt:message key='session.row.cliked_ssl' />">
+            <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />: <%= componentSession.getTLSProtocolName() + " (" + componentSession.getCipherSuiteName() +")" %>" alt="<fmt:message key='session.row.cliked_ssl' />: <%= componentSession.getTLSProtocolName() + " (" + componentSession.getCipherSuiteName() +")" %>">
             <%      }
             } else { %>
             <img src="images/blank.gif" width="1" height="1" alt="">

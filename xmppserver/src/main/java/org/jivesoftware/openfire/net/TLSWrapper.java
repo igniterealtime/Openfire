@@ -36,7 +36,7 @@ import java.security.UnrecoverableKeyException;
 import java.util.Arrays;
 
 /**
- * Creates and initializes the SSLContext instance to use to secure the plain connection. This
+ * Creates and initializes the SSLContext instance to use to encrypt the plain connection. This
  * class is also responsible for encoding and decoding the encrypted data and place it into
  * the corresponding the {@link ByteBuffer}.
  *

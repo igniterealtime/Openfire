@@ -110,11 +110,19 @@ public class HttpConnection {
     }
 
     /**
+     * @deprecated Renamed. See {@link #isEncrypted()}
+     */
+    @Deprecated // Remove in Openfire 4.9 or later.
+    public boolean isSecure() {
+        return isEncrypted();
+    }
+
+    /**
      * Returns true if this connection is using HTTPS.
      *
      * @return true if this connection is using HTTPS.
      */
-    public boolean isSecure() {
+    public boolean isEncrypted() {
         return context.getRequest().isSecure();
     }
 

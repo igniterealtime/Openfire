@@ -483,7 +483,7 @@ public class ServerDialback {
 
         log.debug( "Validating domain...");
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isSecure()) {
+                !connection.isEncrypted()) {
             connection.deliverRawText(new StreamError(StreamError.Condition.policy_violation).toXML());
             // Close the underlying connection
             connection.close();

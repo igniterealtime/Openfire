@@ -21,6 +21,8 @@ import org.jivesoftware.openfire.StreamID;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
@@ -131,8 +133,19 @@ public interface Session extends RoutableChannelHandler {
      * Returns true if this connection is secure.
      *
      * @return true if the connection is secure (e.g. SSL/TLS)
+     * @deprecated Renamed. Use {@link #isEncrypted()} instead.
      */
+    @Deprecated // Remove in Openfire 4.9 or later.
     boolean isSecure();
+
+    /**
+     * Returns true if this session uses encrypted connections.
+     *
+     * @return true if the session is encrypted (e.g. SSL/TLS)
+     */
+    default boolean isEncrypted() {
+        return isSecure();
+    }
 
     /**
      * Returns the peer certificates associated with this session, if any.
@@ -202,12 +215,25 @@ public interface Session extends RoutableChannelHandler {
      * @return true if the socket remains valid, false otherwise.
      */
     boolean validate();
-    
+
     /**
-     * Returns the TLS cipher suite name, if any.
+     * Returns the TLS protocol name used by the connection of the session, if any.
+     *
      * Always returns a valid string, though the string may be "NONE"
+     *
+     * @return a TLS protocol (version) name.
+     */
+    @Nonnull
+    String getTLSProtocolName();
+
+    /**
+     * Returns the TLS cipher suite name used by the connection of the session, if any.
+     *
+     * Always returns a valid string, though the string may be "NONE"
+     *
      * @return cipher suite name.
      */
+    @Nonnull
     String getCipherSuiteName();
 
     /**

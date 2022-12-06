@@ -397,7 +397,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", isUsingServerDialback=" + isUsingServerDialback() +
             ", localDomain=" + getLocalDomain() +

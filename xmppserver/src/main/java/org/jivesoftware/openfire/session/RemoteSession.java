@@ -114,6 +114,11 @@ public abstract class RemoteSession implements Session {
         return clusterTaskResult == null ? -1 : (Long) clusterTaskResult;
     }
 
+    public String getTLSProtocolName() {
+        ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getTLSProtocolName);
+        return (String) doSynchronousClusterTask(task);
+    }
+
     public String getCipherSuiteName() {
         ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getCipherSuiteName);
         return (String) doSynchronousClusterTask(task);
@@ -143,8 +148,13 @@ public abstract class RemoteSession implements Session {
         return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
+    @Deprecated // Remove in Openfire 4.9 or later.
     public boolean isSecure() {
-        ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.isSecure);
+        return isEncrypted();
+    }
+
+    public boolean isEncrypted() {
+        ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.isEncrypted);
         final Object clusterTaskResult = doSynchronousClusterTask(task);
         return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }

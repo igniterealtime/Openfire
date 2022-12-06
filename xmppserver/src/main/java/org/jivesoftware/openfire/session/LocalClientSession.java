@@ -264,7 +264,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         final ConnectionConfiguration connectionConfiguration = connection.getConfiguration();
 
         // Indicate the TLS policy to use for this connection
-        if (!connection.isSecure()) {
+        if (!connection.isEncrypted()) {
             boolean hasCertificates = false;
             try {
                 hasCertificates = connectionConfiguration.getIdentityStore().getAllCertificates().size() > 0;
@@ -803,8 +803,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public String getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
-        // then the connection is already secured
-        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
+        // then the connection is already encrypted
+        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
             return null;
         }
 
@@ -949,7 +949,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +
             ", isInitialized=" + isInitialized() +

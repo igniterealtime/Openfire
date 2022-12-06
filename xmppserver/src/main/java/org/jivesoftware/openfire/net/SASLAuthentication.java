@@ -221,7 +221,7 @@ public class SASLAuthentication {
         for (String mech : getSupportedMechanisms()) {
             if (mech.equals("EXTERNAL")) {
                 boolean trustedCert = false;
-                if (session.isSecure()) {
+                if (session.isEncrypted()) {
                     final Connection connection = ( (LocalClientSession) session ).getConnection();
                     assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
                     if ( SKIP_PEER_CERT_REVALIDATION_CLIENT.getValue() ) {
@@ -252,7 +252,7 @@ public class SASLAuthentication {
     public static Element getSASLMechanismsElement( LocalIncomingServerSession session )
     {
         final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
-        if (session.isSecure()) {
+        if (session.isEncrypted()) {
             final Connection connection   = session.getConnection();
             final TrustStore trustStore   = connection.getConfiguration().getTrustStore();
             final X509Certificate trusted = trustStore.getEndEntityCertificate( session.getConnection().getPeerCertificates() );

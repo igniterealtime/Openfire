@@ -434,8 +434,8 @@ public class EmailService {
         mailProps.setProperty("mail.debug", String.valueOf(debugEnabled));
 
         // Methology from an article on www.javaworld.com (Java Tip 115)
-        // We will attempt to failback to an insecure connection
-        // if the secure one cannot be made
+        // We will attempt to failback to an unencrypted connection
+        // if the encrypted one cannot be made
         if (sslEnabled) {
             // Register with security provider.
             Security.setProperty("ssl.SocketFactory.provider", SSL_FACTORY);

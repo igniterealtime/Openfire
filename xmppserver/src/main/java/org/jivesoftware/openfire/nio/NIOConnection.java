@@ -49,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -198,6 +199,18 @@ public class NIOConnection implements Connection {
     }
 
     @Override
+    public Optional<String> getTLSProtocolName() {
+        return Optional.ofNullable((SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED))
+            .map(SSLSession::getProtocol);
+    }
+
+    @Override
+    public Optional<String> getCipherSuiteName() {
+        return Optional.ofNullable((SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED))
+            .map(SSLSession::getCipherSuite);
+    }
+
+    @Override
     public void setUsingSelfSignedCertificate(boolean isSelfSigned) {
         this.usingSelfSignedCertificate = isSelfSigned;
     }
@@ -304,7 +317,13 @@ public class NIOConnection implements Connection {
     }
 
     @Override
+    @Deprecated // Remove in Openfire 4.9 or later.
     public boolean isSecure() {
+        return isEncrypted();
+    }
+
+    @Override
+    public boolean isEncrypted() {
         return ioSession.getFilterChain().contains(TLS_FILTER_NAME);
     }
 

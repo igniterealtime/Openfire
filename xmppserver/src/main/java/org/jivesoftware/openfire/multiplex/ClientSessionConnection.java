@@ -31,6 +31,7 @@ import org.xmpp.packet.StreamError;
 import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Optional;
 
 /**
  * Represents a connection of a Client Session that was established to a Connection Manager.
@@ -113,6 +114,16 @@ public class ClientSessionConnection extends VirtualConnection {
             // Deliver the wrapped stanza
             multiplexerSession.deliverRawText(sb.toString());
         }
+    }
+
+    @Override
+    public Optional<String> getTLSProtocolName() {
+        return Optional.of("unknown");
+    }
+
+    @Override
+    public Optional<String> getCipherSuiteName() {
+        return Optional.of("unknown");
     }
 
     @Override

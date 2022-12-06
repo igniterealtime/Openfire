@@ -32,6 +32,7 @@ import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 
 /**
  * Following the conventions of the BOSH implementation, this class extends {@link VirtualConnection}
@@ -116,8 +117,14 @@ public class WebSocketConnection extends VirtualConnection
     }
 
     @Override
+    @Deprecated // Remove in Openfire 4.9 or later.
     public boolean isSecure() {
-        return socket.isWebSocketSecure();
+        return isEncrypted();
+    }
+
+    @Override
+    public boolean isEncrypted() {
+        return socket.isWebSocketEncrypted();
     }
 
     @Override
@@ -138,6 +145,16 @@ public class WebSocketConnection extends VirtualConnection
     @Override
     public boolean isCompressed() {
         return XmppWebSocket.isCompressionEnabled();
+    }
+
+    @Override
+    public Optional<String> getTLSProtocolName() {
+        return Optional.ofNullable(this.socket.getTLSProtocolName());
+    }
+
+    @Override
+    public Optional<String> getCipherSuiteName() {
+        return Optional.ofNullable(this.socket.getCipherSuiteName());
     }
 
     @Override

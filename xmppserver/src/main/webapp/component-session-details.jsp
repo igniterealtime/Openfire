@@ -91,6 +91,24 @@
             <c:out value="${componentSession.address}"/>
         </td>
     </tr>
+    <% if (componentSession.isEncrypted()) { %>
+    <tr>
+        <td class="c1">
+            <fmt:message key="component.session.details.tls_version" />:
+        </td>
+        <td>
+            <%=StringUtils.escapeHTMLTags(componentSession.getTLSProtocolName())%>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="component.session.details.cipher" />:
+        </td>
+        <td>
+            <%=StringUtils.escapeHTMLTags(componentSession.getCipherSuiteName())%>
+        </td>
+    </tr>
+    <% } %>
     <tr>
         <td class="c1">
             <fmt:message key="component.session.label.name" />

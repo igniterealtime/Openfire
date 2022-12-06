@@ -183,7 +183,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
     @Override
     public String getAvailableStreamFeatures() {
-        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isSecure()) {
+        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
             return null;
         }
 
@@ -322,7 +322,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
             (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
             (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
-            ", isSecure=" + isSecure() +
+            ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +
             '}';

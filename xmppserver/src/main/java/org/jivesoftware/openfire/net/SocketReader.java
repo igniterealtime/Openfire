@@ -256,13 +256,13 @@ public abstract class SocketReader implements Runnable {
      * another thread.
      *
      * @param packet the received packet.
-     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws UnauthorizedException if the connection required encryption but was not encrypted.
      */
     protected void processIQ(IQ packet) throws UnauthorizedException {
-        // Ensure that connection was secured if TLS was required
+        // Ensure that connection was encrypted if TLS was required.
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isSecure()) {
-            closeNeverSecuredConnection();
+                !connection.isEncrypted()) {
+            closeNeverEncryptedConnection();
             return;
         }
         router.route(packet);
@@ -279,13 +279,13 @@ public abstract class SocketReader implements Runnable {
      * another thread.
      *
      * @param packet the received packet.
-     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws UnauthorizedException if the connection required encryption but was not encrypted.
      */
     protected void processPresence(Presence packet) throws UnauthorizedException {
-        // Ensure that connection was secured if TLS was required
+        // Ensure that connection was encrypted if TLS was required
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isSecure()) {
-            closeNeverSecuredConnection();
+                !connection.isEncrypted()) {
+            closeNeverEncryptedConnection();
             return;
         }
         router.route(packet);
@@ -302,13 +302,13 @@ public abstract class SocketReader implements Runnable {
      * another thread.
      *
      * @param packet the received packet.
-     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws UnauthorizedException if the connection required encryption but was not encryption.
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
-        // Ensure that connection was secured if TLS was required
+        // Ensure that connection was encrypted if TLS was required
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isSecure()) {
-            closeNeverSecuredConnection();
+                !connection.isEncrypted()) {
+            closeNeverEncryptedConnection();
             return;
         }
         router.route(packet);
@@ -345,8 +345,19 @@ public abstract class SocketReader implements Runnable {
     /**
      * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
      * closing the connection a stream error will be sent to the entity.
+     *
+     * @deprecated Renamed. Use {@link #closeNeverEncryptedConnection()} instead.
      */
+    @Deprecated // Remove in Openfire 4.9 or later.
     void closeNeverSecuredConnection() {
+        closeNeverEncryptedConnection();
+    }
+
+    /**
+     * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
+     * closing the connection a stream error will be sent to the entity.
+     */
+    void closeNeverEncryptedConnection() {
         // Send a stream error and close the underlying connection.
         connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
         // Log a warning so that admins can track this case from the server side
@@ -394,9 +405,9 @@ public abstract class SocketReader implements Runnable {
      * first packet. A call to next() should result in an START_TAG state with
      * the first packet in the stream.
      *
-     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws UnauthorizedException if the connection required encryption but was not encrypted.
      * @throws XmlPullParserException if there was an XML error while creating the session.
-     * @throws IOException if an IO error occured while creating the session.
+     * @throws IOException if an IO error occurred while creating the session.
      */
     protected void createSession()
             throws UnauthorizedException, XmlPullParserException, IOException {
@@ -428,7 +439,7 @@ public abstract class SocketReader implements Runnable {
         }
 
         // Create the correct session based on the sent namespace. At this point the server
-        // may offer the client to secure the connection. If the client decides to secure
+        // may offer the client to encrypt the connection. If the client decides to encrypt
         // the connection then a <starttls> stanza should be received
         else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
@@ -499,7 +510,7 @@ public abstract class SocketReader implements Runnable {
      *
      * @param namespace the namespace sent in the stream element. eg. jabber:client.
      * @return the created session or null.
-     * @throws UnauthorizedException if the connection required security but was not secured.
+     * @throws UnauthorizedException if the connection required encryption but was not encrypted.
      * @throws XmlPullParserException if there was an XML error while creating the session.
      * @throws IOException if an IO error occured while creating the session.
      */

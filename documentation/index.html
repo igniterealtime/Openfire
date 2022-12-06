@@ -3,6 +3,18 @@
 <head>
     <title>Openfire: Overview</title>
     <link type="text/css" rel="stylesheet" href="style.css">
+    <style>
+        dl {
+            display: unset;
+        }
+        dt {
+            margin-left: 4em;
+        }
+        dd {
+            margin-left: 6em;
+            margin-bottom: 1.5em;
+        }
+    </style>
 </head>
 <body>
 
@@ -13,9 +25,6 @@
         <h1>Openfire ${project.version}</h1>
     </header>
 
-    <nav>
-    </nav>
-
     <p>
         Openfire provides comprehensive group chat and instant
         messaging (IM) services using the XMPP protocol.
@@ -23,46 +32,50 @@
 
     <section id="documentation">
 
-        <h2>Documentation</h2>
+        <h2>Administrator Documentation</h2>
 
-        <ul>
-            <li>
-                <a href="install-guide.html">Installation Guide</a> -
-                How to install Openfire.
-            </li>
-            <li>
-                <a href="upgrade-guide.html">Upgrade Guide</a> -
-                Instructions for upgrading an existing Openfire installation.
-            </li>
-            <li>
-                <a href="database.html">Database Installation Guide</a> -
-                How to setup your database for use with Openfire.
-            </li>
-            <li>
-                <a href="ssl-guide.html">TLS/SSL Guide</a> -
-                A guide to setting up Openfire's SSL secure socket support.
-            </li>
-            <li>
-                <a href="ldap-guide.html">LDAP Guide</a> -
-                A guide to setting up Openfire to work with LDAP user stores.
-            </li>
-            <li>
-                <a href="db-integration-guide.html">Custom Database Integration Guide</a> -
-                A guide to integrating Openfire authentication, user, and group data with a custom database.
-            </li>
-            <li>
-                <a href="separating-admin-users-guide.html">Separating Administrative Users Guide</a> -
-                A guide to setting up Openfire to work with different user stores for admins and non-administrative users.
-            </li>
-            <li>
-                <a href="pluggable-roster-support-guide.html">Pluggable Roster Support Guide</a> -
-                A guide to integrating Openfire rosters with an alternate store.
-            </li>
-            <li>
-                <a href="trunking-guide.html">Trunking (Gateway) Guide</a> -
-                A guide to set up Openfire to mediate traffic that is exchanged between other XMPP domains
-            </li>
-        </ul>
+        <h3>Basic Server Administration</h3>
+
+        <dl>
+
+            <dt><a href="install-guide.html">Installation Guide</a></dt>
+            <dd>How to install Openfire.</dd>
+
+            <dt><a href="database.html">Database Installation Guide</a></dt>
+            <dd>How to setup your database for use with Openfire.</dd>
+
+            <dt><a href="upgrade-guide.html">Upgrade Guide</a></dt>
+            <dd>Instructions for upgrading an existing Openfire installation.</dd>
+        </dl>
+
+        <h3>Advanced Server Administration</h3>
+
+        <dl>
+            <dt><a href="ssl-guide.html">TLS/SSL Guide</a></dt>
+            <dd>A guide to setting up Openfire's SSL secure socket support.</dd>
+
+            <dt><a href="separating-admin-users-guide.html">Separating Administrative Users Guide</a></dt>
+            <dd>A guide to setting up Openfire to work with different user stores for admins and non-administrative users.</dd>
+
+            <dt><a href="db-clustering-guide.html">Clustered Database Guide</a></dt>
+            <dd>Instructions on using Openfire with a database that consists of more than one server.</dd>
+
+            <dt><a href="trunking-guide.html">Trunking (Gateway) Guide</a></dt>
+            <dd>A guide to set up Openfire to mediate traffic that is exchanged between other XMPP domains</dd>
+        </dl>
+
+        <h3>Integration with External Data Sources</h3>
+
+        <dl>
+            <dt><a href="ldap-guide.html">LDAP Guide</a></dt>
+            <dd>A guide to setting up Openfire to work with LDAP user stores.</dd>
+
+            <dt><a href="db-integration-guide.html">Custom Database Integration Guide</a></dt>
+            <dd>A guide to integrating Openfire authentication, user, and group data with a custom database.</dd>
+
+            <dt><a href="pluggable-roster-support-guide.html">Pluggable Roster Support Guide</a></dt>
+            <dd>A guide to integrating Openfire rosters with an alternate store.</dd>
+        </dl>
 
     </section>
 
@@ -70,44 +83,44 @@
 
         <h2>Developer Documentation</h2>
 
-        <ul>
-             <li>
-                <a href="javadoc/index.html">JavaDocs</a> -
-                Openfire API documentation.
-            </li>
-            <li>
-                <a href="source-build.html">Building the Source</a> -
-                Instructions for downloading and compiling the Openfire source code.
-            </li>
-            <li>
-                <a href="ide-vscode-setup.html">Openfire Source Code in Visual Studio Code</a> -
-                A short tutorial on how to work with the Openfire source code in the Visual Studio Code IDE.
-            </li>
-            <li>
-                <a href="protocol-support.html">Protocol Support</a> -
-                Provides details on the XMPP support and JEPs that Openfire implements.
-            </li>
-               <li>
-                <a href="plugin-dev-guide.html">Plugin Developer Guide</a> -
-                A guide to writing and installing plugins for Openfire.
-            </li>
-            <li>
-                <a href="translator-guide.html">Translator Guide</a> -
-                Information for those interested in translating the admin console of Openfire into other languages.
-            </li>
-            <li>
-                <a href="database-guide.html">Database Schema Guide</a> -
-                A tour of the Openfire database schema for developers and database administrators.
-            </li>
-            <li>
-                <a href="overlay.html">Customization Guide</a> -
-                Instructions on customization support within the build process for Openfire.
-            </li>
-            <li>
-                <a href="working-with-openfire.html">Tips &amp; tricks for working with Openfire</a> -
-                Some collected tools, tips and useful links.
-            </li>
-        </ul>
+        <h3>Basic Development Guides</h3>
+
+        <dl>
+            <dt><a href="source-build.html">Building the Source</a></dt>
+            <dd>Instructions for downloading and compiling the Openfire source code.</dd>
+
+            <dt><a href="ide-vscode-setup.html">Openfire Source Code in Visual Studio Code</a></dt>
+            <dd>A short tutorial on how to work with the Openfire source code in the Visual Studio Code IDE.</dd>
+
+            <dt><a href="plugin-dev-guide.html">Plugin Developer Guide</a></dt>
+            <dd>A guide to writing and installing plugins for Openfire.</dd>
+
+            <dt><a href="working-with-openfire.html">Tips &amp; tricks for working with Openfire</a></dt>
+            <dd>Some collected tools, tips and useful links.</dd>
+        </dl>
+
+        <h3>Advanced Development Guides</h3>
+
+        <dl>
+            <dt><a href="translator-guide.html">Translator Guide</a></dt>
+            <dd>Information for those interested in translating the admin console of Openfire into other languages.</dd>
+
+            <dt><a href="overlay.html">Customization Guide</a></dt>
+            <dd>Instructions on customization support within the build process for Openfire.</dd>
+        </dl>
+
+        <h3>Reference Documentation</h3>
+
+        <dl>
+            <dt><a href="javadoc/index.html">JavaDocs</a></dt>
+            <dd>Openfire API documentation.</dt>
+
+            <dt><a href="protocol-support.html">Protocol Support</a></dt>
+            <dd>Provides details on the XMPP support and XEPs that Openfire implements.</dd>
+
+            <dt><a href="database-guide.html">Database Schema Guide</a></dt>
+            <dd>A tour of the Openfire database schema for developers and database administrators.</dd>
+        </dl>
 
     </section>
 

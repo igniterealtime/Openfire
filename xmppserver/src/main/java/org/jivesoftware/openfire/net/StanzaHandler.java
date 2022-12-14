@@ -119,7 +119,7 @@ public abstract class StanzaHandler {
                 // Ignore <?xml version="1.0"?>
                 return;
             }
-            // Found an stream:stream tag...
+            // Found a stream:stream tag...
             if (!sessionCreated) {
                 sessionCreated = true;
                 MXParser parser = reader.getXPPParser();
@@ -208,6 +208,7 @@ public abstract class StanzaHandler {
                 waitingCompressionACK = true;
             }
         } else if (isStreamManagementStanza(doc)) {
+            Log.trace("Client is sending stream management stanza.");
             session.getStreamManager().process( doc );
         }
         else {

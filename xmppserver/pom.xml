@@ -463,10 +463,32 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>2.27.0</version>
+            <artifactId>mockito-inline</artifactId>
+            <version>4.9.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <!-- Without explicitly defining this dependency of org.mockito:mockity-inline:4.9.0, the mockito code fails for reasons that are beyond me. -->
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.12.16</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Without explicitly defining this dependency of org.mockito:mockity-inline:4.9.0, the mockito code fails for reasons that are beyond me. -->
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.12.16</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Without explicitly defining this dependency of org.mockito:mockity-inline:4.9.0, the mockito code fails for reasons that are beyond me. -->
+            <groupId>org.objenesis</groupId>
+            <artifactId>objenesis</artifactId>
+            <version>3.3</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-all</artifactId>

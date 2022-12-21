@@ -775,7 +775,7 @@ public class ConnectionListener
         }
         else
         {
-            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).acceptSelfSignedCertificates() );
+            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).verifyCertificateValidity() );
         }
     }
 

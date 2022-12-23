@@ -1,0 +1,7 @@
+git:
+  filters:
+  - filter_type: file
+    source_file: i18n/src/main/resources/openfire_i18n.properties
+    file_format: UNICODEPROPERTIES
+    translation_files_expression: 'i18n/src/main/resources/openfire_i18n_<lang>.properties'
+    source_language: en

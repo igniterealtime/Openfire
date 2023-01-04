@@ -49,7 +49,7 @@ public class IQBindHandler extends IQHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(IQBindHandler.class);
 
-    private IQHandlerInfo info;
+    private final IQHandlerInfo info;
     private String serverName;
     private RoutingTable routingTable;
 
@@ -111,7 +111,7 @@ public class IQBindHandler extends IQHandler {
             session.setAnonymousAuth();
         }
         else {
-            String username = authToken.getUsername().toLowerCase();
+            String username = authToken.getUsername();
             // If a session already exists with the requested JID, then check to see
             // if we should kick it off or refuse the new connection
             ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));

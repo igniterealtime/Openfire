@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.JiveGlobals;
@@ -116,7 +117,16 @@ public class DNSUtil {
         // Attempt the SRV lookup.
         final List<WeightedHostAddress> srvLookups = new LinkedList<>(srvLookup("xmpp-server", "tcp", domain));
 
-        final boolean allowTLS = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_POLICY, true);
+        final String propertyValue = JiveGlobals.getProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.optional.toString());
+        Connection.TLSPolicy configuredPolicy;
+        try {
+            configuredPolicy = Connection.TLSPolicy.valueOf(propertyValue);
+        } catch (RuntimeException e) {
+            // In case of misconfiguration, default to the highest level of security.
+            logger.warn("Unexpected value for '{}': '{}'. Defaulting to '{}'", ConnectionSettings.Server.TLS_POLICY, propertyValue, Connection.TLSPolicy.required);
+            configuredPolicy = Connection.TLSPolicy.required;
+        }
+        final boolean allowTLS = configuredPolicy == Connection.TLSPolicy.required || configuredPolicy == Connection.TLSPolicy.optional;
         if (allowTLS) {
             srvLookups.addAll(srvLookup("xmpps-server", "tcp", domain));
         }

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Recovery of an Admin Password</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Recovery of an Admin Password</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            Not infrequently, account credentials of an Openfire server that was set up a long time ago get lost in
+            time. This prevents access to the Admin Console of Openfire, which hampers administration of the instance.
+            This short guide explains how to configure Openfire to accept a password that can be used exactly once to
+            log into the Admin Console, allowing you to configure a new administrative user, or reset the password for
+            an existing administrator.
+        </p>
+
+    </section>
+
+    <section id="configuration">
+
+        <h2>One-Time Access Token Configuration</h2>
+
+        <p>
+            One of the most asked questions on this community forum is how to reset the Openfire admin password such
+            that you can gain access to the web based administration console. Prior to release version 4.3.1, you had to
+            go through the server setup process again to reset the admin password. This process was somewhat scary as
+            people typically don't trust that rerunning setup would not break your configuration settings.
+        </p>
+
+        <p>
+            There is now a simpler way with Openfire version 4.3.1 and higher. The steps are as follows.
+        </p>
+
+        <ol>
+            <li>Stop Openfire</li>
+            <li>Locate Openfire's <code>conf/openfire.xml</code> and edit it with your favorite text editor.</li>
+            <li>Add a tag within the root <code>&lt;jive&gt;</code> tag like so:
+                <code>&lt;oneTimeAccessToken&gt;secretToken&lt;/oneTimeAccessToken&gt;</code>, where secretToken is
+                whatever you want:
+                <fieldset>
+                    <legend>Example of configuration in openfire.xml</legend>
+                    <pre>&lt;jive&gt;
+    &lt;oneTimeAccessToken&gt;secretToken&lt;/oneTimeAccessToken&gt;
+    &lt;adminConsole&gt;
+        &lt;!-- Disable either port by setting the value to -1 --&gt;
+        &lt;port&gt;9090&lt;/port&gt;</pre>
+                </fieldset>
+            </li>
+            <li>Start Openfire</li>
+            <li>For best results, use an incognito/private browsing web browser session to view the Openfire admin console <code>http://ipaddress:9090</code> or <code>https://ipaddress:9091</code>
+                <figure>
+                    <img src="images/one-time-access-token-login.png" alt="Login screen prompting for one-time access token.">
+                    <figcaption>Openfire's admin console login screen that is prompting for the one-time access token.</figcaption>
+                </figure>
+            </li>
+            <li>Enter the one time token from step 3 into the webpage.</li>
+            <li>Use the admin console to do what you need to do, which may include navigating to the admin user and updating its password.</li>
+        </ol>
+
+        <p>
+            Once you have used this <code>oneTimeAccessToken</code> to access the admin console, it is removed from the
+            <code>openfire.xml</code> configuration file.
+        </p>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

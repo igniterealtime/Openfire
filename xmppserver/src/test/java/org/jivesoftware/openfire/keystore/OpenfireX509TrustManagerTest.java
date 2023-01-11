@@ -67,10 +67,10 @@ public class OpenfireX509TrustManagerTest
         trustStore.load( null, password.toCharArray() );
 
         // Populate the store with a valid CA certificate.
-        validChain       = KeystoreTestUtils.generateValidCertificateChain();
-        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert();
-        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert();
-        untrustedCAChain = KeystoreTestUtils.generateValidCertificateChain();
+        validChain       = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
+        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert().getCertificateChain();
+        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
+        untrustedCAChain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
 
         trustStore.setCertificateEntry( getLast( validChain       ).getSubjectDN().getName(), getLast( validChain       ) );
         trustStore.setCertificateEntry( getLast( expiredIntChain  ).getSubjectDN().getName(), getLast( expiredIntChain  ) );

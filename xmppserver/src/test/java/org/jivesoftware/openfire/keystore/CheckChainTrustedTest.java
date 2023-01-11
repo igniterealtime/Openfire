@@ -94,15 +94,15 @@ public class CheckChainTrustedTest
         trustStore.load( null, null );
 
         // Generate a valid chain and add its root certificate to the trust store.
-        validChain = KeystoreTestUtils.generateValidCertificateChain();
+        validChain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
         trustStore.setCertificateEntry( getLast( validChain ).getSubjectDN().getName(), getLast( validChain ) );
 
         // Generate a chain with an expired intermediate certificate and add its root certificate to the trust store.
-        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert();
+        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert().getCertificateChain();
         trustStore.setCertificateEntry( getLast( expiredIntChain ).getSubjectDN().getName(), getLast( expiredIntChain ) );
 
         // Generate a chain with an expired root certificate and add its root certificate to the trust store.
-        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert();
+        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
         trustStore.setCertificateEntry( getLast( expiredRootChain ).getSubjectDN().getName(), getLast( expiredRootChain ) );
 
         // Reset the system under test before each test.
@@ -321,7 +321,7 @@ public class CheckChainTrustedTest
         // Setup fixture.
         final X509CertSelector selector = new X509CertSelector();
         selector.setSubject( validChain[0].getSubjectX500Principal() );
-        final X509Certificate[] chain = KeystoreTestUtils.generateValidCertificateChain();
+        final X509Certificate[] chain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
 
         // Execute system under test.
         trustManager.checkChainTrusted( selector, chain );
@@ -445,7 +445,7 @@ public class CheckChainTrustedTest
     public void testSelfSigned() throws Exception
     {
         // Setup fixture.
-        final X509Certificate[] chain = new X509Certificate[] { KeystoreTestUtils.generateSelfSignedCertificate() };
+        final X509Certificate[] chain = new X509Certificate[] { KeystoreTestUtils.generateSelfSignedCertificate().getCertificate() };
         final X509CertSelector selector = new X509CertSelector();
         selector.setSubject( chain[ 0 ].getSubjectX500Principal() );
 
@@ -481,7 +481,7 @@ public class CheckChainTrustedTest
     public void testSelfSignedExpired() throws Exception
     {
         // Setup fixture.
-        final X509Certificate[] chain = new X509Certificate[] { KeystoreTestUtils.generateExpiredSelfSignedCertificate() };
+        final X509Certificate[] chain = new X509Certificate[] { KeystoreTestUtils.generateExpiredSelfSignedCertificate().getCertificate() };
         final X509CertSelector selector = new X509CertSelector();
         selector.setSubject( chain[ 0 ].getSubjectX500Principal() );
 

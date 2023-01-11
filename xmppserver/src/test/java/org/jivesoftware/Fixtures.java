@@ -1,11 +1,28 @@
+/*
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.openfire.IQRouter;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionListener;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -28,6 +45,7 @@ import static org.mockito.Mockito.*;
 public final class Fixtures {
 
     public static final String XMPP_DOMAIN = "test.xmpp.domain";
+    public static final String HOSTNAME = XMPP_DOMAIN; // Make hostname be XMPP Domain name, to avoid the need for DNS SRV lookups
 
     private Fixtures() {
     }
@@ -79,6 +97,8 @@ public final class Fixtures {
             .when(xmppServer).createJID(any(String.class), nullable(String.class), any(Boolean.class));
         doReturn(mockXMPPServerInfo()).when(xmppServer).getServerInfo();
         doReturn(mockIQRouter()).when(xmppServer).getIQRouter();
+        doReturn(mockConnectionManager()).when(xmppServer).getConnectionManager();
+        doReturn(mockSessionManager()).when(xmppServer).getSessionManager();
 
         return xmppServer;
     }
@@ -86,12 +106,36 @@ public final class Fixtures {
     public static XMPPServerInfo mockXMPPServerInfo() {
         final XMPPServerInfo xmppServerInfo = mock(XMPPServerInfo.class, withSettings().lenient());
         doReturn(XMPP_DOMAIN).when(xmppServerInfo).getXMPPDomain();
+        doReturn(HOSTNAME).when(xmppServerInfo).getHostname();
         return xmppServerInfo;
     }
 
     public static IQRouter mockIQRouter() {
         final IQRouter iqRouter = mock(IQRouter.class, withSettings().lenient());
         return iqRouter;
+    }
+
+    public static SessionManager mockSessionManager() {
+        final SessionManager sessionManager = mock(SessionManager.class, withSettings().lenient());
+        return sessionManager;
+    }
+
+    public static ConnectionManagerImpl mockConnectionManager() {
+        final ConnectionManagerImpl connectionManagerImpl = mock(ConnectionManagerImpl.class, withSettings().lenient());
+        doReturn(mockConnectionListener()).when(connectionManagerImpl).getListener(any(ConnectionType.class), anyBoolean());
+        return connectionManagerImpl;
+    }
+
+    public static ConnectionListener mockConnectionListener() {
+        final ConnectionListener connectionListener = mock(ConnectionListener.class, withSettings().lenient());
+        doReturn(mockConnectionConfiguration()).when(connectionListener).generateConnectionConfiguration();
+        return connectionListener;
+    }
+
+    public static ConnectionConfiguration mockConnectionConfiguration() {
+        final ConnectionConfiguration connectionListener = mock(ConnectionConfiguration.class, withSettings().lenient());
+        doReturn(Connection.TLSPolicy.optional).when(connectionListener).getTlsPolicy();
+        return connectionListener;
     }
 
     public static class StubUserProvider implements UserProvider {

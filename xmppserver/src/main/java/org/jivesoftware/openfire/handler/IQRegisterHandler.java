@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,6 @@ package org.jivesoftware.openfire.handler;
 
 import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -34,7 +29,6 @@ import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -48,6 +42,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -185,7 +183,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             }
             else {
                 reply = IQ.createResultIQ(packet);
-                if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                if (session.isAuthenticated()) {
                     try {
                         User user = userManager.getUser(session.getUsername());
                         Element currentRegistration = probeResult.createCopy();
@@ -239,7 +237,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         reply.setError(PacketError.Condition.forbidden);
                     }
                     else {
-                        if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                        if (session.isAuthenticated()) {
                             User user = userManager.getUser(session.getUsername());
                             // Delete the user
                             userManager.deleteUser(user);
@@ -323,7 +321,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         Stringprep.nodeprep(username);
                     }
 
-                    if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                    if (session.isAuthenticated()) {
                         // Flag that indicates if the user is *only* changing his password
                         boolean onlyPassword = false;
                         if (iqElement.elements().size() == 2 &&

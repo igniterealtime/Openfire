@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.LocalComponentSession;
-import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -134,7 +133,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
 
     @Override
     protected void processIQ(IQ packet) throws UnauthorizedException {
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+        if (!session.isAuthenticated()) {
             // Session is not authenticated so return error
             IQ reply = new IQ();
             reply.setChildElement(packet.getChildElement().createCopy());
@@ -159,7 +158,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
 
     @Override
     protected void processPresence(Presence packet) throws UnauthorizedException {
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+        if (!session.isAuthenticated()) {
             // Session is not authenticated so return error
             Presence reply = new Presence();
             reply.setID(packet.getID());
@@ -174,7 +173,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
 
     @Override
     protected void processMessage(Message packet) throws UnauthorizedException {
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+        if (!session.isAuthenticated()) {
             // Session is not authenticated so return error
             Message reply = new Message();
             reply.setID(packet.getID());

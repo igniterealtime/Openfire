@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,7 +237,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         }
         else {
             // Component has authenticated fine
-            setStatus(STATUS_AUTHENTICATED);
+            setStatus(Session.Status.AUTHENTICATED);
             // Send empty handshake element to acknowledge success
             conn.deliverRawText("<handshake></handshake>");
             // Bind the domain to this component
@@ -435,9 +435,6 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             "address=" + getAddress() +
             ", streamID=" + getStreamID() +
             ", status=" + getStatus() +
-            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
-            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
-            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +

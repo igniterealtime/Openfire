@@ -770,9 +770,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             "address=" + getAddress() +
             ", streamID=" + getStreamID() +
             ", status=" + getStatus() +
-            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
-            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
-            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", isUsingServerDialback=" + isUsingServerDialback() +

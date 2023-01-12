@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -136,11 +136,11 @@
                 return clientSession instanceof LocalSession && ((LocalSession) clientSession).isDetached();
             }
             switch (clientSession.getStatus()) {
-                case Session.STATUS_CLOSED:
+                case CLOSED:
                     return "closed".equals(searchStatus);
-                case Session.STATUS_CONNECTED:
+                case CONNECTED:
                     return "connected".equals(searchStatus);
-                case Session.STATUS_AUTHENTICATED:
+                case AUTHENTICATED:
                     return "authenticated".equals(searchStatus);
                 default:
                     return "unknown".equals(searchStatus);

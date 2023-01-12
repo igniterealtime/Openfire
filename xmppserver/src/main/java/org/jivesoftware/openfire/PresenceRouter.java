@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class PresenceRouter extends BasicModule {
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
-            if (session == null || session.getStatus() != Session.STATUS_CONNECTED) {
+            if (session == null || session.getStatus() != Session.Status.CONNECTED) {
                 handle(packet);
             }
             else {
@@ -151,7 +151,7 @@ public class PresenceRouter extends BasicModule {
                     
                     // Check that sender session is still active (let unavailable presence go through)
                     Session session = sessionManager.getSession(packet.getFrom());
-                    if (session != null && session.getStatus() == Session.STATUS_CLOSED && type == null) {
+                    if (session != null && session.getStatus() == Session.Status.CLOSED && type == null) {
                         Log.warn("Rejected available presence: " + packet + " - " + session);
                         return;
                     }

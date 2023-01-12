@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -612,7 +612,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
         setAddress(jid);
         authToken = auth;
-        setStatus(Session.STATUS_AUTHENTICATED);
+        setStatus(Session.Status.AUTHENTICATED);
 
         // Set default privacy list for this session
         if (!auth.isAnonymous()) {
@@ -631,7 +631,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         // Anonymous users have a full JID. Use the random resource as the JID's node
         String resource = getAddress().getResource();
         setAddress(new JID(resource, getServerName(), resource, true));
-        setStatus(Session.STATUS_AUTHENTICATED);
+        setStatus(Session.Status.AUTHENTICATED);
         authToken = AuthToken.generateAnonymousToken();
         // Add session to the session manager. The session will be added to the routing table as well
         sessionManager.addSession(this);
@@ -946,9 +946,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             "address=" + getAddress() +
             ", streamID=" + getStreamID() +
             ", status=" + getStatus() +
-            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
-            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
-            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +

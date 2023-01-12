@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
@@ -222,11 +221,9 @@ public class StreamManager {
      */
     private void enable( String namespace, boolean resume )
     {
-
-
         boolean offerResume = allowResume();
         // Ensure that resource binding has occurred.
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+        if (!session.isAuthenticated()) {
             this.namespace = namespace;
             sendUnexpectedError();
             return;
@@ -281,7 +278,7 @@ public class StreamManager {
             sendUnexpectedError();
             return;
         }
-        if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+        if (session.isAuthenticated()) {
             Log.debug("Unable to process session resumption attempt, as session {} is not authenticated.", session);
             sendUnexpectedError();
             return;

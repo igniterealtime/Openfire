@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -259,8 +259,11 @@
                                         <c:when test="${session.usingServerDialback}">
                                             <fmt:message key="server.session.details.dialback"/>
                                         </c:when>
-                                        <c:otherwise>
+                                        <c:when test="${session.usingSaslExternal}">
                                             <fmt:message key="server.session.details.tlsauth"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <fmt:message key="server.session.details.unknown"/>
                                         </c:otherwise>
                                     </c:choose>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
@@ -318,12 +321,15 @@
                                 </c:if>
                                 <td nowrap>
                                     <c:choose>
-                                    <c:when test="${session.usingServerDialback}">
-                                        <fmt:message key="server.session.details.dialback"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <fmt:message key="server.session.details.tlsauth"/>
-                                    </c:otherwise>
+                                        <c:when test="${session.usingServerDialback}">
+                                            <fmt:message key="server.session.details.dialback"/>
+                                        </c:when>
+                                        <c:when test="${session.usingSaslExternal}">
+                                            <fmt:message key="server.session.details.tlsauth"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <fmt:message key="server.session.details.unknown"/>
+                                        </c:otherwise>
                                     </c:choose>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>

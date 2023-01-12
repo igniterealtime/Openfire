@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software and Ignite Realtime Community 2021. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
          * Operations of outgoing server sessions
          */
         getOutgoingDomainPairs,
-        isUsingServerDialback,
+        getAuthenticationMethod,
 
         /**
          * Operations of external component sessions

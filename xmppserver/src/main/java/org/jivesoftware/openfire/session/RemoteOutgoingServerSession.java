@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.util.Collection;
  */
 public class RemoteOutgoingServerSession extends RemoteSession implements OutgoingServerSession {
 
-    private long usingServerDialback = -1;
+    private AuthenticationMethod authenticationMethod;
     private final DomainPair pair;
 
     public RemoteOutgoingServerSession(byte[] nodeID, DomainPair address) {
@@ -62,12 +62,12 @@ public class RemoteOutgoingServerSession extends RemoteSession implements Outgoi
     }
 
     @Override
-    public boolean isUsingServerDialback() {
-        if (usingServerDialback == -1) {
-            ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isUsingServerDialback);
-            usingServerDialback = (Boolean) doSynchronousClusterTask(task) ? 1 : 0;
+    public AuthenticationMethod getAuthenticationMethod() {
+        if (authenticationMethod == null) {
+            ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getAuthenticationMethod);
+            authenticationMethod = (AuthenticationMethod) doSynchronousClusterTask(task);
         }
-        return usingServerDialback == 1;
+        return authenticationMethod;
     }
 
     @Override

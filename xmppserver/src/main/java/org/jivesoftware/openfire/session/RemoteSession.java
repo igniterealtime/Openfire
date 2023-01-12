@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, Ignite Realtime Foundation 2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,12 +63,13 @@ public abstract class RemoteSession implements Session {
     /**
      * Remote sessions are always authenticated. Otherwise, they won't be visibile to other
      * cluster nodes. When the session is closed it will no longer be visible to other nodes
-     * so {@link #STATUS_CLOSED} is never returned. 
+     * so CLOSED is never returned.
      *
      * @return the authenticated status.
      */
-    public int getStatus() {
-        return STATUS_AUTHENTICATED;
+    @Override
+    public Status getStatus() {
+        return Session.Status.AUTHENTICATED;
     }
 
     public StreamID getStreamID() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -87,7 +86,7 @@ public class MessageRouter extends BasicModule {
         try {
             // Invoke the interceptors before we process the read packet
             InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
-            if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
+            if (session == null || session.isAuthenticated()) {
                 JID recipientJID = packet.getTo();
 
                 // If the server receives a message stanza with no 'to' attribute, it MUST treat the message as if the 'to' address were the bare JID <localpart@domainpart> of the sending entity.

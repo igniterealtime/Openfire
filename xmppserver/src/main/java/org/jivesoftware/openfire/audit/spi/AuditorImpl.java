@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -403,24 +403,28 @@ public class AuditorImpl implements Auditor {
             if (session != null && session.getStreamID() != null) {
                 element.addAttribute("streamID", session.getStreamID().toString());
             }
-            switch (session == null ? 0 : session.getStatus()) {
-                case Session.STATUS_AUTHENTICATED:
-                    element.addAttribute("status", "auth");
-                    break;
-                case Session.STATUS_CLOSED:
-                    element.addAttribute("status", "closed");
-                    break;
-                case Session.STATUS_CONNECTED:
-                    element.addAttribute("status", "connected");
-                    // This is a workaround. Since we don't want to have an incorrect FROM attribute
-                    // value we need to clean up the FROM attribute. The FROM attribute will contain
-                    // an incorrect value since we are setting a fake JID until the user actually
-                    // authenticates with the server.
-                    packet.setFrom((String) null);
-                    break;
-                default:
-                    element.addAttribute("status", "unknown");
-                    break;
+            if (session == null) {
+                element.addAttribute("status", "unknown");
+            } else {
+                switch (session.getStatus()) {
+                    case AUTHENTICATED:
+                        element.addAttribute("status", "auth");
+                        break;
+                    case CLOSED:
+                        element.addAttribute("status", "closed");
+                        break;
+                    case CONNECTED:
+                        element.addAttribute("status", "connected");
+                        // This is a workaround. Since we don't want to have an incorrect FROM attribute
+                        // value we need to clean up the FROM attribute. The FROM attribute will contain
+                        // an incorrect value since we are setting a fake JID until the user actually
+                        // authenticates with the server.
+                        packet.setFrom((String) null);
+                        break;
+                    default:
+                        element.addAttribute("status", "unknown");
+                        break;
+                }
             }
             element.addAttribute("timestamp", auditFormat.format(creationDate));
             element.add(packet.getElement());

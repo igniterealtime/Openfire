@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         }
         else {
             // Component has authenticated fine
-            setStatus(STATUS_AUTHENTICATED);
+            setStatus(Session.Status.AUTHENTICATED);
             // Send empty handshake element to acknowledge success
             conn.deliverRawText("<handshake></handshake>");
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] Connection manager was AUTHENTICATED with domain: " + getAddress());
@@ -319,9 +319,6 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             "address=" + getAddress() +
             ", streamID=" + getStreamID() +
             ", status=" + getStatus() +
-            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
-            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
-            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +

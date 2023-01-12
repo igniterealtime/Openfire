@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,7 +286,7 @@ public abstract class StanzaHandler {
                 // an available presence show
                 packet.setShow(null);
             }
-            if (session.getStatus() == Session.STATUS_CLOSED && packet.isAvailable()) {
+            if (session.getStatus() == Session.Status.CLOSED && packet.isAvailable()) {
                 // Ignore available presence packets sent from a closed session. A closed
                 // session may have buffered data pending to be processes so we want to ignore
                 // just Presences of type available
@@ -578,7 +578,7 @@ public abstract class StanzaHandler {
         sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
-        if (session.getStatus() != Session.STATUS_AUTHENTICATED) {
+        if (!session.isAuthenticated()) {
             // Include available SASL Mechanisms
             sb.append(SASLAuthentication.getSASLMechanisms(session));
         }

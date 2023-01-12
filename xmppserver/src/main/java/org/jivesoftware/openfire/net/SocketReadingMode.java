@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,7 +232,7 @@ abstract class SocketReadingMode {
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
-        if (socketReader.session.getStatus() != Session.STATUS_AUTHENTICATED) {
+        if (!socketReader.session.isAuthenticated()) {
             // Include available SASL Mechanisms
             sb.append(SASLAuthentication.getSASLMechanisms(socketReader.session));
         }

@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.util;
 
 import org.apache.logging.log4j.Level;
@@ -29,7 +44,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -154,18 +171,7 @@ public class S2STestService {
         final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
         OutgoingServerSession session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(pair);
         if (session != null) {
-            int connectionStatus = session.getStatus();
-            switch(connectionStatus) {
-            case Session.STATUS_CONNECTED:
-                Log.info("Session is connected.");
-                break;
-            case Session.STATUS_CLOSED:
-                Log.info("Session is closed.");
-                break;
-            case Session.STATUS_AUTHENTICATED:
-                Log.info("Session is authenticated.");
-                break;
-            }
+            Log.info("Session is {}.", session.getStatus());
         } else {
             Log.info("Failed to establish server to server session.");
         }

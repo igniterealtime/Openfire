@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,6 @@
  */
 
 package org.jivesoftware.openfire.net;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
@@ -38,6 +34,10 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.*;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.List;
 
 /**
  * A SocketReader creates the appropriate {@link Session} based on the defined namespace in the
@@ -204,7 +204,7 @@ public abstract class SocketReader implements Runnable {
                 // an available presence show
                 packet.setShow(null);
             }
-            if (session.getStatus() == Session.STATUS_CLOSED && packet.isAvailable()) {
+            if (session.getStatus() == Session.Status.CLOSED && packet.isAvailable()) {
                 // Ignore available presence packets sent from a closed session. A closed
                 // session may have buffered data pending to be processes so we want to ignore
                 // just Presences of type available

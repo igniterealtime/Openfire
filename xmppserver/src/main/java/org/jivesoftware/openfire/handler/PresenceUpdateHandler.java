@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,7 @@
 
 package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.openfire.ChannelHandler;
-import org.jivesoftware.openfire.OfflineMessage;
-import org.jivesoftware.openfire.OfflineMessageStore;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.PresenceManager;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -44,11 +36,7 @@ import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -161,7 +149,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             Presence.Type type = presence.getType();
             // Available
             if (type == null) {
-                if (session != null && session.getStatus() == Session.STATUS_CLOSED) {
+                if (session != null && session.getStatus() == Session.Status.CLOSED) {
                     Log.warn("Rejected available presence: " + presence + " - " + session);
                     return;
                 }

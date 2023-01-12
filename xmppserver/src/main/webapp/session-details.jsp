@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -266,19 +266,19 @@
         </td>
         <td>
             <%
-                int status = currentSess.getStatus();
-                if (status == Session.STATUS_CLOSED) {
+                Session.Status status = currentSess.getStatus();
+                if (status == Session.Status.CLOSED) {
             %>
                 <fmt:message key="session.details.close" />
 
             <%
-                } else if (status == Session.STATUS_CONNECTED) {
+                } else if (status == Session.Status.CONNECTED) {
             %>
 
                 <fmt:message key="session.details.connect" />
 
             <%
-                } else if (status == Session.STATUS_AUTHENTICATED) {
+                } else if (status == Session.Status.AUTHENTICATED) {
             %>
 
                 <fmt:message key="session.details.authenticated" />

@@ -58,21 +58,21 @@
     </td>
     <% } %>
     <td>
-        <%  int _status = sess.getStatus();
+        <%  Session.Status _status = sess.getStatus();
             boolean isDetached = sess instanceof LocalSession && ((LocalSession) sess).isDetached();
             if (isDetached) { %>
 
             <fmt:message key="session.details.sm-detached" />
         <%
-            } else if (_status == Session.STATUS_CLOSED) {
+            } else if (_status == Session.Status.CLOSED) {
         %>
             <fmt:message key="session.details.close" />
 
-        <%  } else if (_status == Session.STATUS_CONNECTED) { %>
+        <%  } else if (_status == Session.Status.CONNECTED) { %>
 
             <fmt:message key="session.details.connect" />
 
-        <% } else if (_status == org.jivesoftware.openfire.session.Session.STATUS_AUTHENTICATED) { %>
+        <% } else if (_status == Session.Status.AUTHENTICATED) { %>
 
             <fmt:message key="session.details.authenticated" />
 

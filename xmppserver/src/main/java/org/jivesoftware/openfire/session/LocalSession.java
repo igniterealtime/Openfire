@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022-23 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public abstract class LocalSession implements Session {
     /**
      * The current session status.
      */
-    protected int status = STATUS_CONNECTED;
+    protected Status status = Status.CONNECTED;
 
     /**
      * The connection that this session represents.
@@ -193,7 +193,7 @@ public abstract class LocalSession implements Session {
         }finally {
             lock.unlock();
         }
-        this.status = STATUS_AUTHENTICATED;
+        this.status = Session.Status.AUTHENTICATED;
         this.sessionManager.removeDetached(this);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
         this.sessionManager.removeSession((LocalClientSession)connectionProvider);
@@ -242,7 +242,7 @@ public abstract class LocalSession implements Session {
      * @return The status code for this session
      */
     @Override
-    public int getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -253,8 +253,8 @@ public abstract class LocalSession implements Session {
      *
      * @param status The new status code for this session
      */
-    public void setStatus(int status) {
-        if (status == STATUS_CLOSED && this.streamManager.getResume()) {
+    public void setStatus(Status status) {
+        if (status == Status.CLOSED && this.streamManager.getResume()) {
             Log.debug( "Suppressing close for session with address {} and streamID {}.", this.address, this.streamID );
             return;
         }
@@ -537,9 +537,6 @@ public abstract class LocalSession implements Session {
             "address=" + getAddress() +
             ", streamID=" + getStreamID() +
             ", status=" + getStatus() +
-            (getStatus() == STATUS_AUTHENTICATED ? " (authenticated)" : "" ) +
-            (getStatus() == STATUS_CONNECTED ? " (connected)" : "" ) +
-            (getStatus() == STATUS_CLOSED ? " (closed)" : "" ) +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
             ", serverName='" + getServerName() + '\'' +

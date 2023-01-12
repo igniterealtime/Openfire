@@ -304,6 +304,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             if (validatedDomains.size() < 2) {
                 setAddress(new JID(null, domain, null));
             }
+            setStatus(Status.AUTHENTICATED);
             // Register the new validated domain for this server session in SessionManager
             SessionManager.getInstance().registerIncomingServerSession(domain, this);
         }
@@ -387,6 +388,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
     
     public void tlsAuth() {
+        setStatus(Status.AUTHENTICATED);
         usingServerDialback = false;
     }
 

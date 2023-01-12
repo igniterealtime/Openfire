@@ -261,6 +261,7 @@ public class ServerDialback {
                     StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                     LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, socketReader, streamID);
                     connection.init(session);
+                    session.setStatus(Session.Status.AUTHENTICATED);
                     // Set the remote domain as the address of the session.
                     session.setAddress(new JID(null, domainPair.getRemote(), null));
                     log.debug( "Successfully created new outgoing session!" );

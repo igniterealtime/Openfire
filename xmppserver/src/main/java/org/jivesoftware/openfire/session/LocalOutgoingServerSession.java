@@ -375,6 +375,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                 StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                                 LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
                                 connection.init(session);
+                                session.setStatus(Status.AUTHENTICATED);
                                 // Set the remote domain name as the address of the session.
                                 session.setAddress(new JID(null, domainPair.getRemote(), null));
                                 log.debug( "Successfully created new session!" );
@@ -577,6 +578,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 connection.init(session);
                 // Set the remote domain name as the address of the session.
                 session.setAddress(new JID(null, domainPair.getRemote(), null));
+                session.setStatus(Status.AUTHENTICATED);
                 return session;
             }
             else {
@@ -617,6 +619,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             session.setAddress(new JID(null, domainPair.getRemote(), null));
             // Set that the session was created using TLS+SASL (no server dialback)
             session.usingServerDialback = false;
+            session.setStatus(Status.AUTHENTICATED);
             return session;
         }
         else {

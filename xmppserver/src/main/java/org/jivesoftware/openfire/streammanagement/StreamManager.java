@@ -198,6 +198,7 @@ public class StreamManager {
         boolean allow = false;
         // Ensure that resource binding has occurred.
         if (session instanceof ClientSession) {
+            // TODO: Implement Stream Management resumption for websockets (OF-2566)
             Object ws = session.getSessionData("ws");
             if (ws != null && (Boolean) ws) {
                 Log.debug( "Websockets resume is not yet implemented: {}", session );

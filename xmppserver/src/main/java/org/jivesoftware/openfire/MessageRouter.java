@@ -28,10 +28,7 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
+import org.xmpp.packet.*;
 
 import java.util.List;
 import java.util.StringTokenizer;
@@ -160,6 +157,11 @@ public class MessageRouter extends BasicModule {
                         }
                     }
                 }
+            }
+            else if (SessionPacketRouter.isInvalidStanzaSentPriorToResourceBinding(packet, session)) {
+                log.debug("Closing session that attempts to send stanza to an entity other than the server itself or the client's account, before completing resource binding. Session closed: {}", session);
+                session.deliverRawText(new StreamError(StreamError.Condition.not_authorized).toXML());
+                return;
             }
             else {
                 packet.setTo(session.getAddress());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,13 +278,13 @@ public class XmppWebSocket {
             if (STREAM_FOOTER.equals(tag)) {
                 xmppSession.getStreamManager().formalClose();
                 closeStream(null);
-            } else if ("auth".equals(tag)) {
+            } else if ("auth".equals(tag)) { // TODO this if-statement can probably be removed, as SessionPacketRouter does almost the same (Except for incrementing client packet count maybe).
                 // User is trying to authenticate using SASL
                 startedSASL = true;
                 // Process authentication stanza
                 xmppSession.incrementClientPacketCount();
                 saslStatus = SASLAuthentication.handle(xmppSession, stanza);
-            } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
+            } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) { // TODO this if-statement can probably be removed, as SessionPacketRouter does almost the same (Except for the abort, and incrementing client packet count maybe).
                 // User is responding to SASL challenge. Process response
                 xmppSession.incrementClientPacketCount();
                 saslStatus = SASLAuthentication.handle(xmppSession, stanza);
@@ -292,7 +292,7 @@ public class XmppWebSocket {
                 // restart the stream
                 openStream(stanza.attributeValue(QName.get("lang", XMLConstants.XML_NS_URI), "en"), stanza.attributeValue("from"));
                 configureStream();
-            } else if (Status.authenticated.equals(saslStatus)) {
+            } else {
                 if (router == null) {
                     if (StreamManager.isStreamManagementActive()) {
                         router = new StreamManagementPacketRouter(xmppSession);
@@ -309,10 +309,6 @@ public class XmppWebSocket {
                         sendPacketError(stanza, PacketError.Condition.bad_request);
                     }
                 });
-            } else {
-                // require authentication
-                Log.warn("Not authorized: " + stanza.asXML());
-                sendPacketError(stanza, PacketError.Condition.not_authorized);
             }
         } catch (Exception ex) {
             Log.error("Failed to process incoming stanza: " + stanza.asXML(), ex);

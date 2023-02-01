@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -662,40 +663,34 @@ public abstract class StanzaHandler {
         }
 
         final String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-
-        // Check that the TO attribute of the stream header matches the server name or a valid
-        // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
-        // error and close the underlying connection.
         String host = xpp.getAttributeValue("", "to");
-        StreamError streamError = null;
-        if (validateHost() && isHostUnknown(host)) {
-            streamError = new StreamError(StreamError.Condition.host_unknown);
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host +
-                    ". Connection: " + connection);
-        }
-        // Validate the stream namespace
-        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
-            // Include the invalid-namespace in the response
-            streamError = new StreamError(StreamError.Condition.invalid_namespace);
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to invalid namespace in stream header. Namespace: " +
-                    xpp.getNamespace() + ". Connection: " + connection);
 
-        }
-        // Create the correct session based on the sent namespace. At this point the server
-        // may offer the client to encrypt the connection. If the client decides to encrypt
-        // the connection then a <starttls> stanza should be received
-        else if (!createSession(xpp.getNamespace(null), serverName, xpp, connection)) {
+        try {
+            // Check that the TO attribute of the stream header matches the server name or a valid
+            // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
+            // error and close the underlying connection.
+            if (validateHost() && isHostUnknown(host)) {
+                throw new StreamErrorException(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host);
+            }
+
+            // Validate the stream namespace
+            if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
+                throw new StreamErrorException(StreamError.Condition.invalid_namespace, "Invalid namespace in stream header: " + xpp.getNamespace());
+            }
+
             // http://xmpp.org/rfcs/rfc6120.html#streams-error-conditions-invalid-namespace
             // "or the content namespace declared as the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server")."
-            streamError = new StreamError(StreamError.Condition.invalid_namespace);
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to invalid namespace in stream header. Prefix: " +
-                    xpp.getNamespace(null) + ". Connection: " + connection);
-        }
+            if (!getNamespace().equals(xpp.getNamespace(null))) {
+                throw new StreamErrorException(StreamError.Condition.invalid_namespace, "Invalid namespace in stream header. Expected: 'jabber:client'. Received: '" + xpp.getNamespace(null) + "'.");
+            }
 
-        if (streamError != null) {
+            // Create the correct session based on the sent namespace. At this point the server
+            // may offer the client to encrypt the connection. If the client decides to encrypt
+            // the connection then a <starttls> stanza should be received
+            createSession(serverName, xpp, connection);
+        }
+        catch (final StreamErrorException ex) {
+            Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
             StringBuilder sb = new StringBuilder(250);
             if (host == null) host = serverName;
             sb.append("<?xml version='1.0' encoding='");
@@ -708,13 +703,12 @@ public abstract class StanzaHandler {
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
             sb.append("version=\"1.0\">");
-            sb.append(streamError.toXML());
+            sb.append(ex.getStreamError().toXML());
             // Deliver stanza
             connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
         }
-
     }
 
     private boolean isHostUnknown(String host) {
@@ -778,13 +772,9 @@ public abstract class StanzaHandler {
     abstract boolean validateJIDs();
 
     /**
-     * Creates the appropriate {@link Session} subclass based on the specified namespace.
+     * Creates the appropriate {@link Session} subclass.
      *
-     * @param namespace the namespace sent in the stream element. eg. jabber:client.
-     * @return the created session or null.
      * @throws org.xmlpull.v1.XmlPullParserException when XML parsing causes an error.
-     *
      */
-    abstract boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException;
+    abstract void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException;
 }

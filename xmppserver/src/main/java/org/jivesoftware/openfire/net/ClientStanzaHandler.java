@@ -73,14 +73,10 @@ public class ClientStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException {
-        if ("jabber:client".equals(namespace)) {
-            // The connected client is a regular client so create a ClientSession
-            session = LocalClientSession.createSession(serverName, xpp, connection);
-            return true;
-        }
-        return false;
+    void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
+    {
+        // The connected client is a regular client so create a ClientSession
+        session = LocalClientSession.createSession(serverName, xpp, connection);
     }
 
     @Override

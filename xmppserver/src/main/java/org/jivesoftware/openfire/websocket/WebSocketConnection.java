@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.VirtualConnection;
-import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
@@ -36,19 +35,20 @@ import java.util.Optional;
 
 /**
  * Following the conventions of the BOSH implementation, this class extends {@link VirtualConnection}
- * and delegates the expected XMPP connection behaviors to the corresponding {@link XmppWebSocket}.
+ * and delegates the expected XMPP connection behaviors to the corresponding {@link WebSocketClientConnectionHandler}.
  */
 public class WebSocketConnection extends VirtualConnection
 {
     private static final Logger Log = LoggerFactory.getLogger(WebSocketConnection.class);
 
     private InetSocketAddress remotePeer;
-    private XmppWebSocket socket;
+    private WebSocketClientConnectionHandler socket;
     private PacketDeliverer backupDeliverer;
     private ConnectionConfiguration configuration;
     private ConnectionType connectionType;
+    private WebSocketClientStanzaHandler stanzaHandler;
 
-    public WebSocketConnection(XmppWebSocket socket, PacketDeliverer backupDeliverer, InetSocketAddress remotePeer) {
+    public WebSocketConnection(WebSocketClientConnectionHandler socket, PacketDeliverer backupDeliverer, InetSocketAddress remotePeer) {
         this.socket = socket;
         this.backupDeliverer = backupDeliverer;
         this.remotePeer = remotePeer;
@@ -58,7 +58,13 @@ public class WebSocketConnection extends VirtualConnection
     @Override
     public void closeVirtualConnection(@Nullable final StreamError error)
     {
-        socket.closeSession(error);
+        try {
+            if (error != null) {
+                deliverRawText0(error.toXML());
+            }
+        } finally {
+            socket.getWsSession().close();
+        }
     }
 
     @Override
@@ -84,23 +90,42 @@ public class WebSocketConnection extends VirtualConnection
     @Override
     public void deliver(Packet packet) throws UnauthorizedException
     {
-        final String xml;
-        if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
-            // use string-based operation here to avoid cascading xmlns wonkery
-            StringBuilder packetXml = new StringBuilder(packet.toXML());
-            packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
-            xml = packetXml.toString();
-        } else {
-            xml = packet.toXML();
-        }
-        if (validate()) {
-            deliverRawText(xml);
-        } else {
-            // use fallback delivery mechanism (offline)
+        if (isClosed()) {
             if (backupDeliverer != null) {
                 backupDeliverer.deliver(packet);
             } else {
-                Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+                Log.trace("Discarding packet that was due to be delivered on closed connection {}, for which no backup deliverer was configured.", this);
+            }
+        }
+        else {
+            boolean errorDelivering = false;
+            try {
+                final String xml;
+                if (Namespace.NO_NAMESPACE.equals(packet.getElement().getNamespace())) {
+                    // use string-based operation here to avoid cascading xmlns wonkery
+                    StringBuilder packetXml = new StringBuilder(packet.toXML());
+                    packetXml.insert(packetXml.indexOf(" "), " xmlns=\"jabber:client\"");
+                    xml = packetXml.toString();
+                } else {
+                    xml = packet.toXML();
+                }
+                socket.getWsSession().getRemote().sendStringByFuture(xml);
+            } catch (Exception e) {
+                Log.debug("Error delivering packet:\n" + packet, e);
+                errorDelivering = true;
+            }
+            if (errorDelivering) {
+                close();
+                // Retry sending the packet again. Most probably if the packet is a
+                // Message it will be stored offline
+                if (backupDeliverer != null) {
+                    backupDeliverer.deliver(packet);
+                } else {
+                    Log.trace("Discarding packet that failed to be delivered to connection {}, for which no backup deliverer was configured.", this);
+                }
+            }
+            else {
+                session.incrementServerPacketCount();
             }
         }
     }
@@ -108,7 +133,25 @@ public class WebSocketConnection extends VirtualConnection
     @Override
     public void deliverRawText(String text)
     {
-        socket.deliver(text);
+        if (!isClosed()) {
+            deliverRawText0(text);
+        }
+    }
+
+    private void deliverRawText0(String text)
+    {
+        boolean errorDelivering = false;
+        try {
+            socket.getWsSession().getRemote().sendStringByFuture(text);
+        } catch (Exception e) {
+            Log.debug("Error delivering raw text:\n" + text, e);
+            errorDelivering = true;
+        }
+
+        // Attempt to close the connection if delivering text fails.
+        if (errorDelivering) {
+            close();
+        }
     }
 
     @Override
@@ -144,7 +187,7 @@ public class WebSocketConnection extends VirtualConnection
 
     @Override
     public boolean isCompressed() {
-        return XmppWebSocket.isCompressionEnabled();
+        return WebSocketClientConnectionHandler.isCompressionEnabled();
     }
 
     @Override
@@ -157,9 +200,33 @@ public class WebSocketConnection extends VirtualConnection
         return Optional.ofNullable(this.socket.getCipherSuiteName());
     }
 
+    void setStanzaHandler(final WebSocketClientStanzaHandler stanzaHandler) {
+        this.stanzaHandler = stanzaHandler;
+    }
+
+    WebSocketClientStanzaHandler getStanzaHandler() {
+        return stanzaHandler;
+    }
+
+    @Override
+    public void init(LocalSession session) {
+        super.init(session);
+    }
+
     @Override
     public void reinit(LocalSession session) {
-        this.socket.setXmppSession((LocalClientSession)session);
         super.reinit(session);
+        stanzaHandler.setSession(session);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "WebSocketConnection{" +
+            "jid=" + (getStanzaHandler() == null ? "(null)" : getStanzaHandler().getAddress()) +
+            ", remotePeer=" + remotePeer +
+            ", socket=" + socket +
+            ", connectionType=" + connectionType +
+            '}';
     }
 }

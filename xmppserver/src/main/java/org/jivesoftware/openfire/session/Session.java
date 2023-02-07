@@ -18,6 +18,9 @@ package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.StreamID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmlpull.v1.XmlPullParser;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
@@ -40,6 +43,9 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 public interface Session extends RoutableChannelHandler {
+
+    Logger Log = LoggerFactory.getLogger(Session.class);
+
     /**
      * Version of the XMPP spec supported as MAJOR_VERSION.MINOR_VERSION (e.g. 1.0).
      */
@@ -284,5 +290,83 @@ public interface Session extends RoutableChannelHandler {
     default Map<String, String> getSoftwareVersion()
     {
         return new HashMap<>();
+    }
+
+    /**
+     * Parses a locale from the 'lang' attribute of the element that the provided parser is currently on.
+     *
+     * This method returns the English locale when there is no 'lang' attribute found. It will return an undefined
+     * Locale if the value of the 'lang' attribute could not be used to identify a language.
+     *
+     * @param xpp An XML parser
+     * @return A Locale
+     */
+    static Locale detectLanguage(XmlPullParser xpp) {
+        // Default language is English ("en").
+        Locale language = Locale.forLanguageTag("en");
+        for (int i = 0; i < xpp.getAttributeCount(); i++) {
+            if ("lang".equals(xpp.getAttributeName(i))) {
+                language = Locale.forLanguageTag(xpp.getAttributeValue(i));
+            }
+        }
+        return language;
+    }
+
+    /**
+     * Returns a two-digit version identifier based on the value of the 'version' attribute of the element that the
+     * provided parser is currently on. The value of the 'version' attribute is expected to match 'MAJOR.MINOR' where
+     * both MAJOR and MINOR are integer values.
+     *
+     * The version number defaults to 0.0. It is returned as an array of integers, with the first element in the array
+     * being the MAJOR version number.
+     *
+     * If the version that is being reported is larger than the version supported by this implementation, the version
+     * number that is supported by this implementation is returned instead of the reported version number.
+     *
+     * @param xpp An XML parser
+     * @return an integer array that has a size of two.
+     */
+    static int[] detectVersion(XmlPullParser xpp) {
+        // Default to a version of "0.0". Clients written before the XMPP 1.0 spec may
+        // not report a version in which case "0.0" should be assumed (per rfc3920
+        // section 4.4.1).
+        int majorVersion = 0;
+        int minorVersion = 0;
+        for (int i = 0; i < xpp.getAttributeCount(); i++) {
+            if ("version".equals(xpp.getAttributeName(i))) {
+                try {
+                    int[] version = decodeVersion(xpp.getAttributeValue(i));
+                    majorVersion = version[0];
+                    minorVersion = version[1];
+                }
+                catch (Exception e) {
+                    Log.error("Unable to parse version from 'version' attribute of the element that is being parsed.", e);
+                }
+            }
+        }
+
+        // If the client supports a greater major version than the server,
+        // set the version to the highest one the server supports.
+        if (majorVersion > MAJOR_VERSION) {
+            majorVersion = MAJOR_VERSION;
+            minorVersion = MINOR_VERSION;
+        }
+        else if (majorVersion == MAJOR_VERSION) {
+            // If the client supports a greater minor version than the
+            // server, set the version to the highest one that the server
+            // supports.
+            if (minorVersion > MINOR_VERSION) {
+                minorVersion = MINOR_VERSION;
+            }
+        }
+        return new int[] { majorVersion, minorVersion };
+    }
+
+    static int[] decodeVersion(String version) {
+        int[] answer = new int[] {0 , 0};
+        String [] versionString = version.split("\\.");
+        answer[0] = Integer.parseInt(versionString[0]);
+        answer[1] = Integer.parseInt(versionString[1]);
+        return answer;
     }
 }

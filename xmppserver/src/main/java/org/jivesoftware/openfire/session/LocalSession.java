@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2022-23 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * The session represents a connection between the server and a client (c2s) or
  * another server (s2s) as well as a connection with a component. Authentication and
  * user accounts are associated with c2s connections while s2s has an optional authentication
- * association but no single user user.<p>
+ * association but no single user.
  *
  * Obtain object managers from the session in order to access server resources.
  *
@@ -543,12 +543,12 @@ public abstract class LocalSession implements Session {
             '}';
     }
 
+    /**
+     * @deprecated Replaced by {@link Session#decodeVersion(String)}
+     */
+    @Deprecated // Remove in or after Openfire 4.9.0
     protected static int[] decodeVersion(String version) {
-        int[] answer = new int[] {0 , 0};
-        String [] versionString = version.split("\\.");
-        answer[0] = Integer.parseInt(versionString[0]);
-        answer[1] = Integer.parseInt(versionString[1]);
-        return answer;
+        return Session.decodeVersion(version);
     }
 
     /**

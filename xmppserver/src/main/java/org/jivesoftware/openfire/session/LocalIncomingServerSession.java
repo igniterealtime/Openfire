@@ -110,7 +110,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         String version = xpp.getAttributeValue("", "version");
         String fromDomain = xpp.getAttributeValue("", "from");
         String toDomain = xpp.getAttributeValue("", "to");
-        int[] serverVersion = version != null ? decodeVersion(version) : new int[] {0,0};
+        int[] serverVersion = version != null ? Session.decodeVersion(version) : new int[] {0,0};
 
         if (toDomain == null) {
             toDomain = serverName;

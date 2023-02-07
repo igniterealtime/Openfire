@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,27 +53,27 @@ public class ClientStanzaHandler extends StanzaHandler {
      * @return always false.
      */
     @Override
-    boolean processUnknowPacket(Element doc) {
+    protected boolean processUnknowPacket(Element doc) {
         return false;
     }
 
     @Override
-    String getNamespace() {
+    protected String getNamespace() {
         return "jabber:client";
     }
 
     @Override
-    boolean validateHost() {
+    protected boolean validateHost() {
         return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
     }
 
     @Override
-    boolean validateJIDs() {
+    protected boolean validateJIDs() {
         return true;
     }
 
     @Override
-    void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
+    protected void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
     {
         // The connected client is a regular client so create a ClientSession
         session = LocalClientSession.createSession(serverName, xpp, connection);
@@ -101,7 +101,7 @@ public class ClientStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    void startTLS() throws Exception {
+    protected void startTLS() throws Exception {
         connection.startTLS(false, false);
     }
 }

@@ -222,43 +222,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         // Retrieve list of namespaces declared in current element (OF-2556)
         connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
 
-        // Default language is English ("en").
-        Locale language = Locale.forLanguageTag("en");
-        // Default to a version of "0.0". Clients written before the XMPP 1.0 spec may
-        // not report a version in which case "0.0" should be assumed (per rfc3920
-        // section 4.4.1).
-        int majorVersion = 0;
-        int minorVersion = 0;
-        for (int i = 0; i < xpp.getAttributeCount(); i++) {
-            if ("lang".equals(xpp.getAttributeName(i))) {
-                language = Locale.forLanguageTag(xpp.getAttributeValue(i));
-            }
-            if ("version".equals(xpp.getAttributeName(i))) {
-                try {
-                    int[] version = decodeVersion(xpp.getAttributeValue(i));
-                    majorVersion = version[0];
-                    minorVersion = version[1];
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-            }
-        }
-
-        // If the client supports a greater major version than the server,
-        // set the version to the highest one the server supports.
-        if (majorVersion > MAJOR_VERSION) {
-            majorVersion = MAJOR_VERSION;
-            minorVersion = MINOR_VERSION;
-        }
-        else if (majorVersion == MAJOR_VERSION) {
-            // If the client supports a greater minor version than the
-            // server, set the version to the highest one that the server
-            // supports.
-            if (minorVersion > MINOR_VERSION) {
-                minorVersion = MINOR_VERSION;
-            }
-        }
+        final Locale language = Session.detectLanguage(xpp);
+        final int[] version = Session.detectVersion(xpp);
+        int majorVersion = version[0];
+        int minorVersion = version[1];
 
         connection.setXMPPVersion(majorVersion, minorVersion);
         final ConnectionConfiguration connectionConfiguration = connection.getConfiguration();

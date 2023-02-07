@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,32 @@
  */
 package org.jivesoftware.openfire.websocket;
 
-import java.io.IOException;
-import java.text.MessageFormat;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.jetty.websocket.common.extensions.compress.PerMessageDeflateExtension;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
-import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
-import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * This Servlet enables XMPP over WebSocket (RFC 7395) for Openfire.
  * 
  * The Jetty WebSocketServlet serves as a base class and enables easy integration into the
  * BOSH (http-bind) web context. Each WebSocket request received at the "/ws/" URI will be
- * forwarded to this plugin/servlet, which will in turn create a new {@link XmppWebSocket}
+ * forwarded to this plugin/servlet, which will in turn create a new {@link WebSocketClientConnectionHandler}
  * for each new connection. 
  */
 public class OpenfireWebSocketServlet extends WebSocketServlet {
@@ -95,12 +94,24 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
     @Override
     public void configure(WebSocketServletFactory factory)
     {
-        if (XmppWebSocket.isCompressionEnabled()) {
+        if (WebSocketClientConnectionHandler.isCompressionEnabled()) {
             factory.getExtensionFactory().register("permessage-deflate", PerMessageDeflateExtension.class);
         }
         final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
         factory.getPolicy().setMaxTextMessageBufferSize(messageSize * 5);
         factory.getPolicy().setMaxTextMessageSize(messageSize);
+
+        // Jetty's idle policy cannot be modified - it will bluntly kill the connection. Ensure that it's longer than
+        // the maximum amount of idle-time that Openfire allows for its client connections!
+        final Duration propValue = ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue();
+        final long maxJettyIdleMs;
+        if (propValue.isNegative() || propValue.isZero()) {
+            maxJettyIdleMs = Long.MAX_VALUE;
+        } else {
+            maxJettyIdleMs = propValue.plus(Duration.of(30, ChronoUnit.SECONDS)).toMillis();
+        }
+        factory.getPolicy().setIdleTimeout(maxJettyIdleMs);
+
         factory.setCreator((req, resp) -> {
             try {
                 for (String subprotocol : req.getSubProtocols())
@@ -108,7 +119,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
                     if ("xmpp".equals(subprotocol))
                     {
                         resp.setAcceptedSubProtocol(subprotocol);
-                        return new XmppWebSocket();
+                        return new WebSocketClientConnectionHandler();
                     }
                 }
             } catch (Exception e) {

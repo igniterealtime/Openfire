@@ -82,8 +82,8 @@ public class XMPPPacketReader {
 
     /**
      * Retrieves a collection of namespaces declared in the current element that the parser is on, that are not defined
-     * in {@link #IGNORED_NAMESPACE_ON_STANZA}, and that are not the default namespace (the namespaces returned all have
-     * a defined prefix).
+     * in {@link #IGNORED_NAMESPACE_ON_STANZA}, is not "http://etherx.jabber.org/streams" and that are not the default
+     * namespace (the namespaces returned all have a defined prefix).
      *
      * @param xpp the parser
      * @return A collection of namespaces
@@ -98,7 +98,7 @@ public class XMPPPacketReader {
         for (int i = nsStart; i < nsEnd; i++) {
             final String prefix = xpp.getNamespacePrefix(i);
             final String ns = xpp.getNamespaceUri(i);
-            if (prefix != null && !XMPPPacketReader.IGNORED_NAMESPACE_ON_STANZA.contains(ns)) {
+            if (prefix != null && !XMPPPacketReader.IGNORED_NAMESPACE_ON_STANZA.contains(ns) && !"http://etherx.jabber.org/streams".equals(ns)) {
                 results.add(Namespace.get(prefix, ns));
             }
         }

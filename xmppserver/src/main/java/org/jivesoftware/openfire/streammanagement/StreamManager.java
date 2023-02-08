@@ -174,6 +174,13 @@ public class StreamManager {
                 break;
             case "resume":
                 long h = new Long(element.attributeValue("h"));
+                if (h < 0) {
+                    Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
                 String previd = element.attributeValue("previd");
                 startResume( element.getNamespaceURI(), previd, h);
                 break;
@@ -430,10 +437,28 @@ public class StreamManager {
      * we've sent to the client.
      *
      * @param h Then number of stanzas that the client acknowledges it has received from us.
-     * @return false if we sent less stanzas to the client than the number it is acknowledging.
+     * @return false if we sent fewer stanzas to the client than the number it is acknowledging.
      */
     private synchronized boolean validateClientAcknowledgement(long h) {
-        return h <= ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x );
+        if (h < 0) {
+            throw new IllegalArgumentException("Argument 'h' cannot be negative, but was: " + h);
+        }
+        if (h > MASK) {
+            throw new IllegalArgumentException("Argument 'h' cannot be larger than 2^32 -1, but was: " + h);
+        }
+        final long oldH = clientProcessedStanzas.get();
+        final Long lastUnackedX = unacknowledgedServerStanzas.isEmpty() ? null : unacknowledgedServerStanzas.getLast().x;
+        return validateClientAcknowledgement(h, oldH, lastUnackedX);
+    }
+
+    // Package protected to facilitate unit testing.
+    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
+        if (lastUnackedX == null) {
+            // No unacked stanzas.
+            return h == oldH;
+        }
+
+        return h <= lastUnackedX;
     }
 
     /**
@@ -446,7 +471,7 @@ public class StreamManager {
 
             if ( !validateClientAcknowledgement(h) ) {
                 // All paths leading up to here should have checked for this. Race condition?
-                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
             }
 
             clientProcessedStanzas.set( h );
@@ -484,13 +509,20 @@ public class StreamManager {
         if(isEnabled()) {
             if (ack.attribute("h") != null) {
                 final long h = Long.valueOf(ack.attributeValue("h"));
+                if (h < 0) {
+                    Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
 
                 Log.debug( "Received acknowledgement from client: h={}", h );
 
                 synchronized ( this ) {
                     if (!validateClientAcknowledgement(h)) {
-                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.getLast().x, session );
-                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last stanza: " + unacknowledgedServerStanzas.getLast().x );
+                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x, session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
                         session.deliverRawText( error.toXML() );
                         session.close();
                         return;

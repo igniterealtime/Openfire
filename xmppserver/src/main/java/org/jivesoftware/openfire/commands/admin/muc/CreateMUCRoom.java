@@ -93,6 +93,7 @@ public class CreateMUCRoom extends AdHocCommand {
             note.setText("Room name must be specified.");
             return;
         }
+        roomname = JID.nodeprep(roomname);
         JID admin = admins.iterator().next();
 
         boolean isPersistent;

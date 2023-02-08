@@ -8,7 +8,7 @@
           -->
         <RollingFile name="openfire" fileName="${sys:openfireHome}/logs/openfire.log" filePattern="${sys:openfireHome}/logs/openfire.log-%i">
             <PatternLayout>
-                <Pattern>%d{yyyy.MM.dd HH:mm:ss} %highlight{%-5p} [%t]: %c - %msg{nolookups}%n</Pattern>
+                <Pattern>%d{yyyy.MM.dd HH:mm:ss.SSS} %highlight{%-5p} [%t]: %c - %msg{nolookups}%n</Pattern>
             </PatternLayout>
             <Policies>
                 <SizeBasedTriggeringPolicy size="100 MB"/>

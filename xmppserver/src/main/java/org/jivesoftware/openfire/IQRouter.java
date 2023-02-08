@@ -104,6 +104,10 @@ public class IQRouter extends BasicModule {
                         "jabber:iq:register".equals(childElement.getNamespaceURI()) ||
                         "urn:ietf:params:xml:ns:xmpp-bind".equals(childElement.getNamespaceURI())))) {
                 handle(packet);
+            } else if (SessionPacketRouter.isInvalidStanzaSentPriorToResourceBinding(packet, session)) {
+                Log.debug("Closing session that attempts to send stanza to an entity other than the server itself or the client's account, before completing resource binding. Session closed: {}", session);
+                session.deliverRawText(new StreamError(StreamError.Condition.not_authorized).toXML());
+                return;
             } else {
                 Log.debug("Rejecting stanza from client that has not (yet?) established an authenticated session: {}", packet.toXML());
                 if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {

@@ -78,6 +78,11 @@ public class PresenceRouter extends BasicModule {
             if (session == null || session.getStatus() != Session.Status.CONNECTED) {
                 handle(packet);
             }
+            else if (SessionPacketRouter.isInvalidStanzaSentPriorToResourceBinding(packet, session)) {
+                Log.debug("Closing session that attempts to send stanza to an entity other than the server itself or the client's account, before completing resource binding. Session closed: {}", session);
+                session.deliverRawText(new StreamError(StreamError.Condition.not_authorized).toXML());
+                return;
+            }
             else {
                 packet.setTo(session.getAddress());
                 packet.setFrom((JID)null);

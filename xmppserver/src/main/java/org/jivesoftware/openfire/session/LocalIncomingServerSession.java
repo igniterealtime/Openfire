@@ -252,6 +252,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
         ServerDialback method = new ServerDialback(getConnection(), domainPair);
         if (method.validateRemoteDomain(dbResult, getStreamID())) {
+            setAuthenticationMethod(AuthenticationMethod.DIALBACK);
             // Add the validated domain as a valid domain
             addValidatedDomain(dbResult.attributeValue("from"));
             return true;
@@ -304,6 +305,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             if (validatedDomains.size() < 2) {
                 setAddress(new JID(null, domain, null));
             }
+            setStatus(Status.AUTHENTICATED);
             // Register the new validated domain for this server session in SessionManager
             SessionManager.getInstance().registerIncomingServerSession(domain, this);
         }
@@ -385,10 +387,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         
         return sb.toString();
     }
-    
-    public void tlsAuth() {
-        usingServerDialback = false;
-    }
 
     @Override
     public String toString()
@@ -399,7 +397,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             ", status=" + getStatus() +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", isUsingServerDialback=" + isUsingServerDialback() +
+            ", authenticationMethod=" + getAuthenticationMethod() +
             ", localDomain=" + getLocalDomain() +
             ", defaultIdentity=" + getDefaultIdentity() +
             ", validatedDomains=" + validatedDomains.stream().collect( Collectors.joining( ", ", "{", "}")) +

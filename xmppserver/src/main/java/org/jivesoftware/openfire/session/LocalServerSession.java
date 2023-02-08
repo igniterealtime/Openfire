@@ -28,9 +28,13 @@ import java.util.Locale;
  *
  */
 public class LocalServerSession extends LocalSession implements ServerSession {
-    protected boolean usingServerDialback = true;
     protected boolean outboundAllowed = false;
     protected boolean inboundAllowed = false;
+
+    /**
+     * The method that was used to authenticate this session. Null when the session is not authenticated.
+     */
+    private AuthenticationMethod authenticationMethod = null;
 
     public LocalServerSession(String serverName, Connection connection,
             StreamID streamID) {
@@ -91,8 +95,32 @@ public class LocalServerSession extends LocalSession implements ServerSession {
     }
 
     @Override
-    public boolean isUsingServerDialback() {
-        return usingServerDialback;
+    public void setStatus(Status status) {
+        super.setStatus(status);
+        if (status != Status.AUTHENTICATED) {
+            authenticationMethod = null;
+        }
+    }
+
+    /**
+     * Obtain method that was used to authenticate this session. Null when the session is not authenticated.
+     *
+     * @return the method used for authentication (possibly null).
+     */
+    @Override
+    public AuthenticationMethod getAuthenticationMethod() {
+        return authenticationMethod;
+    }
+
+    /**
+     * Set the method that was used to authenticate this session. Setting a value will cause the status of this session
+     * to be updated to 'Authenticated'.
+     *
+     * @param authenticationMethod The new authentication method for this session
+     */
+    public void setAuthenticationMethod(@Nonnull final AuthenticationMethod authenticationMethod) {
+        this.authenticationMethod = authenticationMethod;
+        setStatus(Status.AUTHENTICATED);
     }
 
     @Override

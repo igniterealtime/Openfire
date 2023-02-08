@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2023 Ignite Realtime Foundation . All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ public class OutgoingServerSessionTask extends RemoteSessionTask {
         if (operation == Operation.getOutgoingDomainPairs) {
             result = ((OutgoingServerSession) getSession()).getOutgoingDomainPairs();
         }
-        else if (operation == Operation.isUsingServerDialback) {
-            result = ((OutgoingServerSession) getSession()).isUsingServerDialback();
+        else if (operation == Operation.getAuthenticationMethod) {
+            result = ((OutgoingServerSession) getSession()).getAuthenticationMethod();
         }
     }
 

@@ -375,6 +375,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                                 StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                                 LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
                                 connection.init(session);
+                                session.setAuthenticationMethod(AuthenticationMethod.DIALBACK);
                                 // Set the remote domain name as the address of the session.
                                 session.setAddress(new JID(null, domainPair.getRemote(), null));
                                 log.debug( "Successfully created new session!" );
@@ -577,6 +578,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 connection.init(session);
                 // Set the remote domain name as the address of the session.
                 session.setAddress(new JID(null, domainPair.getRemote(), null));
+                session.setAuthenticationMethod(AuthenticationMethod.DIALBACK);
                 return session;
             }
             else {
@@ -616,7 +618,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Set the remote domain name as the address of the session
             session.setAddress(new JID(null, domainPair.getRemote(), null));
             // Set that the session was created using TLS+SASL (no server dialback)
-            session.usingServerDialback = false;
+            session.setAuthenticationMethod(AuthenticationMethod.SASL_EXTERNAL);
             return session;
         }
         else {
@@ -669,7 +671,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     @Override
     public boolean authenticateSubdomain(@Nonnull final DomainPair domainPair) {
-        if (!usingServerDialback) {
+        if (!isUsingServerDialback()) {
             /*
              * We cannot do this reliably; but this code should be unreachable.
              */
@@ -772,7 +774,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             ", status=" + getStatus() +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", isUsingServerDialback=" + isUsingServerDialback() +
+            ", authenticationMethod=" + getAuthenticationMethod() +
             ", outgoingDomainPairs=" + getOutgoingDomainPairs().stream().map( DomainPair::toString ).collect(Collectors.joining(", ", "{", "}")) +
             '}';
     }

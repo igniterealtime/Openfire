@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,6 +261,7 @@ public class ServerDialback {
                     StreamID streamID = BasicStreamIDFactory.createStreamID(id);
                     LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, socketReader, streamID);
                     connection.init(session);
+                    session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                     // Set the remote domain as the address of the session.
                     session.setAddress(new JID(null, domainPair.getRemote(), null));
                     log.debug( "Successfully created new outgoing session!" );
@@ -399,6 +400,7 @@ public class ServerDialback {
                                 createIncomingServerSession(connection, streamID, hostname);
                         // Add the validated domain as a valid domain
                         session.addValidatedDomain(hostname);
+                        session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                         // Set the domain or subdomain of the local server used when
                         // validating the session
                         session.setLocalDomain(recipient);

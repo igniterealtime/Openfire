@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -392,7 +392,7 @@ public class SASLAuthentication {
                         {
                             if ( verifyCertificates( incomingServerSession.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
                             {
-                                ( (LocalIncomingServerSession) session ).tlsAuth();
+                                ( (LocalIncomingServerSession) session ).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
                             }
                             else
                             {
@@ -509,6 +509,7 @@ public class SASLAuthentication {
             // Add the validated domain as a valid domain. The remote server can
             // now send packets from this address
             ((LocalIncomingServerSession) session).addValidatedDomain(hostname);
+            ((LocalIncomingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
             Log.info("Inbound Server {} authenticated (via TLS)", username);
         }
     }

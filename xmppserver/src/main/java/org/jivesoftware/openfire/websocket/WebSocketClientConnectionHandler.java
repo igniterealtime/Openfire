@@ -23,7 +23,6 @@ import org.eclipse.jetty.websocket.api.annotations.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQPingHandler;
-import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.nio.ClientConnectionHandler;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
@@ -119,14 +118,7 @@ public class WebSocketClientConnectionHandler
     @OnWebSocketClose
     public void onClose(int statusCode, String reason)
     {
-        // Handle asynchronously, to prevent deadlocks. See OF-2473.
-        HttpBindManager.getInstance().getSessionManager().execute(() -> {
-            try {
-                wsConnection.close();
-            } catch (Throwable t) {
-                Log.warn("An exception occurred while trying to process @OnWebSocketClose for session {}.", wsSession, t);
-            }
-        });
+        wsConnection.close();
     }
 
     @OnWebSocketMessage
@@ -172,24 +164,20 @@ public class WebSocketClientConnectionHandler
     public void onError(Throwable error)
     {
         Log.debug("Error detected; connection: {}, session: {}", wsConnection, wsSession, error);
-
-        // Handle asynchronously, to prevent deadlocks. See OF-2473.
-        HttpBindManager.getInstance().getSessionManager().execute(() -> {
-            synchronized (this) {
-                try {
-                    if (isWebSocketOpen()) {
-                        Log.warn("Attempting to close connection on which an error occurred: {}", wsConnection, error);
-                        wsConnection.close(new StreamError(StreamError.Condition.internal_server_error));
-                    } else {
-                        Log.debug("Error detected on websocket that isn't open (any more):", error);
-                    }
-                } catch (Exception e) {
-                    Log.error("Error disconnecting websocket", e);
-                } finally {
-                    wsSession = null;
+        synchronized (this) {
+            try {
+                if (isWebSocketOpen()) {
+                    Log.warn("Attempting to close connection on which an error occurred: {}", wsConnection, error);
+                    wsConnection.close(new StreamError(StreamError.Condition.internal_server_error));
+                } else {
+                    Log.debug("Error detected on websocket that isn't open (any more):", error);
                 }
+            } catch (Exception e) {
+                Log.error("Error disconnecting websocket", e);
+            } finally {
+                wsSession = null;
             }
-        });
+        }
     }
 
     /**

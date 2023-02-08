@@ -109,7 +109,7 @@ public class WebSocketConnection extends VirtualConnection
                 } else {
                     xml = packet.toXML();
                 }
-                socket.getWsSession().getRemote().sendStringByFuture(xml);
+                socket.getWsSession().getRemote().sendString(xml);
             } catch (Exception e) {
                 Log.debug("Error delivering packet:\n" + packet, e);
                 errorDelivering = true;
@@ -142,7 +142,7 @@ public class WebSocketConnection extends VirtualConnection
     {
         boolean errorDelivering = false;
         try {
-            socket.getWsSession().getRemote().sendStringByFuture(text);
+            socket.getWsSession().getRemote().sendString(text);
         } catch (Exception e) {
             Log.debug("Error delivering raw text:\n" + text, e);
             errorDelivering = true;

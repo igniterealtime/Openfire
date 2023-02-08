@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -326,7 +326,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             String id = xpp.getAttributeValue("", "id");
             log.debug( "Got a response (stream ID: {}, version: {}). Check if the remote server is XMPP 1.0 compliant...", id, serverVersion );
 
-            if (serverVersion != null && decodeVersion(serverVersion)[0] >= 1) {
+            if (serverVersion != null && Session.decodeVersion(serverVersion)[0] >= 1) {
                 log.debug( "The remote server is XMPP 1.0 compliant (or at least reports to be)." );
 
                 // Restore default timeout

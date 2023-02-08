@@ -138,17 +138,13 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException {
-        if (getNamespace().equals(namespace)) {
-            // The connected client is a connection manager so create a ConnectionMultiplexerSession
-            session = LocalConnectionMultiplexerSession.createSession(serverName, xpp, connection);
-            if (session != null) {
-                packetHandler = new MultiplexerPacketHandler(session.getAddress().getDomain());
-            }
-            return true;
+    void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
+    {
+        // The connected client is a connection manager so create a ConnectionMultiplexerSession
+        session = LocalConnectionMultiplexerSession.createSession(serverName, xpp, connection);
+        if (session != null) {
+            packetHandler = new MultiplexerPacketHandler(session.getAddress().getDomain());
         }
-        return false;
     }
 
     @Override

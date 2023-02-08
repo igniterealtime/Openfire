@@ -96,15 +96,12 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException {
+    void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
+    {
+        // The connected client is a server so create an IncomingServerSession
         // TODO Finish implementation
-        /*if ("jabber:server".equals(namespace)) {
-            // The connected client is a server so create an IncomingServerSession
-            session = LocalIncomingServerSession.createSession(serverName, reader, connection);
-            return true;
-        }*/
-        return false;
+        //session = LocalIncomingServerSession.createSession(serverName, xpp, connection);
+        throw new UnsupportedOperationException("Server stanza handler pending implementation");
     }
 
     @Override

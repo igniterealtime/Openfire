@@ -207,13 +207,9 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException {
-        if (getNamespace().equals(namespace)) {
-            // The connected client is a connection manager so create a ConnectionMultiplexerSession
-            session = LocalComponentSession.createSession(serverName, xpp, connection);
-            return true;
-        }
-        return false;
+    void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
+    {
+        // The connected client is a connection manager so create a ConnectionMultiplexerSession
+        session = LocalComponentSession.createSession(serverName, xpp, connection);
     }
 }

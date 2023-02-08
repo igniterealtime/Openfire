@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,21 +72,21 @@ public abstract class StanzaHandler {
     protected Connection connection;
 
     // DANIELE: Indicate if a session is already created
-    private boolean sessionCreated = false;
+    protected boolean sessionCreated = false;
 
     // Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
     // client sent a new initial stream header the value will return to false.
     private boolean startedTLS = false;
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
-    private boolean startedSASL = false;
+    protected boolean startedSASL = false;
     /**
      * SASL status based on the last SASL interaction
      */
-    private SASLAuthentication.Status saslStatus;
+    protected SASLAuthentication.Status saslStatus;
 
     // DANIELE: Indicate if a stream:stream is arrived to complete compression
-    private boolean waitingCompressionACK = false;
+    protected boolean waitingCompressionACK = false;
 
     /**
      * Session associated with the socket reader.
@@ -95,7 +96,7 @@ public abstract class StanzaHandler {
     /**
      * Router used to route incoming packets to the correct channels.
      */
-    private PacketRouter router;
+    protected PacketRouter router;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -113,36 +114,44 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-        boolean initialStream = stanza.startsWith("<stream:stream");
-        if (!sessionCreated || initialStream) {
-            if (!initialStream) {
-                // Ignore <?xml version="1.0"?>
-                return;
-            }
-            // Found a stream:stream tag...
-            if (!sessionCreated) {
-                sessionCreated = true;
-                MXParser parser = reader.getXPPParser();
-                parser.setInput(new StringReader(stanza));
-                createSession(parser);
-            }
-            else if (startedTLS) {
-                startedTLS = false;
-                tlsNegotiated();
-            }
-            else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
-                startedSASL = false;
-                saslSuccessful();
-            }
-            else if (waitingCompressionACK) {
-                waitingCompressionACK = false;
-                compressionSuccessful();
-            }
+        if (!sessionCreated || isStartOfStream(stanza)) {
+            initiateSession(stanza, reader);
+        } else {
+            processStanza(stanza, reader);
+        }
+    }
+
+    protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception
+    {
+        boolean initialStream = isStartOfStream(stanza);
+        if (!initialStream) {
+            // Ignore <?xml version="1.0"?>
             return;
         }
+        // Found a stream:stream tag...
+        if (!sessionCreated) {
+            sessionCreated = true;
+            MXParser parser = reader.getXPPParser();
+            parser.setInput(new StringReader(stanza));
+            createSession(parser);
+        }
+        else if (startedTLS) {
+            startedTLS = false;
+            tlsNegotiated();
+        }
+        else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
+            startedSASL = false;
+            saslSuccessful();
+        }
+        else if (waitingCompressionACK) {
+            waitingCompressionACK = false;
+            compressionSuccessful();
+        }
+    }
 
+    protected void processStanza(String stanza, XMPPPacketReader reader) throws Exception {
         // Verify if end of stream was requested
-        if (stanza.equals("</stream:stream>")) {
+        if (isEndOfStream(stanza)) {
             if (session != null) {
                 session.getStreamManager().formalClose();
                 Log.debug( "Closing session as an end-of-stream was received: {}", session );
@@ -447,7 +456,7 @@ public abstract class StanzaHandler {
      *
      * @return true if the connection was encrypted.
      */
-    private boolean negotiateTLS() {
+    protected boolean negotiateTLS() {
         if (connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
             // Send a not_authorized error and close the underlying connection
             connection.close(new StreamError(StreamError.Condition.not_authorized, "A request to negotiate TLS is denied, as TLS has been disabled by configuration."));
@@ -476,7 +485,7 @@ public abstract class StanzaHandler {
      * depending on the session type such as auth for Non-SASL authentication and register
      * for in-band registration.
      */
-    private void tlsNegotiated() {
+    protected void tlsNegotiated() {
         // Offer stream features including SASL Mechanisms
         StringBuilder sb = new StringBuilder(620);
         sb.append(getStreamHeader());
@@ -498,7 +507,7 @@ public abstract class StanzaHandler {
      * resource binding and session establishment should only be offered to clients (i.e. not
      * to servers or external components)
      */
-    private void saslSuccessful() {
+    protected void saslSuccessful() {
         StringBuilder sb = new StringBuilder(420);
         sb.append(getStreamHeader());
         sb.append("<stream:features>");
@@ -523,7 +532,7 @@ public abstract class StanzaHandler {
      *            included.
      * @return true if it was possible to use compression.
      */
-    private boolean compressClient(Element doc) {
+    protected boolean compressClient(Element doc) {
         String error = null;
         if (connection.getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
             // Client requested compression but this feature is disabled
@@ -574,7 +583,7 @@ public abstract class StanzaHandler {
      * resource binding and session establishment should only be offered to clients (i.e. not
      * to servers or external components)
      */
-    private void compressionSuccessful() {
+    protected void compressionSuccessful() {
         StringBuilder sb = new StringBuilder(340);
         sb.append(getStreamHeader());
         sb.append("<stream:features>");
@@ -598,12 +607,12 @@ public abstract class StanzaHandler {
      * @param stanza Stanza to be checked
      * @return whether stanza's namespace matches XEP-0198 namespace
      */
-    private boolean isStreamManagementStanza(Element stanza) {
+    protected boolean isStreamManagementStanza(Element stanza) {
         return StreamManager.NAMESPACE_V2.equals(stanza.getNamespace().getStringValue()) ||
                 StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
     }
 
-    private String getStreamHeader() {
+    protected String getStreamHeader() {
         StringBuilder sb = new StringBuilder(200);
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
@@ -629,7 +638,7 @@ public abstract class StanzaHandler {
      * @deprecated Renamed. Use {@link #closeNeverEncryptedConnection()}
      */
     @Deprecated // remove in Openfire 4.9 or later.
-    void closeNeverSecuredConnection() {
+    protected void closeNeverSecuredConnection() {
         closeNeverEncryptedConnection();
     }
 
@@ -637,7 +646,7 @@ public abstract class StanzaHandler {
      * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
      * closing the connection a stream error will be sent to the entity.
      */
-    void closeNeverEncryptedConnection() {
+    protected void closeNeverEncryptedConnection() {
         // Send a stream error and close the underlying connection.
         connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was established."));
         // Log a warning so that admins can track this case from the server side
@@ -662,40 +671,34 @@ public abstract class StanzaHandler {
         }
 
         final String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-
-        // Check that the TO attribute of the stream header matches the server name or a valid
-        // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
-        // error and close the underlying connection.
         String host = xpp.getAttributeValue("", "to");
-        StreamError streamError = null;
-        if (validateHost() && isHostUnknown(host)) {
-            streamError = new StreamError(StreamError.Condition.host_unknown);
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to incorrect hostname in stream header. Host: " + host +
-                    ". Connection: " + connection);
-        }
-        // Validate the stream namespace
-        else if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
-            // Include the invalid-namespace in the response
-            streamError = new StreamError(StreamError.Condition.invalid_namespace);
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to invalid namespace in stream header. Namespace: " +
-                    xpp.getNamespace() + ". Connection: " + connection);
 
-        }
-        // Create the correct session based on the sent namespace. At this point the server
-        // may offer the client to encrypt the connection. If the client decides to encrypt
-        // the connection then a <starttls> stanza should be received
-        else if (!createSession(xpp.getNamespace(null), serverName, xpp, connection)) {
+        try {
+            // Check that the TO attribute of the stream header matches the server name or a valid
+            // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
+            // error and close the underlying connection.
+            if (validateHost() && isHostUnknown(host)) {
+                throw new StreamErrorException(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host);
+            }
+
+            // Validate the stream namespace
+            if (!"http://etherx.jabber.org/streams".equals(xpp.getNamespace())) {
+                throw new StreamErrorException(StreamError.Condition.invalid_namespace, "Invalid namespace in stream header: " + xpp.getNamespace());
+            }
+
             // http://xmpp.org/rfcs/rfc6120.html#streams-error-conditions-invalid-namespace
             // "or the content namespace declared as the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server")."
-            streamError = new StreamError(StreamError.Condition.invalid_namespace);
-            // Log a warning so that admins can track this cases from the server side
-            Log.warn("Closing session due to invalid namespace in stream header. Prefix: " +
-                    xpp.getNamespace(null) + ". Connection: " + connection);
-        }
+            if (!getNamespace().equals(xpp.getNamespace(null))) {
+                throw new StreamErrorException(StreamError.Condition.invalid_namespace, "Invalid namespace in stream header. Expected: 'jabber:client'. Received: '" + xpp.getNamespace(null) + "'.");
+            }
 
-        if (streamError != null) {
+            // Create the correct session based on the sent namespace. At this point the server
+            // may offer the client to encrypt the connection. If the client decides to encrypt
+            // the connection then a <starttls> stanza should be received
+            createSession(serverName, xpp, connection);
+        }
+        catch (final StreamErrorException ex) {
+            Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
             StringBuilder sb = new StringBuilder(250);
             if (host == null) host = serverName;
             sb.append("<?xml version='1.0' encoding='");
@@ -708,16 +711,15 @@ public abstract class StanzaHandler {
             sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
             sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
             sb.append("version=\"1.0\">");
-            sb.append(streamError.toXML());
+            sb.append(ex.getStreamError().toXML());
             // Deliver stanza
             connection.deliverRawText(sb.toString());
             // Close the underlying connection
             connection.close();
         }
-
     }
 
-    private boolean isHostUnknown(String host) {
+    protected boolean isHostUnknown(String host) {
         if (host == null) {
             // Answer false since when using server dialback the stream header will not
             // have a TO attribute
@@ -778,13 +780,29 @@ public abstract class StanzaHandler {
     abstract boolean validateJIDs();
 
     /**
-     * Creates the appropriate {@link Session} subclass based on the specified namespace.
+     * Creates the appropriate {@link Session} subclass.
      *
-     * @param namespace the namespace sent in the stream element. eg. jabber:client.
-     * @return the created session or null.
      * @throws org.xmlpull.v1.XmlPullParserException when XML parsing causes an error.
-     *
      */
-    abstract boolean createSession(String namespace, String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException;
+    abstract void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException;
+
+    /**
+     * Checks if the provided XML data represents the beginning of a new XMPP stream.
+     *
+     * @param xml The XML to verify
+     * @return 'true' if the provided data represents the beginning of an XMPP stream.
+     */
+    protected boolean isStartOfStream(final String xml) {
+        return xml.startsWith("<stream:stream");
+    }
+
+    /**
+     * Checks if the provided XML data represents the end / closing of an XMPP stream.
+     *
+     * @param xml The XML to verify
+     * @return 'true' if the provided data represents the end of an XMPP stream.
+     */
+    protected boolean isEndOfStream(final String xml) {
+        return xml.equals("</stream:stream>");
+    }
 }

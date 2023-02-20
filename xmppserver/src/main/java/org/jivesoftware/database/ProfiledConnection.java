@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004 Jive Software, Ignite Realtime Foundation 2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 package org.jivesoftware.database;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.*;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Wraps a Connection object and collects statistics about the database queries
@@ -31,6 +33,8 @@ import java.util.Map;
  * @author Jive Software
  */
 public class ProfiledConnection extends AbstractConnection {
+
+    private static final Logger Log = LoggerFactory.getLogger(ProfiledConnection.class);
 
     public static enum Type {
 
@@ -586,6 +590,10 @@ public class ProfiledConnection extends AbstractConnection {
 
     //--------------------- Connection Wrapping Code ---------------------//
 
+    /**
+     * All connections that are opened and not (yet) closed by the current thread.
+     */
+    private static final ThreadLocal<Map<Connection, Throwable>> connectionsOnThread = ThreadLocal.withInitial(HashMap::new);
 
     /**
      * Creates a new ProfiledConnection that wraps the specified connection.
@@ -594,12 +602,25 @@ public class ProfiledConnection extends AbstractConnection {
      */
     public ProfiledConnection(Connection connection) {
         super(connection);
+        connectionsOnThread.get().put(connection, new Exception("StackTrace"));
+
+        if (connectionsOnThread.get().size() > 1) {
+            Log.warn("This thread currently has more than one (namely: {}) database connections open. Call flows that depend on having more than one open database connection can cause resource starvation. Stack traces for every invocation that opens a new connection are logged on DEBUG level.", connectionsOnThread.get().size());
+            connectionsOnThread.get().values().forEach(t -> Log.debug("Stack trace for invocation of database connection constructor.", t));
+        }
     }
 
     public void close() throws SQLException {
         // Close underlying connection.
         if (connection != null) {
-            connection.close();
+            try {
+                connection.close();
+            } finally {
+                connectionsOnThread.get().remove(connection);
+                if (connectionsOnThread.get().isEmpty()) {
+                    connectionsOnThread.remove();
+                }
+            }
         }
     }
 

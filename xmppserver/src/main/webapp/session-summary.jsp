@@ -120,8 +120,7 @@
     final String searchVersion = ParamUtils.getStringParameter(request, "searchVersion", "");
         if(!searchVersion.trim().isEmpty()) {
             final String searchCriteria = searchVersion.trim();
-            // TODO: Fix this filter
-            filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getResource(), searchCriteria));
+            filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getSoftwareVersion().get("version"), searchCriteria));
         }
     final String searchNode = ParamUtils.getStringParameter(request, "searchNode", "");
     if(searchNode.equals("local")) {

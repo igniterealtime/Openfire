@@ -43,10 +43,21 @@
     </td>
     <td style="width: 15%; white-space: nowrap">
         <% if (sess.getSoftwareVersion() != null) {
-            String version = sess.getSoftwareVersion().get("version");
-            if (version != null) { %>
-        <%= StringUtils.escapeHTMLTags(version) %>
-        <% } } %>
+            final String softwareName = sess.getSoftwareVersion().get("name");
+            final String softwareVersion = sess.getSoftwareVersion().get("version");
+
+            String softwareString = "";
+            if(softwareName != null && !softwareName.isBlank()){
+                softwareString += softwareName + " - ";
+            }
+            if(softwareVersion != null && !softwareVersion.isBlank()) {
+                softwareString += softwareVersion;
+            };
+
+            if (!softwareString.isBlank()) { %>
+                <%= StringUtils.escapeHTMLTags(softwareString) %>
+            <% }
+        } %>
     </td>
     <% if (ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting()) { %>
     <td nowrap>

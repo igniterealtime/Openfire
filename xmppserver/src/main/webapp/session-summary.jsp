@@ -120,7 +120,18 @@
     final String searchVersion = ParamUtils.getStringParameter(request, "searchVersion", "");
         if(!searchVersion.trim().isEmpty()) {
             final String searchCriteria = searchVersion.trim();
-            filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getSoftwareVersion().get("version"), searchCriteria));
+            filter = filter.and(clientSession -> {
+                final String softwareName = clientSession.getSoftwareVersion().get("name");
+                final String softwareVersion = clientSession.getSoftwareVersion().get("version");
+                String softwareString = "";
+                if(softwareName != null && !softwareName.isBlank()){
+                    softwareString += softwareName + " - ";
+                }
+                if(softwareVersion != null && !softwareVersion.isBlank()) {
+                    softwareString += softwareVersion;
+                };
+                return StringUtils.containsIgnoringCase(softwareString, searchCriteria);
+            });
         }
     final String searchNode = ParamUtils.getStringParameter(request, "searchNode", "");
     if(searchNode.equals("local")) {

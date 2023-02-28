@@ -90,9 +90,8 @@ function setUpAioxmppEnvironment {
     	pushd "${AIOXMPPDIR}"
 	fi
 	python3.11 -m pip install setuptools
-	python3.11 -m pip install pytest
-	python3.11 -m pip install pytest-cov
-	python3.11 -m pip install -e .
+	python3.11 -m pip install pytest pytest-cov coveralls pyOpenSSL
+    python3.11 -m pip install .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]
 provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner

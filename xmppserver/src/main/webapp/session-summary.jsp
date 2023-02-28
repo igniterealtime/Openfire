@@ -125,9 +125,12 @@
                 final String softwareVersion = clientSession.getSoftwareVersion().get("version");
                 String softwareString = "";
                 if(softwareName != null && !softwareName.isBlank()){
-                    softwareString += softwareName + " - ";
+                    softwareString += softwareName;
                 }
                 if(softwareVersion != null && !softwareVersion.isBlank()) {
+                    if (!softwareString.isBlank()) {
+                        softwareString += " - ";
+                    }
                     softwareString += softwareVersion;
                 };
                 return StringUtils.containsIgnoringCase(softwareString, searchCriteria);

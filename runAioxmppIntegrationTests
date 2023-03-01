@@ -90,7 +90,7 @@ function setUpAioxmppEnvironment {
     	pushd "${AIOXMPPDIR}"
 	fi
 	python3.11 -m pip install setuptools
-	python3.11 -m pip install pytest pytest-cov coveralls pyOpenSSL
+	python3.11 -m pip install pytest pytest-cov coveralls pyOpenSSL pytz
     python3.11 -m pip install .
     cat >"${AIOXMPPCONFIG}" <<EOL
 [global]

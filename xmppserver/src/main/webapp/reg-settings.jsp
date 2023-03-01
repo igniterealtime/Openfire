@@ -211,7 +211,7 @@
         <table cellpadding="3" cellspacing="0" border="0">
             <tr>
                 <td width="1%"><input type="radio" name="inbandEnabled" value="true" id="rb01" ${inbandEnabled ? 'checked' : ''} ${readOnly ? 'disabled' : ''}></td>
-                <td width="99%"><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> -<fmt:message key="reg.settings.auto_create_user" /></label></td>
+                <td width="99%"><label for="rb01"><b><fmt:message key="reg.settings.enable" /></b> - <fmt:message key="reg.settings.auto_create_user" /></label></td>
             </tr>
             <tr>
                 <td width="1%"><input type="radio" name="inbandEnabled" value="false" id="rb02" ${inbandEnabled ?  '' : 'checked'} ${readOnly ? 'disabled' : ''}></td>

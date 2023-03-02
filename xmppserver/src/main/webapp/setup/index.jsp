@@ -337,6 +337,10 @@
                 </form>
 
             </div>
+
+            <p class="info">
+                <fmt:message key="setup.index.translator-invitation"/>
+            </p>
             <!-- END jive-contentBox -->
 
         </c:otherwise>

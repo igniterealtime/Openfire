@@ -316,6 +316,22 @@ html>body .jive-vcardTable {
     background-position : 5px 5px;
     -moz-border-radius: 3px;
 }
+
+.info {
+    color : #333;
+    font-weight : bold;
+    background-color : #EEE;
+    padding : 5px;
+    border: 1px solid #CCC;
+    margin-top : 10px;
+    margin-bottom: 20px;
+    padding-left : 28px;
+    background-image : url(/images/info-16x16.gif);
+    background-repeat : no-repeat;
+    background-position : 5px 5px;
+    -moz-border-radius: 3px;
+}
+
 .jive_setup_launchAdmin a,
 .jive_setup_launchAdmin a:visited {
     position: relative;

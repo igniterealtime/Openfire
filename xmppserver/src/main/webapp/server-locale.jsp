@@ -27,6 +27,7 @@
 <%@ page import="org.slf4j.Logger" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -102,9 +103,13 @@
         <div class="error"><c:out value="${err.value}"/></div>
     </c:forEach>
 
+    <admin:infobox type="info">
+        <fmt:message key="locale.translator-invitation" />
+    </admin:infobox>
+
     <p>
-<fmt:message key="locale.title.info" />
-</p>
+        <fmt:message key="locale.title.info" />
+    </p>
 
 
 <!-- BEGIN locale settings -->

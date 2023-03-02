@@ -298,6 +298,11 @@
                                 <b>Polski</b> (pl_PL)
                             </label><br>
 
+                            <label for="pt_PT">
+                                <input type="radio" name="localeCode" value="pt_PT" ${locale eq 'pt_PT' ? 'checked' : ''} id="pt_PT" />
+                                <b>Portugu&ecirc;s Portugal</b> (pt_PT)
+                            </label><br>
+
                             <label for="pt_BR">
                                 <input type="radio" name="localeCode" value="pt_BR" ${locale eq 'pt_BR' ? 'checked' : ''} id="pt_BR" />
                                 <b>Portugu&ecirc;s Brasileiro</b> (pt_BR)

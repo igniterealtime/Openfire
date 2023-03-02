@@ -258,63 +258,63 @@
                     %>
                     <div id="jive-setup-language">
                         <p>
-                            <label for="loc01">
-                                <input type="radio" name="localeCode" value="cs_CZ" ${locale eq 'cs_CZ' ? 'checked' : ''} id="loc01" />
+                            <label for="cs_CZ">
+                                <input type="radio" name="localeCode" value="cs_CZ" ${locale eq 'cs_CZ' ? 'checked' : ''} id="cs_CZ" />
                                 <b>Czech</b> (cs_CZ)
                             </label><br>
 
-                            <label for="loc02">
-                                <input type="radio" name="localeCode" value="de" ${locale eq 'de' ? 'checked' : ''} id="loc02" />
+                            <label for="de">
+                                <input type="radio" name="localeCode" value="de" ${locale eq 'de' ? 'checked' : ''} id="de" />
                                 <b>Deutsch</b> (de)
                             </label><br>
 
-                            <label for="loc03">
-                                <input type="radio" name="localeCode" value="en" ${locale eq 'en' ? 'checked' : ''} id="loc03" />
+                            <label for="en">
+                                <input type="radio" name="localeCode" value="en" ${locale eq 'en' ? 'checked' : ''} id="en" />
                                 <b>English</b> (en)
                             </label><br>
 
-                            <label for="loc04">
-                                <input type="radio" name="localeCode" value="es" ${locale eq 'es' ? 'checked' : ''} id="loc04" />
+                            <label for="es">
+                                <input type="radio" name="localeCode" value="es" ${locale eq 'es' ? 'checked' : ''} id="es" />
                                 <b>Espa&ntilde;ol</b> (es)
                             </label><br>
 
-                            <label for="loc05">
-                                <input type="radio" name="localeCode" value="fr" ${locale eq 'fr' ? 'checked' : ''} id="loc05" />
+                            <label for="fr">
+                                <input type="radio" name="localeCode" value="fr" ${locale eq 'fr' ? 'checked' : ''} id="fr" />
                                 <b>Fran&ccedil;ais</b> (fr)
                             </label><br>
 
-                            <label for="locJa">
-                                <input type="radio" name="localeCode" value="ja_JP" ${locale eq 'ja_JP' ? 'checked' : ''} id="locJa" />
+                            <label for="ja_JP">
+                                <input type="radio" name="localeCode" value="ja_JP" ${locale eq 'ja_JP' ? 'checked' : ''} id="ja_JP" />
                                 <b>日本語</b> (ja_JP)
                             </label><br>
 
-                            <label for="loc06">
-                                <input type="radio" name="localeCode" value="nl" ${locale eq 'nl' ? 'checked' : ''} id="loc06" />
+                            <label for="nl">
+                                <input type="radio" name="localeCode" value="nl" ${locale eq 'nl' ? 'checked' : ''} id="nl" />
                                 <b>Nederlands</b> (nl)
                             </label><br>
 
-                            <label for="loc07">
-                                <input type="radio" name="localeCode" value="pl_PL" ${locale eq 'pl_PL' ? 'checked' : ''} id="loc07" />
+                            <label for="pl_PL">
+                                <input type="radio" name="localeCode" value="pl_PL" ${locale eq 'pl_PL' ? 'checked' : ''} id="pl_PL" />
                                 <b>Polski</b> (pl_PL)
                             </label><br>
 
-                            <label for="loc08">
-                                <input type="radio" name="localeCode" value="pt_BR" ${locale eq 'pt_BR' ? 'checked' : ''} id="loc08" />
+                            <label for="pt_BR">
+                                <input type="radio" name="localeCode" value="pt_BR" ${locale eq 'pt_BR' ? 'checked' : ''} id="pt_BR" />
                                 <b>Portugu&ecirc;s Brasileiro</b> (pt_BR)
                             </label><br>
 
-                            <label for="loc09">
-                                <input type="radio" name="localeCode" value="ru_RU" ${locale eq 'ru_RU' ? 'checked' : ''} id="loc09" />
+                            <label for="ru_RU">
+                                <input type="radio" name="localeCode" value="ru_RU" ${locale eq 'ru_RU' ? 'checked' : ''} id="ru_RU" />
                                 <b>&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439;</b> (ru_RU)
                             </label><br>
 
-                            <label for="loc10">
-                                <input type="radio" name="localeCode" value="sk" ${locale eq 'sk' ? 'checked' : ''} id="loc10" />
+                            <label for="sk">
+                                <input type="radio" name="localeCode" value="sk" ${locale eq 'sk' ? 'checked' : ''} id="sk" />
                                 <b>Sloven&#269;ina</b> (sk)
                             </label><br>
 
-                            <label for="loc11">
-                                <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="loc11" />
+                            <label for="zh_CN">
+                                <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="zh_CN" />
                                 <img src="../images/setup_language_zh_CN.gif" align="top" />
                                 <b>Simplified Chinese</b> (zh_CN)
                             </label><br>

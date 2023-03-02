@@ -313,6 +313,11 @@
                                 <b>Sloven&#269;ina</b> (sk)
                             </label><br>
 
+                            <label for="uk_UA">
+                                <input type="radio" name="localeCode" value="uk_UA" ${locale eq 'uk_UA' ? 'checked' : ''} id="uk_UA" />
+                                <b>Українська</b> (uk_UA)
+                            </label><br>
+
                             <label for="zh_CN">
                                 <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="zh_CN" />
                                 <img src="../images/setup_language_zh_CN.gif" align="top" />

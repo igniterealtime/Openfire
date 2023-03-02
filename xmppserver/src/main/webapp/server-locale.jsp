@@ -231,6 +231,14 @@
             </tr>
             <tr>
                 <td>
+                    <input type="radio" name="localeCode" value="uk_UA" <%= ("uk_UA".equals(locale.toString()) ? "checked" : "") %> id="uk_UA" />
+                </td>
+                <td colspan="2">
+                    <label for="uk_UA">Українська (uk_UA)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %> id="zh_CN" />
                 </td>
                 <td>

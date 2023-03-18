@@ -104,6 +104,8 @@
 
         // Create a new file upload handler
         ServletFileUpload upload = new ServletFileUpload(factory);
+        // I'm not sure that the file count can exceed 1, but limiting is good practice under CVE-2023-24998
+        upload.setFileCountMax(20);
 
         try {
             // Parse the request

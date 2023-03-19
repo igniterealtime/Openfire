@@ -415,7 +415,7 @@
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-bmp</artifactId>
-            <version>3.5</version>
+            <version>3.9.4</version>
         </dependency>
 
         <!-- Database Drivers -->

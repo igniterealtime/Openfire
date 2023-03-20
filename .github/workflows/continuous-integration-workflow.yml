@@ -51,8 +51,7 @@ jobs:
   aioxmpp:
 
     name: Execute aioxmpp-based CI tests
-    # ubuntu-latest may have issues with Epoll python events
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -111,8 +110,7 @@ jobs:
   connectivity:
 
     name: Execute Connectivity CI tests
-    # ubuntu-latest may have issues with this workflow?
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: build
 
     steps:

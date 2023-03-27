@@ -50,5 +50,8 @@
               </roster>
           </user2>
       </users>
+      <authprovider>
+          <mode>custom</mode>
+      </authprovider>
   </autosetup>
 </jive>

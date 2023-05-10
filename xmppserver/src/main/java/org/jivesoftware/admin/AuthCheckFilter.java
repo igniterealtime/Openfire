@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,15 @@ public class AuthCheckFilter implements Filter {
      */
     public static final SystemProperty<Boolean> IP_ACCESS_IGNORE_EXCLUDES = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("adminConsole.access.ignore-excludes")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * Controls whether wildcards are allowed in URLs that are excluded from auth checks.
+     */
+    public static final SystemProperty<Boolean> ALLOW_WILDCARDS_IN_EXCLUDES = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("auth.excludes.allow-wildcards")
         .setDefaultValue(false)
         .setDynamic(true)
         .build();
@@ -187,8 +196,8 @@ public class AuthCheckFilter implements Filter {
         // If the exclude rule includes a "?" character, the url must exactly match the exclude rule.
         // If the exclude rule does not contain the "?" character, we chop off everything starting at the first "?"
         // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"
-        // character then the URL is allowed if it exactly matches everything before the * and there are no ".." even encoded ones
-        // characters after the "*". All data in the URL before
+        // (wildcard) character, and wildcards are allowed in excludes, then the URL is allowed if it exactly
+        // matches everything before the * and there are no ".." even encoded ones characters after the "*".
 
         String decodedUrl = null;
         try {
@@ -197,7 +206,7 @@ public class AuthCheckFilter implements Filter {
             return false;
         }
 
-        if (exclude.endsWith("*")) {
+        if (exclude.endsWith("*") && ALLOW_WILDCARDS_IN_EXCLUDES.getValue()) {
             if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
                 // Now make sure that there are no ".." characters in the rest of the URL.
                 if (!decodedUrl.contains("..")) {

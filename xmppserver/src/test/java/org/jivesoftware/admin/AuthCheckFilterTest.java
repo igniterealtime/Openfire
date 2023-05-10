@@ -72,10 +72,19 @@ public class AuthCheckFilterTest {
         assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-/../../log.jsp?log=info&mode=asc&lines=All","setup/setup-*"));
         assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-/%2E%2E/%2E%2E/log.jsp?log=info&mode=asc&lines=All","setup/setup-*"));
         assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-s/%u002e%u002e/%u002e%u002e/log.jsp?log=info&mode=asc&lines=All", "setup/setup-*"));
-       
-        assertTrue(AuthCheckFilter.testURLPassesExclude("setup/setup-new.jsp","setup/setup-*"));
 
         assertFalse(AuthCheckFilter.testURLPassesExclude("another.jsp?login.jsp", "login.jsp"));
+    }
+
+    @Test
+    public void wildcardInExcludePassesWhenWildcardsAllowed() throws Exception {
+        AuthCheckFilter.ALLOW_WILDCARDS_IN_EXCLUDES.setValue(true);
+        assertTrue(AuthCheckFilter.testURLPassesExclude("setup/setup-new.jsp","setup/setup-*"));
+    }
+    @Test
+    public void wildcardInExcludeBlockedWhenWildcardsNotAllowed() throws Exception {
+        AuthCheckFilter.ALLOW_WILDCARDS_IN_EXCLUDES.setValue(false);
+        assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-new.jsp","setup/setup-*"));
     }
 
     @Test

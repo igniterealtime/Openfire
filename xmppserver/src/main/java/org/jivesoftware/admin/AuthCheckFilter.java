@@ -224,6 +224,11 @@ public class AuthCheckFilter implements Filter {
                 excludes.add(tok);
             }
         }
+        // remove setup page access once setup has finished
+        if("true".equals(JiveGlobals.getXMLProperty("setup"))) {
+            removeExclude("setup/index.jsp");
+            removeExclude("setup/setup-*");
+        }
     }
 
     @Override

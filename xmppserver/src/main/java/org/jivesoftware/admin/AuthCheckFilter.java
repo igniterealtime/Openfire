@@ -235,7 +235,7 @@ public class AuthCheckFilter implements Filter {
             StringTokenizer tokenizer = new StringTokenizer(excludesProp, ",");
             while (tokenizer.hasMoreTokens()) {
                 String tok = tokenizer.nextToken().trim();
-                excludes.add(tok);
+                addExclude(tok);
             }
         }
         // remove setup page access once setup has finished

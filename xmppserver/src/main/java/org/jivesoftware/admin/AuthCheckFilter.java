@@ -17,7 +17,10 @@
 package org.jivesoftware.admin;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -194,7 +197,7 @@ public class AuthCheckFilter implements Filter {
         if (exclude.endsWith("*") && ALLOW_WILDCARDS_IN_EXCLUDES.getValue()) {
             if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
                 // Now make sure that there are no ".." characters in the rest of the URL.
-                if (!url.contains("..") && !url.toLowerCase().contains("%2e")) {
+                if (!url.contains("..") && !url.toLowerCase().contains("%2e") && !url.toLowerCase().contains("%u002e")) {
                     return true;
                 }
             }

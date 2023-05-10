@@ -174,7 +174,7 @@ public class WebXmlUtilsTest
         // Verify result.
         assertNotNull( result );
         assertEquals( 1, result.size() );
-        assertEquals( "login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-*,.gif,.png,error-serverdown.jsp,loginToken.jsp", result.get("excludes") );
+        assertEquals( "login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-admin-settings.jsp,setup/setup-completed.jsp,setup/setup-datasource-jndi.jsp,setup/setup-datasource-settings.jsp,setup/setup-datasource-standard.jsp,setup/setup-finished.jsp,setup/setup-host-settings.jsp,setup/setup-ldap-group.jsp,setup/setup-ldap-server.jsp,setup/setup-ldap-user.jsp,setup/setup-profile-settings.jsp,.gif,.png,error-serverdown.jsp,loginToken.jsp", result.get("excludes") );
     }
 
     @Test

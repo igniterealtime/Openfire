@@ -59,8 +59,6 @@ public class AuthCheckFilterTest {
 
     }
 
-    // login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp
-
     @Test
     public void testExcludeRules() {
         assertFalse(AuthCheckFilter.testURLPassesExclude("blahblah/login.jsp", "login.jsp"));
@@ -73,7 +71,7 @@ public class AuthCheckFilterTest {
         assertFalse(AuthCheckFilter.testURLPassesExclude("login.jsp?logout=false&another=true", "login.jsp?logout=false"));
 
         assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-/../../log.jsp?log=info&mode=asc&lines=All","setup/setup-*"));
-        assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-/%2E/%2E/log.jsp?log=info&mode=asc&lines=All","setup/setup-*"));
+        assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-/%2E%2E/%2E%2E/log.jsp?log=info&mode=asc&lines=All","setup/setup-*"));
         assertFalse(AuthCheckFilter.testURLPassesExclude("setup/setup-s/%u002e%u002e/%u002e%u002e/log.jsp?log=info&mode=asc&lines=All", "setup/setup-*"));
        
         assertTrue(AuthCheckFilter.testURLPassesExclude("setup/setup-new.jsp","setup/setup-*"));

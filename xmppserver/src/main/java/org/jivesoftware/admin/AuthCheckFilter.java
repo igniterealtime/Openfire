@@ -227,7 +227,17 @@ public class AuthCheckFilter implements Filter {
         // remove setup page access once setup has finished
         if("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             removeExclude("setup/index.jsp");
-            removeExclude("setup/setup-*");
+            removeExclude("setup/setup-admin-settings.jsp");
+            removeExclude("setup/setup-completed.jsp");
+            removeExclude("setup/setup-datasource-jndi.jsp");
+            removeExclude("setup/setup-datasource-settings.jsp");
+            removeExclude("setup/setup-datasource-standard.jsp");
+            removeExclude("setup/setup-finished.jsp");
+            removeExclude("setup/setup-host-settings.jsp");
+            removeExclude("setup/setup-ldap-group.jsp");
+            removeExclude("setup/setup-ldap-server.jsp");
+            removeExclude("setup/setup-ldap-user.jsp");
+            removeExclude("setup/setup-profile-settings.jsp");
         }
     }
 

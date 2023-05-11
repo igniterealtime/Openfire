@@ -19,8 +19,6 @@ package org.jivesoftware.admin;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -188,11 +186,18 @@ public class AuthCheckFilter implements Filter {
      * @return true if the URL passes the exclude test.
      */
     public static boolean testURLPassesExclude(String url, String exclude) {
+        // If the url doesn't decode to UTF-8 then return false, it could be trying to get around our rules with nonstandard encoding
         // If the exclude rule includes a "?" character, the url must exactly match the exclude rule.
         // If the exclude rule does not contain the "?" character, we chop off everything starting at the first "?"
         // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"
-        // (wildcard) character, and wildcards are allowed in excludes, then the URL is allowed if it exactly
-        // matches everything before the * and there are no ".." characters after the "*".
+        // character then the URL is allowed if it exactly matches everything before the * and there are no ".."
+        // characters after the "*". All data in the URL before
+
+        try {
+            URLDecoder.decode(url, "UTF-8");
+        } catch (Exception e) {
+            return false;        
+        }
 
         if (exclude.endsWith("*") && ALLOW_WILDCARDS_IN_EXCLUDES.getValue()) {
             if (url.startsWith(exclude.substring(0, exclude.length()-1))) {

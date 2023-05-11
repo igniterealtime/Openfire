@@ -311,6 +311,8 @@ public class AuthCheckFilter implements Filter {
 
     @Override
     public void destroy() {
+        // reset excludes to an empty set to prevent state carry over
+        excludes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
     }
 
     private String getRedirectURL(HttpServletRequest request, String loginPage,

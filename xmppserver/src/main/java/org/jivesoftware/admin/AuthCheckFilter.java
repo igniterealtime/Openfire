@@ -19,8 +19,6 @@ package org.jivesoftware.admin;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -190,6 +188,17 @@ public class AuthCheckFilter implements Filter {
         // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"
         // character then the URL is allowed if it exactly matches everything before the * and there are no ".."
         // characters after the "*". All data in the URL before
+
+        try {
+            System.out.println("Original URL = " + url);
+            var decodedUrl = URLDecoder.decode(url, "UTF-16");
+            System.out.println("Decoded URL = " + decodedUrl);
+        } catch (Exception e) {
+
+            System.out.println("FAILS: " + url);
+
+        }
+
 
         if (exclude.endsWith("*")) {
 

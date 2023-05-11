@@ -58,8 +58,6 @@ public class AuthCheckFilterTest {
 
     }
 
-    // login.jsp,index.jsp?logout=true,setup/index.jsp,setup/setup-,.gif,.png,error-serverdown.jsp
-
     @Test
     public void testExcludeRules() {
         assertFalse(AuthCheckFilter.testURLPassesExclude("blahblah/login.jsp", "login.jsp"));

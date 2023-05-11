@@ -187,20 +187,20 @@ public class AuthCheckFilter implements Filter {
         // If the exclude rule includes a "?" character, the url must exactly match the exclude rule.
         // If the exclude rule does not contain the "?" character, we chop off everything starting at the first "?"
         // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"
-        // character then the URL is allowed if it exactly matches everything before the * and there are no ".."
+        // character then the URL is allowed if it exactly matches everything before the * and there are no ".." and no encoded ".."
         // characters after the "*". All data in the URL before
 
+        String decodedUrl = null;
         try {
-            URLDecoder.decode(url, "UTF-8");
+            decodedUrl = URLDecoder.decode(url, "UTF-8");
         } catch (Exception e) {
             return false;
         }
 
         if (exclude.endsWith("*")) {
-
             if (url.startsWith(exclude.substring(0, exclude.length()-1))) {
                 // Now make sure that there are no ".." characters in the rest of the URL.
-                if (!url.contains("..") && !url.toLowerCase().contains("%2e") && !url.toLowerCase().contains("%u002e")) {
+                if (!url.contains("..") && !decodedUrl.contains("..") && !url.toLowerCase().contains("%2e") /*&& !url.toLowerCase().contains("%u002e")*/) {
                     return true;
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class AuthCheckFilter implements Filter {
      * Controls whether wildcards are allowed in URLs that are excluded from auth checks.
      */
     public static final SystemProperty<Boolean> ALLOW_WILDCARDS_IN_EXCLUDES = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("auth.excludes.allow-wildcards")
+        .setKey("adminConsole.access.allow-wildcards-in-excludes")
         .setDefaultValue(false)
         .setDynamic(true)
         .build();

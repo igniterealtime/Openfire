@@ -1355,4 +1355,19 @@ public class JiveGlobals {
         // (re)write the encryption key to the security XML file
         securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
     }
+
+    public static final String[] setupExcludePaths = {
+        "setup/index.jsp", 
+        "setup/setup-admin-settings.jsp", 
+        "setup/setup-completed.jsp", 
+        "setup/setup-datasource-jndi.jsp", 
+        "setup/setup-datasource-settings.jsp", 
+        "setup/setup-datasource-standard.jsp", 
+        "setup/setup-finished.jsp",
+        "setup/setup-host-settings.jsp", 
+        "setup/setup-ldap-group.jsp", 
+        "setup/setup-ldap-server.jsp", 
+        "setup/setup-ldap-user.jsp",
+        "setup/setup-profile-settings.jsp"
+    };
 }

@@ -32,6 +32,7 @@ import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.*;
+import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
@@ -252,7 +253,11 @@ public class AdminConsolePlugin implements Plugin {
         collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
 
         try {
-            adminServer.start();
+            adminServer.start(); // excludes initialised
+        
+            if(XMPPServer.getInstance().isSetupMode()) {
+                AuthCheckFilter.loadSetupExcludes();
+            }
 
             // Log the ports that the admin server is listening on.
             logAdminConsolePorts();

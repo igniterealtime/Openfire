@@ -60,33 +60,6 @@ public class AuthCheckFilter implements Filter {
         .build();
 
     /**
-     * List of IP addresses that are not allowed to access the admin console.
-     */
-    public static final SystemProperty<Set<String>> IP_ACCESS_BLOCKLIST = SystemProperty.Builder.ofType(Set.class)
-        .setKey("adminConsole.access.ip-blocklist")
-        .setDefaultValue(Collections.emptySet())
-        .setDynamic(true)
-        .buildSet(String.class);
-
-    /**
-     * List of IP addresses that are allowed to access the admin console. When empty, this list is ignored.
-     */
-    public static final SystemProperty<Set<String>> IP_ACCESS_ALLOWLIST = SystemProperty.Builder.ofType(Set.class)
-        .setKey("adminConsole.access.ip-allowlist")
-        .setDefaultValue(Collections.emptySet())
-        .setDynamic(true)
-        .buildSet(String.class);
-
-    /**
-     * Controls if IP Access lists are applied to excluded URLs.
-     */
-    public static final SystemProperty<Boolean> IP_ACCESS_IGNORE_EXCLUDES = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("adminConsole.access.ignore-excludes")
-        .setDefaultValue(false)
-        .setDynamic(true)
-        .build();
-
-    /**
      * Controls whether wildcards are allowed in URLs that are excluded from auth checks.
      */
     public static final SystemProperty<Boolean> ALLOW_WILDCARDS_IN_EXCLUDES = SystemProperty.Builder.ofType(Boolean.class)
@@ -191,8 +164,8 @@ public class AuthCheckFilter implements Filter {
         // If the exclude rule includes a "?" character, the url must exactly match the exclude rule.
         // If the exclude rule does not contain the "?" character, we chop off everything starting at the first "?"
         // in the URL and then the resulting url must exactly match the exclude rule. If the exclude ends with a "*"
-        // character then the URL is allowed if it exactly matches everything before the * and there are no ".." even encoded ones
-        // characters after the "*". All data in the URL before
+        // (wildcard) character, and wildcards are allowed in excludes, then the URL is allowed if it exactly
+        // matches everything before the * and there are no ".." characters after the "*".
 
         String decodedUrl = null;
         try {

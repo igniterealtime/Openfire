@@ -1370,6 +1370,7 @@ public class JiveGlobals {
 
     public static final String[] setupExcludePaths = {
         "setup/index.jsp", 
+        "setup/setup-admin-settings_test.jsp", 
         "setup/setup-admin-settings.jsp", 
         "setup/setup-completed.jsp", 
         "setup/setup-datasource-jndi.jsp", 
@@ -1377,10 +1378,12 @@ public class JiveGlobals {
         "setup/setup-datasource-standard.jsp", 
         "setup/setup-finished.jsp",
         "setup/setup-host-settings.jsp", 
+        "setup/setup-ldap-group_test.jsp", 
         "setup/setup-ldap-group.jsp", 
-        "setup/setup-ldap-server.jsp", 
+        "setup/setup-ldap-server.jsp",         
         "setup/setup-ldap-server_test.jsp", 
         "setup/setup-ldap-user.jsp",
+        "setup/setup-ldap-user_test.jsp",
         "setup/setup-profile-settings.jsp"
     };
 }

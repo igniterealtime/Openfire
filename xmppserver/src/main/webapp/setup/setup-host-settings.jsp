@@ -31,6 +31,7 @@
     String fqdn = ParamUtils.getParameter(request, "fqdn");
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", Integer.MIN_VALUE);
     int securePort = ParamUtils.getIntParameter(request, "securePort", Integer.MIN_VALUE);
+    boolean restrictAdminLocalhost = ParamUtils.getBooleanParameter(request, "restrictAdminLocalhost");
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled", true);
     boolean anonymousAuthentication = JiveGlobals.getXMLProperty(AnonymousSaslServer.ENABLED.getKey(), false);
     String encryptionAlgorithm = ParamUtils.getParameter(request, "encryptionAlgorithm");
@@ -120,6 +121,9 @@
 
             session.setAttribute("encryptedSettings", new HashSet<String>());
 
+            if (restrictAdminLocalhost){
+                xmlSettings.put("adminConsole.access.ip-allowlist", "0:0:0:0:0:0:0:1");
+            }
             JiveGlobals.setupPropertyEncryptionAlgorithm(encryptionAlgorithm);
             JiveGlobals.setupPropertyEncryptionKey(encryptionKey);
 
@@ -255,6 +259,16 @@
         </c:if>
     </td>
 </tr>
+    <tr>
+        <td/>
+        <td>
+            <input type="checkbox" name="restrictAdminLocalhost" checked>
+            <label>  <fmt:message key="setup.host.settings.restrict_localhost" /></label>
+            <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span>
+                <span class="tooltiptext"><fmt:message key="setup.host.settings.restrict_localhost_info" /></span>
+            </div><br /><br />
+        </td>
+    </tr>
 <tr>
     <td style="width: 1%; white-space: nowrap" align="right">
         <fmt:message key="setup.host.settings.encryption_algorithm" />

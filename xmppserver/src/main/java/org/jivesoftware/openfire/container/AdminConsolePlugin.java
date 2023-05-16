@@ -489,6 +489,7 @@ public class AdminConsolePlugin implements Plugin {
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+        context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         context.setConfigurations(new Configuration[]{
             new AnnotationConfiguration(),

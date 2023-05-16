@@ -122,7 +122,7 @@
             session.setAttribute("encryptedSettings", new HashSet<String>());
 
             if (restrictAdminLocalhost){
-                xmlSettings.put("adminConsole.access.ip-allowlist", "0:0:0:0:0:0:0:1");
+                xmlSettings.put("adminConsole.interface", "127.0.0.1");
             }
             JiveGlobals.setupPropertyEncryptionAlgorithm(encryptionAlgorithm);
             JiveGlobals.setupPropertyEncryptionKey(encryptionKey);

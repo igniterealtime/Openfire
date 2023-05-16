@@ -479,7 +479,7 @@ public final class HttpBindManager implements CertificateEventListener {
 
                 final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                 final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
-                final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
+                final SslContextFactory.Server sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
                 final HttpConfiguration httpsConfig = new HttpConfiguration();
                 httpsConfig.setSecureScheme("https");
@@ -645,12 +645,7 @@ public final class HttpBindManager implements CertificateEventListener {
      */
     protected Handler createBoshHandler()
     {
-        final int options;
-        if(isHttpCompressionEnabled()) {
-            options = ServletContextHandler.SESSIONS | ServletContextHandler.GZIP;
-        } else {
-            options = ServletContextHandler.SESSIONS;
-        }
+        final int options = ServletContextHandler.SESSIONS;
         final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", options );
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
@@ -667,9 +662,10 @@ public final class HttpBindManager implements CertificateEventListener {
 
         // Add compression filter when needed.
         if (isHttpCompressionEnabled()) {
-            final GzipHandler gzipHandler = context.getGzipHandler();
+            final GzipHandler gzipHandler = new GzipHandler();
             gzipHandler.addIncludedPaths("/*");
             gzipHandler.addIncludedMethods(HttpMethod.POST.asString());
+            context.insertHandler(gzipHandler);
         }
 
         return context;

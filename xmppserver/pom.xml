@@ -148,8 +148,6 @@
                             <jspc>
                                 <package>org.jivesoftware.openfire.admin</package>
                             </jspc>
-                            <sourceVersion>11</sourceVersion>
-                            <targetVersion>11</targetVersion>
                             <keepSources>true</keepSources>
                         </configuration>
                     </execution>
@@ -266,7 +264,7 @@
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
+            <artifactId>websocket-jetty-server</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>

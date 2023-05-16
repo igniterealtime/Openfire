@@ -211,7 +211,7 @@ public class AdminConsolePlugin implements Plugin {
 
                     final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                     final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.WEBADMIN, true ).generateConnectionConfiguration();
-                    final SslContextFactory sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
+                    final SslContextFactory.Server sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
 
                     final HttpConfiguration httpsConfig = new HttpConfiguration();
                     httpsConfig.setSendServerVersion( false );
@@ -501,7 +501,7 @@ public class AdminConsolePlugin implements Plugin {
             new JettyWebXmlConfiguration()
         });
         final URL classes = getClass().getProtectionDomain().getCodeSource().getLocation();
-        context.getMetaData().setWebInfClassesDirs(Collections.singletonList(Resource.newResource(classes)));
+        context.getMetaData().setWebInfClassesResources(Collections.singletonList(Resource.newResource(classes)));
 
         // The index.html includes a redirect to the index.jsp and doesn't bypass
         // the context security when in development mode

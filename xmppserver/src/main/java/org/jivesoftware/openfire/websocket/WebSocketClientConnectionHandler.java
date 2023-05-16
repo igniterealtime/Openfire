@@ -38,6 +38,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -103,7 +104,7 @@ public class WebSocketClientConnectionHandler
         lastReceived = Instant.now();
         wsSession = session;
         final PacketDeliverer backupDeliverer = NettyClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
-        wsConnection = new WebSocketConnection(this, backupDeliverer, session.getRemoteAddress());
+        wsConnection = new WebSocketConnection(this, backupDeliverer, (InetSocketAddress) session.getRemoteAddress()); // TODO can't assume InetSocketAddress
         websocketFramePingTask = new WebsocketFramePingTask();
         if (KEEP_ALIVE_FRAME_PING_ENABLED_PROPERTY.getValue()) {
             // Run the task every 10% of the interval, to get the timing roughly in-line with the configured interval.

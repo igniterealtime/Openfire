@@ -258,6 +258,11 @@ public class PluginServletContext implements ServletContext
     }
 
     @Override
+    public ServletRegistration.Dynamic addJspFile(String servletName, String jspFile) {
+        return proxy.addJspFile(servletName, jspFile);
+    }
+
+    @Override
     public <T extends Servlet> T createServlet( Class<T> aClass ) throws ServletException
     {
         return proxy.createServlet( aClass );
@@ -381,5 +386,35 @@ public class PluginServletContext implements ServletContext
     public String getVirtualServerName()
     {
         return proxy.getVirtualServerName();
+    }
+
+    @Override
+    public int getSessionTimeout() {
+        return proxy.getSessionTimeout();
+    }
+
+    @Override
+    public void setSessionTimeout(int sessionTimeout) {
+        proxy.setSessionTimeout(sessionTimeout);
+    }
+
+    @Override
+    public String getRequestCharacterEncoding() {
+        return proxy.getRequestCharacterEncoding();
+    }
+
+    @Override
+    public void setRequestCharacterEncoding(String encoding) {
+        proxy.setRequestCharacterEncoding(encoding);
+    }
+
+    @Override
+    public String getResponseCharacterEncoding() {
+        return proxy.getResponseCharacterEncoding();
+    }
+
+    @Override
+    public void setResponseCharacterEncoding(String encoding) {
+        proxy.setResponseCharacterEncoding(encoding);
     }
 }

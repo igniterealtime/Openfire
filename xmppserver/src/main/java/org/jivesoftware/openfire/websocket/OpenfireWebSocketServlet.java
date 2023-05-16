@@ -15,9 +15,8 @@
  */
 package org.jivesoftware.openfire.websocket;
 
-import org.eclipse.jetty.websocket.common.extensions.compress.PerMessageDeflateExtension;
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServlet;
+import org.eclipse.jetty.websocket.server.JettyWebSocketServletFactory;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.http.HttpBindManager;
@@ -43,7 +42,7 @@ import java.time.temporal.ChronoUnit;
  * forwarded to this plugin/servlet, which will in turn create a new {@link WebSocketClientConnectionHandler}
  * for each new connection. 
  */
-public class OpenfireWebSocketServlet extends WebSocketServlet {
+public class OpenfireWebSocketServlet extends JettyWebSocketServlet {
 
     private static final long serialVersionUID = 1074354600476010708L;
     private static final Logger Log = LoggerFactory.getLogger(OpenfireWebSocketServlet.class);
@@ -92,14 +91,15 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
     }
 
     @Override
-    public void configure(WebSocketServletFactory factory)
+    public void configure(JettyWebSocketServletFactory factory)
     {
         if (WebSocketClientConnectionHandler.isCompressionEnabled()) {
-            factory.getExtensionFactory().register("permessage-deflate", PerMessageDeflateExtension.class);
+            factory.getAvailableExtensionNames().add("permessage-deflate");
         }
         final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
-        factory.getPolicy().setMaxTextMessageBufferSize(messageSize * 5);
-        factory.getPolicy().setMaxTextMessageSize(messageSize);
+        factory.setInputBufferSize(messageSize * 5);
+        factory.setOutputBufferSize(messageSize * 5);
+        factory.setMaxTextMessageSize(messageSize);
 
         // Jetty's idle policy cannot be modified - it will bluntly kill the connection. Ensure that it's longer than
         // the maximum amount of idle-time that Openfire allows for its client connections!
@@ -110,7 +110,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
         } else {
             maxJettyIdleMs = propValue.plus(Duration.of(30, ChronoUnit.SECONDS)).toMillis();
         }
-        factory.getPolicy().setIdleTimeout(maxJettyIdleMs);
+        factory.setIdleTimeout(Duration.ofMillis(maxJettyIdleMs));
 
         factory.setCreator((req, resp) -> {
             try {
@@ -125,7 +125,7 @@ public class OpenfireWebSocketServlet extends WebSocketServlet {
             } catch (Exception e) {
                 Log.warn("Unable to load websocket factory", e);
             }
-            Log.warn("Failed to create websocket for {}:{} make a request at {}", req.getRemoteAddress(), req.getRemotePort(), req.getRequestPath() );
+            Log.warn("Failed to create websocket for {}:{} make a request at {}", req.getHttpServletRequest().getRemoteAddr(), req.getHttpServletRequest().getRemotePort(), req.getRequestPath() );
             return null;
         });
     }

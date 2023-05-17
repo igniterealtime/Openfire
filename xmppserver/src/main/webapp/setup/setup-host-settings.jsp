@@ -117,13 +117,14 @@
             xmlSettings.put("adminConsole.port", Integer.toString(embeddedPort));
             xmlSettings.put("adminConsole.securePort", Integer.toString(securePort));
             xmlSettings.put("fqdn", fqdn);
+            if (restrictAdminLocalhost){
+                xmlSettings.put("adminConsole.interface", "127.0.0.1");
+            }
+
             session.setAttribute("xmlSettings", xmlSettings);
 
             session.setAttribute("encryptedSettings", new HashSet<String>());
 
-            if (restrictAdminLocalhost){
-                xmlSettings.put("adminConsole.interface", "127.0.0.1");
-            }
             JiveGlobals.setupPropertyEncryptionAlgorithm(encryptionAlgorithm);
             JiveGlobals.setupPropertyEncryptionKey(encryptionKey);
 

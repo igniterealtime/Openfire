@@ -32,6 +32,7 @@ import org.eclipse.jetty.util.WebAppLoaderFix;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.JMXManager;
@@ -686,7 +687,7 @@ public final class HttpBindManager implements CertificateEventListener {
         context.setAllowNullPathInfo(true);
         // Add the functionality-providers.
         context.addServlet( new ServletHolder( new OpenfireWebSocketServlet() ), "/*" );
-
+        JettyWebSocketServletContainerInitializer.configure(context, null);
         return context;
     }
 

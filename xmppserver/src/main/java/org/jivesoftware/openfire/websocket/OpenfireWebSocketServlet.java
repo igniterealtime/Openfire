@@ -93,8 +93,8 @@ public class OpenfireWebSocketServlet extends JettyWebSocketServlet {
     @Override
     public void configure(JettyWebSocketServletFactory factory)
     {
-        if (WebSocketClientConnectionHandler.isCompressionEnabled()) {
-            factory.getAvailableExtensionNames().add("permessage-deflate");
+        if (!WebSocketClientConnectionHandler.isCompressionEnabled()) {
+            factory.getAvailableExtensionNames().remove("permessage-deflate");
         }
         final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
         factory.setInputBufferSize(messageSize * 5);

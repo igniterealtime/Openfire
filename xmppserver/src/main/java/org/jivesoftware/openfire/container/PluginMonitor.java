@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 IgniteRealtime.org
+ * Copyright 2016-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -350,35 +350,6 @@ public class PluginMonitor implements PropertyEventListener
                         // plugins always precede their children.
                         final Deque<List<Path>> dirs = sortPluginDirs( ds, devPlugins );
 
-                        // Hierarchy processing could be parallel.
-                        final Collection<Callable<Integer>> parallelProcesses = new ArrayList<>();
-                        for ( final List<Path> hierarchy : dirs )
-                        {
-                            parallelProcesses.add( new Callable<Integer>()
-                            {
-
-                                @Override
-                                public Integer call() throws Exception
-                                {
-                                    int loaded = 0;
-                                    for ( final Path path : hierarchy )
-                                    {
-                                        // If the plugin hasn't already been started, start it.
-                                        final String canonicalName = PluginMetadataHelper.getCanonicalName( path );
-                                        if ( pluginManager.getPlugin( canonicalName ) == null )
-                                        {
-                                            if ( pluginManager.loadPlugin( canonicalName, path ) )
-                                            {
-                                                loaded++;
-                                            }
-                                        }
-                                    }
-
-                                    return loaded;
-                                }
-                            } );
-                        }
-
                         // Before running any plugin, make sure that the admin plugin is loaded. It is a dependency
                         // of all plugins that attempt to modify the admin panel.
                         if ( pluginManager.getPlugin( "admin" ) == null )
@@ -386,31 +357,59 @@ public class PluginMonitor implements PropertyEventListener
                             pluginManager.loadPlugin( "admin", dirs.getFirst().get( 0 ) );
                         }
 
-                        // Hierarchies could be processed in parallel. This is likely to be beneficial during the first
-                        // execution of this monitor, as during later executions, most plugins will likely already be loaded.
-                        final int parallelProcessMax = JiveGlobals.getIntProperty( "plugins.loading.max-parallel", 4 );
-                        final int parallelProcessCount = ( pluginManager.isExecuted() ? 1 : parallelProcessMax );
-                        final ThreadFactory threadFactory = new NamedThreadFactory("PluginMonitorExec-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
-                        final ExecutorService executorService = Executors.newFixedThreadPool( parallelProcessCount, threadFactory );
-                        try
+                        // Prevent trying to read properties from the database while we're still in setup mode.
+                        if (!XMPPServer.getInstance().isSetupMode())
                         {
-                            // Blocks until ready
-                            final List<Future<Integer>> futures = executorService.invokeAll( parallelProcesses );
+                            // Hierarchy processing could be parallel.
+                            final Collection<Callable<Integer>> parallelProcesses = new ArrayList<>();
+                            for ( final List<Path> hierarchy : dirs )
+                            {
+                                parallelProcesses.add( new Callable<Integer>()
+                                {
 
-                            // Unless nothing happened, report that we're done loading plugins.
-                            int pluginsLoaded = 0;
-                            for ( Future<Integer> future : futures )
-                            {
-                                pluginsLoaded += future.get();
+                                    @Override
+                                    public Integer call() throws Exception
+                                    {
+                                        int loaded = 0;
+                                        for ( final Path path : hierarchy )
+                                        {
+                                            // If the plugin hasn't already been started, start it.
+                                            final String canonicalName = PluginMetadataHelper.getCanonicalName( path );
+                                            if ( pluginManager.getPlugin( canonicalName ) == null )
+                                            {
+                                                if ( pluginManager.loadPlugin( canonicalName, path ) )
+                                                {
+                                                    loaded++;
+                                                }
+                                            }
+                                        }
+
+                                        return loaded;
+                                    }
+                                } );
                             }
-                            if ( pluginsLoaded > 0 && !XMPPServer.getInstance().isSetupMode() )
-                            {
-                                Log.info( "Finished processing all plugins." );
+
+                            // Hierarchies could be processed in parallel. This is likely to be beneficial during the first
+                            // execution of this monitor, as during later executions, most plugins will likely already be loaded.
+                            final int parallelProcessMax = JiveGlobals.getIntProperty("plugins.loading.max-parallel", 4);
+                            final int parallelProcessCount = (pluginManager.isExecuted() ? 1 : parallelProcessMax);
+                            final ThreadFactory threadFactory = new NamedThreadFactory("PluginMonitorExec-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+                            final ExecutorService executorService = Executors.newFixedThreadPool(parallelProcessCount, threadFactory);
+                            try {
+                                // Blocks until ready
+                                final List<Future<Integer>> futures = executorService.invokeAll(parallelProcesses);
+
+                                // Unless nothing happened, report that we're done loading plugins.
+                                int pluginsLoaded = 0;
+                                for (Future<Integer> future : futures) {
+                                    pluginsLoaded += future.get();
+                                }
+                                if (pluginsLoaded > 0) {
+                                    Log.info("Finished processing all plugins.");
+                                }
+                            } finally {
+                                executorService.shutdown();
                             }
-                        }
-                        finally
-                        {
-                            executorService.shutdown();
                         }
 
                         // Trigger event that plugins have been monitored

@@ -57,8 +57,7 @@ jobs:
   aioxmpp:
 
     name: Execute aioxmpp-based CI tests
-    # ubuntu-latest may have issues with Epoll python events
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
@@ -77,9 +76,9 @@ jobs:
           chmod +x ./runAioxmppIntegrationTests
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.11.2
      
       - name: Run aioxmpp tests
         run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness

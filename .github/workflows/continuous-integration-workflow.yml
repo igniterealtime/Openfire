@@ -16,9 +16,9 @@ jobs:
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }}
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
@@ -27,13 +27,13 @@ jobs:
         run: ./mvnw -B package -Pcoverage --file pom.xml
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base
       - name: Upload test files
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: test-files
           path: |
@@ -43,7 +43,7 @@ jobs:
             test.gradle
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
@@ -58,12 +58,12 @@ jobs:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-files
       - name: Fix file permissions
@@ -81,14 +81,14 @@ jobs:
             
       - name: Expose test output
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: aioxmpp test output
           path: aioxmpp/output
 
       - name: Expose openfire output
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: openfire logs
           path: distribution/target/distribution-base/logs/*
@@ -117,16 +117,16 @@ jobs:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-files
       - name: Set up Java
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: 11
           distribution: zulu
@@ -147,16 +147,16 @@ jobs:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: test-files
       - name: Set up Java
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: 11
           distribution: zulu
@@ -175,13 +175,13 @@ jobs:
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
       - name: Set up Java for publishing
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           java-version: 11
           distribution: zulu
@@ -235,14 +235,14 @@ jobs:
         if: ${{ contains(github.ref, 'refs/tags/') }}
         run: echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
 
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
@@ -257,7 +257,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Cache Docker layers # TODO: Validate that caches are faster than no caches
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}

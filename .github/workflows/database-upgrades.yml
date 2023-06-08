@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Openfire
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set environment variables
       run: |
         echo "CONNECTION_STRING=jdbc:sqlserver://localhost:1433;databaseName=openfire;applicationName=Openfire" >> $GITHUB_ENV
@@ -44,7 +44,7 @@ jobs:
     - name: Start database server and install database
       run: docker-compose -f ./build/ci/compose/mssql.yml up --detach
     - name: Cache local Maven repository
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.m2/repository
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:postgresql://localhost:5432/openfire" >> $GITHUB_ENV
@@ -81,7 +81,7 @@ jobs:
       - name: Start database server and install database
         run: docker-compose -f ./build/ci/compose/postgresql.yml up --detach
       - name: Cache local Maven repository
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:mysql://localhost:3306/openfire?rewriteBatchedStatements=true&characterEncoding=UTF-8&characterSetResults=UTF-8&serverTimezone=UTC" >> $GITHUB_ENV
@@ -118,7 +118,7 @@ jobs:
       - name: Start database server and install database
         run: docker-compose -f ./build/ci/compose/mysql.yml up --detach
       - name: Cache local Maven repository
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}

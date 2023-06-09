@@ -75,7 +75,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
-     
+          check-latest: true # attempt to prevent to use 3.11.3 by enticing the runner to update (to something later)
+
       - name: Run aioxmpp tests
         run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
             

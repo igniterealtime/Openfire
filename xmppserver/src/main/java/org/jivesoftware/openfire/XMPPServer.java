@@ -1062,54 +1062,66 @@ public class XMPPServer {
      * @throws FileNotFoundException If jiveHome could not be located
      */
     private void locateOpenfire() throws FileNotFoundException {
-        String jiveConfigName = "conf" + File.separator + "openfire.xml";
-        // First, try to load it openfireHome as a system property.
-        if (openfireHome == null) {
-            String homeProperty = System.getProperty("openfireHome");
-            try {
-                if (homeProperty != null) {
-                    openfireHome = verifyHome(homeProperty, jiveConfigName);
+        final String configName = "conf" + File.separator + "openfire.xml";
+        final String[] extensions = new String[] {
+            "", // no extension
+            ".tmp" // For when Openfire was shutdown uncleanly. See OF-2594.
+        };
+        for (final String extension : extensions) {
+            final String jiveConfigName = configName + extension;
+
+            // First, try to load it openfireHome as a system property.
+            if (openfireHome == null) {
+                String homeProperty = System.getProperty("openfireHome");
+                try {
+                    if (homeProperty != null) {
+                        openfireHome = verifyHome(homeProperty, jiveConfigName);
+                    }
+                }
+                catch (FileNotFoundException fe) {
+                    // Ignore.
                 }
             }
-            catch (FileNotFoundException fe) {
-                // Ignore.
-            }
-        }
 
-        // If we still don't have home, let's assume this is standalone
-        // and just look for home in a standard sub-dir location and verify
-        // by looking for the config file
-        if (openfireHome == null) {
-            try {
-                openfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
-            } catch (IOException ie) {
-                // Ignore.
+            // If we still don't have home, let's assume this is standalone
+            // and just look for home in a standard sub-dir location and verify
+            // by looking for the config file
+            if (openfireHome == null) {
+                try {
+                    openfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
+                } catch (IOException ie) {
+                    // Ignore.
+                }
             }
-        }
 
-        // If home is still null, no outside process has set it and
-        // we have to attempt to load the value from openfire_init.xml,
-        // which must be in the classpath.
-        if (openfireHome == null) {
-            try (InputStream in = getClass().getResourceAsStream("/openfire_init.xml")) {
-                if (in != null) {
-                    String path = SAXReaderUtil.readRootElement(in).getText();
-                    try {
-                        if (path != null) {
-                            openfireHome = verifyHome(path, jiveConfigName);
+            // If home is still null, no outside process has set it and
+            // we have to attempt to load the value from openfire_init.xml,
+            // which must be in the classpath.
+            if (openfireHome == null) {
+                try (InputStream in = getClass().getResourceAsStream("/openfire_init.xml")) {
+                    if (in != null) {
+                        String path = SAXReaderUtil.readRootElement(in).getText();
+                        try {
+                            if (path != null) {
+                                openfireHome = verifyHome(path, jiveConfigName);
+                            }
+                        }
+                        catch (FileNotFoundException fe) {
+                            fe.printStackTrace();
                         }
                     }
-                    catch (FileNotFoundException fe) {
-                        fe.printStackTrace();
+                }
+                catch (Exception e) {
+                    System.err.println("Error loading openfire_init.xml to find home.");
+                    e.printStackTrace();
+                    if (e instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
                     }
                 }
             }
-            catch (Exception e) {
-                System.err.println("Error loading openfire_init.xml to find home.");
-                e.printStackTrace();
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
+
+            if (openfireHome != null) {
+                break;
             }
         }
 
@@ -1121,7 +1133,7 @@ public class XMPPServer {
             // Set the home directory for the config file
             JiveGlobals.setHomeDirectory(openfireHome.toString());
             // Set the name of the config file
-            JiveGlobals.setConfigName(jiveConfigName);
+            JiveGlobals.setConfigName(configName);
         }
     }
 

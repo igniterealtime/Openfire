@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.ldap;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.io.SAXReader;
+import org.jivesoftware.openfire.vcard.VCardTemplate;
 import org.jivesoftware.util.CertificateManager;
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ import java.util.Collection;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests that verify the implementation of {@link org.jivesoftware.openfire.ldap.LdapVCardProvider.VCardTemplate}
+ * Unit tests that verify the implementation of {@link org.jivesoftware.openfire.vcard.VCardTemplate}
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -45,7 +46,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>{placeholder}</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -65,7 +66,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>foo{placeholder}bar</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -85,7 +86,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>foo, {placeholder} bar</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -105,7 +106,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>{placeholderA}, {placeholderB}</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -126,7 +127,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>foo {placeholderA}, {placeholderB} bar</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -149,7 +150,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -170,7 +171,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>placeholder</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -190,7 +191,7 @@ public class VCardTemplateTest
         final Document input = DocumentHelper.parseText("<vcard><el>placeholder/me</el></vcard>");
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -212,7 +213,7 @@ public class VCardTemplateTest
         }
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -251,7 +252,7 @@ public class VCardTemplateTest
         }
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );
@@ -294,7 +295,7 @@ public class VCardTemplateTest
         }
 
         // Execute system under test.
-        final LdapVCardProvider.VCardTemplate result = new LdapVCardProvider.VCardTemplate(input);
+        final VCardTemplate result = new VCardTemplate(input);
 
         // Verify result.
         assertNotNull( result );

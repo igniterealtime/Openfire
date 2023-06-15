@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.security.Principal;
 import java.security.PrivateKey;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.Instant;
@@ -340,8 +341,16 @@ public class RemoteServerDummy implements AutoCloseable
             final Document root = DocumentHelper.createDocument();
             final Element features = root.addElement("features");
             if (!(socket instanceof SSLSocket)) {
-                if (!disableTLS) {
-                    features.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
+                if (encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
+                    final Element startTLS = features.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
+                    if (encryptionPolicy == ServerSettings.EncryptionPolicy.REQUIRED) {
+                        startTLS.addElement("required");
+                    }
+                }
+                if (!isAuthenticated) {
+                    if (!disableDialback && encryptionPolicy != ServerSettings.EncryptionPolicy.REQUIRED) { // do not offer Dialback if we expect TLS first.
+                        features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                    }
                 }
             } else if (!isAuthenticated) {
                 if (!disableDialback) {
@@ -496,10 +505,16 @@ public class RemoteServerDummy implements AutoCloseable
                     return new X509Certificate[0];
                 }
 
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                public void checkClientTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                    if (Instant.now().isAfter(certs[0].getNotAfter().toInstant()) || Instant.now().isBefore(certs[0].getNotBefore().toInstant())) {
+                        throw new CertificateException("Peer certificate is expired.");
+                    }
                 }
 
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+                    if (Instant.now().isAfter(certs[0].getNotAfter().toInstant()) || Instant.now().isBefore(certs[0].getNotBefore().toInstant())) {
+                        throw new CertificateException("Peer certificate is expired.");
+                    }
                 }
             }
         };

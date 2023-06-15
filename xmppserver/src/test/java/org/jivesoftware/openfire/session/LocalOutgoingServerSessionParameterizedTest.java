@@ -38,6 +38,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.*;
 
 import static org.jivesoftware.openfire.session.ExpectedOutcome.ConnectionState.*;
@@ -83,7 +84,7 @@ public class LocalOutgoingServerSessionParameterizedTest
         tmpIdentityStoreFile.deleteOnExit();
         final CertificateStoreConfiguration identityStoreConfig = new CertificateStoreConfiguration("jks", tmpIdentityStoreFile, "secret".toCharArray(), tmpDir);
         final IdentityStore identityStore = new IdentityStore(identityStoreConfig, true);
-        identityStore.ensureDomainCertificate();
+        //identityStore.ensureDomainCertificate();
         doReturn(identityStore).when(certificateStoreManager).getIdentityStore(any());
 
         // Use a temporary file to hold the trust store that is used by the tests.
@@ -160,7 +161,10 @@ public class LocalOutgoingServerSessionParameterizedTest
     public void doTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
+        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
+        final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
+
         try {
             // Setup test fixture.
 
@@ -219,6 +223,24 @@ public class LocalOutgoingServerSessionParameterizedTest
             // Local server dialback.
             JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, localServerSettings.dialbackSupported ? "true" : "false");
 
+            // Local server certificate state
+            switch (localServerSettings.certificateState) {
+                case MISSING:
+                    // Do not install domain certificate.
+                    break;
+                case INVALID:
+                    // Generate an expired certificate by setting the validity to something in the past.
+                    JiveGlobals.setProperty("cert.validity-days", "0");
+                    identityStore.ensureDomainCertificate();
+                    Thread.sleep(Duration.ofSeconds(1).toMillis()); // make sure that it's expired!
+                    JiveGlobals.deleteProperty("cert.validity-days");
+                    break;
+                case VALID:
+                    identityStore.ensureDomainCertificate();
+                    break;
+            }
+
+
             final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
             final int port = remoteServerDummy.getPort();
 
@@ -226,7 +248,6 @@ public class LocalOutgoingServerSessionParameterizedTest
             final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
 
             // Verify results
-
             final ExpectedOutcome expected = generateExpectedOutcome(localServerSettings, remoteServerSettings);
             switch (expected.getConnectionState())
             {

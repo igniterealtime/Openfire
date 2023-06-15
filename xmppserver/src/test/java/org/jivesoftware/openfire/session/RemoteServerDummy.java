@@ -51,7 +51,7 @@ public class RemoteServerDummy implements AutoCloseable
     private boolean useExpiredEndEntityCertificate;
     private boolean useSelfSignedCertificate;
     private boolean disableDialback;
-    private boolean disableTLS;
+    private ServerSettings.EncryptionPolicy encryptionPolicy = ServerSettings.EncryptionPolicy.OPTIONAL;
 
     private KeystoreTestUtils.ResultHolder generatedPKIX;
 
@@ -110,14 +110,11 @@ public class RemoteServerDummy implements AutoCloseable
     }
 
     /**
-     * When set to 'true', this instance will NOT advertise support for the TLS (encryption and authentication) and will
-     * reject TLS encryption and TLS authentication attempts.
-     *
-     * Must not be invoked when also invoking {@link #preparePKIX()}.
+     * Updates the TLS encryption policy that's observed by this server.
      */
-    public void setDisableTLS(boolean disableTLS)
+    public void setEncryptionPolicy(ServerSettings.EncryptionPolicy encryptionPolicy)
     {
-        this.disableTLS = disableTLS;
+        this.encryptionPolicy = encryptionPolicy;
     }
 
     /**
@@ -360,7 +357,7 @@ public class RemoteServerDummy implements AutoCloseable
                 System.out.println(((SSLSocket) socket).getSession().getProtocol());
                 System.out.println(((SSLSocket) socket).getSession().getCipherSuite());
                 System.out.println(((SSLSocket) socket).getSession().getPeerPrincipal());
-                if (((SSLSocket) socket).getSession().getPeerCertificates() != null && !disableTLS) {
+                if (((SSLSocket) socket).getSession().getPeerCertificates() != null && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
                     mechanisms.addElement("mechanism").addText("EXTERNAL");
                 }
             }
@@ -370,7 +367,7 @@ public class RemoteServerDummy implements AutoCloseable
 
         private synchronized void sendStartTlsProceed(Element inbound) throws Exception
         {
-            if (disableTLS || generatedPKIX == null) {
+            if (encryptionPolicy == ServerSettings.EncryptionPolicy.DISABLED || generatedPKIX == null) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
                 final Element root = outbound.addElement(QName.get("stream", namespace));
@@ -411,7 +408,7 @@ public class RemoteServerDummy implements AutoCloseable
          */
         private synchronized void sendAuthResponse(Element inbound) throws IOException
         {
-            if (disableTLS) {
+            if (encryptionPolicy == ServerSettings.EncryptionPolicy.DISABLED) {
                 isAuthenticated = false;
 
                 final Document outbound = DocumentHelper.createDocument();

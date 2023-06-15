@@ -169,17 +169,7 @@ public class LocalOutgoingServerSessionParameterizedTest
             // Setup test fixture.
 
             // Remote server TLS policy.
-            switch (remoteServerSettings.encryptionPolicy) {
-                case REQUIRED:
-                case OPTIONAL:
-                    remoteServerDummy.setDisableTLS(false);
-                    break;
-                case DISABLED:
-                    remoteServerDummy.setDisableTLS(true);
-                    break;
-                default:
-                    throw new IllegalStateException("Unsupported remote TLS policy");
-            }
+            remoteServerDummy.setEncryptionPolicy(remoteServerSettings.encryptionPolicy);
 
             // Remote server dialback
             remoteServerDummy.setDisableDialback(!remoteServerSettings.dialbackSupported);

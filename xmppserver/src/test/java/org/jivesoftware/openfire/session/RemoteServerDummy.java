@@ -114,25 +114,20 @@ public class RemoteServerDummy implements AutoCloseable
      *
      * Must not be invoked when also invoking {@link #preparePKIX()}.
      */
-    public void setDisableTLS(boolean disableTLS) {
-        if (generatedPKIX != null && disableTLS) {
-            throw new IllegalStateException("Cannot disable TLS when you've generated PKIX settings: either you want to use TLS, or you do not.");
-        }
+    public void setDisableTLS(boolean disableTLS)
+    {
         this.disableTLS = disableTLS;
     }
 
     /**
      * When set to 'true', this instance will identify itself with a TLS certificate that is self-signed.
      *
-     * Must be invoked before {@link #preparePKIX()} is invoked. Can't be used when TLS is disabled.
+     * Must be invoked before {@link #preparePKIX()} is invoked.
      *
      * @param useSelfSignedCertificate 'true' to use a self-signed certificate
      */
     public void setUseSelfSignedCertificate(boolean useSelfSignedCertificate)
     {
-        if (useSelfSignedCertificate && disableTLS) {
-            throw new IllegalStateException("Cannot use a certificate and also disable TLS: either you want to use TLS, or you do not.");
-        }
         if (generatedPKIX != null) {
             throw new IllegalStateException("Cannot change PKIX settings after PKIX has been prepared.");
         }
@@ -143,15 +138,12 @@ public class RemoteServerDummy implements AutoCloseable
      * When set to 'true', this instance will identify itself with a TLS certificate that is expired (its 'notBefore'
      * and 'notAfter' values define a period of validity that does not include the current date and time).
      *
-     * Must be invoked before {@link #preparePKIX()} is invoked. Can't be used when TLS is disabled.
+     * Must be invoked before {@link #preparePKIX()} is invoked.
      *
      * @param useExpiredEndEntityCertificate 'true' to use an expired certificate
      */
     public void setUseExpiredEndEntityCertificate(boolean useExpiredEndEntityCertificate)
     {
-        if (useExpiredEndEntityCertificate && disableTLS) {
-            throw new IllegalStateException("Cannot use a certificate and also disable TLS: either you want to use TLS, or you do not.");
-        }
         if (generatedPKIX != null) {
             throw new IllegalStateException("Cannot change PKIX settings after PKIX has been prepared.");
         }
@@ -175,9 +167,6 @@ public class RemoteServerDummy implements AutoCloseable
      */
     public void preparePKIX() throws Exception
     {
-        if (disableTLS) {
-            throw new IllegalStateException("Cannot generate PKIX settings when TLS is disabled: either you want to use TLS, or you do not.");
-        }
         if (generatedPKIX != null) {
             throw new IllegalStateException("PKIX already prepared.");
         }
@@ -372,7 +361,7 @@ public class RemoteServerDummy implements AutoCloseable
 
         private synchronized void sendStartTlsProceed(Element inbound) throws Exception
         {
-            if (disableTLS) {
+            if (disableTLS || generatedPKIX == null) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
                 final Element root = outbound.addElement(QName.get("stream", namespace));
@@ -381,9 +370,6 @@ public class RemoteServerDummy implements AutoCloseable
 
                 send(root.asXML().substring(root.asXML().indexOf(">")+1));
                 throw new InterruptedIOException("TLS Start received while feature is disabled. Kill the connection");
-            }
-            if (generatedPKIX == null) {
-                throw new IllegalStateException("No generated PKIX. Did you call preparePKIX() ?");
             }
 
             final Document outbound = DocumentHelper.createDocument();

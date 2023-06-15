@@ -49,6 +49,7 @@ public class RemoteServerDummy implements AutoCloseable
 
     private boolean useExpiredEndEntityCertificate;
     private boolean useSelfSignedCertificate;
+    private boolean disableDialback;
 
     private KeystoreTestUtils.ResultHolder generatedPKIX;
 
@@ -138,7 +139,13 @@ public class RemoteServerDummy implements AutoCloseable
         this.useExpiredEndEntityCertificate = useExpiredEndEntityCertificate;
     }
 
-
+    /**
+     * When set to 'true', this instance will NOT advertise support for the Dialback authentication mechanism, and will
+     * reject Dialback authentication attempts.
+     */
+    public void setDisableDialback(boolean disableDialback) {
+        this.disableDialback = disableDialback;
+    }
 
     /**
      * Generates KeyPairs and certificates that are used to identify this server using TLS.
@@ -305,7 +312,10 @@ public class RemoteServerDummy implements AutoCloseable
             final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
             final Element root = outbound.addElement(QName.get("stream", namespace));
             root.add(Namespace.get("jabber:server"));
-            root.add(new Namespace("db", "jabber:server:dialback"));
+
+            if (!disableDialback) {
+                root.add(new Namespace("db", "jabber:server:dialback"));
+            }
             root.addAttribute("from", XMPP_DOMAIN);
             root.addAttribute("to", inbound.attributeValue("from", null));
             root.addAttribute("version", "1.0");
@@ -320,7 +330,9 @@ public class RemoteServerDummy implements AutoCloseable
             final Element features = root.addElement("features");
             if (!(socket instanceof SSLSocket)) {
                 features.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
-                features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                if (!disableDialback) {
+                    features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                }
             } else if (!isAuthenticated) {
                 final Element mechanisms = features.addElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
                 System.out.println(((SSLSocket) socket).getSession().getProtocol());
@@ -384,6 +396,18 @@ public class RemoteServerDummy implements AutoCloseable
          */
         private synchronized void processDialback(Element inbound) throws IOException
         {
+            if (disableDialback) {
+                final Document outbound = DocumentHelper.createDocument();
+                final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
+                final Element root = outbound.addElement(QName.get("stream", namespace));
+                root.add(Namespace.get("jabber:server"));
+                final Element error = root.addElement(QName.get("error", "stream", "http://etherx.jabber.org/streams"));
+                error.addElement(QName.get("unsupported-stanza-type", "urn:ietf:params:xml:ns:xmpp-streams"));
+
+                send(root.asXML().substring(root.asXML().indexOf(">")+1));
+                throw new InterruptedIOException("Dialback received while feature is disabled. Kill the connection");
+            }
+
             if (inbound.getTextTrim().isEmpty()) {
                 throw new IllegalStateException("Not supporting processing anything but an initial dialback key submission.");
             }

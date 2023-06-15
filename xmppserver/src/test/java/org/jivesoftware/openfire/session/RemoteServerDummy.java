@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.security.Principal;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
@@ -400,7 +401,7 @@ public class RemoteServerDummy implements AutoCloseable
         /**
          * Responds to a SASL auth request with a SASL result indicating that authentication succeeded.
          *
-         * No actual verification is performed by this implementation. Authentication is blindly accepted.
+         * Very basic verification is performed by this implementation: if the peer provides a certificate that's not expired, authentication is accepted.
          *
          * If TLS is disabled, this sends an authentication failure response.
          *
@@ -417,13 +418,29 @@ public class RemoteServerDummy implements AutoCloseable
 
                 send(failure.asXML());
             }
-            else
-            {
-                isAuthenticated = true;
-                final Document root = DocumentHelper.createDocument();
-                root.addElement(QName.get("success", "urn:ietf:params:xml:ns:xmpp-sasl"));
-                send(root.getRootElement().asXML());
+
+            if (!(socket instanceof SSLSocket)) {
+                final Document outbound = DocumentHelper.createDocument();
+                final Element failure = outbound.addElement(QName.get("failure", "urn:ietf:params:xml:ns:xmpp-sasl"));
+                failure.addElement(QName.get("encryption-required"));
+
+                send(failure.asXML());
             }
+
+            final X509Certificate[] peerCertificates = (X509Certificate[]) ((SSLSocket) socket).getSession().getPeerCertificates();
+            if (peerCertificates == null || peerCertificates.length == 0 || Instant.now().isAfter(peerCertificates[0].getNotAfter().toInstant()) || Instant.now().isBefore(peerCertificates[0].getNotBefore().toInstant())) {
+                final Document outbound = DocumentHelper.createDocument();
+                final Element failure = outbound.addElement(QName.get("failure", "urn:ietf:params:xml:ns:xmpp-sasl"));
+                failure.addElement(QName.get("not-authorized"));
+
+                send(failure.asXML());
+            }
+
+
+            isAuthenticated = true;
+            final Document root = DocumentHelper.createDocument();
+            root.addElement(QName.get("success", "urn:ietf:params:xml:ns:xmpp-sasl"));
+            send(root.getRootElement().asXML());
         }
 
         /**

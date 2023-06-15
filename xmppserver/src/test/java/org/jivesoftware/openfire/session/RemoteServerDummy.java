@@ -448,6 +448,20 @@ public class RemoteServerDummy implements AutoCloseable
                 throw new InterruptedIOException("Dialback received while feature is disabled. Kill the connection");
             }
 
+            if (encryptionPolicy == ServerSettings.EncryptionPolicy.REQUIRED && !(socket instanceof SSLSocket)) {
+                final Document outbound = DocumentHelper.createDocument();
+                final Element result = outbound.addElement(QName.get("result", "db", "urn:xmpp:features:dialback"));
+                result.addAttribute("from", XMPP_DOMAIN);
+                result.addAttribute("to", inbound.attributeValue("from", null));
+                result.addAttribute("type", "error");
+                final Element error = result.addElement("error");
+                error.addAttribute("type", "cancel");
+                error.addElement("policy-violation", "urn:ietf:params:xml:ns:xmpp-stanzas");
+
+                send(outbound.getRootElement().asXML());
+                return; // spec says to not kill the connection.
+            }
+
             if (inbound.getTextTrim().isEmpty()) {
                 throw new IllegalStateException("Not supporting processing anything but an initial dialback key submission.");
             }

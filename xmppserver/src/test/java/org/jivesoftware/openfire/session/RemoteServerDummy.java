@@ -354,10 +354,10 @@ public class RemoteServerDummy implements AutoCloseable
                 if (!disableTLS) {
                     features.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
                 }
+            } else if (!isAuthenticated) {
                 if (!disableDialback) {
                     features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
                 }
-            } else if (!isAuthenticated) {
                 final Element mechanisms = features.addElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
                 System.out.println(((SSLSocket) socket).getSession().getProtocol());
                 System.out.println(((SSLSocket) socket).getSession().getCipherSuite());

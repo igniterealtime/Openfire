@@ -222,7 +222,7 @@ public class LocalOutgoingServerSessionParameterizedTest
                     // Generate an expired certificate by setting the validity to something in the past.
                     JiveGlobals.setProperty("cert.validity-days", "0");
                     identityStore.ensureDomainCertificate();
-                    Thread.sleep(Duration.ofSeconds(1).toMillis()); // make sure that it's expired!
+                    Thread.sleep(Duration.ofSeconds(2).toMillis()); // make sure that it's expired!
                     JiveGlobals.deleteProperty("cert.validity-days");
                     break;
                 case VALID:

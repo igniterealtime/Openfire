@@ -43,10 +43,15 @@ import static org.mockito.Mockito.*;
  * Unit tests that verify if an outbound server-to-server socket connection can be created (and where applicable:
  * encrypted and authenticated), verifying the implementation of {@link LocalOutgoingServerSession#createOutgoingSession(DomainPair, int)}
  *
+ * These tests assume the following constants:
+ * - TLS certificate validation is implemented correctly.
+ * - The domain name in the certificate matches that of the server.
+ *
  * This implementation uses instances of {@link RemoteServerDummy} to represent the remote server to which a connection
  * is being made.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
+ * @author Alex Gidman, alex.gidman@surevine.com
  */
 @RunWith(MockitoJUnitRunner.class)
 public class LocalOutgoingServerSessionTest
@@ -96,9 +101,10 @@ public class LocalOutgoingServerSessionTest
 
     /**
      * Dynamically generate a ConnectionConfiguration answer, as used by the Mock ConnectionListener.
-     *
+     * <p>
      * A dynamic answer is needed, as the value of the ConnectionSettings.Server.TLS_POLICY property needs to be
      * evaluated at run-time (this value is changed in the setup of many of the unit tests in this file).
+     * </p>
      */
     private static class ConnectionConfigurationAnswer implements Answer {
 
@@ -145,6 +151,13 @@ public class LocalOutgoingServerSessionTest
     }
 
     /**
+     * TESTS
+     */
+
+    /**
+     * LOCAL: ENCRYPTION-REQUIRED | CERTIFICATE-VALID | DIALBACK-ENABLED
+     * REMOTE: ENCRYPTION-REQUIRED | CERTIFICATE-VALID | DIALBACK-ENABLED
+     *
      * When:
      * - the remote server identifies itself using a certificate chain that is valid and uses a trusted CA.
      * - the local server allows for Dialback to be used (this should not matter, as it should not be used).
@@ -170,7 +183,7 @@ public class LocalOutgoingServerSessionTest
             final int port = remoteServerDummy.getPort();
 
             // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port); // AG: this is the object we use for our assertions
 
             // Verify results.
             assertNotNull(result);
@@ -185,12 +198,16 @@ public class LocalOutgoingServerSessionTest
     }
 
     /**
-     * A variant of {@link #testOutbound_PeerUsesSignedCert_allowingDialback()} in which the local
-     * server does not allow Dialback to be used (instead of allowing for it).
+     * LOCAL: ENCRYPTION-REQUIRED | CERTIFICATE-VALID | DIALBACK-DISABLED
+     * REMOTE: ENCRYPTION-REQUIRED | CERTIFICATE-VALID | DIALBACK-ENABLED
      *
-     * This should not affect the outcome of the test, as Dialback should not be used.
+     * When:
+     * - the remote server identifies itself using a certificate chain that is valid and uses a trusted CA.
+     * - the local server does not allow for Dialback to be used (this should not matter, as it should not be used).
      *
-     * @see #testOutbound_PeerUsesSignedCert_allowingDialback()
+     * Verify that the local server can set up an outbound connection to a remote server that:
+     * - is encrypted.
+     * - is authenticated (by the remote peer) using the SASL EXTERNAL mechanism.
      */
     @Test
     public void testOutbound_PeerUsesSignedCert_disallowingDialback() throws Exception
@@ -224,6 +241,9 @@ public class LocalOutgoingServerSessionTest
     }
 
     /**
+     * LOCAL: ENCRYPTION-REQUIRED | CERTIFICATE-VALID | DIALBACK-DISABLED
+     * REMOTE: ENCRYPTION-REQUIRED | CERTIFICATE-INVALID | DIALBACK-ENABLED
+     *
      * When:
      * - the remote server identifies itself using a certificate chain that has an expired end-entity certificate.
      * - the local server allows for Dialback to be used.
@@ -298,292 +318,6 @@ public class LocalOutgoingServerSessionTest
             JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
             JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
             remoteServerDummy.setUseExpiredEndEntityCertificate(true);
-            remoteServerDummy.preparePKIX();
-            final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
-            final X509Certificate caCert = chain[chain.length-1];
-            trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
-
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-            final int port = remoteServerDummy.getPort();
-
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-            // Verify results.
-            assertNull(result);
-        } finally {
-            // Teardown test fixture.
-            trustStore.delete("unit-test");
-        }
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a certificate chain that has an expired intermediate certificate.
-     * - the local server does allow Dialback to be used.
-     *
-     * Verify that the local server can set up an outbound connection to the remote server that:
-     * - is encrypted.
-     * - is authenticated (by the remote peer) using the Dialback mechanism.
-     *
-     * Per RFC 6120 section 13.7.2, a session MUST be terminated when the server is presented with a certificate to
-     * determine if it is a 'trusted certificate' for encryption and/or authentication, that fails to validate. However,
-     * RFC 7590 Section 3.4 states: "In particular for XMPP server-to-server interactions, it can be reasonable for XMPP
-     * server implementations to accept encrypted but unauthenticated connections when Server Dialback keys [XEP-0220]
-     * are used." In short: if Dialback is allowed, unauthenticated TLS encryption is better than no encryption.
-     *
-     * In contact of this test, using an invalid certificate chain should cause TLS encryption to succeed, but TLS
-     * authentication (SASL EXTERNAL) to fail. As Dialback is available, this should be used for authentication,
-     * resulting in an outbound connection that is encrypted (using TLS) and authenticated (using Dialback).
-     *
-     * @see #testOutbound_PeerUsesSignedCertWithExpiredEndEntity_allowingDialback()
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSignedCertWithExpiredIntermediate_allowingDialback() throws Exception
-    {
-        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-        try {
-            // Setup test fixture.
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-            remoteServerDummy.setUseExpiredIntermediateCertificate(true);
-            remoteServerDummy.preparePKIX();
-            final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
-            final X509Certificate caCert = chain[chain.length-1];
-            trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
-
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-            final int port = remoteServerDummy.getPort();
-
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-            // Verify results.
-            assertNotNull(result);
-            assertFalse(result.isClosed());
-            assertTrue(result.isEncrypted());
-            assertTrue(result.isAuthenticated());
-            assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
-        } finally {
-            // Teardown test fixture.
-            trustStore.delete("unit-test");
-        }
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a certificate chain that has an expired intermediate certificate.
-     * - the local server does not allow Dialback to be used.
-     *
-     * Verify that the local server cannot set up an outbound connection to the remote server.
-     *
-     * As the certificate chain of the peer that we're connecting to is not valid, it cannot be used to authenticate
-     * the connection using SASL EXTERNAL. As Dialback is disabled, no authentication mechanism are available. This
-     * should cause the outbound connection attempt to fail.
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSignedCertWithExpiredIntermediate_disallowingDialback() throws Exception
-    {
-        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-        try {
-            // Setup test fixture.
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
-            remoteServerDummy.setUseExpiredIntermediateCertificate(true);
-            remoteServerDummy.preparePKIX();
-            final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
-            final X509Certificate caCert = chain[chain.length-1];
-            trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
-
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-            final int port = remoteServerDummy.getPort();
-
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-            // Verify results.
-            assertNull(result);
-        } finally {
-            // Teardown test fixture.
-            trustStore.delete("unit-test");
-        }
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a certificate chain that has an expired root certificate.
-     * - the local server does allow Dialback to be used.
-     *
-     * Verify that the local server can set up an outbound connection to the remote server that:
-     * - is encrypted.
-     * - is authenticated (by the remote peer) using the Dialback mechanism.
-     *
-     * Per RFC 6120 section 13.7.2, a session MUST be terminated when the server is presented with a certificate to
-     * determine if it is a 'trusted certificate' for encryption and/or authentication, that fails to validate. However,
-     * RFC 7590 Section 3.4 states: "In particular for XMPP server-to-server interactions, it can be reasonable for XMPP
-     * server implementations to accept encrypted but unauthenticated connections when Server Dialback keys [XEP-0220]
-     * are used." In short: if Dialback is allowed, unauthenticated TLS encryption is better than no encryption.
-     *
-     * In contact of this test, using an invalid certificate chain should cause TLS encryption to succeed, but TLS
-     * authentication (SASL EXTERNAL) to fail. As Dialback is available, this should be used for authentication,
-     * resulting in an outbound connection that is encrypted (using TLS) and authenticated (using Dialback).
-     *
-     * @see #testOutbound_PeerUsesSignedCertWithExpiredEndEntity_allowingDialback()
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSignedCertWithExpiredRoot_allowingDialback() throws Exception
-    {
-        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-        try {
-            // Setup test fixture.
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-            remoteServerDummy.setUseExpiredRootCertificate(true);
-            remoteServerDummy.preparePKIX();
-            final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
-            final X509Certificate caCert = chain[chain.length-1];
-            trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
-
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-            final int port = remoteServerDummy.getPort();
-
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-            // Verify results.
-            assertNotNull(result);
-            assertFalse(result.isClosed());
-            assertTrue(result.isEncrypted());
-            assertTrue(result.isAuthenticated());
-            assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
-        } finally {
-            // Teardown test fixture.
-            trustStore.delete("unit-test");
-        }
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a certificate chain that has an expired root certificate.
-     * - the local server does not allow Dialback to be used.
-     *
-     * Verify that the local server cannot set up an outbound connection to the remote server.
-     *
-     * As the certificate chain of the peer that we're connecting to is not valid, it cannot be used to authenticate
-     * the connection using SASL EXTERNAL. As Dialback is disabled, no authentication mechanism are available. This
-     * should cause the outbound connection attempt to fail.
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSignedCertWithExpiredRoot_disallowingDialback() throws Exception
-    {
-        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-        try {
-            // Setup test fixture.
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
-            remoteServerDummy.setUseExpiredRootCertificate(true);
-            remoteServerDummy.preparePKIX();
-            final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
-            final X509Certificate caCert = chain[chain.length-1];
-            trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
-
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-            final int port = remoteServerDummy.getPort();
-
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-            // Verify results.
-            assertNull(result);
-        } finally {
-            // Teardown test fixture.
-            trustStore.delete("unit-test");
-        }
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a certificate chain that identifies an XMPP domain different from what the remote server uses in its 'from' stream attribute.
-     * - the local server allows for Dialback to be used.
-     *
-     * Verify that the local server can set up an outbound connection to the remote server that:
-     * - is encrypted.
-     * - is authenticated (by the remote peer) using the Dialback mechanism.
-     *
-     * Per RFC 6120 section 13.7.2, a session MUST be terminated when the server is presented with a certificate to
-     * determine if it is a 'trusted certificate' for encryption and/or authentication, that fails to validate. However,
-     * RFC 7590 Section 3.4 states: "In particular for XMPP server-to-server interactions, it can be reasonable for XMPP
-     * server implementations to accept encrypted but unauthenticated connections when Server Dialback keys [XEP-0220]
-     * are used." In short: if Dialback is allowed, unauthenticated TLS encryption is better than no encryption.
-     *
-     * In contact of this test, using an invalid certificate chain should cause TLS encryption to succeed, but TLS
-     * authentication (SASL EXTERNAL) to fail. As Dialback is available, this should be used for authentication,
-     * resulting in an outbound connection that is encrypted (using TLS) and authenticated (using Dialback).
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2590">OF-2590</a>
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSignedCertWithWrongDomain_allowingDialback() throws Exception
-    {
-        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-        try {
-            // Setup test fixture.
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-            remoteServerDummy.setUseWrongNameInCertificate(true);
-            remoteServerDummy.preparePKIX();
-            final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
-            final X509Certificate caCert = chain[chain.length-1];
-            trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
-
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-            final int port = remoteServerDummy.getPort();
-
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-            // Verify results.
-            assertNotNull(result);
-            assertFalse(result.isClosed());
-            assertTrue(result.isEncrypted());
-            assertTrue(result.isAuthenticated());
-            assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
-        } finally {
-            // Teardown test fixture.
-            trustStore.delete("unit-test");
-        }
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a certificate chain that identifies an XMPP domain different from what the remote server uses in its 'from' stream attribute.
-     * - the local server does not allow for Dialback to be used.
-     *
-     * Verify that the local server cannot set up an outbound connection to the remote server.
-     *
-     * As the certificate chain of the peer that we're connecting to is not valid, it cannot be used to authenticate
-     * the connection using SASL EXTERNAL. As Dialback is disabled, no authentication mechanism are available. This
-     * should cause the outbound connection attempt to fail.
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2590">OF-2590</a>
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSignedCertWithWrongDomain_disallowingDialback() throws Exception
-    {
-        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
-        try {
-            // Setup test fixture.
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, "true");
-            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
-            remoteServerDummy.setUseWrongNameInCertificate(true);
             remoteServerDummy.preparePKIX();
             final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
             final X509Certificate caCert = chain[chain.length-1];
@@ -901,172 +635,6 @@ public class LocalOutgoingServerSessionTest
         JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
         remoteServerDummy.setUseSelfSignedCertificate(true);
         remoteServerDummy.setUseExpiredEndEntityCertificate(true);
-        remoteServerDummy.preparePKIX();
-
-        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-        final int port = remoteServerDummy.getPort();
-
-        // Execute system under test.
-        final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-        // Verify results.
-        assertNull(result);
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a self-signed certificate that identifies an XMPP domain different from what the remote server uses in its 'from' stream attribute.
-     * - the local server is configured to allow self-signed certificates.
-     * - the local server allows for Dialback to be used.
-     *
-     * Verify that the local server can set up an outbound connection to the remote server that:
-     * - is encrypted.
-     * - is authenticated (by the remote peer) using the Dialback mechanism.
-     *
-     * Per RFC 6120 section 13.7.2, a session MUST be terminated when the server is presented with a certificate to
-     * determine if it is a 'trusted certificate' for encryption and/or authentication, that fails to validate. However,
-     * RFC 7590 Section 3.4 states: "In particular for XMPP server-to-server interactions, it can be reasonable for XMPP
-     * server implementations to accept encrypted but unauthenticated connections when Server Dialback keys [XEP-0220]
-     * are used." In short: if Dialback is allowed, unauthenticated TLS encryption is better than no encryption.
-     *
-     * In contact of this test, using an invalid certificate chain should cause TLS encryption to succeed, but TLS
-     * authentication (SASL EXTERNAL) to fail. As Dialback is available, this should be used for authentication,
-     * resulting in an outbound connection that is encrypted (using TLS) and authenticated (using Dialback).
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSelfSignedCertWithWrongDomain_allowingSelfSigned_allowingDialback() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, "true");
-        JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-        remoteServerDummy.setUseSelfSignedCertificate(true);
-        remoteServerDummy.setUseWrongNameInCertificate(true);
-        remoteServerDummy.preparePKIX();
-
-        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-        final int port = remoteServerDummy.getPort();
-
-        // Execute system under test.
-        final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-        // Verify results.
-        assertNotNull(result);
-        assertFalse(result.isClosed());
-        assertTrue(result.isEncrypted());
-        assertTrue(result.isAuthenticated());
-        assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a self-signed certificate that identifies an XMPP domain different from what the remote server uses in its 'from' stream attribute.
-     * - the local server is configured to allow self-signed certificates.
-     * - the local server does not allow for Dialback to be used.
-     *
-     * Verify that the local server can not set up an outbound connection to the remote server.
-     *
-     * As the certificate chain of the peer that we're connecting to is not valid, it cannot be used to authenticate
-     * the connection using SASL EXTERNAL. As Dialback is disabled, no authentication mechanism are available. This
-     * should cause the outbound connection attempt to fail.
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSelfSignedCertWithWrongDomain_allowingSelfSigned_disallowingDialback() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, "true");
-        JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
-        remoteServerDummy.setUseSelfSignedCertificate(true);
-        remoteServerDummy.setUseWrongNameInCertificate(true);
-        remoteServerDummy.preparePKIX();
-
-        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-        final int port = remoteServerDummy.getPort();
-
-        // Execute system under test.
-        final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-        // Verify results.
-        assertNull(result);
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a self-signed certificate that identifies an XMPP domain different from what the remote server uses in its 'from' stream attribute.
-     * - the local server is configured to not allow self-signed certificates.
-     * - the local server allows for Dialback to be used.
-     *
-     * Verify that the local server can set up an outbound connection to the remote server that:
-     * - is encrypted.
-     * - is authenticated (by the remote peer) using the Dialback mechanism.
-     *
-     * Per RFC 6120 section 13.7.2, a session MUST be terminated when the server is presented with a certificate to
-     * determine if it is a 'trusted certificate' for encryption and/or authentication, that fails to validate. However,
-     * RFC 7590 Section 3.4 states: "In particular for XMPP server-to-server interactions, it can be reasonable for XMPP
-     * server implementations to accept encrypted but unauthenticated connections when Server Dialback keys [XEP-0220]
-     * are used." In short: if Dialback is allowed, unauthenticated TLS encryption is better than no encryption.
-     *
-     * In contact of this test, using an invalid certificate chain should cause TLS encryption to succeed, but TLS
-     * authentication (SASL EXTERNAL) to fail. As Dialback is available, this should be used for authentication,
-     * resulting in an outbound connection that is encrypted (using TLS) and authenticated (using Dialback).
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2590">OF-2590</a>
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSelfSignedCertWithWrongDomain_disallowingSelfSigned_allowingDialback() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, "false");
-        JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-        remoteServerDummy.setUseSelfSignedCertificate(true);
-        remoteServerDummy.setUseWrongNameInCertificate(true);
-        remoteServerDummy.preparePKIX();
-
-        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-        final int port = remoteServerDummy.getPort();
-
-        // Execute system under test.
-        final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-        // Verify results.
-        assertNotNull(result);
-        assertFalse(result.isClosed());
-        assertTrue(result.isEncrypted());
-        assertTrue(result.isAuthenticated());
-        assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
-    }
-
-    /**
-     * When:
-     * - the remote server identifies itself using a self-signed certificate that identifies an XMPP domain different from what the remote server uses in its 'from' stream attribute.
-     * - the local server is configured to not allow self-signed certificates.
-     * - the local server does not allow for Dialback to be used.
-     *
-     * Verify that the local server can not set up an outbound connection to the remote server.
-     *
-     * As the certificate chain of the peer that we're connecting to is not valid, it cannot be used to authenticate
-     * the connection using SASL EXTERNAL. As Dialback is disabled, no authentication mechanism are available. This
-     * should cause the outbound connection attempt to fail.
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2590">OF-2590</a>
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2591">OF-2591</a>
-     */
-    @Test
-    public void testOutbound_PeerUsesSelfSignedCertWithWrongDomain_disallowingSelfSigned_disallowingDialback() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, "false");
-        JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "false");
-        remoteServerDummy.setUseSelfSignedCertificate(true);
-        remoteServerDummy.setUseWrongNameInCertificate(true);
         remoteServerDummy.preparePKIX();
 
         final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);

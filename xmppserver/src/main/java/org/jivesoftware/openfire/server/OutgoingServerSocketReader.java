@@ -138,6 +138,10 @@ public class OutgoingServerSocketReader {
         thread.start();
     }
 
+    public boolean isOpen() {
+        return open;
+    }
+
     private void closeSession() {
         open = false;
         if (session != null) {

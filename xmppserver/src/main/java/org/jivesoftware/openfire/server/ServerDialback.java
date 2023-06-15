@@ -325,7 +325,7 @@ public class ServerDialback {
 
             // Process the answer from the Receiving Server
             try {
-                while (true) {
+                while (socketReader.isOpen()) {
                     Element doc = socketReader.getElement(RemoteServerManager.getSocketTimeout(), TimeUnit.MILLISECONDS);
                     if (doc == null) {
                         log.debug( "Failed to authenticate domain: Time out waiting for validation response." );
@@ -349,6 +349,7 @@ public class ServerDialback {
                 log.debug( "Failed to authenticate domain: An interrupt was received while waiting for validation response (is Openfire shutting down?)" );
                 return false;
             }
+            return false;
         }
     }
 

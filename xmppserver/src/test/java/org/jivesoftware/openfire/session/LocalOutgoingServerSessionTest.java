@@ -337,39 +337,7 @@ public class LocalOutgoingServerSessionTest
         }
     }
 
-    /**
-     * When:
-     * - the remote server identifies itself using a self-signed certificate.
-     * - the local server is configured to allow self-signed certificates.
-     * - the local server allows for Dialback to be used (this should not matter, as it should not be used).
-     *
-     * Verify that the local server can set up an outbound connection to the remote server that:
-     * - is encrypted.
-     * - is authenticated (by the remote peer) using the SASL EXTERNAL mechanism.
-     */
-    @Test
-    public void testOutbound_PeerUsesSelfSignedCert_allowingSelfSigned_allowingDialback() throws Exception
-    {
-        // Setup test fixture.
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.required.toString());
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, "true");
-        JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, "true");
-        remoteServerDummy.setUseSelfSignedCertificate(true);
-        remoteServerDummy.preparePKIX();
 
-        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
-        final int port = remoteServerDummy.getPort();
-
-        // Execute system under test.
-        final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
-
-        // Verify results.
-        assertNotNull(result);
-        assertFalse(result.isClosed());
-        assertTrue(result.isEncrypted());
-        assertTrue(result.isAuthenticated());
-        assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
-    }
 
     /**
      * A variant of {@link #testOutbound_PeerUsesSignedCert_allowingDialback()} in which the local

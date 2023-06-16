@@ -63,14 +63,19 @@ import static org.mockito.Mockito.*;
 public class LocalOutgoingServerSessionParameterizedTest
 {
     private RemoteServerDummy remoteServerDummy;
+    private File tmpIdentityStoreFile;
+    private IdentityStore identityStore;
+    private File tmpTrustStoreFile;
+    private TrustStore trustStore;
+
 
     /**
      * Prepares the local server for operation. This mostly involves preparing the test fixture by mocking parts of the
      * API that {@link LocalOutgoingServerSession#createOutgoingSession(DomainPair, int)} uses when establishing a
      * connection.
      */
-    @BeforeAll
-    public static void setUpClass() throws Exception {
+    @BeforeEach
+    public  void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
@@ -80,18 +85,18 @@ public class LocalOutgoingServerSessionParameterizedTest
 
         // Use a temporary file to hold the identity store that is used by the tests.
         final CertificateStoreManager certificateStoreManager = mock(CertificateStoreManager.class, withSettings().lenient());
-        final File tmpIdentityStoreFile = new File(tmpDir, "unittest-identitystore-" + System.currentTimeMillis() + ".jks");
+        tmpIdentityStoreFile = new File(tmpDir, "unittest-identitystore-" + System.currentTimeMillis() + ".jks");
         tmpIdentityStoreFile.deleteOnExit();
         final CertificateStoreConfiguration identityStoreConfig = new CertificateStoreConfiguration("jks", tmpIdentityStoreFile, "secret".toCharArray(), tmpDir);
-        final IdentityStore identityStore = new IdentityStore(identityStoreConfig, true);
+        identityStore = new IdentityStore(identityStoreConfig, true);
         //identityStore.ensureDomainCertificate();
         doReturn(identityStore).when(certificateStoreManager).getIdentityStore(any());
 
         // Use a temporary file to hold the trust store that is used by the tests.
-        final File tmpTrustStoreFile = new File(tmpDir, "unittest-truststore-" + System.currentTimeMillis() + ".jks");
+        tmpTrustStoreFile = new File(tmpDir, "unittest-truststore-" + System.currentTimeMillis() + ".jks");
         tmpTrustStoreFile.deleteOnExit();
         final CertificateStoreConfiguration trustStoreConfig = new CertificateStoreConfiguration("jks", tmpTrustStoreFile, "secret".toCharArray(), tmpDir);
-        final TrustStore trustStore = new TrustStore(trustStoreConfig, true);
+        trustStore = new TrustStore(trustStoreConfig, true);
         doReturn(trustStore).when(certificateStoreManager).getTrustStore(any());
 
         // Mock the connection configuration.
@@ -103,6 +108,7 @@ public class LocalOutgoingServerSessionParameterizedTest
         doReturn(Set.of(connectionListener)).when(connectionManager).getListeners(any(ConnectionType.class));
         doReturn(connectionListener).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
         doReturn(connectionManager).when(xmppServer).getConnectionManager();
+        setUp();
     }
 
     /**
@@ -133,19 +139,20 @@ public class LocalOutgoingServerSessionParameterizedTest
         }
     }
 
-    @BeforeEach
     public void setUp() throws Exception
     {
         remoteServerDummy = new RemoteServerDummy();
         remoteServerDummy.open();
-
-        Fixtures.clearExistingProperties();
         DNSUtil.setDnsOverride(Map.of(RemoteServerDummy.XMPP_DOMAIN, new DNSUtil.HostAddress("localhost", remoteServerDummy.getPort(), false)));
     }
 
     @AfterEach
     public void tearDown() throws Exception
     {
+        tmpIdentityStoreFile.delete();
+        tmpTrustStoreFile.delete();
+        identityStore = null;
+        trustStore = null;
         DNSUtil.setDnsOverride(null);
 
         if (remoteServerDummy != null) {
@@ -219,17 +226,14 @@ public class LocalOutgoingServerSessionParameterizedTest
                     // Do not install domain certificate.
                     break;
                 case INVALID:
-                    // Generate an expired certificate by setting the validity to something in the past.
-                    JiveGlobals.setProperty("cert.validity-days", "0");
-                    identityStore.ensureDomainCertificate();
-                    Thread.sleep(Duration.ofSeconds(2).toMillis()); // make sure that it's expired!
-                    JiveGlobals.deleteProperty("cert.validity-days");
+                    // Insert an expired certificate into the identity store
+                    identityStore.installCertificate(Fixtures.invalidX509Certificate, Fixtures.invalidX509CertificatePrivateKey, "");
                     break;
                 case VALID:
+                    // Generate a valid certificate and insert into identity store
                     identityStore.ensureDomainCertificate();
                     break;
             }
-
 
             final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
             final int port = remoteServerDummy.getPort();
@@ -238,8 +242,9 @@ public class LocalOutgoingServerSessionParameterizedTest
             final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
 
             // Verify results
-            final ExpectedOutcome expected = generateExpectedOutcome(localServerSettings, remoteServerSettings);
-            switch (expected.getConnectionState())
+            final ExpectedOutcome.ConnectionState expected = generateExpectedOutcome(localServerSettings, remoteServerSettings).getConnectionState();
+            System.out.println("Expect: " + expected);
+            switch (expected)
             {
                 case NO_CONNECTION:
                     assertNull(result);
@@ -511,4 +516,6 @@ public class LocalOutgoingServerSessionParameterizedTest
 
         return expectedOutcome;
     }
+
+
 }

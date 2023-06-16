@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.keystore.KeystoreTestUtils;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.StringUtils;
 
 import javax.net.ssl.*;
@@ -29,9 +30,7 @@ import java.net.Socket;
 import java.security.KeyPair;
 import java.security.Principal;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ExecutorService;
@@ -257,7 +256,7 @@ public class RemoteServerDummy implements AutoCloseable
 
         public synchronized void send(final String data) throws IOException
         {
-            System.out.println("# send to Openfire");
+            System.out.println("# send from remote to Openfire");
             System.out.println(data);
             System.out.println();
             os.write(data.getBytes());
@@ -358,8 +357,15 @@ public class RemoteServerDummy implements AutoCloseable
                 System.out.println(((SSLSocket) socket).getSession().getProtocol());
                 System.out.println(((SSLSocket) socket).getSession().getCipherSuite());
                 System.out.println(((SSLSocket) socket).getSession().getPeerPrincipal());
-                if (((SSLSocket) socket).getSession().getPeerCertificates() != null && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
-                    mechanisms.addElement("mechanism").addText("EXTERNAL");
+                Certificate[] certificates = ((SSLSocket) socket).getSession().getPeerCertificates(); // AG: wondering if this throws an exception if the peer (local server) doesn't send a certificate?
+
+                if (certificates != null && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
+                    try {
+                        ((X509Certificate) certificates[0]).checkValidity(); // first peer certificate will belong to the local server
+                        mechanisms.addElement("mechanism").addText("EXTERNAL");
+                    } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+                        System.out.println("local certificate is invalid");
+                    }
                 }
             }
 

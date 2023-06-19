@@ -89,7 +89,6 @@ public class LocalOutgoingServerSessionParameterizedTest
         tmpIdentityStoreFile.deleteOnExit();
         final CertificateStoreConfiguration identityStoreConfig = new CertificateStoreConfiguration("jks", tmpIdentityStoreFile, "secret".toCharArray(), tmpDir);
         identityStore = new IdentityStore(identityStoreConfig, true);
-        //identityStore.ensureDomainCertificate();
         doReturn(identityStore).when(certificateStoreManager).getIdentityStore(any());
 
         // Use a temporary file to hold the trust store that is used by the tests.
@@ -284,8 +283,8 @@ public class LocalOutgoingServerSessionParameterizedTest
     private static Iterable<Arguments> arguments() {
         final Collection<Arguments> result = new LinkedList<>();
 
-        final Set<ServerSettings> localServerSettings = new HashSet<>();
-        final Set<ServerSettings> remoteServerSettings = new HashSet<>();
+        final Set<ServerSettings> localServerSettings = new LinkedHashSet<>();
+        final Set<ServerSettings> remoteServerSettings = new LinkedHashSet<>();
 
         for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
             for (final boolean dialbackSupported : Set.of(true, false)) {

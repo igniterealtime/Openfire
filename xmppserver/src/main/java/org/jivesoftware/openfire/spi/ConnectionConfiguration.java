@@ -28,6 +28,7 @@ public class ConnectionConfiguration
     private final CertificateStoreConfiguration trustStoreConfiguration;
     private final boolean acceptSelfSignedCertificates;
     private final boolean verifyCertificateValidity;
+    private final boolean strictCertificateValidation;
     private final Set<String> encryptionProtocols;
     private final Set<String> encryptionCipherSuites;
     private final Connection.CompressionPolicy compressionPolicy;
@@ -54,7 +55,7 @@ public class ConnectionConfiguration
      * @param compressionPolicy the compression policy
      */
     // TODO input validation
-    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy )
+    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy, boolean strictCertificateValidation )
     {
         if ( maxThreadPoolSize <= 0 ) {
             throw new IllegalArgumentException( "Argument 'maxThreadPoolSize' must be equal to or greater than one." );
@@ -78,6 +79,7 @@ public class ConnectionConfiguration
         this.encryptionProtocols = Collections.unmodifiableSet( encryptionProtocols );
         this.encryptionCipherSuites = Collections.unmodifiableSet( encryptionCipherSuites );
         this.compressionPolicy = compressionPolicy;
+        this.strictCertificateValidation = strictCertificateValidation;
 
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         this.identityStore = certificateStoreManager.getIdentityStore( type );
@@ -200,5 +202,9 @@ public class ConnectionConfiguration
     public boolean isEnabled()
     {
         return enabled;
+    }
+
+    public boolean isStrictCertificateValidation() {
+        return strictCertificateValidation;
     }
 }

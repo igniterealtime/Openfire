@@ -284,7 +284,8 @@ public class ConnectionListener
                 verifyCertificateValidity(),
                 getEncryptionProtocols(),
                 getEncryptionCipherSuites(),
-                getCompressionPolicy()
+                getCompressionPolicy(),
+                getStrictCertificateValidation()
         );
     }
 
@@ -1027,4 +1028,31 @@ public class ConnectionListener
                 '}';
     }
 
+    public void setStrictCertificateValidation(boolean strictCertificateValidation) {
+        final boolean oldValue = getStrictCertificateValidation();
+
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "certificate.strict-validation", Boolean.toString( strictCertificateValidation ) );
+
+        if ( oldValue == strictCertificateValidation ) {
+            Log.debug( "Ignoring strict certificate validation configuration change request (to '{}'): listener already in this state.", strictCertificateValidation );
+            return;
+        }
+
+        Log.debug( "Changing strict certificate validation configuration from '{}' to '{}'.", oldValue, strictCertificateValidation );
+        restart();
+    }
+
+    private boolean getStrictCertificateValidation() {
+        final String propertyName = type.getPrefix() + "certificate.strict-validation";
+        final boolean defaultValue = true;
+
+        if ( type.getFallback() == null ) {
+            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+        }
+        else {
+            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).getStrictCertificateValidation() );
+        }
+    }
 }
+

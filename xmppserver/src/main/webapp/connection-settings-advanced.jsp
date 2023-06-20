@@ -370,12 +370,14 @@
                     <label for="mutualauthentication-needed"><fmt:message key="connection.advanced.settings.clientauth.label_needed"/></label>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <input type="checkbox" name="strict-certificate-validation" id="strict-certificate-validation" ${configuration.strictCertificateValidation ? 'checked' : ''}/>
-                    <label for="strict-certificate-validation"><fmt:message key="connection.advanced.settings.clientauth.label_strict_cert_validation"/></label>
-                </td>
-            </tr>
+            <c:if test="${connectionType eq 'SOCKET_S2S'}">
+                <tr>
+                    <td>
+                        <input type="checkbox" name="strict-certificate-validation" id="strict-certificate-validation" ${configuration.strictCertificateValidation ? 'checked' : ''}/>
+                        <label for="strict-certificate-validation"><fmt:message key="connection.advanced.settings.clientauth.label_strict_cert_validation"/></label>
+                    </td>
+                </tr>
+            </c:if>
         </table>
     </admin:contentBox>
 

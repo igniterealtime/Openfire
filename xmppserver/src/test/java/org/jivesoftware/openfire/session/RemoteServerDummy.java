@@ -356,16 +356,21 @@ public class RemoteServerDummy implements AutoCloseable
                 final Element mechanisms = features.addElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
                 System.out.println(((SSLSocket) socket).getSession().getProtocol());
                 System.out.println(((SSLSocket) socket).getSession().getCipherSuite());
-                System.out.println(((SSLSocket) socket).getSession().getPeerPrincipal());
-                Certificate[] certificates = ((SSLSocket) socket).getSession().getPeerCertificates(); // AG: wondering if this throws an exception if the peer (local server) doesn't send a certificate?
 
-                if (certificates != null && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
-                    try {
-                        ((X509Certificate) certificates[0]).checkValidity(); // first peer certificate will belong to the local server
-                        mechanisms.addElement("mechanism").addText("EXTERNAL");
-                    } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                        System.out.println("local certificate is invalid");
+                try {
+                    // Throws an exception if the peer (local server) doesn't send a certificate
+                    System.out.println(((SSLSocket) socket).getSession().getPeerPrincipal());
+                    Certificate[] certificates = ((SSLSocket) socket).getSession().getPeerCertificates();
+                    if (certificates != null && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
+                        try {
+                            ((X509Certificate) certificates[0]).checkValidity(); // first peer certificate will belong to the local server
+                            mechanisms.addElement("mechanism").addText("EXTERNAL");
+                        } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+                            System.out.println("local certificate is invalid");
+                        }
                     }
+                } catch (SSLPeerUnverifiedException e) {
+                    System.out.println("local certificate is missing/unverified");
                 }
             }
 
@@ -399,7 +404,11 @@ public class RemoteServerDummy implements AutoCloseable
 
             final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, true);
             sslSocket.setSoTimeout((int) SO_TIMEOUT.toMillis());
-            sslSocket.setNeedClientAuth(true);
+
+            // Just indicate that we would like to authenticate the client but if client
+            // certificates are self-signed or have no certificate chain then we are still
+            // good
+            sslSocket.setWantClientAuth(true); // DO WE NEED TO BRING THIS INTO OUR LocalOutgoingServerSessionParameterizedTest MATRIX?
 
             processingService.submit(new SocketProcessor(sslSocket));
         }

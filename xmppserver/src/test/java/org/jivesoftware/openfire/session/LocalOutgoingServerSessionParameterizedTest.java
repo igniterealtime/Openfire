@@ -26,7 +26,6 @@ import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,7 +37,6 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.security.cert.X509Certificate;
-import java.time.Duration;
 import java.util.*;
 
 import static org.jivesoftware.openfire.session.ExpectedOutcome.ConnectionState.*;

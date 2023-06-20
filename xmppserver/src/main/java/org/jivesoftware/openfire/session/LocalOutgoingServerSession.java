@@ -413,6 +413,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             if (connection != null) {
                 connection.forceClose();
             }
+
+            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                log.warn( "Unable to create a new session: not trying dialback as a fallback, as server strictCertificateValidation is enabled" );
+                return null;
+            }
         }
         catch (Exception e)
         {

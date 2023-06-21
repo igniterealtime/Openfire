@@ -69,10 +69,10 @@ public class SocketUtil
             try
             {
                 // (re)initialize the socket.
-                socket = new Socket();
+                socket = new Socket(); // AG HERE
 
                 Log.debug( "Trying to create socket connection to XMPP domain '{}' using remote host: {}:{} (blocks up to {} ms) ...", xmppDomain, realHostname, realPort, socketTimeout );
-                socket.connect( new InetSocketAddress( realHostname, realPort ), socketTimeout );
+                socket.connect( new InetSocketAddress( realHostname, realPort ), socketTimeout ); // AG HERE
                 Log.debug( "Successfully created socket connection to XMPP domain '{}' using remote host: {}:{}!", xmppDomain, realHostname, realPort );
                 return new AbstractMap.SimpleEntry<>(socket, directTLS);
             }

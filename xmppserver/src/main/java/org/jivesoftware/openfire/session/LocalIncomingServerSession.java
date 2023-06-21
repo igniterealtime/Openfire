@@ -227,6 +227,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
     }
 
+
     public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain) {
         super(serverName, connection, streamID);
         this.fromDomain = fromDomain;

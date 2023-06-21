@@ -162,7 +162,7 @@ public class LocalOutgoingServerSessionParameterizedTest
 
     @ParameterizedTest
     @MethodSource("arguments")
-    public void doTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
+    public void outgoingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
@@ -240,6 +240,120 @@ public class LocalOutgoingServerSessionParameterizedTest
 
             // Verify results
             final ExpectedOutcome.ConnectionState expected = generateExpectedOutcome(localServerSettings, remoteServerSettings).getConnectionState();
+            System.out.println("Expect: " + expected);
+            switch (expected)
+            {
+                case NO_CONNECTION:
+                    assertNull(result);
+                    break;
+                case NON_ENCRYPTED_WITH_DIALBACK_AUTH:
+                    assertNotNull(result);
+                    assertFalse(result.isClosed());
+                    assertFalse(result.isEncrypted());
+                    assertTrue(result.isAuthenticated());
+                    assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
+                    break;
+                case ENCRYPTED_WITH_DIALBACK_AUTH:
+                    assertNotNull(result);
+                    assertFalse(result.isClosed());
+                    assertTrue(result.isEncrypted());
+                    assertTrue(result.isAuthenticated());
+                    assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
+                    break;
+                case ENCRYPTED_WITH_SASLEXTERNAL_AUTH:
+                    assertNotNull(result);
+                    assertFalse(result.isClosed());
+                    assertTrue(result.isEncrypted());
+                    assertTrue(result.isAuthenticated());
+                    assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
+                    break;
+            }
+        } finally {
+            // Teardown test fixture.
+            trustStore.delete("unit-test");
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("arguments")
+    public void incomingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
+        throws Exception
+    {
+        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
+        final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
+
+        try {
+            // Setup test fixture.
+
+            // Remote server TLS policy.
+            remoteServerDummy.setEncryptionPolicy(remoteServerSettings.encryptionPolicy);
+
+            // Remote server dialback
+            remoteServerDummy.setDisableDialback(!remoteServerSettings.dialbackSupported);
+
+            // Remote server certificate state
+            switch (remoteServerSettings.certificateState) {
+                case INVALID:
+                    remoteServerDummy.setUseExpiredEndEntityCertificate(true);
+                    // Intended fall-through
+                case VALID:
+                    remoteServerDummy.preparePKIX();
+
+                    // Install in local server's truststore.
+                    final X509Certificate[] chain = remoteServerDummy.getGeneratedPKIX().getCertificateChain();
+                    final X509Certificate caCert = chain[chain.length-1];
+                    trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
+                    break;
+                case MISSING:
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported remote certificate state");
+            }
+
+            // Local server TLS policy.
+            final Connection.TLSPolicy localTlsPolicy;
+            switch (localServerSettings.encryptionPolicy) {
+                case REQUIRED:
+                    localTlsPolicy = Connection.TLSPolicy.required;
+                    break;
+                case OPTIONAL:
+                    localTlsPolicy = Connection.TLSPolicy.optional;
+                    break;
+                case DISABLED:
+                    localTlsPolicy = Connection.TLSPolicy.disabled;
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported local TLS policy");
+            }
+            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, localTlsPolicy.toString());
+
+            // Local server dialback.
+            JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, localServerSettings.dialbackSupported ? "true" : "false");
+
+            // Local server certificate state
+            switch (localServerSettings.certificateState) {
+                case MISSING:
+                    // Do not install domain certificate.
+                    break;
+                case INVALID:
+                    // Insert an expired certificate into the identity store
+                    identityStore.installCertificate(Fixtures.invalidX509Certificate, Fixtures.invalidX509CertificatePrivateKey, "");
+                    break;
+                case VALID:
+                    // Generate a valid certificate and insert into identity store
+                    identityStore.ensureDomainCertificate();
+                    break;
+            }
+
+            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteServerDummy.XMPP_DOMAIN);
+            final int port = remoteServerDummy.getPort();
+
+            // TODO: Execute system under test.
+            final LocalIncomingServerSession result = null;
+
+            // Verify results
+            final ExpectedOutcome.ConnectionState expected = generateExpectedOutcome(remoteServerSettings, localServerSettings).getConnectionState();
             System.out.println("Expect: " + expected);
             switch (expected)
             {

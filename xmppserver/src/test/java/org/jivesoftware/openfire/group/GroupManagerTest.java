@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,32 @@
  */
 package org.jivesoftware.openfire.group;
 
-import static junit.framework.TestCase.fail;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
-@RunWith(MockitoJUnitRunner.class)
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class GroupManagerTest {
 
     private static final String GROUP_NAME = "test-group-name";
@@ -56,7 +53,7 @@ public class GroupManagerTest {
     @Mock
     private Group unCachedGroup;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
         groupCache = CacheFactory.createCache("Group");
@@ -64,7 +61,7 @@ public class GroupManagerTest {
         JiveGlobals.setProperty("provider.group.className", TestGroupProvider.class.getName());
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Ensure that Openfire caches are reset before each test to avoid tests to affect each-other.
         Arrays.stream(CacheFactory.getAllCaches()).forEach(Map::clear);
@@ -73,7 +70,7 @@ public class GroupManagerTest {
         groupManager = GroupManager.getInstance();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() throws Exception {
 
         // Reset static fields after use (to not confuse other test classes).

@@ -1,9 +1,26 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.auth;
 
-import java.util.HashMap;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JDBCAuthProviderTest {
 
@@ -27,53 +44,53 @@ public class JDBCAuthProviderTest {
 
     @Test
     public void hashPassword() throws Exception {
-        assertTrue(MD5_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.md5)));
-        assertTrue(SHA1_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha1)));
-        assertTrue(SHA256_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha256)));
-        assertTrue(SHA512_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha512)));
-        assertFalse(BCRYPTED_PASSWORD.equals(jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.bcrypt)));
+        assertEquals(MD5_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.md5));
+        assertEquals(SHA1_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha1));
+        assertEquals(SHA256_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha256));
+        assertEquals(SHA512_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha512));
+        assertNotEquals(BCRYPTED_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.bcrypt));
         assertTrue(OpenBSDBCrypt.checkPassword(BCRYPTED_PASSWORD, PASSWORD.toCharArray()));
     }
 
     @Test
     public void comparePasswords_sha256() throws Exception {
         setPasswordTypes("sha256");
-        assertTrue("password should be sha256", jdbcAuthProvider.comparePasswords(PASSWORD, SHA256_PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, SHA256_PASSWORD), "password should be sha256");
     }
 
     @Test
     public void comparePasswords_bcrypt() throws Exception {
         setPasswordTypes("bcrypt");
-        assertTrue("password should be bcrypted", jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD), "password should be bcrypted");
     }
 
     @Test
     public void comparePasswords_bcryptLast() throws Exception {
         setPasswordTypes("bcrypt,md5,plain");
-        assertTrue("should ignore everything beyond bcrypt", jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD), "should ignore everything beyond bcrypt");
     }
 
     @Test
     public void comparePasswords_ignoreUnknownDefaultPlain() throws Exception {
         setPasswordTypes("blowfish,puckerfish,rainbowtrout");
-        assertTrue("should passively ignore unknown, add plain if empty", jdbcAuthProvider.comparePasswords(PASSWORD, PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, PASSWORD), "should passively ignore unknown, add plain if empty");
     }
 
     @Test
     public void comparePasswords_md5_sha1() throws Exception {
         setPasswordTypes("md5,sha1");
-        assertTrue("password should be md5 -> sha1", jdbcAuthProvider.comparePasswords(PASSWORD, MD5_SHA1_PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, MD5_SHA1_PASSWORD), "password should be md5 -> sha1");
     }
 
     @Test
     public void comparePasswords_md5_sha512() throws Exception {
         setPasswordTypes("md5,sha512");
-        assertTrue("password should be md5 -> sha512", jdbcAuthProvider.comparePasswords(PASSWORD, MD5_SHA512_PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, MD5_SHA512_PASSWORD), "password should be md5 -> sha512");
     }
     
     @Test
     public void comparePasswords_plain_md5_plain_plain() throws Exception {
         setPasswordTypes("plain,md5,plain,plain");
-        assertTrue("weird password chains are fine", jdbcAuthProvider.comparePasswords(PASSWORD, MD5_PASSWORD));
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, MD5_PASSWORD), "weird password chains are fine");
     }    
 }

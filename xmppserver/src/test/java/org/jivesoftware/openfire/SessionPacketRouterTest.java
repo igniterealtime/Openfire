@@ -16,21 +16,21 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
-import org.xmpp.packet.*;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 /**
@@ -38,15 +38,15 @@ import static org.mockito.Mockito.*;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SessionPacketRouterTest
 {
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Fixtures.clearExistingProperties();
 

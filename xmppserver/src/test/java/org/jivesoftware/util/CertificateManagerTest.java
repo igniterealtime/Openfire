@@ -1,6 +1,24 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.util;
 
-import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERUTF8String;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.GeneralName;
@@ -11,8 +29,8 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
@@ -29,8 +47,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit test to validate the functionality of @{link CertificateManager}.
@@ -47,7 +66,7 @@ public class CertificateManagerTest
     private static KeyPair issuerKeyPair;
     private static ContentSigner contentSigner;
 
-    @BeforeClass
+    @BeforeAll
     public static void initialize() throws Exception
     {
         keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );

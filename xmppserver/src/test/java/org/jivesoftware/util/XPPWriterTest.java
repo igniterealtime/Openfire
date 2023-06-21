@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jivesoftware.util;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * <p>Test the writing of dom4j documents using the XPP serializer.</p>
@@ -29,7 +29,7 @@ public class XPPWriterTest {
      * <p>Run a standard config document through a round trip and compare.</p>
      */
     @Test
-    @Ignore
+    @Disabled
     public void testRoundtrip(){
         // NOTE: disabling this test case until we get resources working again.
         /*

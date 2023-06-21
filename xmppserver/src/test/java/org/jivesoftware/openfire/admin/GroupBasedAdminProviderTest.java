@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.admin;
 
 import org.jivesoftware.Fixtures;
@@ -7,9 +22,9 @@ import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 
 import java.util.Arrays;
@@ -18,6 +33,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -29,12 +45,12 @@ public class GroupBasedAdminProviderTest {
 
     private GroupBasedAdminProvider adminProvider;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Fixtures.clearExistingProperties();
         CacheFactory.initialize();
@@ -64,10 +80,10 @@ public class GroupBasedAdminProviderTest {
         assertThat(admins, is(Collections.emptyList()));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void willNotSetTheListOfAdmins() {
         assertThat(adminProvider.isReadOnly(), is(true));
-        adminProvider.setAdmins(ADMINS);
+        assertThrows(UnsupportedOperationException.class, () -> adminProvider.setAdmins(ADMINS));
     }
 
     public static class TestGroupProvider extends DefaultGroupProvider {

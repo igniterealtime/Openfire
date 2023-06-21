@@ -1,17 +1,36 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.keystore;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.security.cert.*;
-import java.util.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests that verify the functionality of {@link OpenfireX509TrustManager}.
@@ -36,7 +55,7 @@ public class OpenfireX509TrustManagerTest
     private X509Certificate[] expiredRootChain;
     private X509Certificate[] untrustedCAChain;
 
-    @Before
+    @BeforeEach
     public void createFixture() throws Exception
     {
         // Create a fresh store in a location that holds only temporary files.
@@ -75,7 +94,7 @@ public class OpenfireX509TrustManagerTest
         return chain[ chain.length - 1 ];
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception
     {
         // Attempt to delete any left-overs from the test.
@@ -103,10 +122,10 @@ public class OpenfireX509TrustManagerTest
         final X509Certificate[] result = systemUnderTest.getAcceptedIssuers();
 
         // Verify results.
-        Assert.assertEquals( 2, result.length );
-        Assert.assertTrue( Arrays.asList( result ).contains( getLast( validChain ) ) );
-        Assert.assertTrue( Arrays.asList( result ).contains( getLast( expiredIntChain ) ) );
-        Assert.assertFalse( Arrays.asList( result ).contains( getLast( expiredRootChain ) ) );
+        assertEquals( 2, result.length );
+        assertTrue( Arrays.asList( result ).contains( getLast( validChain ) ) );
+        assertTrue( Arrays.asList( result ).contains( getLast( expiredIntChain ) ) );
+        assertFalse( Arrays.asList( result ).contains( getLast( expiredRootChain ) ) );
     }
 
     /**
@@ -127,31 +146,31 @@ public class OpenfireX509TrustManagerTest
     /**
      * Verifies that a chain that has an intermediate certificate that is expired is rejected.
      */
-    @Test(expected = CertificateException.class)
+    @Test
     public void testInvalidChainExpiredIntermediate() throws Exception
     {
         // Setup fixture.
 
         // Execute system under test.
-        systemUnderTest.checkClientTrusted( expiredIntChain, "RSA" );
+        assertThrows(CertificateException.class, () -> systemUnderTest.checkClientTrusted( expiredIntChain, "RSA" ) );
     }
 
     /**
      * Verifies that a chain that has an root certificate (trust anchor) that is expired is rejected.
      */
-    @Test(expected = CertificateException.class)
+    @Test
     public void testInvalidChainExpiredTrustAnchor() throws Exception
     {
         // Setup fixture.
 
         // Execute system under test.
-        systemUnderTest.checkClientTrusted( expiredRootChain, "RSA" );
+        assertThrows(CertificateException.class, () -> systemUnderTest.checkClientTrusted( expiredRootChain, "RSA" ) );
     }
 
     /**
      * Verifies that a chain that is missing an intermediate certificate is rejected.
      */
-    @Test(expected = CertificateException.class)
+    @Test
     public void testInvalidChainMissingIntermediate() throws Exception
     {
         // Setup fixture.
@@ -162,18 +181,18 @@ public class OpenfireX509TrustManagerTest
         input[ 2 ] = validChain[ 3 ];
 
         // Execute system under test.
-        systemUnderTest.checkClientTrusted( input, "RSA" );
+        assertThrows(CertificateException.class, () -> systemUnderTest.checkClientTrusted( input, "RSA" ) );
     }
 
     /**
      * Verifies that a chain that is valid, but does not have its root CA certificate in the trust store, is rejected.
      */
-    @Test(expected = CertificateException.class)
+    @Test
     public void testInvalidChainCAnotTrusted() throws Exception
     {
         // Setup fixture.
 
         // Execute system under test.
-        systemUnderTest.checkClientTrusted( untrustedCAChain, "RSA" );
+        assertThrows(CertificateException.class, () -> systemUnderTest.checkClientTrusted( untrustedCAChain, "RSA" ) );
     }
 }

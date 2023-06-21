@@ -1,23 +1,35 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.cluster;
 
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class ClusterMonitorTest {
 
     private static final String THIS_HOST_NAME = "test-host-name";
@@ -26,12 +38,12 @@ public class ClusterMonitorTest {
     @Mock private XMPPServer xmppServer;
     @Mock private XMPPServerInfo xmppServerInfo;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
 
         Fixtures.clearExistingProperties();
@@ -39,9 +51,9 @@ public class ClusterMonitorTest {
         //noinspection deprecation
         XMPPServer.setInstance(xmppServer);
 
-        doReturn(xmppServerInfo).when(xmppServer).getServerInfo();
+        lenient().doReturn(xmppServerInfo).when(xmppServer).getServerInfo();
 
-        doReturn(THIS_HOST_NAME).when(xmppServerInfo).getHostname();
+        lenient().doReturn(THIS_HOST_NAME).when(xmppServerInfo).getHostname();
 
         clusterMonitor = new ClusterMonitor();
         clusterMonitor.initialize(xmppServer);

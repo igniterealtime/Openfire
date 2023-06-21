@@ -15,12 +15,12 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests that verify the implementation of {@link StreamManager}.

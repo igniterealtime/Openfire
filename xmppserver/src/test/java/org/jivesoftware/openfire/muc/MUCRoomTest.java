@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.ConcurrentGroupList;
 import org.jivesoftware.openfire.group.ConcurrentGroupMap;
 import org.jivesoftware.openfire.muc.spi.FMUCMode;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
 import java.io.ByteArrayInputStream;
@@ -35,7 +35,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MUCRoomTest {
 
     @Mock
@@ -57,7 +57,7 @@ public class MUCRoomTest {
     @Mock
     private MultiUserChatService mockService;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         doReturn("conference").when(mockService).getServiceName();
         doReturn("conference.example.org").when(mockService).getServiceDomain();

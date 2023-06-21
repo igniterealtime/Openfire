@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.*;
-
-import static org.junit.Assert.assertThrows;
 
 /**
  * Unit tests that verify the functionality of {@link AbstractGroupProvider} methods not overridden by the

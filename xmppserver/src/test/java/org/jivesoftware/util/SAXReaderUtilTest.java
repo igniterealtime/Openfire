@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.jivesoftware.util;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Verifies the implementation of {@link SAXReaderUtil}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2007 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -7,12 +7,10 @@
 
 package org.jivesoftware.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test cases for the JID class.
@@ -32,7 +30,7 @@ public class JIDTest {
         } catch (Exception e) {
             failed = true;
         }
-        assertTrue("A domain with spaces was accepted", failed);
+        assertTrue(failed, "A domain with spaces was accepted");
 
         failed = false;
         try {
@@ -40,7 +38,7 @@ public class JIDTest {
         } catch (Exception e) {
             failed = true;
         }
-        assertTrue("A domain with _ was accepted", failed);
+        assertTrue(failed, "A domain with _ was accepted");
     }
 
     @Test
@@ -54,30 +52,29 @@ public class JIDTest {
         } catch (Exception e) {
             failed = true;
         }
-        assertTrue("A username with spaces was accepted", failed);
+        assertTrue(failed, "A username with spaces was accepted");
     }
 
     @Test
     public void testCompare() {
         JID jid1 = new JID("john@mycomapny.com");
         JID jid2 = new JID("john@mycomapny.com");
-        assertEquals("Failed to compare 2 similar JIDs", 0 , jid1.compareTo(jid2));
-        assertEquals("Failed to recognize equal JIDs", jid1 , jid2);
+        assertEquals(0 , jid1.compareTo(jid2), "Failed to compare 2 similar JIDs");
+        assertEquals(jid1, jid2, "Failed to recognize equal JIDs");
 
         jid1 = new JID("john@mycomapny.com");
         jid2 = new JID("mycomapny.com");
-        assertTrue("Failed to recognized bigger JID", jid1.compareTo(jid2) > 0);
-        assertFalse("Failed to recognize different JIDs", jid1.equals(jid2));
+        assertTrue(jid1.compareTo(jid2) > 0, "Failed to recognized bigger JID");
+        assertNotEquals(jid1, jid2, "Failed to recognize different JIDs");
 
         jid1 = new JID("john@mycomapny.com");
         jid2 = new JID("mycomapny.com/resource");
-        assertTrue("Failed to recognized bigger JID", jid1.compareTo(jid2) > 0);
-        assertFalse("Failed to recognize different JIDs", jid1.equals(jid2));
+        assertTrue(jid1.compareTo(jid2) > 0, "Failed to recognized bigger JID");
+        assertNotEquals(jid1, jid2, "Failed to recognize different JIDs");
 
         jid1 = new JID("john@mycomapny.com");
         jid2 = new JID("john@mycomapny.com/resource");
-        assertTrue("Failed to recognized bigger JID", jid1.compareTo(jid2) < 0);
-        assertFalse("Failed to recognize different JIDs", jid1.equals(jid2));
-
+        assertTrue(jid1.compareTo(jid2) < 0, "Failed to recognized bigger JID");
+        assertNotEquals(jid1, jid2, "Failed to recognize different JIDs");
     }
 }

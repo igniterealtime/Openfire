@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@ import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
-import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertThrows;
 

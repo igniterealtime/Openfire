@@ -1,30 +1,37 @@
 /*
- * Copyright (C) 2008 Daniel Henninger. All rights reserved.
+ * Copyright (C) 2008 Daniel Henninger, 2023 Ignite Realtime Foundation. All rights reserved.
  *
- * This software is published under the terms of the GNU Public License (GPL), a copy of which is
- * included in this distribution.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.jivesoftware.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import java.util.ArrayList;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.Rdn;
-
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.ldap.LdapManager;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Rdn;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Daniel Henninger
  */
 public class LDAPTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void reconfigureOpenfireHome() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
@@ -52,22 +59,22 @@ public class LDAPTest {
         String before = "Jive Software, Inc";
         String after = "Jive Software\\, Inc";
         String converted = Rdn.escapeValue(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted);
         
         before = "Test.User; (+1)";
         after = "Test.User\\; (\\+1)";
         converted = Rdn.escapeValue(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted);
         
         before = "Wildcard *";
         after = "Wildcard *";
         converted = Rdn.escapeValue(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted);
         
         before = "Group/Section";
         after = "Group/Section";
         converted = Rdn.escapeValue(before);
-        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted);
     }
 
     @Test
@@ -80,27 +87,27 @@ public class LDAPTest {
         before = "Wildcard *";
         after = "Wildcard \\2a";
         converted = LdapManager.sanitizeSearchFilter(before, false);
-        assertTrue("Conversion result "+before+" to "+converted+ " expected " + after, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted + " expected " + after);
 
         before = "Wildcard *";
         after = "Wildcard *";
         converted = LdapManager.sanitizeSearchFilter(before, true);
-        assertTrue("Conversion result "+before+" to "+converted+ " expected " + after, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted + " expected " + after);
         
         before = "Wild*card *";
         after = "Wild\\2acard \\2a";
         converted = LdapManager.sanitizeSearchFilter(before, false);
-        assertTrue("Conversion result "+before+" to "+converted+ " expected " + after, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted + " expected " + after);
         
         before = "Wild*card *";
         after = "Wild*card *";
         converted = LdapManager.sanitizeSearchFilter(before, true);
-        assertTrue("Conversion result "+before+" to "+converted+ " expected " + after, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted + " expected " + after);
         
         before = "~ Group|Section & Teams!";
         after = "\\7e Group\\7cSection \\26 Teams\\21";
         converted = LdapManager.sanitizeSearchFilter(before, false);
-        assertTrue("Conversion result "+before+" to "+converted+ " expected " + after, converted.equals(after));
+        assertEquals(converted, after, "Conversion result " + before + " to " + converted + " expected " + after);
     }
 
     /**

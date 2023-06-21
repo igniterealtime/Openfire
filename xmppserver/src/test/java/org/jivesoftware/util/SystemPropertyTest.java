@@ -1,22 +1,19 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.util;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.doReturn;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
@@ -25,15 +22,28 @@ import org.jivesoftware.openfire.auth.DefaultAuthProvider;
 import org.jivesoftware.openfire.auth.HybridAuthProvider;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.ldap.LdapAuthProvider;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
-@RunWith(MockitoJUnitRunner.class)
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doReturn;
+
+@ExtendWith(MockitoExtension.class)
 public class SystemPropertyTest {
 
     @Mock
@@ -41,16 +51,15 @@ public class SystemPropertyTest {
     @Mock
     private PluginManager pluginManager;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
 
     @SuppressWarnings({"deprecation", "ResultOfMethodCallIgnored"})
-    @Before
+    @BeforeEach
     public void setUp() {
         Fixtures.clearExistingProperties();
-        doReturn(pluginManager).when(xmppServer).getPluginManager();
         XMPPServer.setInstance(xmppServer);
     }
 
@@ -136,48 +145,55 @@ public class SystemPropertyTest {
         assertThat(booleanProperty.getValueAsSaved(), is("true"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildAPropertyWithoutAKey() {
-        SystemProperty.Builder.ofType(String.class)
-            .build();
+        assertThrows(IllegalArgumentException.class, () -> SystemProperty.Builder.ofType(String.class).build());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildAPropertyWithoutADefaultValue() {
-        SystemProperty.Builder.ofType(String.class)
-            .setKey("a-test-property-without-a-default-value")
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(String.class)
+                .setKey("a-test-property-without-a-default-value")
+                .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildAPropertyWithoutADynamicIndicator() {
-        SystemProperty.Builder.ofType(String.class)
-            .setKey("a-test-property-without-dynamic-set")
-            .setDefaultValue("default value")
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(String.class)
+                .setKey("a-test-property-without-dynamic-set")
+                .setDefaultValue("default value")
+                .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildAPropertyForAnUnsupportedClass() {
-        SystemProperty.Builder.ofType(JavaSpecVersion.class)
-            .setKey("a-property-for-an-unsupported-class")
-            .setDefaultValue(new JavaSpecVersion("1.8"))
-            .setDynamic(true)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(JavaSpecVersion.class)
+                .setKey("a-property-for-an-unsupported-class")
+                .setDefaultValue(new JavaSpecVersion("1.8"))
+                .setDynamic(true)
+                .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildTheSamePropertyTwice() {
         SystemProperty.Builder.ofType(String.class)
             .setKey("a-duplicate-property")
             .setDefaultValue("")
             .setDynamic(true)
             .build();
-        SystemProperty.Builder.ofType(Boolean.class)
-            .setKey("a-duplicate-property")
-            .setDefaultValue(false)
-            .setDynamic(true)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(Boolean.class)
+                .setKey("a-duplicate-property")
+                .setDefaultValue(false)
+                .setDynamic(true)
+                .build()
+        );
     }
 
     @Test
@@ -212,23 +228,27 @@ public class SystemPropertyTest {
         assertThat(property.getValueAsSaved(), is("42"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildADurationPropertyWithoutAChronoUnit() {
-        SystemProperty.Builder.ofType(Duration.class)
-            .setKey("this-will-not-work")
-            .setDefaultValue(Duration.ZERO)
-            .setDynamic(true)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(Duration.class)
+                .setKey("this-will-not-work")
+                .setDefaultValue(Duration.ZERO)
+                .setDynamic(true)
+                .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildADurationPropertyWithAnInvalidChronoUnit() {
-        SystemProperty.Builder.ofType(Duration.class)
-            .setKey("this-will-not-work")
-            .setDefaultValue(Duration.ZERO)
-            .setChronoUnit(ChronoUnit.CENTURIES)
-            .setDynamic(true)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(Duration.class)
+                .setKey("this-will-not-work")
+                .setDefaultValue(Duration.ZERO)
+                .setChronoUnit(ChronoUnit.CENTURIES)
+                .setDynamic(true)
+                .build()
+        );
     }
 
     @Test
@@ -294,6 +314,8 @@ public class SystemPropertyTest {
     @Test
     public void thePluginCanBeChanged() {
 
+        doReturn(pluginManager).when(xmppServer).getPluginManager();
+
         final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
             .setKey("a-plugin-property")
             .setDefaultValue(42L)
@@ -304,15 +326,16 @@ public class SystemPropertyTest {
         assertThat(longProperty.getPlugin(), is("TestPluginName"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void aPluginIsRequired() {
-
-        SystemProperty.Builder.ofType(Long.class)
-            .setKey("a-null-plugin-property")
-            .setDefaultValue(42L)
-            .setPlugin(null)
-            .setDynamic(false)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(Long.class)
+                .setKey("a-null-plugin-property")
+                .setDefaultValue(42L)
+                .setPlugin(null)
+                .setDynamic(false)
+                .build()
+        );
     }
 
     @Test
@@ -365,25 +388,27 @@ public class SystemPropertyTest {
         assertThat(classProperty.getValue(), is(equalTo(DefaultAuthProvider.class)));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildAClassPropertyWithoutABaseClass() {
-
-        SystemProperty.Builder.ofType(Class.class)
-            .setKey("a-broken-class-property")
-            .setDefaultValue(DefaultAuthProvider.class)
-            .setDynamic(false)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(Class.class)
+                .setKey("a-broken-class-property")
+                .setDefaultValue(DefaultAuthProvider.class)
+                .setDynamic(false)
+                .build()
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void willNotBuildARegularPropertyWithABaseClass() {
-
-        SystemProperty.Builder.ofType(Long.class)
-            .setKey("a-broken-long-property")
-            .setDefaultValue(42L)
-            .setBaseClass(java.lang.Long.class)
-            .setDynamic(false)
-            .build();
+        assertThrows(IllegalArgumentException.class, () ->
+            SystemProperty.Builder.ofType(Long.class)
+                .setKey("a-broken-long-property")
+                .setDefaultValue(42L)
+                .setBaseClass(java.lang.Long.class)
+                .setDynamic(false)
+                .build()
+        );
     }
 
     @Test
@@ -425,6 +450,8 @@ public class SystemPropertyTest {
 
     @Test
     public void willRemovePluginSpecificProperties() {
+
+        doReturn(pluginManager).when(xmppServer).getPluginManager();
 
         final String key = "a-class-property-to-remove";
         final SystemProperty<Class> property = SystemProperty.Builder.ofType(Class.class)

@@ -354,6 +354,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
 
+        NettyConnectionAcceptor.shutdownEventLoopGroups();
+
         // Stop the HTTP client listener.
         try
         {

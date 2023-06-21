@@ -121,6 +121,7 @@
         <jetty.version>9.4.43.v20210629</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <mina.version>2.2.1</mina.version>
+        <netty.version>4.1.94.Final</netty.version>
         <bouncycastle.version>1.70</bouncycastle.version>
         <slf4j.version>1.7.36</slf4j.version>
         <log4j.version>2.17.1</log4j.version>

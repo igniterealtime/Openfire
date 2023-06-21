@@ -269,7 +269,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         try {
             final SocketAddress socketAddress = socket.getRemoteSocketAddress();
             log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
-            connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
+            connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false); //TODO: AG NettyConnection?
             if (directTLS) {
                 try {
                     connection.startTLS( true, true );

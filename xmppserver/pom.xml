@@ -302,6 +302,13 @@
             <version>${mina.version}</version>
         </dependency>
 
+        <!-- Netty -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+
         <!-- BouncyCastle -->
         <dependency>
             <groupId>org.bouncycastle</groupId>

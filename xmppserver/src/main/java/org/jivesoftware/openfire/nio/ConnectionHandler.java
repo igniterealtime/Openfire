@@ -86,7 +86,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     @Override
     public void sessionOpened(IoSession session) throws Exception {
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
         session.setAttribute(XML_PARSER, parser);
         // Create a new NIOConnection for the new session
         final NIOConnection connection = createNIOConnection(session);

@@ -21,6 +21,11 @@ import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
+
 /**
  * Decoder class that parses ByteBuffers and generates XML stanzas. Generated
  * stanzas are then passed to the next filters.
@@ -30,18 +35,37 @@ import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 public class XMPPDecoder extends CumulativeProtocolDecoder {
 
     @Override
-    protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out)
-            throws Exception {
+    protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
         // Get the XML light parser from the IoSession
         XMLLightweightParser parser = (XMLLightweightParser) session.getAttribute(ConnectionHandler.XML_PARSER);
+
+        if (parser.isMaxBufferSizeExceeded()) {
+            // exception was thrown before, avoid duplicate exception(s)
+            // "read" and discard remaining data
+            in.position(in.limit());
+            return true;
+        }
+
+        CharBuffer charBuffer = CharBuffer.allocate(in.capacity());
+
+        CharsetDecoder encoder = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        encoder.reset();
+        encoder.decode(in.buf(), charBuffer, false);
+
+        char[] buf = new char[charBuffer.position()];
+        charBuffer.flip();
+        charBuffer.get(buf);
+
         // Parse as many stanzas as possible from the received data
-        parser.read(in);
+        parser.read(buf);
 
         if (parser.areThereMsgs()) {
             for (String stanza : parser.getMsgs()) {
                 out.write(stanza);
             }
         }
-        return !in.hasRemaining();
+        return !in.hasRemaining(); // AKA return isEmpty()
     }
 }

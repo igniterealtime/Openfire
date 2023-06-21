@@ -1,0 +1,51 @@
+/*
+ * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.jivesoftware.openfire.nio;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.util.CharsetUtil;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * Decoder class that parses ByteBuffers and generates XML stanzas. Generated
+ * stanzas are then passed to the next filters.
+ */
+public class NettyXMPPDecoder extends ByteToMessageDecoder {
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        // Get the XML light parser from the channel
+        XMLLightweightParser parser = ctx.channel().attr(NettyConnectionHandler.XML_PARSER).get();
+
+        if (parser.isMaxBufferSizeExceeded()) {
+            in.release();
+            return;
+        }
+
+        // Parse as many stanzas as possible from the received data
+        char[] readChars = in.readCharSequence(in.readableBytes(), CharsetUtil.UTF_8).toString().toCharArray();
+        parser.read(readChars);
+
+        if (parser.areThereMsgs()) {
+            out.addAll(Arrays.asList(parser.getMsgs()));
+        }
+    }
+}

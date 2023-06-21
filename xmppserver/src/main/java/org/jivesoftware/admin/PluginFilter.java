@@ -16,7 +16,6 @@
 
 package org.jivesoftware.admin;
 
-import org.apache.mina.util.CopyOnWriteMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A servlet filter that plugin classes can use to dynamically register and un-register filter logic.
@@ -42,7 +42,7 @@ public class PluginFilter implements Filter {
 
     private static final Logger Log = LoggerFactory.getLogger( PluginFilter.class );
 
-    private static final Map<String, List<Filter>> filters = new CopyOnWriteMap<>();
+    private static final Map<String, List<Filter>> filters = new ConcurrentHashMap<>();
 
     /**
      * Adds a filter to the list of filters that will be run on every request of which the URL matches the URL that

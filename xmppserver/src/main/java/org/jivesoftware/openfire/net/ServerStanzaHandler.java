@@ -30,6 +30,8 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
+import java.io.IOException;
+
 /**
  * Handler of XML stanzas sent by remote servers. Remote servers that send stanzas
  * with no TO or FROM will get their connections closed. Moreover, remote servers
@@ -99,9 +101,13 @@ public class ServerStanzaHandler extends StanzaHandler {
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
     {
         // The connected client is a server so create an IncomingServerSession
-        // TODO Finish implementation
-        //session = LocalIncomingServerSession.createSession(serverName, xpp, connection);
-        throw new UnsupportedOperationException("Server stanza handler pending implementation");
+        // TODO Finish implementation, this is required for netty migration (see ClientStanzaHandler#createSession() which has been implemented)
+        try {
+            session = LocalIncomingServerSession.createSession(serverName, xpp, connection, false);
+        } catch (IOException e) {
+            Log.error(e.getMessage());
+        }
+//        throw new UnsupportedOperationException("Server stanza handler pending implementation");
     }
 
     @Override

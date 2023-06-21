@@ -16,19 +16,14 @@
 
 package org.jivesoftware.openfire.nio;
 
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is a Light-Weight XML Parser.
@@ -93,22 +88,15 @@ class XMLLightweightParser {
     // List with all finished messages found.
     protected List<String> msgs = new ArrayList<>();
     private int depth = 0;
+    private boolean maxBufferSizeExceeded = false;
 
     protected boolean insideChildrenTag = false;
-
-    CharsetDecoder encoder;
 
     static {
         // Set default max buffer size to 1MB. If limit is reached then close connection
         maxBufferSize = JiveGlobals.getIntProperty(MAX_PROPERTY_NAME, 1048576);
         // Listen for changes to this property
         PropertyEventDispatcher.addListener(new PropertyListener());
-    }
-
-    public XMLLightweightParser(Charset charset) {
-        encoder = charset.newDecoder()
-            .onMalformedInput(CodingErrorAction.REPLACE)
-            .onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
 
     /*
@@ -167,33 +155,25 @@ class XMLLightweightParser {
         depth = 0;
     }
 
-    /*
-    * Main reading method
-    */
-    public void read(IoBuffer byteBuffer) throws Exception {
-        if (buffer == null) {
-            // exception was thrown before, avoid duplicate exception(s)
-            // "read" and discard remaining data
-            byteBuffer.position(byteBuffer.limit());
-            return;
-        }
+    public boolean isMaxBufferSizeExceeded() {
+        return maxBufferSizeExceeded;
+    }
+
+    public void read(char[] buf) throws Exception {
         invalidateBuffer();
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (buffer.length() > maxBufferSize) {
             // purge the local buffer / free memory
             buffer = null;
+            // set flag to inform higher level network decoders to stop reading more data
+            maxBufferSizeExceeded = true;
             // processing the exception takes quite long
-            final ProtocolDecoderException ex = new ProtocolDecoderException("Stopped parsing never ending stanza");
+            final ProtocolDecoderException ex = new ProtocolDecoderException("Stopped parsing never ending stanza"); // TODO throw an openfire decoder exception (not mina specific)
             ex.setHexdump("(redacted hex dump of never ending stanza)");
             throw ex;
         }
-        CharBuffer charBuffer = CharBuffer.allocate(byteBuffer.capacity());
-        encoder.reset();
-        encoder.decode(byteBuffer.buf(), charBuffer, false);
-        char[] buf = new char[charBuffer.position()];
-        charBuffer.flip();
-        charBuffer.get(buf);
+
         int readChar = buf.length;
 
         // Just return if nothing was read
@@ -283,7 +263,7 @@ class XMLLightweightParser {
                         // Add message to the list
                         foundMsg(msg);
                         startLastMsg = end;
-                    } 
+                    }
                 } else if (ch == '<') {
                     status = XMLLightweightParser.PRETAIL;
                     insideChildrenTag = true;
@@ -303,8 +283,8 @@ class XMLLightweightParser {
                         cdataOffset = 0;
                     }
                 } else if (cdataOffset == XMLLightweightParser.CDATA_END.length-1 && ch == XMLLightweightParser.CDATA_END[cdataOffset - 1]) {
-                    // if we are looking for the last CDATA_END char, and we instead found an extra ']' 
-                    // char, leave cdataOffset as is and proceed to the next char. This could be a case 
+                    // if we are looking for the last CDATA_END char, and we instead found an extra ']'
+                    // char, leave cdataOffset as is and proceed to the next char. This could be a case
                     // where the XML character data ends with multiple square braces. For Example ]]]>
                 } else {
                     cdataOffset = 0;

@@ -71,7 +71,7 @@ public class XMLLightweightParserTest {
         final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
         buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
         buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
         parser.read(buffer);
@@ -97,7 +97,7 @@ public class XMLLightweightParserTest {
         final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
         buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
         buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
         parser.read(buffer);
@@ -123,7 +123,7 @@ public class XMLLightweightParserTest {
         final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
         buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
         buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
         parser.read(buffer);
@@ -149,7 +149,7 @@ public class XMLLightweightParserTest {
         final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
         buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
         buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
         parser.read(buffer);
@@ -175,7 +175,7 @@ public class XMLLightweightParserTest {
         final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
         buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
         buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
         parser.read(buffer);

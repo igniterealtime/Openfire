@@ -16,6 +16,7 @@
 package org.jivesoftware.util.cache;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -317,7 +318,7 @@ public class DefaultExternalizableUtilTest
     }
 
     /**
-     * Asserts that the process of writing and reading a Array of Long through the {@link DefaultExternalizableUtil}
+     * Asserts that the process of writing and reading an Array of Long through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
     @Test
@@ -335,7 +336,7 @@ public class DefaultExternalizableUtilTest
     }
 
     /**
-     * Asserts that the process of writing and reading a Array of Long through the {@link DefaultExternalizableUtil}
+     * Asserts that the process of writing and reading an Array of Long through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input, when the array is empty
      */
     @Test
@@ -465,7 +466,7 @@ public class DefaultExternalizableUtilTest
      * Asserts that the process of writing and reading a UTF value through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      *
-     * Values taken from https://rosettacode.org/wiki/UTF-8_encode_and_decode#Java
+     * Values taken from <a href="https://rosettacode.org/wiki/UTF-8_encode_and_decode#Java">Rosetta Code</a>
      */
     @Test
     public void testWriteReadSafeUTF() throws Exception
@@ -503,7 +504,7 @@ public class DefaultExternalizableUtilTest
      * Asserts that the process of writing and reading a collection of Externalizable objects through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
-    // TODO @Test
+    @Test @Disabled
     public void testWriteReadExternalizableCollection() throws Exception
     {
         // TODO implement me (and variants for collections that are empty or contain null values).
@@ -513,7 +514,7 @@ public class DefaultExternalizableUtilTest
      * Asserts that the process of writing and reading a collection of Serializable objects through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
-    // TODO @Test
+    @Test @Disabled
     public void testWriteReadSerializableCollection() throws Exception
     {
         // TODO implement me (and variants for collections that are empty or contain null values).
@@ -523,7 +524,7 @@ public class DefaultExternalizableUtilTest
      * Asserts that the process of writing and reading a Map of String to Externalizable objects through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
-    // TODO @Test
+    @Test @Disabled
     public void testWriteReadExternalizableMap() throws Exception
     {
         // TODO implement me (and variants for collections that are empty or contain null values).
@@ -533,7 +534,7 @@ public class DefaultExternalizableUtilTest
      * Asserts that the process of writing and reading a Map of Serializable to Serializable objects through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
-    // TODO @Test
+    @Test @Disabled
     public void testWriteReadSerializableMap() throws Exception
     {
         // TODO implement me (and variants for collections that are empty or contain null values).
@@ -543,7 +544,7 @@ public class DefaultExternalizableUtilTest
      * Asserts that the process of writing and reading a Collection of Strings through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
-    @Test
+    @Test @Disabled
     public void testWriteReadStringCollection() throws Exception
     {
         // TODO implement me (and variants for collections that are empty or contain null values).

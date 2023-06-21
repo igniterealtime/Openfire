@@ -102,7 +102,7 @@ public class XmlNumericCharacterReferenceTest {
         "&#1114111;", "&#x10FFFF;", "&#01114111;", "&#x010FFFF;", "&#00001114111;", "&#x000010FFFF;", "&#000001114111;", "&#x0000010FFFF;" 
     };
     
-    final String[] notNumericCharacterRefrences = new String[] {
+    final String[] notNumericCharacterReferences = new String[] {
         "&amp;", 
         "&#9", "&#x9", "#9;", "#x9;", "&#1", "&#x1", "#1;", "#x1;",
         "&amp;#9;", "&amp;#x9;", "&amp;#1;", "&amp;#x1;" 
@@ -147,12 +147,12 @@ public class XmlNumericCharacterReferenceTest {
      */
     @Test
     public void testnotNumericCharacterReferences() throws Exception {
-        for(final String reference : legalNumericCharacterReferences) {
+        for(final String reference : notNumericCharacterReferences) {
             // do magic
             final boolean result =  XMLLightweightParser.hasIllegalCharacterReferences(reference);
-            
+
             // verify
-            assertFalse(result, "Value \""+reference+"\" is reported to contain an illegal numeric character reference, even though this hard-coded test value should not contain a numeric character reference at all.");
+            assertFalse(result, "Value \""+reference+"\" is reported to contain an illegal numeric character reference, even though this hard-coded test value should not contain one.");
         }
     }
 

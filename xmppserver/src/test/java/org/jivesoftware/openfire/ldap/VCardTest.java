@@ -55,7 +55,7 @@ public class VCardTest
     }
 
     /**
-     * Verifies that, using a simplified template, a placeholder embedded in a element value in a template gets
+     * Verifies that, using a simplified template, a placeholder embedded in an element value in a template gets
      * correctly replaced.
      */
     @Test
@@ -77,7 +77,7 @@ public class VCardTest
     }
 
     /**
-     * Verifies that, using a simplified template, a placeholder embedded in a element value in a template gets
+     * Verifies that, using a simplified template, a placeholder embedded in an element value in a template gets
      * correctly replaced.
      */
     @Test

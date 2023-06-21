@@ -90,7 +90,7 @@ public class OpenfireX509TrustManagerTest
      * @param chain An array (cannot be null).
      * @return The last element of the provided array.
      */
-    private static <X extends Object> X getLast(X[]chain) {
+    private static <X> X getLast(X[]chain) {
         return chain[ chain.length - 1 ];
     }
 
@@ -156,7 +156,7 @@ public class OpenfireX509TrustManagerTest
     }
 
     /**
-     * Verifies that a chain that has an root certificate (trust anchor) that is expired is rejected.
+     * Verifies that a chain that has a root certificate (trust anchor) that is expired is rejected.
      */
     @Test
     public void testInvalidChainExpiredTrustAnchor() throws Exception

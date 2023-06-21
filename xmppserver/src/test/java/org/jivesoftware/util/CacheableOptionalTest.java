@@ -103,7 +103,7 @@ public class CacheableOptionalTest {
         assertThat(co.getCachedSize(), is(actualCachedSize));
     }
 
-    private int calculateCachedSize(CacheableOptional co) throws IOException {
+    private int calculateCachedSize(CacheableOptional<?> co) throws IOException {
         final ByteArrayOutputStream os = new ByteArrayOutputStream();
         final ObjectOutputStream oos = new ObjectOutputStream(os);
         oos.writeObject(co);

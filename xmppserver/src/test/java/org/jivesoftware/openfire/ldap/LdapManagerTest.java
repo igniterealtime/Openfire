@@ -54,7 +54,7 @@ public class LdapManagerTest
 
     /**
      * Test if {@link LdapManager#getProviderURL(LdapName)} generates a whitespace-separated value of URLs when
-     * more than one connect-host is being provided..
+     * more than one connect-host is being provided.
      */
     @Test
     public void testGetProviderURLTwoHosts() throws Exception

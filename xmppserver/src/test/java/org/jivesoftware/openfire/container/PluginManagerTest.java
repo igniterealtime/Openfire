@@ -34,27 +34,33 @@ public class PluginManagerTest
     public void testJARMagicBytes() throws Exception
     {
         // Setup test fixture.
-        final InputStream inputStream = getClass().getClassLoader().getResourceAsStream( "hello.jar" );
-        final BufferedInputStream in = new BufferedInputStream( inputStream );
+        try (final InputStream inputStream = getClass().getClassLoader().getResourceAsStream("hello.jar")) {
+            assert inputStream != null;
+            try (final BufferedInputStream in = new BufferedInputStream(inputStream)) {
 
-        // Execute system under test
-        final boolean result = PluginManager.validMagicNumbers( in );
+                // Execute system under test
+                final boolean result = PluginManager.validMagicNumbers( in );
 
-        // Verify results.
-        assertTrue( result );
+                // Verify results.
+                assertTrue( result );
+            }
+        }
     }
 
     @Test
     public void testTxtMagicBytes() throws Exception
     {
         // Setup test fixture.
-        final InputStream inputStream = getClass().getClassLoader().getResourceAsStream( "fullchain.pem" );
-        final BufferedInputStream in = new BufferedInputStream( inputStream );
+        try (final InputStream inputStream = getClass().getClassLoader().getResourceAsStream( "fullchain.pem" )) {
+            assert inputStream != null;
+            try (final BufferedInputStream in = new BufferedInputStream( inputStream )) {
 
-        // Execute system under test
-        final boolean result = PluginManager.validMagicNumbers( in );
+                // Execute system under test
+                final boolean result = PluginManager.validMagicNumbers(in);
 
-        // Verify results.
-        assertFalse( result );
+                // Verify results.
+                assertFalse(result);
+            }
+        }
     }
 }

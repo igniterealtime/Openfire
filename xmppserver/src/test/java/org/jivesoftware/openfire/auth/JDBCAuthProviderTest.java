@@ -35,7 +35,8 @@ public class JDBCAuthProviderTest {
     private final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
 
     private void setPasswordTypes(final String passwordTypes) {
-        jdbcAuthProvider.propertySet("jdbcAuthProvider.passwordType", new HashMap<String, Object>() {
+        jdbcAuthProvider.propertySet("jdbcAuthProvider.passwordType", new HashMap<>()
+        {
             {
                 put("value", passwordTypes);
             }

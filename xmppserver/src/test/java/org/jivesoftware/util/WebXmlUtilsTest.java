@@ -19,10 +19,7 @@ import org.dom4j.Document;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,14 +34,14 @@ public class WebXmlUtilsTest
     public void testGetServletNames() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
 
         // Execute system under test.
         final List<String> results = WebXmlUtils.getServletNames( webXml );
 
         // Verify result.
         assertNotNull( results );
-        final Iterator iterator = results.iterator(); // Names should be reported in order.
+        final Iterator<String> iterator = results.iterator(); // Names should be reported in order.
         assertEquals( "PluginServlet", iterator.next() );
         assertEquals( "FaviconServlet", iterator.next() );
         assertEquals( "dwr-invoker", iterator.next() );
@@ -56,14 +53,14 @@ public class WebXmlUtilsTest
     public void testGetFilterNames() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
 
         // Execute system under test.
         final List<String> results = WebXmlUtils.getFilterNames( webXml );
 
         // Verify result.
         assertNotNull( results );
-        final Iterator iterator = results.iterator(); // Names should be reported in order.
+        final Iterator<String> iterator = results.iterator(); // Names should be reported in order.
         assertEquals( "AuthCheck", iterator.next() );
         assertEquals( "PluginFilter", iterator.next() );
         assertEquals( "Set Character Encoding", iterator.next() );
@@ -76,7 +73,7 @@ public class WebXmlUtilsTest
     public void testGetServletClassName() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "dwr-invoker";
 
         // Execute system under test.
@@ -90,7 +87,7 @@ public class WebXmlUtilsTest
     public void testGetServletClassNameForNonExistingServlet() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "This does not exist";
 
         // Execute system under test.
@@ -104,7 +101,7 @@ public class WebXmlUtilsTest
     public void testGetFilterClassName() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "Set Character Encoding";
 
         // Execute system under test.
@@ -118,7 +115,7 @@ public class WebXmlUtilsTest
     public void testGetFilterClassNameForNonExistingFilter() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "This does not exist";
 
         // Execute system under test.
@@ -132,7 +129,7 @@ public class WebXmlUtilsTest
     public void testGetServletInitParams() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "FaviconServlet";
 
         // Execute system under test.
@@ -149,7 +146,7 @@ public class WebXmlUtilsTest
     public void testGetServletInitParamsForServletWithoutParams() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "PluginServlet";
 
         // Execute system under test.
@@ -165,7 +162,7 @@ public class WebXmlUtilsTest
     public void testGetServletInitParamsForNonExistingServlet() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "This does not exist";
 
         // Execute system under test.
@@ -180,7 +177,7 @@ public class WebXmlUtilsTest
     public void testGetFilterInitParams() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "AuthCheck";
 
         // Execute system under test.
@@ -196,7 +193,7 @@ public class WebXmlUtilsTest
     public void testGetFilterInitParamsForFilterWithoutParams() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "PluginFilter";
 
         // Execute system under test.
@@ -212,7 +209,7 @@ public class WebXmlUtilsTest
     public void testGetFilterInitParamsForNonExistingFilter() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "This does not exist";
 
         // Execute system under test.
@@ -227,7 +224,7 @@ public class WebXmlUtilsTest
     public void testGetServletUrlPatterns() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "dwr-invoker";
 
         // Execute system under test.
@@ -244,7 +241,7 @@ public class WebXmlUtilsTest
     public void testGetServletUrlPatternsForNonExistingServlet() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String servletName = "This does not exist";
 
         // Execute system under test.
@@ -259,7 +256,7 @@ public class WebXmlUtilsTest
     public void testGetFilterUrlPatterns() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "LocaleFilter";
 
         // Execute system under test.
@@ -276,7 +273,7 @@ public class WebXmlUtilsTest
     public void testGetFilterUrlPatternsForNonExistingFilter() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "This does not exist";
 
         // Execute system under test.
@@ -291,7 +288,7 @@ public class WebXmlUtilsTest
     public void testGetFilterUrlPatternsForFilterThatUsesServletMapping() throws Exception
     {
         // Setup fixture.
-        final Document webXml = WebXmlUtils.asDocument( new File( WebXmlUtilsTest.class.getResource( "/org/jivesoftware/util/test-web.xml" ).toURI() ) );
+        final Document webXml = WebXmlUtils.asDocument( new File( Objects.requireNonNull(WebXmlUtilsTest.class.getResource("/org/jivesoftware/util/test-web.xml")).toURI() ) );
         final String filterName = "AuthCheck";
 
         // Execute system under test.

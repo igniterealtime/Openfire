@@ -53,14 +53,7 @@ public class StanzaIDUtilTest
         assertNotNull( result );
         final Element stanzaIDElement = result.getElement().element( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         assertNotNull( stanzaIDElement );
-        try
-        {
-            UUID.fromString( stanzaIDElement.attributeValue( "id" ) );
-        }
-        catch ( IllegalArgumentException ex )
-        {
-            fail();
-        }
+        assertDoesNotThrow(() -> UUID.fromString( stanzaIDElement.attributeValue( "id" ) ));
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }
 
@@ -86,14 +79,7 @@ public class StanzaIDUtilTest
         assertNotNull( result );
         final Element stanzaIDElement = result.getElement().element( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         assertNotNull( stanzaIDElement );
-        try
-        {
-            UUID.fromString( stanzaIDElement.attributeValue( "id" ) );
-        }
-        catch ( IllegalArgumentException ex )
-        {
-            fail();
-        }
+        assertDoesNotThrow(() -> UUID.fromString( stanzaIDElement.attributeValue( "id" ) ));
         assertNotEquals( notExpected, stanzaIDElement.attributeValue( "id" ) );
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }
@@ -143,14 +129,7 @@ public class StanzaIDUtilTest
         assertNotNull( result );
         final Element stanzaIDElement = result.getElement().element( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         assertNotNull( stanzaIDElement );
-        try
-        {
-            UUID.fromString( stanzaIDElement.attributeValue( "id" ) );
-        }
-        catch ( IllegalArgumentException ex )
-        {
-            fail();
-        }
+        assertDoesNotThrow(() -> UUID.fromString( stanzaIDElement.attributeValue( "id" ) ));
         assertNotEquals( expected, stanzaIDElement.attributeValue( "id" ) );
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }

@@ -22,7 +22,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests that verify the functionality of {@link CollectionUtils}
@@ -70,7 +71,7 @@ public class CollectionUtilsTest
 
     /**
      * Verifies that {@link CollectionUtils#findDuplicates(Collection[])} finds duplicates when the provided
-     * collections has some.
+     * collections have some.
      */
     @Test
     public void testMultipleCollectionsWithoutDuplicates() throws Exception
@@ -90,7 +91,7 @@ public class CollectionUtilsTest
 
     /**
      * Verifies that {@link CollectionUtils#findDuplicates(Collection[])} finds duplicates when the provided
-     * collections has some.
+     * collections have some.
      */
     @Test
     public void testMultipleCollectionsWithDuplicates() throws Exception

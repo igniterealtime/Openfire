@@ -48,6 +48,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
 
     static {
         final java.net.URL location = AbstractGroupProvider.class.getResource("/datasets/openfire.script");
+        assert location != null;
         final String fileLocation = location.toString().substring(0, location.toString().lastIndexOf("/")+1) + "openfire";
         URL = "jdbc:hsqldb:"+fileLocation+";ifexists=true";
 
@@ -1315,7 +1316,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      */
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithTheSameWithTheSameGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");;
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
         provider.createGroup("Test Group B");
         assertTrue(provider.hasSharedGroups());
     }
@@ -1326,8 +1327,8 @@ public class AbstractGroupProviderTest extends DBTestCase {
      */
     public void testHasSharedGroupsReturnsTrueWhenAllAreSharedWithTheSameWithTheSameGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");;
-        provider.createGroup("Test Group B").shareWithUsersInSameGroup("Users in group B");;;
+        provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
+        provider.createGroup("Test Group B").shareWithUsersInSameGroup("Users in group B");
         assertTrue(provider.hasSharedGroups());
     }
 
@@ -1349,7 +1350,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithTheOther() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
-        provider.createGroup("Test Group B").shareWithUsersInGroups(Arrays.asList("Test Group A"),"Users in Group A");
+        provider.createGroup("Test Group B").shareWithUsersInGroups(List.of("Test Group A"),"Users in Group A");
         assertTrue(provider.hasSharedGroups());
     }
 
@@ -1360,7 +1361,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithNonExistent() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
-        provider.createGroup("Test Group B").shareWithUsersInGroups(Arrays.asList("Non-existent Group"),"Non-existent Group");
+        provider.createGroup("Test Group B").shareWithUsersInGroups(List.of("Non-existent Group"),"Non-existent Group");
         assertTrue(provider.hasSharedGroups());
     }
 
@@ -1371,7 +1372,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithNonExistentByWayOfDeletion() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
-        provider.createGroup("Test Group B").shareWithUsersInGroups(Arrays.asList("Test Group A"),"Users in Group A");
+        provider.createGroup("Test Group B").shareWithUsersInGroups(List.of("Test Group A"),"Users in Group A");
         provider.deleteGroup("Test Group A");
         assertTrue(provider.hasSharedGroups());
     }
@@ -1509,8 +1510,8 @@ public class AbstractGroupProviderTest extends DBTestCase {
 
     public void testLoadPropertiesReturnsNoPropertiesForNonExistentGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
-        Group a = provider.createGroup("Test Group A");
-        Group newGroup = new Group("New", "New Description", new ArrayList(), new ArrayList());
+        provider.createGroup("Test Group A");
+        Group newGroup = new Group("New", "New Description", new ArrayList<>(), new ArrayList<>());
         PersistableMap<String,String> result =  provider.loadProperties(newGroup);
         assertEquals(0, result.size());
     }

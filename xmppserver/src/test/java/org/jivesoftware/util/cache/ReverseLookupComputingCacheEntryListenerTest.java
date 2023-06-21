@@ -62,8 +62,8 @@ public class ReverseLookupComputingCacheEntryListenerTest {
         final NodeID clusterNodeB = NodeID.getInstance(UUID.randomUUID().toString().getBytes());
 
         // Execute system under test.
-        listener.entryAdded("somekey", new HashSet<>(Arrays.asList(clusterNodeA)), clusterNodeA);
-        listener.entryUpdated("somekey", new HashSet<>(Arrays.asList(clusterNodeA)), new HashSet<>(Arrays.asList(clusterNodeA, clusterNodeB)), clusterNodeB );
+        listener.entryAdded("somekey", new HashSet<>(List.of(clusterNodeA)), clusterNodeA);
+        listener.entryUpdated("somekey", new HashSet<>(List.of(clusterNodeA)), new HashSet<>(Arrays.asList(clusterNodeA, clusterNodeB)), clusterNodeB );
 
         // Assert result
         assertTrue(reverseLookupMap.containsKey(clusterNodeA));
@@ -88,8 +88,8 @@ public class ReverseLookupComputingCacheEntryListenerTest {
         final NodeID clusterNodeB = NodeID.getInstance(UUID.randomUUID().toString().getBytes());
 
         // Execute system under test.
-        listener.entryUpdated("somekey", new HashSet<>(Arrays.asList(clusterNodeA)), new HashSet<>(Arrays.asList(clusterNodeA, clusterNodeB)), clusterNodeB);
-        listener.entryAdded("somekey", new HashSet<>(Arrays.asList(clusterNodeA)), clusterNodeA);
+        listener.entryUpdated("somekey", new HashSet<>(List.of(clusterNodeA)), new HashSet<>(Arrays.asList(clusterNodeA, clusterNodeB)), clusterNodeB);
+        listener.entryAdded("somekey", new HashSet<>(List.of(clusterNodeA)), clusterNodeA);
 
         // Assert result
         assertTrue(reverseLookupMap.containsKey(clusterNodeA));

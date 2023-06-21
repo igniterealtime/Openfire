@@ -74,13 +74,17 @@ public class IQEntityTimeHandlerTest {
 
             DatatypeConverter.printDateTime(calendar);
         }
-        assertThat(System.currentTimeMillis() - start, is(lessThan(2000L)));
+        long durationA = System.currentTimeMillis() - start;
+        assertThat(durationA, is(lessThan(2000L)));
 
         start = System.currentTimeMillis();
         for (int i = 0; i < 1000000; i++) {
             XMPPDateTimeFormat.format(date);
         }
-        assertThat(System.currentTimeMillis() - start, is(lessThan(4000L)));
+        long durationB = System.currentTimeMillis() - start;
+        assertThat(durationB, is(lessThan(4000L)));
+
+        assertThat(durationA, is(lessThan(durationB)));
     }
 
     @Test
@@ -93,7 +97,7 @@ public class IQEntityTimeHandlerTest {
         assertEquals(result.getChildElement().content().size(), 2);
         assertTrue(result.getChildElement().content().get(0) instanceof Element);
         assertTrue(result.getChildElement().content().get(1) instanceof Element);
-        assertEquals(((Element) result.getChildElement().content().get(0)).getName(), "tzo");
-        assertEquals(((Element) result.getChildElement().content().get(1)).getName(), "utc");
+        assertEquals(result.getChildElement().content().get(0).getName(), "tzo");
+        assertEquals(result.getChildElement().content().get(1).getName(), "utc");
     }
 }

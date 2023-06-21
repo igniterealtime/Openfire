@@ -1,24 +1,5 @@
 package org.jivesoftware.openfire.keystore;
 
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.Provider;
-import java.security.SecureRandom;
-import java.security.Security;
-import java.security.cert.CertPathBuilder;
-import java.security.cert.CertPathBuilderResult;
-import java.security.cert.CertStore;
-import java.security.cert.CollectionCertStoreParameters;
-import java.security.cert.PKIXBuilderParameters;
-import java.security.cert.PKIXCertPathBuilderResult;
-import java.security.cert.TrustAnchor;
-import java.security.cert.X509CertSelector;
-import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.Extension;
@@ -31,6 +12,11 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.jivesoftware.util.Base64;
 
+import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.X509Certificate;
+import java.util.Date;
+
 /**
  * Utility functions that are intended to be used by unit tests.
  *
@@ -39,27 +25,11 @@ import org.jivesoftware.util.Base64;
 public class KeystoreTestUtils
 {
     private static final Provider PROVIDER = new BouncyCastleProvider();
-    private static final Object BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
-    private static final Object END_CERT = "-----END CERTIFICATE-----";
 
     static
     {
         // Add the BC provider to the list of security providers
         Security.addProvider( PROVIDER );
-    }
-
-    /**
-     * Returns the Privacy Enhanced Mail (PEM) format of a X509 certificate.
-     *
-     * @param certificate An X509 certificate (cannot be null).
-     * @return a PEM representation of the certificate (never null, never an empty string).
-     */
-    public static String toPemFormat( X509Certificate certificate ) throws Exception {
-        final StringBuilder sb = new StringBuilder();
-        sb.append( BEGIN_CERT ).append( '\n' );
-        sb.append( Base64.encodeBytes( certificate.getEncoded() ) ).append( '\n' );
-        sb.append( END_CERT).append( '\n' );
-        return sb.toString();
     }
 
     /**
@@ -209,55 +179,6 @@ public class KeystoreTestUtils
     }
 
     /**
-     * This method will validate a chain of certificates. It is provided as an alternative to the certificate chain
-     * validation mechanisms that are under test. This method is intended to be used as a comparative benchmark against
-     * other validation methods.
-     *
-     * The first certificate in the chain is expected to be the end-entity certificate.
-     *
-     * The last certificate in the chain is expected to be the root CA certificate.
-     *
-     * @param chain A certificate chain (cannot be null or empty).
-     * @return CertPathBuilderResult result of validation.
-     * @throws Exception When the chain is not valid.
-     */
-    public CertPathBuilderResult testChain( X509Certificate[] chain ) throws Exception
-    {
-        // Create the selector that specifies the starting certificate
-        X509CertSelector selector = new X509CertSelector();
-        selector.setCertificate( chain[0] );
-
-        // Create the trust anchors (set of root CA certificates)
-        Set<TrustAnchor> trustAnchors = new HashSet<TrustAnchor>();
-        trustAnchors.add(new TrustAnchor(chain[ chain.length - 1], null));
-
-        // Configure the PKIX certificate builder algorithm parameters
-        PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(
-                trustAnchors, selector);
-
-        // Disable CRL checks (this is done manually as additional step)
-        pkixParams.setRevocationEnabled(false);
-
-        // Specify a list of intermediate certificates
-        Set<java.security.cert.Certificate> intermediateCerts = new HashSet<>();
-        for (int i=1; i<chain.length -1; i++)
-        {
-            intermediateCerts.add( chain[ i ] );
-        }
-
-        CertStore intermediateCertStore = CertStore.getInstance("Collection",
-                new CollectionCertStoreParameters(intermediateCerts));
-        pkixParams.addCertStore(intermediateCertStore);
-
-        // Build and verify the certification chain
-        CertPathBuilder builder = CertPathBuilder.getInstance("PKIX");
-        PKIXCertPathBuilderResult result = (PKIXCertPathBuilderResult) builder
-                .build(pkixParams);
-
-        return result;
-    }
-
-    /**
      * Instantiates a new certificate of which the notAfter value is a point in time that is in the past (as compared
      * to the point in time of the invocation of this method).
      *
@@ -287,7 +208,7 @@ public class KeystoreTestUtils
     /**
      * Instantiates a new certificate that is self-signed, meaning that the issuer and subject values are identical. The
      * returned certificate is valid in the same manner as described in the documentation of
-     * {@link #generateSelfSignedCertificate()}.
+     * {@link #generateValidCertificate()}.
      *
      * @return A certificate that is self-signed (never null).
      * @see #generateValidCertificate()

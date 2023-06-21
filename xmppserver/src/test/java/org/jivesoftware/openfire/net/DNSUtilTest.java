@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.net;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -28,17 +27,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class DNSUtilTest {
-
-    @Test @Disabled
-    public void testJabberDotOrg() throws Exception {
-        for (int i=0; i<=10; i++) {
-        final List<DNSUtil.HostAddress> list = DNSUtil.resolveXMPPDomain("jabber.org", 5222);
-        for(DNSUtil.HostAddress address : list) {
-            System.out.println("Address: " + address.toString());
-        }
-            System.out.println("");
-        }
-    }
 
     /**
      * Runs {@link DNSUtil#prioritize(org.jivesoftware.openfire.net.DNSUtil.WeightedHostAddress[])} on a copy of the
@@ -82,7 +70,7 @@ public class DNSUtilTest {
      * A check equal to {@link #testOneHost()}, but using (the edge-case) priority value of zero.
      */
     @Test
-    public void testOneHostZeroPiority() throws Exception {
+    public void testOneHostZeroPriority() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 0, 1);
 
@@ -113,7 +101,6 @@ public class DNSUtilTest {
     /**
      * Verifies that when a couple of records exist that all have a particular priority, those records are all included
      * in the result, ordered (ascending) by their priority.
-     * @throws Exception
      */
     @Test
     public void testDifferentPriorities() throws Exception {

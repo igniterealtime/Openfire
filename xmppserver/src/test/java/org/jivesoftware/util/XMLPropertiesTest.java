@@ -19,8 +19,10 @@ package org.jivesoftware.util;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class XMLPropertiesTest {
 
@@ -30,13 +32,13 @@ public class XMLPropertiesTest {
         XMLProperties props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes()));
         assertNull(props.getAttribute("foo","bar"));
         xml = "<root><foo bar=\"test123\"></foo></root>";
-        props = new XMLProperties(new ByteArrayInputStream(xml.getBytes()));
+        props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes()));
         assertEquals(props.getAttribute("foo","bar"), "test123");
     }
 
     @Test
     public void testGetProperty() throws Exception {
-        XMLProperties props = XMLProperties.getNonPersistedInstance(getClass().getResourceAsStream("XMLProperties.test01.xml"));
+        XMLProperties props = XMLProperties.getNonPersistedInstance(Objects.requireNonNull(getClass().getResourceAsStream("XMLProperties.test01.xml")));
         assertEquals("123", props.getProperty("foo.bar"));
         assertEquals("456", props.getProperty("foo.bar.baz"));
         assertNull(props.getProperty("foo"));
@@ -45,7 +47,7 @@ public class XMLPropertiesTest {
 
     @Test
     public void testGetChildPropertiesIterator() throws Exception {
-        XMLProperties props = XMLProperties.getNonPersistedInstance(getClass().getResourceAsStream("XMLProperties.test02.xml"));
+        XMLProperties props = XMLProperties.getNonPersistedInstance(Objects.requireNonNull(getClass().getResourceAsStream("XMLProperties.test02.xml")));
         String[] names = {"a","b","c","d"};
         String[] values = {"1","2","3","4"};
         String[] children = props.getChildrenProperties("foo.bar");

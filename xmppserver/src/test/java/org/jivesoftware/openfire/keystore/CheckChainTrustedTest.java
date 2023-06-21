@@ -1,6 +1,9 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -188,7 +191,7 @@ public class CheckChainTrustedTest
         // Inject a null value, moving but not removing all other certificates.
         final List<X509Certificate> copy = new ArrayList<>( Arrays.asList( validChain ) ); // wrapping needed to support remove function.
         copy.add( 1, null );
-        final X509Certificate[] chain = copy.toArray( new X509Certificate[ copy.size() ] );
+        final X509Certificate[] chain = copy.toArray(new X509Certificate[0]);
 
         // Execute system under test.
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
@@ -231,7 +234,7 @@ public class CheckChainTrustedTest
         while ( input.equals( shuffled ) ) {
             Collections.shuffle( shuffled );
         }
-        final X509Certificate[] chain = shuffled.toArray( new X509Certificate[ shuffled.size() ] );
+        final X509Certificate[] chain = shuffled.toArray(new X509Certificate[0]);
 
         // Execute system under test.
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
@@ -275,7 +278,7 @@ public class CheckChainTrustedTest
         while ( input.equals( shuffled ) ) {
             Collections.shuffle( shuffled );
         }
-        final X509Certificate[] chain = shuffled.toArray( new X509Certificate[ shuffled.size() ] );
+        final X509Certificate[] chain = shuffled.toArray(new X509Certificate[0]);
 
 
         // Execute system under test.
@@ -299,7 +302,7 @@ public class CheckChainTrustedTest
         // Copy all but the second certificate of a valid chain to a chain that's used for testing.
         final List<X509Certificate> copy = new ArrayList<>( Arrays.asList( validChain ) ); // wrapping needed to support remove function.
         copy.remove( 1 );
-        final X509Certificate[] chain = copy.toArray( new X509Certificate[ copy.size() ] );
+        final X509Certificate[] chain = copy.toArray(new X509Certificate[0]);
 
         // Execute system under test.
         trustManager.checkChainTrusted( selector, chain );
@@ -512,7 +515,7 @@ public class CheckChainTrustedTest
             {
                 sb.append( "Self-signed certificates are not accepted. " );
             }
-            Assert.assertNotNull( sb.toString() + "Validation should have thrown an exception.", exception );
+            Assert.assertNotNull( sb + "Validation should have thrown an exception.", exception );
         }
     }
 }

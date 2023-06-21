@@ -17,6 +17,7 @@
 package org.jivesoftware.util;
 
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.jivesoftware.admin.AdminConsole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +35,8 @@ public class AdminConsoleTest {
      */
     @AfterEach
     public void tearDown() throws Exception {
-        Class c = AdminConsole.class;
-        Method init = c.getDeclaredMethod("load", (Class[])null);
+        Class<AdminConsole> c = AdminConsole.class;
+        Method init = c.getDeclaredMethod("load", (Class<?>[])null);
         init.setAccessible(true);
         init.invoke(null, (Object[])null);
     }
@@ -58,7 +59,7 @@ public class AdminConsoleTest {
         try (InputStream in = getClass().getResourceAsStream("/org/jivesoftware/admin/AdminConsoleTest.admin-sidebar-02.xml")) {
             AdminConsole.addModel("test2", in);
         }
-        Collection tabs = AdminConsole.getModel().selectNodes("//tab");
+        Collection<Node> tabs = AdminConsole.getModel().selectNodes("//tab");
         assertNotNull(tabs);
         assertTrue(tabs.size() > 0);
         boolean found = false;

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -126,33 +127,33 @@ public class StringUtilsTest {
 
     @Test
     public void doubleQuotes() {
-        assertEquals(Arrays.asList("hello world"), StringUtils.shellSplit("\"hello world\""));
+        assertEquals(List.of("hello world"), StringUtils.shellSplit("\"hello world\""));
     }
 
     @Test
     public void singleQuotes() {
-        assertEquals(Arrays.asList("hello world"), StringUtils.shellSplit("'hello world'"));
+        assertEquals(List.of("hello world"), StringUtils.shellSplit("'hello world'"));
     }
 
 
     @Test
     public void escapedDoubleQuotes() {
-        assertEquals(Arrays.asList("\"hello world\""), StringUtils.shellSplit("\"\\\"hello world\\\""));
+        assertEquals(List.of("\"hello world\""), StringUtils.shellSplit("\"\\\"hello world\\\""));
     }
 
     @Test
     public void noEscapeWithinSingleQuotes() {
-        assertEquals(Arrays.asList("hello \\\" world"), StringUtils.shellSplit("'hello \\\" world'"));
+        assertEquals(List.of("hello \\\" world"), StringUtils.shellSplit("'hello \\\" world'"));
     }
 
     @Test
     public void backToBackQuotedStringsShouldFormSingleToken() {
-        assertEquals(Arrays.asList("foobarbaz"), StringUtils.shellSplit("\"foo\"'bar'baz"));
-        assertEquals(Arrays.asList("three four"), StringUtils.shellSplit("\"three\"' 'four"));
+        assertEquals(List.of("foobarbaz"), StringUtils.shellSplit("\"foo\"'bar'baz"));
+        assertEquals(List.of("three four"), StringUtils.shellSplit("\"three\"' 'four"));
     }
 
     @Test
     public void escapedSpacesDoNotBreakUpTokens() {
-        assertEquals(Arrays.asList("three four"), StringUtils.shellSplit("three\\ four"));
+        assertEquals(List.of("three four"), StringUtils.shellSplit("three\\ four"));
     }
 }

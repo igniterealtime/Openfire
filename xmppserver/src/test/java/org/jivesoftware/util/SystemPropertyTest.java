@@ -56,7 +56,7 @@ public class SystemPropertyTest {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @SuppressWarnings({"deprecation", "ResultOfMethodCallIgnored"})
+    @SuppressWarnings({"deprecation"})
     @BeforeEach
     public void setUp() {
         Fixtures.clearExistingProperties();

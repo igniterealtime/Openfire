@@ -53,6 +53,7 @@ public class DefaultGroupProviderTest extends DBTestCase
 
     static {
         final URL location = AbstractGroupProvider.class.getResource("/datasets/openfire.script");
+        assert location != null;
         final String fileLocation = location.toString().substring(0, location.toString().lastIndexOf("/")+1) + "openfire";
         URL = "jdbc:hsqldb:"+fileLocation+";ifexists=true";
 
@@ -101,7 +102,7 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         final Field field = GroupEventDispatcher.class.getDeclaredField("listeners");
         field.setAccessible(true);
-        ((List)field.get(null)).clear();
+        ((List<?>)field.get(null)).clear();
         field.setAccessible(false);
     }
 

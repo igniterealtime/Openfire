@@ -71,6 +71,8 @@ public class HistoryStrategyTest
         assertEquals(input, result);
         assertEquals(input.getType(), ((HistoryStrategy) result).getType());
         assertEquals(input.getMaxNumber(), ((HistoryStrategy) result).getMaxNumber());
+        assertNotNull(input.getChangedSubject());
+        assertNotNull(((HistoryStrategy) result).getChangedSubject());
         assertEquals(input.getChangedSubject().toXML(), ((HistoryStrategy) result).getChangedSubject().toXML());
 
         final AbstractList<String> inputMessageTextHistory = new ArrayList<>();

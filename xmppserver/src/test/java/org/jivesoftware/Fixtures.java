@@ -1,23 +1,5 @@
 package org.jivesoftware;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.withSettings;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
@@ -29,12 +11,20 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
-import org.mockito.ArgumentMatcher;
-import org.mockito.ArgumentMatchers;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-@SuppressWarnings({"ResultOfMethodCallIgnored", "WeakerAccess"})
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.*;
+
+@SuppressWarnings({"WeakerAccess"})
 public final class Fixtures {
 
     public static final String XMPP_DOMAIN = "test.xmpp.domain";

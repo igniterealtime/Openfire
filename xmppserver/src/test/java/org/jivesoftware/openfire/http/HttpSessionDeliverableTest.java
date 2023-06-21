@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class HttpSessionDeliverable
+public class HttpSessionDeliverableTest
 {
     /**
      * Verifies that the default namespace is set on empty stanzas.

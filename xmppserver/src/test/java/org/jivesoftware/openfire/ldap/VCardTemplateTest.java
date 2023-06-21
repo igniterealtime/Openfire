@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,12 @@ package org.jivesoftware.openfire.ldap;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.io.SAXReader;
-import org.jivesoftware.util.CertificateManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
-import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.Collection;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests that verify the implementation of {@link org.jivesoftware.openfire.ldap.LdapVCardProvider.VCardTemplate}

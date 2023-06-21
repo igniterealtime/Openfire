@@ -15,14 +15,15 @@
  */
 package org.jivesoftware.openfire.session;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.StringReader;
 import java.util.Locale;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Unit tests that verify the implementation of {@link Session}.

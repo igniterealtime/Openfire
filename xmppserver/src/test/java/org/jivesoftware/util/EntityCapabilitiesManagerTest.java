@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package org.jivesoftware.util;
 
-import static org.junit.Assert.assertEquals;
-
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.IQ;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test cases for the {@link EntityCapabilitiesManager} class.
@@ -35,7 +35,7 @@ import org.xmpp.packet.IQ;
  */
 public class EntityCapabilitiesManagerTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
         CacheFactory.initialize();
     }

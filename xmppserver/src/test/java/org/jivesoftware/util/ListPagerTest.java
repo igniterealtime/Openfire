@@ -1,10 +1,25 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.util;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,11 +29,11 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.doReturn;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ListPagerTest {
 
     private static final List<Integer> LIST_OF_25 = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25);
@@ -30,14 +45,14 @@ public class ListPagerTest {
     @Mock
     private HttpSession session;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        doReturn("5").when(request).getParameter("listPagerPageSize");
         doReturn(session).when(request).getSession();
     }
 
     @Test
     public void aDefaultRequestWillHaveAPageSizeOf25() {
+        doReturn("5").when(request).getParameter("listPagerPageSize");
 
         final ListPager<Integer> listPager = new ListPager<>(request, response, LIST_OF_25);
 
@@ -51,6 +66,7 @@ public class ListPagerTest {
 
     @Test
     public void anEmptyListWillStartOnPage1Of1() {
+        doReturn("5").when(request).getParameter("listPagerPageSize");
 
         final ListPager<Integer> listPager = new ListPager<>(request, response, Collections.emptyList());
 
@@ -64,6 +80,7 @@ public class ListPagerTest {
 
     @Test
     public void theLowerBoundCurrentPageIs1() {
+        doReturn("5").when(request).getParameter("listPagerPageSize");
         doReturn("-1").when(request).getParameter("listPagerCurrentPage");
 
         final ListPager<Integer> listPager = new ListPager<>(request, response, LIST_OF_25);
@@ -75,6 +92,7 @@ public class ListPagerTest {
 
     @Test
     public void theUpperBoundCurrentPageIsTotalPages() {
+        doReturn("5").when(request).getParameter("listPagerPageSize");
         doReturn(String.valueOf(Integer.MAX_VALUE)).when(request).getParameter("listPagerCurrentPage");
 
         final ListPager<Integer> listPager = new ListPager<>(request, response, LIST_OF_25);
@@ -86,6 +104,7 @@ public class ListPagerTest {
 
     @Test
     public void willFilterTheList() {
+        doReturn("5").when(request).getParameter("listPagerPageSize");
 
         // Filter on even numbers only
         final ListPager<Integer> listPager = new ListPager<>(request, response, LIST_OF_25, value -> value % 2 == 0);

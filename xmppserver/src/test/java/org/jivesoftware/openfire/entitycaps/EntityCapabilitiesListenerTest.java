@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package org.jivesoftware.openfire.entitycaps;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
 import java.util.Collections;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith( MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EntityCapabilitiesListenerTest
 {
     @Mock
@@ -52,13 +52,13 @@ public class EntityCapabilitiesListenerTest
 
     private EntityCapabilitiesManager manager;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
         CacheFactory.initialize();
     }
 
-    @Before
+    @BeforeEach
     public void setupManager() {
         Fixtures.clearExistingProperties();
 

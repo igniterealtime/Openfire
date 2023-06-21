@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,56 +15,70 @@
  */
 package org.jivesoftware.openfire.spi;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit test that verify the implementation of {@link ConnectionType}
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(Parameterized.class)
 public class ConnectionTypeTest
 {
 
     /**
-     * Define the expected outputs of ConnectionType.isClientOriented() for the given ConnectionType
+     * Verifies that the SOCKET_S2S ConnectionType returns the appropriate 'client orientated' value.
      */
-    @Parameterized.Parameters(name = "Verify that when ConnnectionType is \"{0}\" then isClientOriented returns \"{1}\"")
-	public static Iterable<Object[]> data() {
-		return Arrays.asList(new Object[][] {
-            {ConnectionType.SOCKET_S2S, false},
-            {ConnectionType.SOCKET_C2S, true},
-            {ConnectionType.BOSH_C2S, true},
-            {ConnectionType.WEBADMIN, true},
-            {ConnectionType.COMPONENT, false},
-            {ConnectionType.CONNECTION_MANAGER, false}
-		});
-	}
-
-	private final ConnectionType connType;
-    private final boolean expected;
-
-	public ConnectionTypeTest(ConnectionType connType, boolean expected){
-        this.connType = connType;
-        this.expected = expected;
+    @Test
+    public void testSOCKET_S2SConnectionTypeHasCorrectIsClientOriented()
+    {
+        assertFalse(ConnectionType.SOCKET_S2S.isClientOriented());
     }
 
     /**
-     * Verifies that a given ConnectionType returns the appropriate 'client orientated' value.
+     * Verifies that the SOCKET_C2S ConnectionType returns the appropriate 'client orientated' value.
      */
     @Test
-    public void testConnectionTypeHasCorrectIsClientOriented() throws Exception
+    public void testSOCKET_C2SConnectionTypeHasCorrectIsClientOriented()
     {
-        // Execute system under test.
-        final boolean result = connType.isClientOriented();
+        assertTrue(ConnectionType.SOCKET_C2S.isClientOriented());
+    }
 
-        // Verify result.
-        assertEquals(result, expected);
+    /**
+     * Verifies that the BOSH_C2S ConnectionType returns the appropriate 'client orientated' value.
+     */
+    @Test
+    public void testBOSH_C2SConnectionTypeHasCorrectIsClientOriented()
+    {
+        assertTrue(ConnectionType.BOSH_C2S.isClientOriented());
+    }
+    
+    /**
+     * Verifies that the WEBADMIN ConnectionType returns the appropriate 'client orientated' value.
+     */
+    @Test
+    public void testWEBADMINConnectionTypeHasCorrectIsClientOriented()
+    {
+        assertTrue(ConnectionType.WEBADMIN.isClientOriented());
+    }
+
+    /**
+     * Verifies that the COMPONENT ConnectionType returns the appropriate 'client orientated' value.
+     */
+    @Test
+    public void testCOMPONENTConnectionTypeHasCorrectIsClientOriented()
+    {
+        assertFalse(ConnectionType.COMPONENT.isClientOriented());
+    }
+
+    /**
+     * Verifies that the CONNECTION_MANAGER ConnectionType returns the appropriate 'client orientated' value.
+     */
+    @Test
+    public void testCONNECTION_MANAGERConnectionTypeHasCorrectIsClientOriented()
+    {
+        assertFalse(ConnectionType.CONNECTION_MANAGER.isClientOriented());
     }
 }

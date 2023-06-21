@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Community. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Community. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,24 @@ import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.cluster.OccupantAddedTask;
 import org.jivesoftware.openfire.muc.cluster.OccupantRemovedTask;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+
+@ExtendWith(MockitoExtension.class)
 public class OccupantManagerTest
 {
     @Mock
@@ -45,7 +46,7 @@ public class OccupantManagerTest
     @Mock
     private MultiUserChatService mockService;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         doReturn("conference").when(mockService).getServiceName();
         doReturn("conference.example.org").when(mockService).getServiceDomain();

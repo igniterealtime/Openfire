@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package dom.io;
@@ -20,13 +19,14 @@ package dom.io;
 import org.dom4j.Document;
 import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.StringReader;
 import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests that verify the functionality of {@link XMPPPacketReader}
@@ -37,7 +37,7 @@ public class XMPPPacketReaderTest
 {
     private XMPPPacketReader packetReader;
 
-    @Before
+    @BeforeEach
     public void setup()
     {
         packetReader = new XMPPPacketReader();
@@ -61,7 +61,7 @@ public class XMPPPacketReaderTest
         final Document result = packetReader.read( new StringReader( input ) );
 
         // Verify result.
-        Assert.assertFalse( result.asXML().contains( "jabber:client" ) );
+        assertFalse( result.asXML().contains( "jabber:client" ) );
     }
 
     /**
@@ -82,7 +82,7 @@ public class XMPPPacketReaderTest
         final Document result = packetReader.read( new StringReader( input ) );
 
         // Verify result.
-        Assert.assertFalse( result.asXML().contains( "jabber:client" ) );
+        assertFalse( result.asXML().contains( "jabber:client" ) );
     }
 
     /**
@@ -111,8 +111,8 @@ public class XMPPPacketReaderTest
         final Document result = packetReader.read( new StringReader( input ) );
 
         // Verify result.
-        Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
-        Assert.assertTrue( "'jabber:client' should occur after 'something:else'", result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
+        assertFalse( result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ), "'jabber:client' should not occur before 'something:else'" );
+        assertTrue( result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ), "'jabber:client' should occur after 'something:else'" );
     }
 
     /**
@@ -141,8 +141,8 @@ public class XMPPPacketReaderTest
         final Document result = packetReader.read( new StringReader( input ) );
 
         // Verify result.
-        Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
-        Assert.assertTrue( "'jabber:client' should occur after 'something:else'", result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
+        assertFalse( result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ), "'jabber:client' should not occur before 'something:else'" );
+        assertTrue( result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ), "'jabber:client' should occur after 'something:else'" );
     }
 
     /**
@@ -161,8 +161,8 @@ public class XMPPPacketReaderTest
         final Document result = packetReader.read( new StringReader( input ) );
 
         // Verify result.
-        Assert.assertFalse( "'jabber:client' should not occur before 'something:else'", result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
-        Assert.assertTrue( "'jabber:client' should occur after 'something:else'", result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ) );
+        assertFalse( result.asXML().substring( 0, result.asXML().indexOf("something:else") ).contains( "jabber:client" ), "'jabber:client' should not occur before 'something:else'" );
+        assertTrue( result.asXML().substring( result.asXML().indexOf("something:else") ).contains( "jabber:client" ), "'jabber:client' should occur after 'something:else'" );
     }
 
     /**
@@ -186,8 +186,8 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(1, namespacesOnCurrentElement.size());
-        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+        assertEquals(1, namespacesOnCurrentElement.size());
+        assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
     }
 
     /**
@@ -211,7 +211,7 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(0, namespacesOnCurrentElement.size());
+        assertEquals(0, namespacesOnCurrentElement.size());
     }
 
     /**
@@ -235,7 +235,7 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(0, namespacesOnCurrentElement.size());
+        assertEquals(0, namespacesOnCurrentElement.size());
     }
 
     /**
@@ -260,7 +260,7 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(0, namespacesOnCurrentElement.size());
+        assertEquals(0, namespacesOnCurrentElement.size());
     }
 
     /**
@@ -285,7 +285,7 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(0, namespacesOnCurrentElement.size());
+        assertEquals(0, namespacesOnCurrentElement.size());
     }
 
     /**
@@ -310,8 +310,8 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(1, namespacesOnCurrentElement.size());
-        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+        assertEquals(1, namespacesOnCurrentElement.size());
+        assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
     }
 
     /**
@@ -337,8 +337,8 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(1, namespacesOnCurrentElement.size());
-        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+        assertEquals(1, namespacesOnCurrentElement.size());
+        assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
     }
 
     /**
@@ -364,7 +364,7 @@ public class XMPPPacketReaderTest
         final Set<Namespace> namespacesOnCurrentElement = XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(packetReader.getXPPParser());
 
         // Verify results.
-        Assert.assertEquals(1, namespacesOnCurrentElement.size());
-        Assert.assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+        assertEquals(1, namespacesOnCurrentElement.size());
+        assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
     }
 }

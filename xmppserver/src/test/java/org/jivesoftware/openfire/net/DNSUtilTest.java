@@ -1,10 +1,26 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.net.DNSUtil;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link org.jivesoftware.openfire.net.DNSUtil}.
@@ -13,7 +29,7 @@ import java.util.List;
  */
 public class DNSUtilTest {
 
-    //@Test
+    @Test @Disabled
     public void testJabberDotOrg() throws Exception {
         for (int i=0; i<=10; i++) {
         final List<DNSUtil.HostAddress> list = DNSUtil.resolveXMPPDomain("jabber.org", 5222);
@@ -39,11 +55,11 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{fallback, hermes6, hermes});
 
         // verify
-        Assert.assertEquals("There were three records in the input, the output should have contained the same amount.", 3, result.size());
-        Assert.assertTrue("The 'hermes' host should have been included somewhere in the output."   , result.contains(hermes));
-        Assert.assertTrue("The 'hermes6' host should have been included somewhere in the output."  , result.contains(hermes6));
-        Assert.assertTrue("The 'fallback' host should bhave been included somewhere in the output.", result.contains(fallback));
-        Assert.assertEquals("The 'fallback' host should have been the last record in the result."  , fallback, result.get(2));
+        assertEquals(3, result.size(), "There were three records in the input, the output should have contained the same amount.");
+        assertTrue(result.contains(hermes), "The 'hermes' host should have been included somewhere in the output.");
+        assertTrue(result.contains(hermes6), "The 'hermes6' host should have been included somewhere in the output.");
+        assertTrue(result.contains(fallback), "The 'fallback' host should have been included somewhere in the output.");
+        assertEquals(fallback, result.get(2), "The 'fallback' host should have been the last record in the result.");
     }
 
     /**
@@ -58,8 +74,8 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
-        Assert.assertEquals( 1, result.size() );
-        Assert.assertEquals(host, result.get(0));
+        assertEquals( 1, result.size() );
+        assertEquals(host, result.get(0));
     }
 
     /**
@@ -74,8 +90,8 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(host, result.get(0));
+        assertEquals(1, result.size());
+        assertEquals(host, result.get(0));
     }
 
     /**
@@ -90,8 +106,8 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
-        Assert.assertEquals(1, result.size());
-        Assert.assertEquals(host, result.get(0));
+        assertEquals(1, result.size());
+        assertEquals(host, result.get(0));
     }
 
     /**
@@ -110,10 +126,10 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
 
         // verify
-        Assert.assertEquals(3, result.size());
-        Assert.assertEquals(hostA, result.get(0));
-        Assert.assertEquals(hostC, result.get( 1 ));
-        Assert.assertEquals(hostB, result.get(2));
+        assertEquals(3, result.size());
+        assertEquals(hostA, result.get(0));
+        assertEquals(hostC, result.get( 1 ));
+        assertEquals(hostB, result.get(2));
     }
 
     /**
@@ -130,10 +146,10 @@ public class DNSUtilTest {
         final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
 
         // verify
-        Assert.assertEquals(3, result.size());
-        Assert.assertEquals(hostA, result.get(0));
-        Assert.assertEquals(hostC, result.get(1));
-        Assert.assertEquals(hostB, result.get(2));
+        assertEquals(3, result.size());
+        assertEquals(hostA, result.get(0));
+        assertEquals(hostC, result.get(1));
+        assertEquals(hostB, result.get(2));
     }
 
     /**
@@ -173,8 +189,8 @@ public class DNSUtilTest {
         }
 
         // verify
-        Assert.assertTrue( hostAWasFirst );
-        Assert.assertTrue( hostBWasFirst );
+        assertTrue( hostAWasFirst );
+        assertTrue( hostBWasFirst );
     }
 
     /**
@@ -211,8 +227,8 @@ public class DNSUtilTest {
         }
 
         // verify
-        Assert.assertTrue(hostAWasFirst);
-        Assert.assertTrue(hostBWasFirst);
+        assertTrue(hostAWasFirst);
+        assertTrue(hostBWasFirst);
     }
 
     /**
@@ -230,7 +246,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertTrue( result );
+        assertTrue( result );
     }
 
     /**
@@ -248,7 +264,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertFalse( result );
+        assertFalse( result );
     }
 
     /**
@@ -266,7 +282,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertFalse( result );
+        assertFalse( result );
     }
 
     /**
@@ -284,7 +300,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertFalse( result );
+        assertFalse( result );
     }
 
     /**
@@ -302,7 +318,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertTrue( result );
+        assertTrue( result );
     }
 
     /**
@@ -320,7 +336,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertTrue( result );
+        assertTrue( result );
     }
 
     /**
@@ -340,7 +356,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        Assert.assertTrue( result );
+        assertTrue( result );
     }
 
     /**
@@ -358,6 +374,6 @@ public class DNSUtilTest {
         final String result = DNSUtil.constructLookup(service, protocol, name);
 
         // Verify results.
-        Assert.assertEquals("_xmpp-client._tcp.igniterealtime.org.", result);
+        assertEquals("_xmpp-client._tcp.igniterealtime.org.", result);
     }
 }

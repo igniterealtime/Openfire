@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,34 @@
 package org.jivesoftware.openfire.user;
 
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
-
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.dom4j.Element;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.component.IQResultListener;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
-@RunWith(MockitoJUnitRunner.class)
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+
+@ExtendWith(MockitoExtension.class)
 public class UserManagerTest {
 
     private static final String REMOTE_XMPP_DOMAIN = "remote.xmpp.domain";
@@ -61,12 +62,12 @@ public class UserManagerTest {
     private UserManager userManager;
     private IQRouter iqRouter;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         Fixtures.clearExistingProperties();
@@ -105,16 +106,15 @@ public class UserManagerTest {
         assertThat(result.contains("not exists name"), is(false));
     }
     
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void deleteInvalidUserWillGetError()  throws Exception{
     	User user = new User("!@#ED",null,null,null,null);	
-    	userManager.deleteUser(user);
+    	assertThrows(IllegalArgumentException.class, () -> userManager.deleteUser(user));
     }
     
-    @Test(expected=UserAlreadyExistsException.class)
+    @Test
     public void createExistingUserWillGetError()  throws Exception{
-    	userManager.createUser(USER_ID, "change me", "Test User Name", "test-email@example.com");
-    	
+        assertThrows(UserAlreadyExistsException.class, () -> userManager.createUser(USER_ID, "change me", "Test User Name", "test-email@example.com"));
     }
     
     @Test

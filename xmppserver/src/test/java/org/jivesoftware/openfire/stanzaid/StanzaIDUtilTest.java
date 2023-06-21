@@ -1,9 +1,23 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.stanzaid;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -11,10 +25,10 @@ import org.xmpp.packet.Packet;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests that verify the functionality of {@link StanzaID}.
+ * Unit tests that verify the functionality of {@link StanzaIDUtil}.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -36,16 +50,16 @@ public class StanzaIDUtilTest
         final Packet result = StanzaIDUtil.ensureUniqueAndStableStanzaID( input, self );
 
         // Verify results.
-        Assert.assertNotNull( result );
+        assertNotNull( result );
         final Element stanzaIDElement = result.getElement().element( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
-        Assert.assertNotNull( stanzaIDElement );
+        assertNotNull( stanzaIDElement );
         try
         {
             UUID.fromString( stanzaIDElement.attributeValue( "id" ) );
         }
         catch ( IllegalArgumentException ex )
         {
-            Assert.fail();
+            fail();
         }
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }
@@ -69,18 +83,18 @@ public class StanzaIDUtilTest
         final Packet result = StanzaIDUtil.ensureUniqueAndStableStanzaID( input, self );
 
         // Verify results.
-        Assert.assertNotNull( result );
+        assertNotNull( result );
         final Element stanzaIDElement = result.getElement().element( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
-        Assert.assertNotNull( stanzaIDElement );
+        assertNotNull( stanzaIDElement );
         try
         {
             UUID.fromString( stanzaIDElement.attributeValue( "id" ) );
         }
         catch ( IllegalArgumentException ex )
         {
-            Assert.fail();
+            fail();
         }
-        Assert.assertNotEquals( notExpected, stanzaIDElement.attributeValue( "id" ) );
+        assertNotEquals( notExpected, stanzaIDElement.attributeValue( "id" ) );
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }
 
@@ -103,7 +117,7 @@ public class StanzaIDUtilTest
         final Packet result = StanzaIDUtil.ensureUniqueAndStableStanzaID( input, self );
 
         // Verify results.
-        Assert.assertNotNull( result );
+        assertNotNull( result );
         final List<Element> elements = result.getElement().elements( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
         assertEquals( 2, elements.size() );
     }
@@ -126,18 +140,18 @@ public class StanzaIDUtilTest
         final Packet result = StanzaIDUtil.ensureUniqueAndStableStanzaID( input, self );
 
         // Verify results.
-        Assert.assertNotNull( result );
+        assertNotNull( result );
         final Element stanzaIDElement = result.getElement().element( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
-        Assert.assertNotNull( stanzaIDElement );
+        assertNotNull( stanzaIDElement );
         try
         {
             UUID.fromString( stanzaIDElement.attributeValue( "id" ) );
         }
         catch ( IllegalArgumentException ex )
         {
-            Assert.fail();
+            fail();
         }
-        Assert.assertNotEquals( expected, stanzaIDElement.attributeValue( "id" ) );
+        assertNotEquals( expected, stanzaIDElement.attributeValue( "id" ) );
         assertEquals( self.toString(), stanzaIDElement.attributeValue( "by" ) );
     }
 

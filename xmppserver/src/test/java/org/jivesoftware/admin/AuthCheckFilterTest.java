@@ -1,31 +1,47 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.admin;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.admin.AdminManager;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
-import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.admin.AdminManager;
-import org.jivesoftware.openfire.auth.AuthToken;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-@RunWith(MockitoJUnitRunner.class)
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 public class AuthCheckFilterTest {
 
     private static final String adminUser = "test-admin-user";
@@ -39,22 +55,22 @@ public class AuthCheckFilterTest {
     @Mock private AdminManager adminManager;
     @Mock private LoginLimitManager loginLimitManager;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
 
         Fixtures.clearExistingProperties();
 
-        doReturn("/uri/to/page").when(request).getRequestURI();
-        doReturn(httpSession).when(request).getSession();
-        doReturn(remoteAddr).when(request).getRemoteAddr();
+        lenient().doReturn("/uri/to/page").when(request).getRequestURI();
+        lenient().doReturn(httpSession).when(request).getSession();
+        lenient().doReturn(remoteAddr).when(request).getRemoteAddr();
 
-        doReturn(true).when(adminManager).isUserAdmin(adminUser, true);
-        doReturn(false).when(adminManager).isUserAdmin(normalUser, true);
+        lenient().doReturn(true).when(adminManager).isUserAdmin(adminUser, true);
+        lenient().doReturn(false).when(adminManager).isUserAdmin(normalUser, true);
 
     }
 

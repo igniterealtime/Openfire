@@ -415,7 +415,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
 
             if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
-                log.warn( "Unable to create a new session: not trying dialback as a fallback, as server strictCertificateValidation is enabled" );
+                log.warn( "Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled." );
                 return null;
             }
         }

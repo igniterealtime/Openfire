@@ -53,6 +53,7 @@ public class ConnectionConfiguration
      * @param encryptionProtocols the set of protocols supported
      * @param encryptionCipherSuites the set of ciphers supported
      * @param compressionPolicy the compression policy
+     * @param strictCertificateValidation {@code true} to abort connections if certificate validation fails, otherwise {@code false}
      */
     // TODO input validation
     public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy, boolean strictCertificateValidation )
@@ -204,6 +205,12 @@ public class ConnectionConfiguration
         return enabled;
     }
 
+    /**
+     * A boolean that indicates if the connection should be aborted if certificate validation fails.
+     * When true Openfire strictly follows RFC 6120, section 13.7.2
+     *
+     * @return true when connections are aborted if certificate validation fails, otherwise false.
+     */
     public boolean isStrictCertificateValidation() {
         return strictCertificateValidation;
     }

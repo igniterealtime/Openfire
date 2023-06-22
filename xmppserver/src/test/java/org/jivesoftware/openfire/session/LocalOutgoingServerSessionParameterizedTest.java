@@ -224,7 +224,7 @@ public class LocalOutgoingServerSessionParameterizedTest
                     break;
                 case INVALID:
                     // Insert an expired certificate into the identity store
-                    identityStore.installCertificate(Fixtures.invalidX509Certificate, Fixtures.invalidX509CertificatePrivateKey, "");
+                    identityStore.installCertificate(Fixtures.expiredX509Certificate, Fixtures.privateKeyForExpiredCert, "");
                     break;
                 case VALID:
                     // Generate a valid certificate and insert into identity store
@@ -338,7 +338,7 @@ public class LocalOutgoingServerSessionParameterizedTest
                     break;
                 case INVALID:
                     // Insert an expired certificate into the identity store
-                    identityStore.installCertificate(Fixtures.invalidX509Certificate, Fixtures.invalidX509CertificatePrivateKey, "");
+                    identityStore.installCertificate(Fixtures.expiredX509Certificate, Fixtures.privateKeyForExpiredCert, "");
                     break;
                 case VALID:
                     // Generate a valid certificate and insert into identity store

@@ -252,9 +252,9 @@ public final class Fixtures {
     }
 
     /**
-     * Self-Signed invalid X509 certificate for testing purposes (expired 17th June 2023)
+     * Self-Signed expired X509 certificate for testing purposes (expired 17th June 2023)
      */
-    public static final String invalidX509Certificate
+    public static final String expiredX509Certificate
         = "-----BEGIN CERTIFICATE-----\n" +
         "MIICsjCCAZoCCQDsFzeWUN/PbjANBgkqhkiG9w0BAQsFADAbMRkwFwYDVQQDDBB0\n" +
         "ZXN0LnhtcHAuZG9tYWluMB4XDTIzMDYxNjEzMzE0OFoXDTIzMDYxNzEzMzE0OFow\n" +
@@ -274,9 +274,9 @@ public final class Fixtures {
         "-----END CERTIFICATE-----\n";
 
     /**
-     * Private key for {@link #invalidX509Certificate} for testing purposes
+     * Private key for {@link #expiredX509Certificate} for testing purposes
      */
-    public static final String invalidX509CertificatePrivateKey
+    public static final String privateKeyForExpiredCert
         = "-----BEGIN PRIVATE KEY-----\n" +
         "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCsWgreL0o6s18A\n" +
         "n7ovktCo50K8VWoAyiTh28oZMU20UTiWM+0pnQFFRwnBZboDpO1IcUwWe4R3gtw0\n" +

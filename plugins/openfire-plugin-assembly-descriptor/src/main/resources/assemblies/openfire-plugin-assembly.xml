@@ -18,8 +18,23 @@
             </includes>
         </fileSet>
 
-        <!-- filtered metadata files (html, plugin.xml) -->
-        <fileSet>
+        <!--
+            filtered metadata files (html, plugin.xml)
+            This includes 2 sections, one for the current project structure and one for legacy projects
+            This used to assume a 'src/java' directory, but that is not always the case. Default project
+            structure is now src/main/java. Some plugins have worked around this by placing the plugin.xml
+            and related collateral in the src directory. This section now supports both structures.
+        -->
+        <fileSet> <!-- Current project structure - plugin descriptors in the project root -->
+            <outputDirectory/>
+            <directory>${project.basedir}</directory>
+            <filtered>true</filtered>
+            <includes>
+                <include>*.html</include>
+                <include>plugin.xml</include>
+            </includes>
+        </fileSet>
+        <fileSet> <!-- Cope with legacy & unusual project structures - plugin descriptors 2 folders above plugin source -->
             <outputDirectory/>
             <directory>${project.build.sourceDirectory}/../..</directory>
             <filtered>true</filtered>

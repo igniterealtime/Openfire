@@ -25,14 +25,16 @@ rm "$TRUSTSTOREPATH"
 # Import the certificates into the trust store
 for CERTFILE in $TEMPDIR/cert*.pem; do
     # Get the certificate name from some properties
-    CERTNAME_CN=$(openssl x509 -noout -subject -nameopt multiline -in "$CERTFILE" | grep commonName | sed 's/.*commonName *= *//')
-    CERTNAME_OUN=$(openssl x509 -noout -subject -nameopt multiline -in "$CERTFILE" | grep organizationalUnitName | sed 's/.*organizationalUnitName *= *//')
+    CERTNAME_CN=$(openssl x509 -noout -subject -nameopt lname,sep_multiline,utf8 -in "$CERTFILE" | grep commonName | sed 's/.*commonName=//')
+    CERTNAME_OUN=$(openssl x509 -noout -subject -nameopt lname,sep_multiline,utf8 -in "$CERTFILE" | grep organizationalUnitName | sed 's/.*organizationalUnitName=//')
 
     if [[ "$CERTNAME_CN" == "" ]] && [[ "$CERTNAME_OUN" == "" ]]; then # If there is no CN or OUN, use the filename
         CERTNAME=$(basename "$CERTFILE" .pem)
     elif [[ "$CERTNAME_CN" == "" ]] && [[ "$CERTNAME_OUN" != "" ]]; then
         CERTNAME=$CERTNAME_OUN
     elif [[ "$CERTNAME_OUN" == "Certum Certification Authority" ]]; then # Certum has a unique CN, but the OUN isn't
+        CERTNAME=$CERTNAME_CN
+    elif [[ "$CERTNAME_CN" == "Certigna"* ]]; then # Certigna certs have a string of numbers in the OUN
         CERTNAME=$CERTNAME_CN
     elif [[ "$CERTNAME_CN" == "GlobalSign" ]]; then # GlobalSign has a unique OUN, but the CN isn't
         CERTNAME=$CERTNAME_OUN

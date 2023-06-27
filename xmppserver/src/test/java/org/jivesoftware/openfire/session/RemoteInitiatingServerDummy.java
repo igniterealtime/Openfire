@@ -50,8 +50,10 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         System.out.println("connect");
         processingService = Executors.newCachedThreadPool();
 
-        dialbackAcceptThread = new Thread(new DialbackAcceptor());
-        dialbackAcceptThread.start();
+        if (dialbackAuthoritativeServer != null) {
+            dialbackAcceptThread = new Thread(new DialbackAcceptor());
+            dialbackAcceptThread.start();
+        }
 
         final SocketProcessor socketProcessor = new SocketProcessor(port);
         processingService.submit(socketProcessor);
@@ -98,6 +100,9 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
     public synchronized void stopAcceptThread() throws InterruptedException
     {
+        if (dialbackAcceptThread == null) {
+            return;
+        }
         dialbackAcceptThread.interrupt();
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
         while (Instant.now().isBefore(end) && dialbackAcceptThread.getState() != Thread.State.TERMINATED) {
@@ -169,15 +174,17 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                             System.out.println("I don't know how to process this data.");
                         }
 
-                        System.out.println("# DIALBACK AUTH SERVER send to Openfire");
-                        System.out.println(response);
-                        System.out.println();
-                        os.write(response.getBytes());
-                        os.flush();
+                        if (response != null) {
+                            System.out.println("# DIALBACK AUTH SERVER send to Openfire");
+                            System.out.println(response);
+                            System.out.println();
+                            os.write(response.getBytes());
+                            os.flush();
 
-                        if (response.equals("</stream:stream>")) {
-                            socket.close();
-                            break;
+                            if (response.equals("</stream:stream>")) {
+                                socket.close();
+                                break;
+                            }
                         }
                     }
                 } catch (Throwable t) {

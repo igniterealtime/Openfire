@@ -19,10 +19,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.openfire.*;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionListener;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
-import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -117,13 +114,14 @@ public final class Fixtures {
 
     public static SessionManager mockSessionManager() {
         final SessionManager sessionManager = mock(SessionManager.class, withSettings().lenient());
+        when(sessionManager.nextStreamID()).thenReturn(new BasicStreamIDFactory().createStreamID());
         return sessionManager;
     }
 
-    public static ConnectionManagerImpl mockConnectionManager() {
-        final ConnectionManagerImpl connectionManagerImpl = mock(ConnectionManagerImpl.class, withSettings().lenient());
-        doReturn(mockConnectionListener()).when(connectionManagerImpl).getListener(any(ConnectionType.class), anyBoolean());
-        return connectionManagerImpl;
+    public static ConnectionManager mockConnectionManager() {
+        final ConnectionManager connectionManager = mock(ConnectionManagerImpl.class, withSettings().lenient());
+        doReturn(mockConnectionListener()).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
+        return connectionManager;
     }
 
     public static ConnectionListener mockConnectionListener() {

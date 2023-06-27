@@ -520,4 +520,9 @@ public abstract class SocketReader implements Runnable {
     public String getExtraNamespaces() {
         return null;
     }
+
+    public LocalSession getSession()
+    {
+        return session;
+    }
 }

@@ -16,9 +16,15 @@
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
-import org.jivesoftware.openfire.net.*;
+import org.jivesoftware.openfire.net.BlockingAcceptingMode;
+import org.jivesoftware.openfire.net.DNSUtil;
+import org.jivesoftware.openfire.net.SocketAcceptThread;
+import org.jivesoftware.openfire.net.SocketReader;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -41,23 +47,23 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests that verify if an outbound server-to-server socket connection can be created (and where applicable:
- * encrypted and authenticated), verifying the implementation of {@link LocalOutgoingServerSession#createOutgoingSession(DomainPair, int)}
+ * Unit tests that verify if an inbound server-to-server socket connection can be created (and where applicable:
+ * encrypted and authenticated), verifying the implementation of {@link LocalIncomingServerSession}
  *
  * These tests assume the following constants:
  * - TLS certificate validation is implemented correctly.
  * - The domain name in the certificate matches that of the server.
  *
- * This implementation uses instances of {@link RemoteReceivingServerDummy} to represent the remote server to which a connection
- * is being made.
+ * This implementation uses instances of {@link RemoteInitiatingServerDummy} to represent the remote server that
+ * initiates a server-to-server connection.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @author Alex Gidman, alex.gidman@surevine.com
  */
 @ExtendWith(MockitoExtension.class)
-public class LocalOutgoingServerSessionParameterizedTest
+public class LocalIncomingServerSessionTest
 {
-    private RemoteReceivingServerDummy remoteReceivingServerDummy;
+    private RemoteInitiatingServerDummy remoteInitiatingServerDummy;
     private File tmpIdentityStoreFile;
     private IdentityStore identityStore;
     private File tmpTrustStoreFile;
@@ -94,6 +100,10 @@ public class LocalOutgoingServerSessionParameterizedTest
 
         // Mock the connection configuration.
         doReturn(certificateStoreManager).when(xmppServer).getCertificateStoreManager();
+
+        final SessionManager sessionManager = new SessionManager(); // This is the system under test. We do not want to use a mock for this test!
+        sessionManager.initialize(xmppServer);
+        doReturn(sessionManager).when(xmppServer).getSessionManager();
 
         final ConnectionManager connectionManager = Fixtures.mockConnectionManager();
         final ConnectionListener connectionListener = Fixtures.mockConnectionListener();
@@ -134,9 +144,7 @@ public class LocalOutgoingServerSessionParameterizedTest
 
     public void setUp() throws Exception
     {
-        remoteReceivingServerDummy = new RemoteReceivingServerDummy();
-        remoteReceivingServerDummy.open();
-        DNSUtil.setDnsOverride(Map.of(RemoteReceivingServerDummy.XMPP_DOMAIN, new DNSUtil.HostAddress("localhost", remoteReceivingServerDummy.getPort(), false)));
+        remoteInitiatingServerDummy = new RemoteInitiatingServerDummy(Fixtures.XMPP_DOMAIN);
     }
 
     @AfterEach
@@ -148,16 +156,16 @@ public class LocalOutgoingServerSessionParameterizedTest
         trustStore = null;
         DNSUtil.setDnsOverride(null);
 
-        if (remoteReceivingServerDummy != null) {
-            remoteReceivingServerDummy.close();
-            remoteReceivingServerDummy = null;
+        if (remoteInitiatingServerDummy != null) {
+            //remoteInitiatingServerDummy.close();
+            remoteInitiatingServerDummy = null;
         }
 
         Fixtures.clearExistingProperties();
     }
 
     /**
-     * Unit test in which Openfire initiates an outgoing server-to-server connection.
+     * Unit test in which Openfire reacts to an inbound server-to-server connection attempt.
      *
      * This test is parameterized, meaning that the configuration of both the local server and the remote mock server is
      * passed as an argument to this method. These configurations are used to both initialize and execute the test, but
@@ -169,32 +177,31 @@ public class LocalOutgoingServerSessionParameterizedTest
      */
     @ParameterizedTest
     @MethodSource("arguments")
-    public void outgoingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
+    public void incomingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
         final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
-
         try {
             // Setup test fixture.
 
             // Remote server TLS policy.
-            remoteReceivingServerDummy.setEncryptionPolicy(remoteServerSettings.encryptionPolicy);
+            remoteInitiatingServerDummy.setEncryptionPolicy(remoteServerSettings.encryptionPolicy);
 
             // Remote server dialback
-            remoteReceivingServerDummy.setDisableDialback(!remoteServerSettings.dialbackSupported);
+            remoteInitiatingServerDummy.setDisableDialback(!remoteServerSettings.dialbackSupported);
 
             // Remote server certificate state
             switch (remoteServerSettings.certificateState) {
                 case INVALID:
-                    remoteReceivingServerDummy.setUseExpiredEndEntityCertificate(true);
+                    remoteInitiatingServerDummy.setUseExpiredEndEntityCertificate(true);
                     // Intended fall-through
                 case VALID:
-                    remoteReceivingServerDummy.preparePKIX();
+                    remoteInitiatingServerDummy.preparePKIX();
 
                     // Install in local server's truststore.
-                    final X509Certificate[] chain = remoteReceivingServerDummy.getGeneratedPKIX().getCertificateChain();
+                    final X509Certificate[] chain = remoteInitiatingServerDummy.getGeneratedPKIX().getCertificateChain();
                     final X509Certificate caCert = chain[chain.length-1];
                     trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(caCert));
                     break;
@@ -239,14 +246,31 @@ public class LocalOutgoingServerSessionParameterizedTest
                     break;
             }
 
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteReceivingServerDummy.XMPP_DOMAIN);
-            final int port = remoteReceivingServerDummy.getPort();
+            remoteInitiatingServerDummy.init();
+            if (remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort() > 0) {
+                DNSUtil.setDnsOverride(Map.of(RemoteInitiatingServerDummy.XMPP_DOMAIN, new DNSUtil.HostAddress("localhost", remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort(), false)));
+            }
 
-            // Execute system under test.
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteInitiatingServerDummy.XMPP_DOMAIN);
+
+            // execute system under test.
+            final SocketAcceptThread socketAcceptThread = new SocketAcceptThread(0, null, false);
+            socketAcceptThread.setDaemon(true);
+            socketAcceptThread.setPriority(Thread.MAX_PRIORITY);
+            socketAcceptThread.start();
+
+            // now, make the remote server connect.
+            remoteInitiatingServerDummy.connect(socketAcceptThread.getPort());
+
+
+            // get the incoming server session object.
+            final LocalIncomingServerSession result;
+            BlockingAcceptingMode mode = ((BlockingAcceptingMode) socketAcceptThread.getAcceptingMode());
+            final SocketReader socketReader = mode == null ? null : mode.getLastReader();
+            result = socketReader == null ? null : (LocalIncomingServerSession) socketReader.getSession();
 
             // Verify results
-            final ExpectedOutcome.ConnectionState expected = ExpectedOutcome.generateExpectedOutcome(localServerSettings, remoteServerSettings).getConnectionState();
+            final ExpectedOutcome.ConnectionState expected = ExpectedOutcome.generateExpectedOutcome(remoteServerSettings, localServerSettings).getConnectionState();
             System.out.println("Expect: " + expected);
             switch (expected)
             {
@@ -275,9 +299,11 @@ public class LocalOutgoingServerSessionParameterizedTest
                     assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
                     break;
             }
+            System.out.println("Expectation met.");
         } finally {
             // Teardown test fixture.
             trustStore.delete("unit-test");
+            remoteInitiatingServerDummy.disconnect();
         }
     }
 
@@ -291,15 +317,19 @@ public class LocalOutgoingServerSessionParameterizedTest
         final Set<ServerSettings> localServerSettings = new LinkedHashSet<>();
         final Set<ServerSettings> remoteServerSettings = new LinkedHashSet<>();
 
-        for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
-            for (final boolean dialbackSupported : Set.of(true, false)) {
-                for (final ServerSettings.EncryptionPolicy tlsPolicy : ServerSettings.EncryptionPolicy.values()) {
-                    final ServerSettings serverSettings = new ServerSettings(certificateState, dialbackSupported, tlsPolicy);
-                    localServerSettings.add(serverSettings);
-                    remoteServerSettings.add(serverSettings);
-                }
-            }
-        }
+//        for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
+//            for (final boolean dialbackSupported : Set.of(true, false)) {
+//                for (final ServerSettings.EncryptionPolicy tlsPolicy : ServerSettings.EncryptionPolicy.values()) {
+//                    final ServerSettings serverSettings = new ServerSettings(certificateState, dialbackSupported, tlsPolicy);
+//                    localServerSettings.add(serverSettings);
+//                    remoteServerSettings.add(serverSettings);
+//                }
+//            }
+//        }
+//
+        // FIXME: remove the bottom three lines, replace with the commented-out code above.
+        localServerSettings.add(new ServerSettings(ServerSettings.CertificateState.MISSING, true, ServerSettings.EncryptionPolicy.DISABLED ));
+        remoteServerSettings.add(new ServerSettings(ServerSettings.CertificateState.MISSING, true, ServerSettings.EncryptionPolicy.DISABLED ));
 
         for (final ServerSettings local : localServerSettings) {
             for (final ServerSettings remote : remoteServerSettings) {

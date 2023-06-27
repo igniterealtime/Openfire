@@ -4,7 +4,6 @@
 <%@ page import="org.jivesoftware.openfire.component.ExternalComponentManager" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ModificationNotAllowedException" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -13,6 +12,7 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -23,7 +23,7 @@
 <% webManager.init(request, response, session, application, out ); %>
 <%
     final ConnectionType connectionType = ConnectionType.COMPONENT;
-    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
 
     final ConnectionConfiguration plaintextConfiguration  = manager.getListener( connectionType, false ).generateConnectionConfiguration();
     final ConnectionConfiguration legacymodeConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();

@@ -1,8 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-<%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -25,7 +24,6 @@
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
@@ -50,6 +48,8 @@
 <%@ page import="com.rometools.rome.feed.synd.SyndEntry" %>
 <%@ page import="java.io.InputStreamReader" %>
 <%@ page import="org.jivesoftware.util.MemoryUsageMonitor" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -77,8 +77,7 @@
 <% // Get parameters //
     boolean serverOn = (webManager.getXMPPServer() != null);
 
-    ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
-
+    ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
@@ -579,10 +578,10 @@
     }
 
     final String interfaceName;
-    if (connectionManager.getListenAddress() == null || connectionManager.getListenAddress().isAnyLocalAddress() ) {
+    if (((ConnectionManagerImpl)connectionManager).getListenAddress() == null || ((ConnectionManagerImpl)connectionManager).getListenAddress().isAnyLocalAddress() ) {
         interfaceName = LocaleUtils.getLocalizedString("ports.all_ports");
     } else {
-        interfaceName = connectionManager.getListenAddress().getHostName();
+        interfaceName = ((ConnectionManagerImpl)connectionManager).getListenAddress().getHostName();
     }
 %>
     <%

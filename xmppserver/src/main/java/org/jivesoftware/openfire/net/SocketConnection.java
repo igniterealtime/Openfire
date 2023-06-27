@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -227,7 +226,7 @@ public class SocketConnection implements Connection {
         // This is an ugly hack to get backwards compatibility with the pre-MINA era. As this implementation is being
         // removed (it is marked as deprecated - at the time of writing, it is only used for S2S). The ugly hack: assume
         // S2S:
-        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration();
     }
 

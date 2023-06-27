@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, Ignite Realtime Foundation 2022. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, Ignite Realtime Foundation 2022-2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
@@ -477,7 +477,7 @@ public final class HttpBindManager implements CertificateEventListener {
                     Log.warn("HTTP binding: Using certificates but they are not valid for the hosted domain");
                 }
 
-                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                 final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
                 final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
@@ -696,7 +696,7 @@ public final class HttpBindManager implements CertificateEventListener {
 
     // NOTE: enabled by default
     private boolean isHttpCompressionEnabled() {
-        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
         return configuration.getCompressionPolicy() == null || configuration.getCompressionPolicy().equals( Connection.CompressionPolicy.optional );
     }

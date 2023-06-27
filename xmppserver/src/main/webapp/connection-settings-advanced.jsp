@@ -6,6 +6,7 @@
 <%@ page import="org.jivesoftware.openfire.Connection" %>
 <%@ page import="org.jivesoftware.openfire.spi.*" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -47,7 +48,7 @@
         errors.put( "connectionMode", "Unrecognized connection mode." );
     }
 
-    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
     final boolean startInSslMode = "legacy".equalsIgnoreCase( connectionModeParam );
 
     if ( update && errors.isEmpty() )

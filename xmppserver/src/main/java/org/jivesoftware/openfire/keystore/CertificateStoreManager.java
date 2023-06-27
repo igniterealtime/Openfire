@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package org.jivesoftware.openfire.keystore;
 
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.spi.ConnectionListener;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CollectionUtils;
 import org.jivesoftware.util.JiveGlobals;
@@ -187,7 +187,7 @@ public class CertificateStoreManager extends BasicModule
             }
 
             // Update all connection listeners that were using the old configuration.
-            final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+            final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
             for ( ConnectionListener connectionListener : connectionManager.getListeners( type ) ) {
                 try {
                     connectionListener.setIdentityStoreConfiguration( configuration );
@@ -242,7 +242,7 @@ public class CertificateStoreManager extends BasicModule
             }
 
             // Update all connection listeners that were using the old configuration.
-            final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+            final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
             for ( ConnectionListener connectionListener : connectionManager.getListeners( type ) ) {
                 try {
                     connectionListener.setTrustStoreConfiguration( configuration );

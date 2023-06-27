@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 package org.jivesoftware.openfire.multiplex;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.ConnectionMultiplexerSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
@@ -131,7 +131,7 @@ public class ClientSessionConnection extends VirtualConnection {
     {
         // Here, a client-to-server configuration is mocked. It is likely not used, as actual connection handling takes
         // place at the connection manager.
-        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.getListener( ConnectionType.SOCKET_C2S, true ).generateConnectionConfiguration();
     }
 

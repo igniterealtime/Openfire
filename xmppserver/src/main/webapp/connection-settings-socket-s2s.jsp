@@ -1,6 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
@@ -11,6 +10,7 @@
 <%@ page import="org.jivesoftware.openfire.server.RemoteServerManager" %>
 <%@ page import="org.jivesoftware.openfire.server.RemoteServerConfiguration" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -20,7 +20,7 @@
 <% webManager.init(request, response, session, application, out ); %>
 <%
     final ConnectionType connectionType = ConnectionType.SOCKET_S2S;
-    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
 
     pageContext.setAttribute("permissionPolicy", RemoteServerManager.getPermissionPolicy().toString());
 

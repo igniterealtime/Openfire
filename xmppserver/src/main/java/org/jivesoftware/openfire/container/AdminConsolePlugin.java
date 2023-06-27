@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.*;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.*;
@@ -209,7 +209,7 @@ public class AdminConsolePlugin implements Plugin {
                         Log.warn( "Admin console: Using certificates but they are not valid for the hosted domain" );
                     }
 
-                    final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
+                    final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                     final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.WEBADMIN, true ).generateConnectionConfiguration();
                     final SslContextFactory sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
 
@@ -254,7 +254,7 @@ public class AdminConsolePlugin implements Plugin {
 
         try {
             adminServer.start(); // excludes initialised
-        
+
             if(XMPPServer.getInstance().isSetupMode()) {
                 AuthCheckFilter.loadSetupExcludes();
             }

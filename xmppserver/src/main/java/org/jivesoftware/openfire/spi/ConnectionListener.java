@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright 2019-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.spi;
 
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
 import org.jivesoftware.openfire.net.SocketConnection;
@@ -95,7 +96,7 @@ public class ConnectionListener
 
 
     ConnectionListener getConnectionListener( ConnectionType type ) {
-        ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         return connectionManager.getListener( type, getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) );
     }
 

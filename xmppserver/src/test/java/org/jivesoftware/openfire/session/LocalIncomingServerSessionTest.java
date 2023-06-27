@@ -303,22 +303,18 @@ public class LocalIncomingServerSessionTest
         final Set<ServerSettings> localServerSettings = new LinkedHashSet<>();
         final Set<ServerSettings> remoteServerSettings = new LinkedHashSet<>();
 
-//        for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
-//            for (final boolean dialbackSupported : Set.of(true, false)) {
-//                for (final Connection.TLSPolicy tlsPolicy : Connection.TLSPolicy.values()) {
-//                    if (tlsPolicy == Connection.TLSPolicy.legacyMode) {
-//                        continue; // TODO add support for DirectTLS in this unit test!
-//                    }
-//                    final ServerSettings serverSettings = new ServerSettings(certificateState, dialbackSupported, tlsPolicy);
-//                    localServerSettings.add(serverSettings);
-//                    remoteServerSettings.add(serverSettings);
-//                }
-//            }
-//        }
-//
-        // FIXME: remove the bottom three lines, replace with the commented-out code above.
-        localServerSettings.add(new ServerSettings(ServerSettings.CertificateState.MISSING, true, Connection.TLSPolicy.disabled ));
-        remoteServerSettings.add(new ServerSettings(ServerSettings.CertificateState.MISSING, true, Connection.TLSPolicy.disabled ));
+        for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
+            for (final boolean dialbackSupported : Set.of(true, false)) {
+                for (final Connection.TLSPolicy tlsPolicy : Connection.TLSPolicy.values()) {
+                    if (tlsPolicy == Connection.TLSPolicy.legacyMode) {
+                        continue; // TODO add support for DirectTLS in this unit test!
+                    }
+                    final ServerSettings serverSettings = new ServerSettings(certificateState, dialbackSupported, tlsPolicy);
+                    localServerSettings.add(serverSettings);
+                    remoteServerSettings.add(serverSettings);
+                }
+            }
+        }
 
         for (final ServerSettings local : localServerSettings) {
             for (final ServerSettings remote : remoteServerSettings) {

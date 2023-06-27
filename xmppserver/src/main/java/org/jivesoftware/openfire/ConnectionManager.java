@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package org.jivesoftware.openfire;
 
+import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
+
+import java.util.Set;
 
 /**
  * Coordinates connections (accept, read, termination) on the server.
@@ -113,4 +116,33 @@ public interface ConnectionManager {
      * @param port a port number.
      */
     void setPort(ConnectionType type, boolean startInSslMode, int port);
+
+    /**
+     * Returns all connection listeners.
+     *
+     * @return All connection listeners (never null).
+     */
+    Set<ConnectionListener> getListeners();
+
+    /**
+     * Returns al connection listeners for the provided type.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @return The connection listener (never null).
+     */
+    Set<ConnectionListener> getListeners( ConnectionType type );
+
+    /**
+     * Returns a connection listener.
+     *
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
+     * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
+     * is implemented, the parameter value is ignored.
+     *
+     * @param type The connection type for which a listener is to be configured.
+     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @return The connection listener (never null).
+     */
+    ConnectionListener getListener(ConnectionType type, boolean startInSslMode);
 }

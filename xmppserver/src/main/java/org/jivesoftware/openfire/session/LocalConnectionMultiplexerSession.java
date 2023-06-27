@@ -18,17 +18,13 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -261,7 +257,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
      */
     private void sendClientOptions() {
 
-        final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+        final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
 
         IQ options = new IQ(IQ.Type.set);

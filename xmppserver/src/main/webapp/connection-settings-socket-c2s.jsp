@@ -6,11 +6,11 @@
 <%@ page import="org.jivesoftware.openfire.session.ConnectionSettings" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -20,7 +20,7 @@
 <% webManager.init(request, response, session, application, out ); %>
 <%
     final ConnectionType connectionType = ConnectionType.SOCKET_C2S;
-    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
 
     final ConnectionConfiguration plaintextConfiguration  = manager.getListener( connectionType, false ).generateConnectionConfiguration();
     final ConnectionConfiguration legacymodeConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();

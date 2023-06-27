@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 --%>
 <%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="org.jivesoftware.util.Log" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.Connection" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page contentType="text/html;charset=UTF-8" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -52,7 +51,7 @@
             final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", HttpBindManager.HTTP_BIND_FORWARDED.getValue() );
             final String CORSDomains = ParamUtils.getParameter( request, "CORSDomains", true );
 
-            final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+            final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
             final ConnectionConfiguration configuration = manager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
             final String mutualAuthenticationText = ParamUtils.getParameter( request, "mutualauthentication", true );
             final Connection.ClientAuth mutualAuthentication;
@@ -142,7 +141,7 @@
 
     csrfParam = StringUtils.randomString( 15 );
     CookieUtils.setCookie( request, response, "csrf", csrfParam, -1 );
-    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
     final ConnectionConfiguration configuration = manager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
 
     pageContext.setAttribute( "csrf", csrfParam );

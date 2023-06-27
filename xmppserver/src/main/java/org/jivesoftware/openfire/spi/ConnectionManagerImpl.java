@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -409,6 +409,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      *
      * @return All connection listeners (never null).
      */
+    @Override
     public Set<ConnectionListener> getListeners() {
         final Set<ConnectionListener> listeners = new LinkedHashSet<>();
         listeners.add( clientListener );
@@ -438,6 +439,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
      * @return The connection listener (never null).
      */
+    @Override
     public ConnectionListener getListener( ConnectionType type, boolean startInSslMode )
     {
         switch ( type )
@@ -493,6 +495,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * @param type The connection type for which a listener is to be configured.
      * @return The connection listener (never null).
      */
+    @Override
     public Set<ConnectionListener> getListeners( ConnectionType type )
     {
         final Set<ConnectionListener> result = new HashSet<>();

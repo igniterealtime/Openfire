@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, Ignite Realtime Foundation 2023. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
 
 <%@ page errorPage="error.jsp" %>
 <%@ page import="org.jivesoftware.openfire.Connection" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -43,7 +43,7 @@
     boolean clientEnabled = ParamUtils.getBooleanParameter(request, "clientEnabled");
     boolean serverEnabled = ParamUtils.getBooleanParameter(request, "serverEnabled");
 
-    final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 

@@ -22,10 +22,7 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.SessionPacketRouter;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
@@ -33,7 +30,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
@@ -1312,7 +1308,7 @@ public class HttpSession extends LocalClientSession {
         @Override
         public ConnectionConfiguration getConfiguration() {
             if (configuration == null) {
-                final ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+                final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                 configuration = connectionManager.getListener( connectionType, true ).generateConnectionConfiguration();
             }
             return configuration;

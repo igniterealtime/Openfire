@@ -5,8 +5,8 @@
 <%@ page import="org.jivesoftware.openfire.net.DNSUtil" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
-<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -43,7 +43,7 @@
         }
     }
 
-    final ConnectionManagerImpl manager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
+    final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
 
     final ConnectionConfiguration plaintextClientConfiguration  = manager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
     final ConnectionConfiguration legacymodeClientConfiguration = manager.getListener( ConnectionType.SOCKET_C2S, true  ).generateConnectionConfiguration();

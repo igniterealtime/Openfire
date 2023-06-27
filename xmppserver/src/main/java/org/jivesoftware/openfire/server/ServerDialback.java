@@ -16,26 +16,17 @@
 
 package org.jivesoftware.openfire.server;
 
-import java.io.*;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.net.*;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
@@ -51,6 +42,13 @@ import org.xmpp.packet.StreamError;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import java.io.*;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Implementation of the Server Dialback method as defined by the RFC3920.
@@ -657,7 +655,7 @@ public class ServerDialback {
 
         VerifyResult result = VerifyResult.error;
 
-        final ConnectionManagerImpl connectionManager = ( (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager() );
+        final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
         final TLSStreamHandler tlsStreamHandler = new TLSStreamHandler( socket, connectionManager.getListener( ConnectionType.SOCKET_S2S, directTLS ).generateConnectionConfiguration(), true );
 
         if ( directTLS ) {

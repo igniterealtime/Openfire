@@ -55,7 +55,7 @@ import static org.mockito.Mockito.*;
  * @author Alex Gidman, alex.gidman@surevine.com
  */
 @ExtendWith(MockitoExtension.class)
-public class LocalOutgoingServerSessionParameterizedTest
+public class LocalOutgoingServerSessionTest
 {
     private RemoteReceivingServerDummy remoteReceivingServerDummy;
     private File tmpIdentityStoreFile;

@@ -319,7 +319,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
             // Just indicate that we would like to authenticate the client but if client
             // certificates are self-signed or have no certificate chain then we are still
             // good
-            sslSocket.setWantClientAuth(true); // DO WE NEED TO BRING THIS INTO OUR LocalOutgoingServerSessionParameterizedTest MATRIX?
+            sslSocket.setWantClientAuth(true); // DO WE NEED TO BRING THIS INTO OUR LocalOutgoingServerSessionTest MATRIX?
 
             processingService.submit(new SocketProcessor(sslSocket));
         }

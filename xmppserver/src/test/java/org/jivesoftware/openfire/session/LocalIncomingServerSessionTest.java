@@ -42,6 +42,7 @@ import org.mockito.stubbing.Answer;
 import java.io.File;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -247,7 +248,7 @@ public class LocalIncomingServerSessionTest
 
             // now, make the remote server connect.
             remoteInitiatingServerDummy.connect(socketAcceptThread.getPort());
-
+            remoteInitiatingServerDummy.blockUntilDone(1, TimeUnit.MINUTES);
 
             // get the incoming server session object.
             final LocalIncomingServerSession result;

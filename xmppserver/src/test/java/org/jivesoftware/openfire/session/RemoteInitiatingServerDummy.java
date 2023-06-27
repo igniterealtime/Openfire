@@ -11,9 +11,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 {
@@ -23,6 +26,12 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     private final String connectTo;
 
     private ExecutorService processingService;
+
+    /**
+     * A monitor that is used to flag when this dummy has finished trying to set up a connection to Openfire. This is to
+     * help the unit test know when it can start verifying the test outcome.
+     */
+    private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
     public RemoteInitiatingServerDummy(final String connectTo)
     {
@@ -49,6 +58,19 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         socketProcessor.sendStreamHeader();
 
         Thread.sleep(1000); // FIXME replace this with some kind of flag that indicates when the test result is ready to be verified.
+    }
+
+    public void blockUntilDone(final long timeout, final TimeUnit unit) {
+        try {
+            if (!countDownLatch.await(timeout, unit)) {
+                throw new RuntimeException("Test scenario never reached 'done' state");
+            }
+        } catch (InterruptedException e) {
+        }
+    }
+
+    protected void done() {
+        countDownLatch.countDown();
     }
 
     public void disconnect() throws InterruptedException, IOException
@@ -234,9 +256,19 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                             case "result":
                                 processDialbackResult(inbound);
                                 break;
+                            case "success": // intended fall-through
+                            case "failure":
+                                if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
+                                    processSaslResponse(inbound);
+                                    break;
+                                }
+                                // intended fall-through
                             default:
                                 System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
                         }
+                    } else {
+                        // received an end of stream: if the peer closes the connection, then we're done trying.
+                        break;
                     }
 
                 }
@@ -247,6 +279,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                 t.printStackTrace();
             }
             System.out.println("Stopped reading from socket.");
+            done();
         }
 
         private synchronized void sendStreamHeader() throws IOException
@@ -363,10 +396,24 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
         private void processDialbackResult(final Element result) throws IOException {
             final String type = result.attributeValue("type");
-            System.out.println("Openfire reports dialback result of type " + type);
+            System.out.println("Openfire reports Server Dialback result of type " + type);
             if (!"valid".equals(type)) {
-                throw new InterruptedIOException("Dialback failed");
+                throw new InterruptedIOException("Server Dialback failed");
             }
+
+            System.out.println("Successfully authenticated using Server Dialback! We're done setting up a connection.");
+            done();
+        }
+
+        private void processSaslResponse(final Element result) throws IOException {
+            final String name = result.getName();
+            System.out.println("Openfire reports SASL result of type " + name);
+            if (!"success".equals(name)) {
+                throw new InterruptedIOException("SASL Auth failed");
+            }
+
+            System.out.println("Successfully authenticated using SASL! We're done setting up a connection.");
+            done();
         }
     }
 }

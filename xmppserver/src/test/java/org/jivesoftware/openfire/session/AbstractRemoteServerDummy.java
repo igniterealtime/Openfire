@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.session;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.keystore.KeystoreTestUtils;
 
 import javax.net.ssl.KeyManager;
@@ -27,13 +28,13 @@ public class AbstractRemoteServerDummy
     protected boolean useExpiredEndEntityCertificate;
     protected boolean useSelfSignedCertificate;
     protected boolean disableDialback;
-    protected ServerSettings.EncryptionPolicy encryptionPolicy = ServerSettings.EncryptionPolicy.OPTIONAL;
+    protected Connection.TLSPolicy encryptionPolicy = Connection.TLSPolicy.optional;
     protected KeystoreTestUtils.ResultHolder generatedPKIX;
 
     /**
      * Updates the TLS encryption policy that's observed by this server.
      */
-    public void setEncryptionPolicy(ServerSettings.EncryptionPolicy encryptionPolicy)
+    public void setEncryptionPolicy(Connection.TLSPolicy encryptionPolicy)
     {
         this.encryptionPolicy = encryptionPolicy;
     }

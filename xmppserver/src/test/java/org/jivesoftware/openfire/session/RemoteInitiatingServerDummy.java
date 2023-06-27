@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
+import org.jivesoftware.openfire.Connection;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -282,7 +283,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             System.out.println("Openfire " + (peerRequiresStartTLS ? "requires" : (peerSupportsStartTLS ? "supports" : "does not support" )) + " StartTLS. Our own policy: " + encryptionPolicy + ".");
 
             switch (encryptionPolicy) {
-                case DISABLED:
+                case disabled:
                     if (peerRequiresStartTLS) {
                         final Document outbound = DocumentHelper.createDocument();
                         final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
@@ -295,12 +296,12 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                         throw new InterruptedIOException("Openfire requires TLS, we disabled it.");
                     }
                     break;
-                case OPTIONAL:
+                case optional:
                     if (peerSupportsStartTLS) {
                         initiateTLS();
                     }
                     break;
-                case REQUIRED:
+                case required:
                     if (!peerSupportsStartTLS) {
                         final Document outbound = DocumentHelper.createDocument();
                         final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
@@ -317,6 +318,8 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                         initiateTLS();
                     }
                     break;
+                default:
+                    throw new IllegalStateException("This implementation does not supported encryption policy: " + encryptionPolicy);
             }
         }
         private void initiateTLS() throws IOException {
@@ -328,9 +331,9 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             final Element mechanismsEl = features.element(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
             final boolean peerSupportsSASLExternal = mechanismsEl != null && mechanismsEl.elements().stream().anyMatch(element -> "mechanism".equals(element.getName()) && "EXTERNAL".equals(element.getTextTrim()));
             final boolean peerSupportsDialback = peerAdvertisedDialbackNamespace || features.element(QName.get("dialback", "urn:xmpp:features:dialback")) != null;
-            System.out.println("Openfire " + (peerSupportsSASLExternal ? "offers" : "does not offer") + " SASL EXTERNAL, " + (peerSupportsDialback ? "supports" : "does not support") + " Server Dialback. Our own policy: SASL EXTERNAL " + (encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED ? "available" : "not available") + ", Dialback: " + (!disableDialback ? "supported" : "not supported") + ".");
+            System.out.println("Openfire " + (peerSupportsSASLExternal ? "offers" : "does not offer") + " SASL EXTERNAL, " + (peerSupportsDialback ? "supports" : "does not support") + " Server Dialback. Our own policy: SASL EXTERNAL " + (encryptionPolicy != Connection.TLSPolicy.disabled ? "available" : "not available") + ", Dialback: " + (!disableDialback ? "supported" : "not supported") + ".");
 
-            if (peerSupportsSASLExternal && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED && authenticateUsingSaslExternal()) {
+            if (peerSupportsSASLExternal && encryptionPolicy != Connection.TLSPolicy.disabled && authenticateUsingSaslExternal()) {
                 System.out.println("Authenticating using SASL EXTERNAL");
             } else if (peerSupportsDialback && !disableDialback) {
                 startDialbackAuth();

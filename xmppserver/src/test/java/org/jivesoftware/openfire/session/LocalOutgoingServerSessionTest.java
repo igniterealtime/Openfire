@@ -205,21 +205,7 @@ public class LocalOutgoingServerSessionTest
             }
 
             // Local server TLS policy.
-            final Connection.TLSPolicy localTlsPolicy;
-            switch (localServerSettings.encryptionPolicy) {
-                case REQUIRED:
-                    localTlsPolicy = Connection.TLSPolicy.required;
-                    break;
-                case OPTIONAL:
-                    localTlsPolicy = Connection.TLSPolicy.optional;
-                    break;
-                case DISABLED:
-                    localTlsPolicy = Connection.TLSPolicy.disabled;
-                    break;
-                default:
-                    throw new IllegalStateException("Unsupported local TLS policy");
-            }
-            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, localTlsPolicy.toString());
+            JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, localServerSettings.encryptionPolicy.toString());
 
             // Local server dialback.
             JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, localServerSettings.dialbackSupported ? "true" : "false");
@@ -293,7 +279,10 @@ public class LocalOutgoingServerSessionTest
 
         for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
             for (final boolean dialbackSupported : Set.of(true, false)) {
-                for (final ServerSettings.EncryptionPolicy tlsPolicy : ServerSettings.EncryptionPolicy.values()) {
+                for (final Connection.TLSPolicy tlsPolicy : Connection.TLSPolicy.values()) {
+                    if (tlsPolicy == Connection.TLSPolicy.legacyMode) {
+                        continue; // TODO add support for DirectTLS in this unit test!
+                    }
                     final ServerSettings serverSettings = new ServerSettings(certificateState, dialbackSupported, tlsPolicy);
                     localServerSettings.add(serverSettings);
                     remoteServerSettings.add(serverSettings);

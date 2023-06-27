@@ -96,10 +96,10 @@ public class ExpectedOutcome
         final ExpectedOutcome expectedOutcome = new ExpectedOutcome();
 
         switch (initiatingServer.encryptionPolicy) {
-            case DISABLED: // <-- Initiating server's encryption policy.
+            case disabled: // <-- Initiating server's encryption policy.
                 switch (receivingServer.encryptionPolicy) {
-                    case DISABLED: // Intended fall-through: if one peer disables TLS, it won't be used in any circumstances.
-                    case OPTIONAL:
+                    case disabled: // Intended fall-through: if one peer disables TLS, it won't be used in any circumstances.
+                    case optional:
                         // The certificate status of both peers is irrelevant, as TLS won't happen.
                         if (initiatingServer.dialbackSupported && receivingServer.dialbackSupported) {
                             expectedOutcome.set(NON_ENCRYPTED_WITH_DIALBACK_AUTH, "although TLS is not available (so it cannot be used for encryption or authentication), Dialback is available, which allows the Initiating Entity to be authenticated by the Receiving Entity.");
@@ -107,15 +107,15 @@ public class ExpectedOutcome
                             expectedOutcome.set(NO_CONNECTION, "TLS and Dialback aren't available, making it impossible for the Initiating Entity to be authenticated by the Receiving Entity.");
                         }
                         break;
-                    case REQUIRED:
+                    case required:
                         expectedOutcome.set(NO_CONNECTION, "one peer requires encryption while the other disables encryption. This cannot work.");
                         break;
                 }
                 break;
 
-            case OPTIONAL: // <-- Initiating server's encryption policy.
+            case optional: // <-- Initiating server's encryption policy.
                 switch (receivingServer.encryptionPolicy) {
-                    case DISABLED:
+                    case disabled:
                         // The certificate status of both peers is irrelevant, as TLS won't happen.
                         if (initiatingServer.dialbackSupported && receivingServer.dialbackSupported) {
                             expectedOutcome.set(NON_ENCRYPTED_WITH_DIALBACK_AUTH, "TLS is not available, so it cannot be used for encryption or authentication. Dialback is available, which allows the Initiating Entity to be authenticated by the Receiving Entity.");
@@ -123,7 +123,7 @@ public class ExpectedOutcome
                             expectedOutcome.set(NO_CONNECTION, "TLS and Dialback aren't available, making it impossible for the Initiating Entity to be authenticated by the Receiving Entity.");
                         }
                         break;
-                    case OPTIONAL:
+                    case optional:
                         switch (receivingServer.certificateState) {
                             case MISSING:
                                 if (initiatingServer.dialbackSupported && receivingServer.dialbackSupported) {
@@ -165,7 +165,7 @@ public class ExpectedOutcome
                                 break;
                         }
                         break;
-                    case REQUIRED:
+                    case required:
                         switch (receivingServer.certificateState) {
                             case MISSING:
                                 expectedOutcome.set(NO_CONNECTION, "Receiving Entity requires encryption, but it does not provide a TLS certificate. As ANON cypher suites are expected to be unavailable, the Initiating Entity cannot negotiate TLS and therefor the required encrypted connection cannot be established.");
@@ -206,12 +206,12 @@ public class ExpectedOutcome
                 }
                 break;
 
-            case REQUIRED: // <-- Initiating server's encryption policy.
+            case required: // <-- Initiating server's encryption policy.
                 switch (receivingServer.encryptionPolicy) {
-                    case DISABLED:
+                    case disabled:
                         expectedOutcome.set(NO_CONNECTION, "one peer requires encryption, the other disables encryption. This cannot work.");
                         break;
-                    case OPTIONAL:
+                    case optional:
                         switch (receivingServer.certificateState) {
                             case MISSING:
                                 expectedOutcome.set(NO_CONNECTION, "Receiving Entity does not provide a TLS certificate. As ANON cypher suites are expected to be unavailable, the Initiating Entity cannot negotiate TLS and therefor the required encrypted connection cannot be established.");
@@ -249,7 +249,7 @@ public class ExpectedOutcome
                                 break;
                         }
                         break;
-                    case REQUIRED:
+                    case required:
                         switch (receivingServer.certificateState) {
                             case MISSING:
                                 expectedOutcome.set(NO_CONNECTION, "Receiving Entity does not provide a TLS certificate. As ANON cypher suites are expected to be unavailable, the Initiating Entity cannot negotiate TLS and therefor the required encrypted connection cannot be established.");
@@ -292,6 +292,7 @@ public class ExpectedOutcome
                 break;
         }
 
+        // FIXME: add support for the DirectTLS TLS policy.
         return expectedOutcome;
     }
 }

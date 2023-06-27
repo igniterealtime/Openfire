@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.keystore.KeystoreTestUtils;
 import org.jivesoftware.util.StringUtils;
 
@@ -249,14 +250,14 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
             final Document root = DocumentHelper.createDocument();
             final Element features = root.addElement("features");
             if (!(socket instanceof SSLSocket)) {
-                if (encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
+                if (encryptionPolicy != Connection.TLSPolicy.disabled) {
                     final Element startTLS = features.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
-                    if (encryptionPolicy == ServerSettings.EncryptionPolicy.REQUIRED) {
+                    if (encryptionPolicy == Connection.TLSPolicy.required) {
                         startTLS.addElement("required");
                     }
                 }
                 if (!isAuthenticated) {
-                    if (!disableDialback && encryptionPolicy != ServerSettings.EncryptionPolicy.REQUIRED) { // do not offer Dialback if we expect TLS first.
+                    if (!disableDialback && encryptionPolicy != Connection.TLSPolicy.required) { // do not offer Dialback if we expect TLS first.
                         features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
                     }
                 }
@@ -272,7 +273,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                     // Throws an exception if the peer (local server) doesn't send a certificate
                     System.out.println(((SSLSocket) socket).getSession().getPeerPrincipal());
                     Certificate[] certificates = ((SSLSocket) socket).getSession().getPeerCertificates();
-                    if (certificates != null && encryptionPolicy != ServerSettings.EncryptionPolicy.DISABLED) {
+                    if (certificates != null && encryptionPolicy != Connection.TLSPolicy.disabled) {
                         try {
                             ((X509Certificate) certificates[0]).checkValidity(); // first peer certificate will belong to the local server
                             mechanisms.addElement("mechanism").addText("EXTERNAL");
@@ -290,7 +291,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         private synchronized void sendStartTlsProceed(Element inbound) throws Exception
         {
-            if (encryptionPolicy == ServerSettings.EncryptionPolicy.DISABLED || generatedPKIX == null) {
+            if (encryptionPolicy == Connection.TLSPolicy.disabled || generatedPKIX == null) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
                 final Element root = outbound.addElement(QName.get("stream", namespace));
@@ -335,7 +336,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
          */
         private synchronized void sendAuthResponse(Element inbound) throws IOException
         {
-            if (encryptionPolicy == ServerSettings.EncryptionPolicy.DISABLED) {
+            if (encryptionPolicy == Connection.TLSPolicy.disabled) {
                 isAuthenticated = false;
 
                 final Document outbound = DocumentHelper.createDocument();
@@ -391,7 +392,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 throw new InterruptedIOException("Dialback received while feature is disabled. Kill the connection");
             }
 
-            if (encryptionPolicy == ServerSettings.EncryptionPolicy.REQUIRED && !(socket instanceof SSLSocket)) {
+            if (encryptionPolicy == Connection.TLSPolicy.required && !(socket instanceof SSLSocket)) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Element result = outbound.addElement(QName.get("result", "db", "urn:xmpp:features:dialback"));
                 result.addAttribute("from", XMPP_DOMAIN);

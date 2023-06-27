@@ -15,29 +15,13 @@
  */
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.openfire.Connection;
+
 /**
  * Representation of a particular state of server configuration.
  */
 public class ServerSettings
 {
-    public enum EncryptionPolicy
-    {
-        /**
-         * Encryption cannot be used.
-         */
-        DISABLED,
-
-        /**
-         * Encryption may be used, but is not mandatory.
-         */
-        OPTIONAL,
-
-        /**
-         * Encryption must be used.
-         */
-        REQUIRED
-    }
-
     public enum CertificateState
     {
         /**
@@ -80,14 +64,14 @@ public class ServerSettings
     /**
      * Defines if this entity requires/disables or can use TLS for encryption (this does not mandate TLS-based authentication).
      */
-    public final EncryptionPolicy encryptionPolicy;
+    public final Connection.TLSPolicy encryptionPolicy;
 
 //        /**
 //         * Defines if this entity will attempt/require/ignore to validate the peer's certificate
 //         */
 //        public final TlsMutualAuthenticationPolicy tlsMutualAuthenticationPolicy;
 
-    public ServerSettings(final CertificateState certificateState, final boolean dialbackSupported, final EncryptionPolicy encryptionPolicy)
+    public ServerSettings(final CertificateState certificateState, final boolean dialbackSupported, final Connection.TLSPolicy encryptionPolicy)
     {
         this.certificateState = certificateState;
         this.dialbackSupported = dialbackSupported;

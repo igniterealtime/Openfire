@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# Get the location of this script
+SCRIPTPATH="$(
+    cd "$(dirname "$0")"
+    pwd -P
+)"
+
+# Define the truststore path in relation to this script
+TRUSTSTOREPATH="$SCRIPTPATH/../distribution/src/security/truststore"
+
+# Create a temporary directory
+TEMPDIR=$(mktemp -d)
+
+# Download the mozilla trusted root certificates
+# See https://www.ccadb.org/resources (linked to from https://blog.mozilla.org/security/2021/05/10/beware-of-applications-misusing-root-stores/)
+curl -o $TEMPDIR/cacerts.txt https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites
+
+# Parse the certificates into individual files
+csplit --prefix "$TEMPDIR/cert" --suffix-format %02d.pem "$TEMPDIR/cacerts.txt" '/-----BEGIN CERTIFICATE-----/' '{*}' --elide-empty-files --quiet
+
+# Remove the existing trust store
+rm "$TRUSTSTOREPATH"
+
+# Import the certificates into the trust store
+for CERTFILE in $TEMPDIR/cert*.pem; do
+    # Get the certificate name from some properties
+    CERTNAME_CN=$(openssl x509 -noout -subject -nameopt lname,sep_multiline,utf8 -in "$CERTFILE" | grep commonName | sed 's/.*commonName=//')
+    CERTNAME_OUN=$(openssl x509 -noout -subject -nameopt lname,sep_multiline,utf8 -in "$CERTFILE" | grep organizationalUnitName | sed 's/.*organizationalUnitName=//')
+
+    if [[ "$CERTNAME_CN" == "" ]] && [[ "$CERTNAME_OUN" == "" ]]; then # If there is no CN or OUN, use the filename
+        CERTNAME=$(basename "$CERTFILE" .pem)
+    elif [[ "$CERTNAME_CN" == "" ]] && [[ "$CERTNAME_OUN" != "" ]]; then
+        CERTNAME=$CERTNAME_OUN
+    elif [[ "$CERTNAME_OUN" == "Certum Certification Authority" ]]; then # Certum has a unique CN, but the OUN isn't
+        CERTNAME=$CERTNAME_CN
+    elif [[ "$CERTNAME_CN" == "Certigna"* ]]; then # Certigna certs have a string of numbers in the OUN
+        CERTNAME=$CERTNAME_CN
+    elif [[ "$CERTNAME_CN" == "GlobalSign" ]]; then # GlobalSign has a unique OUN, but the CN isn't
+        CERTNAME=$CERTNAME_OUN
+    elif [[ "$CERTNAME_CN" == "Entrust"* ]]; then # Entrust OUNs are links to legal terms
+        CERTNAME=$CERTNAME_CN
+    elif [[ "$CERTNAME_CN" =~ ^See.www.* ]]; then # Some certificates have a CN that is a link to legal terms
+        CERTNAME=$CERTNAME_OUN
+    elif [[ ${#CERTNAME_CN} -gt ${#CERTNAME_OUN} ]]; then # Pick the more descriptive
+        CERTNAME=$CERTNAME_CN
+    else
+        CERTNAME=$CERTNAME_OUN
+    fi
+
+    echo Importing "$CERTFILE" as '"'"$CERTNAME"'"'
+    keytool -import -storepass changeit -keystore "$TRUSTSTOREPATH" -alias "$CERTNAME" -file "$CERTFILE" -noprompt >/tmp/keytool.out 2>&1
+    EXITCODE=$?
+    if [ $EXITCODE -ne 0 ]; then
+        # Find out why the import failed by reading the keytool output
+        KEYTOOLERROR=$(cat /tmp/keytool.out)
+
+        # If the import failed because the certificate was invalid, abort
+        if [[ "$KEYTOOLERROR" == *"Input not an X.509 certificate"* ]]; then
+            echo "==> Failed to import $CERTFILE as $CERTNAME - certificate isn't valid"
+            continue
+        fi
+
+        # If the import failed because the alias already exists, try again with a deduplicated alias
+        if [[ "$KEYTOOLERROR" == *"Certificate not imported, alias <$CERTNAME> already exists"* ]]; then
+
+            NEWEXITCODE=1
+            ATTEMPTCOUNT=0
+
+            while [ $NEWEXITCODE -ne 0 ] && [ $ATTEMPTCOUNT -lt 10 ]; do
+                ATTEMPTCOUNT=$((ATTEMPTCOUNT + 1))
+                DEDUPLICATED_ALIAS="$CERTNAME $ATTEMPTCOUNT"
+                echo "==> Failed to import $CERTFILE as $CERTNAME - alias already exists, trying $DEDUPLICATED_ALIAS"
+                keytool -import -storepass changeit -keystore "$TRUSTSTOREPATH" -alias "$DEDUPLICATED_ALIAS" -file "$CERTFILE" -noprompt >/tmp/keytool.out 2>&1
+                NEWEXITCODE=$?
+                if [ $NEWEXITCODE -ne 0 ]; then
+                    # Check if more attempts are needed
+                    NEWKEYTOOLERROR=$(cat /tmp/keytool.out)
+                    if [[ "$KEYTOOLERROR" == *"Certificate not imported, alias <$CERTNAME> already exists"* ]]; then
+                        continue
+                    else
+                        echo "==> Failed to import $CERTFILE as $DEDUPLICATED_ALIAS - $NEWKEYTOOLERROR"
+                        continue 2
+                    fi
+                else
+                    echo "==> Successfully imported $CERTFILE as $DEDUPLICATED_ALIAS"
+                fi
+            done
+        fi
+    fi
+done

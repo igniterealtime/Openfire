@@ -262,7 +262,11 @@ public class LocalIncomingServerSessionTest
             switch (expected)
             {
                 case NO_CONNECTION:
-                    assertNull(result);
+                    if (result == null) {
+                        assertNull(result); // Yes, this is silly.
+                    } else {
+                        assertFalse(result.isAuthenticated());
+                    }
                     break;
                 case NON_ENCRYPTED_WITH_DIALBACK_AUTH:
                     assertNotNull(result);

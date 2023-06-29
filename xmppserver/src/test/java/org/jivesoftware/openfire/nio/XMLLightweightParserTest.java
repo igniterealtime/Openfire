@@ -16,8 +16,13 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.core.buffer.IoBuffer;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +34,27 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * @author Guus der Kinderen, guus.der.kinderen@goodbytes.nl
  */
 public class XMLLightweightParserTest {
+
+    private CharsetDecoder encoder;
+    private XMLLightweightParser parser;
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        parser = new XMLLightweightParser();
+
+        encoder = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE);
+    }
+
+    private char[] ioBufferToChars(IoBuffer buffer) {
+        CharBuffer charBuffer = CharBuffer.allocate(buffer.capacity());
+        encoder.decode(buffer.buf(), charBuffer, false);
+        char[] buf = new char[charBuffer.position()];
+        charBuffer.flip();
+        charBuffer.get(buf);
+        return buf;
+    }
 
     /**
      * Asserts that a start-tag name can be parsed when it is followed by a space character.
@@ -45,10 +71,9 @@ public class XMLLightweightParserTest {
         final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
         buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
         buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(ioBufferToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -74,7 +99,7 @@ public class XMLLightweightParserTest {
         final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(ioBufferToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -100,7 +125,7 @@ public class XMLLightweightParserTest {
         final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(ioBufferToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -126,7 +151,7 @@ public class XMLLightweightParserTest {
         final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(ioBufferToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -152,7 +177,7 @@ public class XMLLightweightParserTest {
         final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(ioBufferToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -178,7 +203,7 @@ public class XMLLightweightParserTest {
         final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(ioBufferToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.

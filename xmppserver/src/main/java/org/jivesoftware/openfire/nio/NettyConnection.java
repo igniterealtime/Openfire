@@ -21,6 +21,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.compression.JZlibDecoder;
+import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -57,6 +59,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
 import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.*;
 
 /**
@@ -418,14 +421,15 @@ public class NettyConnection implements Connection {
 
     @Override
     public void addCompression() {
-        System.out.println(this.getClass()+" "+ "addCompression"+" not implemented");
-        // TODO with netty
+        // Inbound traffic only
+        channelHandlerContext.channel().pipeline().addFirst(new JZlibDecoder());
     }
 
     @Override
     public void startCompression() {
-        System.out.println(this.getClass()+" "+ "startCompression"+" not implemented");
-        // TODO with netty
+        // Outbound traffic only
+        channelHandlerContext.channel().pipeline().addFirst(new JZlibEncoder(Z_BEST_COMPRESSION));
+        // Z_BEST_COMPRESSION is the same level as COMPRESSION_MAX in MINA
     }
 
     @Override
@@ -452,8 +456,7 @@ public class NettyConnection implements Connection {
 
     @Override
     public boolean isCompressed() {
-        System.out.println(this.getClass()+" "+ "isCompressed"+" not implemented");
-        return false; // TODO with netty
+        return channelHandlerContext.channel().pipeline().get(JZlibDecoder.class) != null;
     }
 
     @Override

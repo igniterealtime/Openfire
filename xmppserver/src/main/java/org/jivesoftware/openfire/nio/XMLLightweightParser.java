@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.filter.codec.ProtocolDecoderException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
@@ -164,14 +163,12 @@ class XMLLightweightParser {
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (buffer.length() > maxBufferSize) {
-            // purge the local buffer / free memory
-            buffer = null;
             // set flag to inform higher level network decoders to stop reading more data
             maxBufferSizeExceeded = true;
+            // purge the local buffer / free memory
+            buffer = null;
             // processing the exception takes quite long
-            final ProtocolDecoderException ex = new ProtocolDecoderException("Stopped parsing never ending stanza"); // TODO throw an openfire decoder exception (not mina specific)
-            ex.setHexdump("(redacted hex dump of never ending stanza)");
-            throw ex;
+            throw new InboundBufferSizeException("Stopped parsing never ending stanza");
         }
 
         int readChar = buf.length;

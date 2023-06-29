@@ -43,7 +43,7 @@ public class XMPPDecoder extends CumulativeProtocolDecoder {
             // exception was thrown before, avoid duplicate exception(s)
             // "read" and discard remaining data
             in.position(in.limit());
-            return true;
+            return true; // we are empty
         }
 
         CharBuffer charBuffer = CharBuffer.allocate(in.capacity());

@@ -25,9 +25,10 @@ import java.net.InetSocketAddress;
 
 /**
  * This class is responsible for accepting new (socket) connections, using Java NIO implementation provided by the
- * Apache MINA framework.
+ * Netty framework.
  *
- * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+ * @author Matthew Vivian
+ * @author Alex Gidman
  */
 class NettyConnectionAcceptor extends ConnectionAcceptor {
     // NioEventLoopGroup is a multithreaded event loop that handles I/O operation.
@@ -202,13 +203,14 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     }
 
     /**
-     * Determines if this instance is currently in a state where it is actively serving connections.
+     * Determines if this instance is currently in a state where it is actively serving connections or not.
+     * Channel must be open with no connections if it is idle
      *
      * @return false when this instance is started and is currently being used to serve connections (otherwise true)
      */
     @Override
     public synchronized boolean isIdle() {
-        return mainChannel.isActive();
+        return mainChannel.isOpen() && !mainChannel.isActive();
     }
 
     @Override

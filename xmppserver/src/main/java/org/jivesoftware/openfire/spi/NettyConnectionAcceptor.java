@@ -160,11 +160,39 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
                 // We are writing a TCP/IP server, so we are allowed to set the socket options such as
                 // tcpNoDelay and keepAlive. Please refer to the apidocs of ChannelOption and the specific
                 // ChannelConfig implementations to get an overview about the supported ChannelOptions.
+
+                // Set the listen backlog (queue) length.
                 .option(ChannelOption.SO_BACKLOG, 128)
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
                 // childOption() is for the Channels accepted by the parent ServerChannel,
                 // which is NioSocketChannel in this case.
                 .childOption(ChannelOption.SO_KEEPALIVE, true);
+
+
+            final int sendBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.send", -1 );
+            if ( sendBuffer > 0 ) {
+                // SO_SNDBUF = Socket Option - Send Buffer Size in Bytes
+                serverBootstrap.childOption(ChannelOption.SO_SNDBUF, sendBuffer);
+            }
+            final int receiveBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.receive", -1 );
+            if ( receiveBuffer > 0 ) {
+                // SO_RCVBUF = Socket Option - Receive Buffer Size in Bytes
+                serverBootstrap.childOption(ChannelOption.SO_RCVBUF, receiveBuffer);
+            }
+            final int linger = JiveGlobals.getIntProperty( "xmpp.socket.linger", -1 );
+            if ( linger > 0 ) {
+                serverBootstrap.childOption(ChannelOption.SO_LINGER, receiveBuffer);
+            }
+
+            serverBootstrap.childOption(ChannelOption.TCP_NODELAY, JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", true));
+
+            // Set that it will be possible to bind a socket if there is a connection in the timeout state.
+            serverBootstrap.childOption(ChannelOption.SO_REUSEADDR, true);
+
+            // We do not need to throttle sessions for Netty
+            if ( configuration.getMaxBufferSize() > 0 ) {
+                Log.warn( "Throttling by using max buffer size not implemented for Netty; a maximum of 1 message per read is implemented instead.");
+            }
 
             // Bind to the port and start the server to accept incoming connections.
             // You can now call the bind() method as many times as you want (with different bind addresses.)
@@ -216,7 +244,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     @Override
     public synchronized void reconfigure(ConnectionConfiguration configuration) {
         this.configuration = configuration;
-
         // TODO reconfigure the netty connection
     }
 

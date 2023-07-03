@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * This class is responsible for accepting new (socket) connections, using Java NIO implementation provided by the
@@ -42,11 +44,12 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     // and may be even configurable via a constructor.
 
     /**
-     * Controls the write timeout time in seconds to handle stalled sessionds and prevent DoS
+     * Controls the write timeout time in seconds to handle stalled sessions and prevent DoS
      */
-    public static final SystemProperty<Integer> WRITE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Integer.class)
+    public static final SystemProperty<Duration> WRITE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.socket.write-timeout-seconds")
-        .setDefaultValue(30)
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setChronoUnit(ChronoUnit.SECONDS)
         .setDynamic(true)
         .build();
 
@@ -164,7 +167,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
                     public void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new NettyXMPPDecoder());
                         ch.pipeline().addLast(new StringEncoder());
-                        ch.pipeline().addLast("stalledSessionHandler", new WriteTimeoutHandler(WRITE_TIMEOUT_SECONDS.getValue()));
+                        ch.pipeline().addLast("stalledSessionHandler", new WriteTimeoutHandler((int)WRITE_TIMEOUT_SECONDS.getValue().getSeconds()));
                         ch.pipeline().addLast(connectionHandler);
                     }
                 })

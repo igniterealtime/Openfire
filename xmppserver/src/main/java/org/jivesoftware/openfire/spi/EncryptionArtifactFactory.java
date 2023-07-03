@@ -343,6 +343,30 @@ public class EncryptionArtifactFactory
         }
     }
 
+    public SslContext createSslContext() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, SSLException {
+        getKeyManagers();
+        SslContextBuilder builder = SslContextBuilder.forServer(keyManagerFactory);
+
+        // Set policy for checking client certificates.
+        switch ( configuration.getClientAuth() )
+        {
+            case disabled:
+                builder.clientAuth(ClientAuth.NONE);
+                break;
+            case wanted:
+                builder.clientAuth(ClientAuth.OPTIONAL);
+                break;
+            case needed:
+                builder.clientAuth(ClientAuth.REQUIRE);
+                break;
+        }
+
+        builder.protocols(configuration.getEncryptionProtocols());
+        builder.startTls(true);
+
+        return builder.build();
+    }
+
     /**
      * Create and configure a new SslContext instance for a Netty server.<p>
      *

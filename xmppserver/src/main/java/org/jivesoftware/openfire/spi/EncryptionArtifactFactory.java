@@ -1,5 +1,8 @@
 package org.jivesoftware.openfire.spi;
 
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.apache.mina.filter.ssl.SslFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.keystore.OpenfireX509TrustManager;
@@ -322,6 +325,30 @@ public class EncryptionArtifactFactory
             sslContextFactory = null;
             throw ex;
         }
+    }
+
+    public SslContext createSslContext() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, SSLException {
+        getKeyManagers();
+        SslContextBuilder builder = SslContextBuilder.forServer(keyManagerFactory);
+
+        // Set policy for checking client certificates.
+        switch ( configuration.getClientAuth() )
+        {
+            case disabled:
+                builder.clientAuth(ClientAuth.NONE);
+                break;
+            case wanted:
+                builder.clientAuth(ClientAuth.OPTIONAL);
+                break;
+            case needed:
+                builder.clientAuth(ClientAuth.REQUIRE);
+                break;
+        }
+
+        builder.protocols(configuration.getEncryptionProtocols());
+        builder.startTls(true);
+
+        return builder.build();
     }
 
     /**

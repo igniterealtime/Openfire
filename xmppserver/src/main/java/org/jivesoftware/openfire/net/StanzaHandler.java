@@ -619,7 +619,9 @@ public abstract class StanzaHandler {
         sb.append("'?>");
         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace());
-        sb.append("\" from=\"");
+        sb.append("\"");
+        sb.append(getAdditionalNamespaces());
+        sb.append(" from=\"");
         sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         sb.append("\" id=\"");
         sb.append(session.getStreamID());
@@ -629,6 +631,10 @@ public abstract class StanzaHandler {
         sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
+    }
+
+    protected String getAdditionalNamespaces() {
+        return "";
     }
 
     /**

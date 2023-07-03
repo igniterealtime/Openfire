@@ -2,29 +2,19 @@ package org.jivesoftware.openfire.spi;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.timeout.WriteTimeoutHandler;
-import org.apache.mina.transport.socket.SocketSessionConfig;
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyServerConnectionHandler;
-import org.jivesoftware.openfire.nio.NettyXMPPDecoder;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 /**
  * This class is responsible for accepting new (socket) connections, using Java NIO implementation provided by the
@@ -35,25 +25,25 @@ import java.time.temporal.ChronoUnit;
  */
 class NettyConnectionAcceptor extends ConnectionAcceptor {
     // NioEventLoopGroup is a multithreaded event loop that handles I/O operation.
-    // Netty provides various EventLoopGroup implementations for different kind of transports.
-    // We are implementing a server-side application in this example, and therefore two
-    // NioEventLoopGroup will be used. The first one, often called 'boss', accepts an incoming connection.
+    // The first one, often called 'boss', accepts an incoming connection.
     // The second one, often called 'worker', handles the traffic of the accepted connection once the boss
     // accepts the connection and registers the accepted connection to the worker. How many Threads are
     // used and how they are mapped to the created Channels depends on the EventLoopGroup implementation
     // and may be even configurable via a constructor.
 
     /**
-     * Controls the write timeout time in seconds to handle stalled sessions and prevent DoS
+     * A multithreaded event loop that handles I/O operation
+     * <p>
+     * The 'boss' accepts an incoming connection.
      */
-    public static final SystemProperty<Duration> WRITE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
-        .setKey("xmpp.socket.write-timeout-seconds")
-        .setDefaultValue(Duration.ofSeconds(30))
-        .setChronoUnit(ChronoUnit.SECONDS)
-        .setDynamic(true)
-        .build();
-
     private static final EventLoopGroup BOSS_GROUP = new NioEventLoopGroup();
+
+    /**
+     * A multithreaded event loop that handles I/O operation
+     * <p>
+     * The 'worker', handles the traffic of the accepted connection once the boss accepts the connection
+     * and registers the accepted connection to the worker.
+     */
     private static final EventLoopGroup WORKER_GROUP = new NioEventLoopGroup();
     private final Logger Log;
     private final NettyConnectionHandler connectionHandler;
@@ -99,45 +89,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
 //        }
     }
 
-    private static NioSocketAcceptor buildSocketAcceptor() {
-
-        // TODO consider configuring netty with the settings below (i.e. find the netty way of doing this)
-
-        // Create SocketAcceptor with correct number of processors
-        final int processorCount = JiveGlobals.getIntProperty("xmpp.processor.count", Runtime.getRuntime().availableProcessors());
-
-        final NioSocketAcceptor socketAcceptor = new NioSocketAcceptor(processorCount);
-
-        // Set that it will be possible to bind a socket if there is a connection in the timeout state.
-        socketAcceptor.setReuseAddress(true);
-
-        // Set the listen backlog (queue) length. Default is 50.
-        socketAcceptor.setBacklog(JiveGlobals.getIntProperty("xmpp.socket.backlog", 50));
-
-        // Set default (low level) settings for new socket connections
-        final SocketSessionConfig socketSessionConfig = socketAcceptor.getSessionConfig();
-
-        //socketSessionConfig.setKeepAlive();
-        final int receiveBuffer = JiveGlobals.getIntProperty("xmpp.socket.buffer.receive", -1);
-        if (receiveBuffer > 0) {
-            socketSessionConfig.setReceiveBufferSize(receiveBuffer);
-        }
-
-        final int sendBuffer = JiveGlobals.getIntProperty("xmpp.socket.buffer.send", -1);
-        if (sendBuffer > 0) {
-            socketSessionConfig.setSendBufferSize(sendBuffer);
-        }
-
-        final int linger = JiveGlobals.getIntProperty("xmpp.socket.linger", -1);
-        if (linger > 0) {
-            socketSessionConfig.setSoLinger(linger);
-        }
-
-        socketSessionConfig.setTcpNoDelay(JiveGlobals.getBooleanProperty("xmpp.socket.tcp-nodelay", socketSessionConfig.isTcpNoDelay()));
-
-        return socketAcceptor;
-    }
-
     /**
      * Starts this acceptor by binding the socket acceptor. When the acceptor is already started, a warning will be
      * logged and the method invocation is otherwise ignored.
@@ -147,42 +98,23 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
         System.out.println("Running Netty on port: " + getPort());
 
         try {
-            // ServerBootstrap is a helper class that sets up a server. You can set up the server using
-            // a Channel directly. However, please note that this is a tedious process, and you do not
-            // need to do that in most cases.
+            // ServerBootstrap is a helper class that sets up a server
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(BOSS_GROUP, WORKER_GROUP)
-                // Here, we specify to use the NioServerSocketChannel class which is used to
-                // instantiate a new Channel to accept incoming connections.
+                // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
-                // The ChannelInitializer is a special handler that is purposed to help a user configure
-                // a new Channel. It is most likely that you want to configure the ChannelPipeline of the
-                // new Channel by adding some handlers such as DiscardServerHandler to implement your
-                // network application. As the application gets complicated, it is likely that you will add
-                // more handlers to the pipeline and extract this anonymous class into a top-level
-                // class eventually.
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    public void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(new NettyXMPPDecoder());
-                        ch.pipeline().addLast(new StringEncoder());
-                        ch.pipeline().addLast("stalledSessionHandler", new WriteTimeoutHandler((int)WRITE_TIMEOUT_SECONDS.getValue().getSeconds()));
-                        ch.pipeline().addLast(connectionHandler);
-                    }
-                })
-                // You can also set the parameters which are specific to the Channel implementation.
-                // We are writing a TCP/IP server, so we are allowed to set the socket options such as
-                // tcpNoDelay and keepAlive. Please refer to the apidocs of ChannelOption and the specific
-                // ChannelConfig implementations to get an overview about the supported ChannelOptions.
-
+                .childHandler(new NettyServerInitializer(connectionHandler))
                 // Set the listen backlog (queue) length.
-                .option(ChannelOption.SO_BACKLOG, 128)
+                .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
                 // childOption() is for the Channels accepted by the parent ServerChannel,
                 // which is NioSocketChannel in this case.
-                .childOption(ChannelOption.SO_KEEPALIVE, true);
-
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                // Setting TCP_NODELAY to false enables the Nagle algorithm, which delays sending small successive packets
+                .childOption(ChannelOption.TCP_NODELAY, JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", true))
+                // Set that it will be possible to bind a socket if there is a connection in the timeout state.
+                .childOption(ChannelOption.SO_REUSEADDR, true);
 
             final int sendBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.send", -1 );
             if ( sendBuffer > 0 ) {
@@ -199,27 +131,16 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
                 serverBootstrap.childOption(ChannelOption.SO_LINGER, linger);
             }
 
-            serverBootstrap.childOption(ChannelOption.TCP_NODELAY, JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", true));
-
-            // Set that it will be possible to bind a socket if there is a connection in the timeout state.
-            serverBootstrap.childOption(ChannelOption.SO_REUSEADDR, true);
-
-            // We do not need to throttle sessions for Netty
-            if ( configuration.getMaxBufferSize() > 0 ) {
-                Log.warn( "Throttling by using max buffer size not implemented for Netty; a maximum of 1 message per read is implemented instead.");
-            }
-
-
             // Bind to the port and start the server to accept incoming connections.
-            // You can now call the bind() method as many times as you want (with different bind addresses.)
             this.mainChannel = serverBootstrap.bind(
-                new InetSocketAddress(configuration.getBindAddress(),
-                    configuration.getPort()))
+                    new InetSocketAddress(
+                        configuration.getBindAddress(),
+                        configuration.getPort())
+                )
                 .sync()
                 .channel();
 
         } catch (InterruptedException e) {
-            System.err.println("Error starting " + configuration.getPort() + ": " + e.getMessage());
             Log.error("Error starting: " + configuration.getPort(), e);
             closeMainChannel();
         }
@@ -230,8 +151,17 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     @Override
     public synchronized void stop() {
-        System.out.println("Stop called for port: " + getPort());
         closeMainChannel();
+    }
+
+    /**
+     * Close the main channel (this is not synchronous and does not verify the channel has closed).
+     */
+    private void closeMainChannel() {
+        if (this.mainChannel != null) {
+            Log.info("Closing channel " + mainChannel);
+            mainChannel.close();
+        }
     }
 
     /**
@@ -261,16 +191,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     public synchronized void reconfigure(ConnectionConfiguration configuration) {
         this.configuration = configuration;
         // TODO reconfigure the netty connection
-    }
-
-    /**
-     * Close the main channel (this is not synchronous and does not verify the channel has closed).
-     */
-    public void closeMainChannel() {
-        if (this.mainChannel != null) {
-            Log.info("Closing channel " + mainChannel);
-            mainChannel.close();
-        }
     }
 
     public synchronized int getPort() {

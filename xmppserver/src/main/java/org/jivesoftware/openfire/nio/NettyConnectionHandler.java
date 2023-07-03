@@ -129,8 +129,6 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, String message) {
-        // org.jivesoftware.openfire.nio.ConnectionHandler.messageReceived
-
         // Get the parser to use to process stanza. For optimization there is going
         // to be a parser for each running thread. Each Filter will be executed
         // by the Executor placed as the first Filter. So we can have a parser associated

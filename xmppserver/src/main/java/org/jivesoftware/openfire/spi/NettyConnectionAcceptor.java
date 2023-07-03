@@ -8,8 +8,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.apache.mina.transport.socket.SocketSessionConfig;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
@@ -18,6 +18,7 @@ import org.jivesoftware.openfire.nio.NettyConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyServerConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyXMPPDecoder;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,16 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     // accepts the connection and registers the accepted connection to the worker. How many Threads are
     // used and how they are mapped to the created Channels depends on the EventLoopGroup implementation
     // and may be even configurable via a constructor.
+
+    /**
+     * Controls the write timeout time in seconds to handle stalled sessionds and prevent DoS
+     */
+    public static final SystemProperty<Integer> WRITE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.write-timeout-seconds")
+        .setDefaultValue(30)
+        .setDynamic(true)
+        .build();
+
     private static final EventLoopGroup BOSS_GROUP = new NioEventLoopGroup();
     private static final EventLoopGroup WORKER_GROUP = new NioEventLoopGroup();
     private final Logger Log;
@@ -153,6 +164,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
                     public void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast(new NettyXMPPDecoder());
                         ch.pipeline().addLast(new StringEncoder());
+                        ch.pipeline().addLast("stalledSessionHandler", new WriteTimeoutHandler(WRITE_TIMEOUT_SECONDS.getValue()));
                         ch.pipeline().addLast(connectionHandler);
                     }
                 })
@@ -181,7 +193,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
             }
             final int linger = JiveGlobals.getIntProperty( "xmpp.socket.linger", -1 );
             if ( linger > 0 ) {
-                serverBootstrap.childOption(ChannelOption.SO_LINGER, receiveBuffer);
+                serverBootstrap.childOption(ChannelOption.SO_LINGER, linger);
             }
 
             serverBootstrap.childOption(ChannelOption.TCP_NODELAY, JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", true));
@@ -193,6 +205,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
             if ( configuration.getMaxBufferSize() > 0 ) {
                 Log.warn( "Throttling by using max buffer size not implemented for Netty; a maximum of 1 message per read is implemented instead.");
             }
+
 
             // Bind to the port and start the server to accept incoming connections.
             // You can now call the bind() method as many times as you want (with different bind addresses.)

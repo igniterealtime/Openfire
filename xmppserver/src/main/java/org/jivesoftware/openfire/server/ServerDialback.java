@@ -196,6 +196,11 @@ public class ServerDialback {
 
         log.debug( "Creating new outgoing session..." );
 
+        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+            log.info("Unable to create new outgoing session: Dialback has been disabled by configuration.");
+            return null;
+        }
+
         String hostname = null;
         int realPort = port;
         try {
@@ -309,6 +314,11 @@ public class ServerDialback {
 
         log.debug( "Authenticating domain ..." );
 
+        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+            log.info("Failed to authenticate domain: Dialback has been disabled by configuration.");
+            return false;
+        }
+
         String key = AuthFactory.createDigest( id, getSecretkey() );
 
         synchronized (socketReader) {
@@ -370,6 +380,12 @@ public class ServerDialback {
      */
     public LocalIncomingServerSession createIncomingSession(XMPPPacketReader reader) throws IOException,
             XmlPullParserException {
+
+        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+            Log.info("Server Dialback: disallowing functionality as it has been disabled by configuration.");
+            return null;
+        }
+
         XmlPullParser xpp = reader.getXPPParser();
         StringBuilder sb;
         if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
@@ -483,6 +499,15 @@ public class ServerDialback {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Acting as Receiving Server: Validate domain: " + recipient + "(id " + streamID + ") for OS: " + remoteDomain + "]" );
 
         log.debug( "Validating domain...");
+
+        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+            log.info("Unable to validate domain: Dialback has been disabled by configuration.");
+            connection.deliverRawText(new StreamError(StreamError.Condition.policy_violation).toXML());
+            // Close the underlying connection
+            connection.close();
+            return false;
+        }
+
         if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isEncrypted()) {
             connection.deliverRawText(new StreamError(StreamError.Condition.policy_violation).toXML());
@@ -896,6 +921,20 @@ public class ServerDialback {
         // TODO If the value of the 'from' address does not match the hostname
         // represented by the Receiving Server when opening the TCP connection, then
         // generate an <invalid-from/> stream error condition
+
+        if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+            Log.info("Unable to verify the Dialback key as Dialback has been disabled by configuration.");
+            StringBuilder sb = new StringBuilder();
+            sb.append("<db:verify");
+            sb.append(" from=\"").append(verifyTO).append("\"");
+            sb.append(" to=\"").append(verifyFROM).append("\"");
+            sb.append(" type=\"error\"");
+            sb.append(" id=\"").append(streamID.getID()).append("\">");
+            sb.append("<error type=\"cancel\"><policy-violation xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error>");
+            sb.append("</db:verify>");
+            connection.deliverRawText(sb.toString());
+            return false;
+        }
 
         // Verify the received key
         // Created the expected key based on the received ID value and the shared secret

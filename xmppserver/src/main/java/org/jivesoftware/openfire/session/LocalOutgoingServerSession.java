@@ -294,7 +294,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.debug( "Send the stream header and wait for response..." );
             StringBuilder openingStream = new StringBuilder();
             openingStream.append("<stream:stream");
-            openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+                openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            }
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
             openingStream.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673

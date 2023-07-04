@@ -7,7 +7,7 @@
         <table>
             <tbody>
                 <tr>
-                    <td class="jive-icon"><img src="images/${type}-16x16.gif" alt=""/></td>
+                    <td class="jive-icon"><img src="/images/${type}-16x16.gif" alt=""/></td>
                     <td class="jive-icon-label">
                         <jsp:doBody />
                     </td>

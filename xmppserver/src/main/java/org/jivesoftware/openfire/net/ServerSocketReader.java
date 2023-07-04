@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,7 +196,10 @@ public class ServerSocketReader extends SocketReader {
 
     @Override
     public String getExtraNamespaces() {
-        return "xmlns:db=\"jabber:server:dialback\"";
+        if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+            return "xmlns:db=\"jabber:server:dialback\"";
+        }
+        return super.getExtraNamespaces();
     }
 
     @Override

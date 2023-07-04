@@ -195,7 +195,7 @@
             <%= StringUtils.escapeHTMLTags(service.getDescription()) %> &nbsp;
         </td>
         <td style="width: 5%">
-            <a href="muc-room-summary.jsp?mucname==<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>
+            <a href="muc-room-summary.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>
         </td>
         <td style="width: 5%">
             <%= service.getNumberConnectedUsers() %>

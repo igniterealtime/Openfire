@@ -58,8 +58,6 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         final SocketProcessor socketProcessor = new SocketProcessor(port);
         processingService.submit(socketProcessor);
         socketProcessor.sendStreamHeader();
-
-        Thread.sleep(1000); // FIXME replace this with some kind of flag that indicates when the test result is ready to be verified.
     }
 
     public void blockUntilDone(final long timeout, final TimeUnit unit) {

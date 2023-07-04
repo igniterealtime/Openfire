@@ -309,7 +309,7 @@ public class LocalIncomingServerSessionTest
         final Set<ServerSettings> remoteServerSettings = new LinkedHashSet<>();
 
         for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
-            for (final boolean dialbackSupported : Set.of(true, false)) {
+            for (final boolean dialbackSupported : List.of(true, false)) {
                 for (final Connection.TLSPolicy tlsPolicy : Connection.TLSPolicy.values()) {
                     if (tlsPolicy == Connection.TLSPolicy.legacyMode) {
                         continue; // TODO add support for DirectTLS in this unit test!

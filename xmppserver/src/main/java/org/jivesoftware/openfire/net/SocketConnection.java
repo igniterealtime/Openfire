@@ -684,6 +684,7 @@ public class SocketConnection implements Connection {
                 writeStarted();
                 writer.write(text);
                 writer.flush();
+                System.out.print("Sending: " + text);
             }
             catch (Exception e) {
                 Log.debug("Error delivering raw text" + "\n" + this.toString(), e);

@@ -139,7 +139,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         // updateReadBytesCounter(session); TODO maybe replace with https://netty.io/4.0/api/io/netty/handler/traffic/TrafficCounter.html#currentReadBytes--
 
 
-        //System.out.println("RCVD: " + message);
+        System.out.println("Received: " + message);
         // Let the stanza handler process the received stanza
         try {
             ctx.channel().attr(HANDLER).get().process(message, parser);

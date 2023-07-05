@@ -76,7 +76,7 @@ public abstract class StanzaHandler {
 
     // Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
     // client sent a new initial stream header the value will return to false.
-    private boolean startedTLS = false;
+    protected boolean startedTLS = false;
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
     protected boolean startedSASL = false;
@@ -114,7 +114,7 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-        if (!sessionCreated || isStartOfStream(stanza)) {
+        if (isStartOfStream(stanza) || !sessionCreated) {
             initiateSession(stanza, reader);
         } else {
             processStanza(stanza, reader);
@@ -175,7 +175,7 @@ public abstract class StanzaHandler {
             // only known case occurring 'in the wild' for this is Dialback, but it's valid XML / XMPP regardless). Re-
             // establishing those prefixes is achieved by wrapping the data-to-be-parsed in a dummy root element on which
             // the prefixes are defined. After the data has been parsed, the dummy root element is discarded. See OF-2556.
-            Log.trace("Connection defined namespace prefixes on its original 'stream' element.");
+            Log.debug("Connection defined namespace prefixes on its original 'stream' element.");
             final StringBuilder sb = new StringBuilder();
             sb.append("<stream ");
             namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));

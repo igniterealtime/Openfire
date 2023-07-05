@@ -16,24 +16,16 @@
 
 package org.jivesoftware.openfire.server;
 
-import java.lang.reflect.Field;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.openfire.interceptor.PacketRejectedException;
-import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
@@ -41,17 +33,16 @@ import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.cache.DefaultLocalCacheStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
@@ -287,7 +278,7 @@ public class OutgoingSessionPromise {
             Log.trace("Finished processing {}", domainPair);
         }
 
-        private RoutableChannelHandler establishConnection() throws Exception { // TODO: AG - Maybe here?
+        private RoutableChannelHandler establishConnection() throws Exception {
             Log.debug("Start establishing a connection for {}", domainPair);
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
@@ -295,7 +286,7 @@ public class OutgoingSessionPromise {
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
-                created = LocalOutgoingServerSession.authenticateDomain(domainPair); //TODO: AG MAGIC HERE
+                created = LocalOutgoingServerSession.authenticateDomain(domainPair); // TODO: AG MAGIC HERE
             } finally {
                 lock.unlock();
             }

@@ -298,6 +298,16 @@ public class ServerDialback {
     }
 
     /**
+     * Create a dialback key and send to receiving server
+     *
+     * @param id the stream id to be used for creating the dialback key.
+     */
+    public void createAndSendDialbackKey(String id) {
+        String key = AuthFactory.createDigest( id, getSecretkey() );
+        sendDialbackKey(key);
+    }
+
+    /**
      * Authenticates the Originating Server domain with the Receiving Server. Once the domain has
      * been authenticated the Receiving Server will start accepting packets from the Originating
      * Server.<p>
@@ -324,13 +334,7 @@ public class ServerDialback {
 
         synchronized (socketReader) {
             log.debug( "Sending dialback key and wait for the validation response..." );
-            StringBuilder sb = new StringBuilder();
-            sb.append("<db:result");
-            sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
-            sb.append(" to=\"").append(domainPair.getRemote()).append("\">");
-            sb.append(key);
-            sb.append("</db:result>");
-            connection.deliverRawText(sb.toString());
+            sendDialbackKey(key);
 
             // Process the answer from the Receiving Server
             try {
@@ -360,6 +364,21 @@ public class ServerDialback {
             }
             return false;
         }
+    }
+
+    /**
+     * Sends the supplied dialback key to receiving server
+     *
+     * @param key dialback key to send
+     */
+    private void sendDialbackKey(String key) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<db:result");
+        sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
+        sb.append(" to=\"").append(domainPair.getRemote()).append("\">");
+        sb.append(key);
+        sb.append("</db:result>");
+        connection.deliverRawText(sb.toString());
     }
 
     /**

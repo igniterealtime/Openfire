@@ -72,7 +72,7 @@ public class NettyConnection implements Connection {
      */
     public static final String CHARSET = "UTF-8";
 
-    private LocalSession session;
+    public LocalSession session;
     private ChannelHandlerContext channelHandlerContext;
 
     final private Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
@@ -325,7 +325,7 @@ public class NettyConnection implements Connection {
 
     @Override
     public boolean isEncrypted() {
-        return false; // TODO with netty
+        return channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME) != null;
     }
 
     @Override
@@ -365,7 +365,7 @@ public class NettyConnection implements Connection {
 
     @Override
     public void deliverRawText(String text) {
-        //System.out.println("Sending: " + text);
+        System.out.println("Sending: " + text);
         if (!isClosed()) {
             boolean errorDelivering = false;
             ChannelFuture f = channelHandlerContext.writeAndFlush(text);
@@ -391,22 +391,20 @@ public class NettyConnection implements Connection {
     public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
 
         final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
-        SslContext sslContext = factory.createSslContext();
 
-        final SslHandler sslHandler = sslContext.newHandler(channelHandlerContext.alloc());
-
+        final SslContext sslContext;
         if ( clientMode ) {
-//            filter = factory.createClientModeSslFilter();
+            sslContext= factory.createClientModeSslContext();
         } else {
-//            filter = factory.createServerModeSslFilter();
+            sslContext = factory.createServerModeSslContext();
         }
 
+        final SslHandler sslHandler = sslContext.newHandler(channelHandlerContext.alloc());
         channelHandlerContext.pipeline().addFirst(SSL_HANDLER_NAME, sslHandler);
 
         if ( !clientMode && !directTLS ) {
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
-//            ioSession.getFilterChain().remove(STARTTLS_FILTER_NAME);
         }
     }
 

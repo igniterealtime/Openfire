@@ -43,9 +43,14 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
         return new ServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection );
     }
 
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) {
+        System.out.println("Adding NettyServerConnectionHandler");
+        super.handlerAdded(ctx);
+    }
 
 
-    // TBD V
+// TBD V
 
 
 

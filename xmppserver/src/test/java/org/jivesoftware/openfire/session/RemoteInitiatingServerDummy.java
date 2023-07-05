@@ -91,7 +91,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         processingService.shutdown();
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
         while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
-            Thread.sleep(SO_TIMEOUT.dividedBy(10).toMillis());
+            Thread.sleep(Math.max(10, SO_TIMEOUT.dividedBy(50).toMillis()));
         }
         if (!processingService.isTerminated()) {
             processingService.shutdownNow();
@@ -106,7 +106,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         dialbackAcceptThread.interrupt();
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
         while (Instant.now().isBefore(end) && dialbackAcceptThread.getState() != Thread.State.TERMINATED) {
-            Thread.sleep(SO_TIMEOUT.dividedBy(10).toMillis());
+            Thread.sleep(Math.max(10, SO_TIMEOUT.dividedBy(50).toMillis()));
         }
         final Thread.State finalState = dialbackAcceptThread.getState();
         if (finalState != Thread.State.TERMINATED) {

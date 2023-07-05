@@ -172,12 +172,12 @@ public class AbstractRemoteServerDummy
             {
                 @Override
                 public String[] getClientAliases(String keyType, Principal[] issuers) {
-                    throw new IllegalStateException("Should not be used.");
+                    return new String[] { XMPP_DOMAIN };
                 }
 
                 @Override
                 public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
-                    throw new IllegalStateException("Should not be used.");
+                    return XMPP_DOMAIN;
                 }
 
                 @Override

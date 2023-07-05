@@ -2,7 +2,9 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.util.Base64;
 
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -11,12 +13,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.time.Duration;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 {
@@ -24,14 +24,16 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     private Thread dialbackAcceptThread;
 
     private final String connectTo;
-
+    boolean attemptedEncryptionNegotiation = false;
+    boolean alreadyTriedSaslExternal = false;
+    boolean peerSupportsDialback;
     private ExecutorService processingService;
 
     /**
      * A monitor that is used to flag when this dummy has finished trying to set up a connection to Openfire. This is to
      * help the unit test know when it can start verifying the test outcome.
      */
-    private final CountDownLatch countDownLatch = new CountDownLatch(1);
+    private final Phaser phaser = new Phaser(0);
 
     public RemoteInitiatingServerDummy(final String connectTo)
     {
@@ -55,22 +57,22 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             dialbackAcceptThread.start();
         }
 
+        phaser.register();
+
         final SocketProcessor socketProcessor = new SocketProcessor(port);
         processingService.submit(socketProcessor);
-        socketProcessor.sendStreamHeader();
     }
 
     public void blockUntilDone(final long timeout, final TimeUnit unit) {
         try {
-            if (!countDownLatch.await(timeout, unit)) {
-                throw new RuntimeException("Test scenario never reached 'done' state");
-            }
-        } catch (InterruptedException e) {
+            phaser.awaitAdvanceInterruptibly(0, timeout, unit);
+        } catch (InterruptedException | TimeoutException e) {
+            throw new RuntimeException("Test scenario never reached 'done' state");
         }
     }
 
     protected void done() {
-        countDownLatch.countDown();
+        phaser.arriveAndDeregister();
     }
 
     public void disconnect() throws InterruptedException, IOException
@@ -203,7 +205,6 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         private Socket socket;
         private OutputStream os;
         private InputStream is;
-        boolean didEncryptionNegotiation = false;
         boolean peerAdvertisedDialbackNamespace = false;
 
         private SocketProcessor(int port) throws IOException
@@ -216,9 +217,18 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             is = socket.getInputStream();
         }
 
+        private SocketProcessor(Socket socket) throws IOException
+        {
+            System.out.println("New session on socket");
+
+            this.socket = socket;
+            os = socket.getOutputStream();
+            is = socket.getInputStream();
+        }
+
         public synchronized void send(final String data) throws IOException
         {
-            System.out.println("# send from remote to Openfire");
+            System.out.println("# send from remote to Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
             System.out.println(data);
             System.out.println();
             os.write(data.getBytes());
@@ -228,48 +238,80 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         @Override
         public void run()
         {
+            System.out.println("Start reading from socket" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
             try {
+                sendStreamHeader();
+
                 final byte[] buffer = new byte[1024 * 16];
                 int count;
                 while ((count = is.read(buffer)) > 0) {
                     String read = new String(buffer, 0, count);
-
+                    if (read.startsWith("<?")) {
+                        System.out.println("(stripping prolog from data that's read)");
+                        final int endProlog = read.indexOf("?>") + 2;
+                        read = read.substring(endProlog);
+                    }
                     if (read.startsWith("<stream:") && !read.contains("xmlns:stream=")) {
                         // Ugly hack to get stream prefix to work.
                         read = read.replaceFirst(">", " xmlns:stream=\"http://etherx.jabber.org/streams\">");
-                        System.out.println("# recv (Hacked inbound stanza to include stream namespace declaration)");
+                        System.out.println("# recv (Hacked inbound stanza to include stream namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
                     } else if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
                         // Ugly hack to get Dialback to work.
                         read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");
-                        System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)");
+                        System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
                     } else {
-                        System.out.println("# recv from Openfire");
+                        System.out.println("# recv from Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
                     }
                     System.out.println(read);
                     System.out.println();
 
                     if (!read.equals("</stream:stream>")) {
-                        final Element inbound = parse(read);
+                        Element inbound = parse(read);
+                        if (inbound.getName().equals("stream")) {
+                            // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
+                            peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
+                            switch (inbound.elements().size()) {
+                                case 0:
+                                    // Done processing the input. Iterate, to try to read more.
+                                   continue;
+                                case 1:
+                                    // There are child elements to process!
+                                    inbound = inbound.elements().get(0);
+                                    break;
+                                default:
+                                    // More than one child element. This test implementation can't currently handle that.
+                                    throw new IllegalStateException("Unable to process more than one child element.");
+                            }
+                        }
                         switch (inbound.getName()) {
-                            case "stream":
-                                // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
-                                peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
-                                break;
                             case "features":
                                 negotiateFeatures(inbound);
                                 break;
                             case "result":
                                 processDialbackResult(inbound);
                                 break;
+                            case "proceed":
+                                processStartTLSProceed(inbound);
+                                return; // stop reading more from this inputstream.
                             case "success": // intended fall-through
                             case "failure":
                                 if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
-                                    processSaslResponse(inbound);
-                                    break;
+                                    if (processSaslResponse(inbound)) {
+                                        System.out.println("Successfully authenticated using SASL! We're done setting up a connection.");
+                                        return;
+                                    } else if (peerSupportsDialback && !disableDialback) {
+                                            System.out.println("Unable to authenticate using SASL! Dialback seems to be available. Trying that...");
+                                            startDialbackAuth();
+                                            break;
+                                    } else {
+                                        throw new InterruptedIOException("Unable to authenticate");
+                                    }
+                                } else if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
+                                    throw new InterruptedIOException("Received StartTLS failure from Openfire. Aborting connection");
                                 }
                                 // intended fall-through
                             default:
-                                System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
+                                System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to." + (socket instanceof SSLSocket ? " (encrypted)" : ""));
                         }
                     } else {
                         // received an end of stream: if the peer closes the connection, then we're done trying.
@@ -277,14 +319,16 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                     }
 
                 }
+                System.out.println("Ending read loop.");
             } catch (InterruptedIOException e) {
 
             } catch (Throwable t) {
                 // Log exception only when not cleanly closed.
                 t.printStackTrace();
+            } finally {
+                System.out.println("Stopped reading from socket");
+                done();
             }
-            System.out.println("Stopped reading from socket.");
-            done();
         }
 
         private synchronized void sendStreamHeader() throws IOException
@@ -306,15 +350,21 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
         private void negotiateFeatures(final Element features) throws IOException
         {
-            if (!didEncryptionNegotiation) {
-                negotiateEncryption(features);
-                didEncryptionNegotiation = true;
+            if (!attemptedEncryptionNegotiation) {
+                attemptedEncryptionNegotiation = true;
+                if (negotiateEncryption(features)) {
+                    return;
+                }
             }
             negotiateAuthentication(features);
         }
 
-        private void negotiateEncryption(final Element features) throws IOException
+        /**
+         * Returns 'true' if negotiation was started, false if no negotiation was started.
+         */
+        private boolean negotiateEncryption(final Element features) throws IOException
         {
+            System.out.println("Negotiating encryption...");
             final Element startTLSel = features.element(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
             final boolean peerSupportsStartTLS = startTLSel != null;
             final boolean peerRequiresStartTLS = peerSupportsStartTLS && startTLSel.element("required") != null;
@@ -333,12 +383,13 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                         send(root.asXML().substring(root.asXML().indexOf(">")+1));
                         throw new InterruptedIOException("Openfire requires TLS, we disabled it.");
                     }
-                    break;
+                    return false;
                 case optional:
                     if (peerSupportsStartTLS) {
                         initiateTLS();
+                        return true;
                     }
-                    break;
+                    return false;
                 case required:
                     if (!peerSupportsStartTLS) {
                         final Document outbound = DocumentHelper.createDocument();
@@ -354,25 +405,54 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                     else
                     {
                         initiateTLS();
+                        return true;
                     }
-                    break;
                 default:
                     throw new IllegalStateException("This implementation does not supported encryption policy: " + encryptionPolicy);
             }
         }
+
         private void initiateTLS() throws IOException {
             System.out.println("Initiating TLS...");
-            //FIXME do TLS.
+            final Document outbound = DocumentHelper.createDocument();
+            final Element startTls = outbound.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
+            send(startTls.asXML());
+        }
+
+        private void processStartTLSProceed(Element proceed) throws IOException, NoSuchAlgorithmException, KeyManagementException
+        {
+            System.out.println("Received StartTLS proceed.");
+            System.out.println("Replace the socket with one that will do TLS on the next inbound and outbound data");
+
+            final SSLContext sc = SSLContext.getInstance("TLSv1.2");
+
+            sc.init(createKeyManager(generatedPKIX.getKeyPair(), generatedPKIX.getCertificateChain()), createTrustManagerThatTrustsAll(), new java.security.SecureRandom());
+            SSLContext.setDefault(sc);
+
+            final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, socket.getPort(), true);
+            sslSocket.setSoTimeout((int) SO_TIMEOUT.toMillis());
+            sslSocket.addHandshakeCompletedListener(event -> System.out.println("SSL handshake completed: " + event));
+            sslSocket.startHandshake();
+
+            // Just indicate that we would like to authenticate the client but if client
+            // certificates are self-signed or have no certificate chain then we are still
+            // good
+            //sslSocket.setWantClientAuth(true); // DO WE NEED TO BRING THIS INTO OUR LocalOutgoingServerSessionTest MATRIX?
+            phaser.register();
+
+            final SocketProcessor sslSocketProcessor = new SocketProcessor(sslSocket);
+            processingService.submit(sslSocketProcessor);
         }
 
         private void negotiateAuthentication(final Element features) throws IOException {
+            System.out.println("Negotiating authentication...");
             final Element mechanismsEl = features.element(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
             final boolean peerSupportsSASLExternal = mechanismsEl != null && mechanismsEl.elements().stream().anyMatch(element -> "mechanism".equals(element.getName()) && "EXTERNAL".equals(element.getTextTrim()));
-            final boolean peerSupportsDialback = peerAdvertisedDialbackNamespace || features.element(QName.get("dialback", "urn:xmpp:features:dialback")) != null;
+            peerSupportsDialback = peerAdvertisedDialbackNamespace || features.element(QName.get("dialback", "urn:xmpp:features:dialback")) != null;
             System.out.println("Openfire " + (peerSupportsSASLExternal ? "offers" : "does not offer") + " SASL EXTERNAL, " + (peerSupportsDialback ? "supports" : "does not support") + " Server Dialback. Our own policy: SASL EXTERNAL " + (encryptionPolicy != Connection.TLSPolicy.disabled ? "available" : "not available") + ", Dialback: " + (!disableDialback ? "supported" : "not supported") + ".");
 
-            if (peerSupportsSASLExternal && encryptionPolicy != Connection.TLSPolicy.disabled && authenticateUsingSaslExternal()) {
-                System.out.println("Authenticating using SASL EXTERNAL");
+            if (peerSupportsSASLExternal && encryptionPolicy != Connection.TLSPolicy.disabled && !alreadyTriedSaslExternal) {
+                authenticateUsingSaslExternal();
             } else if (peerSupportsDialback && !disableDialback) {
                 startDialbackAuth();
             } else {
@@ -381,9 +461,14 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             }
         }
 
-        private boolean authenticateUsingSaslExternal() throws IOException {
-            // FIXME implement SASL EXTERNAL authentication.
-            return false;
+        private void authenticateUsingSaslExternal() throws IOException {
+            System.out.println("Authenticating using SASL EXTERNAL");
+            alreadyTriedSaslExternal = true;
+            final Document outbound = DocumentHelper.createDocument();
+            final Element root = outbound.addElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"));
+            root.addAttribute("mechanism", "EXTERNAL");
+            root.setText(Base64.encodeBytes(XMPP_DOMAIN.getBytes()));
+            send(root.asXML());
         }
 
         private void startDialbackAuth() throws IOException {
@@ -410,15 +495,10 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             done();
         }
 
-        private void processSaslResponse(final Element result) throws IOException {
+        private boolean processSaslResponse(final Element result) throws IOException {
             final String name = result.getName();
             System.out.println("Openfire reports SASL result of type " + name);
-            if (!"success".equals(name)) {
-                throw new InterruptedIOException("SASL Auth failed");
-            }
-
-            System.out.println("Successfully authenticated using SASL! We're done setting up a connection.");
-            done();
+            return "success".equals(name);
         }
     }
 }

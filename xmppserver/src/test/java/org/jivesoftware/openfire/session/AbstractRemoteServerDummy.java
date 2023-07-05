@@ -121,16 +121,15 @@ public class AbstractRemoteServerDummy
     {
         String toParse = xml;
 
-        if (!xml.endsWith("/>")) {
-            Matcher matcher = Pattern.compile("[A-Za-z:]+").matcher(xml);
-            if (matcher.find()) {
-                final String fakeEndTag = "</" + matcher.group() + ">";
-                if (!xml.trim().endsWith(fakeEndTag)) {
-                    toParse += fakeEndTag;
-                }
+        // Verify if xml ends with close tag that matches the first tag.
+        final Matcher matcher = Pattern.compile("[A-Za-z:]+").matcher(xml);
+        if (matcher.find()) {
+            final String fakeEndTag = "</" + matcher.group() + ">";
+            final String emptyElementTagPattern = "<" + matcher.group() + "[^/>]*/>";
+            if (!xml.trim().endsWith(fakeEndTag) && !Pattern.compile(emptyElementTagPattern).matcher(xml).find()) {
+                toParse += fakeEndTag;
             }
         }
-
         return DocumentHelper.parseText(toParse).getRootElement();
     }
 

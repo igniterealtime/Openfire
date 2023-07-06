@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.openfire.security.SecurityAuditManager;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,14 +53,38 @@ public class LoginLimitManager {
     }
 
     // Max number of attempts per ip address that can be performed in given time frame
-    private long maxAttemptsPerIP;
+    public static final SystemProperty<Long> MAX_ATTEMPTS_PER_IP = SystemProperty.Builder.ofType(Long.class)
+        .setKey("adminConsole.maxAttemptsPerIP")
+        .setDynamic(true)
+        .setDefaultValue(10L)
+        .setMinValue(1L)
+        .build();
+
     // Time frame before attempts per ip addresses are reset
-    private Duration millisecondsBetweenPerIP;
+    public static final SystemProperty<Duration> PER_IP_ATTEMPT_RESET_INTERVAL = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("adminConsole.perIPAttemptResetInterval")
+        .setDynamic(false)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofMinutes(15))
+        .setMinValue(Duration.ofMillis(1))
+        .build();
 
     // Max number of attempts per username that can be performed in a given time frame
-    private long maxAttemptsPerUsername;
+    public static final SystemProperty<Long> MAX_ATTEMPTS_PER_USERNAME = SystemProperty.Builder.ofType(Long.class)
+        .setKey("adminConsole.maxAttemptsPerUsername")
+        .setDynamic(true)
+        .setDefaultValue(10L)
+        .setMinValue(1L)
+        .build();
+
     // Time frame before attempts per username are reset
-    private Duration millisecondsBetweenPerUsername;
+    public static final SystemProperty<Duration> PER_USERNAME_ATTEMPT_RESET_INTERVAL = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("adminConsole.perUsernameAttemptResetInterval")
+        .setDynamic(false)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofMinutes(15))
+        .setMinValue(Duration.ofMillis(1))
+        .build();
 
     // Record of attempts per IP address
     private Map<String,Long> attemptsPerIP;
@@ -82,18 +107,10 @@ public class LoginLimitManager {
         attemptsPerIP = new ConcurrentHashMap<>();
         attemptsPerUsername = new ConcurrentHashMap<>();
 
-        // Max number of attempts per ip address that can be performed in given time frame (10 attempts default)
-        maxAttemptsPerIP = JiveGlobals.getLongProperty("adminConsole.maxAttemptsPerIP", 10);
-        // Time frame before attempts per ip addresses are reset (15 minutes default)
-        millisecondsBetweenPerIP = Duration.ofMillis(JiveGlobals.getLongProperty("adminConsole.perIPAttemptResetInterval", 900000));
-        // Max number of attempts per username that can be performed in a given time frame (10 attempts default)
-        maxAttemptsPerUsername = JiveGlobals.getLongProperty("adminConsole.maxAttemptsPerUsername", 10);
-        // Time frame before attempts per ip addresses are reset (15 minutes default)
-        millisecondsBetweenPerUsername = Duration.ofMillis(JiveGlobals.getLongProperty("adminConsole.perUsernameAttemptResetInterval", 900000));
         // Set up per username attempt reset task
-        taskEngine.scheduleAtFixedRate(new PerUsernameTask(), Duration.ZERO, millisecondsBetweenPerUsername);
+        taskEngine.scheduleAtFixedRate(new PerUsernameTask(), Duration.ZERO, PER_USERNAME_ATTEMPT_RESET_INTERVAL.getValue());
         // Set up per IP attempt reset task
-        taskEngine.scheduleAtFixedRate(new PerIPAddressTask(), Duration.ZERO, millisecondsBetweenPerIP);
+        taskEngine.scheduleAtFixedRate(new PerIPAddressTask(), Duration.ZERO, PER_IP_ATTEMPT_RESET_INTERVAL.getValue());
     }
 
     /**
@@ -104,10 +121,10 @@ public class LoginLimitManager {
      * @return True if the login attempt limit has been hit.
      */
     public boolean hasHitConnectionLimit(String username, String address) {
-        if (attemptsPerIP.get(address) != null && attemptsPerIP.get(address) > maxAttemptsPerIP) {
+        if (attemptsPerIP.get(address) != null && attemptsPerIP.get(address) > MAX_ATTEMPTS_PER_IP.getValue()) {
             return true;
         }
-        if (attemptsPerUsername.get(username) != null && attemptsPerUsername.get(username) > maxAttemptsPerUsername) {
+        if (attemptsPerUsername.get(username) != null && attemptsPerUsername.get(username) > MAX_ATTEMPTS_PER_USERNAME.getValue()) {
             return true;
         }
         // No problem then, no limit hit.
@@ -130,7 +147,7 @@ public class LoginLimitManager {
         cnt++;
         attemptsPerIP.put(address, cnt);
         final StringBuilder sb = new StringBuilder();
-        if (cnt > maxAttemptsPerIP) {
+        if (cnt > MAX_ATTEMPTS_PER_IP.getValue()) {
             Log.warn("Login attempt limit breached for address "+address);
             sb.append("Future login attempts from this address will be temporarily locked out. ");
         }
@@ -141,7 +158,7 @@ public class LoginLimitManager {
         }
         cnt++;
         attemptsPerUsername.put(username, cnt);
-        if (cnt > maxAttemptsPerUsername) {
+        if (cnt > MAX_ATTEMPTS_PER_USERNAME.getValue()) {
             Log.warn("Login attempt limit breached for username "+username);
             sb.append("Future login attempts for this user will be temporarily locked out. ");
         }

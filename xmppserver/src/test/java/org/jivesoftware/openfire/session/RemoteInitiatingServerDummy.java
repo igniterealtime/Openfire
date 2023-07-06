@@ -14,7 +14,10 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.KeyManagementException;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.concurrent.*;
 
@@ -426,7 +429,18 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
             final SSLContext sc = SSLContext.getInstance("TLSv1.2");
 
-            sc.init(createKeyManager(generatedPKIX.getKeyPair(), generatedPKIX.getCertificateChain()), createTrustManagerThatTrustsAll(), new java.security.SecureRandom());
+            TrustManager[] tm = createTrustManagerThatTrustsAll();
+            SecureRandom random = new SecureRandom();
+
+
+            KeyManager[] km = createKeyManager(new KeyPair(null, null), new X509Certificate[0]);
+            if (generatedPKIX != null) {
+                KeyPair keyPair = generatedPKIX.getKeyPair();
+                X509Certificate[] certificateChain = generatedPKIX.getCertificateChain();
+                km = createKeyManager(keyPair, certificateChain);
+            }
+
+            sc.init(km, tm , random);
             SSLContext.setDefault(sc);
 
             final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, socket.getPort(), true);

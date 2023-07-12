@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class AbstractRemoteServerDummy
 {
     public static final String XMPP_DOMAIN = "remote-dummy.example.org";
-    public static final Duration SO_TIMEOUT = Duration.ofMillis(100);
+    public static final Duration SO_TIMEOUT = Duration.ofMillis(50);
     protected boolean useExpiredEndEntityCertificate;
     protected boolean useSelfSignedCertificate;
     protected boolean disableDialback;

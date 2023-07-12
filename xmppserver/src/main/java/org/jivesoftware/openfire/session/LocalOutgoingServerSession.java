@@ -407,7 +407,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         catch (SSLHandshakeException e)
         {
-            // When not doing direct TLS but startTLS, this a failure as described in RFC3620, section 5.4.3.2 "STARTTLS Failure".
+            // When not doing direct TLS but startTLS, this a failure as described in RFC6120, section 5.4.3.2 "STARTTLS Failure".
             log.info( "{} negotiation failed. Closing connection (without sending any data such as <failure/> or </stream>).", (directTLS ? "Direct TLS" : "StartTLS" ), e );
 
             // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
@@ -423,7 +423,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         catch (Exception e)
         {
-            // This might be RFC3620, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
+            // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn( "An exception occurred while creating an encrypted session. Closing connection.", e );
 
             if (connection != null) {

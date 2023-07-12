@@ -77,13 +77,13 @@ abstract class SocketReadingMode {
             socketReader.connection.startTLS(false, false);
         }
         catch (SSLHandshakeException e) {
-            // RFC3620, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending any more data (<failure/> nor </stream>).
+            // RFC6120, section 5.4.3.2 "STARTTLS Failure" - close the socket *without* sending any more data (<failure/> nor </stream>).
             Log.info( "STARTTLS negotiation (with: {}) failed.", socketReader.connection, e );
             socketReader.connection.forceClose();
             return false;
         }
         catch (IOException | RuntimeException e) {
-            // RFC3620, section 5.4.2.2 "Failure case" - Send a <failure/> element, then close the socket.
+            // RFC6120, section 5.4.2.2 "Failure case" - Send a <failure/> element, then close the socket.
             Log.warn( "An exception occurred while performing STARTTLS negotiation (with: {})", socketReader.connection, e);
             socketReader.connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             socketReader.connection.close();

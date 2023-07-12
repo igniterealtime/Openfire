@@ -71,7 +71,7 @@ public class ServerSettings
 //         */
 //        public final TlsMutualAuthenticationPolicy tlsMutualAuthenticationPolicy;
 
-    public ServerSettings(final CertificateState certificateState, final boolean dialbackSupported, final Connection.TLSPolicy encryptionPolicy)
+    public ServerSettings(final Connection.TLSPolicy encryptionPolicy, final CertificateState certificateState, final boolean dialbackSupported)
     {
         this.certificateState = certificateState;
         this.dialbackSupported = dialbackSupported;

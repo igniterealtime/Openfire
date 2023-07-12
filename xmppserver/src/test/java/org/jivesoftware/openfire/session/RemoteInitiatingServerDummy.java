@@ -9,22 +9,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.security.KeyManagementException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 {
     private ServerSocket dialbackAuthoritativeServer;
     private Thread dialbackAcceptThread;
+    private DialbackAcceptor dialbackAcceptor = new DialbackAcceptor();
 
     private final String connectTo;
     boolean attemptedEncryptionNegotiation = false;
@@ -56,7 +55,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         processingService = Executors.newCachedThreadPool();
 
         if (dialbackAuthoritativeServer != null) {
-            dialbackAcceptThread = new Thread(new DialbackAcceptor());
+            dialbackAcceptThread = new Thread(dialbackAcceptor);
             dialbackAcceptThread.start();
         }
 
@@ -82,7 +81,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     {
         System.out.println("disconnect");
         stopProcessingService();
-        stopAcceptThread();
+        stopDialbackAcceptThread();
         if (dialbackAuthoritativeServer != null) {
             dialbackAuthoritativeServer.close();
             dialbackAuthoritativeServer = null;
@@ -92,28 +91,31 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     public synchronized void stopProcessingService() throws InterruptedException
     {
         processingService.shutdown();
-        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
+        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
-            Thread.sleep(Math.max(10, SO_TIMEOUT.dividedBy(50).toMillis()));
+            Thread.sleep(Math.max(100, SO_TIMEOUT.dividedBy(50).toMillis()));
         }
         if (!processingService.isTerminated()) {
             processingService.shutdownNow();
         }
     }
 
-    public synchronized void stopAcceptThread() throws InterruptedException
+    public synchronized void stopDialbackAcceptThread() throws InterruptedException
     {
         if (dialbackAcceptThread == null) {
             return;
         }
+        dialbackAcceptor.stop();
         dialbackAcceptThread.interrupt();
-        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
+        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && dialbackAcceptThread.getState() != Thread.State.TERMINATED) {
             Thread.sleep(Math.max(10, SO_TIMEOUT.dividedBy(50).toMillis()));
         }
         final Thread.State finalState = dialbackAcceptThread.getState();
         if (finalState != Thread.State.TERMINATED) {
-            System.out.println("Accept thread not terminating after it was stopped. Current state: " + finalState);
+            System.err.println("Dialback Accept thread not terminating after it was stopped. Current state: " + finalState);
+            Arrays.stream(dialbackAcceptThread.getStackTrace()).forEach(System.err::println);
+            dialbackAcceptThread.stop();
         }
         dialbackAcceptThread = null;
     }
@@ -125,12 +127,19 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
     private class DialbackAcceptor implements Runnable
     {
+        boolean shouldStop = false;
+
+        void stop() {
+            shouldStop = true;
+        }
+
         @Override
         public void run()
         {
             System.out.println("Start accepting socket connections (as Server Dialback Authoritative Server).");
-            while (true) {
+            while (!shouldStop) {
                 try {
+                    dialbackAuthoritativeServer.setSoTimeout((int)SO_TIMEOUT.multipliedBy(10).toMillis());
                     final Socket socket = dialbackAuthoritativeServer.accept();
                     final InputStream is = socket.getInputStream();
                     final OutputStream os = socket.getOutputStream();
@@ -193,7 +202,9 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                 } catch (Throwable t) {
                     // Log exception only when not cleanly closed.
                     if (dialbackAcceptThread != null && !dialbackAcceptThread.isInterrupted()) {
-                        t.printStackTrace();
+                        if (!(t instanceof SocketTimeoutException) && !shouldStop) {
+                            t.printStackTrace();
+                        }
                     } else {
                         break;
                     }
@@ -209,6 +220,14 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         private OutputStream os;
         private InputStream is;
         boolean peerAdvertisedDialbackNamespace = false;
+
+        /**
+         * To speed up the test execution, SO_TIMEOUT (the socket read timeout) has been set to a low value. When negotiating Server Dialback, a second
+         * socket connection is used. XMPP session establishment on the first socket connection is paused while the Server Dialback negotiation takes
+         * place. This can easily cause the SO_TIMEOUT to run out. To prevent issues, this implementation allows for reads of the first socket connection
+         * to time out for a certain number of times, before treating this as a terminal exception.
+         */
+        private int allowableSocketTimeouts = 0;
 
         private SocketProcessor(int port) throws IOException
         {
@@ -245,89 +264,101 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             try {
                 sendStreamHeader();
 
-                final byte[] buffer = new byte[1024 * 16];
-                int count;
-                while ((count = is.read(buffer)) > 0) {
-                    String read = new String(buffer, 0, count);
-                    if (read.startsWith("<?")) {
-                        System.out.println("(stripping prolog from data that's read)");
-                        final int endProlog = read.indexOf("?>") + 2;
-                        read = read.substring(endProlog);
-                    }
-                    if (read.startsWith("<stream:") && !read.contains("xmlns:stream=")) {
-                        // Ugly hack to get stream prefix to work.
-                        read = read.replaceFirst(">", " xmlns:stream=\"http://etherx.jabber.org/streams\">");
-                        System.out.println("# recv (Hacked inbound stanza to include stream namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
-                    } else if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
-                        // Ugly hack to get Dialback to work.
-                        read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");
-                        System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
-                    } else {
-                        System.out.println("# recv from Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
-                    }
-                    System.out.println(read);
-                    System.out.println();
+                do {
+                    try {
+                        final byte[] buffer = new byte[1024 * 16];
+                        int count;
+                        while (!processingService.isShutdown() && (count = is.read(buffer)) > 0) {
+                            String read = new String(buffer, 0, count);
+                            if (read.startsWith("<?")) {
+                                System.out.println("(stripping prolog from data that's read)");
+                                final int endProlog = read.indexOf("?>") + 2;
+                                read = read.substring(endProlog);
+                            }
+                            if (read.startsWith("<stream:") && !read.contains("xmlns:stream=")) {
+                                // Ugly hack to get stream prefix to work.
+                                read = read.replaceFirst(">", " xmlns:stream=\"http://etherx.jabber.org/streams\">");
+                                System.out.println("# recv (Hacked inbound stanza to include stream namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                            } else if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
+                                // Ugly hack to get Dialback to work.
+                                read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");
+                                System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                            } else {
+                                System.out.println("# recv from Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                            }
+                            System.out.println(read);
+                            System.out.println();
 
-                    if (!read.equals("</stream:stream>")) {
-                        Element inbound = parse(read);
-                        if (inbound.getName().equals("stream")) {
-                            // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
-                            peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
-                            switch (inbound.elements().size()) {
-                                case 0:
-                                    // Done processing the input. Iterate, to try to read more.
-                                   continue;
-                                case 1:
-                                    // There are child elements to process!
-                                    inbound = inbound.elements().get(0);
-                                    break;
-                                default:
-                                    // More than one child element. This test implementation can't currently handle that.
-                                    throw new IllegalStateException("Unable to process more than one child element.");
+                            if (read.startsWith("<stream:error ") && read.endsWith("</stream:stream>")) {
+                                System.out.println("Peer sends a stream error. Can't use this connection anymore.");
+                                return;
+                            }
+                            if (!read.equals("</stream:stream>")) {
+                                Element inbound = parse(read);
+                                if (inbound.getName().equals("stream")) {
+                                    // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
+                                    peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
+                                    switch (inbound.elements().size()) {
+                                        case 0:
+                                            // Done processing the input. Iterate, to try to read more.
+                                            continue;
+                                        case 1:
+                                            // There are child elements to process!
+                                            inbound = inbound.elements().get(0);
+                                            break;
+                                        default:
+                                            // More than one child element. This test implementation can't currently handle that.
+                                            throw new IllegalStateException("Unable to process more than one child element.");
+                                    }
+                                }
+                                switch (inbound.getName()) {
+                                    case "features":
+                                        negotiateFeatures(inbound);
+                                        break;
+                                    case "result":
+                                        processDialbackResult(inbound);
+                                        break;
+                                    case "proceed":
+                                        processStartTLSProceed(inbound);
+                                        return; // stop reading more from this inputstream.
+                                    case "success": // intended fall-through
+                                    case "failure":
+                                        if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
+                                            if (processSaslResponse(inbound)) {
+                                                System.out.println("Successfully authenticated using SASL! We're done setting up a connection.");
+                                                return;
+                                            } else if (peerSupportsDialback && !disableDialback) {
+                                                System.out.println("Unable to authenticate using SASL! Dialback seems to be available. Trying that...");
+                                                startDialbackAuth();
+                                                break;
+                                            } else {
+                                                throw new InterruptedIOException("Unable to authenticate");
+                                            }
+                                        } else if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
+                                            throw new InterruptedIOException("Received StartTLS failure from Openfire. Aborting connection");
+                                        }
+                                        // intended fall-through
+                                    default:
+                                        System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to." + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                                }
+                            } else {
+                                // received an end of stream: if the peer closes the connection, then we're done trying.
+                                break;
                             }
                         }
-                        switch (inbound.getName()) {
-                            case "features":
-                                negotiateFeatures(inbound);
-                                break;
-                            case "result":
-                                processDialbackResult(inbound);
-                                break;
-                            case "proceed":
-                                processStartTLSProceed(inbound);
-                                return; // stop reading more from this inputstream.
-                            case "success": // intended fall-through
-                            case "failure":
-                                if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-sasl")) {
-                                    if (processSaslResponse(inbound)) {
-                                        System.out.println("Successfully authenticated using SASL! We're done setting up a connection.");
-                                        return;
-                                    } else if (peerSupportsDialback && !disableDialback) {
-                                            System.out.println("Unable to authenticate using SASL! Dialback seems to be available. Trying that...");
-                                            startDialbackAuth();
-                                            break;
-                                    } else {
-                                        throw new InterruptedIOException("Unable to authenticate");
-                                    }
-                                } else if (inbound.getNamespaceURI().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
-                                    throw new InterruptedIOException("Received StartTLS failure from Openfire. Aborting connection");
-                                }
-                                // intended fall-through
-                            default:
-                                System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to." + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                    } catch (SocketTimeoutException e) {
+                        allowableSocketTimeouts--;
+                        if (allowableSocketTimeouts <= 0) {
+                            throw e;
                         }
-                    } else {
-                        // received an end of stream: if the peer closes the connection, then we're done trying.
-                        break;
                     }
-
-                }
+                } while (!processingService.isShutdown() && allowableSocketTimeouts > 0);
                 System.out.println("Ending read loop.");
-            } catch (InterruptedIOException e) {
-
             } catch (Throwable t) {
                 // Log exception only when not cleanly closed.
-                t.printStackTrace();
+                if (!processingService.isShutdown()) {
+                    t.printStackTrace();
+                }
             } finally {
                 System.out.println("Stopped reading from socket");
                 done();
@@ -487,6 +518,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
         private void startDialbackAuth() throws IOException {
             System.out.println("Authenticating using Server Dialback");
+            allowableSocketTimeouts = 10;
             final String key = "UNITTESTDIALBACKKEY";
 
             final Document outbound = DocumentHelper.createDocument();

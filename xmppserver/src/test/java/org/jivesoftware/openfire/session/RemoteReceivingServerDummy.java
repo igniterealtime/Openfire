@@ -27,12 +27,14 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.security.KeyPair;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.cert.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -48,6 +50,8 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
     private ServerSocket server;
 
     private Thread acceptThread;
+    private Acceptor acceptor = new Acceptor();
+
     private ExecutorService processingService;
 
     /**
@@ -65,9 +69,8 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         processingService = Executors.newCachedThreadPool();
 
-        acceptThread = new Thread(new Acceptor());
+        acceptThread = new Thread(acceptor);
         acceptThread.start();
-
     }
 
     /**
@@ -99,16 +102,19 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         return server.getLocalPort();
     }
 
-    public synchronized void stopAcceptThread() throws InterruptedException
+    public void stopAcceptThread() throws InterruptedException
     {
+        acceptor.stop();
         acceptThread.interrupt();
-        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
+        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && acceptThread.getState() != Thread.State.TERMINATED) {
             Thread.sleep(SO_TIMEOUT.dividedBy(10).toMillis());
         }
         final Thread.State finalState = acceptThread.getState();
         if (finalState != Thread.State.TERMINATED) {
-            System.out.println("Accept thread not terminating after it was stopped. Current state: " + finalState);
+            System.err.println("Accept thread not terminating after it was stopped. Current state: " + finalState);
+            Arrays.stream(acceptThread.getStackTrace()).forEach(System.err::println);
+            acceptThread.stop();
         }
         acceptThread = null;
     }
@@ -116,7 +122,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
     public synchronized void stopProcessingService() throws InterruptedException
     {
         processingService.shutdown();
-        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(2));
+        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
             Thread.sleep(SO_TIMEOUT.dividedBy(10).toMillis());
         }
@@ -127,12 +133,19 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
     private class Acceptor implements Runnable
     {
+        boolean shouldStop = false;
+
+        void stop() {
+            shouldStop = true;
+        }
+
         @Override
         public void run()
         {
             System.out.println("Start accepting socket connections.");
-            while (true) {
+            while (!shouldStop) {
                 try {
+                    server.setSoTimeout((int)SO_TIMEOUT.multipliedBy(10).toMillis());
                     final Socket socket = server.accept();
                     System.out.println("Accepted new socket connection.");
 
@@ -140,7 +153,9 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 } catch (Throwable t) {
                     // Log exception only when not cleanly closed.
                     if (acceptThread != null && !acceptThread.isInterrupted()) {
-                        t.printStackTrace();
+                        if (!(t instanceof SocketTimeoutException)) {
+                            t.printStackTrace();
+                        }
                     } else {
                         break;
                     }
@@ -157,10 +172,21 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         private InputStream is;
         private boolean isAuthenticated = false;
 
+        /**
+         * To speed up the test execution, SO_TIMEOUT (the socket read timeout) has been set to a low value. When negotiating Server Dialback, a second
+         * socket connection is used. XMPP session establishment on the first socket connection is paused while the Server Dialback negotiation takes
+         * place. This can easily cause the SO_TIMEOUT to run out. To prevent issues, this implementation allows for reads of the first socket connection
+         * to time out for a certain number of times, before treating this as a terminal exception.
+         */
+        private int allowableSocketTimeouts = 0;
+
         private SocketProcessor(Socket socket) throws IOException
         {
             System.out.println("New session on socket.");
 
+            if (socket instanceof SSLSocket) {
+                allowableSocketTimeouts = 10; // A new TLS-connection has been observed to require some extra time (when Dialback-over-TLS is happening).
+            }
             this.socket = socket;
             os = socket.getOutputStream();
             is = socket.getInputStream();
@@ -168,7 +194,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         public synchronized void send(final String data) throws IOException
         {
-            System.out.println("# send from remote to Openfire");
+            System.out.println("# send from remote to Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
             System.out.println(data);
             System.out.println();
             os.write(data.getBytes());
@@ -180,51 +206,65 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         {
             System.out.println("Start reading from socket.");
             try {
-                final byte[] buffer = new byte[1024 * 16];
-                int count;
-                while ((count = is.read(buffer)) > 0) {
-                    String read = new String(buffer, 0, count);
+                do {
+                    try {
+                        final byte[] buffer = new byte[1024 * 16];
+                        int count;
+                        while (!processingService.isShutdown() && (count = is.read(buffer)) > 0) {
+                            String read = new String(buffer, 0, count);
 
-                    // Ugly hack to get Dialback to work.
-                    if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
-                        read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");
-                        System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)");
-                    } else {
-                        System.out.println("# recv from Openfire");
-                    }
-                    System.out.println(read);
-                    System.out.println();
+                            // Ugly hack to get Dialback to work.
+                            if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
+                                read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");
+                                System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                            } else {
+                                System.out.println("# recv from Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                            }
+                            System.out.println(read);
+                            System.out.println();
 
-                    // THIS CONTROLS THE REMOTE SERVER TLS / AUTH RESPONSES
-                    if (!read.equals("</stream:stream>")) {
-                        final Element inbound = parse(read);
-                        switch (inbound.getName()) {
-                            case "stream":
-                                sendStreamHeader(inbound);
-                                sendStreamFeatures();
-                                break;
-                            case "starttls":
-                                sendStartTlsProceed(inbound);
-                                return; // Stop reading from this socket immediately, as it is replaced by a secure socket.
-                            case "auth":
-                                sendAuthResponse(inbound);
-                                break;
-                            case "result":
-                                processDialback(inbound);
-                                break;
-                            default:
-                                System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
+                            // THIS CONTROLS THE REMOTE SERVER TLS / AUTH RESPONSES
+                            if (read.startsWith("<stream:error ") && read.endsWith("</stream:stream>")) {
+                                System.out.println("Peer sends a stream error. Can't use this connection anymore.");
+                                return;
+                            }
+                            if (!read.equals("</stream:stream>")) {
+                                final Element inbound = parse(read);
+                                switch (inbound.getName()) {
+                                    case "stream":
+                                        sendStreamHeader(inbound);
+                                        sendStreamFeatures();
+                                        break;
+                                    case "starttls":
+                                        sendStartTlsProceed(inbound);
+                                        return; // Stop reading from this socket immediately, as it is replaced by a secure socket.
+                                    case "auth":
+                                        sendAuthResponse(inbound);
+                                        break;
+                                    case "result":
+                                        processDialback(inbound);
+                                        break;
+                                    default:
+                                        System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
+                                }
+                            }
+                        }
+                    } catch (SocketTimeoutException e) {
+                        allowableSocketTimeouts--;
+                        if (allowableSocketTimeouts <= 0) {
+                            throw e;
                         }
                     }
-                }
-            } catch (InterruptedIOException e) {
-
+                } while (!processingService.isShutdown() && allowableSocketTimeouts > 0);
+                System.out.println("Ending read loop." + (socket instanceof SSLSocket ? " (encrypted)" : ""));
             } catch (Throwable t) {
                 // Log exception only when not cleanly closed.
-                t.printStackTrace();
+                if (!processingService.isShutdown()) {
+                    t.printStackTrace();
+                }
+            } finally {
+                System.out.println("Stopped reading from socket");
             }
-            System.out.println("Stopped reading from socket.");
-
         }
 
         private synchronized void sendStreamHeader(Element inbound) throws IOException
@@ -259,11 +299,13 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 if (!isAuthenticated) {
                     if (!disableDialback && encryptionPolicy != Connection.TLSPolicy.required) { // do not offer Dialback if we expect TLS first.
                         features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                        allowableSocketTimeouts = 10; // It's possible that the peer will start dialback. If that's happening, we need to be more forgiving in regard to socket timeouts.
                     }
                 }
             } else if (!isAuthenticated) {
                 if (!disableDialback) {
                     features.addElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                    allowableSocketTimeouts = 10; // It's possible that the peer will start dialback. If that's happening, we need to be more forgiving in regard to socket timeouts.
                 }
                 final Element mechanisms = features.addElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
                 System.out.println(((SSLSocket) socket).getSession().getProtocol());
@@ -380,6 +422,8 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
          */
         private synchronized void processDialback(Element inbound) throws IOException
         {
+            allowableSocketTimeouts = 10;
+
             if (disableDialback) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");

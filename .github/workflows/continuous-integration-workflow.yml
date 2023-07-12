@@ -25,6 +25,12 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: ./mvnw -B package -Pcoverage --file pom.xml
+      - name: Upload failed test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: surefire-reports_java${{ matrix.java }}
+          path: xmppserver/target/surefire-reports
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v3

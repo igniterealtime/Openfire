@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -25,8 +27,11 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.ServerDialbackErrorException;
+import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.StreamErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -253,11 +258,43 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     public boolean validateSubsequentDomain(Element dbResult) {
         final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
         ServerDialback method = new ServerDialback(getConnection(), domainPair);
-        if (method.validateRemoteDomain(dbResult, getStreamID())) {
+        try {
+            method.validateRemoteDomain(dbResult, getStreamID());
+
+            final String recipient = dbResult.attributeValue("to");
+            final String remoteDomain = dbResult.attributeValue("from");
+
+            // Add the validated domain as a valid domain. Do this before notifying the remote domain of success! (OF-2626)
             setAuthenticationMethod(AuthenticationMethod.DIALBACK);
-            // Add the validated domain as a valid domain
-            addValidatedDomain(dbResult.attributeValue("from"));
+            addValidatedDomain(remoteDomain);
+
+            // Report success to the peer.
+            final Document outbound = DocumentHelper.createDocument();
+            final Element root = outbound.addElement("root");
+            root.addNamespace("db", "urn:xmpp:features:dialback");
+            final Element result = root.addElement("db:result");
+            result.addAttribute("from", recipient);
+            result.addAttribute("to", remoteDomain);
+            result.addAttribute("type", "valid");
+            getConnection().deliverRawText(result.asXML());
+
             return true;
+        } catch (StreamErrorException e) {
+            Log.info("Unable to validate domain '{}' (full stack trace is logged on debug level): {}", fromDomain, e.getStreamError().getText());
+            Log.debug("Unable to validate domain '{}'", fromDomain, e);
+            getConnection().deliverRawText(e.getStreamError().toXML());
+
+            // Close the underlying connection
+            getConnection().close();
+        } catch (ServerDialbackErrorException e) {
+            Log.debug( "Unable to validate domain '{}': (full stack trace is logged on debug level): {}", fromDomain, e.getError().getText());
+            Log.debug("Unable to validate domain '{}'", fromDomain, e);
+            getConnection().deliverRawText(e.toXML().asXML());
+        } catch (ServerDialbackKeyInvalidException e) {
+            Log.debug( "Dialback key is invalid. Sending verification result to remote domain." );
+            getConnection().deliverRawText(e.toXML().asXML());
+            Log.debug( "Close the underlying connection as key verification failed." );
+            getConnection().close();
         }
         return false;
     }

@@ -24,12 +24,30 @@ import java.util.regex.Pattern;
 public class AbstractRemoteServerDummy
 {
     public static final String XMPP_DOMAIN = "remote-dummy.example.org";
+
+    private final static KeystoreTestUtils.ResultHolder SELF_SIGNED_CERTIFICATE;
+    private final static KeystoreTestUtils.ResultHolder EXPIRED_SELF_SIGNED_CERTIFICATE;
+    private final static KeystoreTestUtils.ResultHolder VALID_CERTIFICATE_CHAIN;
+    private final static KeystoreTestUtils.ResultHolder EXPIRED_CERTIFICATE_CHAIN;
+
     public static final Duration SO_TIMEOUT = Duration.ofMillis(50);
     protected boolean useExpiredEndEntityCertificate;
     protected boolean useSelfSignedCertificate;
     protected boolean disableDialback;
     protected Connection.TLSPolicy encryptionPolicy = Connection.TLSPolicy.optional;
     protected KeystoreTestUtils.ResultHolder generatedPKIX;
+
+    static {
+        // Generating certificates is expensive. For performance, it's best to generate each set once, and then reuse those during the execution of the tests.
+        try {
+            SELF_SIGNED_CERTIFICATE = KeystoreTestUtils.generateSelfSignedCertificate(XMPP_DOMAIN);
+            EXPIRED_SELF_SIGNED_CERTIFICATE = KeystoreTestUtils.generateExpiredSelfSignedCertificate(XMPP_DOMAIN);
+            VALID_CERTIFICATE_CHAIN = KeystoreTestUtils.generateValidCertificateChain(XMPP_DOMAIN);
+            EXPIRED_CERTIFICATE_CHAIN = KeystoreTestUtils.generateCertificateChainWithExpiredEndEntityCert(XMPP_DOMAIN);
+        } catch (Throwable t) {
+            throw new IllegalStateException("Unable to setup certificates used by the test implementation.", t);
+        }
+    }
 
     /**
      * Updates the TLS encryption policy that's observed by this server.
@@ -91,11 +109,10 @@ public class AbstractRemoteServerDummy
             throw new IllegalStateException("PKIX already prepared.");
         }
 
-        final String commonName = XMPP_DOMAIN;
         if (useSelfSignedCertificate) {
-            generatedPKIX = useExpiredEndEntityCertificate ? KeystoreTestUtils.generateExpiredSelfSignedCertificate(commonName) : KeystoreTestUtils.generateSelfSignedCertificate(commonName);
+            generatedPKIX = useExpiredEndEntityCertificate ? EXPIRED_SELF_SIGNED_CERTIFICATE : SELF_SIGNED_CERTIFICATE;
         } else {
-            generatedPKIX = useExpiredEndEntityCertificate ? KeystoreTestUtils.generateCertificateChainWithExpiredEndEntityCert(commonName) : KeystoreTestUtils.generateValidCertificateChain(commonName);
+            generatedPKIX = useExpiredEndEntityCertificate ? EXPIRED_CERTIFICATE_CHAIN : VALID_CERTIFICATE_CHAIN;
         }
     }
 

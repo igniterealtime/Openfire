@@ -181,6 +181,8 @@ public class LocalIncomingServerSessionTest
     public void incomingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
+        System.out.println("Executing test:\n - Local Server Settings: " + localServerSettings + "\n - Rmote Server Settings: " + remoteServerSettings);
+
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
         final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
@@ -258,7 +260,7 @@ public class LocalIncomingServerSessionTest
 
             // Verify results
             final ExpectedOutcome.ConnectionState expected = ExpectedOutcome.generateExpectedOutcome(remoteServerSettings, localServerSettings).getConnectionState();
-            System.out.println("Expect: " + expected);
+            System.out.println("Expect: " + expected + ", Result: " + result);
             switch (expected)
             {
                 case NO_CONNECTION:

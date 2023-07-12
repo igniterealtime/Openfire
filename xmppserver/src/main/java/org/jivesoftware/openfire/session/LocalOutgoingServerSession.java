@@ -415,11 +415,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             if (connection != null) {
                 connection.forceClose();
             }
-
-            if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
-                log.warn( "Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled." );
-                return null;
-            }
         }
         catch (Exception e)
         {
@@ -429,6 +424,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             if (connection != null) {
                 connection.close();
             }
+        }
+
+        if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+            log.warn( "Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled." );
+            return null;
         }
 
         if (ServerDialback.isEnabled())

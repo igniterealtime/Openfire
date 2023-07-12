@@ -172,7 +172,7 @@ public class LocalOutgoingServerSessionTest
     public void outgoingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
-        System.out.println("Executing test:\n - Local Server Settings: " + localServerSettings + "\n - Rmote Server Settings: " + remoteServerSettings);
+        System.out.println("Executing test:\n - Local Server (Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (dummy/mock server) Settings: " + remoteServerSettings);
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);

@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ServerStanzaHandler;
@@ -26,10 +27,12 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
             .setDefaultValue(true)
             .setDynamic(true)
             .build();
+    private final boolean directTLS;
 
     public NettyServerConnectionHandler(ConnectionConfiguration configuration)
     {
         super(configuration);
+        this.directTLS = configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
     }
 
     @Override
@@ -40,7 +43,7 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
 
     @Override
     StanzaHandler createStanzaHandler(NettyConnection connection) {
-        return new ServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection );
+        return new ServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection, directTLS);
     }
 
     @Override

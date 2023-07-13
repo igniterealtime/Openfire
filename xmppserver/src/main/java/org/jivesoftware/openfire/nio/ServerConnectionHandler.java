@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.nio;
 
 import org.apache.mina.core.session.IoSession;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ServerStanzaHandler;
@@ -26,10 +27,12 @@ public class ServerConnectionHandler extends ConnectionHandler
         .setDefaultValue(true)
         .setDynamic(true)
         .build();
+    private final boolean directTLS;
 
     public ServerConnectionHandler( ConnectionConfiguration configuration )
     {
         super( configuration );
+        this.directTLS = configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
     }
 
     @Override
@@ -42,7 +45,7 @@ public class ServerConnectionHandler extends ConnectionHandler
     @Override
     StanzaHandler createStanzaHandler( NIOConnection connection )
     {
-        return new ServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection );
+        return new ServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection, directTLS );
     }
 
     @Override

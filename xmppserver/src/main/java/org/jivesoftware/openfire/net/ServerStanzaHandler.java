@@ -62,8 +62,11 @@ public class ServerStanzaHandler extends StanzaHandler {
         .setDynamic(true)
         .build();
 
-    public ServerStanzaHandler(PacketRouter router, Connection connection) {
+    private final boolean directTLS;
+
+    public ServerStanzaHandler(PacketRouter router, Connection connection, boolean directTLS) {
         super(router, connection);
+        this.directTLS = directTLS;
     }
 
     @Override
@@ -115,7 +118,7 @@ public class ServerStanzaHandler extends StanzaHandler {
     {
         // The connected client is a server so create an IncomingServerSession
         try {
-            session = LocalIncomingServerSession.createSession(serverName, xpp, connection, false);
+            session = LocalIncomingServerSession.createSession(serverName, xpp, connection, this.directTLS);
         } catch (IOException e) {
             Log.error(e.getMessage(), e);
         }

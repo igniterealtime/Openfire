@@ -269,7 +269,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         try {
 
             // Wait for the future to give us a session...
-            sessionInitialiser = new NettySessionInitializer(domainPair, port);
+            sessionInitialiser = new NettySessionInitializer(domainPair, port, directTLS);
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever
             // TODO extended timeout while working on dialback issue - which seems to have a 10s timeout
             return (LocalOutgoingServerSession) sessionInitialiser.init().get(15000, TimeUnit.MILLISECONDS);

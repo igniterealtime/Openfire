@@ -46,7 +46,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnectionHandler.class);
     static final AttributeKey<XMLLightweightParser> XML_PARSER = AttributeKey.valueOf("XML-PARSER");
-    static final AttributeKey<NettyConnection> CONNECTION = AttributeKey.valueOf("CONNECTION");
+    public static final AttributeKey<NettyConnection> CONNECTION = AttributeKey.valueOf("CONNECTION");
     static final AttributeKey<StanzaHandler> HANDLER = AttributeKey.valueOf("HANDLER");
 
 

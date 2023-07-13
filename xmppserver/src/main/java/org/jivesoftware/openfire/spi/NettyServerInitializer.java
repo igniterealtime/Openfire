@@ -12,6 +12,8 @@ import org.jivesoftware.util.SystemProperty;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
+
 /**
  * Creates a newly configured {@link ChannelPipeline} for a new channel.
  */
@@ -28,17 +30,22 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         .build();
 
     private final NettyConnectionHandler businessLogicHandler;
+    private final boolean directTLS;
 
-    public NettyServerInitializer(NettyConnectionHandler businessLogicHandler) {
+    public NettyServerInitializer(NettyConnectionHandler businessLogicHandler, boolean directTLS) {
         this.businessLogicHandler = businessLogicHandler;
+        this.directTLS = directTLS;
     }
 
     @Override
-    public void initChannel(SocketChannel ch) {
+    public void initChannel(SocketChannel ch) throws Exception {
         ch.pipeline().addLast(new NettyXMPPDecoder());
         ch.pipeline().addLast(new StringEncoder());
         ch.pipeline().addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())));
         ch.pipeline().addLast(businessLogicHandler);
 
+        if (directTLS) {
+            ch.attr(CONNECTION).get().startTLS(false, true);
+        }
     }
 }

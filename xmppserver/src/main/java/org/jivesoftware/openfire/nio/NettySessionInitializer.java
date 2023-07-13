@@ -1,10 +1,7 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -12,16 +9,22 @@ import io.netty.handler.codec.string.StringEncoder;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
+import static org.jivesoftware.openfire.session.Session.Log;
 
 
 public class NettySessionInitializer {
@@ -30,41 +33,20 @@ public class NettySessionInitializer {
     
     private final DomainPair domainPair;
     private final int port;
+    private  boolean directTLS = false;
     private EventLoopGroup workerGroup;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private Channel channel;
+
+    public NettySessionInitializer(DomainPair domainPair, int port, boolean directTLS) {
+        this(domainPair, port);
+        this.directTLS = directTLS;
+    }
 
     public NettySessionInitializer(DomainPair domainPair, int port) {
         this.domainPair = domainPair;
         this.port = port;
     }
-
-
-// TODO handle direct TLS
-//            if (directTLS) {
-//                try {
-//                    connection.startTLS( true, true );
-//                } catch ( SSLException ex ) {
-//                    if ( JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK, true) && ex.getMessage().contains( "plaintext connection?" ) ) {
-//                        Log.warn( "Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", socketAddress );
-//                        try {
-//                            // Close old socket
-//                            socket.close();
-//                        } catch ( Exception e ) {
-//                            Log.debug( "An exception occurred (and is ignored) while trying to close a socket that was already in an error state.", e );
-//                        }
-//                        socket = new Socket();
-//                        socket.connect( socketAddress, RemoteServerManager.getSocketTimeout() );
-//                        connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
-//                        directTLS = false;
-//                        Log.info( "Re-established connection to {}. Proceeding without directTLS.", socketAddress );
-//                    } else {
-//                        // Do not retry as non-DirectTLS, rethrow the exception.
-//                        throw ex;
-//                    }
-//                }
-//            }
-
-
 
     public Future<LocalSession> init() {
         workerGroup = new NioEventLoopGroup();
@@ -74,49 +56,58 @@ public class NettySessionInitializer {
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.handler(new ChannelInitializer<SocketChannel>() {
-                @Override
-                public void initChannel(SocketChannel ch) {
-                    final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-                    ConnectionConfiguration listenerConfiguration = connectionManager.getListener(ConnectionType.SOCKET_S2S, false).generateConnectionConfiguration();
+                          @Override
+                          public void initChannel(SocketChannel ch) throws Exception {
+                              final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
+                              ConnectionConfiguration listenerConfiguration = connectionManager.getListener(ConnectionType.SOCKET_S2S, false).generateConnectionConfiguration();
 
-                    ch.pipeline().addLast(new NettyXMPPDecoder());
-                    ch.pipeline().addLast(new StringEncoder());
-                    ch.pipeline().addLast(new NettyOutboundConnectionHandler(listenerConfiguration, domainPair));
-                }
+                              ch.pipeline().addLast(new NettyXMPPDecoder());
+                              ch.pipeline().addLast(new StringEncoder());
+                              ch.pipeline().addLast(new NettyOutboundConnectionHandler(listenerConfiguration, domainPair));
+                              // Should have a connection
+                              if (directTLS) {
+                                  ch.attr(CONNECTION).get().startTLS(true, true);
+                              }
+                          }
+
+                          @Override
+                          public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                              super.exceptionCaught(ctx, cause);
+                              if (exceptionOccurredForDirectTLS(cause)) {
+                                  if ( directTLS &&
+                                      JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK, true) &&
+                                      cause.getMessage().contains( "plaintext connection?")
+                                  ) {
+                                      Log.warn( "Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", domainPair.getRemote() );
+                                      directTLS = false;
+                                      Log.info( "Re-establishing connection to {}. Proceeding without directTLS.", domainPair.getRemote() );
+                                      init();
+                                  }
+                              }
+                          }
+
+                          public boolean exceptionOccurredForDirectTLS(Throwable cause) {
+                              return cause instanceof SSLException;
+                          }
             });
 
-            Channel channel = b.connect(domainPair.getRemote(), port).sync().channel();
+            this.channel = b.connect(domainPair.getRemote(), port).sync().channel();
 
             // Start the session negotiation
             sendOpeningStreamHeader(channel);
 
             return waitForSession(channel);
-
-
-            // TODO - do something here (block?) until we get a LocalOutgoingServerSession
-            // How do we report back that the session is open?
-            //      This happens in RespondingServerStanzaHandler.createSession()
-            //   Pass something in for ^ to update?
-            //
-            // How do Futures work?
-            //
-            //
-            // can we add a handler to the pipeline to handle this?
-            //      Does this even make sense? Handlers deal with network in/out
-
-//            return channel;
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } finally {
-            // TODO how do we shut down the server?
-//                workerGroup.shutdownGracefully();
+            stop();
+            throw new RuntimeException(e); // TODO: Better to throw all exceptions and catch outside?
         }
-
     }
 
     public void stop() {
+        channel.close();
         workerGroup.shutdownGracefully();
     }
+
     private Future<LocalSession> waitForSession(Channel channel) {
         RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) channel.attr(NettyConnectionHandler.HANDLER).get();
 

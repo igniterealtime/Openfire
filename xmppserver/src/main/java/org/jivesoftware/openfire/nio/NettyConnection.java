@@ -396,7 +396,7 @@ public class NettyConnection implements Connection {
         if ( clientMode ) {
             sslContext= factory.createClientModeSslContext();
         } else {
-            sslContext = factory.createServerModeSslContext();
+            sslContext = factory.createServerModeSslContext(directTLS);
         }
 
         final SslHandler sslHandler = sslContext.newHandler(channelHandlerContext.alloc());

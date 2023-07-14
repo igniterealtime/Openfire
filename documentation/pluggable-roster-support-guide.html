@@ -26,19 +26,10 @@
             with alternate sources of roster data rather than the provided database tables.
         </p>
         <p>
-            Consider the scenario where Openfire is integrated as the chat server solution for an existing
-            'social' application. In this application a user is linked to other users via a relationship
-            of sorts, and the system of record for the relationship data is NOT the Openfire system.
-            Using an XMPP server such as Openfire the applications benefit from the real-time nature of
-            XMPP rosters and other subscription based features such as PEP, but with the caveat that
-            the existing relationship information has to be duplicated in Openfire and could potentially
-            become out of sync.
-        </p>
-        <p>
-            With the introduction of pluggable roster providers, Openfire can be instructed to retrieve and
-            modify roster data that lives in alternative locations to the standard database tables. The options
-            are limitless as to what this could be, e.g. an alternative database table(s), a web service, a NoSQL
-            database etc.
+            This integration requires some Java knowledge in order to implement a custom roster provider
+            for Openfire. The skill needed will vary depending on what you are trying to achieve.
+            The extension approach is similar to the
+            <a href="implementing-authprovider-guide.html">custom AuthProvider approach</a> on which it is based.
         </p>
 
         <p>Topics that are covered in this document:</p>
@@ -58,9 +49,19 @@
         <h2>Background</h2>
 
         <p>
-            This integration requires some Java knowledge in order to implement a custom roster provider
-            for Openfire. The skill needed will vary depending on what you are trying to achieve.
-            The extension approach is similar to the custom AuthProvider approach on which it is based.
+            Consider the scenario where Openfire is integrated as the chat server solution for an existing
+            'social' application. In this application a user is linked to other users via a relationship
+            of sorts, and the system of record for the relationship data is NOT the Openfire system.
+            Using an XMPP server such as Openfire the applications benefit from the real-time nature of
+            XMPP rosters and other subscription based features such as PEP, but with the caveat that
+            the existing relationship information has to be duplicated in Openfire and could potentially
+            become out of sync.
+        </p>
+        <p>
+            With the introduction of pluggable roster providers, Openfire can be instructed to retrieve and
+            modify roster data that lives in alternative locations to the standard database tables. The options
+            are limitless as to what this could be, e.g. an alternative database table(s), a web service, a NoSQL
+            database etc.
         </p>
 
     </section>

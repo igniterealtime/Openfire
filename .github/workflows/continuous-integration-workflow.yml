@@ -191,7 +191,7 @@ jobs:
           server-username: IGNITE_REALTIME_MAVEN_USERNAME
           server-password: IGNITE_REALTIME_MAVEN_PASSWORD
       - name: Publish
-        run: ./mvnw -B deploy
+        run: ./mvnw -B deploy -Pci -Dmaven.test.skip=true
         env:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}

@@ -181,7 +181,6 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <source>11</source>
                             <quiet>true</quiet>
                             <doclint>none</doclint>
                         </configuration>

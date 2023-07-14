@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * Generally speaking, event listener invocation will always include the key value. For performance optimizations,
  * the value can be omitted. The behavior is configured when registering the listener with a cache.
  *
- * An instance can be registered with a cache using {@link Cache#addListener(org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener, boolean)}
+ * An instance can be registered with a cache using {@link Cache#addClusteredCacheEntryListener(ClusteredCacheEntryListener, boolean, boolean)}
  *
  * Listeners are invoked in an asynchronous fashion. It is possible that invocations occur in a different order than in
  * which the cache was modified.

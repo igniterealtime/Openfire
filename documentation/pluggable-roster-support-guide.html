@@ -85,8 +85,8 @@
             </li>
             <li>
                 Make the class available in a jar and make this available to Openfire by placing it in the lib directory.
-                There are numerous ways to package a jar with this class inside it, popular build systems such as Gradle and Maven
-                can make your life easier.
+                Why not use an Openfire plugin, you ask? Read the FAQ entry below! There are numerous ways to package a
+                jar with this class inside it, popular build systems such as Gradle and Maven can make your life easier.
             </li>
             <li>
                 Set the property 'provider.roster.className' to be the full name of your class, e.g. 'com.foo.bar.MyRosterItemProvider'.
@@ -111,6 +111,26 @@
         <p>
             Just place your new custom library in the Openfire lib directory, this will ensure it is automatically
             available at startup.
+        </p>
+
+        <h4>Should I include all the dependencies that my code needs?</h4>
+        <p>
+            Yes, and no. Your code will run using the same classpath as Openfire. Openfire's dependencies are already on
+            that classpath. If your code uses the same dependencies, you do not need to include them again. You can add
+            other dependencies, either by packaging them in your jar file, or by placing them in the openfire lib folder.
+        </p>
+        <p>
+            Beware of conflicting dependencies! Sometimes, packaging dependencies in an all-containing jar, and renaming
+            the packages of those dependencies (<em>shade</em> them), can be helpful.
+        </p>
+
+        <h4>Isn't it easier to deploy my code as an Openfire plugin?</h4>
+        <p>
+            It is not recommended to use a plugin for packaging and deploying your provider. For one, plugins use a
+            dedicated class path. For another, the load order of plugins could lead to hairy scenario's, and finally:
+            plugins can be <em>unloaded</em> at runtime. This all could lead to a running Openfire service for which you
+            cannot guarantee that your provider is loaded at all times. For these reasons, we recommend creating a jar
+            file instead of an Openfire plugin, and placing that jar file in Openfire's lib directory!
         </p>
 
         <h4>Will I have a degradation in performance using a custom RosterItemProvider?</h4>

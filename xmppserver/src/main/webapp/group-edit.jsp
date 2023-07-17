@@ -690,7 +690,7 @@
                     <td>
                         <c:choose>
                             <c:when test="${webManager.userManager.isRegisteredUser(member, false)}">
-                                <a href="user-properties.jsp?username=${fn:escapeXml(webManager.userManager.getUser(member).username)}">
+                                <a href="user-properties.jsp?username=${admin:urlEncode(webManager.userManager.getUser(member).username)}">
                                     <c:out value="${webManager.userManager.getUser(member).username}"/>
                                 </a>
                             </c:when>

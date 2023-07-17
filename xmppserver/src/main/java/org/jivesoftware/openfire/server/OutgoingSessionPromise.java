@@ -286,7 +286,7 @@ public class OutgoingSessionPromise {
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
-                created = LocalOutgoingServerSession.authenticateDomain(domainPair); // TODO: AG MAGIC HERE
+                created = LocalOutgoingServerSession.authenticateDomain(domainPair);
             } finally {
                 lock.unlock();
             }

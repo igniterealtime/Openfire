@@ -70,7 +70,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     public NettyConnectionAcceptor(ConnectionConfiguration configuration) {
         super(configuration);
 
-        String name = configuration.getType().toString().toLowerCase() + (configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode ? "_ssl" : "");
+        String name = configuration.getType().toString().toLowerCase() + (isDirectTLS() ? "_ssl" : "");
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
 
         switch (configuration.getType()) {
@@ -110,7 +110,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
                 // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
-                .childHandler(new NettyServerInitializer(connectionHandler, configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode))
+                .childHandler(new NettyServerInitializer(connectionHandler, isDirectTLS()))
                 // Set the listen backlog (queue) length.
                 .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
@@ -150,6 +150,10 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
             Log.error("Error starting: " + configuration.getPort(), e);
             closeMainChannel();
         }
+    }
+
+    private boolean isDirectTLS() {
+        return configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
     }
 
     /**

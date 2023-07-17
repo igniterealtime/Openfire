@@ -99,7 +99,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
-        System.out.println("Netty XMPP handler added: " + ctx.channel().localAddress());
+        Log.trace("Netty XMPP handler added: " + ctx.channel().localAddress());
         //        ConnectionHandler.sessionOpened()
 
         // TODO - do we want a separate parser per-channel?
@@ -125,7 +125,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
-        System.out.println("Netty XMPP handler removed: " + ctx.channel().localAddress());
+        Log.trace("Netty XMPP handler removed: " + ctx.channel().localAddress());
     }
 
     @Override
@@ -139,8 +139,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         // Update counter of read bytes
         // updateReadBytesCounter(session); TODO maybe replace with https://netty.io/4.0/api/io/netty/handler/traffic/TrafficCounter.html#currentReadBytes--
 
-
-        System.out.println("Received: " + message);
+        Log.trace("Handler on " +  ctx.channel().localAddress() + " received: " + message);
         // Let the stanza handler process the received stanza
         try {
             ctx.channel().attr(HANDLER).get().process(message, parser);
@@ -159,8 +158,6 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         Log.error(cause.getMessage(), cause);
         ctx.close();
     }
-
-
 
 
     /**

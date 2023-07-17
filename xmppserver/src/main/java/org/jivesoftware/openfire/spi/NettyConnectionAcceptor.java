@@ -101,7 +101,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     @Override
     public synchronized void start() {
-        System.out.println("Running Netty on port: " + getPort());
+        Log.debug("Running Netty on port: " + getPort());
 
         try {
             // ServerBootstrap is a helper class that sets up a server

@@ -346,7 +346,7 @@ public class NettyConnection implements Connection {
 
     @Override
     public void deliverRawText(String text) {
-        System.out.println("Sending: " + text);
+        Log.trace("Sending: " + text);
         if (!isClosed()) {
             boolean errorDelivering = false;
             ChannelFuture f = channelHandlerContext.writeAndFlush(text);

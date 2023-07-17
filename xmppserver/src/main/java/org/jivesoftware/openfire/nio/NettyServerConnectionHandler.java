@@ -25,6 +25,8 @@ import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Server-specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -35,6 +37,8 @@ import org.jivesoftware.util.SystemProperty;
  */
 public class NettyServerConnectionHandler extends NettyConnectionHandler
 {
+    private static final Logger Log = LoggerFactory.getLogger(NettyServerConnectionHandler.class);
+
     /**
      * Enable / disable backup delivery of stanzas to the XMPP server itself when a stanza failed to be delivered on a
      * server-to-server connection. When disabled, stanzas that can not be delivered on the connection are discarded.
@@ -65,10 +69,9 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
-        System.out.println("Adding NettyServerConnectionHandler");
+        Log.trace("Adding NettyServerConnectionHandler");
         super.handlerAdded(ctx);
     }
-
 
     // TODO - check idle time is set for connections (check client, server, outbound handlers
     int getMaxIdleTime()

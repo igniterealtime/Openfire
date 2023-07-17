@@ -26,8 +26,10 @@
 <%@ page import="org.jivesoftware.util.ListPager" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -148,7 +150,7 @@
                 <c:out value="${listPager.firstItemNumberOnPage + loop.index}"/>
             </td>
             <td style="width: 22%">
-                <a href="group-edit.jsp?group=<c:out value="${group.name}"/>"
+                <a href="group-edit.jsp?group=${admin:urlEncode(group.name)}"
                    title='<fmt:message key="global.click_edit"/>'
                 ><c:out value="${group.name}"/></a>
             </td>
@@ -156,13 +158,13 @@
             <td style="width: 10%"><c:out value="${group.members.size()}"/></td>
             <td style="width: 10%"><c:out value="${group.admins.size()}"/></td>
             <td style="width: 1%">
-                <a href="group-edit.jsp?group=<c:out value="${group.name}"/>"
+                <a href="group-edit.jsp?group=${admin:urlEncode(group.name)}"
                    title='<fmt:message key="global.click_edit"/>'
                 ><img src="images/edit-16x16.gif" alt='<fmt:message key="global.click_edit"/>'></a>
             </td>
             <c:if test="${canEdit}">
                 <td style="width: 1%;">
-                    <a href="group-delete.jsp?group=<c:out value="${group.name}"/>"
+                    <a href="group-delete.jsp?group=${admin:urlEncode(group.name)}"
                                    title='<fmt:message key="global.click_delete" />'
                     ><img src="images/delete-16x16.gif" alt='<fmt:message key="global.click_delete" />'></a>
                 </td>

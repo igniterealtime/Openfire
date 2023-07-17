@@ -345,7 +345,7 @@
 <head>
 <title><fmt:message key="group.edit.title"/></title>
 <meta name="subPageID" content="group-edit"/>
-<meta name="extraParams" content="group=${fn:escapeXml(param.group)}"/>
+<meta name="extraParams" content="group=${admin:urlEncode(group.name)}"/>
 <meta name="helpPage" content="edit_group_properties.html"/>
 </head>
 <body>

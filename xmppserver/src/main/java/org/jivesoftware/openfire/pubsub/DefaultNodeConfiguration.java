@@ -16,14 +16,16 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
+
+import java.util.Locale;
 
 /**
  * A DefaultNodeConfiguration keeps the default configuration values for leaf or collection
@@ -433,10 +435,10 @@ public class DefaultNodeConfiguration implements Cacheable {
     }
 
 
-    public DataForm getConfigurationForm() {
+    public DataForm getConfigurationForm(Locale preferredLocale) {
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.default.title"));
-        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.default.instruction"));
+        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.default.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.default.instruction", preferredLocale));
         // Add the form fields and configure them for edition
 
         FormField formField = form.addField();
@@ -447,37 +449,37 @@ public class DefaultNodeConfiguration implements Cacheable {
         formField = form.addField();
         formField.setVariable("pubsub#subscribe");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.subscribe"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.subscribe", preferredLocale));
         formField.addValue(subscriptionEnabled);
 
         formField = form.addField();
         formField.setVariable("pubsub#deliver_payloads");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.deliver_payloads"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.deliver_payloads", preferredLocale));
         formField.addValue(deliverPayloads);
 
         formField = form.addField();
         formField.setVariable("pubsub#notify_config");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_config"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_config", preferredLocale));
         formField.addValue(notifyConfigChanges);
 
         formField = form.addField();
         formField.setVariable("pubsub#notify_delete");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_delete"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_delete", preferredLocale));
         formField.addValue(notifyDelete);
 
         formField = form.addField();
         formField.setVariable("pubsub#notify_retract");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_retract"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_retract", preferredLocale));
         formField.addValue(notifyRetract);
 
         formField = form.addField();
         formField.setVariable("pubsub#presence_based_delivery");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.presence_based"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.presence_based", preferredLocale));
         formField.addValue(presenceBasedDelivery);
 
         if (leaf) {
@@ -485,32 +487,32 @@ public class DefaultNodeConfiguration implements Cacheable {
             formField.setVariable("pubsub#send_item_subscribe");
             formField.setType(FormField.Type.boolean_type);
             formField.setLabel(
-                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe"));
+                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe", preferredLocale));
             formField.addValue(sendItemSubscribe);
 
             formField = form.addField();
             formField.setVariable("pubsub#persist_items");
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.persist_items"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.persist_items", preferredLocale));
             formField.addValue(persistPublishedItems);
 
             formField = form.addField();
             formField.setVariable("pubsub#max_items");
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items", preferredLocale));
             formField.addValue(maxPublishedItems);
 
             formField = form.addField();
             formField.setVariable("pubsub#max_payload_size");
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_payload_size"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_payload_size", preferredLocale));
             formField.addValue(maxPayloadSize);
         }
 
         formField = form.addField();
         formField.setVariable("pubsub#access_model");
         formField.setType(FormField.Type.list_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.access_model"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.access_model", preferredLocale));
         formField.addOption(null, AccessModel.authorize.getName());
         formField.addOption(null, AccessModel.open.getName());
         formField.addOption(null, AccessModel.presence.getName());
@@ -521,7 +523,7 @@ public class DefaultNodeConfiguration implements Cacheable {
         formField = form.addField();
         formField.setVariable("pubsub#publish_model");
         formField.setType(FormField.Type.list_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.publish_model"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.publish_model", preferredLocale));
         formField.addOption(null, PublisherModel.publishers.getName());
         formField.addOption(null, PublisherModel.subscribers.getName());
         formField.addOption(null, PublisherModel.open.getName());
@@ -530,13 +532,13 @@ public class DefaultNodeConfiguration implements Cacheable {
         formField = form.addField();
         formField.setVariable("pubsub#language");
         formField.setType(FormField.Type.text_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.language"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.language", preferredLocale));
         formField.addValue(language);
 
         formField = form.addField();
         formField.setVariable("pubsub#itemreply");
         formField.setType(FormField.Type.list_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.itemreply"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.itemreply", preferredLocale));
         if (replyPolicy != null) {
             formField.addValue(replyPolicy.name());
         }
@@ -545,7 +547,7 @@ public class DefaultNodeConfiguration implements Cacheable {
             formField = form.addField();
             formField.setVariable("pubsub#leaf_node_association_policy");
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_node_association"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_node_association", preferredLocale));
             formField.addOption(null, CollectionNode.LeafNodeAssociationPolicy.all.name());
             formField.addOption(null, CollectionNode.LeafNodeAssociationPolicy.owners.name());
             formField.addOption(null, CollectionNode.LeafNodeAssociationPolicy.whitelist.name());
@@ -554,7 +556,7 @@ public class DefaultNodeConfiguration implements Cacheable {
             formField = form.addField();
             formField.setVariable("pubsub#leaf_nodes_max");
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_nodes_max"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_nodes_max", preferredLocale));
             formField.addValue(maxLeafNodes);
         }
 

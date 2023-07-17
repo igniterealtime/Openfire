@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,7 +507,7 @@ public class PubSubEngine
             return true;
         }
 
-        final DataForm conditions = node.getConfigurationForm();
+        final DataForm conditions = node.getConfigurationForm(null);
         for ( final FormField precondition : preconditions.getFields() )
         {
             if ( precondition.getVariable().equals( "FORM_TYPE" ) )
@@ -933,10 +933,11 @@ public class PubSubEngine
         }
 
         // Return data form containing subscription configuration to the subscriber
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(iq.getFrom());
         IQ reply = IQ.createResultIQ(iq);
         Element replyChildElement = childElement.createCopy();
         reply.setChildElement(replyChildElement);
-        replyChildElement.element("options").add(subscription.getConfigurationForm().getElement());
+        replyChildElement.element("options").add(subscription.getConfigurationForm(preferredLocale).getElement());
         router.route(reply);
     }
 
@@ -1467,10 +1468,12 @@ public class PubSubEngine
         }
 
         // Return data form containing node configuration to the owner
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(iq.getFrom());
+
         IQ reply = IQ.createResultIQ(iq);
         Element replyChildElement = childElement.createCopy();
         reply.setChildElement(replyChildElement);
-        replyChildElement.element("configure").add(node.getConfigurationForm().getElement());
+        replyChildElement.element("configure").add(node.getConfigurationForm(preferredLocale).getElement());
         router.route(reply);
     }
 
@@ -1491,10 +1494,12 @@ public class PubSubEngine
         }
 
         // Return data form containing default node configuration
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(iq.getFrom());
+
         IQ reply = IQ.createResultIQ(iq);
         Element replyChildElement = childElement.createCopy();
         reply.setChildElement(replyChildElement);
-        replyChildElement.element("default").add(config.getConfigurationForm().getElement());
+        replyChildElement.element("default").add(config.getConfigurationForm(preferredLocale).getElement());
         router.route(reply);
     }
 

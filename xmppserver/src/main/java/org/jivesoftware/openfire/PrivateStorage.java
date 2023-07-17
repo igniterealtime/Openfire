@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class PrivateStorage extends BasicModule {
         Node node = pepService.getNode( data.getNamespaceURI() );
         if ( node == null )
         {
-            PubSubEngine.CreateNodeResponse response = PubSubEngine.createNodeHelper( pepService, owner, pepService.getDefaultNodeConfiguration( true ).getConfigurationForm().getElement(), data.getNamespaceURI(), PRIVATE_DATA_PUBLISHING_OPTIONS );
+            PubSubEngine.CreateNodeResponse response = PubSubEngine.createNodeHelper( pepService, owner, pepService.getDefaultNodeConfiguration( true ).getConfigurationForm(null).getElement(), data.getNamespaceURI(), PRIVATE_DATA_PUBLISHING_OPTIONS );
             node = response.newNode;
 
             if ( node == null )

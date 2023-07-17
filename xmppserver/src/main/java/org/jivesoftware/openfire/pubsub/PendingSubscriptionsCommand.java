@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.util.LocaleUtils;
@@ -26,6 +27,7 @@ import org.xmpp.packet.JID;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Ad-hoc command that sends pending subscriptions to node owners.
@@ -42,16 +44,15 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.title"));
-        form.addInstruction(
-                LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.instruction"));
+        form.setTitle(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.instruction", preferredLocale));
 
         FormField formField = form.addField();
         formField.setVariable("pubsub#node");
         formField.setType(FormField.Type.list_single);
-        formField.setLabel(
-                LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.node"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.node", preferredLocale));
         for (Node node : service.getNodes()) {
             if (!node.isCollectionNode() && node.isAdmin(data.getOwner())) {
                 formField.addOption(null, node.getUniqueIdentifier().getNodeId());
@@ -63,27 +64,26 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         Element note = command.addElement("note");
         List<String> nodeIDs = data.getData().get("pubsub#node");
         if (nodeIDs.isEmpty()) {
             // No nodeID was provided by the requester
             note.addAttribute("type", "error");
-            note.setText(LocaleUtils.getLocalizedString(
-                    "pubsub.command.pending-subscriptions.error.idrequired"));
+            note.setText(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.error.idrequired", preferredLocale));
         }
         else if (nodeIDs.size() > 1) {
             // More than one nodeID was provided by the requester
             note.addAttribute("type", "error");
-            note.setText(LocaleUtils.getLocalizedString(
-                    "pubsub.command.pending-subscriptions.error.manyIDs"));
+            note.setText(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.error.manyIDs", preferredLocale));
         }
         else {
             Node node = service.getNode(nodeIDs.get(0));
             if (node != null) {
                 if (node.isAdmin(data.getOwner())) {
                     note.addAttribute("type", "info");
-                    note.setText(LocaleUtils.getLocalizedString(
-                            "pubsub.command.pending-subscriptions.success"));
+                    note.setText(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.success", preferredLocale));
 
                     for (NodeSubscription subscription : node.getPendingSubscriptions()) {
                         subscription.sendAuthorizationRequest(data.getOwner());
@@ -92,15 +92,13 @@ public class PendingSubscriptionsCommand extends AdHocCommand {
                 else {
                     // Requester is not an admin of the specified node
                     note.addAttribute("type", "error");
-                    note.setText(LocaleUtils.getLocalizedString(
-                            "pubsub.command.pending-subscriptions.error.forbidden"));
+                    note.setText(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.error.forbidden", preferredLocale));
                 }
             }
             else {
                 // Node with the specified nodeID was not found
                 note.addAttribute("type", "error");
-                note.setText(LocaleUtils.getLocalizedString(
-                        "pubsub.command.pending-subscriptions.error.badid"));
+                note.setText(LocaleUtils.getLocalizedString("pubsub.command.pending-subscriptions.error.badid", preferredLocale));
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ public class GetServerStats extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -59,25 +61,25 @@ public class GetServerStats extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("index.server_name"));
+        field.setLabel(LocaleUtils.getLocalizedString("index.server_name", preferredLocale));
         field.setVariable("name");
         field.addValue(AdminConsole.getAppName());
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("index.version"));
+        field.setLabel(LocaleUtils.getLocalizedString("index.version", preferredLocale));
         field.setVariable("version");
         field.addValue(AdminConsole.getVersionString());
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("index.domain_name"));
+        field.setLabel(LocaleUtils.getLocalizedString("index.domain_name", preferredLocale));
         field.setVariable("domain");
         field.addValue(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("index.jvm"));
+        field.setLabel(LocaleUtils.getLocalizedString("index.jvm", preferredLocale));
         field.setVariable("os");
         String vmName = System.getProperty("java.vm.name");
         if (vmName == null) {
@@ -90,7 +92,7 @@ public class GetServerStats extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("index.uptime"));
+        field.setLabel(LocaleUtils.getLocalizedString("index.uptime", preferredLocale));
         field.setVariable("uptime");
         field.addValue(XMPPDateTimeFormat.format(XMPPServer.getInstance().getServerInfo().getLastStarted()));
 
@@ -105,7 +107,7 @@ public class GetServerStats extends AdHocCommand {
         double percentUsed = 100 - percentFree;
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("index.memory"));
+        field.setLabel(LocaleUtils.getLocalizedString("index.memory", preferredLocale));
         field.setVariable("memory");
         field.addValue(mbFormat.format(usedMemory) + " MB of " + mbFormat.format(maxMemory) + " MB (" +
                 percentFormat.format(percentUsed) + "%) used");
@@ -122,13 +124,13 @@ public class GetServerStats extends AdHocCommand {
         }
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Available Users");
+        field.setLabel(LocaleUtils.getLocalizedString("index.available_users", preferredLocale));
         field.setVariable("activeusersnum");
         field.addValue(users.size());
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Available Users Sessions");
+        field.setLabel(LocaleUtils.getLocalizedString("index.available_users_sessions", preferredLocale));
         field.setVariable("sessionsnum");
         field.addValue(availableSessions);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -369,6 +369,9 @@ public class LocaleUtils {
      * Returns an internationalized string loaded from a resource bundle using
      * the passed in Locale.
      *
+     * If the passed in Locale cannot be used to retrieve a localized string,
+     * the locale specified by JiveGlobals.getLocale() will be used instead.
+     *
      * @param key the key to use for retrieving the string from the
      *      appropriate resource bundle.
      * @param locale the locale to use for retrieving the appropriate
@@ -376,9 +379,21 @@ public class LocaleUtils {
      * @return the localized string.
      */
     public static String getLocalizedString(String key, Locale locale) {
-        ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
-
-        return getLocalizedString(key, locale, null, bundle);
+        if (locale == null) {
+            locale = JiveGlobals.getLocale();
+        }
+        ResourceBundle bundle;
+        try {
+            bundle = ResourceBundle.getBundle(resourceBaseName, locale);
+            return getLocalizedString(key, locale, null, bundle);
+        } catch (MissingResourceException e) {
+            if (!locale.equals(JiveGlobals.getLocale())) {
+                return getLocalizedString(key);
+            } else {
+                Log.error(e.getMessage());
+                return key;
+            }
+        }
     }
 
     /**
@@ -433,6 +448,39 @@ public class LocaleUtils {
     }
 
     /**
+     * Returns an internationalized string loaded from a resource bundle
+     * substituting the passed in arguments. Substitution is handled using
+     * the {@link java.text.MessageFormat} class.
+     *
+     * If the passed in Locale cannot be used to retrieve a localized string,
+     * the locale specified by JiveGlobals.getLocale() will be used instead.
+     *
+     * @param key the key to use for retrieving the string from the
+     *      appropriate resource bundle.
+     * @param arguments a list of objects to use which are formatted, then
+     *      inserted into the pattern at the appropriate places.
+     * @param locale the locale to use for retrieving the appropriate
+     *      locale-specific string.
+     * @return the localized string.
+     */
+    public static String getLocalizedString(String key, List<?> arguments, Locale locale) {
+        if (locale == null) {
+            locale = JiveGlobals.getLocale();
+        }
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle(resourceBaseName, locale);
+            return getLocalizedString(key, locale, arguments, bundle);
+        } catch (MissingResourceException e) {
+            if (!locale.equals(JiveGlobals.getLocale())) {
+                return getLocalizedString(key, arguments, JiveGlobals.getLocale());
+            } else {
+                Log.error(e.getMessage());
+                return key;
+            }
+        }
+    }
+
+    /**
      * Returns an internationalized string loaded from a resource bundle from the passed
      * in plugin. If the plugin name is {@code null}, the key will be looked up using
      * the standard resource bundle.
@@ -459,7 +507,7 @@ public class LocaleUtils {
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List arguments) {
-        return getLocalizedString(key, pluginName, arguments, null, false);
+        return getLocalizedString(key, pluginName, arguments, null, true);
     }
 
     /**
@@ -485,7 +533,7 @@ public class LocaleUtils {
      *            locale-specific string.
      * @param fallback
      *            if {@code true}, the global locale used by Openfire will be
-     *            used if the requested locale is not available)
+     *            used if the requested locale is not available
      * @return the localized string.
      */
     public static String getLocalizedString(String key, String pluginName, List<?> arguments, Locale locale, boolean fallback) {
@@ -515,7 +563,7 @@ public class LocaleUtils {
             Locale jivesLocale = JiveGlobals.getLocale();
             if (fallback && !jivesLocale.equals(locale)) {
                 Log.info("Could not find the requested locale. Falling back to default locale.", mre);
-                return getLocalizedString(key, pluginName, arguments, jivesLocale, false);
+                return getLocalizedString(key, pluginName, arguments, jivesLocale, true);
             }
             
             Log.error(mre.getMessage(), mre);
@@ -562,7 +610,7 @@ public class LocaleUtils {
      *      locale-specific string.
      * @param arguments a list of objects to use which are formatted, then
      *      inserted into the pattern at the appropriate places.
-     * @param bundle The resource bundle from which to return the localized 
+     * @param bundle The resource bundle from which to return the localized
      *      string.
      * @return the localized string.
      */
@@ -580,7 +628,7 @@ public class LocaleUtils {
 
         // See if the bundle has a value
         try {
-            // The jdk caches resource bundles on it's own, so we won't bother.
+            // The jdk caches resource bundles on its own, so we won't bother.
             value = bundle.getString(key);
             // perform argument substitutions
             if (arguments != null) {

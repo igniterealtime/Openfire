@@ -57,7 +57,7 @@
     // Load the node object
     Node node = pubSubServiceInfo.getNode(nodeID);
 
-    DataForm form = node.getConfigurationForm();
+    DataForm form = node.getConfigurationForm(null);
 
     //Field that will not be returned to the server, i.e. cannot be edited on this page
     ArrayList<String> nonReturnFields = new ArrayList<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1271,6 +1271,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public void setConflictKickLimit(int limit) {
         conflictLimit = limit;
         CONFLICT_LIMIT.setValue(limit);
+    }
+
+    public Locale getLocaleForSession(JID address)
+    {
+        if (address == null || !XMPPServer.getInstance().isLocal(address)) {
+            return null;
+        }
+
+        final ClientSession session = getSession(address);
+        if (session == null) {
+            return null;
+        }
+
+        return session.getLanguage();
     }
 
     private class ClientSessionListener implements ConnectionCloseListener {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 
 package org.jivesoftware.openfire.pubsub;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
@@ -38,6 +33,11 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 
 import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
@@ -126,8 +126,8 @@ public class LeafNode extends Node {
     }
 
     @Override
-    protected void addFormFields(DataForm form, boolean isEditing) {
-        super.addFormFields(form, isEditing);
+    protected void addFormFields(DataForm form, Locale preferredLocale, boolean isEditing) {
+        super.addFormFields(form, preferredLocale, isEditing);
 
         FormField typeField = form.getField("pubsub#node_type");
         typeField.addValue("leaf");
@@ -137,7 +137,7 @@ public class LeafNode extends Node {
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
             formField.setLabel(
-                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe"));
+                    LocaleUtils.getLocalizedString("pubsub.form.conf.send_item_subscribe", preferredLocale));
         }
         formField.addValue(sendItemSubscribe);
 
@@ -145,7 +145,7 @@ public class LeafNode extends Node {
         formField.setVariable("pubsub#persist_items");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.persist_items"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.persist_items", preferredLocale));
         }
         formField.addValue(persistPublishedItems);
 
@@ -153,7 +153,7 @@ public class LeafNode extends Node {
         formField.setVariable("pubsub#max_items");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items", preferredLocale));
         }
         formField.addValue(maxPublishedItems);
 
@@ -161,7 +161,7 @@ public class LeafNode extends Node {
         formField.setVariable("pubsub#max_payload_size");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_payload_size"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_payload_size", preferredLocale));
         }
         formField.addValue(maxPayloadSize);
 

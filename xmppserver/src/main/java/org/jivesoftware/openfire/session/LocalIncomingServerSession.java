@@ -110,119 +110,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      */
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
-        XmlPullParser xpp = reader.getXPPParser();
-                
-        String version = xpp.getAttributeValue("", "version");
-        String fromDomain = xpp.getAttributeValue("", "from");
-        String toDomain = xpp.getAttributeValue("", "to");
-        int[] serverVersion = version != null ? Session.decodeVersion(version) : new int[] {0,0};
-
-        if (toDomain == null) {
-            toDomain = serverName;
-        }
-
-        // Retrieve list of namespaces declared in current element (OF-2556)
-        connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
-
-        try {
-            // Get the stream ID for the new session
-            StreamID streamID = SessionManager.getInstance().nextStreamID();
-            // Create a server Session for the remote server
-            LocalIncomingServerSession session = SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
-            Log.debug("Creating new session with stream ID '{}' for local '{}' to peer '{}'.", streamID, toDomain, fromDomain);
-
-            // Send the stream header
-            StringBuilder openingStream = new StringBuilder();
-            openingStream.append("<stream:stream");
-            if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-                openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
-            }
-            openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(toDomain).append("\"");
-            if (fromDomain != null) {
-                openingStream.append(" to=\"").append(fromDomain).append("\"");
-            }
-            openingStream.append(" id=\"").append(streamID).append("\"");
-            
-            // OF-443: Not responding with a 1.0 version in the stream header when federating with older
-            // implementations appears to reduce connection issues with those domains (patch by Marcin Cieślak).
-            if (serverVersion[0] >= 1) {
-                openingStream.append(" version=\"1.0\">");
-            } else {
-                openingStream.append('>');
-            }
-
-            Log.trace("Outbound opening stream: {}", openingStream);
-            connection.deliverRawText(openingStream.toString());
-
-            if (serverVersion[0] >= 1) {        	
-                // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
-
-                // Indicate the TLS policy to use for this connection
-                Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
-                boolean hasCertificates = false;
-                try {
-                    hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-                if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
-                    Log.error("Server session rejected. TLS is required but no certificates " +
-                            "were created.");
-                    return null;
-                }
-                connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
-            }
-
-            // Indicate the compression policy to use for this connection
-            connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
-
-            StringBuilder sb = new StringBuilder();
-            
-            if (serverVersion[0] >= 1) {
-                Log.trace("Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)");
-
-                sb.append("<stream:features>");
-
-                if (!directTLS && (connection.getTlsPolicy() == Connection.TLSPolicy.required || connection.getTlsPolicy() == Connection.TLSPolicy.optional)) {
-                    sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-                    if (!ServerDialback.isEnabled()) {
-                        Log.debug("Server dialback is disabled so TLS is required");
-                        sb.append("<required/>");
-                    }
-                    sb.append("</starttls>");
-                }
-                
-                // Include available SASL Mechanisms
-                sb.append(SASLAuthentication.getSASLMechanisms(session));
-                
-                if (ServerDialback.isEnabled()) {
-                    // Also offer server dialback (when TLS is not required). Server dialback may be offered
-                    // after TLS has been negotiated and a self-signed certificate is being used
-                    sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
-                }
-
-                sb.append("</stream:features>");
-            } else {
-                Log.debug("Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443)");
-            }
-
-            Log.trace("Outbound feature advertisement: {}", sb);
-            connection.deliverRawText(sb.toString());
-
-            Log.trace("Set the domain or subdomain of the local server targeted by the remote server: {}", serverName);
-            session.setLocalDomain(serverName);
-            return session;
-        }
-        catch (Exception e) {
-            Log.error("Error establishing connection from remote server: {}", connection, e);
-            connection.close(new StreamError(StreamError.Condition.internal_server_error));
-            return null;
-        }
+        return createSession(serverName, reader.getXPPParser(), connection, directTLS);
     }
-
 
     public static LocalIncomingServerSession createSession(String serverName, XmlPullParser xpp,
                                                            Connection connection, boolean directTLS) throws XmlPullParserException, IOException {
@@ -335,8 +224,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             return null;
         }
     }
-
-
 
     public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain) {
         super(serverName, connection, streamID);

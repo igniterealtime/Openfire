@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,6 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pep.PEPService;
@@ -40,6 +30,12 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A type of node that contains nodes and/or other collections but no published
@@ -156,8 +152,8 @@ public class CollectionNode extends Node {
     }
 
     @Override
-    protected void addFormFields(DataForm form, boolean isEditing) {
-        super.addFormFields(form, isEditing);
+    protected void addFormFields(DataForm form, Locale preferredLocale, boolean isEditing) {
+        super.addFormFields(form, preferredLocale, isEditing);
 
         FormField typeField = form.getField("pubsub#node_type");
         typeField.addValue("collection");
@@ -167,10 +163,10 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#leaf_node_association_policy");
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy"));
-            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.all"), LeafNodeAssociationPolicy.all.name());
-            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.owners"), LeafNodeAssociationPolicy.owners.name());
-            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.whitelist"), LeafNodeAssociationPolicy.whitelist.name());
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy", preferredLocale));
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.all", preferredLocale), LeafNodeAssociationPolicy.all.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.owners", preferredLocale), LeafNodeAssociationPolicy.owners.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.whitelist", preferredLocale), LeafNodeAssociationPolicy.whitelist.name());
         }
         formField.addValue(associationPolicy.name());
 
@@ -178,10 +174,10 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#children_association_policy");
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy"));
-            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.all"), LeafNodeAssociationPolicy.all.name());
-            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.owners"), LeafNodeAssociationPolicy.owners.name());
-            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.whitelist"), LeafNodeAssociationPolicy.whitelist.name());
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy", preferredLocale));
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.all", preferredLocale), LeafNodeAssociationPolicy.all.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.owners", preferredLocale), LeafNodeAssociationPolicy.owners.name());
+            formField.addOption(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_policy.whitelist", preferredLocale), LeafNodeAssociationPolicy.whitelist.name());
         }
         formField.addValue(associationPolicy.name());
 
@@ -190,7 +186,7 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#leaf_node_association_whitelist");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_whitelist"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_whitelist", preferredLocale));
         }
         for (JID contact : associationTrusted) {
             formField.addValue(contact.toString());
@@ -200,7 +196,7 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#children_association_whitelist");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_whitelist"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_association_whitelist", preferredLocale));
         }
         for (JID contact : associationTrusted) {
             formField.addValue(contact.toString());
@@ -210,7 +206,7 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#leaf_nodes_max");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max", preferredLocale));
         }
         formField.addValue(maxLeafNodes);
 
@@ -218,7 +214,7 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#children_max");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max", preferredLocale));
         }
         formField.addValue(maxLeafNodes);
 
@@ -226,7 +222,7 @@ public class CollectionNode extends Node {
         formField.setVariable("pubsub#children");
         if (isEditing) {
             formField.setType(FormField.Type.text_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children", preferredLocale));
         }
         for (Node.UniqueIdentifier nodeId : nodes.keySet()) {
             formField.addValue(nodeId.getNodeId());
@@ -272,7 +268,7 @@ public class CollectionNode extends Node {
         Element item = items.addElement("item");
         item.addAttribute("id", child.getUniqueIdentifier().getNodeId());
         if (deliverPayloads) {
-            item.add(child.getMetadataForm().getElement());
+            item.add(child.getMetadataForm(null).getElement()); // FIXME: figure out a way to have proper localization.
         }
         // Broadcast event notification to subscribers
         broadcastCollectionNodeEvent(child, message);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutableChannelHandler;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.BasicModule;
@@ -685,7 +682,8 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             Node pubNode = getNode(node);
             Set<DataForm> dataForms = new HashSet<>();
             if (canDiscoverNode(pubNode)) {
-                dataForms.add(pubNode.getMetadataForm());
+                final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(senderJID);
+                dataForms.add(pubNode.getMetadataForm(preferredLocale));
                 // Get the metadata data form
                 return dataForms;
             }

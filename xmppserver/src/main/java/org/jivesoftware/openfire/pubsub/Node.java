@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 
 package org.jivesoftware.openfire.pubsub;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
@@ -39,9 +34,13 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 
-import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
-
 import java.io.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
+import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
 /**
  * A virtual location to which information can be published and from which event
@@ -781,7 +780,7 @@ public abstract class Node implements Cacheable, Externalizable {
         config.addAttribute("node", nodeID);
 
         if (deliverPayloads) {
-            config.add(getConfigurationChangeForm().getElement());
+            config.add(getConfigurationChangeForm(null).getElement()); // FIXME localize this form for each recipient.
         }
         // Send notification that the node configuration has changed
         broadcastNodeEvent(message, false);
@@ -800,11 +799,10 @@ public abstract class Node implements Cacheable, Externalizable {
      * @param subscription the new subscription that needs to be approved.
      * @return the data form to be included in the authorization request.
      */
-    DataForm getAuthRequestForm(NodeSubscription subscription) {
+    DataForm getAuthRequestForm(NodeSubscription subscription, Locale preferredLocale) {
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.authorization.title"));
-        form.addInstruction(
-                LocaleUtils.getLocalizedString("pubsub.form.authorization.instruction"));
+        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.authorization.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.authorization.instruction", preferredLocale));
 
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -819,19 +817,19 @@ public abstract class Node implements Cacheable, Externalizable {
         formField = form.addField();
         formField.setVariable("pubsub#node");
         formField.setType(FormField.Type.text_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.node"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.node", preferredLocale));
         formField.addValue(nodeID);
 
         formField = form.addField();
         formField.setVariable("pubsub#subscriber_jid");
         formField.setType(FormField.Type.jid_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.subscriber"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.subscriber", preferredLocale));
         formField.addValue(subscription.getJID().toString());
 
         formField = form.addField();
         formField.setVariable("pubsub#allow");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.allow"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.authorization.allow", preferredLocale));
         formField.addValue(Boolean.FALSE);
 
         return form;
@@ -841,14 +839,15 @@ public abstract class Node implements Cacheable, Externalizable {
     /**
      * Returns a data form used by the owner to edit the node configuration.
      *
+     * @param preferredLocale The preferred locale to localize the form.
      * @return data form used by the owner to edit the node configuration.
      */
-    public DataForm getConfigurationForm() {
+    public DataForm getConfigurationForm(Locale preferredLocale) {
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.conf.title"));
+        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.conf.title", preferredLocale));
         List<String> params = new ArrayList<>();
         params.add(nodeID);
-        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.conf.instruction", params));
+        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.conf.instruction", params, preferredLocale));
 
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -856,25 +855,26 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.addValue("http://jabber.org/protocol/pubsub#node_config");
 
         // Add the form fields and configure them for edition
-        addFormFields(form, true);
+        addFormFields(form, preferredLocale, true);
         return form;
     }
 
     /**
      * Adds the required form fields to the specified form. When editing is true the field type
-     * and a label is included in each fields. The form being completed will contain the current
-     * node configuration. This information can be used for editing the node or for notifing that
+     * and a label is included in each field. The form being completed will contain the current
+     * node configuration. This information can be used for editing the node or for notifying that
      * the node configuration has changed.
      *
      * @param form the form containing the node configuration.
+     * @param preferredLocale the preferred locale to localize the form.
      * @param isEditing true when the form will be used to edit the node configuration.
      */
-    protected void addFormFields(DataForm form, boolean isEditing) {
+    protected void addFormFields(DataForm form, Locale preferredLocale, boolean isEditing) {
         FormField formField = form.addField();
         formField.setVariable("pubsub#title");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.short_name"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.short_name", preferredLocale));
         }
         formField.addValue(name);
 
@@ -882,7 +882,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#description");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.description"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.description", preferredLocale));
         }
         formField.addValue(description);
 
@@ -890,14 +890,14 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#node_type");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.node_type"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.node_type", preferredLocale));
         }
         
         formField = form.addField();
         formField.setVariable("pubsub#collection");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.collection"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.collection", preferredLocale));
         }
 
         final CollectionNode parent = getParent();
@@ -909,7 +909,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#subscribe");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.subscribe"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.subscribe", preferredLocale));
         }
         formField.addValue(subscriptionEnabled);
 
@@ -918,7 +918,7 @@ public abstract class Node implements Cacheable, Externalizable {
         // TODO Replace this variable for the one defined in the JEP (once one is defined)
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.subscription_required"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.subscription_required", preferredLocale));
         }
         formField.addValue(subscriptionConfigurationRequired);
 
@@ -926,7 +926,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#deliver_payloads");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.deliver_payloads"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.deliver_payloads", preferredLocale));
         }
         formField.addValue(deliverPayloads);
 
@@ -934,7 +934,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#notify_config");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_config"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_config", preferredLocale));
         }
         formField.addValue(notifyConfigChanges);
 
@@ -942,7 +942,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#notify_delete");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_delete"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_delete", preferredLocale));
         }
         formField.addValue(notifyDelete);
 
@@ -950,7 +950,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#notify_retract");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_retract"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.notify_retract", preferredLocale));
         }
         formField.addValue(notifyRetract);
 
@@ -958,7 +958,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#presence_based_delivery");
         if (isEditing) {
             formField.setType(FormField.Type.boolean_type);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.presence_based"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.presence_based", preferredLocale));
         }
         formField.addValue(presenceBasedDelivery);
 
@@ -966,7 +966,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#type");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.type"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.type", preferredLocale));
         }
         formField.addValue(payloadType);
 
@@ -974,7 +974,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#body_xslt");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.body_xslt"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.body_xslt", preferredLocale));
         }
         formField.addValue(bodyXSLT);
 
@@ -982,7 +982,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#dataform_xslt");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.dataform_xslt"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.dataform_xslt", preferredLocale));
         }
         formField.addValue(dataformXSLT);
 
@@ -990,7 +990,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#access_model");
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.access_model"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.access_model", preferredLocale));
             formField.addOption(null, AccessModel.authorize.getName());
             formField.addOption(null, AccessModel.open.getName());
             formField.addOption(null, AccessModel.presence.getName());
@@ -1003,7 +1003,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#publish_model");
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.publish_model"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.publish_model", preferredLocale));
             formField.addOption(null, PublisherModel.publishers.getName());
             formField.addOption(null, PublisherModel.subscribers.getName());
             formField.addOption(null, PublisherModel.open.getName());
@@ -1014,7 +1014,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#roster_groups_allowed");
         if (isEditing) {
             formField.setType(FormField.Type.list_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.roster_allowed"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.roster_allowed", preferredLocale));
         }
         for (String group : rosterGroupsAllowed) {
             formField.addValue(group);
@@ -1024,7 +1024,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#contact");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.contact"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.contact", preferredLocale));
         }
         for (JID contact : contacts) {
             formField.addValue(contact.toString());
@@ -1034,7 +1034,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#language");
         if (isEditing) {
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.language"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.language", preferredLocale));
         }
         formField.addValue(language);
 
@@ -1042,7 +1042,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#owner");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.owner"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.owner", preferredLocale));
         }
         for (JID owner : getOwners()) {
             formField.addValue(owner.toString());
@@ -1052,7 +1052,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#publisher");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.publisher"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.publisher", preferredLocale));
         }
         for (JID owner : getPublishers()) {
             formField.addValue(owner.toString());
@@ -1062,7 +1062,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#itemreply");
         if (isEditing) {
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.itemreply"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.itemreply", preferredLocale));
             formField.addOption(null, ItemReplyPolicy.owner.name());
             formField.addOption(null, ItemReplyPolicy.publisher.name());
         }
@@ -1074,7 +1074,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#replyroom");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.replyroom"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.replyroom", preferredLocale));
         }
         for (JID owner : getReplyRooms()) {
             formField.addValue(owner.toString());
@@ -1084,7 +1084,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.setVariable("pubsub#replyto");
         if (isEditing) {
             formField.setType(FormField.Type.jid_multi);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.replyto"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.replyto", preferredLocale));
         }
         for (JID owner : getReplyTo()) {
             formField.addValue(owner.toString());
@@ -1094,12 +1094,13 @@ public abstract class Node implements Cacheable, Externalizable {
     /**
      * Returns a data form with the node configuration. The returned data form is used for
      * notifying node subscribers that the node configuration has changed. The data form is
-     * ony going to be included if node is configure to include payloads in event
+     * ony going to be included if node is configured to include payloads in event
      * notifications.
      *
+     * @param preferredLocale The preferred locale to localize the form
      * @return a data form with the node configuration.
      */
-    private DataForm getConfigurationChangeForm() {
+    private DataForm getConfigurationChangeForm(Locale preferredLocale) {
         DataForm form = new DataForm(DataForm.Type.result);
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -1107,7 +1108,7 @@ public abstract class Node implements Cacheable, Externalizable {
         formField.addValue("http://jabber.org/protocol/pubsub#node_config");
         // Add the form fields and configure them for notification
         // (i.e. no label or options are included)
-        addFormFields(form, false);
+        addFormFields(form, preferredLocale, false);
         return form;
     }
 
@@ -1115,16 +1116,17 @@ public abstract class Node implements Cacheable, Externalizable {
      * Returns a data form containing the node configuration that is going to be used for
      * service discovery.
      *
+     * @param preferredLocale The preferred locale to localize the form.
      * @return a data form with the node configuration.
      */
-    public DataForm getMetadataForm() {
+    public DataForm getMetadataForm(Locale preferredLocale) {
         DataForm form = new DataForm(DataForm.Type.result);
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
         formField.setType(FormField.Type.hidden);
         formField.addValue("http://jabber.org/protocol/pubsub#meta-data");
         // Add the form fields
-        addFormFields(form, true);
+        addFormFields(form, preferredLocale, true);
         return form;
     }
 

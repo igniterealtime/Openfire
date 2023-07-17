@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.JMXManager;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
@@ -810,11 +811,12 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         JID recipientJID = XMPPServer.getInstance().createJID(name, null, true).asBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);
         if (node != null) {
+            final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(senderJID);
             // Answer the extended info of a given node
             Node pubNode = pepService.getNode(node);
             // Get the metadata data form
             final Set<DataForm> dataForms = new HashSet<>();
-            dataForms.add(pubNode.getMetadataForm());
+            dataForms.add(pubNode.getMetadataForm(preferredLocale));
             return dataForms;
         }
         return new HashSet<>();

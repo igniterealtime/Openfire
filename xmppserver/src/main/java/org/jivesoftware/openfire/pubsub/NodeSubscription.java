@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,8 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
@@ -36,6 +30,9 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
+
+import java.text.ParseException;
+import java.util.*;
 
 import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
@@ -506,14 +503,15 @@ public class NodeSubscription {
      * Returns a data form with the subscription configuration. The data form can be used to
      * edit the subscription configuration.
      *
+     * @param preferredLocale The preferred locale to localize the form.
      * @return data form used by the subscriber to edit the subscription configuration.
      */
-    public DataForm getConfigurationForm() {
+    public DataForm getConfigurationForm(Locale preferredLocale) {
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.subscription.title"));
+        form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.subscription.title", preferredLocale));
         List<String> params = new ArrayList<>();
         params.add(node.getUniqueIdentifier().getNodeId());
-        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.subscription.instruction", params));
+        form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.subscription.instruction", params, preferredLocale));
         // Add the form fields and configure them for edition
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -523,25 +521,25 @@ public class NodeSubscription {
         formField = form.addField();
         formField.setVariable("pubsub#deliver");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.deliver"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.deliver", preferredLocale));
         formField.addValue(deliverNotifications);
 
         formField = form.addField();
         formField.setVariable("pubsub#digest");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.digest"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.digest", preferredLocale));
         formField.addValue(usingDigest);
 
         formField = form.addField();
         formField.setVariable("pubsub#digest_frequency");
         formField.setType(FormField.Type.text_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.digest_frequency"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.digest_frequency", preferredLocale));
         formField.addValue(digestFrequency);
 
         formField = form.addField();
         formField.setVariable("pubsub#expire");
         formField.setType(FormField.Type.text_single);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.expire"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.expire", preferredLocale));
         if (expire != null) {
             formField.addValue(XMPPDateTimeFormat.format(expire));
         }
@@ -549,13 +547,13 @@ public class NodeSubscription {
         formField = form.addField();
         formField.setVariable("pubsub#include_body");
         formField.setType(FormField.Type.boolean_type);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.include_body"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.include_body", preferredLocale));
         formField.addValue(includingBody);
 
         formField = form.addField();
         formField.setVariable("pubsub#show-values");
         formField.setType(FormField.Type.list_multi);
-        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.show-values"));
+        formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.show-values", preferredLocale));
         formField.addOption(null, Presence.Show.away.name());
         formField.addOption(null, Presence.Show.chat.name());
         formField.addOption(null, Presence.Show.dnd.name());
@@ -569,7 +567,7 @@ public class NodeSubscription {
             formField = form.addField();
             formField.setVariable("pubsub#subscription_type");
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.subscription_type"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.subscription_type", preferredLocale));
             formField.addOption(null, Type.items.name());
             formField.addOption(null, Type.nodes.name());
             formField.addValue(type);
@@ -577,7 +575,7 @@ public class NodeSubscription {
             formField = form.addField();
             formField.setVariable("pubsub#subscription_depth");
             formField.setType(FormField.Type.list_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.subscription_depth"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.subscription_depth", preferredLocale));
             formField.addOption(null, "1");
             formField.addOption(null, "all");
             formField.addValue(depth == 1 ? "1" : "all");
@@ -587,7 +585,7 @@ public class NodeSubscription {
             formField = form.addField();
             formField.setVariable("x-pubsub#keywords");
             formField.setType(FormField.Type.text_single);
-            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.keywords"));
+            formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.subscription.keywords", preferredLocale));
             if (keyword != null) {
                 formField.addValue(keyword);
             }
@@ -812,7 +810,8 @@ public class NodeSubscription {
         }
         // Add a message body (if required)
         if (isIncludingBody()) {
-            notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
+            final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(jid);
+            notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body", preferredLocale));
         }
         // Include date when published item was created
         notification.getElement().addElement("delay", "urn:xmpp:delay")
@@ -875,13 +874,14 @@ public class NodeSubscription {
     }
 
     /**
-     * Sends an request to authorize the pending subscription to the specified owner.
+     * Sends a request to authorize the pending subscription to the specified owner.
      *
      * @param owner the JID of the user that will get the authorization request.
      */
     public void sendAuthorizationRequest(JID owner) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(owner);
         Message authRequest = new Message();
-        authRequest.addExtension(node.getAuthRequestForm(this));
+        authRequest.addExtension(node.getAuthRequestForm(this, preferredLocale));
         authRequest.setTo(owner);
         authRequest.setFrom(node.getService().getAddress());
         // Send authentication request to node owners
@@ -893,10 +893,9 @@ public class NodeSubscription {
      * answer sent by a owner will be processed. Rest of the answers will be discarded.
      */
     public void sendAuthorizationRequest() {
-        Message authRequest = new Message();
-        authRequest.addExtension(node.getAuthRequestForm(this));
-        // Send authentication request to node owners
-        node.getService().broadcast(node, authRequest, node.getOwners());
+        for (final JID owner : node.getOwners()) {
+            sendAuthorizationRequest(owner);
+        }
     }
 
     /**

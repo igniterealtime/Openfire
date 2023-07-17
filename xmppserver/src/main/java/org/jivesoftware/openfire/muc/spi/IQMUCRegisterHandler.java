@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,11 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.muc.ConflictException;
-import org.jivesoftware.openfire.muc.ForbiddenException;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -37,6 +30,11 @@ import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.locks.Lock;
 
 /**
  * This class is responsible for handling packets with namespace jabber:iq:register that were
@@ -49,59 +47,6 @@ class IQMUCRegisterHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(IQMUCRegisterHandler.class);
 
-    private static final Element probeResult;
-    
-    static {
-        // Create the registration form of the room which contains information
-        // such as: first name, last name and  nickname.
-        final DataForm registrationForm = new DataForm(DataForm.Type.form);
-        registrationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.reg.title"));
-        registrationForm.addInstruction(LocaleUtils
-                .getLocalizedString("muc.form.reg.instruction"));
-
-        final FormField fieldForm = registrationForm.addField();
-        fieldForm.setVariable("FORM_TYPE");
-        fieldForm.setType(FormField.Type.hidden);
-        fieldForm.addValue("http://jabber.org/protocol/muc#register");
-
-        final FormField fieldReg = registrationForm.addField();
-        fieldReg.setVariable("muc#register_first");
-        fieldReg.setType(FormField.Type.text_single);
-        fieldReg.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name"));
-        fieldReg.setRequired(true);
-
-        final FormField fieldLast = registrationForm.addField();
-        fieldLast.setVariable("muc#register_last");
-        fieldLast.setType(FormField.Type.text_single);
-        fieldLast.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name"));
-        fieldLast.setRequired(true);
-
-        final FormField fieldNick = registrationForm.addField();
-        fieldNick.setVariable("muc#register_roomnick");
-        fieldNick.setType(FormField.Type.text_single);
-        fieldNick.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname"));
-        fieldNick.setRequired(true);
-
-        final FormField fieldUrl = registrationForm.addField();
-        fieldUrl.setVariable("muc#register_url");
-        fieldUrl.setType(FormField.Type.text_single);
-        fieldUrl.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url"));
-
-        final FormField fieldMail = registrationForm.addField();
-        fieldMail.setVariable("muc#register_email");
-        fieldMail.setType(FormField.Type.text_single);
-        fieldMail.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email"));
-
-        final FormField fieldFaq = registrationForm.addField();
-        fieldFaq.setVariable("muc#register_faqentry");
-        fieldFaq.setType(FormField.Type.text_single);
-        fieldFaq.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry"));
-
-        // Create the probeResult and add the registration form
-        probeResult = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
-        probeResult.add(registrationForm.getElement());
-    }
-    
     private final MultiUserChatService mucService;
 
     public IQMUCRegisterHandler(MultiUserChatService mucService) {
@@ -120,6 +65,8 @@ class IQMUCRegisterHandler {
             reply.setError(PacketError.Condition.feature_not_implemented);
             return reply;
         }
+
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(packet.getFrom());
 
         final Lock lock = mucService.getChatRoomLock(name);
         lock.lock();
@@ -146,7 +93,55 @@ class IQMUCRegisterHandler {
             if (IQ.Type.get == packet.getType()) {
                 reply = IQ.createResultIQ(packet);
                 String nickname = room.getReservedNickname(packet.getFrom());
-                Element currentRegistration = probeResult.createCopy();
+
+                // Create the registration form of the room which contains information
+                // such as: first name, last name and  nickname.
+                final DataForm registrationForm = new DataForm(DataForm.Type.form);
+                registrationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.reg.title", preferredLocale));
+                registrationForm.addInstruction(LocaleUtils.getLocalizedString("muc.form.reg.instruction", preferredLocale));
+
+                final FormField fieldForm = registrationForm.addField();
+                fieldForm.setVariable("FORM_TYPE");
+                fieldForm.setType(FormField.Type.hidden);
+                fieldForm.addValue("http://jabber.org/protocol/muc#register");
+
+                final FormField fieldReg = registrationForm.addField();
+                fieldReg.setVariable("muc#register_first");
+                fieldReg.setType(FormField.Type.text_single);
+                fieldReg.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.first-name", preferredLocale));
+                fieldReg.setRequired(true);
+
+                final FormField fieldLast = registrationForm.addField();
+                fieldLast.setVariable("muc#register_last");
+                fieldLast.setType(FormField.Type.text_single);
+                fieldLast.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.last-name", preferredLocale));
+                fieldLast.setRequired(true);
+
+                final FormField fieldNick = registrationForm.addField();
+                fieldNick.setVariable("muc#register_roomnick");
+                fieldNick.setType(FormField.Type.text_single);
+                fieldNick.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.nickname", preferredLocale));
+                fieldNick.setRequired(true);
+
+                final FormField fieldUrl = registrationForm.addField();
+                fieldUrl.setVariable("muc#register_url");
+                fieldUrl.setType(FormField.Type.text_single);
+                fieldUrl.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.url", preferredLocale));
+
+                final FormField fieldMail = registrationForm.addField();
+                fieldMail.setVariable("muc#register_email");
+                fieldMail.setType(FormField.Type.text_single);
+                fieldMail.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.email", preferredLocale));
+
+                final FormField fieldFaq = registrationForm.addField();
+                fieldFaq.setVariable("muc#register_faqentry");
+                fieldFaq.setType(FormField.Type.text_single);
+                fieldFaq.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry", preferredLocale));
+
+                // Create the probeResult and add the registration form
+                Element currentRegistration = DocumentHelper.createElement(QName.get("query", "jabber:iq:register"));
+                currentRegistration.add(registrationForm.getElement());
+
                 if (nickname != null) {
                     // The user is already registered with the room so answer a completed form
                     ElementUtil.setProperty(currentRegistration, "query.registered", null);

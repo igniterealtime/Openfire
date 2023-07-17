@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,10 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupJID;
@@ -37,6 +35,9 @@ import org.xmpp.forms.FormField;
 import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.*;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#owner. This kind of 
  * packets are usually sent by room owners. So this handler provides the necessary functionality
@@ -50,17 +51,12 @@ public class IQOwnerHandler {
 
     private final MUCRoom room;
 
-    private DataForm configurationForm;
-
-    private Element probeResult;
-
     private final boolean skipInvite;
 
     public IQOwnerHandler(MUCRoom chatroom) {
         this.room = chatroom;
         this.skipInvite = JiveGlobals.getBooleanProperty(
                 "xmpp.muc.skipInvite", false);
-        init();
     }
 
     /**
@@ -120,8 +116,8 @@ public class IQOwnerHandler {
                 // If no element was included in the query element then answer the
                 // configuration form
                 if (!element.elementIterator().hasNext()) {
-                    refreshConfigurationFormValues();
-                    reply.setChildElement(probeResult.createCopy());
+                    final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(packet.getFrom());
+                    reply.setChildElement(generateProbeResult(preferredLocale));
                 }
                 // An unknown and possibly incorrect element was included in the query
                 // element so answer a BAD_REQUEST error
@@ -453,8 +449,8 @@ public class IQOwnerHandler {
         }
 
         // Send the updated presences to the room occupants
-        for (Object presence : presences) {
-            room.send((Presence) presence, room.getRole());
+        for (Presence presence : presences) {
+            room.send(presence, room.getRole());
         }
 
         // XEP-0045 section 10.2.1 "Notification of Configuration Changes: A room MUST send notification to all occupants
@@ -472,6 +468,133 @@ public class IQOwnerHandler {
     }
 
     private void refreshConfigurationFormValues() {
+    }
+
+    private Element generateProbeResult(Locale preferredLocale) {
+        final DataForm configurationForm = new DataForm(DataForm.Type.form);
+        configurationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.conf.title", preferredLocale));
+        List<String> params = new ArrayList<>();
+        params.add(room.getName());
+        configurationForm.addInstruction(LocaleUtils.getLocalizedString("muc.form.conf.instruction", params, preferredLocale));
+
+        configurationForm.addField("FORM_TYPE", null, Type.hidden)
+                .addValue("http://jabber.org/protocol/muc#roomconfig");
+
+        configurationForm.addField("muc#roomconfig_roomname",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomname", preferredLocale),
+                Type.text_single);
+
+        configurationForm.addField("muc#roomconfig_roomdesc",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomdesc", preferredLocale),
+                Type.text_single);
+
+        configurationForm.addField("muc#roomconfig_changesubject",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_changesubject", preferredLocale),
+                Type.boolean_type);
+
+        final FormField maxUsers = configurationForm.addField(
+                "muc#roomconfig_maxusers",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_maxusers", preferredLocale),
+                Type.list_single);
+        maxUsers.addOption("10", "10");
+        maxUsers.addOption("20", "20");
+        maxUsers.addOption("30", "30");
+        maxUsers.addOption("40", "40");
+        maxUsers.addOption("50", "50");
+        maxUsers.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none", preferredLocale), "0");
+
+        final FormField broadcast = configurationForm.addField(
+                "muc#roomconfig_presencebroadcast",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_presencebroadcast", preferredLocale),
+                Type.list_multi);
+        broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator", preferredLocale), "moderator");
+        broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant", preferredLocale), "participant");
+        broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.visitor", preferredLocale), "visitor");
+
+        configurationForm.addField("muc#roomconfig_publicroom",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_publicroom", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField("muc#roomconfig_persistentroom",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_persistentroom", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField("muc#roomconfig_moderatedroom",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_moderatedroom", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField("muc#roomconfig_membersonly",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_membersonly", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField(null, null, Type.fixed)
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.allowinvitesfixed", preferredLocale));
+
+        configurationForm.addField("muc#roomconfig_allowinvites",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowinvites", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField("muc#roomconfig_passwordprotectedroom",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_passwordprotectedroom", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField(null, null, Type.fixed)
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomsecretfixed", preferredLocale));
+
+        configurationForm.addField("muc#roomconfig_roomsecret",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomsecret", preferredLocale),
+                Type.text_private);
+
+        final FormField whois = configurationForm.addField(
+                "muc#roomconfig_whois",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_whois", preferredLocale),
+                Type.list_single);
+        whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator", preferredLocale), "moderators");
+        whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone", preferredLocale), "anyone");
+
+        final FormField allowpm = configurationForm.addField(
+                "muc#roomconfig_allowpm",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowpm", preferredLocale),
+                Type.list_single);
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone", preferredLocale), "anyone");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator", preferredLocale), "moderators");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant", preferredLocale), "participants");
+        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none", preferredLocale), "none");
+
+        configurationForm.addField("muc#roomconfig_enablelogging",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField("x-muc#roomconfig_reservednick",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_reservednick", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField("x-muc#roomconfig_canchangenick",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_canchangenick", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField(null, null, Type.fixed)
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.owner_registration", preferredLocale));
+
+        configurationForm.addField("x-muc#roomconfig_registration",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_registration", preferredLocale),
+                Type.boolean_type);
+
+        configurationForm.addField(null, null, Type.fixed)
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomadminsfixed", preferredLocale));
+
+        configurationForm.addField("muc#roomconfig_roomadmins",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomadmins", preferredLocale),
+                Type.jid_multi);
+
+        configurationForm.addField(null, null, Type.fixed)
+                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomownersfixed", preferredLocale));
+
+        configurationForm.addField("muc#roomconfig_roomowners",
+                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomowners", preferredLocale),
+                Type.jid_multi);
+
+        // Add room-specific data values to the form.
         synchronized (room) {
             FormField field = configurationForm.getField("muc#roomconfig_roomname");
             field.clearValues();
@@ -582,145 +705,12 @@ public class IQOwnerHandler {
                     field.addValue(jid.toString());
                 }
             }
-
-            // Remove the old element
-            probeResult.remove(probeResult.element(QName.get("x", "jabber:x:data")));
-            // Add the new representation of configurationForm as an element 
-            probeResult.add(configurationForm.getElement());
-
         }
-    }
 
-    private void init() {
-        Element element = DocumentHelper.createElement(QName.get("query",
-                "http://jabber.org/protocol/muc#owner"));
-
-        configurationForm = new DataForm(DataForm.Type.form);
-        configurationForm.setTitle(LocaleUtils.getLocalizedString("muc.form.conf.title"));
-        List<String> params = new ArrayList<>();
-        params.add(room.getName());
-        configurationForm.addInstruction(LocaleUtils.getLocalizedString("muc.form.conf.instruction", params));
-
-        configurationForm.addField("FORM_TYPE", null, Type.hidden)
-                .addValue("http://jabber.org/protocol/muc#roomconfig");
-
-        configurationForm.addField("muc#roomconfig_roomname", 
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomname"),
-                Type.text_single);
-
-        configurationForm.addField("muc#roomconfig_roomdesc",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomdesc"),
-                Type.text_single);
-
-        configurationForm.addField("muc#roomconfig_changesubject",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_changesubject"),
-                Type.boolean_type);
-        
-        final FormField maxUsers = configurationForm.addField(
-                "muc#roomconfig_maxusers",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_maxusers"),
-                Type.list_single);
-        maxUsers.addOption("10", "10");
-        maxUsers.addOption("20", "20");
-        maxUsers.addOption("30", "30");
-        maxUsers.addOption("40", "40");
-        maxUsers.addOption("50", "50");
-        maxUsers.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none"), "0");
-
-        final FormField broadcast = configurationForm.addField(
-                "muc#roomconfig_presencebroadcast",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_presencebroadcast"),
-                Type.list_multi);
-        broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderator");
-        broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant"), "participant");
-        broadcast.addOption(LocaleUtils.getLocalizedString("muc.form.conf.visitor"), "visitor");
-
-        configurationForm.addField("muc#roomconfig_publicroom", 
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_publicroom"),
-                Type.boolean_type);
-
-        configurationForm.addField("muc#roomconfig_persistentroom",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_persistentroom"),
-                Type.boolean_type);
-
-        configurationForm.addField("muc#roomconfig_moderatedroom",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_moderatedroom"),
-                Type.boolean_type);
-
-        configurationForm.addField("muc#roomconfig_membersonly",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_membersonly"),
-                Type.boolean_type);
-
-        configurationForm.addField(null, null, Type.fixed)
-                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.allowinvitesfixed"));
-
-        configurationForm.addField("muc#roomconfig_allowinvites",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowinvites"),
-                Type.boolean_type);
-
-        configurationForm.addField("muc#roomconfig_passwordprotectedroom",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_passwordprotectedroom"),
-                Type.boolean_type);
-
-        configurationForm.addField(null, null, Type.fixed)
-                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomsecretfixed"));
-
-        configurationForm.addField("muc#roomconfig_roomsecret",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomsecret"),
-                Type.text_private);
-        
-        final FormField whois = configurationForm.addField(
-                "muc#roomconfig_whois",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_whois"),
-                Type.list_single);
-        whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
-        whois.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
-
-        final FormField allowpm = configurationForm.addField(
-                "muc#roomconfig_allowpm",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_allowpm"),
-                Type.list_single);
-        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.anyone"), "anyone");
-        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.moderator"), "moderators");
-        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.participant"), "participants");
-        allowpm.addOption(LocaleUtils.getLocalizedString("muc.form.conf.none"), "none");
-
-        configurationForm.addField("muc#roomconfig_enablelogging",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging"),
-                Type.boolean_type);
-
-        configurationForm.addField("x-muc#roomconfig_reservednick",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_reservednick"),
-                Type.boolean_type);
-
-        configurationForm.addField("x-muc#roomconfig_canchangenick",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_canchangenick"),
-                Type.boolean_type);
-
-        configurationForm.addField(null, null, Type.fixed)
-                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"));
-
-        configurationForm.addField("x-muc#roomconfig_registration",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_registration"),
-                Type.boolean_type);
-
-        configurationForm.addField(null, null, Type.fixed)
-                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomadminsfixed"));
-
-        configurationForm.addField("muc#roomconfig_roomadmins",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomadmins"),
-                Type.jid_multi);
-
-        configurationForm.addField(null, null, Type.fixed)
-                .addValue(LocaleUtils.getLocalizedString("muc.form.conf.roomownersfixed"));
-
-        configurationForm.addField("muc#roomconfig_roomowners",
-                LocaleUtils.getLocalizedString("muc.form.conf.owner_roomowners"),
-                Type.jid_multi);
-
-        // Create the probeResult and add the basic info together with the configuration form
-        probeResult = element;
-        probeResult.add(configurationForm.getElement());
+        final Element element = DocumentHelper.createElement(QName.get("query",
+            "http://jabber.org/protocol/muc#owner"));
+        element.add(configurationForm.getElement());
+        return element;
     }
 
     /**

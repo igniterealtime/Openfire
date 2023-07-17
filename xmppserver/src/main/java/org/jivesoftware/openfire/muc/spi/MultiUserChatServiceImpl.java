@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2021-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2021-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ package org.jivesoftware.openfire.muc.spi;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.XMPPServerListener;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.archive.Archiver;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -2969,6 +2966,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // Answer the extended info of a given room
             final MUCRoom room = getChatRoom(name);
             if (room != null) {
+
+                final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(senderJID);
+
                 final DataForm dataForm = new DataForm(Type.result);
 
                 final FormField fieldType = dataForm.addField();
@@ -2979,19 +2979,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final FormField fieldDescr = dataForm.addField();
                 fieldDescr.setVariable("muc#roominfo_description");
                 fieldDescr.setType(FormField.Type.text_single);
-                fieldDescr.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.desc"));
+                fieldDescr.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.desc", preferredLocale));
                 fieldDescr.addValue(room.getDescription());
 
                 final FormField fieldSubj = dataForm.addField();
                 fieldSubj.setVariable("muc#roominfo_subject");
                 fieldSubj.setType(FormField.Type.text_single);
-                fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject"));
+                fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject", preferredLocale));
                 fieldSubj.addValue(room.getSubject());
 
                 final FormField fieldOcc = dataForm.addField();
                 fieldOcc.setVariable("muc#roominfo_occupants");
                 fieldOcc.setType(FormField.Type.text_single);
-                fieldOcc.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants"));
+                fieldOcc.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.occupants", preferredLocale));
                 fieldOcc.addValue(Integer.toString(room.getOccupantsCount()));
 
                 /*field = new XFormFieldImpl("muc#roominfo_lang");
@@ -3003,7 +3003,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 final FormField fieldDate = dataForm.addField();
                 fieldDate.setVariable("x-muc#roominfo_creationdate");
                 fieldDate.setType(FormField.Type.text_single);
-                fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate"));
+                fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate", preferredLocale));
                 fieldDate.addValue(XMPPDateTimeFormat.format(room.getCreationDate()));
                 final Set<DataForm> dataForms = new HashSet<>();
                 dataForms.add(dataForm);

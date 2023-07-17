@@ -43,15 +43,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
 
@@ -65,7 +61,7 @@ public class NettyConnection implements Connection {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     private static final String SSL_HANDLER_NAME = "ssl";
-    private ConnectionConfiguration configuration;
+    private final ConnectionConfiguration configuration;
 
     /**
      * The utf-8 charset for decoding and encoding XMPP packet streams.
@@ -73,7 +69,7 @@ public class NettyConnection implements Connection {
     public static final String CHARSET = "UTF-8";
 
     public LocalSession session;
-    private ChannelHandlerContext channelHandlerContext;
+    private final ChannelHandlerContext channelHandlerContext;
 
     final private Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
 
@@ -81,10 +77,9 @@ public class NettyConnection implements Connection {
      * Deliverer to use when the connection is closed or was closed when delivering
      * a packet.
      */
-    private PacketDeliverer backupDeliverer;
+    private final PacketDeliverer backupDeliverer;
     private int majorVersion = 1;
     private int minorVersion = 0;
-    private String language = null;
 
     /**
      * TLS policy currently in use for this connection.
@@ -96,7 +91,6 @@ public class NettyConnection implements Connection {
      * Compression policy currently in use for this connection.
      */
     private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
-    private static final ThreadLocal<CharsetEncoder> encoder = new ThreadLocalEncoder();
 
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
@@ -104,25 +98,13 @@ public class NettyConnection implements Connection {
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
-    private AtomicReference<State> state = new AtomicReference<>(State.OPEN);
-
-    /**
-     * Lock used to ensure the integrity of the underlying IoSession (refer to
-     * https://issues.apache.org/jira/browse/DIRMINA-653 for details)
-     * <p>
-     * This lock can be removed once Openfire guarantees a stable delivery
-     * order, in which case {@link #deliver(Packet)} won't be called
-     * concurrently any more, which made this lock necessary in the first place.
-     * </p>
-     */
-    private final ReentrantLock ioSessionLock = new ReentrantLock(true);
+    private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
 
     public NettyConnection(ChannelHandlerContext channelHandlerContext, @Nullable PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
         this.channelHandlerContext = channelHandlerContext;
         this.backupDeliverer = packetDeliverer;
         this.configuration = configuration;
     }
-
 
     @Override
     public boolean validate() {
@@ -311,7 +293,6 @@ public class NettyConnection implements Connection {
         }
     }
 
-
     @Override
     public boolean isClosed() {
         return state.get() == State.CLOSED;
@@ -473,13 +454,4 @@ public class NettyConnection implements Connection {
         return super.toString() + " Netty Session: " + channelHandlerContext.name();
     }
 
-    private static class ThreadLocalEncoder extends ThreadLocal<CharsetEncoder> {
-
-        @Override
-        protected CharsetEncoder initialValue() {
-            return StandardCharsets.UTF_8.newEncoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT);
-        }
-    }
 }

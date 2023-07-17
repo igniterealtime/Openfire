@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2015-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2015-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 
 /**
- * An OutgoingSessionPromise provides an asynchronic way for sending packets to remote servers.
+ * An OutgoingSessionPromise provides an asynchronous way for sending packets to remote servers.
  * When looking for a route to a remote server that does not have an existing connection, a session
- * promise is returned.
+ * promise is returned.<p>
  *
  * This class will queue packets and process them in another thread. The processing thread will
  * use a pool of thread that will actually do the hard work. The threads in the pool will try
@@ -286,7 +286,7 @@ public class OutgoingSessionPromise {
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
-                created = LocalOutgoingServerSession.authenticateDomain(domainPair); // TODO: AG MAGIC HERE
+                created = LocalOutgoingServerSession.authenticateDomain(domainPair);
             } finally {
                 lock.unlock();
             }

@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.spi;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -17,8 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- * This class is responsible for accepting new (socket) connections, using Java NIO implementation provided by the
- * Netty framework.
+ * Responsible for accepting new (socket) connections, using Java NIO implementation provided by the Netty framework.
  *
  * @author Matthew Vivian
  * @author Alex Gidman
@@ -68,25 +83,16 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
             default:
                 throw new IllegalStateException("This implementation does not support the connection type as defined in the provided configuration: " + configuration.getType());
         }
-//        connectionHandler = new NettyServerConnectionHandler( configuration );
 
-//        switch ( configuration.getType() )
-//        {
-//             case SOCKET_S2S:
-//                connectionHandler = new ServerConnectionHandler( configuration );
-//                break;
-//            case SOCKET_C2S:
-//                connectionHandler = new ClientConnectionHandler( configuration );
-//                break;
+
+// TODO add support for COMPONENT & Multiplexer
 //            case COMPONENT:
 //                connectionHandler = new ComponentConnectionHandler( configuration );
 //                break;
 //            case CONNECTION_MANAGER:
 //                connectionHandler = new MultiplexerConnectionHandler( configuration );
 //                break;
-//            default:
-//                throw new IllegalStateException( "This implementation does not support the connection type as defined in the provided configuration: " + configuration.getType() );
-//        }
+
     }
 
     /**

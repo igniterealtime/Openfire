@@ -41,7 +41,7 @@ import java.util.Set;
 // TODO most getters in this class assume that the ConnectionAcceptor property value match the property values of JiveGlobals. This should be the case, but should be asserted.
 public class ConnectionListener
 {
-    private Logger Log;
+    private final Logger Log;
 
     // Connection characteristics
     private final ConnectionType type;
@@ -199,7 +199,7 @@ public class ConnectionListener
         {
             case BOSH_C2S:
             case WEBADMIN:
-                Log.debug( "Not starting a (MINA-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
+                Log.debug( "Not starting a (Netty-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
                 return;
 
             default:
@@ -229,7 +229,6 @@ public class ConnectionListener
         Log.debug( "Starting..." );
         if ( getType() == ConnectionType.SOCKET_S2S || getType() == ConnectionType.SOCKET_C2S ) {
             connectionAcceptor = new NettyConnectionAcceptor( generateConnectionConfiguration() );
-//            connectionAcceptor = new LegacyConnectionAcceptor( generateConnectionConfiguration() );
         } else {
             connectionAcceptor = new MINAConnectionAcceptor( generateConnectionConfiguration() );
         }

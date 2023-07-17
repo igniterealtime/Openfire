@@ -38,9 +38,9 @@ import java.util.Map;
 class XMLLightweightParser {
     private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
     private static int maxBufferSize;
-    // Chars that rappresent CDATA section start
+    // Chars that represent CDATA section start
     protected static char[] CDATA_START = {'<', '!', '[', 'C', 'D', 'A', 'T', 'A', '['};
-    // Chars that rappresent CDATA section end
+    // Chars that represent CDATA section end
     protected static char[] CDATA_END = {']', ']', '>'};
 
     // Buffer with all data retrieved
@@ -82,7 +82,7 @@ class XMLLightweightParser {
     protected int startLastMsg = 0;
     // Flag used to discover tag in the form <tag />.
     protected boolean insideRootTag = false;
-    // Object conteining the head tag
+    // Object containing the head tag
     protected StringBuilder head = new StringBuilder(16);
     // List with all finished messages found.
     protected List<String> msgs = new ArrayList<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,18 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Decoder class that parses ByteBuffers and generates XML stanzas. Generated
+ * Decoder that parses ByteBuffers and generates XML stanzas. Generated
  * stanzas are then passed to the next filters.
  */
 public class NettyXMPPDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        // Get the XML light parser from the channel
+        // Get the XML parser from the channel
         XMLLightweightParser parser = ctx.channel().attr(NettyConnectionHandler.XML_PARSER).get();
 
+        // Check that the buffer is not bigger than 1 Megabyte. For security reasons
+        // we will abort parsing when 1 Mega of queued chars was found.
         if (parser.isMaxBufferSizeExceeded()) {
             in.release();
             return;
@@ -44,6 +46,7 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         char[] readChars = in.readCharSequence(in.readableBytes(), CharsetUtil.UTF_8).toString().toCharArray();
         parser.read(readChars);
 
+        // Add any decoded messages to our outbound list to be processed by subsequent channelRead() events
         if (parser.areThereMsgs()) {
             out.addAll(Arrays.asList(parser.getMsgs()));
         }

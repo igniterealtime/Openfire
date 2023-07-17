@@ -68,7 +68,7 @@ public class SocketConnection implements Connection {
      * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
      * up to the connection's owner to configure the timeout value. Sending stanzas to the client
      * is not considered as activity. We are only considering the connection active when the
-     * client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * client sends some data or heartbeats (i.e. whitespaces) to the server.
      * The reason for this is that sending data will fail if the connection is closed. And if
      * the thread is blocked while sending data (because the socket is closed) then the clean up
      * thread will close the socket anyway.
@@ -684,7 +684,7 @@ public class SocketConnection implements Connection {
                 writeStarted();
                 writer.write(text);
                 writer.flush();
-                System.out.print("Sending: " + text);
+                Log.trace("Sending: " + text);
             }
             catch (Exception e) {
                 Log.debug("Error delivering raw text" + "\n" + this.toString(), e);

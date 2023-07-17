@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -11,10 +27,11 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 
 /**
- * ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created and how to build and configure
- * a {@link NettyConnection}.
+ * Server-specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
+ * and how to build and configure a {@link NettyConnection}.
  *
- * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+ * @author Matthew Vivian
+ * @author Alex Gidman
  */
 public class NettyServerConnectionHandler extends NettyConnectionHandler
 {
@@ -53,10 +70,7 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
     }
 
 
-// TBD V
-
-
-
+    // TODO - check idle time is set for connections (check client, server, outbound handlers
     int getMaxIdleTime()
     {
         return JiveGlobals.getIntProperty( "xmpp.server.idle", 6 * 60 * 1000 ) / 1000;

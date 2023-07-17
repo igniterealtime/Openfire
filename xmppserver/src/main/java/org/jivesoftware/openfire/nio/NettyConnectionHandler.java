@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,12 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
-import java.nio.charset.StandardCharsets;
-
 /**
  * A NettyConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
- * received XML stanzas to the proper StanzaHandler.
+ * received XML stanzas to the proper StanzaHandler.<p>
+ *
+ * Subclasses of this will supply a specific {@link StanzaHandler} implementation depending on the
+ * type of connection to be handled, e.g. C2S, S2S.
  *
  * @author Matthew Vivian
  * @author Alex Gidman

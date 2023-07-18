@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,8 @@ import org.xmpp.packet.*;
 import javax.annotation.Nonnull;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
@@ -69,6 +72,16 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     private static final Logger Log = LoggerFactory.getLogger(LocalOutgoingServerSession.class);
 
     private static final Interner<JID> remoteAuthMutex = Interners.newWeakInterner();
+
+    /**
+     * Controls the S2S outgoing session initialise timeout time in seconds
+     */
+    public static final SystemProperty<Duration> INITIALISE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.session.initialise-timeout")
+        .setDefaultValue(Duration.ofSeconds(5))
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .build();
 
     private OutgoingServerSocketReader socketReader;
     private final Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
@@ -444,9 +457,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         else {
             log.debug("Skipping server dialback attempt as it has been disabled by local configuration.");
             return null;
-        }    	
+        }
     }
-    
+
     private static LocalOutgoingServerSession attemptSASLexternal(SocketConnection connection, MXParser xpp, XMPPPacketReader reader, DomainPair domainPair, String id, StringBuilder openingStream) throws DocumentException, IOException, XmlPullParserException {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[EXTERNAL SASL for: " + domainPair + " (Stream ID: " + id + ")]" );
 
@@ -455,7 +468,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.debug("EXTERNAL SASL was successful.");
             // SASL was successful so initiate a new stream
             connection.deliverRawText(openingStream.toString());
-            
+
             // Reset the parser
             //xpp.resetInput();
             //             // Reset the parser to use the new secured reader
@@ -479,9 +492,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         else {
             log.debug("EXTERNAL SASL failed.");
             return null;
-        }  	
+        }
     }
-    
+
     private static boolean doExternalAuthentication(String localDomain, SocketConnection connection,
             XMPPPacketReader reader) throws DocumentException, IOException, XmlPullParserException {
 

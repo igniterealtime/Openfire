@@ -60,12 +60,6 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
 
         switch ( configuration.getType() )
         {
-             case SOCKET_S2S:
-                connectionHandler = new ServerConnectionHandler( configuration );
-                break;
-            case SOCKET_C2S:
-                connectionHandler = new ClientConnectionHandler( configuration );
-                break;
             case COMPONENT:
                 connectionHandler = new ComponentConnectionHandler( configuration );
                 break;

@@ -116,8 +116,9 @@ public class NettySessionInitializer {
 
             return waitForSession(channel);
         } catch (InterruptedException e) {
+            Log.error("Error establishing Netty client session", e);
             stop();
-            throw new RuntimeException(e); // TODO: Better to throw all exceptions and catch outside?
+            throw new RuntimeException(e);
         }
     }
 

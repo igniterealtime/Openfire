@@ -45,9 +45,9 @@ import java.util.Set;
  * The connection used for receiving packets will use a ServerStanzaHandler since the other
  * connection will not receive packets.<p>
  *
- * TODO Finish migration of s2s to use NIO instead of blocking threads. Migrate from ServerSocketReader.
- *
  * @author Gaston Dombiak
+ * @author Alex Gidman
+ * @author Matthew Vivian
  */
 public class ServerStanzaHandler extends StanzaHandler {
 

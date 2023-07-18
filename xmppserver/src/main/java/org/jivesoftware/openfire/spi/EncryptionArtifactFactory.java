@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2015-2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.spi;
 
 import io.netty.handler.ssl.ClientAuth;
@@ -327,6 +343,12 @@ public class EncryptionArtifactFactory
         }
     }
 
+    /**
+     * Create and configure a new SslContext instance for a Netty server.<p>
+     *
+     * @param directTLS if the first write request should be encrypted.
+     * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
+     */
     public SslContext createServerModeSslContext(boolean directTLS) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, SSLException {
         getKeyManagers();
         SslContextBuilder builder = SslContextBuilder.forServer(keyManagerFactory);
@@ -352,6 +374,13 @@ public class EncryptionArtifactFactory
         return builder.build();
     }
 
+    /**
+     * Create and configure a new SslContext instance for a Netty client.<p>
+     *
+     * Used when the Openfire server is acting as a client when making S2S connections.
+     *
+     * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
+     */
     public SslContext createClientModeSslContext() throws SSLException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
         getKeyManagers();
 

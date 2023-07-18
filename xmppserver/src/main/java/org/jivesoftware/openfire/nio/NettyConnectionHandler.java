@@ -100,9 +100,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         Log.trace("Netty XMPP handler added: " + ctx.channel().localAddress());
-        //        ConnectionHandler.sessionOpened()
 
-        // TODO - do we want a separate parser per-channel?
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
         ctx.channel().attr(XML_PARSER).set(new XMLLightweightParser());
 

@@ -46,7 +46,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RespondingServerStanzaHandler.class);
     private final DomainPair domainPair;
-
     private boolean isSessionAuthenticated = false;
 
     /**
@@ -118,7 +117,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    boolean processUnknowPacket(Element doc) {
         String rootTagName = doc.getName();
 
         // Handle features

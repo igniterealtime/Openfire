@@ -40,7 +40,9 @@ import org.xmpp.packet.JID;
  * be created and how to build and configure a {@link NIOConnection}.
  *
  * @author Gaston Dombiak
+ * @deprecated Use {@link NettyClientConnectionHandler} instead
  */
+@Deprecated
 public class ClientConnectionHandler extends ConnectionHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(ClientConnectionHandler.class);

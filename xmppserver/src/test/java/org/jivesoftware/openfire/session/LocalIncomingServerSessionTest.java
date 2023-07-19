@@ -182,7 +182,7 @@ public class LocalIncomingServerSessionTest
         throws Exception
     {
         final ExpectedOutcome expected = ExpectedOutcome.generateExpectedOutcome(remoteServerSettings, localServerSettings);
-        System.out.println("Executing test:\n - Local Server, Recipient, System Under Test Settings: " + localServerSettings + "\n - Remote Server, Initiator, dummy/mock server Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
+        if (RemoteInitiatingServerDummy.doLog) System.out.println("Executing test:\n - Local Server, Recipient, System Under Test Settings: " + localServerSettings + "\n - Remote Server, Initiator, dummy/mock server Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
@@ -258,7 +258,7 @@ public class LocalIncomingServerSessionTest
             result = socketReader == null ? null : (LocalIncomingServerSession) socketReader.getSession();
 
             // Verify results
-            System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
+            if (RemoteInitiatingServerDummy.doLog) System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
             switch (expected.getConnectionState())
             {
                 case NO_CONNECTION:
@@ -290,7 +290,7 @@ public class LocalIncomingServerSessionTest
                     assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
                     break;
             }
-            System.out.println("Expectation met.");
+            if (RemoteInitiatingServerDummy.doLog) System.out.println("Expectation met.");
         } finally {
             // Teardown test fixture.
             trustStore.delete("unit-test");

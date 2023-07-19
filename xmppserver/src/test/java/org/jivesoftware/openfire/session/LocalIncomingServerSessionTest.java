@@ -241,8 +241,6 @@ public class LocalIncomingServerSessionTest
                 DNSUtil.setDnsOverride(Map.of(RemoteInitiatingServerDummy.XMPP_DOMAIN, new DNSUtil.HostAddress("localhost", remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort(), false)));
             }
 
-            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteInitiatingServerDummy.XMPP_DOMAIN);
-
             // execute system under test.
             final SocketAcceptThread socketAcceptThread = new SocketAcceptThread(0, null, false);
             socketAcceptThread.setDaemon(true);

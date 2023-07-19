@@ -214,7 +214,7 @@ public class AbstractRemoteServerDummy
 
                 @Override
                 public PrivateKey getPrivateKey(String alias) {
-                    return keyPair.getPrivate();
+                    return keyPair == null ? null : keyPair.getPrivate();
                 }
             }
         };

@@ -353,7 +353,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
             final SSLContext sc = SSLContext.getInstance("TLSv1.2");
 
-            sc.init(createKeyManager(generatedPKIX.getKeyPair(), generatedPKIX.getCertificateChain()), createTrustManagerThatTrustsAll(), new java.security.SecureRandom());
+            sc.init(createKeyManager(generatedPKIX == null ? null : generatedPKIX.getKeyPair(), generatedPKIX == null ? null : generatedPKIX.getCertificateChain()), createTrustManagerThatTrustsAll(), new java.security.SecureRandom());
             SSLContext.setDefault(sc);
 
             final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, true);

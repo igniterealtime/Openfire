@@ -50,6 +50,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -414,6 +416,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
             if (connection != null) {
                 connection.forceClose();
+
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                    return null;
+                }
+            }
+
+            if (e.getCause() instanceof CertificateException && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.", e);
+                return null;
             }
         }
         catch (Exception e)
@@ -423,12 +434,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
             if (connection != null) {
                 connection.close();
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                    return null;
+                }
             }
-        }
-
-        if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
-            log.warn( "Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled." );
-            return null;
         }
 
         if (ServerDialback.isEnabled())
@@ -484,6 +493,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
             // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
             if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
+                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                    log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
+                    return null;
+                }
                 if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
                     log.debug( "SASL authentication failed. Will continue with dialback." );
                 } else {

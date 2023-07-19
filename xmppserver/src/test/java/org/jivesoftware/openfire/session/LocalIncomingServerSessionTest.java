@@ -327,6 +327,13 @@ public class LocalIncomingServerSessionTest
             }
         }
 
+        // Not all test-runners easily identify the parameters that are used to run each test iteration. Those that do
+        // not, typically show a number. By outputting the numbered arguments, they can be cross-referenced with any
+        // failed test case.
+        int i = 1;
+        for (Arguments arguments : result) {
+            System.out.println("Test [" + i++ + "]: " + arguments.get()[0] + ", " + arguments.get()[1]);
+        }
         return result;
     }
 }

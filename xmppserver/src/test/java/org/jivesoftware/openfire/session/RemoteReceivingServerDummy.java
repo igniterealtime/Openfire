@@ -333,7 +333,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         private synchronized void sendStartTlsProceed(Element inbound) throws Exception
         {
-            if (encryptionPolicy == Connection.TLSPolicy.disabled || generatedPKIX == null) {
+            if (encryptionPolicy == Connection.TLSPolicy.disabled) {
                 final Document outbound = DocumentHelper.createDocument();
                 final Namespace namespace = new Namespace("stream", "http://etherx.jabber.org/streams");
                 final Element root = outbound.addElement(QName.get("stream", namespace));

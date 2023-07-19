@@ -172,7 +172,8 @@ public class LocalOutgoingServerSessionTest
     public void outgoingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
-        System.out.println("Executing test:\n - Local Server (Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (dummy/mock server) Settings: " + remoteServerSettings);
+        final ExpectedOutcome expected = ExpectedOutcome.generateExpectedOutcome(localServerSettings, remoteServerSettings);
+        System.out.println("Executing test:\n - Local Server (Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
@@ -234,9 +235,8 @@ public class LocalOutgoingServerSessionTest
             final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
 
             // Verify results
-            final ExpectedOutcome.ConnectionState expected = ExpectedOutcome.generateExpectedOutcome(localServerSettings, remoteServerSettings).getConnectionState();
-            System.out.println("Expect: " + expected + ", Result: " + result);
-            switch (expected)
+            System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
+            switch (expected.getConnectionState())
             {
                 case NO_CONNECTION:
                     assertNull(result);

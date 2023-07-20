@@ -490,9 +490,6 @@ public class XMPPServer {
 
         // steps from setup-profile-settings.jsp
         if ("default".equals(JiveGlobals.getXMLProperty("autosetup.authprovider.mode", "default"))) {
-            JiveGlobals.setXMLProperty("connectionProvider.className",
-                "org.jivesoftware.database.DefaultConnectionProvider");
-
             JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
                 AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
             JiveGlobals.setProperty(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),

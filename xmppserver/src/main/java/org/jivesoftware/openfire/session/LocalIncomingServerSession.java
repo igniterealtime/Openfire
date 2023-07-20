@@ -138,7 +138,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             // Send the stream header
             StringBuilder openingStream = new StringBuilder();
             openingStream.append("<stream:stream");
-            openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+                openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            }
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
             openingStream.append(" from=\"").append(toDomain).append("\"");

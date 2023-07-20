@@ -22,11 +22,9 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.net.SocketUtil;
-import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
-import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,13 +35,9 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.nio.charset.StandardCharsets;
-import java.security.cert.CertPathValidatorException;
-import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -73,17 +67,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private static final Interner<JID> remoteAuthMutex = Interners.newWeakInterner();
 
-    /**
-     * Controls the S2S outgoing session initialise timeout time in seconds
-     */
-    public static final SystemProperty<Duration> INITIALISE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
-        .setKey("xmpp.server.session.initialise-timeout")
-        .setDefaultValue(Duration.ofSeconds(5))
-        .setChronoUnit(ChronoUnit.SECONDS)
-        .setDynamic(true)
-        .build();
-
-    private OutgoingServerSocketReader socketReader;
+    private final OutgoingServerSocketReader socketReader;
     private final Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
 
     /**
@@ -263,21 +247,180 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         Socket socket = socketToXmppDomain.getKey();
         boolean directTLS = socketToXmppDomain.getValue();
 
-        final SocketAddress socketAddress = socket.getRemoteSocketAddress();
-        log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
-        NettySessionInitializer sessionInitialiser = null;
+        SocketConnection connection = null;
         try {
+            final SocketAddress socketAddress = socket.getRemoteSocketAddress();
+            log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
+            connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
+            if (directTLS) {
+                try {
+                    connection.startTLS( true, true );
+                } catch ( SSLException ex ) {
+                    if ( JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK, true) && ex.getMessage().contains( "plaintext connection?" ) ) {
+                        Log.warn( "Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", socketAddress );
+                        try {
+                            // Close old socket
+                            socket.close();
+                        } catch ( Exception e ) {
+                            Log.debug( "An exception occurred (and is ignored) while trying to close a socket that was already in an error state.", e );
+                        }
+                        socket = new Socket();
+                        socket.connect( socketAddress, RemoteServerManager.getSocketTimeout() );
+                        connection = new SocketConnection(XMPPServer.getInstance().getPacketDeliverer(), socket, false);
+                        directTLS = false;
+                        Log.info( "Re-established connection to {}. Proceeding without directTLS.", socketAddress );
+                    } else {
+                        // Do not retry as non-DirectTLS, rethrow the exception.
+                        throw ex;
+                    }
+                }
+            }
 
-            // Wait for the future to give us a session...
-            sessionInitialiser = new NettySessionInitializer(domainPair, port, directTLS);
+            log.debug( "Send the stream header and wait for response..." );
+            StringBuilder openingStream = new StringBuilder();
+            openingStream.append("<stream:stream");
+            if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+                openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            }
+            openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            openingStream.append(" xmlns=\"jabber:server\"");
+            openingStream.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
+            openingStream.append(" to=\"").append(domainPair.getRemote()).append("\"");
+            openingStream.append(" version=\"1.0\">");
+            connection.deliverRawText(openingStream.toString());
+
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever
+            int soTimeout = socket.getSoTimeout();
+            socket.setSoTimeout(5000);
+
+            XMPPPacketReader reader = new XMPPPacketReader();
+
+            final InputStream inputStream;
+            if (directTLS) {
+                inputStream = connection.getTLSStreamHandler().getInputStream();
+            } else {
+                inputStream = socket.getInputStream();
+            }
+            reader.getXPPParser().setInput(new InputStreamReader( inputStream, StandardCharsets.UTF_8 ));
+
+            // Get the answer from the Receiving Server
+            XmlPullParser xpp = reader.getXPPParser();
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
+            }
+
+            String serverVersion = xpp.getAttributeValue("", "version");
+            String id = xpp.getAttributeValue("", "id");
+            log.debug( "Got a response (stream ID: {}, version: {}). Check if the remote server is XMPP 1.0 compliant...", id, serverVersion );
+
+            if (serverVersion != null && Session.decodeVersion(serverVersion)[0] >= 1) {
+                log.debug( "The remote server is XMPP 1.0 compliant (or at least reports to be)." );
+
+                // Restore default timeout
+                socket.setSoTimeout(soTimeout);
+
+                Element features = reader.parseDocument().getRootElement();
+                if (features != null) {
+                    log.debug( "Processing stream features of the remote domain: {}", features.asXML() );
+                    if (directTLS) {
+                        log.debug( "We connected to the remote server using direct TLS. Authenticate the connection with SASL..." );
+                        LocalOutgoingServerSession answer = authenticate(domainPair, connection, reader, openingStream, features, id);
+                        if (answer != null) {
+                            log.debug( "Successfully authenticated the connection with SASL)!" );
+                            // Everything went fine so return the encrypted and authenticated connection.
+                            log.debug( "Successfully created new session!" );
+                            return answer;
+                        }
+                        log.debug( "Unable to authenticate the connection with SASL." );
+                    } else {
+                        log.debug( "Check if both us as well as the remote server have enabled STARTTLS and/or dialback ..." );
+                        final boolean useTLS = connection.getTlsPolicy() == Connection.TLSPolicy.optional || connection.getTlsPolicy() == Connection.TLSPolicy.required;
+                        if (useTLS && features.element("starttls") != null) {
+                            log.debug( "Both us and the remote server support the STARTTLS feature. Encrypt and authenticate the connection with TLS & SASL..." );
+                            LocalOutgoingServerSession answer = encryptAndAuthenticate(domainPair, connection, reader, openingStream);
+                            if (answer != null) {
+                                log.debug( "Successfully encrypted/authenticated the connection with TLS/SASL)!" );
+                                // Everything went fine so return the secured and
+                                // authenticated connection
+                                log.debug( "Successfully created new session!" );
+                                return answer;
+                            }
+                            log.debug( "Unable to encrypt and authenticate the connection with TLS & SASL." );
+                        }
+                        else if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                            log.debug("I have no StartTLS yet I must TLS");
+                            connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
+                            return null;
+                        }
+                        // Check if we are going to try server dialback (XMPP 1.0)
+                        else if (ServerDialback.isEnabled() && features.element("dialback") != null) {
+                            log.debug( "Both us and the remote server support the 'dialback' feature. Authenticate the connection with dialback..." );
+                            ServerDialback method = new ServerDialback(connection, domainPair);
+                            OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
+                            if (method.authenticateDomain(newSocketReader, id)) {
+                                log.debug( "Successfully authenticated the connection with dialback!" );
+                                StreamID streamID = BasicStreamIDFactory.createStreamID(id);
+                                LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
+                                connection.init(session);
+                                session.setAuthenticationMethod(AuthenticationMethod.DIALBACK);
+                                // Set the remote domain name as the address of the session.
+                                session.setAddress(new JID(null, domainPair.getRemote(), null));
+                                log.debug( "Successfully created new session!" );
+                                return session;
+                            }
+                            else {
+                                log.debug( "Unable to authenticate the connection with dialback." );
+                            }
+                        }
+                    }
+                }
+                else {
+                    log.debug( "Error! No data from the remote server (expected a 'feature' element).");
+                }
+            } else {
+                log.debug( "The remote server is not XMPP 1.0 compliant." );
+            }
+
+            log.debug( "Something went wrong so close the connection and try server dialback over a plain connection" );
+            if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                log.debug("I have no StartTLS yet I must TLS");
+                connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
+                return null;
+            }
+            connection.close();
+        }
+        catch (SSLHandshakeException e)
+        {
+            // When not doing direct TLS but startTLS, this a failure as described in RFC6120, section 5.4.3.2 "STARTTLS Failure".
+            log.info( "{} negotiation failed. Closing connection (without sending any data such as <failure/> or </stream>).", (directTLS ? "Direct TLS" : "StartTLS" ), e );
+
+            // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
+            // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
+            if (connection != null) {
+                connection.forceClose();
+
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                    return null;
+                }
+            }
+
+            if (e.getCause() instanceof CertificateException && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.", e);
+                return null;
+            }
             return (LocalOutgoingServerSession) sessionInitialiser.init().get(5000, TimeUnit.MILLISECONDS);
         }
         catch (Exception e)
         {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn( "An exception occurred while creating an encrypted session. Closing connection.", e );
-            if (sessionInitialiser != null) { sessionInitialiser.stop(); }
+
+            if (connection != null) {
+                connection.close();
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                    return null;
+                }
+            }
         }
 
         if (ServerDialback.isEnabled())
@@ -299,6 +442,213 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.warn( "Unable to create a new session: exhausted all options (not trying dialback as a fallback, as server dialback is disabled by configuration." );
             return null;
         }
+    }
+
+    private static LocalOutgoingServerSession encryptAndAuthenticate(DomainPair domainPair, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream) throws Exception {
+        final Logger log = LoggerFactory.getLogger(Log.getName() + "[Encrypt connection for: " + domainPair + "]" );
+        Element features;
+
+        log.debug( "Encrypting and authenticating connection ...");
+
+        log.debug( "Indicating we want TLS and wait for response." );
+        connection.deliverRawText( "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>" );
+
+        MXParser xpp = reader.getXPPParser();
+        // Wait for the <proceed> response
+        Element proceed = reader.parseDocument().getRootElement();
+        if (proceed != null && proceed.getName().equals("proceed")) {
+            log.debug( "Received 'proceed' from remote server. Negotiating TLS..." );
+            try {
+//                boolean needed = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true) &&
+//                        		 JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_CHAIN_VERIFY, true) &&
+//                        		 !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+                connection.startTLS(true, false);
+            } catch(Exception e) {
+                log.debug("TLS negotiation failed: " + e.getMessage());
+                throw e;
+            }
+            log.debug( "TLS negotiation was successful. Connection encrypted. Proceeding with authentication..." );
+
+            // If TLS cannot be used for authentication, it is permissible to use another authentication mechanism
+            // such as dialback. RFC 6120 does not explicitly allow this, as it does not take into account any other
+            // authentication mechanism other than TLS (it does mention dialback in an interoperability note. However,
+            // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
+            // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
+            // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
+            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
+                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                    log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
+                    return null;
+                }
+                if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+                    log.debug( "SASL authentication failed. Will continue with dialback." );
+                } else {
+                    log.warn( "Unable to authenticate the connection: SASL authentication failed (and dialback is not available)." );
+                    return null;
+                }
+            }
+
+            log.debug( "TLS negotiation was successful so initiate a new stream." );
+            connection.deliverRawText( openingStream.toString() );
+
+            // Reset the parser to use the new secured reader
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), StandardCharsets.UTF_8));
+            // Skip new stream element
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
+            }
+            // Get the stream ID
+            String id = xpp.getAttributeValue("", "id");
+            // Get new stream features
+            features = reader.parseDocument().getRootElement();
+            if (features != null) {
+                return authenticate( domainPair, connection, reader, openingStream, features, id );
+            }
+            else {
+                log.debug( "Failed to encrypt and authenticate connection: neither SASL mechanisms nor SERVER DIALBACK were offered by the remote host." );
+                return null;
+            }
+        }
+        else {
+            log.debug( "Failed to encrypt and authenticate connection: <proceed> was not received!" );
+            return null;
+        }
+    }
+
+    private static LocalOutgoingServerSession authenticate( final DomainPair domainPair,
+                                                            final SocketConnection connection,
+                                                            final XMPPPacketReader reader,
+                                                            final StringBuilder openingStream,
+                                                            final Element features,
+                                                            final String id ) throws DocumentException, IOException, XmlPullParserException
+    {
+        final Logger log = LoggerFactory.getLogger(Log.getName() + "[Authenticate connection for: " + domainPair + "]" );
+
+        MXParser xpp = reader.getXPPParser();
+
+        // Bookkeeping: determine what functionality the remote server offers.
+        boolean saslEXTERNALoffered = false;
+        if (features.element("mechanisms") != null) {
+            Iterator<Element> it = features.element( "mechanisms").elementIterator();
+            while (it.hasNext()) {
+                Element mechanism = it.next();
+                if ("EXTERNAL".equals(mechanism.getTextTrim())) {
+                    saslEXTERNALoffered = true;
+                    break;
+                }
+            }
+        }
+        final boolean dialbackOffered = features.element("dialback") != null;
+
+        log.debug("Remote server is offering dialback: {}, EXTERNAL SASL: {}", dialbackOffered, saslEXTERNALoffered );
+
+        LocalOutgoingServerSession result = null;
+
+        // first, try SASL
+        if (saslEXTERNALoffered) {
+            log.debug( "Trying to authenticate with EXTERNAL SASL." );
+            result = attemptSASLexternal(connection, xpp, reader, domainPair, id, openingStream);
+            if (result == null) {
+                log.debug( "Failed to authenticate with EXTERNAL SASL." );
+            } else {
+                log.debug( "Successfully authenticated with EXTERNAL SASL." );
+            }
+        }
+
+        // SASL unavailable or failed, try dialback.
+        if (result == null) {
+            log.debug( "Trying to authenticate with dialback." );
+            result = attemptDialbackOverTLS(connection, reader, domainPair, id);
+            if (result == null) {
+                log.debug( "Failed to authenticate with dialback." );
+            } else {
+                log.debug( "Successfully authenticated with dialback." );
+            }
+        }
+
+        if ( result != null ) {
+            log.debug( "Successfully encrypted and authenticated connection!" );
+            return result;
+        } else {
+            log.warn( "Unable to encrypt and authenticate connection: Exhausted all options." );
+            return null;
+        }
+    }
+
+    private static LocalOutgoingServerSession attemptDialbackOverTLS(Connection connection, XMPPPacketReader reader, DomainPair domainPair, String id) {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[Dialback over TLS for: " + domainPair + " (Stream ID: " + id + ")]" );
+
+        if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+            log.debug("Trying to connecting using dialback over TLS.");
+            ServerDialback method = new ServerDialback(connection, domainPair);
+            OutgoingServerSocketReader newSocketReader = new OutgoingServerSocketReader(reader);
+            if (method.authenticateDomain(newSocketReader, id)) {
+                log.debug("Dialback over TLS was successful.");
+                StreamID streamID = BasicStreamIDFactory.createStreamID(id);
+                LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, newSocketReader, streamID);
+                connection.init(session);
+                // Set the remote domain name as the address of the session.
+                session.setAddress(new JID(null, domainPair.getRemote(), null));
+                session.setAuthenticationMethod(AuthenticationMethod.DIALBACK);
+                return session;
+            }
+            else {
+                log.debug("Dialback over TLS failed");
+                return null;
+            }
+        }
+        else {
+            log.debug("Skipping server dialback attempt as it has been disabled by local configuration.");
+            return null;
+        }
+    }
+
+    private static LocalOutgoingServerSession attemptSASLexternal(SocketConnection connection, MXParser xpp, XMPPPacketReader reader, DomainPair domainPair, String id, StringBuilder openingStream) throws DocumentException, IOException, XmlPullParserException {
+        final Logger log = LoggerFactory.getLogger( Log.getName() + "[EXTERNAL SASL for: " + domainPair + " (Stream ID: " + id + ")]" );
+
+        log.debug("Starting EXTERNAL SASL.");
+        if (doExternalAuthentication(domainPair.getLocal(), connection, reader)) {
+            log.debug("EXTERNAL SASL was successful.");
+            // SASL was successful so initiate a new stream
+            connection.deliverRawText(openingStream.toString());
+
+            // Reset the parser
+            //xpp.resetInput();
+            //             // Reset the parser to use the new secured reader
+            xpp.setInput(new InputStreamReader(connection.getTLSStreamHandler().getInputStream(), StandardCharsets.UTF_8));
+            // Skip the opening stream sent by the server
+            for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+                eventType = xpp.next();
+            }
+
+            // SASL authentication was successful so create new OutgoingServerSession
+            id = xpp.getAttributeValue("", "id");
+            StreamID streamID = BasicStreamIDFactory.createStreamID(id);
+            LocalOutgoingServerSession session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, new OutgoingServerSocketReader(reader), streamID);
+            connection.init(session);
+            // Set the remote domain name as the address of the session
+            session.setAddress(new JID(null, domainPair.getRemote(), null));
+            // Set that the session was created using TLS+SASL (no server dialback)
+            session.setAuthenticationMethod(AuthenticationMethod.SASL_EXTERNAL);
+            return session;
+        }
+        else {
+            log.debug("EXTERNAL SASL failed.");
+            return null;
+        }
+    }
+
+    private static boolean doExternalAuthentication(String localDomain, SocketConnection connection,
+            XMPPPacketReader reader) throws DocumentException, IOException, XmlPullParserException {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"EXTERNAL\">");
+        sb.append(StringUtils.encodeBase64(localDomain));
+        sb.append("</auth>");
+        connection.deliverRawText(sb.toString());
+
+        Element response = reader.parseDocument().getRootElement();
+        return response != null && "success".equals(response.getName());
     }
 
     public static LocalOutgoingServerSession encryptAndAuthenticate(DomainPair domainPair, SocketConnection connection, XMPPPacketReader reader, StringBuilder openingStream) throws Exception {
@@ -512,10 +862,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         super(localDomain, connection, streamID);
         this.socketReader = socketReader;
         socketReader.setSession(this);
-    }
-
-    public LocalOutgoingServerSession(String localDomain, Connection connection, StreamID streamID) {
-        super(localDomain, connection, streamID);
     }
 
     @Override

@@ -100,6 +100,7 @@ public final class ConnectionSettings {
         public static final String PERMISSION_SETTINGS = "xmpp.server.permission";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.server.cert.policy";
         public static final String ALLOW_ANONYMOUS_OUTBOUND_DATA = "xmpp.server.allow-anonymous-outbound-data";
+        public static final String IDLE_TIMEOUT_PROPERTY = "xmpp.server.idle";
 
         public static final String STRICT_CERTIFICATE_VALIDATION = "xmpp.socket.ssl.certificate.strict-validation";
     }

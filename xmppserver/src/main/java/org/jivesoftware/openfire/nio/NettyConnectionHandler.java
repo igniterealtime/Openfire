@@ -95,7 +95,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
      *
      * @return the max number of seconds a connection can be idle.
      */
-    abstract int getMaxIdleTime();
+    public abstract int getMaxIdleTime();
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
@@ -109,16 +109,6 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         ctx.channel().attr(CONNECTION).set(nettyConnection);
 
         ctx.channel().attr(HANDLER).set(createStanzaHandler(nettyConnection));
-
-        // Set the max time a connection can be idle before closing it. This amount of seconds
-        // is divided in two, as Openfire will ping idle clients first (at 50% of the max idle time)
-        // before disconnecting them (at 100% of the max idle time). This prevents Openfire from
-        // removing connections without warning.
-// TODO idle handler see: https://netty.io/4.0/api/io/netty/handler/timeout/IdleStateHandler.html
-//        final int idleTime = getMaxIdleTime() / 2;
-//        if (idleTime > 0) {
-//            session.getConfig().setIdleTime(IdleStatus.READER_IDLE, idleTime);
-//        }
     }
 
     @Override

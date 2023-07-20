@@ -20,8 +20,10 @@ import io.netty.channel.ChannelHandlerContext;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +54,8 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     }
 
     @Override
-    int getMaxIdleTime() {
-        return 0;
+    public int getMaxIdleTime() {
+        return JiveGlobals.getIntProperty(ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY, 360);
     }
 
     @Override

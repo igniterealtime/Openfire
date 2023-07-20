@@ -4,8 +4,11 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyConnectionHandler;
+import org.jivesoftware.openfire.nio.NettyIdleStateKeepAliveHandler;
 import org.jivesoftware.openfire.nio.NettyXMPPDecoder;
 import org.jivesoftware.util.SystemProperty;
 
@@ -35,14 +38,22 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
     public NettyServerInitializer(NettyConnectionHandler businessLogicHandler, boolean directTLS) {
         this.businessLogicHandler = businessLogicHandler;
         this.directTLS = directTLS;
+
     }
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
-        ch.pipeline().addLast(new NettyXMPPDecoder());
-        ch.pipeline().addLast(new StringEncoder());
-        ch.pipeline().addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())));
-        ch.pipeline().addLast(businessLogicHandler);
+        boolean clientConnection = businessLogicHandler instanceof NettyClientConnectionHandler;
+        int maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime() > -1 ? businessLogicHandler.getMaxIdleTime() : 0;
+        int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
+
+        ch.pipeline()
+            .addLast(new NettyXMPPDecoder())
+            .addLast(new StringEncoder())
+            .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
+            .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0))
+            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(clientConnection))
+            .addLast(businessLogicHandler);
 
         if (directTLS) {
             ch.attr(CONNECTION).get().startTLS(false, true);

@@ -23,10 +23,12 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ServerStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Server-specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -38,6 +40,18 @@ import org.slf4j.LoggerFactory;
 public class NettyServerConnectionHandler extends NettyConnectionHandler
 {
     private static final Logger Log = LoggerFactory.getLogger(NettyServerConnectionHandler.class);
+
+    /**
+     * How much time the server will wait without receiving an inbound message until it is classed as an idle connection
+     * and closed.
+     */
+    public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.idle")
+        .setDefaultValue(Duration.ofMinutes(6))
+        .setMinValue(Duration.ofMillis(-1))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(true)
+        .build();
 
     /**
      * Enable / disable backup delivery of stanzas to the XMPP server itself when a stanza failed to be delivered on a
@@ -73,9 +87,7 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
         super.handlerAdded(ctx);
     }
 
-    // TODO - check idle time is set for connections (check client, server, outbound handlers
-    int getMaxIdleTime()
-    {
-        return JiveGlobals.getIntProperty( "xmpp.server.idle", 6 * 60 * 1000 ) / 1000;
+    public int getMaxIdleTime() {
+        return Math.toIntExact(IDLE_TIMEOUT_PROPERTY.getValue().toSeconds());
     }
 }

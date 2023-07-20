@@ -424,8 +424,13 @@ public class ServerDialback {
                         // After the session has been created, inform all listeners as well.
                         ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                         return session;
+                    } catch (StreamErrorException e) {
+                        Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was not successful.", hostname, recipient, e);
+                        connection.close(e.getStreamError());
+                        return null;
                     } catch (Exception e) {
                         Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was not successful.", hostname, recipient, e);
+                        connection.close();
                         return null;
                     }
                 }

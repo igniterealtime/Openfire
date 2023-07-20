@@ -52,30 +52,39 @@ public class ServerSettings
 //        }
 
     /**
+     * Defines if this entity requires/disables or can use TLS for encryption (this does not mandate TLS-based authentication).
+     */
+    public final Connection.TLSPolicy encryptionPolicy;
+
+    /**
      * Describes the certificate that's offered by this entity.
      */
     public final CertificateState certificateState;
+
+    /**
+     * When Dialback is allowed, unauthenticated TLS encryption is better than no encryption. This, however, breaks with
+     * a strict interpretation of RFC 6120 section 13.7.2 (while it appears allowable in RFC 7590 Section 3.4). Openfire
+     * con be configured either way, by setting the 'strict certificate validation' configuration. This field will take
+     * into account that setting.
+     */
+    public final boolean strictCertificateValidation;
 
     /**
      * Defines if this entity will support the Dialback authentication mechanism.
      */
     public final boolean dialbackSupported;
 
-    /**
-     * Defines if this entity requires/disables or can use TLS for encryption (this does not mandate TLS-based authentication).
-     */
-    public final Connection.TLSPolicy encryptionPolicy;
-
 //        /**
 //         * Defines if this entity will attempt/require/ignore to validate the peer's certificate
 //         */
 //        public final TlsMutualAuthenticationPolicy tlsMutualAuthenticationPolicy;
 
-    public ServerSettings(final Connection.TLSPolicy encryptionPolicy, final CertificateState certificateState, final boolean dialbackSupported)
+    public ServerSettings(final Connection.TLSPolicy encryptionPolicy, final CertificateState certificateState, final boolean strictCertificateValidation, final boolean dialbackSupported)
     {
-        this.certificateState = certificateState;
-        this.dialbackSupported = dialbackSupported;
         this.encryptionPolicy = encryptionPolicy;
+        this.certificateState = certificateState;
+        this.strictCertificateValidation = strictCertificateValidation;
+        this.dialbackSupported = dialbackSupported;
     }
 
     @Override
@@ -87,9 +96,9 @@ public class ServerSettings
     public String toString(int length)
     {
         if (length > 0) {
-            return "[encryption=" + encryptionPolicy.toString().substring(0, length) + ", certificate=" + certificateState.toString().substring(0, length) + ", dialback=" + (dialbackSupported ? "SUPPORTED" : "DISABLED").substring(0, length) + "]";
+            return "[encryption=" + encryptionPolicy.toString().substring(0, length) + ", certificate=" + certificateState.toString().substring(0, length) + ", strictCertValidation=" + strictCertificateValidation + ", dialback=" + (dialbackSupported ? "SUPPORTED" : "DISABLED").substring(0, length) + "]";
         } else {
-            return "[encryption=" + encryptionPolicy.toString() + ", certificate=" + certificateState.toString() + ", dialback=" + (dialbackSupported ? "SUPPORTED" : "DISABLED") + "]";
+            return "[encryption=" + encryptionPolicy.toString() + ", certificate=" + certificateState.toString() + ", strictCertValidation=" + strictCertificateValidation + ", dialback=" + (dialbackSupported ? "SUPPORTED" : "DISABLED") + "]";
         }
     }
 }

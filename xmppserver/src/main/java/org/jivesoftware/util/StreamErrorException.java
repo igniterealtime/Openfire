@@ -75,7 +75,7 @@ public class StreamErrorException extends Exception
 
     public StreamErrorException(StreamError streamError, Throwable cause)
     {
-        super(streamError != null && !streamError.getText().isEmpty() ? streamError.getText() : null, cause);
+        super(streamError != null && streamError.getText() != null && !streamError.getText().isEmpty() ? streamError.getText() : null, cause);
         this.streamError = streamError;
     }
 

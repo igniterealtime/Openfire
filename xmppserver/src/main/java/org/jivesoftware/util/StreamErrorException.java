@@ -45,7 +45,7 @@ public class StreamErrorException extends Exception
 
     public StreamErrorException(StreamError.Condition condition, Throwable cause)
     {
-        super(cause);
+        super(condition.name(), cause);
         this.streamError = new StreamError(condition);
     }
 
@@ -57,6 +57,7 @@ public class StreamErrorException extends Exception
 
     public StreamErrorException(StreamError streamError)
     {
+        super(streamError != null && streamError.getText() != null && !streamError.getText().isEmpty() ? streamError.getText() : null);
         this.streamError = streamError;
     }
 
@@ -74,7 +75,7 @@ public class StreamErrorException extends Exception
 
     public StreamErrorException(StreamError streamError, Throwable cause)
     {
-        super(cause);
+        super(streamError != null && streamError.getText() != null && !streamError.getText().isEmpty() ? streamError.getText() : null, cause);
         this.streamError = streamError;
     }
 

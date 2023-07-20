@@ -44,12 +44,12 @@ public class SocketAcceptThread extends Thread {
     public SocketAcceptThread( int tcpPort, InetAddress bindInterface, boolean directTLS )
             throws IOException {
         super("Socket Listener at port " + tcpPort + ( directTLS ? " (direct TLS)" : ""));
-        this.tcpPort = tcpPort;
         this.bindInterface = bindInterface;
         this.directTLS = directTLS;
 
         // Set the blocking reading mode to use
         acceptingMode = new BlockingAcceptingMode(tcpPort, bindInterface, directTLS);
+        this.tcpPort = acceptingMode.serverSocket.getLocalPort();
     }
 
     /**
@@ -87,5 +87,14 @@ public class SocketAcceptThread extends Thread {
         acceptingMode.run();
         // We stopped accepting new connections so close the listener
         shutdown();
+    }
+
+    /**
+     * The Socket Accepting Mode for this thread. This is exposed for unit testing purposes. It is unlikely that this
+     * should be used elsewhere.
+     */
+    public SocketAcceptingMode getAcceptingMode()
+    {
+        return acceptingMode;
     }
 }

@@ -89,6 +89,8 @@
         final int listenerMaxThreads = ParamUtils.getIntParameter( request, "maxThreads", configuration.getMaxThreadPoolSize() );
         final boolean acceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "accept-self-signed-certificates" );
         final boolean verifyCertificateValidity = ParamUtils.getBooleanParameter( request, "verify-certificate-validity" );
+        final boolean strictCertificateValidation = ParamUtils.getBooleanParameter( request, "strict-certificate-validation" );
+
 
 
         // Apply new configuration
@@ -104,6 +106,7 @@
         listener.setEncryptionCipherSuites( cipherSuites );
         listener.setAcceptSelfSignedCertificates( acceptSelfSignedCertificates );
         listener.setVerifyCertificateValidity( verifyCertificateValidity );
+        listener.setStrictCertificateValidation( strictCertificateValidation );
 
         // Log the event
         webManager.logEvent( "Updated connection settings for " + connectionType + " (mode: " + connectionModeParam + ")", configuration.toString() );
@@ -367,6 +370,14 @@
                     <label for="mutualauthentication-needed"><fmt:message key="connection.advanced.settings.clientauth.label_needed"/></label>
                 </td>
             </tr>
+            <c:if test="${connectionType eq 'SOCKET_S2S'}">
+                <tr>
+                    <td>
+                        <input type="checkbox" name="strict-certificate-validation" id="strict-certificate-validation" ${configuration.strictCertificateValidation ? 'checked' : ''}/>
+                        <label for="strict-certificate-validation"><fmt:message key="connection.advanced.settings.clientauth.label_strict_cert_validation"/></label>
+                    </td>
+                </tr>
+            </c:if>
         </table>
     </admin:contentBox>
 

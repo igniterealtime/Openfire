@@ -32,9 +32,11 @@ import org.slf4j.LoggerFactory;
  * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance
  */
 @Deprecated
-class BlockingAcceptingMode extends SocketAcceptingMode {
+public class BlockingAcceptingMode extends SocketAcceptingMode {
 
     private static final Logger Log = LoggerFactory.getLogger(BlockingAcceptingMode.class);
+
+    private SocketReader reader;
 
     protected BlockingAcceptingMode(int tcpPort, InetAddress bindInterface, boolean directTLS) throws IOException {
         super(directTLS);
@@ -53,7 +55,7 @@ class BlockingAcceptingMode extends SocketAcceptingMode {
                 if (sock != null) {
                     Log.debug("Connect " + sock.toString());
 
-                    SocketReader reader = createServerSocketReader(  sock, false, true );
+                    reader = createServerSocketReader(  sock, false, true );
                     Thread thread = new Thread(reader, reader.getName());
                     thread.setDaemon(true);
                     thread.setPriority(Thread.NORM_PRIORITY);
@@ -70,5 +72,15 @@ class BlockingAcceptingMode extends SocketAcceptingMode {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.accept"), e);
             }
         }
+    }
+
+    /**
+     * The last socket reader that was created (if any).
+     *
+     * This is intended to be used for unit testing purposes only.
+     */
+    public SocketReader getLastReader()
+    {
+        return reader;
     }
 }

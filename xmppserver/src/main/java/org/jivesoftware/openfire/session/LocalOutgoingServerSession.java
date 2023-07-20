@@ -50,6 +50,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertificateException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -246,7 +248,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * @param port default port to use to establish the connection.
      * @return new outgoing session to a remote domain, or null.
      */
-    private static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port) {
+    // package-protected to facilitate unit testing..
+    static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port) {
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Create outgoing session for: " + domainPair + "]" );
 
         log.debug( "Creating new session..." );
@@ -294,7 +297,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             log.debug( "Send the stream header and wait for response..." );
             StringBuilder openingStream = new StringBuilder();
             openingStream.append("<stream:stream");
-            openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+                openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            }
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
             openingStream.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
@@ -404,22 +409,34 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
         catch (SSLHandshakeException e)
         {
-            // When not doing direct TLS but startTLS, this a failure as described in RFC3620, section 5.4.3.2 "STARTTLS Failure".
+            // When not doing direct TLS but startTLS, this a failure as described in RFC6120, section 5.4.3.2 "STARTTLS Failure".
             log.info( "{} negotiation failed. Closing connection (without sending any data such as <failure/> or </stream>).", (directTLS ? "Direct TLS" : "StartTLS" ), e );
 
             // The receiving entity is expected to close the socket *without* sending any more data (<failure/> nor </stream>).
             // It is probably (see OF-794) best if we, as the initiating entity, therefor don't send any data either.
             if (connection != null) {
                 connection.forceClose();
+
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                    return null;
+                }
+            }
+
+            if (e.getCause() instanceof CertificateException && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.", e);
+                return null;
             }
         }
         catch (Exception e)
         {
-            // This might be RFC3620, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
+            // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn( "An exception occurred while creating an encrypted session. Closing connection.", e );
 
             if (connection != null) {
                 connection.close();
+                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                    return null;
+                }
             }
         }
 
@@ -468,7 +485,18 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 throw e;
             }
             log.debug( "TLS negotiation was successful. Connection encrypted. Proceeding with authentication..." );
+
+            // If TLS cannot be used for authentication, it is permissible to use another authentication mechanism
+            // such as dialback. RFC 6120 does not explicitly allow this, as it does not take into account any other
+            // authentication mechanism other than TLS (it does mention dialback in an interoperability note. However,
+            // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
+            // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
+            // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
             if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
+                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                    log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
+                    return null;
+                }
                 if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
                     log.debug( "SASL authentication failed. Will continue with dialback." );
                 } else {

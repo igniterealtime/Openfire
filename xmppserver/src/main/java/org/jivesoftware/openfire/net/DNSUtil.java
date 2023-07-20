@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,7 +345,7 @@ public class DNSUtil {
         private final int port;
         private final boolean directTLS;
 
-        private HostAddress(String host, int port, boolean directTLS) {
+        public HostAddress(String host, int port, boolean directTLS) {
             // Host entries in DNS should end with a ".".
             if (host.endsWith(".")) {
                 this.host = host.substring(0, host.length()-1);

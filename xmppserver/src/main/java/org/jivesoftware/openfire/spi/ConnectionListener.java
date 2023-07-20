@@ -284,7 +284,8 @@ public class ConnectionListener
                 verifyCertificateValidity(),
                 getEncryptionProtocols(),
                 getEncryptionCipherSuites(),
-                getCompressionPolicy()
+                getCompressionPolicy(),
+                getStrictCertificateValidation()
         );
     }
 
@@ -1018,6 +1019,46 @@ public class ConnectionListener
         restart();
     }
 
+    /**
+     * Defines whether a connection should be aborted if certificate validation fails.
+     * When set to true Openfire strictly follows RFC 6120, section 13.7.2.
+     *
+     * @param strictCertificateValidation true to abort connections if certificate validation fails, otherwise false
+     */
+    public void setStrictCertificateValidation(boolean strictCertificateValidation) {
+        final boolean oldValue = getStrictCertificateValidation();
+
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "certificate.strict-validation", Boolean.toString( strictCertificateValidation ) );
+
+        if ( oldValue == strictCertificateValidation ) {
+            Log.debug( "Ignoring strict certificate validation configuration change request (to '{}'): listener already in this state.", strictCertificateValidation );
+            return;
+        }
+
+        Log.debug( "Changing strict certificate validation configuration from '{}' to '{}'.", oldValue, strictCertificateValidation );
+        restart();
+    }
+
+    /**
+     * A boolean that indicates if the connection should be aborted if certificate validation fails.
+     * When true Openfire strictly follows RFC 6120, section 13.7.2. If not previously set, value of true is
+     * returned by default.
+     *
+     * @return true when connections are aborted if certificate validation fails, otherwise false.
+     */
+    private boolean getStrictCertificateValidation() {
+        final String propertyName = type.getPrefix() + "certificate.strict-validation";
+        final boolean defaultValue = true;
+
+        if ( type.getFallback() == null ) {
+            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+        }
+        else {
+            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).getStrictCertificateValidation() );
+        }
+    }
+
     @Override
     public String toString()
     {
@@ -1027,4 +1068,6 @@ public class ConnectionListener
                 '}';
     }
 
+
 }
+

@@ -62,6 +62,10 @@ public class CertificateManagerTest
     public static final ASN1ObjectIdentifier XMPP_ADDR_OID = new ASN1ObjectIdentifier( "1.3.6.1.5.5.7.8.5" );
     public static final ASN1ObjectIdentifier DNS_SRV_OID = new ASN1ObjectIdentifier( "1.3.6.1.5.5.7.8.7" );
 
+    public static final int KEY_SIZE = 512;
+    public static final String KEY_ALGORITHM = "RSA";
+    public static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
+
     private static KeyPairGenerator keyPairGenerator;
     private static KeyPair subjectKeyPair;
     private static KeyPair issuerKeyPair;
@@ -70,12 +74,12 @@ public class CertificateManagerTest
     @BeforeAll
     public static void initialize() throws Exception
     {
-        keyPairGenerator = KeyPairGenerator.getInstance( "RSA" );
-        keyPairGenerator.initialize( 512 );
+        keyPairGenerator = KeyPairGenerator.getInstance( KEY_ALGORITHM );
+        keyPairGenerator.initialize( KEY_SIZE );
 
         subjectKeyPair = keyPairGenerator.generateKeyPair();
         issuerKeyPair = keyPairGenerator.generateKeyPair();
-        contentSigner = new JcaContentSignerBuilder( "SHA1withRSA" ).build( issuerKeyPair.getPrivate() );
+        contentSigner = new JcaContentSignerBuilder( SIGNATURE_ALGORITHM ).build( issuerKeyPair.getPrivate() );
     }
 
     /**
@@ -347,11 +351,10 @@ public class CertificateManagerTest
         final String issuerCommonName = "issuer common name";
         final String subjectCommonName = "subject common name";
         final String domain = "domain.example.org";
-        final String signAlgoritm = "SHA256WITHRSAENCRYPTION";
         final Set<String> sanDnsNames = Stream.of( "alternative-a.example.org", "alternative-b.example.org" ).collect( Collectors.toSet() );
 
         // Execute system under test.
-        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, sanDnsNames );
+        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, SIGNATURE_ALGORITHM, sanDnsNames );
 
         // Verify results.
         assertNotNull( result );
@@ -374,11 +377,10 @@ public class CertificateManagerTest
         final String issuerCommonName = "issuer common name";
         final String subjectCommonName = "subject common name";
         final String domain = "domain.example.org";
-        final String signAlgoritm = "SHA256WITHRSAENCRYPTION";
         final Set<String> sanDnsNames = Stream.of( "alternative-a.example.org", "alternative-b.example.org" ).collect( Collectors.toSet() );
 
         // Execute system under test.
-        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, sanDnsNames );
+        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, SIGNATURE_ALGORITHM, sanDnsNames );
 
         // Verify results.
         assertNotNull( result );
@@ -400,11 +402,10 @@ public class CertificateManagerTest
         final String issuerCommonName = "issuer common name";
         final String subjectCommonName = "subject common name";
         final String domain = "domain.example.org";
-        final String signAlgoritm = "SHA256WITHRSAENCRYPTION";
         final Set<String> sanDnsNames = Stream.of( "alternative-a.example.org", "alternative-b.example.org" ).collect( Collectors.toSet() );
 
         // Execute system under test.
-        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, sanDnsNames );
+        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, SIGNATURE_ALGORITHM, sanDnsNames );
 
         // Verify results.
         assertNotNull( result );
@@ -426,11 +427,10 @@ public class CertificateManagerTest
         final String issuerCommonName = "issuer common name";
         final String subjectCommonName = "subject common name";
         final String domain = "domain.example.org";
-        final String signAlgoritm = "SHA256WITHRSAENCRYPTION";
         final Set<String> sanDnsNames = Stream.of( "alternative-a.example.org", "alternative-b.example.org" ).collect( Collectors.toSet() );
 
         // Execute system under test.
-        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, signAlgoritm, sanDnsNames );
+        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, SIGNATURE_ALGORITHM, sanDnsNames );
 
         // Verify results.
         assertNotNull( result );

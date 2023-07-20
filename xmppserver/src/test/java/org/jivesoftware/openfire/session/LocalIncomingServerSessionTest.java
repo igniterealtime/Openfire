@@ -158,7 +158,7 @@ public class LocalIncomingServerSessionTest
         DNSUtil.setDnsOverride(null);
 
         if (remoteInitiatingServerDummy != null) {
-            //remoteInitiatingServerDummy.close();
+            remoteInitiatingServerDummy.disconnect();
             remoteInitiatingServerDummy = null;
         }
 
@@ -294,7 +294,6 @@ public class LocalIncomingServerSessionTest
         } finally {
             // Teardown test fixture.
             trustStore.delete("unit-test");
-            remoteInitiatingServerDummy.disconnect();
         }
     }
 

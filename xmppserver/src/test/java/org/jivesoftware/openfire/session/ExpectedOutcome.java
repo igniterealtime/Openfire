@@ -20,6 +20,14 @@ import java.util.Set;
 
 import static org.jivesoftware.openfire.session.ExpectedOutcome.ConnectionState.*;
 
+/**
+ * Given XMPP federation, this class defines the expected result of one domain trying to establish an authenticated
+ * connection to another domain.
+ *
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc6120>Extensible Messaging and Presence Protocol (XMPP): Core</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0220.html">XEP-0220: Server Dialback</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0178.xml">XEP-0178: Best Practices for Use of SASL EXTERNAL with Certificates</a>
+ */
 public class ExpectedOutcome
 {
     /**

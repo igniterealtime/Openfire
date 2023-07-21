@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * A servlet filter that plugin classes can use to dynamically register and un-register filter logic.<p>
+ * A servlet filter that plugin classes can use to dynamically register and un-register filter logic.
  *
  * This implementation assumes, but does not enforce, that filters installed by plugins are applied to URL patterns that
  * match the plugin. When filters installed by different plugins are applied to the same URL, the behavior of this
@@ -47,10 +47,10 @@ public class PluginFilter implements Filter {
     /**
      * Adds a filter to the list of filters that will be run on every request of which the URL matches the URL that
      * is registered with this filter. More specifically, the request URL should be equal to, or start with, the filter
-     * URL.<p>
+     * URL.
      *
      * Multiple filters can be registered on the same URL, in which case they will be executed in the order in which
-     * they were added. <p>
+     * they were added.
      *
      * Adding a filter does not initialize the plugin instance.
      *

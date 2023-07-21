@@ -399,61 +399,6 @@ public class EncryptionArtifactFactory
     }
 
     /**
-     * Create and configure a new SslContext instance for a Netty server.<p>
-     *
-     * @param directTLS if the first write request should be encrypted.
-     * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
-     */
-    public SslContext createServerModeSslContext(boolean directTLS) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, SSLException {
-        getKeyManagers();
-        SslContextBuilder builder = SslContextBuilder.forServer(keyManagerFactory);
-
-        // Set policy for checking client certificates.
-        switch ( configuration.getClientAuth() )
-        {
-            case disabled:
-                builder.clientAuth(ClientAuth.NONE);
-                break;
-            case wanted:
-                builder.clientAuth(ClientAuth.OPTIONAL);
-                break;
-            case needed:
-                builder.clientAuth(ClientAuth.REQUIRE);
-                break;
-        }
-
-        builder.protocols(configuration.getEncryptionProtocols());
-        builder.ciphers(configuration.getEncryptionCipherSuites());
-        builder.startTls(!directTLS);
-
-        return builder.build();
-    }
-
-    /**
-     * Create and configure a new SslContext instance for a Netty client.<p>
-     *
-     * Used when the Openfire server is acting as a client when making S2S connections.
-     *
-     * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
-     */
-    public SslContext createClientModeSslContext() throws SSLException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
-        getKeyManagers();
-
-        // We will never send SSLV2 ClientHello messages
-        Set<String> protocols = new HashSet<>(configuration.getEncryptionProtocols());
-        protocols.remove("SSLv2Hello");
-
-        return SslContextBuilder
-            .forClient()
-            .protocols(protocols)
-            .ciphers(configuration.getEncryptionCipherSuites())
-            .keyManager(keyManagerFactory)
-            .trustManager(getTrustManagers()[0])
-            .startTls(false)
-            .build();
-    }
-
-    /**
      * Creates an Apache MINA SslFilter that is configured to use server mode when handshaking.
      *
      * For Openfire, an engine is of this mode used for most purposes (as Openfire is a server by nature).

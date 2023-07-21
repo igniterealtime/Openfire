@@ -130,7 +130,7 @@ public class SystemPropertiesServlet extends HttpServlet {
         final boolean oldEncrypt = JiveGlobals.isPropertyEncrypted(key);
         final String oldValueToLog = oldEncrypt ? "***********" : JiveGlobals.getProperty(key);
         final String value = request.getParameter("value");
-        final boolean encrypt = ParamUtils.getBooleanAttribute(request, "encrypt");
+        final boolean encrypt = ParamUtils.getBooleanParameter(request, "encrypt");
         final boolean alreadyExists = JiveGlobals.getProperty(key) != null;
         JiveGlobals.setProperty(key, value, encrypt);
         request.getSession().setAttribute("successMessage",

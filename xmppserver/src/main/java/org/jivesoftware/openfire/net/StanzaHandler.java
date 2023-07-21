@@ -19,12 +19,10 @@ package org.jivesoftware.openfire.net;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.StreamIDFactory;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -99,6 +97,16 @@ public abstract class StanzaHandler {
     protected PacketRouter router;
 
     /**
+     * Domain of the remote server or client.
+     */
+    protected String remoteDomain;
+
+    /**
+     * Domain of the server
+     */
+    private String serverName;
+
+    /**
      * Creates a dedicated reader for a socket.
      *
      * @param router     the router for sending packets that were read.
@@ -136,8 +144,11 @@ public abstract class StanzaHandler {
             createSession(parser);
         }
         else if (startedTLS) {
+            MXParser parser = reader.getXPPParser();
+            parser.setInput(new StringReader(stanza));
+            tlsNegotiated(parser);
             startedTLS = false;
-            tlsNegotiated();
+
         }
         else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
             startedSASL = false;
@@ -484,7 +495,19 @@ public abstract class StanzaHandler {
      * depending on the session type such as auth for Non-SASL authentication and register
      * for in-band registration.
      */
-    protected void tlsNegotiated() {
+    protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        // Discard remoteDomain value obtained from unencrypted initiating stream
+        // in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
+        this.remoteDomain = "";
+
+        // Get remoteDomain from encrypted stream tag
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+        this.remoteDomain = xpp.getAttributeValue("", "from");
+
+        // TODO: OF-1913 - Session needs a new StreamID as per https://tools.ietf.org/html/rfc6120#section-5.4.3.3
+
         // Offer stream features including SASL Mechanisms
         StringBuilder sb = new StringBuilder(620);
         sb.append(getStreamHeader());
@@ -617,17 +640,13 @@ public abstract class StanzaHandler {
         sb.append(CHARSET);
         sb.append("'?>");
         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
-        sb.append(getNamespace());
-        sb.append("\"");
+        sb.append(getNamespace()).append("\"");
         sb.append(getAdditionalNamespaces());
-        sb.append(" from=\"");
-        sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-        sb.append("\" id=\"");
-        sb.append(session.getStreamID());
-        sb.append("\" xml:lang=\"");
-        sb.append(session.getLanguage().toLanguageTag());
-        sb.append("\" version=\"");
-        sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
+        sb.append(" from=\"").append(serverName).append("\"");
+        sb.append(" to=\"").append(remoteDomain).append("\"");
+        sb.append(" id=\"").append(session.getStreamID()).append("\"");
+        sb.append(" xml:lang=\"").append(session.getLanguage().toLanguageTag()).append("\"");
+        sb.append(" version=\"").append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
     }
@@ -675,8 +694,9 @@ public abstract class StanzaHandler {
             eventType = xpp.next();
         }
 
-        final String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        this.serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         String host = xpp.getAttributeValue("", "to");
+        this.remoteDomain = xpp.getAttributeValue("", "from");
 
         try {
             // Check that the TO attribute of the stream header matches the server name or a valid

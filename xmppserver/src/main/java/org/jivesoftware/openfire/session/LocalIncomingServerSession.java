@@ -110,11 +110,11 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      */
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
-        return createSession(serverName, reader.getXPPParser(), connection, directTLS);
+        return createSession(serverName, reader.getXPPParser(), connection, directTLS, false);
     }
 
     public static LocalIncomingServerSession createSession(String serverName, XmlPullParser xpp,
-                                                           Connection connection, boolean directTLS) throws XmlPullParserException, IOException {
+                                                           Connection connection, boolean directTLS, boolean doNotSendXMPPStream) throws XmlPullParserException, IOException {
 
         String version = xpp.getAttributeValue("", "version");
         String fromDomain = xpp.getAttributeValue("", "from");
@@ -149,6 +149,10 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             LocalIncomingServerSession session = SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
             Log.debug("Creating new session with stream ID '{}' for local '{}' to peer '{}'.", streamID, toDomain, fromDomain);
 
+            if (doNotSendXMPPStream) {
+                session.setLocalDomain(serverName);
+                return session;
+            }
             // Send the stream header
             StringBuilder openingStream = new StringBuilder();
             openingStream.append("<stream:stream");

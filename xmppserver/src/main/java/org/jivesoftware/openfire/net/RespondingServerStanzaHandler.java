@@ -92,12 +92,20 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             // Pull namespaces off of the stream:stream stanza and add them to the additional
             List<Namespace> receivedNamespaces = null;
             try {
-                receivedNamespaces = DocumentHelper.parseText(xml + "</stream:stream>").getRootElement().declaredNamespaces();
+                Element rootElement = DocumentHelper.parseText(xml + "</stream:stream>").getRootElement();
+                receivedNamespaces = rootElement.declaredNamespaces();
                 Set<Namespace> additionalNamespaces = receivedNamespaces
                     .stream()
                     .filter(RespondingServerStanzaHandler::isRelevantNamespace)
                     .collect(Collectors.toSet());
                 connection.setAdditionalNamespaces(additionalNamespaces);
+
+                // Create a new session with a new ID if a new stream has started on an existing connection
+                // following TLS negotiation
+                String newStreamId = rootElement.attribute("id").getValue();
+                if (sessionCreated && newStreamId != null) {
+                    session = createLocalOutgoingServerSession(newStreamId, connection);
+                }
             } catch (DocumentException e) {
                 LOG.error("Failed extract additional namespaces", e);
             }
@@ -313,7 +321,18 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException {
         String currentStreamId = xpp.getAttributeValue("", "id");
-        session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, BasicStreamIDFactory.createStreamID(currentStreamId));
+        session = createLocalOutgoingServerSession(currentStreamId,  connection);
+    }
+
+    /**
+     * Creates a LocalOutgoingServerSession
+     *
+     * @param streamId id taken from the responding servers latest stream tag
+     * @param connection the connection between the servers
+     * @return a LocalOutgoingServerSession
+     */
+    private LocalOutgoingServerSession createLocalOutgoingServerSession(String streamId, Connection connection) {
+        return new LocalOutgoingServerSession(domainPair.getLocal(), connection, BasicStreamIDFactory.createStreamID(streamId));
     }
 
     public void setSessionAuthenticated(boolean authenticated) {

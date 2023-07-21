@@ -22,6 +22,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -97,14 +98,9 @@ public abstract class StanzaHandler {
     protected PacketRouter router;
 
     /**
-     * Domain of the remote server or client.
+     * Domain of the local server and remote server or client.
      */
-    protected String remoteDomain;
-
-    /**
-     * Domain of the server
-     */
-    private String serverName;
+    private DomainPair domainPair;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -496,17 +492,23 @@ public abstract class StanzaHandler {
      * for in-band registration.
      */
     protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {
-        // Discard remoteDomain value obtained from unencrypted initiating stream
+        // Discard domain values obtained from unencrypted initiating stream
         // in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
-        this.remoteDomain = "";
+        this.domainPair = null;
 
         // Get remoteDomain from encrypted stream tag
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }
-        this.remoteDomain = xpp.getAttributeValue("", "from");
+        this.domainPair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), xpp.getAttributeValue("", "from"));
 
-        // TODO: OF-1913 - Session needs a new StreamID as per https://tools.ietf.org/html/rfc6120#section-5.4.3.3
+        // Discard session data obtained from unencrypted initiating stream
+        // in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
+        SessionManager sessionManager = SessionManager.getInstance();
+        sessionManager.unregisterIncomingServerSession(session.getStreamID());
+        // Re-instate the session with a new ID on the same connection
+        createSession(domainPair.getLocal(), xpp, connection);
+        this.connection.reinit(session);
 
         // Offer stream features including SASL Mechanisms
         StringBuilder sb = new StringBuilder(620);
@@ -642,8 +644,8 @@ public abstract class StanzaHandler {
         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace()).append("\"");
         sb.append(getAdditionalNamespaces());
-        sb.append(" from=\"").append(serverName).append("\"");
-        sb.append(" to=\"").append(remoteDomain).append("\"");
+        sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
+        sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
         sb.append(" id=\"").append(session.getStreamID()).append("\"");
         sb.append(" xml:lang=\"").append(session.getLanguage().toLanguageTag()).append("\"");
         sb.append(" version=\"").append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
@@ -694,9 +696,8 @@ public abstract class StanzaHandler {
             eventType = xpp.next();
         }
 
-        this.serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        this.domainPair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), xpp.getAttributeValue("", "from"));
         String host = xpp.getAttributeValue("", "to");
-        this.remoteDomain = xpp.getAttributeValue("", "from");
 
         try {
             // Check that the TO attribute of the stream header matches the server name or a valid
@@ -720,7 +721,7 @@ public abstract class StanzaHandler {
             // Create the correct session based on the sent namespace. At this point the server
             // may offer the client to encrypt the connection. If the client decides to encrypt
             // the connection then a <starttls> stanza should be received
-            createSession(serverName, xpp, connection);
+            createSession(domainPair.getLocal(), xpp, connection);
 
             if (session == null) {
                 throw new StreamErrorException(StreamError.Condition.internal_server_error, "Unable to create a session.");
@@ -729,7 +730,7 @@ public abstract class StanzaHandler {
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
             StringBuilder sb = new StringBuilder(250);
-            if (host == null) host = serverName;
+            if (host == null) host = domainPair.getLocal();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");

@@ -132,83 +132,75 @@
             }
         }
     }
+
+    pageContext.setAttribute("groupName", groupName);
+    if (groupName != null) {
+        pageContext.setAttribute("group", webManager.getGroupManager().getGroup(groupName));
+    }
+    pageContext.setAttribute( "errors", errors );
+    pageContext.setAttribute( "name", name );
+    pageContext.setAttribute( "description", description );
 %>
 
 <html>
 <head>
-<title><%
-           // If editing the group.
-           if (groupName != null) {
-        %>
-        <fmt:message key="group.edit.title" />
-        <% }
-           // Otherwise creating a new group.
-           else {
-        %>
-        <fmt:message key="group.create.title" />
-        <% } %>
-</title>
-
-<% if (groupName == null) { %>
-<meta name="pageID" content="group-create"/>
-<% }
-   else { %>
-<meta name="subPageID" content="group-edit"/>
-<meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
-<% } %>
-    
-<meta name="helpPage" content="create_a_group.html"/>
+    <c:choose>
+        <c:when test="${not empty groupName}">
+            <title><fmt:message key="group.edit.title" /></title>
+            <meta name="pageID" content="group-create"/>
+        </c:when>
+        <c:otherwise>
+            <title><fmt:message key="group.create.title" /></title>
+            <meta name="subPageID" content="group-edit"/>
+            <meta name="extraParams" content="group=${admin:urlEncode(groupName)}"/>
+        </c:otherwise>
+    </c:choose>
+    <meta name="helpPage" content="create_a_group.html"/>
 </head>
 <body>
 
 <c:set var="submit" value="${param.create}"/>
 
-<%  if (errors.get("general") != null) { %>
-<admin:infoBox type="error">
-    <fmt:message key="group.create.error" />
-</admin:infoBox>
-<%  } %>
+<c:if test="${not empty errors['general']}">
+    <admin:infoBox type="error">
+        <fmt:message key="group.create.error" />
+    </admin:infoBox>
+</c:if>
 
-<% if (webManager.getGroupManager().isReadOnly()) { %>
-<div class="error">
-    <fmt:message key="group.read_only"/>
-</div>
-<% } %>
+<c:if test="${webManager.groupManager.readOnly}">
+    <div class="error">
+        <fmt:message key="group.read_only"/>
+    </div>
+</c:if>
 
 <p>
-    <%
-        // If editing the group.
-        if (groupName != null) {
-    %>
-    <fmt:message key="group.edit.details_info" />
-    <% }
-       // Otherwise creating a new group.
-       else {
-    %>
-    <fmt:message key="group.create.form" />
-    <% } %>
+    <c:choose>
+        <c:when test="${not empty groupName}">
+            <fmt:message key="group.edit.details_info" />
+        </c:when>
+        <c:otherwise>
+            <fmt:message key="group.create.form" />
+        </c:otherwise>
+    </c:choose>
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
 
-   <% if (groupName != null) { %>
-    <input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>" id="existingName">
-   <% } %>
+    <c:if test="${not empty groupName}">
+        <input type="hidden" name="group" value="<c:out value="${groupName}"/>" id="existingName">
+    </c:if>
 
     <!-- BEGIN create group -->
     <div class="jive-contentBoxHeader">
-        <%
-            // If editing the group.
-            if (groupName != null) {
-        %>
-        <fmt:message key="group.edit.title" />
-        <% }
-           // Otherwise creating a new group.
-           else {
-        %>
-        <fmt:message key="group.create.new_group_title" />
-        <% } %>
+        <c:choose>
+            <c:when test="${not empty groupName}">
+                <fmt:message key="group.edit.title" />
+            </c:when>
+            <c:otherwise>
+                <fmt:message key="group.create.new_group_title" />
+            </c:otherwise>
+        </c:choose>
     </div>
     <div class="jive-contentBox">
         <table>
@@ -217,63 +209,56 @@
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *
         </td>
         <td>
-            <input type="text" name="name" size="30" maxlength="50"
-             value="<%= ((name != null) ? StringUtils.escapeForXML(name) : "") %>" id="gname">
+            <input type="text" name="name" size="30" maxlength="50" value="<c:out value="${name}"/>" id="gname">
         </td>
     </tr>
 
-    <%  if (errors.get("name") != null || errors.get("groupAlreadyExists") != null) { %>
-
+    <c:if test="${not empty errors['name']}">
         <tr>
             <td style="width: 1%; white-space: nowrap">&nbsp;</td>
             <td>
-                <%  if (errors.get("name") != null) { %>
-                    <span class="jive-error-text"><fmt:message key="group.create.invalid_group_name" /></span>
-                <%  } else if (errors.get("groupAlreadyExists") != null) { %>
-                    <span class="jive-error-text"><fmt:message key="group.create.invalid_group_info" /></span>
-                <%  } %>
+                <span class="jive-error-text"><fmt:message key="group.create.invalid_group_name" /></span>
             </td>
         </tr>
-
-    <%  } %>
+    </c:if>
+    <c:if test="${not empty errors['groupAlreadyExists']}">
+        <tr>
+            <td style="width: 1%; white-space: nowrap">&nbsp;</td>
+            <td>
+                <span class="jive-error-text"><fmt:message key="group.create.invalid_group_info" /></span>
+            </td>
+        </tr>
+    </c:if>
 
     <tr>
         <td style="width: 1%; white-space: nowrap">
             <label for="gdesc"><fmt:message key="group.create.label_description" /></label>
         </td>
         <td>
-            <textarea name="description" cols="30" rows="3" maxlength="255" id="gdesc"
-             ><%= ((description != null) ? StringUtils.escapeHTMLTags(description) : "") %></textarea>
+            <textarea name="description" cols="30" rows="3" maxlength="255" id="gdesc"><c:out value="${description}"/></textarea>
         </td>
     </tr>
 
-    <%  if (errors.get("description") != null) { %>
-
+    <c:if test="${not empty errors['description']}">
         <tr>
-            <td style="width: 1%; white-space: nowrap">
-                &nbsp;
-            </td>
+            <td style="width: 1%; white-space: nowrap">&nbsp;</td>
             <td>
                 <span class="jive-error-text"><fmt:message key="group.create.invalid_description" /></span>
             </td>
         </tr>
-
-    <%  } %>
+    </c:if>
 
     <tr>
         <td></td>
         <td>
-            <%
-               // If editing the group.
-               if (groupName != null) {
-            %>
-            <input type="submit" name="edit" value="<fmt:message key="group.edit.title" />">
-            <% }
-               // Otherwise creating a new group.
-               else {
-            %>
-            <input type="submit" name="create" value="<fmt:message key="group.create.create" />">
-            <% } %>
+            <c:choose>
+                <c:when test="${not empty groupName}">
+                    <input type="submit" name="edit" value="<fmt:message key="group.edit.title" />">
+                </c:when>
+                <c:otherwise>
+                    <input type="submit" name="create" value="<fmt:message key="group.create.create" />">
+                </c:otherwise>
+            </c:choose>
             <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
         </td>
     </tr>
@@ -288,19 +273,17 @@
 document.f.name.focus();
 </script>
 
-<%  // Disable the form if a read-only user provider.
-if (webManager.getGroupManager().isReadOnly()) { %>
-
-<script>
-  function disable() {
-let limit = document.forms[0].elements.length;
-for (let i=0;i<limit;i++) {
-  document.forms[0].elements[i].disabled = true;
-}
-  }
-  disable();
-</script>
-<% } %>
+<c:if test="${webManager.groupManager.readOnly}">
+    <script>
+      function disable() {
+        let limit = document.forms[0].elements.length;
+        for (let i=0;i<limit;i++) {
+          document.forms[0].elements[i].disabled = true;
+        }
+      }
+      disable();
+    </script>
+</c:if>
 
 </body>
-</html>%>
+</html>

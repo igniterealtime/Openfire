@@ -345,7 +345,7 @@
 <head>
 <title><fmt:message key="group.edit.title"/></title>
 <meta name="subPageID" content="group-edit"/>
-<meta name="extraParams" content="group=${fn:escapeXml(param.group)}"/>
+<meta name="extraParams" content="group=${admin:urlEncode(group.name)}"/>
 <meta name="helpPage" content="edit_group_properties.html"/>
 </head>
 <body>
@@ -690,7 +690,7 @@
                     <td>
                         <c:choose>
                             <c:when test="${webManager.userManager.isRegisteredUser(member, false)}">
-                                <a href="user-properties.jsp?username=${fn:escapeXml(webManager.userManager.getUser(member).username)}">
+                                <a href="user-properties.jsp?username=${admin:urlEncode(webManager.userManager.getUser(member).username)}">
                                     <c:out value="${webManager.userManager.getUser(member).username}"/>
                                 </a>
                             </c:when>

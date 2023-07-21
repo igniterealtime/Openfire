@@ -23,6 +23,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 
+<%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -66,13 +67,14 @@
         response.sendRedirect("group-summary.jsp?deletesuccess=true");
         return;
     }
+    pageContext.setAttribute( "group", group );
 %>
 
 <html>
     <head>
         <title><fmt:message key="group.delete.title"/></title>
         <meta name="subPageID" content="group-delete"/>
-        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+        <meta name="extraParams" content="group=${admin:urlEncode(group.name)}"/>
         <meta name="helpPage" content="delete_a_group.html"/>
     </head>
     <body>
@@ -85,13 +87,13 @@
 
 <p>
 <fmt:message key="group.delete.hint_info" />
-<b><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>"><%= group.getName() %></a></b>
+<b><a href="group-edit.jsp?group=${admin:urlEncode(group.name)}"><c:out value="${group.name}"/></a></b>
 <fmt:message key="group.delete.hint_info1" />
 </p>
 
 <form action="group-delete.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
-<input type="hidden" name="group" value="<%= StringUtils.escapeForXML(groupName) %>">
+<input type="hidden" name="group" value="<c:out value="${group.name}"/>">
 <input type="submit" name="delete" value="<fmt:message key="group.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>

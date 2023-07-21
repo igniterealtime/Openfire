@@ -45,7 +45,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
-        boolean clientConnection = businessLogicHandler instanceof NettyClientConnectionHandler;
+        boolean isClientConnection = businessLogicHandler instanceof NettyClientConnectionHandler;
         int maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime() > -1 ? businessLogicHandler.getMaxIdleTime() : 0;
         int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
 
@@ -54,7 +54,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             .addLast(new StringEncoder())
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0))
-            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(clientConnection))
+            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))
             .addLast(businessLogicHandler);
 
         if (directTLS) {

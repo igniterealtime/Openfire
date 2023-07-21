@@ -47,7 +47,9 @@ import java.util.concurrent.ThreadPoolExecutor;
  * by changing the property <b>xmpp.server.processing.max.threads</b>.
  *
  * @author Gaston Dombiak
+ * @deprecated see {@link ServerStanzaHandler}
  */
+@Deprecated
 public class ServerSocketReader extends SocketReader {
 
     private static final Logger Log = LoggerFactory.getLogger(ServerSocketReader.class);

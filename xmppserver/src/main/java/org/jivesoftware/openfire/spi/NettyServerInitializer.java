@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.spi;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -34,11 +35,12 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
 
     private final NettyConnectionHandler businessLogicHandler;
     private final boolean directTLS;
+    private final ChannelGroup allChannels;
 
-    public NettyServerInitializer(NettyConnectionHandler businessLogicHandler, boolean directTLS) {
+    public NettyServerInitializer(NettyConnectionHandler businessLogicHandler, boolean directTLS, ChannelGroup allChannels) {
         this.businessLogicHandler = businessLogicHandler;
         this.directTLS = directTLS;
-
+        this.allChannels = allChannels;
     }
 
     @Override
@@ -58,5 +60,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         if (directTLS) {
             ch.attr(CONNECTION).get().startTLS(false, true);
         }
+
+        allChannels.add(ch);
     }
 }

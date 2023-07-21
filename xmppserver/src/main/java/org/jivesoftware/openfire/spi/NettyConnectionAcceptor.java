@@ -20,8 +20,11 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyConnectionHandler;
@@ -31,6 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+
+import static org.jivesoftware.openfire.nio.NettyConnection.SSL_HANDLER_NAME;
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
 
 /**
  * Responsible for accepting new (socket) connections, using Java NIO implementation provided by the Netty framework.
@@ -49,17 +55,26 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     /**
      * A multithreaded event loop that handles I/O operation
      * <p>
-     * The 'boss' accepts an incoming connection.
+     * The parent 'boss' accepts an incoming connection.
      */
-    private static final EventLoopGroup BOSS_GROUP = new NioEventLoopGroup();
+    private static final EventLoopGroup PARENT_GROUP = new NioEventLoopGroup();
 
     /**
      * A multithreaded event loop that handles I/O operation
      * <p>
-     * The 'worker', handles the traffic of the accepted connection once the boss accepts the connection
+     * The child 'worker', handles the traffic of the accepted connection once the parent accepts the connection
      * and registers the accepted connection to the worker.
      */
-    private static final EventLoopGroup WORKER_GROUP = new NioEventLoopGroup();
+    private static final EventLoopGroup CHILD_GROUP = new NioEventLoopGroup();
+
+    /**
+     * A thread-safe Set containing all open Channels associated with this ConnectionAcceptor
+     *
+     * Allows various bulk operations to be made on them such as pipeline modification & broadcast messages.
+     * Closed Channels are automatically removed.
+     */
+    private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+
     private final Logger Log;
     private final NettyConnectionHandler connectionHandler;
     private Channel mainChannel;
@@ -70,7 +85,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     public NettyConnectionAcceptor(ConnectionConfiguration configuration) {
         super(configuration);
 
-        String name = configuration.getType().toString().toLowerCase() + (isDirectTLS() ? "_ssl" : "");
+        String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
 
         switch (configuration.getType()) {
@@ -106,11 +121,11 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
         try {
             // ServerBootstrap is a helper class that sets up a server
             ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap.group(BOSS_GROUP, WORKER_GROUP)
+            serverBootstrap.group(PARENT_GROUP, CHILD_GROUP)
                 // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
-                .childHandler(new NettyServerInitializer(connectionHandler, isDirectTLS()))
+                .childHandler(new NettyServerInitializer(connectionHandler, isDirectTLSConfigured(), allChannels))
                 // Set the listen backlog (queue) length.
                 .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
@@ -152,9 +167,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
         }
     }
 
-    private boolean isDirectTLS() {
-        return configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
-    }
 
     /**
      * Stops this acceptor by unbinding the socket acceptor. Does nothing when the instance is not started.
@@ -178,11 +190,11 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
      * Shuts down event loop groups if they are not already shutdown - this will close all channels.
      */
     public static void shutdownEventLoopGroups() {
-        if (!BOSS_GROUP.isShuttingDown()) {
-            BOSS_GROUP.shutdownGracefully();
+        if (!PARENT_GROUP.isShuttingDown()) {
+            PARENT_GROUP.shutdownGracefully();
         }
-        if (!WORKER_GROUP.isShuttingDown()) {
-            WORKER_GROUP.shutdownGracefully();
+        if (!CHILD_GROUP.isShuttingDown()) {
+            CHILD_GROUP.shutdownGracefully();
         }
     }
 
@@ -200,7 +212,49 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     @Override
     public synchronized void reconfigure(ConnectionConfiguration configuration) {
         this.configuration = configuration;
-        // TODO reconfigure the netty connection
+
+        if (isDirectTLSConfigured(configuration)) {
+            addNewSslHandlerToAllChannels();
+        } else {
+            // The acceptor is in 'startTLS' mode. Remove TLS filter
+            removeSslHandlerFromAllChannels();
+        }
+    }
+
+    /**
+     * Remove TLS filter from all channels of this acceptor
+     */
+    private void removeSslHandlerFromAllChannels() {
+        this.allChannels
+            .stream()
+            .map(Channel::pipeline)
+            .filter(pipeline -> pipeline.toMap().containsKey(SSL_HANDLER_NAME))
+            .forEach(pipeline -> pipeline.remove(SSL_HANDLER_NAME));
+    }
+
+    /**
+     * Add or replace TLS filter in all channels of this acceptor
+     */
+    private void addNewSslHandlerToAllChannels() {
+        this.allChannels.forEach(channel ->
+        {
+            if (channel.pipeline().toMap().containsKey(SSL_HANDLER_NAME)) {
+                channel.pipeline().remove(SSL_HANDLER_NAME);
+            }
+            try {
+                channel.attr(CONNECTION).get().startTLS(false, true);
+            } catch (Exception e) {
+                Log.error("An exception occurred while reloading the TLS configuration.", e);
+            }
+        });
+    }
+
+    private boolean isDirectTLSConfigured() {
+        return isDirectTLSConfigured(this.configuration);
+    }
+
+    private static boolean isDirectTLSConfigured(ConnectionConfiguration configuration) {
+        return configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
     }
 
     public synchronized int getPort() {

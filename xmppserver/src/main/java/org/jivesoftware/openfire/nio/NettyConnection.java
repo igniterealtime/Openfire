@@ -60,7 +60,7 @@ import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
 public class NettyConnection implements Connection {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
-    private static final String SSL_HANDLER_NAME = "ssl";
+    public static final String SSL_HANDLER_NAME = "ssl";
     private final ConnectionConfiguration configuration;
 
     /**

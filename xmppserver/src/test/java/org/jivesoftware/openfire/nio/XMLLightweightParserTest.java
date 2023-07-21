@@ -20,7 +20,8 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Unit tests that verify the functionality as implemented in {@link XMLLightweightParser}
@@ -183,33 +184,5 @@ public class XMLLightweightParserTest {
         // Verify results.
         assertNotNull( result );
         assertEquals(1, result.length );
-    }
-
-    @Test
-    public void testHasIllegalCharacterReferencesFindsIllegalDecimalChars() throws Exception
-    {
-        final String input = "test &#65; test";
-        assertFalse(XMLLightweightParser.hasIllegalCharacterReferences(input));
-    }
-
-    @Test
-    public void testHasIllegalCharacterReferencesFindsLegalDecimalChars() throws Exception
-    {
-        final String input = "test &#7; test";
-        assertTrue(XMLLightweightParser.hasIllegalCharacterReferences(input));
-    }
-
-    @Test
-    public void testHasIllegalCharacterReferencesFindsIllegalHexChars() throws Exception
-    {
-        final String input = "test &#x41; test";
-        assertFalse(XMLLightweightParser.hasIllegalCharacterReferences(input));
-    }
-
-    @Test
-    public void testHasIllegalCharacterReferencesFindsLegalHexChars() throws Exception
-    {
-        final String input = "test &#x7; test";
-        assertTrue(XMLLightweightParser.hasIllegalCharacterReferences(input));
     }
 }

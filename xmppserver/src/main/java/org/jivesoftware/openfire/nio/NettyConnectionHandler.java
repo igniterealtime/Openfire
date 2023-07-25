@@ -19,11 +19,13 @@ package org.jivesoftware.openfire.nio;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.util.AttributeKey;
 import org.apache.mina.core.session.IoSession;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.slf4j.Logger;
@@ -32,6 +34,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
+import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 /**
  * A NettyConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
  * received XML stanzas to the proper StanzaHandler.<p>
@@ -48,6 +51,8 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     private static final Logger Log = LoggerFactory.getLogger(NettyConnectionHandler.class);
     static final AttributeKey<XMLLightweightParser> XML_PARSER = AttributeKey.valueOf("XML-PARSER");
     public static final AttributeKey<NettyConnection> CONNECTION = AttributeKey.valueOf("CONNECTION");
+    public static final AttributeKey<Long> READ_BYTES = AttributeKey.valueOf("READ_BYTES");
+    public static final AttributeKey<Long> WRITTEN_BYTES = AttributeKey.valueOf("WRITTEN_BYTES");
     static final AttributeKey<StanzaHandler> HANDLER = AttributeKey.valueOf("HANDLER");
 
 
@@ -107,6 +112,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         // Create a new Connection for the new session
         final NettyConnection nettyConnection = createNettyConnection(ctx);
         ctx.channel().attr(CONNECTION).set(nettyConnection);
+        ctx.channel().attr(READ_BYTES).set(0L);
 
         ctx.channel().attr(HANDLER).set(createStanzaHandler(nettyConnection));
     }
@@ -125,7 +131,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         final XMPPPacketReader parser = PARSER_CACHE.get();
 
         // Update counter of read bytes
-        // updateReadBytesCounter(session); TODO maybe replace with https://netty.io/4.0/api/io/netty/handler/traffic/TrafficCounter.html#currentReadBytes--
+        updateReadBytesCounter(ctx);
 
         Log.trace("Handler on " +  ctx.channel().localAddress() + " received: " + message);
         // Let the stanza handler process the received stanza
@@ -152,41 +158,23 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
      * Updates the system counter of read bytes. This information is used by the incoming
      * bytes statistic.
      *
-     * @param ctx the session that read more bytes from the socket.
+     * @param ctx the context for the channel reading bytes
      */
     private void updateReadBytesCounter(ChannelHandlerContext ctx) {
-// TODO maybe replace with https://netty.io/4.0/api/io/netty/handler/traffic/TrafficCounter.html#currentReadBytes--
-//        long currentBytes = session.getReadBytes();
-//        Long prevBytes = (Long) session.getAttribute("_read_bytes");
-//        long delta;
-//        if (prevBytes == null) {
-//            delta = currentBytes;
-//        }
-//        else {
-//            delta = currentBytes - prevBytes;
-//        }
-//        session.setAttribute("_read_bytes", currentBytes);
-//        ServerTrafficCounter.incrementIncomingCounter(delta);
+        ChannelTrafficShapingHandler handler = (ChannelTrafficShapingHandler) ctx.channel().pipeline().get(TRAFFIC_HANDLER_NAME);
+        if (handler != null) {
+            long currentBytes = handler.trafficCounter().currentReadBytes();
+            Long prevBytes = ctx.channel().attr(READ_BYTES).get();
+            long delta;
+            if (prevBytes == null) {
+                delta = currentBytes;
+            }
+            else {
+                delta = currentBytes - prevBytes;
+            }
+            ctx.channel().attr(READ_BYTES).set(currentBytes);
+            ServerTrafficCounter.incrementIncomingCounter(delta);
+        }
     }
 
-    /**
-     * Updates the system counter of written bytes. This information is used by the outgoing
-     * bytes statistic.
-     *
-     * @param session the session that wrote more bytes to the socket.
-     */
-    private void updateWrittenBytesCounter(IoSession session) {
-// TODO maybe replace with https://netty.io/4.0/api/io/netty/handler/traffic/TrafficCounter.html#currentReadBytes--
-//        long currentBytes = session.getWrittenBytes();
-//        Long prevBytes = (Long) session.getAttribute("_written_bytes");
-//        long delta;
-//        if (prevBytes == null) {
-//            delta = currentBytes;
-//        }
-//        else {
-//            delta = currentBytes - prevBytes;
-//        }
-//        session.setAttribute("_written_bytes", currentBytes);
-//        ServerTrafficCounter.incrementOutgoingCounter(delta);
-    }
 }

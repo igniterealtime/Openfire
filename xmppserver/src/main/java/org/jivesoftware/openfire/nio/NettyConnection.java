@@ -23,10 +23,12 @@ import io.netty.handler.codec.compression.JZlibDecoder;
 import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -50,6 +52,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.WRITTEN_BYTES;
+import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 
 /**
  * Implementation of {@link Connection} interface specific for Netty connections.
@@ -322,6 +326,8 @@ public class NettyConnection implements Connection {
             boolean errorDelivering = false;
             try {
                 ChannelFuture f = channelHandlerContext.writeAndFlush(packet.getElement().asXML());
+                updateWrittenBytesCounter(channelHandlerContext);
+
                 // TODO handle errors?
             }
             catch (Exception e) {
@@ -350,6 +356,7 @@ public class NettyConnection implements Connection {
         if (!isClosed()) {
             boolean errorDelivering = false;
             ChannelFuture f = channelHandlerContext.writeAndFlush(text);
+            updateWrittenBytesCounter(channelHandlerContext);
             // TODO handle errors?
 
 //            try {
@@ -366,6 +373,28 @@ public class NettyConnection implements Connection {
 //            if (errorDelivering) {
 //                close();
 //            }
+        }
+    }
+
+    /**
+     * Updates the system counter of written bytes. This information is used by the outgoing
+     * bytes statistic.
+     *
+     * @param ctx the context for the channel writing bytes
+     */
+    private void updateWrittenBytesCounter(ChannelHandlerContext ctx) {
+        ChannelTrafficShapingHandler handler = (ChannelTrafficShapingHandler) ctx.channel().pipeline().get(TRAFFIC_HANDLER_NAME);
+        if (handler != null) {
+            long currentBytes = handler.trafficCounter().lastWrittenBytes();
+            Long prevBytes = ctx.channel().attr(WRITTEN_BYTES).get();
+            long delta;
+            if (prevBytes == null) {
+                delta = currentBytes;
+            } else {
+                delta = currentBytes - prevBytes;
+            }
+            ctx.channel().attr(WRITTEN_BYTES).set(currentBytes);
+            ServerTrafficCounter.incrementOutgoingCounter(delta);
         }
     }
 

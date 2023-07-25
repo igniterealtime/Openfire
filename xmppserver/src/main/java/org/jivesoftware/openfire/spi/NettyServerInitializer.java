@@ -7,10 +7,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
-import org.jivesoftware.openfire.nio.NettyConnectionHandler;
-import org.jivesoftware.openfire.nio.NettyIdleStateKeepAliveHandler;
-import org.jivesoftware.openfire.nio.NettyXMPPDecoder;
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
+
+import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.SystemProperty;
 
 import java.time.Duration;
@@ -33,6 +32,8 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         .setDynamic(true)
         .build();
 
+    public static final String TRAFFIC_HANDLER_NAME = "trafficShapingHandler"
+    ;
     private final NettyConnectionHandler businessLogicHandler;
     private final boolean directTLS;
     private final ChannelGroup allChannels;
@@ -50,6 +51,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
 
         ch.pipeline()
+            .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
             .addLast(new NettyXMPPDecoder())
             .addLast(new StringEncoder())
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))

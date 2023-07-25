@@ -27,6 +27,8 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.cert.CertificateException;
+
 /**
  * Outbound (S2S) specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
  * and how to build and configure a {@link NettyConnection}.
@@ -51,6 +53,24 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     @Override
     StanzaHandler createStanzaHandler(NettyConnection connection) {
         return new RespondingServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection, domainPair );
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        super.exceptionCaught(ctx, cause);
+
+        if (isCertificateException(cause) && configRequiresStrictCertificateValidation()) {
+            Log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
+            throw new RuntimeException(cause);
+        }
+     }
+
+    private static boolean configRequiresStrictCertificateValidation() {
+        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true);
+    }
+
+    public boolean isCertificateException(Throwable cause) {
+        return cause instanceof CertificateException;
     }
 
     @Override

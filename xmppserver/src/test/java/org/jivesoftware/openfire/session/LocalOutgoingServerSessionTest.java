@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -155,6 +156,14 @@ public class LocalOutgoingServerSessionTest
         }
 
         Fixtures.clearExistingProperties();
+    }
+
+
+    @Test
+    void single() throws Exception {
+        ServerSettings localServerSettings = new ServerSettings(Connection.TLSPolicy.required, ServerSettings.CertificateState.MISSING, true, true);
+        ServerSettings remoteServerSettings = new ServerSettings(Connection.TLSPolicy.required, ServerSettings.CertificateState.MISSING, true, true);
+        outgoingTest(localServerSettings, remoteServerSettings);
     }
 
     /**

@@ -23,13 +23,10 @@ import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.server.ServerDialback;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.ServerSession;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +119,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handle features
         if ("features".equals(rootTagName)) {
-            LOG.debug("Check if both us as well as the remote server have enabled STARTTLS and/or dialback ...");
 
             // Encryption ------
             if (shouldUseTls() && remoteFeaturesContainsStartTLS(doc)) {
@@ -137,6 +133,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             }
 
             // Authentication ------
+            LOG.debug("Check if both us as well as the remote server have enabled STARTTLS and/or dialback ...");
             final boolean saslExternalOffered = isSaslExternalOfferred(doc);
             final boolean dialbackOffered = isDialbackOffered(doc);
             LOG.debug("Remote server is offering dialback: {}, EXTERNAL SASL: {}", dialbackOffered, saslExternalOffered);
@@ -154,6 +151,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 startedSASL = true;
                 return true;
             } else if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+
                 // Next, try dialback
                 LOG.debug("Trying to authenticate using dialback.");
                 LOG.debug("[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + session.getStreamID() + ")]");
@@ -194,6 +192,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
             // Try dialback
             if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
+
                 LOG.debug("Trying to authenticate using dialback.");
                 LOG.debug("[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + session.getStreamID() + ")]");
                 ServerDialback dialback = new ServerDialback(connection, domainPair);
@@ -245,7 +244,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             LOG.debug("TLS negotiation was successful. Connection encrypted. Proceeding with authentication...");
 
             // Verify - TODO does this live here, should we do this when handling features mechanisms?
+            // If TLS cannot be used for authentication, it is permissible to use another authentication mechanism
+            // such as dialback. RFC 6120 does not explicitly allow this, as it does not take into account any other
+            // authentication mechanism other than TLS (it does mention dialback in an interoperability note. However,
+            // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
+            // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
+            // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
             if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
+                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                    LOG.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
+                    return false;
+                }
                 if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
                     LOG.debug("Failed to verify certificates for SASL authentication. Will continue with dialback.");
                     // Will continue with dialback when the features stanza comes in and is processed (above)

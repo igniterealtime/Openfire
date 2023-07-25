@@ -850,6 +850,8 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
                             item.getSubStatus() == RosterItem.SUB_TO)) {
                         PEPService pepService = pepServiceManager.getPEPService(item.getJid().asBareJID());
                         if (pepService != null) {
+                            pepService.getRootCollectionNode().getSubscriptions(availableSessionJID)
+                            pepService.getRootCollectionNode().getAccessModel().canAccessItems(pepService.getRootCollectionNode(), availableSessionJID, availableSessionJID);
                             pepService.sendLastPublishedItems(availableSessionJID);
                         }
                     }

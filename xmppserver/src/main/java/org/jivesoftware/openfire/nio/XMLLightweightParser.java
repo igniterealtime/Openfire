@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.filter.codec.ProtocolDecoderException;
@@ -44,9 +42,6 @@ import org.jivesoftware.util.PropertyEventListener;
  * @author Gaston Dombiak
  */
 class XMLLightweightParser {
-
-    private static final Pattern XML_HAS_CHARREF = Pattern.compile("&#(0*([0-9]+)|[xX]0*([0-9a-fA-F]+));");
-
     private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
     private static int maxBufferSize;
     // Chars that rappresent CDATA section start
@@ -400,37 +395,41 @@ class XMLLightweightParser {
      *            The input string
      * @return {@code true} if the input string contains an invalid numeric character reference, {@code false}
      *         otherwise.
-     * @see http://www.w3.org/TR/2008/REC-xml-20081126/#dt-charref
+     * @see <a href="https://www.w3.org/TR/2008/REC-xml-20081126/#dt-charref">Definition of a character reference</a>
      */
     public static boolean hasIllegalCharacterReferences(String string) {
-        // If there's no character reference, don't bother to do more specific checking.
-        final Matcher matcher = XML_HAS_CHARREF.matcher(string);
+        int needle = 0;
+        while (needle < string.length()) {
+            final int start = string.indexOf("&#", needle);
+            if (start == -1) {
+                return false;
+            }
+            final int end = string.indexOf(";", start + 2);
+            if (end == -1) {
+                return false;
+            }
+            needle = end;
 
-        while (matcher.find()) {
-            final String decValue = matcher.group(2);
-            if (decValue != null) {
-                final int value = Integer.parseInt(decValue);
-                if (!isLegalXmlCharacter(value)) {
-                    return true;
-                } else {
-                    continue;
-                }
+            final boolean isHex = string.charAt(start + 2) == 'x' || string.charAt(start + 2) == 'X';
+
+            final String candidate;
+            final int radix;
+            if (isHex) {
+                candidate = string.substring(start + 3, end);
+                radix = 16;
+            } else {
+                candidate = string.substring(start + 2, end);
+                radix = 10;
             }
 
-            final String hexValue = matcher.group(3);
-            if (hexValue != null) {
-                final int value = Integer.parseInt(hexValue, 16);
+            try {
+                final int value = Integer.parseInt(candidate, radix);
                 if (!isLegalXmlCharacter(value)) {
                     return true;
-                } else {
-                    continue;
                 }
+            } catch (NumberFormatException e) {
+                // The 'candidate' value wasn't a numeric character reference.
             }
-
-            // This is bad. The XML_HAS_CHARREF expression should have a hit for either the decimal
-            // or the heximal notation.
-            throw new IllegalStateException(
-                    "An error occurred while searching for illegal character references in the value [" + string + "].");
         }
 
         return false;
@@ -442,8 +441,9 @@ class XMLLightweightParser {
      * 
      * @param value
      *            the codepoint
-     * @return {@code true} if the codepoint is a valid charater per XML 1.0 definition, {@code false} otherwise.
-     * @see http://www.w3.org/TR/2008/REC-xml-20081126/#NT-Char
+     * @return {@code true} if the codepoint is a valid character per XML 1.0 definition, {@code false} otherwise.
+     *
+     * @see <a href="https://www.w3.org/TR/2008/REC-xml-20081126/#NT-Char">Definition of a characters range</a>
      */
     public static boolean isLegalXmlCharacter(int value) {
         return value == 0x9 || value == 0xA || value == 0xD || (value >= 0x20 && value <= 0xD7FF)

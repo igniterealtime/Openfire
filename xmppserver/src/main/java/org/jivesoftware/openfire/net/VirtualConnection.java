@@ -92,18 +92,6 @@ public abstract class VirtualConnection implements Connection {
     }
 
     @Override
-    public Connection.CompressionPolicy getCompressionPolicy() {
-        // Return null since compression is not used for virtual connections
-        return null;
-    }
-
-    @Override
-    public Connection.TLSPolicy getTlsPolicy() {
-        // Return null since TLS is not used for virtual connections
-        return null;
-    }
-
-    @Override
     public boolean isCompressed() {
         // Return false since compression is not used for virtual connections
         return false;
@@ -111,16 +99,6 @@ public abstract class VirtualConnection implements Connection {
 
     @Override
     public void setXMPPVersion(int majorVersion, int minorVersion) {
-        //Ignore
-    }
-
-    @Override
-    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
-        //Ignore
-    }
-
-    @Override
-    public void setTlsPolicy(TLSPolicy tlsPolicy) {
         //Ignore
     }
 
@@ -180,6 +158,11 @@ public abstract class VirtualConnection implements Connection {
                 entry.setValue( session );
             }
         }
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return session != null && !isClosed();
     }
 
     /**

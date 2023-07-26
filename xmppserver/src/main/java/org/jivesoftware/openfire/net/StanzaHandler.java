@@ -231,8 +231,7 @@ public abstract class StanzaHandler {
         }
 
         // Ensure that connection was encrypted if TLS was required
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isEncrypted()) {
+        if (connection.isInitialized() && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
             closeNeverEncryptedConnection();
             return;
         }
@@ -457,7 +456,7 @@ public abstract class StanzaHandler {
      * @return true if the connection was encrypted.
      */
     protected boolean negotiateTLS() {
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.disabled) {
             // Send a not_authorized error and close the underlying connection
             connection.close(new StreamError(StreamError.Condition.not_authorized, "A request to negotiate TLS is denied, as TLS has been disabled by configuration."));
             // Log a warning so that admins can track this case from the server side
@@ -534,7 +533,7 @@ public abstract class StanzaHandler {
      */
     protected boolean compressClient(Element doc) {
         String error = null;
-        if (connection.getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
+        if (connection.getConfiguration().getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
             // Client requested compression but this feature is disabled
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
             // Log a warning so that admins can track this case from the server side

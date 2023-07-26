@@ -73,6 +73,13 @@ public interface Connection extends Closeable {
     void reinit( LocalSession session );
 
     /**
+     * Checks if the connection has finished initialization.
+     *
+     * @return true if connection has finished initialization.
+     */
+    boolean isInitialized();
+
+    /**
      * Returns the raw IP address of this <code>InetAddress</code>
      * object. The result is in network byte order: the highest order
      * byte of the address is in <code>getAddress()[0]</code>.
@@ -305,42 +312,6 @@ public interface Connection extends Closeable {
      * @return true if the connection is using compression.
      */
     boolean isCompressed();
-
-    /**
-     * Returns whether compression is optional or is disabled.
-     *
-     * @return whether compression is optional or is disabled.
-     */
-    CompressionPolicy getCompressionPolicy();
-
-    /**
-     * Sets whether compression is enabled or is disabled.
-     *
-     * @param compressionPolicy whether Compression is enabled or is disabled.
-     */
-    void setCompressionPolicy(CompressionPolicy compressionPolicy);
-
-    /**
-     * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to encrypt their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
-     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
-     * last case.
-     *
-     * @return whether TLS is mandatory, optional or is disabled.
-     */
-    TLSPolicy getTlsPolicy();
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to encrypt their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
-     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
-     * last case.
-     *
-     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
-     */
-    void setTlsPolicy(TLSPolicy tlsPolicy);
 
     /**
      * Returns the TLS protocol name used by the connection of the session, if any.

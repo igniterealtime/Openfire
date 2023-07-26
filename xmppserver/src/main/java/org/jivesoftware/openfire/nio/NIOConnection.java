@@ -85,16 +85,8 @@ public class NIOConnection implements Connection {
     private int minorVersion = 0;
     private String language = null;
 
-    /**
-     * TLS policy currently in use for this connection.
-     */
-    private TLSPolicy tlsPolicy = TLSPolicy.optional;
     private boolean usingSelfSignedCertificate;
 
-    /**
-     * Compression policy currently in use for this connection.
-     */
-    private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
     private static final ThreadLocal<CharsetEncoder> encoder = new ThreadLocalEncoder();
 
     /**
@@ -307,6 +299,11 @@ public class NIOConnection implements Connection {
         }
     }
 
+    @Override
+    public boolean isInitialized() {
+        return session != null && !isClosed();
+    }
+
     protected StanzaHandler getStanzaHandler() {
         return (StanzaHandler)ioSession.getAttribute(ConnectionHandler.HANDLER);
     }
@@ -474,26 +471,6 @@ public class NIOConnection implements Connection {
     @Override
     public boolean isCompressed() {
         return ioSession.getFilterChain().contains(COMPRESSION_FILTER_NAME);
-    }
-
-    @Override
-    public CompressionPolicy getCompressionPolicy() {
-        return compressionPolicy;
-    }
-
-    @Override
-    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
-        this.compressionPolicy = compressionPolicy;
-    }
-
-    @Override
-    public TLSPolicy getTlsPolicy() {
-        return tlsPolicy;
-    }
-
-    @Override
-    public void setTlsPolicy(TLSPolicy tlsPolicy) {
-        this.tlsPolicy = tlsPolicy;
     }
 
     @Override

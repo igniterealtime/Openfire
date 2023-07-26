@@ -531,7 +531,7 @@ public class ServerDialback {
             throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Dialback has been disabled by configuration."));
         }
 
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
             throw new StreamErrorException(new StreamError(StreamError.Condition.policy_violation, "Local server configuration dictates that Server Dialback can be negotiated only after the connection has been encrypted."));
         }
 

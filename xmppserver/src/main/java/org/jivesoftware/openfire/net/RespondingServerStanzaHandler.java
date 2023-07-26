@@ -283,11 +283,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     private boolean shouldUseTls() {
-        return connection.getTlsPolicy() == Connection.TLSPolicy.optional || connection.getTlsPolicy() == Connection.TLSPolicy.required;
+        return connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.optional || connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required;
     }
 
     private boolean mustUseTls() {
-        return connection.getTlsPolicy() == Connection.TLSPolicy.required;
+        return connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required;
     }
 
     @Override

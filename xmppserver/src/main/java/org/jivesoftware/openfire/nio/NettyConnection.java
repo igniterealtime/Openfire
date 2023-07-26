@@ -85,16 +85,7 @@ public class NettyConnection implements Connection {
     private int majorVersion = 1;
     private int minorVersion = 0;
 
-    /**
-     * TLS policy currently in use for this connection.
-     */
-    private TLSPolicy tlsPolicy = TLSPolicy.optional;
     private boolean usingSelfSignedCertificate;
-
-    /**
-     * Compression policy currently in use for this connection.
-     */
-    private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
 
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
@@ -298,6 +289,11 @@ public class NettyConnection implements Connection {
     }
 
     @Override
+    public boolean isInitialized() {
+        return session != null && !isClosed();
+    }
+
+    @Override
     public boolean isClosed() {
         return state.get() == State.CLOSED;
     }
@@ -456,26 +452,6 @@ public class NettyConnection implements Connection {
     @Override
     public boolean isCompressed() {
         return channelHandlerContext.channel().pipeline().get(JZlibDecoder.class) != null;
-    }
-
-    @Override
-    public CompressionPolicy getCompressionPolicy() {
-        return compressionPolicy;
-    }
-
-    @Override
-    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
-        this.compressionPolicy = compressionPolicy;
-    }
-
-    @Override
-    public TLSPolicy getTlsPolicy() {
-        return tlsPolicy;
-    }
-
-    @Override
-    public void setTlsPolicy(TLSPolicy tlsPolicy) {
-        this.tlsPolicy = tlsPolicy;
     }
 
     @Override

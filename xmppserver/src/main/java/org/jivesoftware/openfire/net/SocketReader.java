@@ -260,7 +260,7 @@ public abstract class SocketReader implements Runnable {
      */
     protected void processIQ(IQ packet) throws UnauthorizedException {
         // Ensure that connection was encrypted if TLS was required.
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isEncrypted()) {
             closeNeverEncryptedConnection();
             return;
@@ -283,7 +283,7 @@ public abstract class SocketReader implements Runnable {
      */
     protected void processPresence(Presence packet) throws UnauthorizedException {
         // Ensure that connection was encrypted if TLS was required
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isEncrypted()) {
             closeNeverEncryptedConnection();
             return;
@@ -306,7 +306,7 @@ public abstract class SocketReader implements Runnable {
      */
     protected void processMessage(Message packet) throws UnauthorizedException {
         // Ensure that connection was encrypted if TLS was required
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required &&
                 !connection.isEncrypted()) {
             closeNeverEncryptedConnection();
             return;

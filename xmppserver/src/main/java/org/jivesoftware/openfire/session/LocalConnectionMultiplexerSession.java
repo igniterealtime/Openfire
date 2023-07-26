@@ -105,12 +105,6 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
             return null;
         }
 
-        // Indicate the TLS policy to use for this connection
-        connection.setTlsPolicy( connection.getConfiguration().getTlsPolicy() );
-
-        // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
-
         // Set the connection manager domain to use delivering a packet fails
         final MultiplexerPacketDeliverer packetDeliverer = (MultiplexerPacketDeliverer) connection.getPacketDeliverer();
         if (packetDeliverer != null) {
@@ -147,9 +141,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
             sb = new StringBuilder(490);
             sb.append("<stream:features>");
-            if (connection.getTlsPolicy() != Connection.TLSPolicy.disabled) {
+            if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled) {
                 sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-                if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+                if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
                     sb.append("<required/>");
                 }
                 sb.append("</starttls>");
@@ -179,12 +173,12 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
     @Override
     public String getAvailableStreamFeatures() {
-        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
+        if (conn.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
             return null;
         }
 
         // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
             return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
         }

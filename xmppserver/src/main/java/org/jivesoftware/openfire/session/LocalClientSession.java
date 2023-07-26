@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.roster.RosterManager;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -228,32 +227,20 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         int minorVersion = version[1];
 
         connection.setXMPPVersion(majorVersion, minorVersion);
-        final ConnectionConfiguration connectionConfiguration = connection.getConfiguration();
 
-        // Indicate the TLS policy to use for this connection
-        if (!connection.isEncrypted()) {
-            boolean hasCertificates = false;
-            try {
-                hasCertificates = connectionConfiguration.getIdentityStore().getAllCertificates().size() > 0;
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
-            Connection.TLSPolicy tlsPolicy = connectionConfiguration.getTlsPolicy();
-            if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
-                Log.error("Client session rejected. TLS is required but no certificates " +
-                        "were created.");
-                return null;
-            }
-            // Set default TLS policy
-            connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
-        } else {
-            // Set default TLS policy
-            connection.setTlsPolicy(Connection.TLSPolicy.disabled);
+        boolean hasCertificates = false;
+        try {
+            hasCertificates = !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty();
+        }
+        catch (Exception e) {
+            Log.error("Unable to load find any content in the identity store. This connection won't be able to support TLS.", e);
         }
 
-        // Indicate the compression policy to use for this connection
-        connection.setCompressionPolicy( connectionConfiguration.getCompressionPolicy() );
+        if (!hasCertificates && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
+            Log.error("Client session rejected. TLS is required but no certificates " +
+                "were created.");
+            return null;
+        }
 
         // Create a ClientSession for this user.
         LocalClientSession session = SessionManager.getInstance().createClientSession(connection, language);
@@ -287,9 +274,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
         sb = new StringBuilder(490);
         sb.append("<stream:features>");
-        if (connection.getTlsPolicy() != Connection.TLSPolicy.disabled) {
+        if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled) {
             sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-            if (connection.getTlsPolicy() == Connection.TLSPolicy.required) {
+            if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
                 sb.append("<required/>");
             }
             sb.append("</starttls>");
@@ -771,14 +758,14 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     public String getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already encrypted
-        if (conn.getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
+        if (conn.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
             return null;
         }
 
         StringBuilder sb = new StringBuilder(200);
 
         // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
             sb.append(
                     "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");

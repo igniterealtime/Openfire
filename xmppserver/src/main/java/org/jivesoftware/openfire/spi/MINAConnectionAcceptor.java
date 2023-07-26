@@ -50,7 +50,9 @@ class MINAConnectionAcceptor extends ConnectionAcceptor
 
     /**
      * Instantiates, but not starts, a new instance.
+     * @deprecated Use {@link NettyConnectionAcceptor} instead
      */
+    @Deprecated
     public MINAConnectionAcceptor( ConnectionConfiguration configuration )
     {
         super( configuration );

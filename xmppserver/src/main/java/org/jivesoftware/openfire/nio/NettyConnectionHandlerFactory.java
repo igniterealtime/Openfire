@@ -38,9 +38,8 @@ public class NettyConnectionHandlerFactory {
                 return new NettyClientConnectionHandler(configuration);
             case COMPONENT:
                 return new NettyComponentConnectionHandler(configuration);
-            // TODO add support for Multiplexer
-            //  case CONNECTION_MANAGER:
-            //      return new NettyMultiplexerConnectionHandler(configuration);
+            case CONNECTION_MANAGER:
+                return new NettyMultiplexerConnectionHandler(configuration);
             default:
                 throw new IllegalStateException("This implementation does not support the connection type as defined in the provided configuration: " + configuration.getType());
         }

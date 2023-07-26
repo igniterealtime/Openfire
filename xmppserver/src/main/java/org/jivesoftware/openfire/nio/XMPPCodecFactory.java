@@ -26,6 +26,7 @@ import org.apache.mina.filter.codec.ProtocolEncoder;
  *
  * @author Gaston Dombiak
  */
+@Deprecated
 public class XMPPCodecFactory implements ProtocolCodecFactory {
 
     private final XMPPEncoder encoder;

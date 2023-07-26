@@ -38,7 +38,9 @@ import org.xmpp.packet.StreamError;
  * received XML stanzas to the proper StanzaHandler.
  *
  * @author Gaston Dombiak
+ * @deprecated Use {@link NettyConnectionHandler} instead
  */
+@Deprecated
 public abstract class ConnectionHandler extends IoHandlerAdapter {
 
     private static final Logger Log = LoggerFactory.getLogger(ConnectionHandler.class);

@@ -60,7 +60,9 @@ import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.*;
  *
  * @author Gaston Dombiak
  * @see <a href="http://mina.apache.org">Apache MINA</a>
+ * @deprecated Use {@link NettyConnection} instead
  */
+@Deprecated
 public class NIOConnection implements Connection {
 
     private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,23 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.core.session.IoSession;
+import io.netty.channel.ChannelHandlerContext;
 import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.MultiplexerStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 
 /**
- * ConnectionHandler that knows which subclass of {@link org.jivesoftware.openfire.net.StanzaHandler} should
- * be created and how to build and configure a {@link org.jivesoftware.openfire.nio.NIOConnection}.
+ * ConnectionHandler that knows which subclass of {@link StanzaHandler} should
+ * be created and how to build and configure a {@link NettyConnection}.
  *
- * @author Gaston Dombiak
- * @deprecated Use {@link NettyMultiplexerConnectionHandler} instead
+ * @author Alex Gidman
  */
-@Deprecated
-public class MultiplexerConnectionHandler extends ConnectionHandler {
+public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler {
 
     /**
      * Enable / disable backup delivery of stanzas to other connections in the same connection manager when a stanza
@@ -42,28 +40,27 @@ public class MultiplexerConnectionHandler extends ConnectionHandler {
      * be delivered on the connection are discarded.
      */
     public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.multiplex.backup-packet-delivery.enabled")
+        .setKey("xmpp.multiplex.netty-backup-packet-delivery.enabled")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();
-
-    public MultiplexerConnectionHandler(ConnectionConfiguration configuration) {
+    public NettyMultiplexerConnectionHandler(ConnectionConfiguration configuration) {
         super(configuration);
     }
 
     @Override
-    NIOConnection createNIOConnection(IoSession session) {
+    NettyConnection createNettyConnection(ChannelHandlerContext ctx) {
         final PacketDeliverer backupDeliverer = BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new MultiplexerPacketDeliverer() : null;
-        return new NIOConnection(session, backupDeliverer, configuration);
+        return new NettyConnection(ctx, backupDeliverer, configuration);
     }
 
     @Override
-    StanzaHandler createStanzaHandler(NIOConnection connection) {
+    StanzaHandler createStanzaHandler(NettyConnection connection) {
         return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override
-    int getMaxIdleTime() {
+    public int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.multiplex.idle", 5 * 60 * 1000) / 1000;
     }
 }

@@ -30,7 +30,9 @@ import org.jivesoftware.util.SystemProperty;
  * be created and how to build and configure a {@link NIOConnection}.
  *
  * @author Gaston Dombiak
+ * @deprecated Use {@link NettyComponentConnectionHandler} instead
  */
+@Deprecated
 public class ComponentConnectionHandler extends ConnectionHandler {
 
     /**

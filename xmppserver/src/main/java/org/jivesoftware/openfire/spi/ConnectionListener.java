@@ -227,12 +227,7 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        if ( getType() == ConnectionType.CONNECTION_MANAGER ) {
-            connectionAcceptor = new MINAConnectionAcceptor(generateConnectionConfiguration());
-        } else {
-            connectionAcceptor = new NettyConnectionAcceptor( generateConnectionConfiguration() );
-        }
-
+        connectionAcceptor = new NettyConnectionAcceptor(generateConnectionConfiguration());
         connectionAcceptor.start();
         Log.info( "Started." );
     }

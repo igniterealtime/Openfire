@@ -28,6 +28,7 @@ import org.apache.mina.filter.codec.ProtocolEncoderOutput;
  *
  * @author Gaston Dombiak
  */
+@Deprecated
 public class XMPPEncoder extends ProtocolEncoderAdapter {
 
     @Override

@@ -31,7 +31,9 @@ import java.nio.charset.StandardCharsets;
  * stanzas are then passed to the next filters.
  *
  * @author Gaston Dombiak
+ * @deprecated Use {@link NettyXMPPDecoder} instead
  */
+@Deprecated
 public class XMPPDecoder extends CumulativeProtocolDecoder {
 
     @Override

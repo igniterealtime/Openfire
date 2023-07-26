@@ -26,9 +26,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyConnectionHandler;
-import org.jivesoftware.openfire.nio.NettyServerConnectionHandler;
+import org.jivesoftware.openfire.nio.NettyConnectionHandlerFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,29 +83,11 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     public NettyConnectionAcceptor(ConnectionConfiguration configuration) {
         super(configuration);
+        this.connectionHandler = NettyConnectionHandlerFactory.createConnectionHandler(configuration);
 
         String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
 
-        switch (configuration.getType()) {
-            case SOCKET_S2S:
-                connectionHandler = new NettyServerConnectionHandler(configuration);
-                break;
-            case SOCKET_C2S:
-                connectionHandler = new NettyClientConnectionHandler(configuration);
-                break;
-            default:
-                throw new IllegalStateException("This implementation does not support the connection type as defined in the provided configuration: " + configuration.getType());
-        }
-
-
-// TODO add support for COMPONENT & Multiplexer
-//            case COMPONENT:
-//                connectionHandler = new ComponentConnectionHandler( configuration );
-//                break;
-//            case CONNECTION_MANAGER:
-//                connectionHandler = new MultiplexerConnectionHandler( configuration );
-//                break;
 
     }
 

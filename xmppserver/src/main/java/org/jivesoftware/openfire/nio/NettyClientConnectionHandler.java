@@ -40,7 +40,7 @@ public class NettyClientConnectionHandler extends NettyConnectionHandler{
      * are discarded.
      */
     public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.client.netty-backup-packet-delivery.enabled") // TODO - rename once MINA-specific is removed and NettyClientConnectionHandler becomes ClientConnectionHandler
+        .setKey("xmpp.client.netty-backup-packet-delivery.enabled")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();
@@ -51,7 +51,6 @@ public class NettyClientConnectionHandler extends NettyConnectionHandler{
 
     @Override
     NettyConnection createNettyConnection(ChannelHandlerContext ctx) {
-        // TODO - can this be moved up to superclass? appears to be same as Server implementation
         final PacketDeliverer backupDeliverer = BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
         return new NettyConnection(ctx, backupDeliverer, configuration);
     }

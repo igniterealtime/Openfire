@@ -227,10 +227,10 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        if ( getType() == ConnectionType.SOCKET_S2S || getType() == ConnectionType.SOCKET_C2S ) {
-            connectionAcceptor = new NettyConnectionAcceptor( generateConnectionConfiguration() );
+        if ( getType() == ConnectionType.CONNECTION_MANAGER ) {
+            connectionAcceptor = new MINAConnectionAcceptor(generateConnectionConfiguration());
         } else {
-            connectionAcceptor = new MINAConnectionAcceptor( generateConnectionConfiguration() );
+            connectionAcceptor = new NettyConnectionAcceptor( generateConnectionConfiguration() );
         }
 
         connectionAcceptor.start();

@@ -79,7 +79,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     private Channel mainChannel;
 
     /**
-     * Instantiates, but not starts, a new instance.
+     * Instantiates, but does not start, a new instance.
      */
     public NettyConnectionAcceptor(ConnectionConfiguration configuration) {
         super(configuration);
@@ -87,8 +87,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
 
         String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
-
-
     }
 
     /**

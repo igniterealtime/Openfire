@@ -36,9 +36,9 @@ public class NettyConnectionHandlerFactory {
                 return new NettyServerConnectionHandler(configuration);
             case SOCKET_C2S:
                 return new NettyClientConnectionHandler(configuration);
-            // TODO add support for Component & Multiplexer
-            //  case COMPONENT:
-            //      return new NettyComponentConnectionHandler(configuration);
+            case COMPONENT:
+                return new NettyComponentConnectionHandler(configuration);
+            // TODO add support for Multiplexer
             //  case CONNECTION_MANAGER:
             //      return new NettyMultiplexerConnectionHandler(configuration);
             default:

@@ -17,11 +17,15 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -39,12 +43,21 @@ import java.security.cert.CertificateException;
 public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     private static final Logger Log = LoggerFactory.getLogger(NettyOutboundConnectionHandler.class);
     private final DomainPair domainPair;
+    private final int port;
+    volatile boolean sslInitDone;
 
-    public NettyOutboundConnectionHandler(ConnectionConfiguration configuration, DomainPair domainPair) {
+    public NettyOutboundConnectionHandler(ConnectionConfiguration configuration, DomainPair domainPair, int port) {
         super(configuration);
         this.domainPair = domainPair;
+        this.port = port;
     }
 
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        if (sslInitDone) {
+            super.channelActive(ctx);
+        }
+    }
     @Override
     NettyConnection createNettyConnection(ChannelHandlerContext ctx) {
         return new NettyConnection(ctx, null, configuration);
@@ -82,5 +95,45 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     public void handlerAdded(ChannelHandlerContext ctx) {
         Log.trace("Adding NettyOutboundConnectionHandler");
         super.handlerAdded(ctx);
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (!sslInitDone && evt instanceof SslHandshakeCompletionEvent) {
+            SslHandshakeCompletionEvent e = (SslHandshakeCompletionEvent) evt;
+            if (e.isSuccess()) {
+                sslInitDone = true;
+                ctx.fireChannelActive();
+            } else {
+                // SSL Handshake has failed, fall back to dialback
+                RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) ctx.channel().attr(NettyConnectionHandler.HANDLER).get();
+
+                if (ServerDialback.isEnabled() && connectionConfigDoesNotRequireTls()) {
+                    Log.debug("Unable to create a new session. Going to try connecting using server dialback as a fallback.");
+
+                    // Use server dialback (pre XMPP 1.0) over a plain connection
+                    final LocalOutgoingServerSession outgoingSession = new ServerDialback(domainPair).createOutgoingSession(port);
+                    if (outgoingSession != null) {
+                        Log.debug("Successfully created new session (using dialback as a fallback)!");
+                        stanzaHandler.setSessionAuthenticated(true);
+                        stanzaHandler.setSession(outgoingSession);
+                    } else {
+                        Log.warn("Unable to create a new session: Dialback (as a fallback) failed.");
+                        stanzaHandler.setSession(null);
+                    }
+                } else {
+                    Log.warn("Unable to create a new session: exhausted all options (not trying dialback as a fallback, as server dialback is disabled by configuration.");
+                    stanzaHandler.setSession(null);
+                }
+
+                stanzaHandler.setAttemptedAllAuthenticationMethods(true);
+            }
+        }
+
+        super.userEventTriggered(ctx, evt);
+    }
+
+    private boolean connectionConfigDoesNotRequireTls() {
+        return this.configuration.getTlsPolicy() != Connection.TLSPolicy.required;
     }
 }

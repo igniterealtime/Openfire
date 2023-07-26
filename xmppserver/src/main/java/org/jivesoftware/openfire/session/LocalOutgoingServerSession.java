@@ -273,22 +273,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             sessionInitialiser.stop();
         }
 
-        if (ServerDialback.isEnabled() && configDoesNotRequireTls(listenerConfiguration)) {
-            log.debug("Unable to create a new session. Going to try connecting using server dialback as a fallback.");
-
-            // Use server dialback (pre XMPP 1.0) over a plain connection
-            final LocalOutgoingServerSession outgoingSession = new ServerDialback(domainPair).createOutgoingSession(port);
-            if (outgoingSession != null) { // TODO this success handler behaves differently from a similar success handler above. Shouldn't those be the same?
-                log.debug("Successfully created new session (using dialback as a fallback)!");
-                return outgoingSession;
-            } else {
-                log.warn("Unable to create a new session: Dialback (as a fallback) failed.");
-                return null;
-            }
-        } else {
-            log.warn("Unable to create a new session: exhausted all options (not trying dialback as a fallback, as server dialback is disabled by configuration.");
-            return null;
-        }
+        return null;
     }
 
 

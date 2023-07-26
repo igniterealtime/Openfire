@@ -44,6 +44,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     private static final Logger LOG = LoggerFactory.getLogger(RespondingServerStanzaHandler.class);
     private final DomainPair domainPair;
     private boolean isSessionAuthenticated = false;
+    private boolean attemptedAllAuthenticationMethods;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -321,5 +322,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException {
         String currentStreamId = xpp.getAttributeValue("", "id");
         session = new LocalOutgoingServerSession(domainPair.getLocal(), connection, BasicStreamIDFactory.createStreamID(currentStreamId));
+    }
+
+    public void setSessionAuthenticated(boolean authenticated) {
+        this.isSessionAuthenticated = authenticated;
+    }
+
+    public boolean haveAttemptedAllAuthenticationMethods() {
+        return attemptedAllAuthenticationMethods;
+    }
+
+    public void setAttemptedAllAuthenticationMethods(boolean haveAttemptedAllAuthenticationMethods) {
+        this.attemptedAllAuthenticationMethods = haveAttemptedAllAuthenticationMethods;
     }
 }

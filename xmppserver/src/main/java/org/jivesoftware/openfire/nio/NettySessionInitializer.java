@@ -88,7 +88,7 @@ public class NettySessionInitializer {
                 public void initChannel(SocketChannel ch) throws Exception {
                     ch.pipeline().addLast(new NettyXMPPDecoder());
                     ch.pipeline().addLast(new StringEncoder());
-                    ch.pipeline().addLast(new NettyOutboundConnectionHandler(listenerConfiguration, domainPair));
+                    ch.pipeline().addLast(new NettyOutboundConnectionHandler(listenerConfiguration, domainPair, port));
                     // Should have a connection
                     if (directTLS) {
                         ch.attr(CONNECTION).get().startTLS(true, true);
@@ -140,7 +140,7 @@ public class NettySessionInitializer {
         RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) channel.attr(NettyConnectionHandler.HANDLER).get();
 
         return executor.submit(() -> {
-            while (!stanzaHandler.isSessionAuthenticated()) {
+            while (!stanzaHandler.isSessionAuthenticated() && !stanzaHandler.haveAttemptedAllAuthenticationMethods()) {
                 Thread.sleep(100);
             }
             return stanzaHandler.getSession();

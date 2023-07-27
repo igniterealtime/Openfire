@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Load Balancing Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Load Balancing Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            When, for scalability or reliability, Openfire is being run in a clustered configuration, it is desirable to
+            spread out inbound connections in a predictable and configurable manner over the available cluster nodes.
+        </p>
+
+        <p>
+            Topics that are covered in this document:
+        </p>
+
+        <nav>
+            <ul>
+                <li><a href="#ports">Network Ports to Load Balance</a>
+                <li><a href="#proxying-webports">Proxying web-bindings over standard ports</a></li>
+                <li><a href="#dnssrv">Using DNS Service (SRV) records</a>
+                <li><a href="#sticky">Configuring Session Persistence</a>
+                <li><a href="#tls-termination">Terminating TLS at the load balancer</a>
+            </ul>
+        </nav>
+
+        <p>
+            Some related topics are <em>not</em> covered in this document, but are instead discussed in other documents:
+        </p>
+
+        <ul>
+            <li><a href="https://www.igniterealtime.org/projects/openfire/plugins/2.6.1/hazelcast/readme.html">Enable clustering in Openfire</a> - describes how to use the Hazelcast plugin to add clustering functionality to Openfire.</li>
+            <li><a href="db-clustering-guide.html">Clustered Database Guide</a> - Instructions on using Openfire with a database that consists of more than one server.</li>
+        </ul>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            Load balancing is primarily used to control the distribution of (client) connections over a cluster of
+            Openfire servers. There are, however, other scenarios in which having load balancing features can be
+            useful.
+        </p>
+
+        <p>
+            A load balancer can be used to implement a fail-over strategy. Such a strategy is particularly useful when
+            your (possibly single-instance) Openfire server is being replaced, or even temporarily unavailable. With
+            containerization, these scenarios are becoming more and more prevalent.
+        </p>
+
+    </section>
+
+    <section id="ports">
+
+        <h2>Network Ports to Load Balance</h2>
+
+        <p>
+            When using a load balancing solutions, the following external ports can be distributed over your
+            load-balanced server cluster:
+        </p>
+
+        <ul>
+            <li><code>5222</code> and <code>5223</code> for TCP-based clients (this typically includes desktop and mobile clients)</li>
+            <li><code>7070</code> and <code>7443</code> for BOSH and websocket-based clients (most browser-based clients), as well as client-facing HTTP endpoints</li>
+            <li><code>5269</code> and <code>5270</code> for server federation (useful when users of your XMPP domain are interacting with users on other XMPP domains.</li>
+        </ul>
+
+        <p>
+            Avoid exposing Openfire's web-based administrative console (ports 9090 and 9091) via the load balancer!
+            From a security perspective, this console should be reachable to anything but selected, priviliged network
+            addresses. Additionally, for the admin console to function properly, each web request should end up with the
+            same server. As some settings are to be applied to each individual server, the administrative consoles of
+            each server should be individually addressable.
+        </p>
+
+    </section>
+
+    <section id="proxying-webports">
+
+        <h2>Proxying web-bindings over standard ports</h2>
+
+        <p>
+            Openfire by default serves its client-facing HTTP endpoints (including BOSH, websockets and HTTP endpoints,
+            like the one used for HTTP file transfer) by default on ports 7070 (for HTTP) and 7443 (HTTPS). It is often
+            desired to expose these endpoints over the standard HTTP ports: 80 and 443. Although more a topic on the
+            subject of proxying, a load balancer could be used to provide such a mapping, by accepting connections on
+            the desired public port, and load-balancing them to ports used by Openfire.
+        </p>
+
+        <aside>
+            <p>
+                At the time of writing, overriding the announced endpoints with one single configuration item is
+                <a href="https://igniterealtime.atlassian.net/browse/OF-2117">a feature under development</a>. Until
+                that is implemented, various configuration changes are to be made, one for each feature.
+            </p>
+        </aside>
+
+        <p>
+            When applying such a configuration, it is important to realize that Openfire will announce some web endpoint
+            addresses. Unless configured differently, it will advertise the ports that are used by Openfire itself. In
+            this scenario, these no longer are the ports as to be used by remote peers.
+        </p>
+
+        <p>
+            To overcome this issue, Openfire allows you to override the default announced endpoints. For the announced
+            port of the HTTP File Upload plugin, for example, the property <code>plugin.httpfileupload.announcedWebPort</code>
+            can be used.
+        </p>
+
+    </section>
+
+    <section id="dnssrv">
+
+        <h2>Using DNS Service (SRV) records</h2>
+
+        <p>
+            DNS Service (SRV) records can specify the network addresses (typically: the hostname and port) of servers
+            that provide a particular service for a domain. In the <a href="https://datatracker.ietf.org/doc/html/rfc6120#section-3.2">
+            specifications of the XMPP protocol</a>, DNS SRV is defined as the preferred process to resolve domain names.
+            As a result, most server and client implementations support this out of the box.
+        </p>
+
+        <aside>
+            <p>
+                This guide is not an exhaustive reference for DNS Service Records. Please refer to
+                <a href="https://datatracker.ietf.org/doc/html/rfc2782">RFC 2782: A DNS RR for specifying the location
+                of services (DNS SRV)</a> instead.
+            </p>
+        </aside>
+
+        <p>
+            A DNS SRV request is issued to find records for a specific <em>service</em> on a specific domain. Each
+            request can return more than one DNS SRV record. Each record specifies a target host within the domain where
+            the service can be expected to be provided.
+        </p>
+
+        <fieldset>
+            <legend>Example DNS SRV records</legend>
+            <pre><code>_xmpp-client._tcp.example.net. 86400 IN SRV 5 50 5222 server1.example.net.
+_xmpp-client._tcp.example.net. 86400 IN SRV 10 30 5222 server2.example.net.</code></pre>
+        </fieldset>
+
+        <p>
+            In the example above, the <em>service</em> defined as <code>xmpp-client</code> for the <em>domain</em> named
+            <code>example.net</code> is reported to be made available on two target hosts:
+        </p>
+
+        <ol>
+            <li>a server with hostname <code>server1.example.net</code>, on port <code>5222</code></li>
+            <li>another server named <code>server2.example.net</code>, also on port <code>5222</code></li>
+        </ol>
+
+        <p>
+            Apart from the hostname and port of a service location, each DNS SRV record contains two other relevant
+            values: a 'priority' and a 'weight' value. In the examples above, the priority values for each host are
+            <code>5</code> and <code>10</code>. The weight values are <code>50</code> and <code>30</code>.
+        </p>
+
+        <p>
+            The priority and weight values can be used to configure the desired load balancing between the provided
+            target hosts. A client must attempt to contact the target host with the lowest-numbered priority it can
+            reach. Target hosts with the same priority are to be tried in an order defined by the weight field. The
+            weight field specifies a relative weight for entries with the same priority. Larger weights are given a
+            proportionately higher probability of being selected.
+        </p>
+
+        <p>
+            Given multiple records with specific 'priority' and 'weight' values, DNS SRV records can be used for various
+            load balancing strategies, ranging from single one-server lookups (which is useful for running an XMPP
+            domain on a server that does not resolve by the same name), simple round-robin load-balancing, to
+            configurations that define a tiered setup, with fail-over servers taking over when a primary set of
+            locations all fail to allow a client to connect.
+        </p>
+
+        <p>
+            The benefit of a load-balancing approach using DNS SRV records is that it is extremely light-weight: apart
+            from a few additional records in the DNS system, there is no maintenance of networking infrastructure.
+            Arguably the biggest drawback of using DNS SRV records is that it needs client support. Although most
+            TCP-based XMPP clients can be expected to support DNS SRV lookups, this is not the case for clients that
+            make use of BOSH-binding for XMPP or websockets, which are used by most browser-based clients.
+        </p>
+
+        <aside>
+            <p>
+                XMPP-compatible lookup mechanisms for BOSH-binding and websockets are defined in
+                <a href="https://xmpp.org/extensions/xep-0156.html">XEP-0156: Discovering Alternative XMPP Connection Methods</a>.
+                This, however, does not define concepts similar to the 'priority' and 'weight' values of DNS SRV.</p>
+        </aside>
+
+        <h4>Links to DNS SRV-related documentation</h4>
+
+        <ul>
+            <li><a href="https://datatracker.ietf.org/doc/html/rfc2782">RFC 2782: A DNS RR for specifying the location of services (DNS SRV)</a></li>
+            <li><a href="https://datatracker.ietf.org/doc/html/rfc6120#section-3.2">RFC 6120, section 3.2: Extensible Messaging and Presence Protocol (XMPP): Core, section 'Resolution of Fully Qualified Domain Names'</a></li>
+            <li><a href="https://xmpp.org/extensions/xep-0368.html">XEP-0368: SRV records for XMPP over TLS</a></li>
+        </ul>
+
+    </section>
+
+    <section id="sticky">
+
+        <h2>Configuring Session Persistence</h2>
+
+        <p>
+            Session Persistence (or: 'sticky sessions') ensures that all requests from a user during the session are
+            sent to the same target. Clients connecting to Openfire can benefit from session persistence.
+        </p>
+
+        <p>
+            TCP-based clients depend on a single, long-lived socket connection. As such, there is little need for them
+            to use session persistence. A notable exemption is when the <a href="https://xmpp.org/extensions/xep-0198.html">
+            Stream Management</a> feature is used. This feature allows clients that have disconnected unexpectedly (for
+            example, when a network interruption occurred), to resume its pre-existing connection. In Openfire, session
+            resumption can only occur on the server where the session was originally created. When that's attempted on
+            a different server, that process will fail. It's likely that the client in such a scenario will simply
+            perform a full re-establishment of a new session. That is a little inefficient and inconvenient, but not
+            necessarily a priority issue.
+        </p>
+
+        <aside>
+            <p>
+                The adventurous could consider experimenting with a reverse proxy implementation like the third-party
+                <a href="https://github.com/moparisthebest/xmpp-proxy/">xmpp-proxy</a> to forward websocket data onto
+                TCP connections, and load-balance that. Your mileage may vary.
+            </p>
+        </aside>
+
+        <p>
+            For BOSH and websocket-based connections, session persistence is a must: Openfire cannot properly service
+            clients when its data arrives at different servers as the one where its session was originally created.
+        </p>
+
+        <p>
+            Server-to-server connections are established by using long-lived socket connections, similar to TCP-based
+            clients. As Openfire will accept multiple concurrent connections from remote domains (and does not support
+            the Stream Management feature for server-to-server connections), session persistence is not needed here.
+        </p>
+
+    </section>
+
+    <section id="tls-termination">
+
+        <h2>Terminating TLS at the load balancer</h2>
+
+        <aside>
+            <p>
+                When terminating TLS on the load balancer, Openfire's feature that allows authentication over TLS
+                (defined by the <a href="https://datatracker.ietf.org/doc/html/rfc4422#appendix-A">SASL EXTERNAL</a>
+                mechanism) is likely to be affected/become unavailable. Typical instant messaging clients rarely use
+                this feature. It is, however, commonly used for server-to-server communication.
+            </p>
+        </aside>
+
+        <p>
+            To offload a significant amount of resource usage from Openfire, it can be desirable to have TLS negotiation
+            happen on a load balancer instead of in Openfire itself.
+        </p>
+
+        <p>
+            Terminating TLS on the load balancer is typically straight-forward with modern load balancers and HTTPS
+            traffic. This can be utilized for BOSH and websocket-based clients. For TCP-based connections, things are
+            trickier.
+        </p>
+
+        <p>
+            TCP-based XMPP connections typically come in two flavors:
+            <a href="https://en.wikipedia.org/wiki/Opportunistic_TLS">Opportunistic TLS</a> (STARTTLS) and Direct TLS
+            (for client connections, Openfire provides opportunistic TLS on port 5222 and direct TLS on 5223). The
+            two differ in when TLS negotiation takes place. With direct TLS, TLS negotiation happens prior to exchanging
+            any XMPP-specific data (much like how HTTPS operates). With opportunistic TLS, the TLS handshakes occur
+            embedded within the exchange of XMPP data.
+        </p>
+
+        <p>
+            Terminating direct TLS connections on a load balancer can be achievable, but for opportunistic TLS to be
+            terminated on the load balancer, the balancer needs to support XMPP explicitly. At the time of writing,
+            no such load balancers are known to exist. Third-party (reverse) proxy solutions do exist that claim to be
+            able to terminate TLS. These projects are linked to below, but their compatibility with Openfire is unknown.
+        </p>
+
+        <h4>Links related to TLS termination</h4>
+
+        <ul>
+            <li><a href="https://en.wikipedia.org/wiki/Opportunistic_TLS">Wikipedia: Opportunistic TLS (StartTLS)</a></li>
+            <li><a href="https://datatracker.ietf.org/doc/html/rfc4422#appendix-A">RFC 4422, appendix A: The SASL EXTERNAL Mechanism</a></li>
+            <li><a href="https://github.com/moparisthebest/xmpp-proxy/">xmpp-proxy: a reverse proxy and outgoing proxy for XMPP servers and clients</a></li>
+            <li><a href="https://github.com/robn/nginx-xmpp">Nginx with XMPP proxy support</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

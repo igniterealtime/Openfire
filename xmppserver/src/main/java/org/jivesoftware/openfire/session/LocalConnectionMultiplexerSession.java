@@ -141,7 +141,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
             sb = new StringBuilder(490);
             sb.append("<stream:features>");
-            if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled) {
+            if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
                 sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
                 if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
                     sb.append("<required/>");

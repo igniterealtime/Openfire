@@ -45,6 +45,7 @@ import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
 import java.net.UnknownHostException;
+import java.security.KeyStoreException;
 import java.util.*;
 
 /**
@@ -274,12 +275,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
         sb = new StringBuilder(490);
         sb.append("<stream:features>");
-        if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled) {
-            sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-            if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-                sb.append("<required/>");
+        try {
+            if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
+                sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
+                    sb.append("<required/>");
+                }
+                sb.append("</starttls>");
             }
-            sb.append("</starttls>");
+        } catch (KeyStoreException e) {
+            Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
         }
         // Include available SASL Mechanisms
         sb.append(SASLAuthentication.getSASLMechanisms(session));

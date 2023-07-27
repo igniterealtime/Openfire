@@ -54,7 +54,7 @@ public class NettySessionInitializer {
     private final DomainPair domainPair;
     private final int port;
     private  boolean directTLS = false;
-    private EventLoopGroup workerGroup;
+    private final EventLoopGroup workerGroup;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private Channel channel;
 
@@ -117,6 +117,9 @@ public class NettySessionInitializer {
             });
 
             this.channel = b.connect(socketAddress).sync().channel();
+
+            // Make sure we free up resources (worker group NioEventLoopGroup) when the channel is closed
+            this.channel.closeFuture().addListener(future -> stop());
 
             // Start the session negotiation
             sendOpeningStreamHeader(channel);

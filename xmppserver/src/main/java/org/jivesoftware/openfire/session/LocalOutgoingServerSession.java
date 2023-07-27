@@ -260,16 +260,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Wait for the future to give us a session...
             // Set a read timeout so that we don't keep waiting forever
             return (LocalOutgoingServerSession) sessionInitialiser.init(listenerConfiguration).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
-        } catch (ExecutionException e) {
+        } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
-            log.warn("An exception occurred while creating an encrypted session. Closing connection.", e);
-            sessionInitialiser.stop();
-            return null;
-        } catch (TimeoutException e) {
-            log.warn("Timed out waiting for session creation. Closing connection.", e);
-            sessionInitialiser.stop();
-        } catch (InterruptedException e) {
-            log.warn("An exception occurred while creating an encrypted session. Closing connection.", e);
+            log.warn("An exception occurred while creating a session. Closing connection.", e);
+        } finally {
             sessionInitialiser.stop();
         }
 

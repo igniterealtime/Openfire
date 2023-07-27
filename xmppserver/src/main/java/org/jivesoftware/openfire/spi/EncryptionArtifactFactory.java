@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.spi;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import org.apache.mina.filter.ssl.SslFilter;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.keystore.OpenfireX509TrustManager;
 import org.jivesoftware.util.SystemProperty;
@@ -396,80 +395,6 @@ public class EncryptionArtifactFactory
             .trustManager(getTrustManagers()[0])
             .startTls(false)
             .build();
-    }
-
-    /**
-     * Creates an Apache MINA SslFilter that is configured to use server mode when handshaking.
-     *
-     * For Openfire, an engine is of this mode used for most purposes (as Openfire is a server by nature).
-     *
-     * Instead of an SSLContext or SSLEngine, Apache MINA uses an SslFilter instance. It is generally not needed to
-     * create both SSLContext/SSLEngine as well as SslFilter instances.
-     *
-     * @return An initialized SslFilter instance (never null)
-     * @throws KeyManagementException if there was problem manging the ket
-     * @throws NoSuchAlgorithmException if the algorithm is not supported
-     * @throws KeyStoreException if there was a problem accessing the keystore
-     * @throws UnrecoverableKeyException if the key could not be recovered
-     */
-    public SslFilter createServerModeSslFilter() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException
-    {
-        final SSLContext sslContext = getSSLContext();
-        final SSLEngine sslEngine = createServerModeSSLEngine();
-
-        return createSslFilter( sslContext, sslEngine );
-    }
-
-    /**
-     * Creates an Apache MINA SslFilter that is configured to use client mode when handshaking.
-     *
-     * For Openfire, a filter of this mode is typically used when the server tries to connect to another server.
-     *
-     * Instead of an SSLContext or SSLEngine, Apache MINA uses an SslFilter instance. It is generally not needed to
-     * create both SSLContext/SSLEngine as well as SslFilter instances.
-     *
-     * @return An initialized SslFilter instance (never null)
-     * @throws KeyManagementException if there was problem manging the ket
-     * @throws NoSuchAlgorithmException if the algorithm is not supported
-     * @throws KeyStoreException if there was a problem accessing the keystore
-     * @throws UnrecoverableKeyException if the key could not be recovered
-     */
-    public SslFilter createClientModeSslFilter() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException
-    {
-        final SSLContext sslContext = getSSLContext();
-        final SSLEngine sslEngine = createClientModeSSLEngine();
-
-        return createSslFilter( sslContext, sslEngine );
-    }
-
-    /**
-     * A utility method that implements the shared functionality of getServerModeSslFilter and getClientModeSslFilter.
-     *
-     * This method is used to initialize and configure an instance of SslFilter for a particular pre-configured
-     * SSLContext and SSLEngine. In most cases, developers will want to use getServerModeSslFilter or
-     * getClientModeSslFilter instead of this method.
-     *
-     * @param sslContext a pre-configured SSL Context instance (cannot be null).
-     * @param sslEngine a pre-configured SSL Engine instance (cannot be null).
-     * @return A SslFilter instance (never null).
-     */
-    private static SslFilter createSslFilter( SSLContext sslContext, SSLEngine sslEngine ) {
-        final SslFilter filter = new SslFilter( sslContext );
-
-        // Copy configuration from the SSL Engine into the filter.
-        filter.setEnabledProtocols( sslEngine.getEnabledProtocols() );
-        filter.setEnabledCipherSuites( sslEngine.getEnabledCipherSuites() );
-
-        // Note that the setters for 'need' and 'want' influence each-other. Invoke only one of them!
-        if ( sslEngine.getNeedClientAuth() )
-        {
-            filter.setNeedClientAuth( true );
-        }
-        else if ( sslEngine.getWantClientAuth() )
-        {
-            filter.setWantClientAuth( true );
-        }
-        return filter;
     }
 
     /**

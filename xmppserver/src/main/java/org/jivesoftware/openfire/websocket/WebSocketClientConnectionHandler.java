@@ -24,7 +24,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
-import org.jivesoftware.openfire.nio.ClientConnectionHandler;
+import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
@@ -45,7 +45,7 @@ import java.util.TimerTask;
 
 /**
  * This class handles all WebSocket events for the corresponding connection with a remote peer, analogous to the
- * function of {@link ClientConnectionHandler} for TCP connections.
+ * function of {@link NettyClientConnectionHandler} for TCP connections.
  *
  * Specifically the XMPP session is managed concurrently with the WebSocket session, including all
  * framing and authentication requirements. Packets received from the remote peer are forwarded as
@@ -102,7 +102,7 @@ public class WebSocketClientConnectionHandler
     {
         lastReceived = Instant.now();
         wsSession = session;
-        final PacketDeliverer backupDeliverer = ClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
+        final PacketDeliverer backupDeliverer = NettyClientConnectionHandler.BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? new OfflinePacketDeliverer() : null;
         wsConnection = new WebSocketConnection(this, backupDeliverer, session.getRemoteAddress());
         websocketFramePingTask = new WebsocketFramePingTask();
         if (KEEP_ALIVE_FRAME_PING_ENABLED_PROPERTY.getValue()) {

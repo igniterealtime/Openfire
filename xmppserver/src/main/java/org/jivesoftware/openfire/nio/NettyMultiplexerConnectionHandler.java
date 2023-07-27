@@ -40,7 +40,7 @@ public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler {
      * be delivered on the connection are discarded.
      */
     public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.multiplex.netty-backup-packet-delivery.enabled")
+        .setKey("xmpp.multiplex.backup-packet-delivery.enabled")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();

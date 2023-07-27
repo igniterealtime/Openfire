@@ -30,7 +30,7 @@
                  java.util.Collection"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.nio.NIOConnection" %>
+<%@ page import="org.jivesoftware.openfire.nio.NettyConnection" %>
 <%@ page import="org.jivesoftware.openfire.websocket.WebSocketConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
 <%@ page import="java.util.Map" %>
@@ -222,7 +222,7 @@
             <%
                 if (s.isDetached()) {
                     %><fmt:message key="session.details.sm-detached"/><%
-                } else if (s.getConnection() instanceof NIOConnection) {
+                } else if (s.getConnection() instanceof NettyConnection) {
                     %>TCP<%
                 } else if (s.getConnection() instanceof WebSocketConnection) {
                     %>WebSocket<%

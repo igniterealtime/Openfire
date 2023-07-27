@@ -29,7 +29,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 /**
- * Fallback method used by {@link org.jivesoftware.openfire.nio.NIOConnection} when a 
+ * Fallback method used by {@link org.jivesoftware.openfire.nio.NettyConnection} when a
  * connection fails to send a {@link Packet} (likely because it was closed). Message packets
  * will be stored offline for later retrieval. IQ and Presence packets are dropped.<p>
  *

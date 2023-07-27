@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -194,7 +193,7 @@ public class ConnectionListener
      */
     public synchronized void start()
     {
-        // TODO Start all connection types here, by supplying more connection acceptors other than a MINA-based one.
+        // TODO Start all connection types here, by supplying more connection acceptors other than a Netty-based one.
         switch ( getType() )
         {
             case BOSH_C2S:
@@ -347,22 +346,6 @@ public class ConnectionListener
         Log.debug( "Reconfiguring..." );
         connectionAcceptor.reconfigure( generateConnectionConfiguration() );
         Log.info( "Reconfigured." );
-    }
-
-    /**
-     * Returns the MINA-specific socket acceptor that is managed by the instance.
-     *
-     * @return A socket acceptor, or null when this listener is disabled or not based on a MINA implementation.
-     */
-    // TODO see if we can avoid exposing MINA internals.
-    public NioSocketAcceptor getSocketAcceptor()
-    {
-        if ( connectionAcceptor == null || !(connectionAcceptor instanceof MINAConnectionAcceptor) )
-        {
-            return null;
-        }
-
-        return ((MINAConnectionAcceptor)connectionAcceptor).getSocketAcceptor();
     }
 
     /**

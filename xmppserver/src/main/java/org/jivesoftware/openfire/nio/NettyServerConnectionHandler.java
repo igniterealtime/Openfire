@@ -58,7 +58,7 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
      * server-to-server connection. When disabled, stanzas that can not be delivered on the connection are discarded.
      */
     public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-            .setKey("xmpp.server.netty-backup-packet-delivery.enabled")
+            .setKey("xmpp.server.backup-packet-delivery.enabled")
             .setDefaultValue(true)
             .setDynamic(true)
             .build();

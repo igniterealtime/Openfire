@@ -38,9 +38,7 @@ import org.xmpp.packet.Presence;
  * Handler of XML stanzas sent by external components connected directly to the server. Received packet will
  * have their FROM attribute overridden to avoid spoofing.<p>
  *
- * This is an implementation of the XEP-114. In the future we will add support for XEP-225 now that
- * we are using MINA things should be easier. Since we are now using MINA incoming traffic is handled
- * by a set of worker threads.
+ * This is an implementation of the XEP-114.
  *
  * @author Gaston Dombiak
  */

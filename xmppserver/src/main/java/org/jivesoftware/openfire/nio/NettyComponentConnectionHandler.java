@@ -22,7 +22,7 @@ public class NettyComponentConnectionHandler extends NettyConnectionHandler {
      * component connection. When disabled, stanzas that can not be delivered on the connection are discarded.
      */
     public static final SystemProperty<Boolean> BACKUP_PACKET_DELIVERY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.component.netty-backup-packet-delivery.enabled")
+        .setKey("xmpp.component.backup-packet-delivery.enabled")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();

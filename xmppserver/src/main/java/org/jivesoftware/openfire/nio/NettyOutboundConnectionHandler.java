@@ -32,7 +32,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLHandshakeException;
+import java.security.cert.CertificateException;
 
 /**
  * Outbound (S2S) specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -133,7 +133,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                 // SSL Handshake has failed
                 stanzaHandler.setSession(null);
 
-                if (isSSLHandshakeException(event) && isCausedByCertificateError(event)){
+                if (isCertificateException(event)){
                     if (configRequiresStrictCertificateValidation()) {
                         Log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
                         throw new RuntimeException(event.cause());
@@ -166,12 +166,8 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         super.userEventTriggered(ctx, evt);
     }
 
-    private static boolean isSSLHandshakeException(SslHandshakeCompletionEvent event) {
-        return event.cause() instanceof SSLHandshakeException;
-    }
-
-    private static boolean isCausedByCertificateError(SslHandshakeCompletionEvent event) {
-        return event.cause().getMessage().contains("java.security.cert.CertPathBuilderException");
+    private static boolean isCertificateException(SslHandshakeCompletionEvent event) {
+        return event.cause().getCause() instanceof CertificateException;
     }
 
     private static void abandonSession(RespondingServerStanzaHandler stanzaHandler) {

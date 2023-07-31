@@ -63,7 +63,7 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public class NettyConnection implements Connection {
+public class NettyConnection implements Connection<Channel> {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
@@ -330,8 +330,9 @@ public class NettyConnection implements Connection {
             try {
                 ChannelFuture f = channelHandlerContext.writeAndFlush(packet.getElement().asXML());
                 updateWrittenBytesCounter(channelHandlerContext);
-
-                // TODO handle errors?
+                // TODO - handle errors more specifically
+                // Currently errors are handled by the default exceptionCaught method (log error, close channel)
+                // We can add a new listener to the ChannelFuture f for more specific error handling.
             }
             catch (Exception e) {
                 Log.debug("Error delivering packet:\n" + packet, e);
@@ -357,25 +358,11 @@ public class NettyConnection implements Connection {
     public void deliverRawText(String text) {
         Log.trace("Sending: " + text);
         if (!isClosed()) {
-            boolean errorDelivering = false;
             ChannelFuture f = channelHandlerContext.writeAndFlush(text);
             updateWrittenBytesCounter(channelHandlerContext);
-            // TODO handle errors?
-
-//            try {
-                // TODO don't block, handle errors async with custom ChannelFutureListener
-//                f.addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE); // Removed the sync so this won't throw
-//            }
-//            catch (Exception e) {
-//                Log.error("Error delivering raw text:\n" + text, e);
-//                e.printStackTrace();
-//                errorDelivering = true;
-//            }
-
-            // Attempt to close the connection if delivering text fails.
-//            if (errorDelivering) {
-//                close();
-//            }
+            // TODO - handle errors more specifically
+            // Currently errors are handled by the default exceptionCaught method (log error, close channel)
+            // We can add a new listener to the ChannelFuture f for more specific error handling.
         }
     }
 

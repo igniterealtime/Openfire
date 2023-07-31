@@ -32,7 +32,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.cert.CertificateException;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Outbound (S2S) specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -68,22 +68,8 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         return new RespondingServerStanzaHandler( XMPPServer.getInstance().getPacketRouter(), connection, domainPair );
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        super.exceptionCaught(ctx, cause);
-
-        if (isCertificateException(cause) && configRequiresStrictCertificateValidation()) {
-            Log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
-            throw new RuntimeException(cause);
-        }
-     }
-
     private static boolean configRequiresStrictCertificateValidation() {
         return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true);
-    }
-
-    public boolean isCertificateException(Throwable cause) {
-        return cause instanceof CertificateException;
     }
 
     @Override
@@ -97,13 +83,24 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         super.handlerAdded(ctx);
     }
 
+    /**
+     * Called when SSL Handshake has been completed.
+     *
+     * If successful, attempts authentication via SASL, or dialback dependent on configuration and certificate validity.
+     * If not successful, either attempts dialback on a plain un-encrypted connection, or throws an exception dependent
+     * on configuration.
+     *
+     * @param ctx ChannelHandlerContext for the Netty channel
+     * @param evt Event that has been triggered - this implementation specifically identifies SslHandshakeCompletionEvent
+     * @throws Exception
+     */
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (!sslInitDone && evt instanceof SslHandshakeCompletionEvent) {
-            SslHandshakeCompletionEvent e = (SslHandshakeCompletionEvent) evt;
+            SslHandshakeCompletionEvent event = (SslHandshakeCompletionEvent) evt;
             RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) ctx.channel().attr(NettyConnectionHandler.HANDLER).get();
 
-            if (e.isSuccess()) {
+            if (event.isSuccess()) {
                 sslInitDone = true;
 
                 NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
@@ -133,11 +130,19 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
 
                 ctx.fireChannelActive();
             } else {
-                // SSL Handshake has failed, fall back to dialback
+                // SSL Handshake has failed
                 stanzaHandler.setSession(null);
 
-                System.out.println("SSL HANDSHAKE FAILED: " + e.cause());
+                if (isSSLHandshakeException(event) && isCausedByCertificateError(event)){
+                    if (configRequiresStrictCertificateValidation()) {
+                        Log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
+                        throw new RuntimeException(event.cause());
+                    } else {
+                        Log.warn("TLS handshake failed due to a certificate validation error");
+                    }
+                }
 
+                // fall back to dialback
                 if (ServerDialback.isEnabled() && connectionConfigDoesNotRequireTls()) {
                     Log.debug("Unable to create a new TLS session. Going to try connecting using server dialback as a fallback.");
 
@@ -159,6 +164,14 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         }
 
         super.userEventTriggered(ctx, evt);
+    }
+
+    private static boolean isSSLHandshakeException(SslHandshakeCompletionEvent event) {
+        return event.cause() instanceof SSLHandshakeException;
+    }
+
+    private static boolean isCausedByCertificateError(SslHandshakeCompletionEvent event) {
+        return event.cause().getMessage().contains("java.security.cert.CertPathBuilderException");
     }
 
     private static void abandonSession(RespondingServerStanzaHandler stanzaHandler) {

@@ -570,7 +570,7 @@ public abstract class LocalSession implements Session {
     public String getTLSProtocolName() {
         return Optional.ofNullable(conn)
             .map(c -> c.getTLSProtocolName().orElse("NONE"))
-            .orElse("NONE");
+            .orElse("NONE").toString();
     }
 
     @Override
@@ -578,7 +578,7 @@ public abstract class LocalSession implements Session {
     public String getCipherSuiteName() {
         return Optional.ofNullable(conn)
             .map(c -> c.getCipherSuiteName().orElse("NONE"))
-            .orElse("NONE");
+            .orElse("NONE").toString();
     }
 
     @Override

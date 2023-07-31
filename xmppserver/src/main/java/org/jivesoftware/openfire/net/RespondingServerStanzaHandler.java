@@ -241,7 +241,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             if (session instanceof LocalOutgoingServerSession) {
                 ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
             } else {
-                System.out.println("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
                 LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
                 return false;
             }

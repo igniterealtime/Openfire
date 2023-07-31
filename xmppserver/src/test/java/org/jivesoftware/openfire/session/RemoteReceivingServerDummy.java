@@ -50,7 +50,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
     /**
      * When switched to 'true', most XMPP interaction will be printed to standard-out.
      */
-    public static final boolean doLog = true;
+    public static final boolean doLog = false;
 
     private ServerSocket server;
 

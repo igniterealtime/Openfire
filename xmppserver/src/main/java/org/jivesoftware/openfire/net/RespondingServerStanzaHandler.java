@@ -24,9 +24,11 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.server.ServerDialback;
-import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 
+import java.io.StringReader;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -105,8 +108,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     @Override
     protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception {
+        boolean initialStream = isStartOfStream(stanza);
+        if (!initialStream) {
+            // Ignore <?xml version="1.0"?>
+            return;
+        }
+
         if (!sessionCreated) {
-            super.initiateSession(stanza, reader);
+            sessionCreated = true;
+            MXParser parser = reader.getXPPParser();
+            parser.setInput(new StringReader(stanza));
+            createSession(parser);
         }
     }
 
@@ -121,6 +133,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         // Handle features
         if ("features".equals(rootTagName)) {
 
+            // Prevent falling back to dialback if we are already authenticated
+            if (session.isAuthenticated()) {
+                return true;
+            }
+
             // Encryption ------
             if (shouldUseTls() && remoteFeaturesContainsStartTLS(doc)) {
                 LOG.debug("Both us and the remote server support the STARTTLS feature. Encrypt and authenticate the connection with TLS & SASL...");
@@ -130,6 +147,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             } else if (mustUseTls() && !connection.isEncrypted()) {
                 LOG.debug("I MUST use TLS but I have no StartTLS in features.");
+                abandonSessionInitiation();
                 return false;
             }
 
@@ -151,8 +169,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 connection.deliverRawText(sb.toString());
                 startedSASL = true;
                 return true;
-            } else if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-
+            } else if (dialbackOffered && (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned())) {
                 // Next, try dialback
                 LOG.debug("Trying to authenticate using dialback.");
                 LOG.debug("[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + session.getStreamID() + ")]");
@@ -211,7 +228,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             // SASL was successful so initiate a new stream
             StringBuilder sb = new StringBuilder();
             sb.append("<stream:stream");
-            sb.append(" xmlns:db=\"jabber:server:dialback\"");
             sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             sb.append(" xmlns=\"jabber:server\"");
             sb.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
@@ -220,66 +236,39 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             connection.deliverRawText(sb.toString());
 
             connection.init(session);
-            isSessionAuthenticated = true;
             // Set the remote domain name as the address of the session.
             session.setAddress(new JID(null, domainPair.getRemote(), null));
             if (session instanceof LocalOutgoingServerSession) {
                 ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
             } else {
+                System.out.println("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
                 LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
                 return false;
             }
+            isSessionAuthenticated = true;
             return true;
         }
 
         // Handles proceed (prior to TLS negotiation)
         if (rootTagName.equals("proceed")) {
             LOG.debug("Received 'proceed' from remote server. Negotiating TLS...");
+
             try {
                 LOG.debug("Encrypting and authenticating connection ...");
                 connection.startTLS(true, false);
             } catch (Exception e) {
-                LOG.debug("TLS negotiation failed: " + e.getMessage());
+                LOG.debug("TLS negotiation failed to start: " + e.getMessage());
                 return false;
             }
-            LOG.debug("TLS negotiation was successful. Connection encrypted. Proceeding with authentication...");
-
-            // Verify - TODO does this live here, should we do this when handling features mechanisms?
-            // If TLS cannot be used for authentication, it is permissible to use another authentication mechanism
-            // such as dialback. RFC 6120 does not explicitly allow this, as it does not take into account any other
-            // authentication mechanism other than TLS (it does mention dialback in an interoperability note. However,
-            // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
-            // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
-            // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
-            if (!SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
-                if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
-                    LOG.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
-                    return false;
-                }
-                if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-                    LOG.debug("Failed to verify certificates for SASL authentication. Will continue with dialback.");
-                    // Will continue with dialback when the features stanza comes in and is processed (above)
-                } else {
-                    LOG.warn("Unable to authenticate the connection: Failed to verify certificates for SASL authentication and dialback is not available.");
-                    return false;
-                }
-            }
-
-            LOG.debug("TLS negotiation was successful so initiate a new stream.");
-            StringBuilder sb = new StringBuilder();
-            sb.append("<stream:stream");
-            sb.append(" xmlns:db=\"jabber:server:dialback\"");
-            sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            sb.append(" xmlns=\"jabber:server\"");
-            sb.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
-            sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
-            sb.append(" version=\"1.0\">");
-            connection.deliverRawText(sb.toString());
-
             return true;
         }
 
         return false;
+    }
+
+    private void abandonSessionInitiation() {
+        this.setAttemptedAllAuthenticationMethods(true);
+        this.setSession(null);
     }
 
     private boolean shouldUseTls() {

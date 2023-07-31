@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.net;
 
+import io.netty.channel.Channel;
+import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -109,8 +111,9 @@ public abstract class VirtualConnection implements Connection {
         return null;
     }
 
-    public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
+    public Future<Channel> startTLS(boolean clientMode, boolean directTLS) throws Exception {
         //Ignore
+        return null;
     }
 
     public void addCompression() {

@@ -161,8 +161,10 @@ public class LocalOutgoingServerSessionTest
 
     @Test
     void single() throws Exception {
-        ServerSettings localServerSettings = new ServerSettings(Connection.TLSPolicy.required, ServerSettings.CertificateState.MISSING, true, true);
-        ServerSettings remoteServerSettings = new ServerSettings(Connection.TLSPolicy.required, ServerSettings.CertificateState.MISSING, true, true);
+//        - Local Server (Openfire, System under test) Settings:    [encryption=optio, certificate=MISSI, strictCertValidation=true, dialback=SUPPO]
+//        - Remote Server (dummy/mock server) Settings:             [encryption=optio, certificate=INVAL, strictCertValidation=true, dialback=SUPPO]
+        ServerSettings localServerSettings = new ServerSettings(Connection.TLSPolicy.optional, ServerSettings.CertificateState.MISSING, true, true);
+        ServerSettings remoteServerSettings = new ServerSettings(Connection.TLSPolicy.optional, ServerSettings.CertificateState.INVALID, true, true);
         outgoingTest(localServerSettings, remoteServerSettings);
     }
 

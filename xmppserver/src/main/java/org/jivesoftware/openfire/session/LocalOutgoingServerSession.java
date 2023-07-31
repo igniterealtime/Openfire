@@ -70,11 +70,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private static final Interner<JID> remoteAuthMutex = Interners.newWeakInterner();
 
+    public static final String XMPP_SERVER_SESSION_INITIALISE_TIMEOUT_KEY = "xmpp.server.session.initialise-timeout";
     /**
      * Controls the S2S outgoing session initialise timeout time in seconds
      */
     public static final SystemProperty<Duration> INITIALISE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
-        .setKey("xmpp.server.session.initialise-timeout")
+        .setKey(XMPP_SERVER_SESSION_INITIALISE_TIMEOUT_KEY)
         .setDefaultValue(Duration.ofSeconds(5))
         .setChronoUnit(ChronoUnit.SECONDS)
         .setDynamic(true)
@@ -263,7 +264,6 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn("An exception occurred while creating a session. Closing connection.", e);
-        } finally {
             sessionInitialiser.stop();
         }
 

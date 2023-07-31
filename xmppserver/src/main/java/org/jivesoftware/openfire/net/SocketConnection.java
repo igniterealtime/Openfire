@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.net;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
+import io.netty.channel.Channel;
+import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
@@ -150,7 +152,7 @@ public class SocketConnection implements Connection {
         return tlsStreamHandler;
     }
 
-    public void startTLS(boolean clientMode, boolean directTLS) throws IOException {
+    public Future<Channel> startTLS(boolean clientMode, boolean directTLS) throws IOException {
         if (!isEncrypted) {
             isEncrypted = true;
 
@@ -175,6 +177,7 @@ public class SocketConnection implements Connection {
             writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
+        return null;
     }
 
     @Override

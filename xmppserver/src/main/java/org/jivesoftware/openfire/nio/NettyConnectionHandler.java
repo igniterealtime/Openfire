@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.nio;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.util.AttributeKey;
 import org.dom4j.io.XMPPPacketReader;
@@ -69,6 +70,8 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
      * Reuse the same factory for all the connections.
      */
     private static XmlPullParserFactory factory = null;
+
+    volatile boolean sslInitDone;
 
     static {
         try {
@@ -152,6 +155,23 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         ctx.close();
     }
 
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (!sslInitDone && evt instanceof SslHandshakeCompletionEvent) {
+            SslHandshakeCompletionEvent e = (SslHandshakeCompletionEvent) evt;
+
+            if (e.isSuccess()) {
+                sslInitDone = true;
+
+                NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
+                connection.setEncrypted(true);
+                Log.debug("TLS negotiation was successful.");
+                ctx.fireChannelActive();
+            }
+        }
+
+        super.userEventTriggered(ctx, evt);
+    }
 
     /**
      * Updates the system counter of read bytes. This information is used by the incoming

@@ -63,7 +63,7 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public class NettyConnection implements Connection<Channel> {
+public class NettyConnection implements Connection{
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
@@ -388,7 +388,7 @@ public class NettyConnection implements Connection<Channel> {
         }
     }
 
-    public Future<Channel> startTLS(boolean clientMode, boolean directTLS) throws Exception {
+    public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
 
         final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
 
@@ -407,7 +407,6 @@ public class NettyConnection implements Connection<Channel> {
             deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
         }
 
-        return sslHandler.handshakeFuture();
     }
 
     @Override

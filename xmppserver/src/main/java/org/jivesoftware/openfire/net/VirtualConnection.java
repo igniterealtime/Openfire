@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Gaston Dombiak
  */
-public abstract class VirtualConnection implements Connection<Void>  {
+public abstract class VirtualConnection implements Connection {
 
     private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
 
@@ -111,9 +111,8 @@ public abstract class VirtualConnection implements Connection<Void>  {
         return null;
     }
 
-    public Future<Void> startTLS(boolean clientMode, boolean directTLS) throws Exception {
+    public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
         //Ignore
-        return null;
     }
 
     public void addCompression() {

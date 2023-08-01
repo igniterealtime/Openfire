@@ -39,7 +39,7 @@ import java.util.Set;
  *
  * @author Iain Shigeoka
  */
-public interface Connection<T> extends Closeable {
+public interface Connection extends Closeable {
 /**
      * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
      * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
@@ -354,7 +354,7 @@ public interface Connection<T> extends Closeable {
      * @return a future that resolves once TLS handshake has completed
      * @throws Exception if an error occurred while encrypting the connection.
      */
-    Future<T> startTLS(boolean clientMode, boolean directTLS) throws Exception;
+    void startTLS(boolean clientMode, boolean directTLS) throws Exception;
 
     /**
      * Adds the compression filter to the connection but only filter incoming traffic. Do not filter

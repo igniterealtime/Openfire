@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Iain Shigeoka
  * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance. Currently only in use for s2s.
  */
-public class SocketConnection implements Connection<Void> {
+public class SocketConnection implements Connection {
 
     private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 
@@ -152,7 +152,7 @@ public class SocketConnection implements Connection<Void> {
         return tlsStreamHandler;
     }
 
-    public Future<Void> startTLS(boolean clientMode, boolean directTLS) throws IOException {
+    public void startTLS(boolean clientMode, boolean directTLS) throws IOException {
         if (!isEncrypted) {
             isEncrypted = true;
 
@@ -177,7 +177,6 @@ public class SocketConnection implements Connection<Void> {
             writer = new BufferedWriter(new OutputStreamWriter(tlsStreamHandler.getOutputStream(), StandardCharsets.UTF_8));
             xmlSerializer = new XMLSocketWriter(writer, this);
         }
-        return null;
     }
 
     @Override

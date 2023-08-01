@@ -25,7 +25,6 @@ import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
-import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -63,7 +62,7 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public class NettyConnection implements Connection{
+public class NettyConnection implements Connection {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
@@ -406,7 +405,6 @@ public class NettyConnection implements Connection{
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
         }
-
     }
 
     @Override

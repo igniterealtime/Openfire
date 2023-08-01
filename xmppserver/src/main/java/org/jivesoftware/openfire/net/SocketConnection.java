@@ -18,8 +18,6 @@ package org.jivesoftware.openfire.net;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
-import io.netty.channel.Channel;
-import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;

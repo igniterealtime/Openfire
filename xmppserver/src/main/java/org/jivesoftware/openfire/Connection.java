@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire;
 
-import io.netty.channel.Channel;
-import io.netty.util.concurrent.Future;
 import org.dom4j.Namespace;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -351,7 +349,6 @@ public interface Connection extends Closeable {
      *
      * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
      * @param directTLS  boolean indicating if the negotiation is directTLS (true) or startTLS (false).
-     * @return a future that resolves once TLS handshake has completed
      * @throws Exception if an error occurred while encrypting the connection.
      */
     void startTLS(boolean clientMode, boolean directTLS) throws Exception;

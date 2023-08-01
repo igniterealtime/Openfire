@@ -86,6 +86,7 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
                 sendPingPacket(ctx);
             }
         }
+        super.userEventTriggered(ctx, evt);
     }
 
     /**

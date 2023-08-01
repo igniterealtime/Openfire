@@ -120,7 +120,6 @@
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
         <jetty.version>9.4.43.v20210629</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
-        <mina.version>2.2.1</mina.version>
         <netty.version>4.1.94.Final</netty.version>
         <bouncycastle.version>1.70</bouncycastle.version>
         <slf4j.version>1.7.36</slf4j.version>
@@ -345,18 +344,6 @@
                     </rules>
                     <fail>true</fail>
                 </configuration>
-            </plugin>
-
-            <!--
-            The various MINA dependencies rely on OSGi bundle artifacts rather than standard JAR files.
-            As such, it's necessary to add support for these bundle to Maven using the Apache Felix maven-bundle-plugin.
-            See https://stackoverflow.com/a/5409602 for a good explanation of OSGi bundles, with links to more info.
-            -->
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>4.2.0</version>
-                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>

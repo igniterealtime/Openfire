@@ -16,16 +16,17 @@
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
-import org.jivesoftware.openfire.net.*;
+import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

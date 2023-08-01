@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import io.netty.channel.Channel;
-import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -44,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Gaston Dombiak
  */
-public abstract class VirtualConnection implements Connection<Void>  {
+public abstract class VirtualConnection implements Connection  {
 
     private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
 
@@ -111,9 +109,8 @@ public abstract class VirtualConnection implements Connection<Void>  {
         return null;
     }
 
-    public Future<Void> startTLS(boolean clientMode, boolean directTLS) throws Exception {
+    public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
         //Ignore
-        return null;
     }
 
     public void addCompression() {

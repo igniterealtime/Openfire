@@ -76,7 +76,7 @@ public abstract class StanzaHandler {
 
     // Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
     // client sent a new initial stream header the value will return to false.
-    private boolean startedTLS = false;
+    protected boolean startedTLS = false;
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
     protected boolean startedSASL = false;
@@ -114,7 +114,7 @@ public abstract class StanzaHandler {
     }
 
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
-        if (!sessionCreated || isStartOfStream(stanza)) {
+        if (isStartOfStream(stanza) || !sessionCreated) {
             initiateSession(stanza, reader);
         } else {
             processStanza(stanza, reader);
@@ -231,8 +231,7 @@ public abstract class StanzaHandler {
         }
 
         // Ensure that connection was encrypted if TLS was required
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.required &&
-                !connection.isEncrypted()) {
+        if (connection.isInitialized() && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
             closeNeverEncryptedConnection();
             return;
         }
@@ -457,7 +456,7 @@ public abstract class StanzaHandler {
      * @return true if the connection was encrypted.
      */
     protected boolean negotiateTLS() {
-        if (connection.getTlsPolicy() == Connection.TLSPolicy.disabled) {
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.disabled) {
             // Send a not_authorized error and close the underlying connection
             connection.close(new StreamError(StreamError.Condition.not_authorized, "A request to negotiate TLS is denied, as TLS has been disabled by configuration."));
             // Log a warning so that admins can track this case from the server side
@@ -534,7 +533,7 @@ public abstract class StanzaHandler {
      */
     protected boolean compressClient(Element doc) {
         String error = null;
-        if (connection.getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
+        if (connection.getConfiguration().getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
             // Client requested compression but this feature is disabled
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
             // Log a warning so that admins can track this case from the server side
@@ -619,7 +618,9 @@ public abstract class StanzaHandler {
         sb.append("'?>");
         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace());
-        sb.append("\" from=\"");
+        sb.append("\"");
+        sb.append(getAdditionalNamespaces());
+        sb.append(" from=\"");
         sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         sb.append("\" id=\"");
         sb.append(session.getStreamID());
@@ -629,6 +630,10 @@ public abstract class StanzaHandler {
         sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
+    }
+
+    protected String getAdditionalNamespaces() {
+        return "";
     }
 
     /**

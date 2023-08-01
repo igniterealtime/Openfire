@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -41,7 +40,7 @@ import java.util.Set;
 // TODO most getters in this class assume that the ConnectionAcceptor property value match the property values of JiveGlobals. This should be the case, but should be asserted.
 public class ConnectionListener
 {
-    private Logger Log;
+    private final Logger Log;
 
     // Connection characteristics
     private final ConnectionType type;
@@ -194,12 +193,12 @@ public class ConnectionListener
      */
     public synchronized void start()
     {
-        // TODO Start all connection types here, by supplying more connection acceptors other than a MINA-based one.
+        // TODO Start all connection types here, by supplying more connection acceptors other than a Netty-based one.
         switch ( getType() )
         {
             case BOSH_C2S:
             case WEBADMIN:
-                Log.debug( "Not starting a (MINA-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
+                Log.debug( "Not starting a (Netty-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
                 return;
 
             default:
@@ -227,15 +226,7 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        if ( getType() == ConnectionType.SOCKET_S2S )
-        {
-            connectionAcceptor = new LegacyConnectionAcceptor( generateConnectionConfiguration() );
-        }
-        else
-        {
-            connectionAcceptor = new MINAConnectionAcceptor( generateConnectionConfiguration() );
-        }
-
+        connectionAcceptor = new NettyConnectionAcceptor(generateConnectionConfiguration());
         connectionAcceptor.start();
         Log.info( "Started." );
     }
@@ -355,22 +346,6 @@ public class ConnectionListener
         Log.debug( "Reconfiguring..." );
         connectionAcceptor.reconfigure( generateConnectionConfiguration() );
         Log.info( "Reconfigured." );
-    }
-
-    /**
-     * Returns the MINA-specific socket acceptor that is managed by the instance.
-     *
-     * @return A socket acceptor, or null when this listener is disabled or not based on a MINA implementation.
-     */
-    // TODO see if we can avoid exposing MINA internals.
-    public NioSocketAcceptor getSocketAcceptor()
-    {
-        if ( connectionAcceptor == null || !(connectionAcceptor instanceof MINAConnectionAcceptor) )
-        {
-            return null;
-        }
-
-        return ((MINAConnectionAcceptor)connectionAcceptor).getSocketAcceptor();
     }
 
     /**

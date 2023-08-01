@@ -68,7 +68,7 @@ public class SocketConnection implements Connection {
      * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
      * up to the connection's owner to configure the timeout value. Sending stanzas to the client
      * is not considered as activity. We are only considering the connection active when the
-     * client sends some data or hearbeats (i.e. whitespaces) to the server.
+     * client sends some data or heartbeats (i.e. whitespaces) to the server.
      * The reason for this is that sending data will fail if the connection is closed. And if
      * the thread is blocked while sending data (because the socket is closed) then the clean up
      * thread will close the socket anyway.
@@ -102,16 +102,7 @@ public class SocketConnection implements Connection {
 
     private long writeStarted = -1;
 
-    /**
-     * TLS policy currently in use for this connection.
-     */
-    private TLSPolicy tlsPolicy = TLSPolicy.optional;
     private boolean usingSelfSignedCertificate;
-
-    /**
-     * Compression policy currently in use for this connection.
-     */
-    private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
 
     public static Collection<SocketConnection> getInstances() {
         return instances.keySet();
@@ -146,9 +137,6 @@ public class SocketConnection implements Connection {
         xmlSerializer = new XMLSocketWriter(writer, this);
 
         instances.put(this, "");
-
-        // Default this sensibly.
-        this.tlsPolicy = this.getConfiguration().getTlsPolicy();
     }
 
     /**
@@ -278,6 +266,11 @@ public class SocketConnection implements Connection {
     }
 
     @Override
+    public boolean isInitialized() {
+        return session != null && !isClosed();
+    }
+
+    @Override
     public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
         if (isClosed()) {
             listener.onConnectionClose(handbackMessage);
@@ -357,25 +350,6 @@ public class SocketConnection implements Connection {
     }
 
     @Override
-    public TLSPolicy getTlsPolicy() {
-        return tlsPolicy;
-    }
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to encrypt their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
-     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
-     * last case.
-     *
-     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
-     */
-    @Override
-    public void setTlsPolicy(TLSPolicy tlsPolicy) {
-        this.tlsPolicy = tlsPolicy;
-    }
-
-    @Override
     public Optional<String> getTLSProtocolName()
     {
         return Optional.ofNullable(tlsStreamHandler)
@@ -389,21 +363,6 @@ public class SocketConnection implements Connection {
         return Optional.ofNullable(tlsStreamHandler)
             .map(TLSStreamHandler::getSSLSession)
             .map(SSLSession::getCipherSuite);
-    }
-
-    @Override
-    public CompressionPolicy getCompressionPolicy() {
-        return compressionPolicy;
-    }
-
-    /**
-     * Sets whether compression is enabled or is disabled.
-     *
-     * @param compressionPolicy whether Compression is enabled or is disabled.
-     */
-    @Override
-    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
-        this.compressionPolicy = compressionPolicy;
     }
 
     public long getIdleTimeout() {
@@ -684,6 +643,7 @@ public class SocketConnection implements Connection {
                 writeStarted();
                 writer.write(text);
                 writer.flush();
+                Log.trace("Sending: " + text);
             }
             catch (Exception e) {
                 Log.debug("Error delivering raw text" + "\n" + this.toString(), e);

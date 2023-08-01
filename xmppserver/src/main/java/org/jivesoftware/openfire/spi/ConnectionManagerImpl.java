@@ -16,9 +16,6 @@
 
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.core.buffer.IoBuffer;
-import org.apache.mina.core.buffer.SimpleBufferAllocator;
-import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -354,6 +351,8 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             }
         }
 
+        NettyConnectionAcceptor.shutdownEventLoopGroups();
+
         // Stop the HTTP client listener.
         try
         {
@@ -602,11 +601,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         getListener( type, startInSslMode ).setPort( port );
     }
 
-    // TODO see if we can avoid exposing MINA internals.
-    public NioSocketAcceptor getSocketAcceptor( ConnectionType type, boolean startInSslMode )
-    {
-        return getListener( type, startInSslMode ).getSocketAcceptor();
-    }
 
     // #####################################################################
     // Certificates events
@@ -667,18 +661,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     // #####################################################################
     // Module management
     // #####################################################################
-
-    @Override
-    public void initialize(XMPPServer server) {
-        super.initialize(server);
-
-        // Check if we need to configure MINA to use Direct or Heap Buffers
-        // Note: It has been reported that heap buffers are 50% faster than direct buffers
-        if (JiveGlobals.getBooleanProperty("xmpp.socket.heapBuffer", true)) {
-            IoBuffer.setUseDirectBuffer(false);
-            IoBuffer.setAllocator(new SimpleBufferAllocator());
-        }
-    }
 
     @Override
     public void start() {

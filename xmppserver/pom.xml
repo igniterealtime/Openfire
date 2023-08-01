@@ -285,22 +285,20 @@
             <version>${standard-taglib.version}</version>
         </dependency>
 
-        <!-- Apache MINA -->
+        <!-- Netty -->
         <dependency>
-            <groupId>org.apache.mina</groupId>
-            <artifactId>mina-core</artifactId>
-            <version>${mina.version}</version>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${netty.version}</version>
         </dependency>
+
+        <!-- JZLib -->
         <dependency>
-            <groupId>org.apache.mina</groupId>
-            <artifactId>mina-integration-jmx</artifactId>
-            <version>${mina.version}</version>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jzlib</artifactId>
+            <version>1.1.3</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.mina</groupId>
-            <artifactId>mina-filter-compression</artifactId>
-            <version>${mina.version}</version>
-        </dependency>
+
 
         <!-- BouncyCastle -->
         <dependency>

@@ -59,6 +59,12 @@ public final class ConnectionSettings {
         public static final String LOGIN_ANONYM_ALLOWED = "xmpp.client.login.allowedAnonym";
 
         public static final String MAX_THREADS = "xmpp.client.processing.threads";
+
+        /**
+         * Used to configure throttling at the network level
+         *
+         * @deprecated not implemented for Netty as this uses max of 1 message per read instead
+         */
         public static final String MAX_READ_BUFFER = "xmpp.client.maxReadBufferSize";
 
         public static final String MAX_THREADS_SSL = "xmpp.client_ssl.processing.threads";
@@ -94,6 +100,7 @@ public final class ConnectionSettings {
         public static final String PERMISSION_SETTINGS = "xmpp.server.permission";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.server.cert.policy";
         public static final String ALLOW_ANONYMOUS_OUTBOUND_DATA = "xmpp.server.allow-anonymous-outbound-data";
+        public static final String IDLE_TIMEOUT_PROPERTY = "xmpp.server.idle";
 
         public static final String STRICT_CERTIFICATE_VALIDATION = "xmpp.socket.ssl.certificate.strict-validation";
     }

@@ -73,6 +73,13 @@ public interface Connection extends Closeable {
     void reinit( LocalSession session );
 
     /**
+     * Checks if the connection has finished initialization.
+     *
+     * @return true if connection has finished initialization.
+     */
+    boolean isInitialized();
+
+    /**
      * Returns the raw IP address of this <code>InetAddress</code>
      * object. The result is in network byte order: the highest order
      * byte of the address is in <code>getAddress()[0]</code>.
@@ -307,42 +314,6 @@ public interface Connection extends Closeable {
     boolean isCompressed();
 
     /**
-     * Returns whether compression is optional or is disabled.
-     *
-     * @return whether compression is optional or is disabled.
-     */
-    CompressionPolicy getCompressionPolicy();
-
-    /**
-     * Sets whether compression is enabled or is disabled.
-     *
-     * @param compressionPolicy whether Compression is enabled or is disabled.
-     */
-    void setCompressionPolicy(CompressionPolicy compressionPolicy);
-
-    /**
-     * Returns whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to encrypt their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
-     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
-     * last case.
-     *
-     * @return whether TLS is mandatory, optional or is disabled.
-     */
-    TLSPolicy getTlsPolicy();
-
-    /**
-     * Sets whether TLS is mandatory, optional or is disabled. When TLS is mandatory clients
-     * are required to encrypt their connections or otherwise their connections will be closed.
-     * On the other hand, when TLS is disabled clients are not allowed to encrypt their connections
-     * using TLS. Their connections will be closed if they try to encrypt the connection. in this
-     * last case.
-     *
-     * @param tlsPolicy whether TLS is mandatory, optional or is disabled.
-     */
-    void setTlsPolicy(TLSPolicy tlsPolicy);
-
-    /**
      * Returns the TLS protocol name used by the connection of the session, if any.
      *
      * @return a TLS protocol (version) name.
@@ -372,12 +343,12 @@ public interface Connection extends Closeable {
      * will be the server during the TLS negotiation. Therefore, the server requesting the TLS
      * negotiation must pass <code>true</code> in the {@code clientMode} parameter and the server
      * receiving the TLS request must pass <code>false</code> in the {@code clientMode} parameter.<p>
-     *
+     * <p>
      * In the case of client-2-server the XMPP server must pass <code>false</code> in the
      * {@code clientMode} parameter since it will behave as the server in the TLS negotiation.
      *
      * @param clientMode boolean indicating if this entity is a client or a server in the TLS negotiation.
-     * @param directTLS boolean indicating if the negotiation is directTLS (true) or startTLS (false).
+     * @param directTLS  boolean indicating if the negotiation is directTLS (true) or startTLS (false).
      * @throws Exception if an error occurred while encrypting the connection.
      */
     void startTLS(boolean clientMode, boolean directTLS) throws Exception;

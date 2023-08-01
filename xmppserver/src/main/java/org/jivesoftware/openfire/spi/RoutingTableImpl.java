@@ -613,7 +613,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Log.trace("Routing to remote domain: {}", packet);
 
         // It is possible that serversCache has an entry for this domain, while the OutgoingSessionPromise is
-        // still processing it's queue. Stanzas must be delivered in order, so delivery of this stanza needs to
+        // still processing its queue. Stanzas must be delivered in order, so delivery of this stanza needs to
         // be postponed until after the queue is empty (OF-2321).
         //
         // The code block below is guarded by the mutex that also guards:
@@ -622,7 +622,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // This will ensure that a new stanza:
         // - is supplied to OutgoingSessionPromise before queue processing is started / can start.
         // - is not supplied to OutgoingSessionPromise after queue processing has started. In that case, this code will
-        //   block until until the OutgoingSessionPromise is done processing, and will then route the stanza through the localRoutingTable.
+        //   block until the OutgoingSessionPromise is done processing, and will then route the stanza through the localRoutingTable.
         synchronized (OutgoingSessionPromise.getInstance().getMutex(domainPair))
         {
             if (OutgoingSessionPromise.getInstance().hasProcess(domainPair)) {

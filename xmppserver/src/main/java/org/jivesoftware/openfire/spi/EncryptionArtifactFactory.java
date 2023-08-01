@@ -1,6 +1,24 @@
+/*
+ * Copyright (C) 2015-2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.spi;
 
-import org.apache.mina.filter.ssl.SslFilter;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.jivesoftware.openfire.keystore.OpenfireX509TrustManager;
 import org.jivesoftware.util.SystemProperty;
@@ -190,7 +208,8 @@ public class EncryptionArtifactFactory
         final SSLEngine sslEngine = sslContext.createSSLEngine();
 
         // Configure protocol support.
-        final Set<String> protocols = configuration.getEncryptionProtocols();
+        final Set<String> protocols = new HashSet<>(configuration.getEncryptionProtocols());
+        protocols.remove("TLSv1.3"); // TLSv1.3 is not compatible with this SSLEngine implementation
         if ( !protocols.isEmpty() )
         {
             // When an explicit list of enabled protocols is defined, use only those (otherwise, an implementation-specific default will be used).
@@ -325,77 +344,58 @@ public class EncryptionArtifactFactory
     }
 
     /**
-     * Creates an Apache MINA SslFilter that is configured to use server mode when handshaking.
+     * Create and configure a new SslContext instance for a Netty server.<p>
      *
-     * For Openfire, an engine is of this mode used for most purposes (as Openfire is a server by nature).
-     *
-     * Instead of an SSLContext or SSLEngine, Apache MINA uses an SslFilter instance. It is generally not needed to
-     * create both SSLContext/SSLEngine as well as SslFilter instances.
-     *
-     * @return An initialized SslFilter instance (never null)
-     * @throws KeyManagementException if there was problem manging the ket
-     * @throws NoSuchAlgorithmException if the algorithm is not supported
-     * @throws KeyStoreException if there was a problem accessing the keystore
-     * @throws UnrecoverableKeyException if the key could not be recovered
+     * @param directTLS if the first write request should be encrypted.
+     * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
      */
-    public SslFilter createServerModeSslFilter() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException
-    {
-        final SSLContext sslContext = getSSLContext();
-        final SSLEngine sslEngine = createServerModeSSLEngine();
+    public SslContext createServerModeSslContext(boolean directTLS) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, SSLException {
+        getKeyManagers();
+        SslContextBuilder builder = SslContextBuilder.forServer(keyManagerFactory);
 
-        return createSslFilter( sslContext, sslEngine );
+        // Set policy for checking client certificates.
+        switch ( configuration.getClientAuth() )
+        {
+            case disabled:
+                builder.clientAuth(ClientAuth.NONE);
+                break;
+            case wanted:
+                builder.clientAuth(ClientAuth.OPTIONAL);
+                break;
+            case needed:
+                builder.clientAuth(ClientAuth.REQUIRE);
+                break;
+        }
+
+        builder.protocols(configuration.getEncryptionProtocols());
+        builder.ciphers(configuration.getEncryptionCipherSuites());
+        builder.startTls(!directTLS);
+
+        return builder.build();
     }
 
     /**
-     * Creates an Apache MINA SslFilter that is configured to use client mode when handshaking.
+     * Create and configure a new SslContext instance for a Netty client.<p>
      *
-     * For Openfire, a filter of this mode is typically used when the server tries to connect to another server.
+     * Used when the Openfire server is acting as a client when making S2S connections.
      *
-     * Instead of an SSLContext or SSLEngine, Apache MINA uses an SslFilter instance. It is generally not needed to
-     * create both SSLContext/SSLEngine as well as SslFilter instances.
-     *
-     * @return An initialized SslFilter instance (never null)
-     * @throws KeyManagementException if there was problem manging the ket
-     * @throws NoSuchAlgorithmException if the algorithm is not supported
-     * @throws KeyStoreException if there was a problem accessing the keystore
-     * @throws UnrecoverableKeyException if the key could not be recovered
+     * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
      */
-    public SslFilter createClientModeSslFilter() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException
-    {
-        final SSLContext sslContext = getSSLContext();
-        final SSLEngine sslEngine = createClientModeSSLEngine();
+    public SslContext createClientModeSslContext() throws SSLException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+        getKeyManagers();
 
-        return createSslFilter( sslContext, sslEngine );
-    }
+        // We will never send SSLV2 ClientHello messages
+        Set<String> protocols = new HashSet<>(configuration.getEncryptionProtocols());
+        protocols.remove("SSLv2Hello");
 
-    /**
-     * A utility method that implements the shared functionality of getServerModeSslFilter and getClientModeSslFilter.
-     *
-     * This method is used to initialize and configure an instance of SslFilter for a particular pre-configured
-     * SSLContext and SSLEngine. In most cases, developers will want to use getServerModeSslFilter or
-     * getClientModeSslFilter instead of this method.
-     *
-     * @param sslContext a pre-configured SSL Context instance (cannot be null).
-     * @param sslEngine a pre-configured SSL Engine instance (cannot be null).
-     * @return A SslFilter instance (never null).
-     */
-    private static SslFilter createSslFilter( SSLContext sslContext, SSLEngine sslEngine ) {
-        final SslFilter filter = new SslFilter( sslContext );
-
-        // Copy configuration from the SSL Engine into the filter.
-        filter.setEnabledProtocols( sslEngine.getEnabledProtocols() );
-        filter.setEnabledCipherSuites( sslEngine.getEnabledCipherSuites() );
-
-        // Note that the setters for 'need' and 'want' influence each-other. Invoke only one of them!
-        if ( sslEngine.getNeedClientAuth() )
-        {
-            filter.setNeedClientAuth( true );
-        }
-        else if ( sslEngine.getWantClientAuth() )
-        {
-            filter.setWantClientAuth( true );
-        }
-        return filter;
+        return SslContextBuilder
+            .forClient()
+            .protocols(protocols)
+            .ciphers(configuration.getEncryptionCipherSuites())
+            .keyManager(keyManagerFactory)
+            .trustManager(getTrustManagers()[0])
+            .startTls(false)
+            .build();
     }
 
     /**

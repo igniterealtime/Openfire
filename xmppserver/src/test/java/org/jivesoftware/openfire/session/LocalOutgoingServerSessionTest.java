@@ -16,9 +16,11 @@
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
-import org.jivesoftware.openfire.net.*;
+import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -156,6 +158,7 @@ public class LocalOutgoingServerSessionTest
 
         Fixtures.clearExistingProperties();
     }
+    
 
     /**
      * Unit test in which Openfire initiates an outgoing server-to-server connection.

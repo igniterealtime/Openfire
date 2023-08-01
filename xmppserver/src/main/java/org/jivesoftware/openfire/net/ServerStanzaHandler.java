@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -30,6 +31,9 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
+import java.io.IOException;
+import java.util.Set;
+
 /**
  * Handler of XML stanzas sent by remote servers. Remote servers that send stanzas
  * with no TO or FROM will get their connections closed. Moreover, remote servers
@@ -41,9 +45,9 @@ import org.xmpp.packet.*;
  * The connection used for receiving packets will use a ServerStanzaHandler since the other
  * connection will not receive packets.<p>
  *
- * TODO Finish migration of s2s to use NIO instead of blocking threads. Migrate from ServerSocketReader.
- *
  * @author Gaston Dombiak
+ * @author Alex Gidman
+ * @author Matthew Vivian
  */
 public class ServerStanzaHandler extends StanzaHandler {
 
@@ -58,8 +62,11 @@ public class ServerStanzaHandler extends StanzaHandler {
         .setDynamic(true)
         .build();
 
-    public ServerStanzaHandler(PacketRouter router, Connection connection) {
+    private final boolean directTLS;
+
+    public ServerStanzaHandler(PacketRouter router, Connection connection, boolean directTLS) {
         super(router, connection);
+        this.directTLS = directTLS;
     }
 
     @Override
@@ -81,6 +88,17 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
+    protected String getAdditionalNamespaces() {
+        final Set<Namespace> namespaces = connection.getAdditionalNamespaces();
+        if (namespaces.isEmpty()) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder();
+        namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));
+        return sb.toString();
+    }
+
+    @Override
     String getNamespace() {
         return "jabber:server";
     }
@@ -99,9 +117,11 @@ public class ServerStanzaHandler extends StanzaHandler {
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
     {
         // The connected client is a server so create an IncomingServerSession
-        // TODO Finish implementation
-        //session = LocalIncomingServerSession.createSession(serverName, xpp, connection);
-        throw new UnsupportedOperationException("Server stanza handler pending implementation");
+        try {
+            session = LocalIncomingServerSession.createSession(serverName, xpp, connection, this.directTLS);
+        } catch (IOException e) {
+            Log.error(e.getMessage(), e);
+        }
     }
 
     @Override

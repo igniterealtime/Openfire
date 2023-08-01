@@ -110,8 +110,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      */
     public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
             SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
-        XmlPullParser xpp = reader.getXPPParser();
-                
+        return createSession(serverName, reader.getXPPParser(), connection, directTLS);
+    }
+
+    public static LocalIncomingServerSession createSession(String serverName, XmlPullParser xpp,
+                                                           Connection connection, boolean directTLS) throws XmlPullParserException, IOException {
+
         String version = xpp.getAttributeValue("", "version");
         String fromDomain = xpp.getAttributeValue("", "from");
         String toDomain = xpp.getAttributeValue("", "to");
@@ -144,7 +148,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 openingStream.append(" to=\"").append(fromDomain).append("\"");
             }
             openingStream.append(" id=\"").append(streamID).append("\"");
-            
+
             // OF-443: Not responding with a 1.0 version in the stream header when federating with older
             // implementations appears to reduce connection issues with those domains (patch by Marcin Cieślak).
             if (serverVersion[0] >= 1) {
@@ -156,37 +160,31 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             Log.trace("Outbound opening stream: {}", openingStream);
             connection.deliverRawText(openingStream.toString());
 
-            if (serverVersion[0] >= 1) {        	
-                // Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)
-
-                // Indicate the TLS policy to use for this connection
-                Connection.TLSPolicy tlsPolicy = connection.getTlsPolicy();
-                boolean hasCertificates = false;
-                try {
-                    hasCertificates = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( ConnectionType.SOCKET_S2S ).getStore().size() > 0;
-                }
-                catch (Exception e) {
-                    Log.error(e.getMessage(), e);
-                }
-                if (Connection.TLSPolicy.required == tlsPolicy && !hasCertificates) {
-                    Log.error("Server session rejected. TLS is required but no certificates " +
-                            "were created.");
-                    return null;
-                }
-                connection.setTlsPolicy(hasCertificates ? tlsPolicy : Connection.TLSPolicy.disabled);
+            boolean hasCertificates = false;
+            try {
+                hasCertificates = !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty();
+            }
+            catch (Exception e) {
+                Log.error("Unable to load find any content in the identity store. This connection won't be able to support TLS.", e);
             }
 
-            // Indicate the compression policy to use for this connection
-            connection.setCompressionPolicy( connection.getConfiguration().getCompressionPolicy() );
+            if (!hasCertificates && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
+                Log.error("Server session rejected. TLS is required but no certificates " +
+                    "were created.");
+                return null;
+            }
 
             StringBuilder sb = new StringBuilder();
-            
+
             if (serverVersion[0] >= 1) {
                 Log.trace("Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)");
 
                 sb.append("<stream:features>");
 
-                if (!directTLS && (connection.getTlsPolicy() == Connection.TLSPolicy.required || connection.getTlsPolicy() == Connection.TLSPolicy.optional)) {
+                if (!directTLS
+                    && (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required || connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.optional)
+                    && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()
+                ) {
                     sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
                     if (!ServerDialback.isEnabled()) {
                         Log.debug("Server dialback is disabled so TLS is required");
@@ -194,10 +192,10 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                     }
                     sb.append("</starttls>");
                 }
-                
+
                 // Include available SASL Mechanisms
                 sb.append(SASLAuthentication.getSASLMechanisms(session));
-                
+
                 if (ServerDialback.isEnabled()) {
                     // Also offer server dialback (when TLS is not required). Server dialback may be offered
                     // after TLS has been negotiated and a self-signed certificate is being used
@@ -406,7 +404,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         StringBuilder sb = new StringBuilder();
         
         // Include Stream Compression Mechanism
-        if (conn.getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
+        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
                 !conn.isCompressed()) {
             sb.append("<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
         }

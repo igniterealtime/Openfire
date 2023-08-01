@@ -15,9 +15,15 @@
  */
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.core.buffer.IoBuffer;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,6 +36,27 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  */
 public class XMLLightweightParserTest {
 
+    private CharsetDecoder encoder;
+    private XMLLightweightParser parser;
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        parser = new XMLLightweightParser();
+
+        encoder = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE);
+    }
+
+    private char[] BytBufToChars(ByteBuf buffer) {
+        CharBuffer charBuffer = CharBuffer.allocate(buffer.capacity());
+        encoder.decode(buffer.nioBuffer(), charBuffer, false);
+        char[] buf = new char[charBuffer.position()];
+        charBuffer.flip();
+        charBuffer.get(buf);
+        return buf;
+    }
+
     /**
      * Asserts that a start-tag name can be parsed when it is followed by a space character.
      *
@@ -41,14 +68,13 @@ public class XMLLightweightParserTest {
     public void testOF2329OpenAndCloseWithSpace() throws Exception
     {
         // Setup test fixture.
+
         final String input = "<presence to='foo@example.org'></presence>";
-        final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
-        buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
-        buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.length());
+        buffer.writeBytes(input.getBytes());
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(BytBufToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -68,13 +94,12 @@ public class XMLLightweightParserTest {
     {
         // Setup test fixture.
         final String input = "<presence \n to='foo@example.org'></presence>";
-        final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
-        buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
-        buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.length());
+        buffer.writeBytes(input.getBytes());
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(BytBufToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -94,13 +119,12 @@ public class XMLLightweightParserTest {
     {
         // Setup test fixture.
         final String input = "<presence\n to='foo@example.org'></presence>";
-        final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
-        buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
-        buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.length());
+        buffer.writeBytes(input.getBytes());
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(BytBufToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -120,13 +144,12 @@ public class XMLLightweightParserTest {
     {
         // Setup test fixture.
         final String input = "<presence to='foo@example.org'/>";
-        final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
-        buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
-        buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.length());
+        buffer.writeBytes(input.getBytes());
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(BytBufToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -146,13 +169,12 @@ public class XMLLightweightParserTest {
     {
         // Setup test fixture.
         final String input = "<presence\n to='foo@example.org'/>";
-        final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
-        buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
-        buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.length());
+        buffer.writeBytes(input.getBytes());
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(BytBufToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.
@@ -172,13 +194,12 @@ public class XMLLightweightParserTest {
     {
         // Setup test fixture.
         final String input = "<presence \n to='foo@example.org'/>";
-        final IoBuffer buffer = IoBuffer.allocate(input.length(), false);
-        buffer.putString(input, StandardCharsets.UTF_8.newEncoder());
-        buffer.flip();
-        final XMLLightweightParser parser = new XMLLightweightParser(StandardCharsets.UTF_8);
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.length());
+        buffer.writeBytes(input.getBytes());
+        final XMLLightweightParser parser = new XMLLightweightParser();
 
         // Execute system under test.
-        parser.read(buffer);
+        parser.read(BytBufToChars(buffer));
         final String[] result = parser.getMsgs();
 
         // Verify results.

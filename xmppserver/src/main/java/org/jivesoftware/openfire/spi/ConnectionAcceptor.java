@@ -34,7 +34,7 @@ public abstract class ConnectionAcceptor
     /**
      * Makes the instance start accepting connections.
      *
-     * An invocation of this method on an instance that is already started should have no effect (to the extend that the
+     * An invocation of this method on an instance that is already started should have no effect (to the extent that the
      * instance should continue to accept connections without interruption or configuration changes).
      */
     abstract public void start();

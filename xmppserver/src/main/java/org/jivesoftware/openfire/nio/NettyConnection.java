@@ -16,17 +16,21 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.core.buffer.IoBuffer;
-import org.apache.mina.core.filterchain.IoFilterChain;
-import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.compression.CompressionFilter;
-import org.apache.mina.filter.ssl.SslFilter;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.compression.JZlibDecoder;
+import io.netty.handler.codec.compression.JZlibEncoder;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
-import org.jivesoftware.openfire.net.StartTlsFilter;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -38,41 +42,39 @@ import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 
-import static org.jivesoftware.openfire.spi.ConnectionManagerImpl.*;
+import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.WRITTEN_BYTES;
+import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 
 /**
- * Implementation of {@link Connection} interface specific for NIO connections when using the Apache MINA framework.
+ * Implementation of {@link Connection} interface specific for Netty connections.
  *
- * @author Gaston Dombiak
- * @see <a href="http://mina.apache.org">Apache MINA</a>
+ * @author Matthew Vivian
+ * @author Alex Gidman
  */
-public class NIOConnection implements Connection {
+public class NettyConnection implements Connection {
 
-    private static final Logger Log = LoggerFactory.getLogger(NIOConnection.class);
-    private ConnectionConfiguration configuration;
+    private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
+    public static final String SSL_HANDLER_NAME = "ssl";
+    private final ConnectionConfiguration configuration;
 
     /**
      * The utf-8 charset for decoding and encoding XMPP packet streams.
      */
     public static final String CHARSET = "UTF-8";
 
-    private LocalSession session;
-    private IoSession ioSession;
+    public LocalSession session;
+    private final ChannelHandlerContext channelHandlerContext;
 
     final private Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
 
@@ -80,22 +82,11 @@ public class NIOConnection implements Connection {
      * Deliverer to use when the connection is closed or was closed when delivering
      * a packet.
      */
-    private PacketDeliverer backupDeliverer;
+    private final PacketDeliverer backupDeliverer;
     private int majorVersion = 1;
     private int minorVersion = 0;
-    private String language = null;
 
-    /**
-     * TLS policy currently in use for this connection.
-     */
-    private TLSPolicy tlsPolicy = TLSPolicy.optional;
     private boolean usingSelfSignedCertificate;
-
-    /**
-     * Compression policy currently in use for this connection.
-     */
-    private CompressionPolicy compressionPolicy = CompressionPolicy.disabled;
-    private static final ThreadLocal<CharsetEncoder> encoder = new ThreadLocalEncoder();
 
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
@@ -103,21 +94,11 @@ public class NIOConnection implements Connection {
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
-    private AtomicReference<State> state = new AtomicReference<>(State.OPEN);
+    private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
+    private boolean isEncrypted = false;
 
-    /**
-     * Lock used to ensure the integrity of the underlying IoSession (refer to
-     * https://issues.apache.org/jira/browse/DIRMINA-653 for details)
-     * <p>
-     * This lock can be removed once Openfire guarantees a stable delivery
-     * order, in which case {@link #deliver(Packet)} won't be called
-     * concurrently any more, which made this lock necessary in the first place.
-     * </p>
-     */
-    private final ReentrantLock ioSessionLock = new ReentrantLock(true);
-
-    public NIOConnection(IoSession session, @Nullable PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
-        this.ioSession = session;
+    public NettyConnection(ChannelHandlerContext channelHandlerContext, @Nullable PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
+        this.channelHandlerContext = channelHandlerContext;
         this.backupDeliverer = packetDeliverer;
         this.configuration = configuration;
     }
@@ -148,7 +129,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public byte[] getAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = ioSession.getRemoteAddress();
+        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();
         final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
         final InetAddress address = socketAddress.getAddress();
@@ -157,7 +138,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = ioSession.getRemoteAddress();
+        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();
         final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
         final InetAddress inetAddress = socketAddress.getAddress();
@@ -166,7 +147,7 @@ public class NIOConnection implements Connection {
 
     @Override
     public String getHostName() throws UnknownHostException {
-        final SocketAddress remoteAddress = ioSession.getRemoteAddress();
+        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();
         final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
         final InetAddress inetAddress = socketAddress.getAddress();
@@ -175,24 +156,25 @@ public class NIOConnection implements Connection {
 
     @Override
     public Certificate[] getLocalCertificates() {
-        SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED);
-        if (sslSession != null) {
-            return sslSession.getLocalCertificates();
+        SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+
+        if (sslhandler != null) {
+            return sslhandler.engine().getSession().getLocalCertificates();
         }
         return new Certificate[0];
     }
 
     @Override
     public Certificate[] getPeerCertificates() {
+        SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
         try {
-            SSLSession sslSession = (SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED);
-            if (sslSession != null) {
-                return sslSession.getPeerCertificates();
+            if (sslhandler != null) {
+                return sslhandler.engine().getSession().getPeerCertificates();
             }
         } catch (SSLPeerUnverifiedException e) {
             if (Log.isTraceEnabled()) {
                 // This is perfectly acceptable when mutual authentication is not enforced by Openfire configuration.
-                Log.trace( "Peer does not offer certificates in session: " + session, e);
+                Log.trace("Peer does not offer certificates in session: " + session, e);
             }
         }
         return new Certificate[0];
@@ -200,14 +182,14 @@ public class NIOConnection implements Connection {
 
     @Override
     public Optional<String> getTLSProtocolName() {
-        return Optional.ofNullable((SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED))
-            .map(SSLSession::getProtocol);
+        SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        return Optional.ofNullable(sslhandler.engine().getSession().getProtocol());
     }
 
     @Override
     public Optional<String> getCipherSuiteName() {
-        return Optional.ofNullable((SSLSession) ioSession.getAttribute(SslFilter.SSL_SECURED))
-            .map(SSLSession::getCipherSuite);
+        SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        return Optional.ofNullable(sslhandler.engine().getSession().getCipherSuite());
     }
 
     @Override
@@ -248,15 +230,16 @@ public class NIOConnection implements Connection {
             rawEndStream += "</stream:stream>";
 
             try {
-                deliverRawText0(rawEndStream);
+                deliverRawText(rawEndStream);
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
             }
 
             try {
-                ioSession.closeOnFlush();
+                // TODO don't block, handle errors async with custom ChannelFutureListener
+                this.channelHandlerContext.close().addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE).sync();
             } catch (Exception e) {
-                Log.error("Exception while closing MINA session", e);
+                Log.error("Exception while closing Netty session", e);
             }
             notifyCloseListeners(); // clean up session, etc.
             closeListeners.clear();
@@ -293,7 +276,7 @@ public class NIOConnection implements Connection {
     @Override
     public void reinit(LocalSession owner) {
         session = owner;
-        StanzaHandler stanzaHandler = getStanzaHandler();
+        StanzaHandler stanzaHandler = this.channelHandlerContext.channel().attr(NettyConnectionHandler.HANDLER).get();
         stanzaHandler.setSession(owner);
 
         // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
@@ -307,8 +290,9 @@ public class NIOConnection implements Connection {
         }
     }
 
-    protected StanzaHandler getStanzaHandler() {
-        return (StanzaHandler)ioSession.getAttribute(ConnectionHandler.HANDLER);
+    @Override
+    public boolean isInitialized() {
+        return session != null && !isClosed();
     }
 
     @Override
@@ -324,7 +308,11 @@ public class NIOConnection implements Connection {
 
     @Override
     public boolean isEncrypted() {
-        return ioSession.getFilterChain().contains(TLS_FILTER_NAME);
+        return isEncrypted;
+    }
+
+    public void setEncrypted(boolean encrypted) {
+        isEncrypted = encrypted;
     }
 
     @Override
@@ -338,18 +326,12 @@ public class NIOConnection implements Connection {
         }
         else {
             boolean errorDelivering = false;
-            IoBuffer buffer = IoBuffer.allocate(4096);
-            buffer.setAutoExpand(true);
             try {
-                buffer.putString(packet.getElement().asXML(), encoder.get());
-                buffer.flip();
-
-                ioSessionLock.lock();
-                try {
-                    ioSession.write(buffer);
-                } finally {
-                    ioSessionLock.unlock();
-                }
+                ChannelFuture f = channelHandlerContext.writeAndFlush(packet.getElement().asXML());
+                updateWrittenBytesCounter(channelHandlerContext);
+                // TODO - handle errors more specifically
+                // Currently errors are handled by the default exceptionCaught method (log error, close channel)
+                // We can add a new listener to the ChannelFuture f for more specific error handling.
             }
             catch (Exception e) {
                 Log.debug("Error delivering packet:\n" + packet, e);
@@ -373,80 +355,69 @@ public class NIOConnection implements Connection {
 
     @Override
     public void deliverRawText(String text) {
+        Log.trace("Sending: " + text);
         if (!isClosed()) {
-            deliverRawText0(text);
+            ChannelFuture f = channelHandlerContext.writeAndFlush(text);
+            updateWrittenBytesCounter(channelHandlerContext);
+            // TODO - handle errors more specifically
+            // Currently errors are handled by the default exceptionCaught method (log error, close channel)
+            // We can add a new listener to the ChannelFuture f for more specific error handling.
         }
     }
 
-    private void deliverRawText0(String text){
-        boolean errorDelivering = false;
-        IoBuffer buffer = IoBuffer.allocate(text.length());
-        buffer.setAutoExpand(true);
-        try {
-            //Charset charset = Charset.forName(CHARSET);
-            //buffer.putString(text, charset.newEncoder());
-            buffer.put(text.getBytes(StandardCharsets.UTF_8));
-            buffer.flip();
-            ioSessionLock.lock();
-            try {
-                ioSession.write(buffer);
+    /**
+     * Updates the system counter of written bytes. This information is used by the outgoing
+     * bytes statistic.
+     *
+     * @param ctx the context for the channel writing bytes
+     */
+    private void updateWrittenBytesCounter(ChannelHandlerContext ctx) {
+        ChannelTrafficShapingHandler handler = (ChannelTrafficShapingHandler) ctx.channel().pipeline().get(TRAFFIC_HANDLER_NAME);
+        if (handler != null) {
+            long currentBytes = handler.trafficCounter().lastWrittenBytes();
+            Long prevBytes = ctx.channel().attr(WRITTEN_BYTES).get();
+            long delta;
+            if (prevBytes == null) {
+                delta = currentBytes;
+            } else {
+                delta = currentBytes - prevBytes;
             }
-            finally {
-                ioSessionLock.unlock();
-            }
-        }
-        catch (Exception e) {
-            Log.debug("Error delivering raw text:\n" + text, e);
-            errorDelivering = true;
-        }
-
-        // Attempt to close the connection if delivering text fails.
-        if (errorDelivering) {
-            close();
+            ctx.channel().attr(WRITTEN_BYTES).set(currentBytes);
+            ServerTrafficCounter.incrementOutgoingCounter(delta);
         }
     }
 
     public void startTLS(boolean clientMode, boolean directTLS) throws Exception {
 
         final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
-        final SslFilter filter;
-        if ( clientMode )
-        {
-            filter = factory.createClientModeSslFilter();
-        }
-        else
-        {
-            filter = factory.createServerModeSslFilter();
+
+        final SslContext sslContext;
+        if ( clientMode ) {
+            sslContext= factory.createClientModeSslContext();
+        } else {
+            sslContext = factory.createServerModeSslContext(directTLS);
         }
 
-        ioSession.getFilterChain().addBefore(EXECUTOR_FILTER_NAME, TLS_FILTER_NAME, filter);
-
-        if (!directTLS)
-        {
-            ioSession.getFilterChain().addAfter(TLS_FILTER_NAME, STARTTLS_FILTER_NAME, new StartTlsFilter());
-        }
+        final SslHandler sslHandler = sslContext.newHandler(channelHandlerContext.alloc());
+        channelHandlerContext.pipeline().addFirst(SSL_HANDLER_NAME, sslHandler);
 
         if ( !clientMode && !directTLS ) {
             // Indicate the client that the server is ready to negotiate TLS
             deliverRawText( "<proceed xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>" );
-            ioSession.getFilterChain().remove(STARTTLS_FILTER_NAME);
         }
     }
 
     @Override
     public void addCompression() {
-        IoFilterChain chain = ioSession.getFilterChain();
-        String baseFilter = EXECUTOR_FILTER_NAME;
-        if (chain.contains(TLS_FILTER_NAME)) {
-            baseFilter = TLS_FILTER_NAME;
-        }
-        chain.addAfter(baseFilter, COMPRESSION_FILTER_NAME, new CompressionFilter(true, false, CompressionFilter.COMPRESSION_MAX));
+        // Inbound traffic only
+        channelHandlerContext.channel().pipeline().addFirst(new JZlibDecoder());
     }
 
     @Override
     public void startCompression() {
-        CompressionFilter ioFilter = (CompressionFilter) ioSession.getFilterChain().get(COMPRESSION_FILTER_NAME);
-        ioFilter.setCompressOutbound(true);
+        // Outbound traffic only
+        channelHandlerContext.channel().pipeline().addFirst(new JZlibEncoder(Z_BEST_COMPRESSION));
+        // Z_BEST_COMPRESSION is the same level as COMPRESSION_MAX in MINA
     }
 
     @Override
@@ -473,41 +444,12 @@ public class NIOConnection implements Connection {
 
     @Override
     public boolean isCompressed() {
-        return ioSession.getFilterChain().contains(COMPRESSION_FILTER_NAME);
-    }
-
-    @Override
-    public CompressionPolicy getCompressionPolicy() {
-        return compressionPolicy;
-    }
-
-    @Override
-    public void setCompressionPolicy(CompressionPolicy compressionPolicy) {
-        this.compressionPolicy = compressionPolicy;
-    }
-
-    @Override
-    public TLSPolicy getTlsPolicy() {
-        return tlsPolicy;
-    }
-
-    @Override
-    public void setTlsPolicy(TLSPolicy tlsPolicy) {
-        this.tlsPolicy = tlsPolicy;
+        return channelHandlerContext.channel().pipeline().get(JZlibDecoder.class) != null;
     }
 
     @Override
     public String toString() {
-        return super.toString() + " MINA Session: " + ioSession;
+        return super.toString() + " Netty Session: " + channelHandlerContext.name();
     }
 
-    private static class ThreadLocalEncoder extends ThreadLocal<CharsetEncoder> {
-
-        @Override
-        protected CharsetEncoder initialValue() {
-            return StandardCharsets.UTF_8.newEncoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT);
-        }
-    }
 }

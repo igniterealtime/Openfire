@@ -1,22 +1,6 @@
-/*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.core.session.IoSession;
+import io.netty.channel.ChannelHandlerContext;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ComponentStanzaHandler;
@@ -27,11 +11,11 @@ import org.jivesoftware.util.SystemProperty;
 
 /**
  * ConnectionHandler that knows which subclass of {@link StanzaHandler} should
- * be created and how to build and configure a {@link NIOConnection}.
+ * be created and how to build and configure a {@link NettyConnection}.
  *
- * @author Gaston Dombiak
+ * @author Alex Gidman
  */
-public class ComponentConnectionHandler extends ConnectionHandler {
+public class NettyComponentConnectionHandler extends NettyConnectionHandler {
 
     /**
      * Enable / disable backup delivery of stanzas to the XMPP server itself when a stanza failed to be delivered on a
@@ -43,23 +27,23 @@ public class ComponentConnectionHandler extends ConnectionHandler {
         .setDynamic(true)
         .build();
 
-    public ComponentConnectionHandler(ConnectionConfiguration configuration) {
+    public NettyComponentConnectionHandler(ConnectionConfiguration configuration) {
         super(configuration);
     }
 
     @Override
-    NIOConnection createNIOConnection(IoSession session) {
+    NettyConnection createNettyConnection(ChannelHandlerContext ctx) {
         final PacketDeliverer backupDeliverer = BACKUP_PACKET_DELIVERY_ENABLED.getValue() ? XMPPServer.getInstance().getPacketDeliverer() : null;
-        return new NIOConnection(session, backupDeliverer, configuration);
+        return new NettyConnection(ctx, backupDeliverer, configuration);
     }
 
     @Override
-    StanzaHandler createStanzaHandler(NIOConnection connection) {
+    StanzaHandler createStanzaHandler(NettyConnection connection) {
         return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 
     @Override
-    int getMaxIdleTime() {
+    public int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.component.idle", 6 * 60 * 1000) / 1000;
     }
 }

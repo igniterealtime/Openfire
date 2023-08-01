@@ -42,6 +42,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Stanza handler for responding to incoming stanzas when the server is acting as the client in an S2S scenario.
+ *
+ * @author Alex Gidman
+ * @author Matthew Vivian
+ */
 public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RespondingServerStanzaHandler.class);
@@ -84,6 +90,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return doc.element("dialback") != null;
     }
 
+    /**
+     * Checks if XML string is start of stream; if it is, extract namespaces for parsing followign stanzas, and create
+     * a new session if a new stream ID is detected (e.g. following TLS negotiation).
+     * @param xml The XML stanza to verify
+     * @return true if start of stream, else false
+     */
     @Override
     protected boolean isStartOfStream(String xml) {
         final boolean isStartOfStream = super.isStartOfStream(xml);
@@ -104,7 +116,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 // following TLS negotiation
                 String newStreamId = rootElement.attribute("id").getValue();
                 if (sessionCreated && newStreamId != null) {
-                    session = createLocalOutgoingServerSession(newStreamId, connection);
+                    ServerSession.AuthenticationMethod existingAuthMethod = session instanceof LocalOutgoingServerSession
+                        ? ((LocalOutgoingServerSession) session).getAuthenticationMethod()
+                        : null;
+                    transferConnectionToNewSession(newStreamId, existingAuthMethod);
                 }
             } catch (DocumentException e) {
                 LOG.error("Failed extract additional namespaces", e);
@@ -112,6 +127,21 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         }
 
         return isStartOfStream;
+    }
+
+    /**
+     * Transfer an existing connection to a new session when a new streamID is detected. Also transfers existing
+     * authentication method if previously set.
+     * @param newStreamId new stream ID for the new session
+     * @param existingAuthMethod authentication method used previously (possibly null)
+     */
+    private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
+        session = createLocalOutgoingServerSession(newStreamId, connection);
+        if (isSessionAuthenticated() && session instanceof LocalOutgoingServerSession) {
+            ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
+        } else {
+            LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
+        }
     }
 
     @Override

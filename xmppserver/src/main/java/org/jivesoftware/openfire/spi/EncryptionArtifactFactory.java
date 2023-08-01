@@ -208,7 +208,8 @@ public class EncryptionArtifactFactory
         final SSLEngine sslEngine = sslContext.createSSLEngine();
 
         // Configure protocol support.
-        final Set<String> protocols = configuration.getEncryptionProtocols();
+        final Set<String> protocols = new HashSet<>(configuration.getEncryptionProtocols());
+        protocols.remove("TLSv1.3"); // TLSv1.3 is not compatible with this SSLEngine implementation
         if ( !protocols.isEmpty() )
         {
             // When an explicit list of enabled protocols is defined, use only those (otherwise, an implementation-specific default will be used).

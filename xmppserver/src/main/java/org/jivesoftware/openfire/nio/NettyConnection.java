@@ -183,12 +183,18 @@ public class NettyConnection implements Connection {
     @Override
     public Optional<String> getTLSProtocolName() {
         SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        if (sslhandler == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(sslhandler.engine().getSession().getProtocol());
     }
 
     @Override
     public Optional<String> getCipherSuiteName() {
         SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        if (sslhandler == null) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(sslhandler.engine().getSession().getCipherSuite());
     }
 

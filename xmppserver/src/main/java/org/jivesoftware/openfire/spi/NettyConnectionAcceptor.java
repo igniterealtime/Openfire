@@ -26,8 +26,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.nio.NettyConnectionHandler;
-import org.jivesoftware.openfire.nio.NettyConnectionHandlerFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +73,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
     private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     private final Logger Log;
-    private final NettyConnectionHandler connectionHandler;
     private Channel mainChannel;
 
     /**
@@ -83,7 +80,6 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     public NettyConnectionAcceptor(ConnectionConfiguration configuration) {
         super(configuration);
-        this.connectionHandler = NettyConnectionHandlerFactory.createConnectionHandler(configuration);
 
         String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
@@ -104,7 +100,7 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
                 // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
-                .childHandler(new NettyServerInitializer(connectionHandler, isDirectTLSConfigured(), allChannels))
+                .childHandler(new NettyServerInitializer(configuration, allChannels))
                 // Set the listen backlog (queue) length.
                 .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
                 // option() is for the NioServerSocketChannel that accepts incoming connections.

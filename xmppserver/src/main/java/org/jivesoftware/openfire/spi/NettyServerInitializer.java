@@ -9,6 +9,7 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.SystemProperty;
 
@@ -32,21 +33,21 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         .setDynamic(true)
         .build();
 
-    public static final String TRAFFIC_HANDLER_NAME = "trafficShapingHandler"
-    ;
-    private final NettyConnectionHandler businessLogicHandler;
-    private final boolean directTLS;
+    public static final String TRAFFIC_HANDLER_NAME = "trafficShapingHandler";
     private final ChannelGroup allChannels;
+    private final ConnectionConfiguration configuration;
 
-    public NettyServerInitializer(NettyConnectionHandler businessLogicHandler, boolean directTLS, ChannelGroup allChannels) {
-        this.businessLogicHandler = businessLogicHandler;
-        this.directTLS = directTLS;
+    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels) {
         this.allChannels = allChannels;
+        this.configuration = configuration;
     }
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
-        boolean isClientConnection = businessLogicHandler instanceof NettyClientConnectionHandler;
+
+        boolean isClientConnection = configuration.getType() == ConnectionType.SOCKET_C2S;
+
+        NettyConnectionHandler businessLogicHandler = NettyConnectionHandlerFactory.createConnectionHandler(configuration);
         int maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime() > -1 ? businessLogicHandler.getMaxIdleTime() : 0;
         int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
 
@@ -59,10 +60,14 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))
             .addLast(businessLogicHandler);
 
-        if (directTLS) {
+        if (isDirectTLSConfigured()) {
             ch.attr(CONNECTION).get().startTLS(false, true);
         }
 
         allChannels.add(ch);
+    }
+
+    private boolean isDirectTLSConfigured() {
+        return this.configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
     }
 }

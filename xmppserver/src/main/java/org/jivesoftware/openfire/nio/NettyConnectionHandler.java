@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.nio;
 
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
@@ -35,6 +34,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
 import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
+
 /**
  * A NettyConnectionHandler is responsible for creating new sessions, destroying sessions and delivering
  * received XML stanzas to the proper StanzaHandler.<p>
@@ -45,7 +45,6 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-@Sharable
 public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler<String> {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnectionHandler.class);
@@ -71,7 +70,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
      */
     private static XmlPullParserFactory factory = null;
 
-    volatile boolean sslInitDone;
+    protected boolean sslInitDone;
 
     static {
         try {

@@ -20,9 +20,13 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -52,6 +56,11 @@ import java.util.Set;
 public class ServerStanzaHandler extends StanzaHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(ServerStanzaHandler.class);
+
+    /**
+     * Domain of the local server and remote server or client.
+     */
+    private DomainPair domainPair;
 
     /**
      * Controls if JIDs that are in the addresses of stanzas supplied by remote domains are validated.
@@ -115,6 +124,15 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
+    protected void createSession(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+        this.domainPair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), xpp.getAttributeValue("", "from"));
+        super.createSession(xpp);
+    }
+
+    @Override
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
     {
         // The connected client is a server so create an IncomingServerSession
@@ -133,6 +151,48 @@ public class ServerStanzaHandler extends StanzaHandler {
         //needed ? Connection.ClientAuth.needed : Connection.ClientAuth.wanted
         connection.startTLS(false, false);
     }
+
+    @Override
+    protected String getStreamHeader() {
+        StringBuilder sb = new StringBuilder(200);
+        sb.append("<?xml version='1.0' encoding='");
+        sb.append(CHARSET);
+        sb.append("'?>");
+        sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
+        sb.append(getNamespace()).append("\"");
+        sb.append(getAdditionalNamespaces());
+        sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
+        sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
+        sb.append(" id=\"").append(session.getStreamID()).append("\"");
+        sb.append(" xml:lang=\"").append(session.getLanguage().toLanguageTag()).append("\"");
+        sb.append(" version=\"").append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
+        sb.append("\">");
+        return sb.toString();
+}
+
+    @Override
+    protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        // Discard domain values obtained from unencrypted initiating stream
+        // in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
+        this.domainPair = null;
+
+        // Get remoteDomain from encrypted stream tag
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+        this.domainPair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), xpp.getAttributeValue("", "from"));
+
+        // Discard session data obtained from unencrypted initiating stream
+        // in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
+        SessionManager sessionManager = SessionManager.getInstance();
+        sessionManager.unregisterIncomingServerSession(session.getStreamID());
+        // Re-instate the session with a new ID on the same connection
+        createSession(domainPair.getLocal(), xpp, connection);
+        this.connection.reinit(session);
+
+        super.tlsNegotiated(xpp);
+    }
+
     @Override
     protected void processIQ(IQ packet) throws UnauthorizedException {
         packetReceived(packet);

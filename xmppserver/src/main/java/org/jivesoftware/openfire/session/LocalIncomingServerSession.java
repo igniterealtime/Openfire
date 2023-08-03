@@ -186,7 +186,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                     && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()
                 ) {
                     sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
-                    if (!ServerDialback.isEnabled()) {
+                    if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
+                        sb.append("<required/>");
+                    } else if (!ServerDialback.isEnabled()) {
                         Log.debug("Server dialback is disabled so TLS is required");
                         sb.append("<required/>");
                     }

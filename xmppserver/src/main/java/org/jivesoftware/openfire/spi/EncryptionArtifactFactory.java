@@ -76,14 +76,14 @@ public class EncryptionArtifactFactory
     }
 
     /**
-     * Generates KeyManager instances suitable for connections that are created based on a particular configuration.
+     * Generates a KeyManager factory suitable for connections that are created based on a particular configuration.
      *
      * @return KeyManagers applicable to a connection that is established using the provided configuration.
      * @throws UnrecoverableKeyException if the key could not be recovered
      * @throws NoSuchAlgorithmException if the algorithm was unrecognised
      * @throws KeyStoreException if there was a problem loading the keystore
      */
-    public synchronized KeyManager[] getKeyManagers() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
+    public synchronized KeyManagerFactory getKeyManagerFactory() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
     {
         try
         {
@@ -105,7 +105,7 @@ public class EncryptionArtifactFactory
                 keyManagerFactory.init( configuration.getIdentityStore().getStore(), configuration.getIdentityStoreConfiguration().getPassword() );
             }
 
-            return keyManagerFactory.getKeyManagers();
+            return keyManagerFactory;
         }
         catch ( UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | RuntimeException ex )
         {
@@ -118,12 +118,28 @@ public class EncryptionArtifactFactory
     /**
      * Generates KeyManager instances suitable for connections that are created based on a particular configuration.
      *
+     * @return KeyManagers applicable to a connection that is established using the provided configuration.
+     * @throws UnrecoverableKeyException if the key could not be recovered
+     * @throws NoSuchAlgorithmException if the algorithm was unrecognised
+     * @throws KeyStoreException if there was a problem loading the keystore
+     */
+    public KeyManager[] getKeyManagers() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException
+    {
+        return getKeyManagerFactory().getKeyManagers();
+    }
+
+    /**
+     * Generates TrustManager instances suitable for connections that are created based on a particular configuration.
+     *
      * @return TrustManagers applicable to a connection that is established using the provided configuration.
      * @throws KeyStoreException if there was a problem accessing the keystore
      * @throws NoSuchAlgorithmException if the algorithm is not supported
      */
     public synchronized TrustManager[] getTrustManagers() throws KeyStoreException, NoSuchAlgorithmException
     {
+        // Implementation note: Various consumers of this method (in this same class) expect exactly one result. If this implementation is ever
+        //                      modified to allow for more than one TrustManager to be returned, be sure to modify those consumers accordingly!
+
         final Class<TrustManager> trustManagerClass = (Class<TrustManager>) TRUST_MANAGER_CLASS.getValue();
         Log.debug( "Configured TrustManager class: {}", trustManagerClass.getCanonicalName() );
 
@@ -350,8 +366,7 @@ public class EncryptionArtifactFactory
      * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
      */
     public SslContext createServerModeSslContext(boolean directTLS) throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, SSLException {
-        getKeyManagers();
-        SslContextBuilder builder = SslContextBuilder.forServer(keyManagerFactory);
+        SslContextBuilder builder = SslContextBuilder.forServer(getKeyManagerFactory());
 
         // Set policy for checking client certificates.
         switch ( configuration.getClientAuth() )
@@ -383,7 +398,6 @@ public class EncryptionArtifactFactory
      * @return A secure socket protocol implementation which acts as a factory for {@link SSLContext} and {@link io.netty.handler.ssl.SslHandler}
      */
     public SslContext createClientModeSslContext() throws SSLException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
-        getKeyManagers();
 
         // We will never send SSLV2 ClientHello messages
         Set<String> protocols = new HashSet<>(configuration.getEncryptionProtocols());
@@ -393,8 +407,8 @@ public class EncryptionArtifactFactory
             .forClient()
             .protocols(protocols)
             .ciphers(configuration.getEncryptionCipherSuites())
-            .keyManager(keyManagerFactory)
-            .trustManager(getTrustManagers()[0])
+            .keyManager(getKeyManagerFactory())
+            .trustManager(getTrustManagers()[0]) // The existing implementation never returns more than one trust manager.
             .startTls(false)
             .build();
     }

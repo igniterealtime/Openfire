@@ -367,6 +367,7 @@ public class EncryptionArtifactFactory
                 break;
         }
 
+        builder.trustManager(getTrustManagers()[0]); // The existing implementation never returns more than one trust manager.
         builder.protocols(configuration.getEncryptionProtocols());
         builder.ciphers(configuration.getEncryptionCipherSuites());
         builder.startTls(!directTLS);

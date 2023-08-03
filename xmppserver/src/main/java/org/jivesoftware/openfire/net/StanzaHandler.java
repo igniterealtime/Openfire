@@ -701,6 +701,10 @@ public abstract class StanzaHandler {
             // may offer the client to encrypt the connection. If the client decides to encrypt
             // the connection then a <starttls> stanza should be received
             createSession(serverName, xpp, connection);
+
+            if (session == null) {
+                throw new StreamErrorException(StreamError.Condition.internal_server_error, "Unable to create a session.");
+            }
         }
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session. Closing connection: {}", connection, ex);

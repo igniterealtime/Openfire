@@ -125,6 +125,20 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             toDomain = serverName;
         }
 
+        boolean hasCertificates = false;
+        try {
+            hasCertificates = !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty();
+        }
+        catch (Exception e) {
+            Log.error("Unable to find any content in the identity store. This connection won't be able to support TLS.", e);
+        }
+
+        if (!hasCertificates && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
+            Log.error("Server session rejected. TLS is required but no certificates " +
+                "were created.");
+            return null;
+        }
+
         // Retrieve list of namespaces declared in current element (OF-2556)
         connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
 
@@ -159,20 +173,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             Log.trace("Outbound opening stream: {}", openingStream);
             connection.deliverRawText(openingStream.toString());
-
-            boolean hasCertificates = false;
-            try {
-                hasCertificates = !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty();
-            }
-            catch (Exception e) {
-                Log.error("Unable to load find any content in the identity store. This connection won't be able to support TLS.", e);
-            }
-
-            if (!hasCertificates && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-                Log.error("Server session rejected. TLS is required but no certificates " +
-                    "were created.");
-                return null;
-            }
 
             StringBuilder sb = new StringBuilder();
 

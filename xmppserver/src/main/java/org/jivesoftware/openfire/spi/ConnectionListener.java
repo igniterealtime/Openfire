@@ -289,7 +289,7 @@ public class ConnectionListener
      *
      * In order to stop this listener (and persist this as the desired state for this connection, use #enable(false).
      */
-    protected synchronized void stop()
+    public synchronized void stop()
     {
         if ( connectionAcceptor == null )
         {

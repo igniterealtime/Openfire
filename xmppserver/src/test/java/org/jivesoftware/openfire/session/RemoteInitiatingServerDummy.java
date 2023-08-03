@@ -2,6 +2,8 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Base64;
 
 import javax.net.ssl.*;
@@ -41,6 +43,11 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
      * help the unit test know when it can start verifying the test outcome.
      */
     private final Phaser phaser = new Phaser(0);
+
+    /**
+     * The last StreamID value as reported by the peer (if any).
+     */
+    private StreamID remoteStreamID;
 
     public RemoteInitiatingServerDummy(final String connectTo)
     {
@@ -128,6 +135,11 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     public int getDialbackAuthoritativeServerPort()
     {
         return dialbackAuthoritativeServer != null ? dialbackAuthoritativeServer.getLocalPort() : -1;
+    }
+
+    public StreamID getRemoteStreamID()
+    {
+        return remoteStreamID;
     }
 
     private class DialbackAcceptor implements Runnable
@@ -303,6 +315,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                                 if (inbound.getName().equals("stream")) {
                                     // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
                                     peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
+                                    remoteStreamID = BasicStreamIDFactory.createStreamID(inbound.attributeValue("id"));
                                     switch (inbound.elements().size()) {
                                         case 0:
                                             // Done processing the input. Iterate, to try to read more.
@@ -351,6 +364,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                                 break;
                             }
                         }
+                        // Maybe we should immediately return here, as the stream has ended. Socket timeouts (which are processed by the remainder of this method) seem not relevant in that case. return;
                     } catch (SocketTimeoutException e) {
                         allowableSocketTimeouts--;
                         if (allowableSocketTimeouts <= 0) {

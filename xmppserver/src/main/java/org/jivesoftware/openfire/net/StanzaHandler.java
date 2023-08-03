@@ -336,7 +336,7 @@ public abstract class StanzaHandler {
             processIQ(packet);
         }
         else {
-            if (!processUnknowPacket(doc)) {
+            if (!processUnknownPacket(doc)) {
                 Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") + doc.asXML() + ". Closing session: " + session);
                 session.close();
             }
@@ -446,7 +446,7 @@ public abstract class StanzaHandler {
      * @return true if a received packet has been processed.
      * @throws UnauthorizedException if stanza failed to be processed. Connection will be closed.
      */
-    abstract boolean processUnknowPacket(Element doc) throws UnauthorizedException;
+    abstract boolean processUnknownPacket(Element doc) throws UnauthorizedException;
 
     /**
      * Tries to encrypt the connection using TLS. If the connection is encrypted then reset

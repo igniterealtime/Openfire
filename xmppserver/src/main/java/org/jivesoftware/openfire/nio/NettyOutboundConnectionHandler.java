@@ -113,7 +113,11 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                 // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
                 // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
                 // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
-                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
+
+                // OF-2625 - peer certificate is implicitly trusted if accept self-signed certificates enabled
+                boolean acceptSelfSignedCerts = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS);
+
+                if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true) || acceptSelfSignedCerts) {
                     Log.debug("SASL authentication will be attempted");
                     Log.debug("Send the stream header and wait for response...");
                     sendNewStreamHeader(connection);
@@ -156,7 +160,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                         Log.warn("Unable to create a new session: Dialback (as a fallback) failed.");
                     }
                 } else {
-                    Log.warn("Unable to create a new session: exhausted all options (not trying dialback as a fallback, as server dialback is disabled by configuration.");
+                    Log.warn("Unable to create a new session: exhausted all options (not trying dialback as a fallback, as unencrypted server dialback is disabled by configuration.");
                 }
 
                 stanzaHandler.setAttemptedAllAuthenticationMethods(true);

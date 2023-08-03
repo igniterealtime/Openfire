@@ -88,7 +88,7 @@ public final class ConnectionSettings {
         public static final String DIALBACK_ENABLED = "xmpp.server.dialback.enabled";
         public static final String TLS_POLICY = "xmpp.server.tls.policy";
 
-        public static final String TLS_ACCEPT_SELFSIGNED_CERTS = "xmpp.server.certificate.accept-selfsigned";
+        public static final String TLS_ACCEPT_SELFSIGNED_CERTS = "xmpp.socket.ssl.certificate.accept-selfsigned";
         public static final String TLS_CERTIFICATE_VERIFY = "xmpp.server.certificate.verify";
         public static final String TLS_CERTIFICATE_VERIFY_VALIDITY = "xmpp.server.certificate.verify.validity";
         public static final String TLS_CERTIFICATE_ROOT_VERIFY = "xmpp.server.certificate.verify.root";

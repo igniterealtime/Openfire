@@ -102,7 +102,7 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean processUnknowPacket(Element doc) {
+    boolean processUnknownPacket(Element doc) {
         String tag = doc.getName();
         if ("route".equals(tag)) {
             // Process stanza wrapped by the route packet

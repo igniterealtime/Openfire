@@ -51,7 +51,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    boolean processUnknownPacket(Element doc) throws UnauthorizedException {
         String tag = doc.getName();
         if ("handshake".equals(tag)) {
             // External component is trying to authenticate

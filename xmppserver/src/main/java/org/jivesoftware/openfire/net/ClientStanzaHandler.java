@@ -53,7 +53,7 @@ public class ClientStanzaHandler extends StanzaHandler {
      * @return always false.
      */
     @Override
-    protected boolean processUnknowPacket(Element doc) {
+    protected boolean processUnknownPacket(Element doc) {
         return false;
     }
 

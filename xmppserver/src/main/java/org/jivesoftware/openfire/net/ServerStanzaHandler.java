@@ -70,7 +70,7 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean processUnknowPacket(Element doc) throws UnauthorizedException {
+    boolean processUnknownPacket(Element doc) throws UnauthorizedException {
         // Handle subsequent db:result packets
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
             if (!((LocalIncomingServerSession) session).validateSubsequentDomain(doc)) {

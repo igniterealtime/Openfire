@@ -261,8 +261,10 @@ public class SASLAuthentication {
             if (trusted != null && session.getDefaultIdentity() != null) {
                 haveTrustedCertificate = verifyCertificate(trusted, session.getDefaultIdentity());
             }
-            if (haveTrustedCertificate) {
+            boolean acceptSelfSignedCerts = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS);
+            if (haveTrustedCertificate || acceptSelfSignedCerts) {
                 // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
+                // OF-2625 - peer certificate is implicitly trusted if accept self-signed certificates enabled
                 final Element mechanism = result.addElement("mechanism");
                 mechanism.setText("EXTERNAL");
             }
@@ -387,18 +389,15 @@ public class SASLAuthentication {
                         final LocalIncomingServerSession incomingServerSession = (LocalIncomingServerSession) session;
 
                         // Flag that indicates if certificates of the remote server should be validated.
-                        final boolean verify = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
-                        if ( verify )
-                        {
-                            if ( verifyCertificates( incomingServerSession.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
-                            {
-                                ( (LocalIncomingServerSession) session ).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
-                            }
-                            else
-                            {
-                                throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
-                            }
+                        final boolean shouldVerifyCertificates = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
+                        boolean acceptSelfSignedCerts = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS);
+                        // OF-2625 - peer certificate is implicitly trusted if accept self-signed certificates enabled
+                        if ( shouldVerifyCertificates && !acceptSelfSignedCerts && !verifyCertificates( incomingServerSession.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) ) {
+                            throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
+                        } else {
+                            ( (LocalIncomingServerSession) session ).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
                         }
+
                     }
 
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge );

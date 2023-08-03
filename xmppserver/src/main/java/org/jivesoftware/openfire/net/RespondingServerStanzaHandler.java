@@ -127,7 +127,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    boolean processUnknowPacket(Element doc) {
+    boolean processUnknownPacket(Element doc) {
         String rootTagName = doc.getName();
 
         // Handle features
@@ -225,16 +225,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         if ("success".equals(rootTagName)) {
             LOG.debug("EXTERNAL SASL was successful.");
 
-            // SASL was successful so initiate a new stream
-            StringBuilder sb = new StringBuilder();
-            sb.append("<stream:stream");
-            sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            sb.append(" xmlns=\"jabber:server\"");
-            sb.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
-            sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
-            sb.append(" version=\"1.0\">");
-            connection.deliverRawText(sb.toString());
-
             connection.init(session);
             // Set the remote domain name as the address of the session.
             session.setAddress(new JID(null, domainPair.getRemote(), null));
@@ -245,6 +235,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return false;
             }
             isSessionAuthenticated = true;
+
+            // SASL was successful so initiate a new stream
+            StringBuilder sb = new StringBuilder();
+            sb.append("<stream:stream");
+            sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
+            sb.append(" xmlns=\"jabber:server\"");
+            sb.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
+            sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
+            sb.append(" version=\"1.0\">");
+            connection.deliverRawText(sb.toString());
+
             return true;
         }
 

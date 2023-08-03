@@ -21,12 +21,9 @@ import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
-import org.jivesoftware.openfire.net.BlockingAcceptingMode;
 import org.jivesoftware.openfire.net.DNSUtil;
-import org.jivesoftware.openfire.net.SocketAcceptThread;
-import org.jivesoftware.openfire.net.SocketReader;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
+import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
@@ -35,11 +32,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -106,41 +103,7 @@ public class LocalIncomingServerSessionTest
         sessionManager.initialize(xmppServer);
         doReturn(sessionManager).when(xmppServer).getSessionManager();
 
-        final ConnectionManager connectionManager = Fixtures.mockConnectionManager();
-        final ConnectionListener connectionListener = Fixtures.mockConnectionListener();
-        doAnswer(new ConnectionConfigurationAnswer(identityStoreConfig, trustStoreConfig)).when(connectionListener).generateConnectionConfiguration();
-        doReturn(Set.of(connectionListener)).when(connectionManager).getListeners(any(ConnectionType.class));
-        doReturn(connectionListener).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
-        doReturn(connectionManager).when(xmppServer).getConnectionManager();
         setUp();
-    }
-
-    /**
-     * Dynamically generate a ConnectionConfiguration answer, as used by the Mock ConnectionListener.
-     * <p>
-     * A dynamic answer is needed, as the value of the ConnectionSettings.Server.TLS_POLICY property needs to be
-     * evaluated at run-time (this value is changed in the setup of many of the unit tests in this file).
-     * </p>
-     */
-    private static class ConnectionConfigurationAnswer implements Answer {
-
-        private CertificateStoreConfiguration identityStoreConfig;
-        private CertificateStoreConfiguration trustStoreConfig;
-
-        private ConnectionConfigurationAnswer(CertificateStoreConfiguration identityStoreConfig, CertificateStoreConfiguration trustStoreConfig)
-        {
-            this.identityStoreConfig = identityStoreConfig;
-            this.trustStoreConfig = trustStoreConfig;
-        }
-
-        @Override
-        public Object answer(InvocationOnMock invocation) throws Throwable
-        {
-            final Connection.TLSPolicy tlsPolicy = Connection.TLSPolicy.valueOf(JiveGlobals.getProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.optional.toString()));
-            final Set<String> suites = Set.of("TLS_AES_256_GCM_SHA384","TLS_AES_128_GCM_SHA256","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_RSA_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_DHE_DSS_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_DSS_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_RSA_WITH_AES_256_CBC_SHA256","TLS_DHE_DSS_WITH_AES_256_CBC_SHA256","TLS_DHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_DSS_WITH_AES_128_CBC_SHA256","TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_RSA_WITH_AES_256_CBC_SHA","TLS_DHE_DSS_WITH_AES_256_CBC_SHA","TLS_DHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_DSS_WITH_AES_128_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA","TLS_RSA_WITH_AES_256_GCM_SHA384","TLS_RSA_WITH_AES_128_GCM_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA256","TLS_RSA_WITH_AES_128_CBC_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA","TLS_RSA_WITH_AES_128_CBC_SHA","TLS_EMPTY_RENEGOTIATION_INFO_SCSV");
-            final Set<String> protocols = Set.of("TLSv1.2");
-            return new ConnectionConfiguration(ConnectionType.SOCKET_S2S, true, 10, -1, Connection.ClientAuth.wanted, null, 9999, tlsPolicy, identityStoreConfig, trustStoreConfig, true, true, protocols, suites, Connection.CompressionPolicy.optional, true );
-        }
     }
 
     public void setUp() throws Exception
@@ -187,6 +150,7 @@ public class LocalIncomingServerSessionTest
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
         final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
+        ConnectionListener connectionListener = null;
         try {
             // Setup test fixture.
 
@@ -242,20 +206,32 @@ public class LocalIncomingServerSessionTest
             }
 
             // execute system under test.
-            final SocketAcceptThread socketAcceptThread = new SocketAcceptThread(0, null, false);
-            socketAcceptThread.setDaemon(true);
-            socketAcceptThread.setPriority(Thread.MAX_PRIORITY);
-            socketAcceptThread.start();
+            JiveGlobals.setProperty(ConnectionSettings.Server.OLD_SSLPORT, String.valueOf(findFreeLocalPort()));
+            connectionListener = new ConnectionListener(ConnectionType.SOCKET_S2S,
+                ConnectionSettings.Server.OLD_SSLPORT,
+                ConnectionManagerImpl.DEFAULT_SERVER_SSL_PORT,
+                ConnectionSettings.Server.ENABLE_OLD_SSLPORT,
+                "xmpp.server.processing.threads",
+                null,
+                JiveGlobals.getProperty(ConnectionSettings.Server.TLS_POLICY),
+                ConnectionSettings.Server.AUTH_PER_CLIENTCERT_POLICY,
+                null,
+                identityStore.getConfiguration(),
+                trustStore.getConfiguration(),
+                ConnectionSettings.Server.COMPRESSION_SETTINGS);
+            connectionListener.start();
+
+            final ConnectionManager connectionManager = Fixtures.mockConnectionManager();
+            doReturn(Set.of(connectionListener)).when(connectionManager).getListeners(any(ConnectionType.class));
+            doReturn(connectionListener).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
+            doReturn(connectionManager).when(XMPPServer.getInstance()).getConnectionManager();
 
             // now, make the remote server connect.
-            remoteInitiatingServerDummy.connect(socketAcceptThread.getPort());
+            remoteInitiatingServerDummy.connect(connectionListener.getPort());
             remoteInitiatingServerDummy.blockUntilDone(1, TimeUnit.MINUTES);
 
             // get the incoming server session object.
-            final LocalIncomingServerSession result;
-            BlockingAcceptingMode mode = ((BlockingAcceptingMode) socketAcceptThread.getAcceptingMode());
-            final SocketReader socketReader = mode == null ? null : mode.getLastReader();
-            result = socketReader == null ? null : (LocalIncomingServerSession) socketReader.getSession();
+            final LocalIncomingServerSession result = remoteInitiatingServerDummy.getRemoteStreamID() == null ? null : XMPPServer.getInstance().getSessionManager().getIncomingServerSession( remoteInitiatingServerDummy.getRemoteStreamID() );
 
             // Verify results
             if (RemoteInitiatingServerDummy.doLog) System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
@@ -294,6 +270,9 @@ public class LocalIncomingServerSessionTest
         } finally {
             // Teardown test fixture.
             trustStore.delete("unit-test");
+            if (connectionListener != null) {
+                connectionListener.stop();
+            }
         }
     }
 
@@ -334,5 +313,20 @@ public class LocalIncomingServerSessionTest
             System.out.println("Test [" + i++ + "]: " + arguments.get()[0] + ", " + arguments.get()[1]);
         }
         return result;
+    }
+
+    /**
+     * Returns a local TCP port number that is likely to be available to use.
+     *
+     * Note that during the execution of this method, the port is briefly in use. Also: there is no guarantee that after
+     * this method returns, another process does not immediately start using the port that is returned.
+     *
+     * @return A TCP port number
+     */
+    public static int findFreeLocalPort() throws IOException
+    {
+        try (ServerSocket serverSocket = new ServerSocket(0)){
+            return serverSocket.getLocalPort();
+        }
     }
 }

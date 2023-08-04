@@ -151,12 +151,15 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         // Close the connection when an exception is raised.
         Log.error(cause.getMessage(), cause);
-        ctx.close();
+        ctx.channel().close();
     }
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        ctx.channel().attr(CONNECTION).get().close();
+        Connection connection = ctx.channel().attr(CONNECTION).get();
+        if (connection != null) {
+            connection.close(); // clean up resources (connection and session) when channel is unregistered.
+        }
         super.channelUnregistered(ctx);
     }
 

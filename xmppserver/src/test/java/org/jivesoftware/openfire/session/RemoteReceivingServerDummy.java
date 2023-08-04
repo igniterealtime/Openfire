@@ -17,10 +17,12 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.keystore.KeystoreTestUtils;
 import org.jivesoftware.util.StringUtils;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -28,17 +30,18 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.security.KeyPair;
-import java.security.Principal;
-import java.security.PrivateKey;
-import java.security.cert.*;
-import java.time.Duration;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Provides a network entity that mimics the behavior of a remote XMPP server, when accepting a socket connection.
@@ -211,13 +214,14 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         {
             if (doLog) System.out.println("Start reading from socket.");
             try {
+                final ByteBuffer buffer = ByteBuffer.allocate(1024*16);
+                ReadableByteChannel channel = Channels.newChannel(is);
                 do {
                     try {
-                        final byte[] buffer = new byte[1024 * 16];
-                        int count;
-                        while (!processingService.isShutdown() && (count = is.read(buffer)) > 0) {
-                            String read = new String(buffer, 0, count);
-
+                        while (!processingService.isShutdown() && channel.read(buffer) >= 0) {
+                            buffer.flip();
+                            String read = StandardCharsets.UTF_8.decode(buffer).toString();
+                            buffer.compact();
                             // Ugly hack to get Dialback to work.
                             if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
                                 read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");

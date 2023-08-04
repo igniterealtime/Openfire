@@ -22,6 +22,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateHandler;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
@@ -86,9 +87,15 @@ public class NettySessionInitializer {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
+                    NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listenerConfiguration, domainPair, port);
+                    int maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime() > -1 ? businessLogicHandler.getMaxIdleTime() : 0;
+                    int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
+
                     ch.pipeline().addLast(new NettyXMPPDecoder());
                     ch.pipeline().addLast(new StringEncoder());
-                    ch.pipeline().addLast(new NettyOutboundConnectionHandler(listenerConfiguration, domainPair, port));
+                    ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0));
+                    ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
+                    ch.pipeline().addLast(businessLogicHandler);
                     // Should have a connection
                     if (directTLS) {
                         ch.attr(CONNECTION).get().startTLS(true, true);

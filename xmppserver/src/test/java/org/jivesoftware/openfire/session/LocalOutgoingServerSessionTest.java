@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,6 +37,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import java.io.File;
+import java.security.Key;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
@@ -60,11 +63,48 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class LocalOutgoingServerSessionTest
 {
+    private static Key FIXTURE_VALID_KEY;
+    private static Certificate[] FIXTURE_VALID_CERTIFICATE_CHAIN;
     private RemoteReceivingServerDummy remoteReceivingServerDummy;
     private File tmpIdentityStoreFile;
     private IdentityStore identityStore;
     private File tmpTrustStoreFile;
     private TrustStore trustStore;
+
+    /**
+     * Generates (one time) content for a 'valid' identity store: a private key and associated (self-signed) certificate
+     * chain.
+     *
+     * This generated artifacts are stored in static fields, intended to be re-used by different tests. This prevents
+     * each test from having to generate them, which saves around 66% of the CPU time that's consumed by the tests.
+     */
+    @BeforeAll
+    public static void generateValidKeyAndCert() throws Exception {
+        Fixtures.reconfigureOpenfireHome();
+        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        final XMPPServer xmppServer = Fixtures.mockXMPPServer();
+        XMPPServer.setInstance(xmppServer);
+
+        final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        final File tmpValidIdentityStoreFile = new File(tmpDir, "unittest-identitystorevalid-" + System.currentTimeMillis() + ".jks");
+        tmpValidIdentityStoreFile.deleteOnExit();
+        try {
+            final CertificateStoreConfiguration identityStoreConfig = new CertificateStoreConfiguration("jks", tmpValidIdentityStoreFile, "secret".toCharArray(), tmpDir);
+            final IdentityStore validStore = new IdentityStore(identityStoreConfig, true);
+            validStore.ensureDomainCertificate();
+            final Enumeration<String> aliases = validStore.getStore().aliases();
+            while (aliases.hasMoreElements()) {
+                String alias = aliases.nextElement();
+                if (validStore.getStore().isKeyEntry(alias)) {
+                    FIXTURE_VALID_KEY = validStore.getStore().getKey(alias, "secret".toCharArray());
+                    FIXTURE_VALID_CERTIFICATE_CHAIN = validStore.getStore().getCertificateChain(alias);
+                    return;
+                }
+            }
+        } finally {
+            tmpValidIdentityStoreFile.delete();
+        }
+    }
 
     /**
      * Prepares the local server for operation. This mostly involves preparing the test fixture by mocking parts of the
@@ -235,8 +275,8 @@ public class LocalOutgoingServerSessionTest
                     identityStore.installCertificate(Fixtures.expiredX509Certificate, Fixtures.privateKeyForExpiredCert, "");
                     break;
                 case VALID:
-                    // Generate a valid certificate and insert into identity store
-                    identityStore.ensureDomainCertificate();
+                    // Adds a valid certificate into identity store
+                    identityStore.getStore().setKeyEntry( "selfsignedkey", FIXTURE_VALID_KEY, "secret".toCharArray(), FIXTURE_VALID_CERTIFICATE_CHAIN);
                     break;
             }
 

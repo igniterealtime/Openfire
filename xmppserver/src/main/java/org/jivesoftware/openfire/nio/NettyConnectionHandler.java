@@ -164,6 +164,12 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     }
 
     @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        ctx.channel().attr(CONNECTION).get().close();
+        super.channelUnregistered(ctx);
+    }
+
+    @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (!sslInitDone && evt instanceof SslHandshakeCompletionEvent) {
             SslHandshakeCompletionEvent e = (SslHandshakeCompletionEvent) evt;

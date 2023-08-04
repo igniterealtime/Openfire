@@ -228,6 +228,7 @@ public class LocalOutgoingServerSessionTest
         if (RemoteReceivingServerDummy.doLog) System.out.println("Executing test:\n - Local Server (Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(1));
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
         final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
 

@@ -403,13 +403,16 @@ public class EncryptionArtifactFactory
         Set<String> protocols = new HashSet<>(configuration.getEncryptionProtocols());
         protocols.remove("SSLv2Hello");
 
+        // createClientModeSslContext is only used when the Openfire server is acting as a client when
+        // making outbound S2S connections so the first stanza we send should be encrypted hence startTls(false)
+
         return SslContextBuilder
             .forClient()
             .protocols(protocols)
             .ciphers(configuration.getEncryptionCipherSuites())
             .keyManager(getKeyManagerFactory())
             .trustManager(getTrustManagers()[0]) // The existing implementation never returns more than one trust manager.
-            .startTls(false)
+            .startTls(false) // Acting as client making outbound S2S connection so encrypt next stanza
             .build();
     }
 

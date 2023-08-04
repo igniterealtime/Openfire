@@ -217,7 +217,7 @@ public class NettyConnection implements Connection {
     public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
 
-            // Ensure that the state of this connection, its session and the MINA context are eventually closed.
+            // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
 
             if (session != null) {
                 session.setStatus(Session.Status.CLOSED);
@@ -237,7 +237,7 @@ public class NettyConnection implements Connection {
 
             try {
                 // TODO don't block, handle errors async with custom ChannelFutureListener
-                this.channelHandlerContext.close().addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE).sync();
+                this.channelHandlerContext.channel().close().addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE).sync();
             } catch (Exception e) {
                 Log.error("Exception while closing Netty session", e);
             }

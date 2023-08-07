@@ -154,7 +154,7 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     protected String getStreamHeader() {
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");

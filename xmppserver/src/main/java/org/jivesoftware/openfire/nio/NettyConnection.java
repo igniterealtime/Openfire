@@ -411,7 +411,7 @@ public class NettyConnection implements Connection {
     public void addCompression() {
         // Inbound traffic only
         if (isEncrypted()) {
-            channelHandlerContext.channel().pipeline().addAfter(SSL_HANDLER_NAME, "compressionHandler", new JZlibDecoder());
+            channelHandlerContext.channel().pipeline().addAfter(SSL_HANDLER_NAME, "inboundCompressionHandler", new JZlibDecoder());
         }  else {
             channelHandlerContext.channel().pipeline().addFirst(new JZlibDecoder());
         }
@@ -421,7 +421,7 @@ public class NettyConnection implements Connection {
     public void startCompression() {
         // Outbound traffic only
         if (isEncrypted()) {
-            channelHandlerContext.channel().pipeline().addAfter(SSL_HANDLER_NAME, "compressionHandler", new JZlibEncoder(Z_BEST_COMPRESSION));
+            channelHandlerContext.channel().pipeline().addAfter(SSL_HANDLER_NAME, "outboundCompressionHandler", new JZlibEncoder(Z_BEST_COMPRESSION));
         }  else {
             channelHandlerContext.channel().pipeline().addFirst(new JZlibEncoder(Z_BEST_COMPRESSION));
         }

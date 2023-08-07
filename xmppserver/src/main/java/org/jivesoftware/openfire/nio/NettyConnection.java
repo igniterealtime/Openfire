@@ -410,13 +410,21 @@ public class NettyConnection implements Connection {
     @Override
     public void addCompression() {
         // Inbound traffic only
-        channelHandlerContext.channel().pipeline().addFirst(new JZlibDecoder());
+        if (isEncrypted()) {
+            channelHandlerContext.channel().pipeline().addAfter(SSL_HANDLER_NAME, "compressionHandler", new JZlibDecoder());
+        }  else {
+            channelHandlerContext.channel().pipeline().addFirst(new JZlibDecoder());
+        }
     }
 
     @Override
     public void startCompression() {
         // Outbound traffic only
-        channelHandlerContext.channel().pipeline().addFirst(new JZlibEncoder(Z_BEST_COMPRESSION));
+        if (isEncrypted()) {
+            channelHandlerContext.channel().pipeline().addAfter(SSL_HANDLER_NAME, "compressionHandler", new JZlibEncoder(Z_BEST_COMPRESSION));
+        }  else {
+            channelHandlerContext.channel().pipeline().addFirst(new JZlibEncoder(Z_BEST_COMPRESSION));
+        }
         // Z_BEST_COMPRESSION is the same level as COMPRESSION_MAX in MINA
     }
 

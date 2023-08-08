@@ -90,21 +90,33 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return doc.element("dialback") != null;
     }
 
+
     /**
-     * Checks if XML string is start of stream; if it is, extract namespaces for parsing followign stanzas, and create
-     * a new session if a new stream ID is detected (e.g. following TLS negotiation).
-     * @param xml The XML stanza to verify
-     * @return true if start of stream, else false
+     * Transfer an existing connection to a new session when a new streamID is detected. Also transfers existing
+     * authentication method if previously set.
+     * @param newStreamId new stream ID for the new session
+     * @param existingAuthMethod authentication method used previously (possibly null)
      */
+    private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
+        session = createLocalOutgoingServerSession(newStreamId, connection);
+        connection.reinit(session);
+        if (isSessionAuthenticated() && session instanceof LocalOutgoingServerSession) {
+            ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
+        } else {
+            LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
+        }
+    }
+
     @Override
-    protected boolean isStartOfStream(String xml) {
-        final boolean isStartOfStream = super.isStartOfStream(xml);
-        if (isStartOfStream) {
+    protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception {
+        boolean startOfStream = isStartOfStream(stanza);
+
+        if (startOfStream) {
             // We initiate the stream for a RespondingServerStanzaHandler, so we need to add the stream namespace
             // Pull namespaces off of the stream:stream stanza and add them to the additional
             List<Namespace> receivedNamespaces = null;
             try {
-                Element rootElement = DocumentHelper.parseText(xml + "</stream:stream>").getRootElement();
+                Element rootElement = DocumentHelper.parseText(stanza + "</stream:stream>").getRootElement();
                 receivedNamespaces = rootElement.declaredNamespaces();
                 Set<Namespace> additionalNamespaces = receivedNamespaces
                     .stream()
@@ -113,7 +125,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 connection.setAdditionalNamespaces(additionalNamespaces);
 
                 // Create a new session with a new ID if a new stream has started on an existing connection
-                // following TLS negotiation
+                // following TLS negotiation in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
                 String newStreamId = rootElement.attribute("id").getValue();
                 if (sessionCreated && newStreamId != null) {
                     ServerSession.AuthenticationMethod existingAuthMethod = session instanceof LocalOutgoingServerSession
@@ -126,28 +138,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             }
         }
 
-        return isStartOfStream;
-    }
-
-    /**
-     * Transfer an existing connection to a new session when a new streamID is detected. Also transfers existing
-     * authentication method if previously set.
-     * @param newStreamId new stream ID for the new session
-     * @param existingAuthMethod authentication method used previously (possibly null)
-     */
-    private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
-        session = createLocalOutgoingServerSession(newStreamId, connection);
-        if (isSessionAuthenticated() && session instanceof LocalOutgoingServerSession) {
-            ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
-        } else {
-            LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
-        }
-    }
-
-    @Override
-    protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception {
-        boolean initialStream = isStartOfStream(stanza);
-        if (!initialStream) {
+        if (!startOfStream) {
             // Ignore <?xml version="1.0"?>
             return;
         }

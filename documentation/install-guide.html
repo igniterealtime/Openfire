@@ -506,14 +506,28 @@ Starting openfire</code></pre>
         <h2>Firewall</h2>
 
         <p>
-            Server's administrator should open TCP ports 5222 and 7443 for incoming connections for XMPP clients to be
-            able to connect to Openfire. Additionally, an administrator can also open TCP 9090 (for http) and TCP 9091
-            (for https), if there is a need to remotely administrate Openfire connecting to its Admin Console. We
-            recommend only using 9091 port as it is an encrypted connection. For server to server connections one should
-            also open TCP 5269 port and for secure HTTP-BIND connections TCP 7443 port. Port number can be different, if
-            the default configuration has been changed by an administrator. Additional ports may also be in use by
-            Openfire or by plugins to provide additional features. The full list of ports used by Openfire can be found on
-            the first page of Admin Console in the Server Ports section.
+            Server's administrator should open TCP ports <code>5222</code> and <code>5223</code> for incoming
+            connections for XMPP clients to be able to connect to Openfire.
+        </p>
+        <p>
+            For secure BOSH / (HTTP-bind) and websocket-based client connections ensure that TCP port <code>7443</code>
+            is reachable. The unencrypted port equivalent for this port (which uses HTTP instead of HTTPS, or WS instead
+            of WSS) is <code>7070</code>. We recommend only using encrypted connections on port <code>7443</code>.
+        </p>
+        <p>
+            For server to server connections one should also open ports TCP <code>5269</code> and <code>5270</code>.
+        </p>
+        <p>
+            As a general rule, the Openfire Admin Console should not be exposed to the general internet. However, an
+            administrator can choose to open TCP <code>9090</code> (for HTTP) and TCP <code>9091</code> (for HTTPS), if
+            there is a need to remotely administrate Openfire connecting to its Admin Console. We recommend only using
+            <code>9091</code> port as it is an encrypted connection, and we strongly recommend limiting access to a
+            curated list of known, trusted network addresses, if any.
+        </p>
+        <p>
+            Port number can be different, if the default configuration has been changed by an administrator. Additional
+            ports may also be in use by Openfire or by plugins to provide additional features. The full list of ports
+            used by Openfire can be found on the first page of Admin Console in the Server Ports section.
         </p>
 
     </section>

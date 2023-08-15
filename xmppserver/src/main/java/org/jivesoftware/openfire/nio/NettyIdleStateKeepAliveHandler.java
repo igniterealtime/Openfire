@@ -81,7 +81,7 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
             IdleStateEvent e = (IdleStateEvent) evt;
             final boolean doPing = ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue() && clientConnection;
             if (e.state() == IdleState.READER_IDLE) {
-                ctx.close();
+                ctx.channel().attr(CONNECTION).get().close();
             } else if (doPing && e.state() == IdleState.WRITER_IDLE) {
                 sendPingPacket(ctx);
             }

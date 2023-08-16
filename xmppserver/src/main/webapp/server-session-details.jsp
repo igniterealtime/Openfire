@@ -321,10 +321,10 @@
                                 </c:if>
                                 <td nowrap>
                                     <c:choose>
-                                        <c:when test="${session.usingServerDialback}">
+                                        <c:when test="${session.isUsingServerDialback()}">
                                             <fmt:message key="server.session.details.dialback"/>
                                         </c:when>
-                                        <c:when test="${session.usingSaslExternal}">
+                                        <c:when test="${session.isUsingSaslExternal()}">
                                             <fmt:message key="server.session.details.tlsauth"/>
                                         </c:when>
                                         <c:otherwise>

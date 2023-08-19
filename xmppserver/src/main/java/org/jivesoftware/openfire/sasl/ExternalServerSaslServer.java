@@ -1,6 +1,22 @@
+/*
+ * Copyright (C) 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.util.SystemProperty;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
@@ -16,6 +32,20 @@ import java.nio.charset.StandardCharsets;
  */
 public class ExternalServerSaslServer implements SaslServer
 {
+    /**
+     * This property controls if the inbound connection is required to provide an authorization identity in the SASL
+     * EXTERNAL handshake (as part of an `auth` element). In older XMPP specifications, it was not required to have a
+     * `from` attribute on the stream, making the authzid a required part of the handshake.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2639">Issue OF-2639</a>
+     */
+    public static final SystemProperty<Boolean> PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID = SystemProperty.Builder
+        .ofType( Boolean.class )
+        .setKey( "xmpp.auth.sasl.external.server.require-authzid" )
+        .setDefaultValue( false )
+        .setDynamic( true )
+        .build();
+
     public static final String NAME = "EXTERNAL";
 
     private boolean complete = false;
@@ -43,16 +73,24 @@ public class ExternalServerSaslServer implements SaslServer
             throw new IllegalStateException( "Authentication exchange already completed." );
         }
 
+        final String defaultIdentity = session.getDefaultIdentity();
+        final String requestedId;
         if ( response == null || response.length == 0 )
         {
-            // No hostname was provided so send a challenge to get it
-            return new byte[ 0 ];
+            if (PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID.getValue() || defaultIdentity == null) {
+                // No hostname was provided so send a challenge to get it
+                return new byte[0];
+            } else {
+                requestedId = defaultIdentity;
+            }
+        }
+        else
+        {
+            requestedId = new String( response, StandardCharsets.UTF_8 );
         }
 
         complete = true;
 
-        final String requestedId = new String( response, StandardCharsets.UTF_8 );
-        final String defaultIdentity = session.getDefaultIdentity();
         if ( !requestedId.equals( defaultIdentity ) )
         {
             throw new SaslException( "From '" + requestedId + "' does not equal authzid '" + defaultIdentity + "'" );

@@ -912,6 +912,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
+        final List<Packet> packets = csiManager.queueOrPush(packet);
+        if (packets.isEmpty()) {
+            return;
+        }
         synchronized ( streamManager )
         {
             if ( conn != null )

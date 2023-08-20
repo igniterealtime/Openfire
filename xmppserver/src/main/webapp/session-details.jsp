@@ -223,6 +223,7 @@
             <fmt:message key="session.details.csi-active"/>
             <% } else { %>
             <fmt:message key="session.details.csi-inactive"/>
+            (<fmt:message key="session.details.csi-delayed-stanzas"/>: <%= s.getCsiManager().getDelayQueueSize() %>)
             <% } %>
         </td>
     </tr>

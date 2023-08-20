@@ -20,8 +20,11 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.csi.CsiManager;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveGlobals;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
@@ -41,19 +44,19 @@ import org.xmpp.packet.Presence;
  */
 public class ClientStanzaHandler extends StanzaHandler {
 
+    private static final Logger Log = LoggerFactory.getLogger(ClientStanzaHandler.class);
+
     public ClientStanzaHandler(PacketRouter router, Connection connection) {
         super(router, connection);
     }
 
-    /**
-     * Only packets of type Message, Presence and IQ can be processed by this class. Any other
-     * type of packet is unknown and thus rejected generating the connection to be closed.
-     *
-     * @param doc the unknown DOM element that was received
-     * @return always false.
-     */
     @Override
     protected boolean processUnknowPacket(Element doc) {
+        if (CsiManager.isStreamManagementNonza(doc)) {
+            Log.trace("Client is sending client state indication nonza.");
+            ((LocalClientSession) session).getCsiManager().process(doc);
+            return true;
+        }
         return false;
     }
 

@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.csi.CsiManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.privacy.PrivacyList;
@@ -121,6 +122,11 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * Defines whether a XEP-0191 blocklist was requested by the client of this session.
      */
     private boolean hasRequestedBlocklist = false;
+
+    /**
+     * XEP-0352 Client State Indication Manager
+     */
+    protected final CsiManager csiManager;
 
     static {
         // Fill out the allowedIPs with the system property
@@ -520,6 +526,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      */
     public LocalClientSession(String serverName, Connection connection, StreamID streamID, Locale language) {
         super(serverName, connection, streamID, language);
+        csiManager = new CsiManager(this);
         // Set an unavailable initial presence
         presence = new Presence();
         presence.setType(Presence.Type.unavailable);
@@ -705,6 +712,26 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
+    public void reattach(LocalSession connectionProvider, long h)
+    {
+        super.reattach(connectionProvider, h);
+
+        // XEP-0352: "After a previous stream was resumed using mechanisms like Stream Management (XEP-0198), the CSI
+        // state is not restored. That is, stream resumption does not affect the current CSI state, which always
+        // defaults to 'active' for new and resumed streams. Clients wishing to immediately go to the inactive state
+        // should do so after stream resumption."
+        csiManager.activate();
+    }
+
+    /**
+     * Returns the Client State Indication manager for this session.
+     *
+     * @return A Client State Indication manager
+     */
+    public CsiManager getCsiManager() {
+        return csiManager;
+    }
+
     /**
      * Obtain the presence of this session.
      *
@@ -803,7 +830,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
                 sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
             }
-        }
+
+            // Offer XEP-0352 Client State Indication capabilities if enabled
+            if (CsiManager.ENABLED.getValue()) {
+                sb.append(String.format("<csi xmlns='%s'/>", CsiManager.NAMESPACE));
+            }
+         }
 
         // Add XEP-0115 entity capabilities for the server, so that peer can skip service discovery.
         final String ver = EntityCapabilitiesManager.getLocalDomainVerHash();

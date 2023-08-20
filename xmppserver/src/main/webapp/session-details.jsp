@@ -216,6 +216,18 @@
     </tr>
     <tr>
         <td class="c1">
+            <fmt:message key="session.details.csi-status"/>:
+        </td>
+        <td>
+            <% if (s.getCsiManager().isActive()) { %>
+            <fmt:message key="session.details.csi-active"/>
+            <% } else { %>
+            <fmt:message key="session.details.csi-inactive"/>
+            <% } %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
             <fmt:message key="session.details.connection-type"/>:
         </td>
         <td>

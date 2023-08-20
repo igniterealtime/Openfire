@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.websocket;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionPacketRouter;
+import org.jivesoftware.openfire.csi.CsiManager;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
@@ -56,7 +57,9 @@ public class StreamManagementPacketRouter extends SessionPacketRouter {
     public void route(Element wrappedElement) throws UnknownStanzaException {
 
         if (StreamManager.NAMESPACE_V3.equals(wrappedElement.getNamespace().getStringValue())) {
-            session.getStreamManager().process( wrappedElement );
+            session.getStreamManager().process(wrappedElement);
+        } else if (CsiManager.isStreamManagementNonza(wrappedElement)) {
+            session.getCsiManager().process(wrappedElement);
         } else {
             super.route(wrappedElement);
             if (isUnsolicitedAckExpected()) {

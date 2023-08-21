@@ -443,15 +443,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         if (publishElement != null) {
             final String nodeID = publishElement.attributeValue("node");
 
-            // Do not allow User Avatar nodes to be created.
-            // TODO: Implement XEP-0084
-            if (nodeID.startsWith("http://www.xmpp.org/extensions/xep-0084.html")) {
-                IQ reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.feature_not_implemented);
-                return reply;
-            }
-
             if (pepService.getNode(nodeID) == null) {
                 // Create the node
                 final JID creator = bareJidFrom;

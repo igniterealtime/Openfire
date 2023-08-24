@@ -105,7 +105,8 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean validateHost() {
-        return true;
+        // Hosts are not currently validated for S2S
+        return false;
     }
 
     @Override

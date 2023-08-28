@@ -34,7 +34,7 @@ public class LocalServerSession extends LocalSession implements ServerSession {
     /**
      * The method that was used to authenticate this session. Null when the session is not authenticated.
      */
-    private AuthenticationMethod authenticationMethod = null;
+    protected AuthenticationMethod authenticationMethod = null;
 
     public LocalServerSession(String serverName, Connection connection,
             StreamID streamID) {
@@ -127,12 +127,12 @@ public class LocalServerSession extends LocalSession implements ServerSession {
     public String toString()
     {
         return this.getClass().getSimpleName() +"{" +
-            "address=" + getAddress() +
-            ", streamID=" + getStreamID() +
-            ", status=" + getStatus() +
+            "address=" + address +
+            ", streamID=" + streamID +
+            ", status=" + status +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", isUsingServerDialback=" + isUsingServerDialback() +
+            ", authenticationMethod=" + authenticationMethod +
             '}';
     }
 }

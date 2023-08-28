@@ -306,12 +306,12 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     public String toString()
     {
         return this.getClass().getSimpleName() +"{" +
-            "address=" + getAddress() +
-            ", streamID=" + getStreamID() +
-            ", status=" + getStatus() +
+            "address=" + address +
+            ", streamID=" + streamID +
+            ", status=" + status +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", serverName='" + getServerName() + '\'' +
+            ", serverName='" + serverName + '\'' +
             '}';
     }
 }

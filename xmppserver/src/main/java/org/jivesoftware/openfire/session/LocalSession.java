@@ -60,11 +60,12 @@ public abstract class LocalSession implements Session {
     /**
      * The Address this session is authenticated as.
      */
-    private JID address;
+    protected JID address;
+
     /**
      * The stream id for this session (random and unique).
      */
-    private StreamID streamID;
+    protected final StreamID streamID;
 
     /**
      * The current session status.
@@ -78,9 +79,9 @@ public abstract class LocalSession implements Session {
 
     protected SessionManager sessionManager;
 
-    private String serverName;
+    protected final String serverName;
 
-    private long startDate = System.currentTimeMillis();
+    protected final long startDate = System.currentTimeMillis();
 
     private long lastActiveDate;
 
@@ -533,13 +534,13 @@ public abstract class LocalSession implements Session {
     @Override
     public String toString()
     {
-        return this.getClass().getSimpleName() +"{" +
-            "address=" + getAddress() +
-            ", streamID=" + getStreamID() +
-            ", status=" + getStatus() +
+        return this.getClass().getSimpleName() + "{" +
+            "address=" + address +
+            ", streamID=" + streamID +
+            ", status=" + status +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", serverName='" + getServerName() + '\'' +
+            ", serverName='" + serverName + '\'' +
             '}';
     }
 

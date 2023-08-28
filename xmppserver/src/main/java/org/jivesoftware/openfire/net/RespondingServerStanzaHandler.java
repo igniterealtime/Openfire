@@ -189,12 +189,14 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 LOG.debug("Dialback was successful.");
 
                 connection.init(session);
-                isSessionAuthenticated = true;
                 // Set the remote domain name as the address of the session.
                 session.setAddress(new JID(null, domainPair.getRemote(), null));
                 if (session instanceof LocalOutgoingServerSession) {
                     ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                 }
+
+                // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
+                isSessionAuthenticated = true;
 
                 return true;
             } else {

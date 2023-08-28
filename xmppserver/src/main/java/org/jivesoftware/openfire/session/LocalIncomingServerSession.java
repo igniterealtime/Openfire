@@ -431,14 +431,14 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     public String toString()
     {
         return this.getClass().getSimpleName() +"{" +
-            "address=" + getAddress() +
-            ", streamID=" + getStreamID() +
-            ", status=" + getStatus() +
+            "address=" + address +
+            ", streamID=" + streamID +
+            ", status=" + status +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", authenticationMethod=" + getAuthenticationMethod() +
-            ", localDomain=" + getLocalDomain() +
-            ", defaultIdentity=" + getDefaultIdentity() +
+            ", authenticationMethod=" + authenticationMethod +
+            ", localDomain=" + localDomain +
+            ", defaultIdentity=" + fromDomain +
             ", validatedDomains=" + validatedDomains.stream().collect( Collectors.joining( ", ", "{", "}")) +
             '}';
     }

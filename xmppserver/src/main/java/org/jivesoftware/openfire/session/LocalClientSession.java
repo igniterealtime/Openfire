@@ -902,16 +902,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
         }
         return this.getClass().getSimpleName() +"{" +
-            "address=" + getAddress() +
-            ", streamID=" + getStreamID() +
-            ", status=" + getStatus() +
+            "address=" + address +
+            ", streamID=" + streamID +
+            ", status=" + status +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", serverName='" + getServerName() + '\'' +
-            ", isInitialized=" + isInitialized() +
-            ", hasAuthToken=" + (getAuthToken() != null) +
+            ", serverName='" + serverName + '\'' +
+            ", isInitialized=" + initialized +
+            ", hasAuthToken=" + (authToken != null) +
             ", peer address='" + peerAddress +'\'' +
-            ", presence='" + getPresence().toString() + '\'' +
+            ", presence='" + presence.toString() + '\'' +
             '}';
     }
 }

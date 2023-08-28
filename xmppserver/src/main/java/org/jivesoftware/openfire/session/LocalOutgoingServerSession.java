@@ -408,12 +408,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     public String toString()
     {
         return this.getClass().getSimpleName() +"{" +
-            "address=" + getAddress() +
-            ", streamID=" + getStreamID() +
-            ", status=" + getStatus() +
+            "address=" + address +
+            ", streamID=" + streamID +
+            ", status=" + status +
             ", isEncrypted=" + isEncrypted() +
             ", isDetached=" + isDetached() +
-            ", authenticationMethod=" + getAuthenticationMethod() +
+            ", authenticationMethod=" + authenticationMethod +
             ", outgoingDomainPairs=" + getOutgoingDomainPairs().stream().map( DomainPair::toString ).collect(Collectors.joining(", ", "{", "}")) +
             '}';
     }

@@ -183,11 +183,7 @@ public class ServerSocketReader extends SocketReader {
             IOException {
         if ("jabber:server".equals(namespace)) {
             // The connected client is a server so create an IncomingServerSession
-            session = LocalIncomingServerSession.createSession(serverName, reader, connection);
-            if (session == null) {
-                return false;
-            }
-            LocalIncomingServerSession.sendOpenStream((LocalIncomingServerSession)session, connection, directTLS);
+            session = LocalIncomingServerSession.createSession(serverName, reader, connection, directTLS);
             // After the session has been created, inform all listeners as well.
             ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
             return true;

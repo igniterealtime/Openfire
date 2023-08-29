@@ -246,6 +246,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
                 return false;
             }
+
+            // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
             isSessionAuthenticated = true;
             return true;
         }

@@ -16,12 +16,10 @@
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.DNSUtil;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -267,7 +265,14 @@ public class LocalIncomingServerSessionTest
             remoteInitiatingServerDummy.blockUntilDone(1, TimeUnit.MINUTES);
 
             // get the incoming server session object.
-            final LocalIncomingServerSession result = remoteInitiatingServerDummy.getRemoteStreamID() == null ? null : XMPPServer.getInstance().getSessionManager().getIncomingServerSession( remoteInitiatingServerDummy.getRemoteStreamID() );
+            final LocalIncomingServerSession result;
+            if (remoteInitiatingServerDummy.getReceivedStreamIDs().isEmpty()) {
+                result = null;
+            } else {
+                // Get the _last_ stream ID.
+                final StreamID streamID = BasicStreamIDFactory.createStreamID(remoteInitiatingServerDummy.getReceivedStreamIDs().get(remoteInitiatingServerDummy.getReceivedStreamIDs().size()-1));
+                result = XMPPServer.getInstance().getSessionManager().getIncomingServerSession( streamID );
+            }
 
             // Verify results
             if (RemoteInitiatingServerDummy.doLog) System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
@@ -293,6 +298,12 @@ public class LocalIncomingServerSessionTest
                     assertTrue(result.isEncrypted());
                     assertTrue(result.isAuthenticated());
                     assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
+
+                    // Assertions that are specific to OF-1913:
+                    assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamIDs().size());
+                    assertNotEquals(remoteInitiatingServerDummy.getReceivedStreamIDs().get(0), remoteInitiatingServerDummy.getReceivedStreamIDs().get(1));
+                    assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamToValues().size());
+                    assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamFromValues().size());
                     break;
                 case ENCRYPTED_WITH_SASLEXTERNAL_AUTH:
                     assertNotNull(result);
@@ -300,6 +311,12 @@ public class LocalIncomingServerSessionTest
                     assertTrue(result.isEncrypted());
                     assertTrue(result.isAuthenticated());
                     assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
+
+                    // Assertions that are specific to OF-1913:
+                    assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamIDs().size());
+                    assertNotEquals(remoteInitiatingServerDummy.getReceivedStreamIDs().get(0), remoteInitiatingServerDummy.getReceivedStreamIDs().get(1));
+                    assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamToValues().size());
+                    assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamFromValues().size());
                     break;
             }
             if (RemoteInitiatingServerDummy.doLog) System.out.println("Expectation met.");

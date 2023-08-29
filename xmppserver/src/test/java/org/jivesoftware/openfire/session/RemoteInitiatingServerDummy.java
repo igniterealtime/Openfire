@@ -19,8 +19,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
@@ -39,17 +41,15 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     boolean alreadyTriedSaslExternal = false;
     boolean peerSupportsDialback;
     private ExecutorService processingService;
+    private final List<String> receivedStreamIDs = new ArrayList<>();
+    private final List<String> receivedStreamFromValues = new ArrayList<>();
+    private final List<String> receivedStreamToValues = new ArrayList<>();
 
     /**
      * A monitor that is used to flag when this dummy has finished trying to set up a connection to Openfire. This is to
      * help the unit test know when it can start verifying the test outcome.
      */
     private final Phaser phaser = new Phaser(0);
-
-    /**
-     * The last StreamID value as reported by the peer (if any).
-     */
-    private StreamID remoteStreamID;
 
     public RemoteInitiatingServerDummy(final String connectTo)
     {
@@ -156,9 +156,37 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         return dialbackAuthoritativeServer != null ? dialbackAuthoritativeServer.getLocalPort() : -1;
     }
 
-    public StreamID getRemoteStreamID()
+    /**
+     * Returns all stream IDs (potential duplicates, but no null values) that were received from the peer during the
+     * setup.
+     *
+     * @return all stream IDs received from the peer.
+     */
+    public List<String> getReceivedStreamIDs()
     {
-        return remoteStreamID;
+        return receivedStreamIDs;
+    }
+
+    /**
+     * Returns all stream 'from' attribute values (potential duplicates, but no null values) that were received from the
+     * peer during the setup.
+     *
+     * @return all stream 'from' attribute values received from the peer.
+     */
+    public List<String> getReceivedStreamFromValues()
+    {
+        return receivedStreamFromValues;
+    }
+
+    /**
+     * Returns all stream 'to' attribute values (potential duplicates, but no null values) that were received from the
+     * peer during the setup.
+     *
+     * @return all stream 'to' attribute values received from the peer.
+     */
+    public List<String> getReceivedStreamToValues()
+    {
+        return receivedStreamToValues;
     }
 
     private class DialbackAcceptor implements Runnable
@@ -334,7 +362,9 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                                 if (inbound.getName().equals("stream")) {
                                     // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
                                     peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
-                                    remoteStreamID = BasicStreamIDFactory.createStreamID(inbound.attributeValue("id"));
+                                    if (inbound.attributeValue("id") != null) receivedStreamIDs.add(inbound.attributeValue("id"));
+                                    if (inbound.attributeValue("to") != null) receivedStreamToValues.add(inbound.attributeValue("to"));
+                                    if (inbound.attributeValue("from") != null) receivedStreamFromValues.add(inbound.attributeValue("from"));
                                     switch (inbound.elements().size()) {
                                         case 0:
                                             // Done processing the input. Iterate, to try to read more.

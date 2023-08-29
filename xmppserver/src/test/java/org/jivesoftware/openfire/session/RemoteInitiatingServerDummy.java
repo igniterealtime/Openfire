@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.session;
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.Base64;
 
@@ -18,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.concurrent.*;
 
@@ -85,7 +87,24 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         }
     }
 
-    protected void done() {
+    protected void done()
+    {
+        if (remoteStreamID != null) {
+            // If we recorded a stream ID, wait for this stream to be registered in the session manager before
+            // continuing to prevent a race condition.
+            final Instant stopWaiting = Instant.now().plus(500, ChronoUnit.MILLIS);
+            try {
+                while (Instant.now().isBefore(stopWaiting)) {
+                    if (XMPPServer.getInstance().getSessionManager().getIncomingServerSession( remoteStreamID ) != null) {
+                        break;
+                    }
+                    Thread.sleep(10);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         phaser.arriveAndDeregister();
     }
 

@@ -516,12 +516,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @return the newly created {@link IncomingServerSession}.
      * @throws UnauthorizedException if the local server has not been initialized yet.
      */
-    public LocalIncomingServerSession createIncomingServerSession(Connection conn, StreamID id, String fromDomain)
+    public LocalIncomingServerSession createIncomingServerSession(Connection conn, StreamID id, String fromDomain, String toDomain, int[] version)
             throws UnauthorizedException {
         if (serverName == null) {
             throw new UnauthorizedException("Server not initialized");
         }
-        LocalIncomingServerSession session = new LocalIncomingServerSession(serverName, conn, id, fromDomain);
+        LocalIncomingServerSession session = new LocalIncomingServerSession(serverName, conn, id, fromDomain, toDomain, version);
         conn.init(session);
         // Register to receive close notification on this session so we can
         // remove its route from the sessions set

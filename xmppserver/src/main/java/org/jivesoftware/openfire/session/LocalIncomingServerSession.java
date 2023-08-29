@@ -22,14 +22,12 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
-import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.slf4j.Logger;
@@ -79,7 +77,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * validated with this server. The remote server is allowed to send packets to this
      * server from any of the validated domains.
      */
-    private Set<String> validatedDomains = new HashSet<>();
+    private final Set<String> validatedDomains = new HashSet<>();
 
     /**
      * Domains or subdomain of this server that was used by the remote server
@@ -91,35 +89,51 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     /**
      * Default domain, as supplied in stream header typically.
      */
-    private String fromDomain = null;
+    private final String fromDomain;
 
     /**
-     * Creates a new session that will receive packets. The new session will be authenticated
-     * before being returned. If the authentication process fails then the answer will be
-     * {@code null}.<p>
+     * Domain targeted by the peer, as supplied in the stream header. Typically, (unless trunking) the local domain.
+     */
+    private final String toDomain;
+
+    /**
+     * The XMPP version supported by the peer, as supplied in its stream header.
+     */
+    private final int[] peerStreamVersion;
+
+
+    /**
+     * Creates a new session that will receive packets.
      *
      * @param serverName hostname of this server.
      * @param reader reader on the new established connection with the remote server.
      * @param connection the new established connection with the remote server.
-     * @param directTLS true of connections are immediately encrypted (as opposed to plain text / startls).
-     * @return a new session that will receive packets or null if a problem occured while
-     *         authenticating the remote server or when acting as the Authoritative Server during
-     *         a Server Dialback authentication process.
+     * @return a new session that will receive packets or null if a problem occurred.
      * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing the XML.
      * @throws java.io.IOException if an input/output error occurs while using the connection.
      */
-    public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
-        return createSession(serverName, reader.getXPPParser(), connection, directTLS, false);
+    @Deprecated
+    public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader, SocketConnection connection) throws XmlPullParserException, IOException
+    {
+        return createSession(serverName, reader.getXPPParser(), connection);
     }
 
-    public static LocalIncomingServerSession createSession(String serverName, XmlPullParser xpp,
-                                                           Connection connection, boolean directTLS, boolean doNotSendXMPPStream) throws XmlPullParserException, IOException {
-
+    /**
+     * Creates a new session that will receive packets.
+     *
+     * @param serverName hostname of this server.
+     * @param xpp an XML parser that is processing data sent by the remote server.
+     * @param connection the new established connection with the remote server.
+     * @return a new session that will receive packets or null if a problem occurred.
+     * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing the XML.
+     * @throws java.io.IOException if an input/output error occurs while using the connection.
+     */
+    public static LocalIncomingServerSession createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException, IOException
+    {
         String version = xpp.getAttributeValue("", "version");
+        int[] serverVersion = version != null ? Session.decodeVersion(version) : new int[] {0,0};
         String fromDomain = xpp.getAttributeValue("", "from");
         String toDomain = xpp.getAttributeValue("", "to");
-        int[] serverVersion = version != null ? Session.decodeVersion(version) : new int[] {0,0};
 
         if (toDomain == null) {
             toDomain = serverName;
@@ -146,13 +160,31 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             // Get the stream ID for the new session
             StreamID streamID = SessionManager.getInstance().nextStreamID();
             // Create a server Session for the remote server
-            LocalIncomingServerSession session = SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
+            LocalIncomingServerSession session = SessionManager.getInstance().createIncomingServerSession(connection, streamID, toDomain, fromDomain, serverVersion);
             Log.debug("Creating new session with stream ID '{}' for local '{}' to peer '{}'.", streamID, toDomain, fromDomain);
 
-            if (doNotSendXMPPStream) {
-                session.setLocalDomain(serverName);
-                return session;
-            }
+            Log.trace("Set the domain or subdomain of the local server targeted by the remote server: {}", serverName);
+            session.setLocalDomain(serverName);
+            return session;
+        }
+        catch (Exception e) {
+            Log.error("Error establishing connection from remote server: {}", connection, e);
+            connection.close(new StreamError(StreamError.Condition.internal_server_error));
+            return null;
+        }
+    }
+
+    /**
+     * Sends a &lt;stream:stream&gt; tag (without the closing tag) and, when appropriate, stream features, over a
+     * connection for a particular inbound server-to-server session.
+     *
+     * @param session The inbound server-to-server session
+     * @param connection A connection to the remote server
+     * @param directTLS true if the connection is immediately encrypted (as opposed to plain text / starttls).
+     */
+    public static void sendOpenStream(final LocalIncomingServerSession session, final Connection connection, final boolean directTLS)
+    {
+        try {
             // Send the stream header
             StringBuilder openingStream = new StringBuilder();
             openingStream.append("<stream:stream");
@@ -161,15 +193,15 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             }
             openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
             openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(toDomain).append("\"");
-            if (fromDomain != null) {
-                openingStream.append(" to=\"").append(fromDomain).append("\"");
+            openingStream.append(" from=\"").append(session.getToDomain()).append("\"");
+            if (session.getFromDomain() != null) {
+                openingStream.append(" to=\"").append(session.getFromDomain()).append("\"");
             }
-            openingStream.append(" id=\"").append(streamID).append("\"");
+            openingStream.append(" id=\"").append(session.getStreamID()).append("\"");
 
             // OF-443: Not responding with a 1.0 version in the stream header when federating with older
             // implementations appears to reduce connection issues with those domains (patch by Marcin Cieślak).
-            if (serverVersion[0] >= 1) {
+            if (session.getPeerStreamVersion()[0] >= 1) {
                 openingStream.append(" version=\"1.0\">");
             } else {
                 openingStream.append('>');
@@ -180,7 +212,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             StringBuilder sb = new StringBuilder();
 
-            if (serverVersion[0] >= 1) {
+            if (session.getPeerStreamVersion()[0] >= 1) {
                 Log.trace("Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)");
 
                 sb.append("<stream:features>");
@@ -215,22 +247,18 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             Log.trace("Outbound feature advertisement: {}", sb);
             connection.deliverRawText(sb.toString());
-
-            Log.trace("Set the domain or subdomain of the local server targeted by the remote server: {}", serverName);
-            session.setLocalDomain(serverName);
-            return session;
         }
         catch (Exception e) {
             Log.error("Error establishing connection from remote server: {}", connection, e);
             connection.close(new StreamError(StreamError.Condition.internal_server_error));
-            return null;
         }
     }
 
-
-    public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain) {
+    public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain, String toDomain, int[] peerStreamVersion) {
         super(serverName, connection, streamID);
         this.fromDomain = fromDomain;
+        this.toDomain = toDomain;
+        this.peerStreamVersion = peerStreamVersion;
     }
     
     public String getDefaultIdentity() {
@@ -429,6 +457,36 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
         
         return sb.toString();
+    }
+
+    /**
+     * Default domain, as supplied in stream header typically.
+     *
+     * @return an XMPP domain name.
+     */
+    public String getFromDomain()
+    {
+        return fromDomain;
+    }
+
+    /**
+     * Domain targeted by the peer, as supplied in the stream header. Typically, (unless trunking) the local domain.
+     *
+     * @return an XMPP domain name.
+     */
+    public String getToDomain()
+    {
+        return toDomain;
+    }
+
+    /**
+     * The XMPP version supported by the peer, as supplied in its stream header.
+     *
+     * @return XMPP version, as an array of numbers from most to least significant.
+     */
+    public int[] getPeerStreamVersion()
+    {
+        return peerStreamVersion;
     }
 
     @Override

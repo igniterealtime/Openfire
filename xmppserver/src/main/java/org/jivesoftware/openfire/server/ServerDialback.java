@@ -427,14 +427,13 @@ public class ServerDialback {
                 if ("db".equals(doc.getNamespacePrefix()) && "result".equals(doc.getName())) {
                     String hostname = doc.attributeValue("from");
                     String recipient = doc.attributeValue("to");
-                    String version = xpp.getAttributeValue("", "version");
-                    int[] serverVersion = version != null ? Session.decodeVersion(version) : new int[] {0,0};
                     Log.debug("ServerDialback: RS - Validating remote domain for incoming session from {} to {}", hostname, recipient);
                     try {
                         validateRemoteDomain(doc, streamID);
                         Log.debug("ServerDialback: RS - Validation of remote domain for incoming session from {} to {} was successful.", hostname, recipient);
                         // Create a server Session for the remote server
-                        LocalIncomingServerSession session = sessionManager.createIncomingServerSession(connection, streamID, hostname, recipient, serverVersion);
+                        LocalIncomingServerSession session = sessionManager.
+                            createIncomingServerSession(connection, streamID, hostname);
                         // Add the validated domain as a valid domain
                         session.addValidatedDomain(hostname);
                         session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);

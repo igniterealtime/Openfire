@@ -137,10 +137,7 @@ public class ServerStanzaHandler extends StanzaHandler {
     {
         // The connected client is a server so create an IncomingServerSession
         try {
-            session = LocalIncomingServerSession.createSession(serverName, xpp, connection);
-            if (!this.startedTLS) {
-                LocalIncomingServerSession.sendOpenStream((LocalIncomingServerSession) session, connection, this.directTLS);
-            }
+            session = LocalIncomingServerSession.createSession(serverName, xpp, connection, this.directTLS, this.startedTLS);
         } catch (IOException e) {
             Log.error(e.getMessage(), e);
         }

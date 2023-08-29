@@ -41,7 +41,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     boolean alreadyTriedSaslExternal = false;
     boolean peerSupportsDialback;
     private ExecutorService processingService;
-    private final List<String> receivedStreamIDs = new ArrayList<>();
+    private final List<StreamID> receivedStreamIDs = new ArrayList<>();
     private final List<String> receivedStreamFromValues = new ArrayList<>();
     private final List<String> receivedStreamToValues = new ArrayList<>();
 
@@ -89,13 +89,14 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
     protected void done()
     {
-        if (remoteStreamID != null) {
+        if (!getReceivedStreamIDs().isEmpty()) {
             // If we recorded a stream ID, wait for this stream to be registered in the session manager before
             // continuing to prevent a race condition.
             final Instant stopWaiting = Instant.now().plus(500, ChronoUnit.MILLIS);
             try {
                 while (Instant.now().isBefore(stopWaiting)) {
-                    if (XMPPServer.getInstance().getSessionManager().getIncomingServerSession( remoteStreamID ) != null) {
+                    final StreamID lastReceivedID = getReceivedStreamIDs().get(getReceivedStreamIDs().size()-1);
+                    if (XMPPServer.getInstance().getSessionManager().getIncomingServerSession( lastReceivedID ) != null) {
                         break;
                     }
                     Thread.sleep(10);
@@ -162,7 +163,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
      *
      * @return all stream IDs received from the peer.
      */
-    public List<String> getReceivedStreamIDs()
+    public List<StreamID> getReceivedStreamIDs()
     {
         return receivedStreamIDs;
     }
@@ -362,7 +363,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                                 if (inbound.getName().equals("stream")) {
                                     // This is expected to be the response stream header. No need to act on this, but if it contains a dialback namespace, then this suggests that the peer supports dialback.
                                     peerAdvertisedDialbackNamespace = inbound.declaredNamespaces().stream().anyMatch(namespace -> "jabber:server:dialback".equals(namespace.getURI()));
-                                    if (inbound.attributeValue("id") != null) receivedStreamIDs.add(inbound.attributeValue("id"));
+                                    if (inbound.attributeValue("id") != null) receivedStreamIDs.add(BasicStreamIDFactory.createStreamID(inbound.attributeValue("id")));
                                     if (inbound.attributeValue("to") != null) receivedStreamToValues.add(inbound.attributeValue("to"));
                                     if (inbound.attributeValue("from") != null) receivedStreamFromValues.add(inbound.attributeValue("from"));
                                     switch (inbound.elements().size()) {

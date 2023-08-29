@@ -270,8 +270,8 @@ public class LocalIncomingServerSessionTest
                 result = null;
             } else {
                 // Get the _last_ stream ID.
-                final StreamID streamID = BasicStreamIDFactory.createStreamID(remoteInitiatingServerDummy.getReceivedStreamIDs().get(remoteInitiatingServerDummy.getReceivedStreamIDs().size()-1));
-                result = XMPPServer.getInstance().getSessionManager().getIncomingServerSession( streamID );
+                final StreamID lastReceivedID = remoteInitiatingServerDummy.getReceivedStreamIDs().get(remoteInitiatingServerDummy.getReceivedStreamIDs().size()-1);
+                result = XMPPServer.getInstance().getSessionManager().getIncomingServerSession( lastReceivedID );
             }
 
             // Verify results

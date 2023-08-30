@@ -18,6 +18,8 @@ package org.jivesoftware;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
+import org.jivesoftware.database.ConnectionProvider;
+import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.spi.*;
 import org.jivesoftware.openfire.user.User;
@@ -25,6 +27,7 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.JiveProperties;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -32,6 +35,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -48,6 +52,24 @@ public final class Fixtures {
     }
 
     /**
+     * Disables the persistence (of properties) to the database, setting a dummy database connection provider, unless
+     * another provider has explicitly been set.
+     */
+    public static void disableDatabasePersistence() {
+        JiveProperties.disableDatabasePersistence();
+        // The persistence of JiveProperties implicitly initializes the DbConnectionManager. Do that here, to avoid issues.
+        if (DbConnectionManager.getConnectionProvider() == null) {
+            DbConnectionManager.setConnectionProvider(new DummyConnectionProvider());
+        }
+        // The following allows JiveGlobals to persist
+        JiveGlobals.setXMLProperty("setup", "true");
+        // The following speeds up tests by avoiding DB retries
+        JiveGlobals.setXMLProperty("database.maxRetries", "0");
+        JiveGlobals.setXMLProperty("database.retryDelay", "0");
+        clearExistingProperties();
+    }
+
+    /**
      * Reconfigures the Openfire home directory to the blank test one. This allows {@link JiveGlobals#setProperty(String, String)} etc.
      * to work (and persist) in test classes without errors being displayed to stderr. Ideally should be called in a
      * {@link org.junit.BeforeClass} method.
@@ -59,12 +81,6 @@ public final class Fixtures {
         }
         final File openfireHome = new File(configFile.toURI()).getParentFile().getParentFile();
         JiveGlobals.setHomeDirectory(openfireHome.toString());
-        // The following allows JiveGlobals to persist
-        JiveGlobals.setXMLProperty("setup", "true");
-        // The following speeds up tests by avoiding DB retries
-        JiveGlobals.setXMLProperty("database.maxRetries", "0");
-        JiveGlobals.setXMLProperty("database.retryDelay", "0");
-        clearExistingProperties();
     }
 
     /**
@@ -247,6 +263,33 @@ public final class Fixtures {
         } catch (final DocumentException e) {
             throw new IllegalArgumentException("The supplied input did not contain a well-formed XML document", e);
         }
+    }
+
+    public static class DummyConnectionProvider implements ConnectionProvider {
+
+        @Override
+        public boolean isPooled()
+        {
+            return false;
+        }
+
+        @Override
+        public java.sql.Connection getConnection() throws SQLException
+        {
+            return null;
+        }
+
+        @Override
+        public void start()
+        {}
+
+        @Override
+        public void restart()
+        {}
+
+        @Override
+        public void destroy()
+        {}
     }
 
     /**

@@ -17,6 +17,7 @@ package org.jivesoftware.util;
 
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.ldap.LdapManager;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -34,6 +35,7 @@ public class LDAPTest {
     @BeforeAll
     public static void reconfigureOpenfireHome() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
     }
 
 //    @Test
@@ -53,6 +55,11 @@ public class LDAPTest {
 //        converted = LdapManager.getEnclosedDN(before);
 //        assertTrue("Conversion result "+before+" to "+converted, converted.equals(after));
 //    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
+    }
 
     @Test
     public void testRdnEscapeValue() {

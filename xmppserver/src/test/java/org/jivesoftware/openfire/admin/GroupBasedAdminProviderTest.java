@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,12 +48,12 @@ public class GroupBasedAdminProviderTest {
 
     @BeforeAll
     public static void beforeClass() throws Exception {
+        Fixtures.disableDatabasePersistence();
         Fixtures.reconfigureOpenfireHome();
     }
 
     @BeforeEach
     public void setUp() throws Exception {
-        Fixtures.clearExistingProperties();
         CacheFactory.initialize();
         GroupManager.GROUP_PROVIDER.setValue(TestGroupProvider.class);
         mockGroupName = "mock-group-name";
@@ -60,6 +61,11 @@ public class GroupBasedAdminProviderTest {
         mockGroup = mock(Group.class);
         doReturn(ADMINS).when(mockGroup).getMembers();
         adminProvider = new GroupBasedAdminProvider();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     @Test

@@ -104,6 +104,8 @@ public class GroupManagerNoMockTest extends DBTestCase
         field.setAccessible(true);
         ((List<?>)field.get(null)).clear();
         field.setAccessible(false);
+
+        Fixtures.clearExistingProperties();
     }
 
     @Override

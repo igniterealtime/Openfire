@@ -81,6 +81,7 @@ public class LocalOutgoingServerSessionTest
     @BeforeAll
     public static void generateValidKeyAndCert() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
@@ -112,8 +113,7 @@ public class LocalOutgoingServerSessionTest
      * connection.
      */
     @BeforeEach
-    public void setUpClass() throws Exception {
-        Fixtures.reconfigureOpenfireHome();
+    public void setUpEach() throws Exception {
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);

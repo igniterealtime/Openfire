@@ -38,8 +38,7 @@ import javax.net.ssl.SSLException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
@@ -56,7 +55,6 @@ public class NettySessionInitializer {
     private final int port;
     private  boolean directTLS = false;
     private final EventLoopGroup workerGroup;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private Channel channel;
 
     public NettySessionInitializer(DomainPair domainPair, int port) {
@@ -148,13 +146,8 @@ public class NettySessionInitializer {
 
     private Future<LocalSession> waitForSession(Channel channel) {
         RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) channel.attr(NettyConnectionHandler.HANDLER).get();
-
-        return executor.submit(() -> {
-            while (!stanzaHandler.isSessionAuthenticated() && !stanzaHandler.haveAttemptedAllAuthenticationMethods()) {
-                Thread.sleep(100);
-            }
-            return stanzaHandler.getSession();
-        });
+        return CompletableFuture.anyOf(stanzaHandler.isSessionAuthenticated(), stanzaHandler.haveAttemptedAllAuthenticationMethods())
+            .thenApply(o -> stanzaHandler.getSession());
     }
 
     private void sendOpeningStreamHeader(Channel channel) {

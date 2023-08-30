@@ -40,6 +40,8 @@ import java.io.StringReader;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -52,8 +54,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(RespondingServerStanzaHandler.class);
     private final DomainPair domainPair;
-    private boolean isSessionAuthenticated = false;
-    private boolean attemptedAllAuthenticationMethods;
+    private final CompletableFuture<Void> isSessionAuthenticated = new CompletableFuture<>();
+    private final CompletableFuture<Void> attemptedAllAuthenticationMethods = new CompletableFuture<>();
 
     /**
      * Creates a dedicated reader for a socket.
@@ -100,7 +102,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
         session = createLocalOutgoingServerSession(newStreamId, connection);
         connection.reinit(session);
-        if (isSessionAuthenticated() && session instanceof LocalOutgoingServerSession) {
+        if (isSessionAuthenticated.isDone() && session instanceof LocalOutgoingServerSession) {
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
         } else {
             LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
@@ -225,7 +227,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 }
 
                 // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-                isSessionAuthenticated = true;
+                isSessionAuthenticated.complete(null);
 
                 return true;
             } else {
@@ -277,7 +279,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             }
 
             // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-            isSessionAuthenticated = true;
+            isSessionAuthenticated.complete(null);
             return true;
         }
 
@@ -299,8 +301,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     private void abandonSessionInitiation() {
-        this.setAttemptedAllAuthenticationMethods(true);
         this.setSession(null);
+        this.setAttemptedAllAuthenticationMethods();
     }
 
     private boolean shouldUseTls() {
@@ -335,7 +337,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return session;
     }
 
-    public boolean isSessionAuthenticated() {
+    public CompletableFuture<Void> isSessionAuthenticated() {
         return isSessionAuthenticated;
     }
 
@@ -356,15 +358,15 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return new LocalOutgoingServerSession(domainPair.getLocal(), connection, BasicStreamIDFactory.createStreamID(streamId));
     }
 
-    public void setSessionAuthenticated(boolean authenticated) {
-        this.isSessionAuthenticated = authenticated;
+    public void setSessionAuthenticated() {
+        this.isSessionAuthenticated.complete(null);
     }
 
-    public boolean haveAttemptedAllAuthenticationMethods() {
+    public CompletableFuture<Void> haveAttemptedAllAuthenticationMethods() {
         return attemptedAllAuthenticationMethods;
     }
 
-    public void setAttemptedAllAuthenticationMethods(boolean haveAttemptedAllAuthenticationMethods) {
-        this.attemptedAllAuthenticationMethods = haveAttemptedAllAuthenticationMethods;
+    public void setAttemptedAllAuthenticationMethods() {
+        this.attemptedAllAuthenticationMethods.complete(null);
     }
 }

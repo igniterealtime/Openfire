@@ -155,8 +155,8 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                     final LocalOutgoingServerSession outgoingSession = new ServerDialback(domainPair).createOutgoingSession(port);
                     if (outgoingSession != null) {
                         Log.debug("Successfully created new session (using dialback as a fallback)!");
-                        stanzaHandler.setSessionAuthenticated(true);
                         stanzaHandler.setSession(outgoingSession);
+                        stanzaHandler.setSessionAuthenticated();
                     } else {
                         Log.warn("Unable to create a new session: Dialback (as a fallback) failed.");
                     }
@@ -164,7 +164,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                     Log.warn("Unable to create a new session: exhausted all options (not trying dialback as a fallback, as server dialback is disabled by configuration.");
                 }
 
-                stanzaHandler.setAttemptedAllAuthenticationMethods(true);
+                stanzaHandler.setAttemptedAllAuthenticationMethods();
             }
         }
 
@@ -177,7 +177,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
 
     private static void abandonSession(RespondingServerStanzaHandler stanzaHandler) {
         stanzaHandler.setSession(null);
-        stanzaHandler.setAttemptedAllAuthenticationMethods(true);
+        stanzaHandler.setAttemptedAllAuthenticationMethods();
     }
 
     private void sendNewStreamHeader(NettyConnection connection) {

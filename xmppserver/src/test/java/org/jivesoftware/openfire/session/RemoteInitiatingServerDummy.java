@@ -123,10 +123,12 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     public synchronized void stopProcessingService() throws InterruptedException
     {
         processingService.shutdown();
+
+        /* This is graceful, but takes a lot of time when combining all unit test executions.
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
             Thread.sleep(Math.max(100, SO_TIMEOUT.dividedBy(50).toMillis()));
-        }
+        } */
         if (!processingService.isTerminated()) {
             processingService.shutdownNow();
         }
@@ -139,10 +141,11 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         }
         dialbackAcceptor.stop();
         dialbackAcceptThread.interrupt();
+        /* This is graceful, but takes a lot of time when combining all unit test executions.
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && dialbackAcceptThread.getState() != Thread.State.TERMINATED) {
             Thread.sleep(Math.max(10, SO_TIMEOUT.dividedBy(50).toMillis()));
-        }
+        } */
         final Thread.State finalState = dialbackAcceptThread.getState();
         if (finalState != Thread.State.TERMINATED) {
             if (doLog) System.err.println("Dialback Accept thread not terminating after it was stopped. Current state: " + finalState);

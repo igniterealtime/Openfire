@@ -114,10 +114,12 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
     {
         acceptor.stop();
         acceptThread.interrupt();
+
+        /* This is graceful, but takes a lot of time when combining all unit test executions.
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && acceptThread.getState() != Thread.State.TERMINATED) {
             Thread.sleep(SO_TIMEOUT.dividedBy(10).toMillis());
-        }
+        } */
         final Thread.State finalState = acceptThread.getState();
         if (finalState != Thread.State.TERMINATED) {
             if (doLog) System.err.println("Accept thread not terminating after it was stopped. Current state: " + finalState);
@@ -130,10 +132,13 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
     public synchronized void stopProcessingService() throws InterruptedException
     {
         processingService.shutdown();
+
+        /* This is graceful, but takes a lot of time when combining all unit test executions.
         final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
         while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
             Thread.sleep(SO_TIMEOUT.dividedBy(10).toMillis());
-        }
+        } */
+
         if (!processingService.isTerminated()) {
             processingService.shutdownNow();
         }

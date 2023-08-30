@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,6 +83,8 @@ public class LocalIncomingServerSessionTest
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        JiveGlobals.setProperty("xmpp.socket.netty.graceful-shutdown.quiet-period", "0");
+        JiveGlobals.setProperty("xmpp.socket.netty.graceful-shutdown.timeout", "0");
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
 
@@ -113,7 +116,6 @@ public class LocalIncomingServerSessionTest
      */
     @BeforeEach
     public void setUpEach() throws Exception {
-        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
 
@@ -158,6 +160,16 @@ public class LocalIncomingServerSessionTest
             remoteInitiatingServerDummy = null;
         }
 
+        Fixtures.clearExistingProperties(
+            Set.of(
+                "xmpp.domain",
+                "xmpp.socket.netty.graceful-shutdown.quiet-period",
+                "xmpp.socket.netty.graceful-shutdown.timeout"
+            ));
+    }
+
+    @AfterAll
+    public static void tearDownClass() {
         Fixtures.clearExistingProperties();
     }
 
@@ -180,7 +192,6 @@ public class LocalIncomingServerSessionTest
         final ExpectedOutcome expected = ExpectedOutcome.generateExpectedOutcome(remoteServerSettings, localServerSettings);
         if (RemoteInitiatingServerDummy.doLog) System.out.println("Executing test:\n - Local Server, Recipient, System Under Test Settings: " + localServerSettings + "\n - Remote Server, Initiator, dummy/mock server Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
-        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
         final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
         ConnectionListener connectionListener = null;

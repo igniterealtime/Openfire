@@ -31,15 +31,19 @@ import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
 import static org.jivesoftware.openfire.session.Session.Log;
@@ -49,6 +53,26 @@ import static org.jivesoftware.openfire.session.Session.Log;
  * Initialises an outgoing netty channel for outbound S2S
  */
 public class NettySessionInitializer {
+
+    /**
+     * The inactivity duration after which a Netty executor can be shutdown gracefully.
+     */
+    public static final SystemProperty<Duration> GRACEFUL_SHUTDOWN_QUIET_PERIOD = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.socket.netty.graceful-shutdown.quiet-period")
+        .setDefaultValue(Duration.ofSeconds(2))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum amount of time to wait until a Netty executor is shutdown regardless if a task was submitted during the quiet period.
+     */
+    public static final SystemProperty<Duration> GRACEFUL_SHUTDOWN_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.socket.netty.graceful-shutdown.timeout")
+        .setDefaultValue(Duration.ofSeconds(15))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(false)
+        .build();
 
     private static final Logger LOG = LoggerFactory.getLogger(NettySessionInitializer.class);
     private final DomainPair domainPair;
@@ -141,7 +165,7 @@ public class NettySessionInitializer {
         if (channel != null) {
             channel.close();
         }
-        workerGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private Future<LocalSession> waitForSession(Channel channel) {

@@ -27,13 +27,19 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.TimeUnit;
 
 import static org.jivesoftware.openfire.nio.NettyConnection.SSL_HANDLER_NAME;
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
+import static org.jivesoftware.openfire.nio.NettySessionInitializer.GRACEFUL_SHUTDOWN_QUIET_PERIOD;
+import static org.jivesoftware.openfire.nio.NettySessionInitializer.GRACEFUL_SHUTDOWN_TIMEOUT;
 
 /**
  * Responsible for accepting new (socket) connections, using Java NIO implementation provided by the Netty framework.
@@ -166,10 +172,10 @@ class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     public static void shutdownEventLoopGroups() {
         if (!PARENT_GROUP.isShuttingDown()) {
-            PARENT_GROUP.shutdownGracefully();
+            PARENT_GROUP.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
         if (!CHILD_GROUP.isShuttingDown()) {
-            CHILD_GROUP.shutdownGracefully();
+            CHILD_GROUP.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 

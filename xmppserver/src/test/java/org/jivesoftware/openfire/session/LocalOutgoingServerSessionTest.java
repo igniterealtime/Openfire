@@ -171,7 +171,7 @@ public class LocalOutgoingServerSessionTest
         {
             final Connection.TLSPolicy tlsPolicy = Connection.TLSPolicy.valueOf(JiveGlobals.getProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.optional.toString()));
             final Set<String> suites = Set.of("TLS_AES_256_GCM_SHA384","TLS_AES_128_GCM_SHA256","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_RSA_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_DHE_DSS_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_DSS_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_RSA_WITH_AES_256_CBC_SHA256","TLS_DHE_DSS_WITH_AES_256_CBC_SHA256","TLS_DHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_DSS_WITH_AES_128_CBC_SHA256","TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_RSA_WITH_AES_256_CBC_SHA","TLS_DHE_DSS_WITH_AES_256_CBC_SHA","TLS_DHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_DSS_WITH_AES_128_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA","TLS_RSA_WITH_AES_256_GCM_SHA384","TLS_RSA_WITH_AES_128_GCM_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA256","TLS_RSA_WITH_AES_128_CBC_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA","TLS_RSA_WITH_AES_128_CBC_SHA","TLS_EMPTY_RENEGOTIATION_INFO_SCSV");
-            final Set<String> protocols = Set.of("TLSv1.2");
+            final Set<String> protocols = Set.of("TLSv1.3", "TLSv1.2");
             return new ConnectionConfiguration(ConnectionType.SOCKET_S2S, true, 10, -1, Connection.ClientAuth.wanted, null, 9999, tlsPolicy, identityStoreConfig, trustStoreConfig, true, true, protocols, suites, Connection.CompressionPolicy.optional, true );
         }
     }
@@ -227,15 +227,7 @@ public class LocalOutgoingServerSessionTest
     public void outgoingTest(final ServerSettings localServerSettings, final ServerSettings remoteServerSettings)
         throws Exception
     {
-        final ExpectedOutcome expected;
-        if (localServerSettings.encryptionPolicy == Connection.TLSPolicy.optional && localServerSettings.certificateState == ServerSettings.CertificateState.INVALID && localServerSettings.dialbackSupported &&
-            remoteServerSettings.encryptionPolicy == Connection.TLSPolicy.optional && remoteServerSettings.certificateState == ServerSettings.CertificateState.VALID && remoteServerSettings.dialbackSupported) {
-            // TODO: can we improve on this test to explicitly verify the outcome if the first connection?
-            expected = new ExpectedOutcome();
-            expected.set(NON_ENCRYPTED_WITH_DIALBACK_AUTH, "For this very specific configuration, the expected outcome is 'NO_CONNECTION'. However, Openfire will (and should) immediately make a new connection attempt (without TLS), that SHOULD succeed.");
-        } else {
-            expected = ExpectedOutcome.generateExpectedOutcome(localServerSettings, remoteServerSettings);
-        }
+        final ExpectedOutcome expected = ExpectedOutcome.generateExpectedOutcome(localServerSettings, remoteServerSettings);
         if (RemoteReceivingServerDummy.doLog) System.out.println("Executing test:\n - Local Server (Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
@@ -319,6 +311,7 @@ public class LocalOutgoingServerSessionTest
                     assertTrue(result.isEncrypted());
                     assertTrue(result.isAuthenticated());
                     assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
+                    assertEquals( "TLSv1.3", result.getConnection().getTLSProtocolName().get());
                     break;
                 case ENCRYPTED_WITH_SASLEXTERNAL_AUTH:
                     assertNotNull(result);
@@ -326,6 +319,7 @@ public class LocalOutgoingServerSessionTest
                     assertTrue(result.isEncrypted());
                     assertTrue(result.isAuthenticated());
                     assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
+                    assertEquals( "TLSv1.3", result.getConnection().getTLSProtocolName().get());
                     break;
             }
         } finally {

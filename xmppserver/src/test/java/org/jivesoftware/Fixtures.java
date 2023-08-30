@@ -97,6 +97,24 @@ public final class Fixtures {
             .forEach(JiveGlobals::deleteProperty);
     }
 
+    /**
+     * As {@link #reconfigureOpenfireHome()} allows properties to persist, this method clears all existing properties
+     * (both XML and 'database') to ensure clean test output. Ideally should be called in a {@link org.junit.Before} method.
+     *
+     * @param except properties that are not cleared if they are set.
+     */
+    public static void clearExistingProperties(Set<String> except) {
+        JiveGlobals.getXMLPropertyNames().stream()
+            .filter(name -> !"setup".equals(name))
+            .filter(name -> !"database.maxRetries".equals(name))
+            .filter(name -> !"database.retryDelay".equals(name))
+            .filter(name -> !except.contains(name))
+            .forEach(JiveGlobals::deleteXMLProperty);
+        JiveGlobals.getPropertyNames().stream()
+            .filter(name -> !except.contains(name))
+            .forEach(JiveGlobals::deleteProperty);
+    }
+
     public static XMPPServer mockXMPPServer() {
         final XMPPServer xmppServer = mock(XMPPServer.class, withSettings().lenient());
         doAnswer(invocationOnMock -> {

@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +84,8 @@ public class LocalOutgoingServerSessionTest
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        JiveGlobals.setProperty("xmpp.socket.netty.graceful-shutdown.quiet-period", "0");
+        JiveGlobals.setProperty("xmpp.socket.netty.graceful-shutdown.timeout", "0");
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
 
@@ -114,10 +117,8 @@ public class LocalOutgoingServerSessionTest
      */
     @BeforeEach
     public void setUpEach() throws Exception {
-        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
-
         final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 
         // Use a temporary file to hold the identity store that is used by the tests.
@@ -196,6 +197,16 @@ public class LocalOutgoingServerSessionTest
             remoteReceivingServerDummy = null;
         }
 
+        Fixtures.clearExistingProperties(
+            Set.of(
+                "xmpp.domain",
+                "xmpp.socket.netty.graceful-shutdown.quiet-period",
+                "xmpp.socket.netty.graceful-shutdown.timeout"
+            ));
+    }
+
+    @AfterAll
+    public static void tearDownClass() {
         Fixtures.clearExistingProperties();
     }
     
@@ -229,6 +240,7 @@ public class LocalOutgoingServerSessionTest
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(1));
+
         final TrustStore trustStore = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore(ConnectionType.SOCKET_S2S);
         final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore(ConnectionType.SOCKET_S2S);
 

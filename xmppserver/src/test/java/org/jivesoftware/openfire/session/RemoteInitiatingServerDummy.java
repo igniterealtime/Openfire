@@ -2,6 +2,7 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -94,9 +95,10 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             // continuing to prevent a race condition.
             final Instant stopWaiting = Instant.now().plus(500, ChronoUnit.MILLIS);
             try {
+                final StreamID lastReceivedID = getReceivedStreamIDs().get(getReceivedStreamIDs().size()-1);
+                final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
                 while (Instant.now().isBefore(stopWaiting)) {
-                    final StreamID lastReceivedID = getReceivedStreamIDs().get(getReceivedStreamIDs().size()-1);
-                    if (XMPPServer.getInstance().getSessionManager().getIncomingServerSession( lastReceivedID ) != null) {
+                    if (sessionManager.getIncomingServerSession( lastReceivedID ) != null) {
                         break;
                     }
                     Thread.sleep(10);

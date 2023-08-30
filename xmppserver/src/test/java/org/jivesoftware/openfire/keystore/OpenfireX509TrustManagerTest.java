@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.keystore;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -50,10 +51,20 @@ public class OpenfireX509TrustManagerTest
     private KeyStore trustStore;
     private String location; // location on disc for the keystore. Used to clean-up after each test.
 
-    private X509Certificate[] validChain;
-    private X509Certificate[] expiredIntChain;
-    private X509Certificate[] expiredRootChain;
-    private X509Certificate[] untrustedCAChain;
+    private static X509Certificate[] validChain;
+    private static X509Certificate[] expiredIntChain;
+    private static X509Certificate[] expiredRootChain;
+    private static X509Certificate[] untrustedCAChain;
+
+    @BeforeAll
+    public static void createChains() throws Exception
+    {
+        // Populate the store with a valid CA certificate.
+        validChain       = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
+        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert().getCertificateChain();
+        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
+        untrustedCAChain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
+    }
 
     @BeforeEach
     public void createFixture() throws Exception
@@ -65,12 +76,6 @@ public class OpenfireX509TrustManagerTest
         trustStore = KeyStore.getInstance( KeyStore.getDefaultType());
         final String password = "TS%WV@# aSG 4";
         trustStore.load( null, password.toCharArray() );
-
-        // Populate the store with a valid CA certificate.
-        validChain       = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
-        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert().getCertificateChain();
-        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
-        untrustedCAChain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
 
         trustStore.setCertificateEntry( getLast( validChain       ).getSubjectDN().getName(), getLast( validChain       ) );
         trustStore.setCertificateEntry( getLast( expiredIntChain  ).getSubjectDN().getName(), getLast( expiredIntChain  ) );
@@ -98,8 +103,6 @@ public class OpenfireX509TrustManagerTest
     public void tearDown() throws Exception
     {
         // Attempt to delete any left-overs from the test.
-        validChain = null;
-
         if ( trustStore != null)
         {
             trustStore = null;

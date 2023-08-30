@@ -531,7 +531,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             if (doLog) System.out.println("Received StartTLS proceed.");
             if (doLog) System.out.println("Replace the socket with one that will do TLS on the next inbound and outbound data");
 
-            final SSLContext sc = SSLContext.getInstance("TLSv1.2");
+            final SSLContext sc = SSLContext.getInstance("TLSv1.3");
 
             TrustManager[] tm = createTrustManagerThatTrustsAll();
             SecureRandom random = new SecureRandom();

@@ -365,7 +365,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
             if (doLog) System.out.println("Replace the socket with one that will do TLS on the next inbound and outbound data");
 
-            final SSLContext sc = SSLContext.getInstance("TLSv1.2");
+            final SSLContext sc = SSLContext.getInstance("TLSv1.3");
 
             sc.init(createKeyManager(generatedPKIX == null ? null : generatedPKIX.getKeyPair(), generatedPKIX == null ? null : generatedPKIX.getCertificateChain()), createTrustManagerThatTrustsAll(), new java.security.SecureRandom());
             SSLContext.setDefault(sc);

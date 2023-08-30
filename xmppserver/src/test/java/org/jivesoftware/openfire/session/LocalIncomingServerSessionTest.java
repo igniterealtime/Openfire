@@ -310,6 +310,7 @@ public class LocalIncomingServerSessionTest
                     assertTrue(result.isEncrypted());
                     assertTrue(result.isAuthenticated());
                     assertEquals(ServerSession.AuthenticationMethod.DIALBACK, result.getAuthenticationMethod());
+                    assertEquals( "TLSv1.3", result.getConnection().getTLSProtocolName().get());
 
                     // Assertions that are specific to OF-1913:
                     assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamIDs().size());
@@ -323,6 +324,7 @@ public class LocalIncomingServerSessionTest
                     assertTrue(result.isEncrypted());
                     assertTrue(result.isAuthenticated());
                     assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, result.getAuthenticationMethod());
+                    assertEquals("TLSv1.3", result.getConnection().getTLSProtocolName().get());
 
                     // Assertions that are specific to OF-1913:
                     assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamIDs().size());

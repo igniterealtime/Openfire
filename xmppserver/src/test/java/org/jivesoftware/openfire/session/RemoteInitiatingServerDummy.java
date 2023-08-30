@@ -213,7 +213,6 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                     final OutputStream os = socket.getOutputStream();
                     if (doLog) System.out.println("DIALBACK AUTH SERVER: Accepted new socket connection.");
 
-                    Thread.sleep(100);
                     final byte[] buffer = new byte[1024 * 16];
                     int count;
                     while ((count = is.read(buffer)) > 0) {

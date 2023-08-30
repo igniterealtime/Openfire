@@ -19,7 +19,6 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.DNSUtil;
-import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -81,6 +80,7 @@ public class LocalIncomingServerSessionTest
     @BeforeAll
     public static void generateValidKeyAndCert() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
@@ -113,7 +113,6 @@ public class LocalIncomingServerSessionTest
      */
     @BeforeEach
     public void setUpEach() throws Exception {
-        Fixtures.reconfigureOpenfireHome();
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);

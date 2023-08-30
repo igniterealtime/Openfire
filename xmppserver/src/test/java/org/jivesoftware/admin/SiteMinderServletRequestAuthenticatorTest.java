@@ -18,6 +18,8 @@ package org.jivesoftware.admin;
 
 
 import org.jivesoftware.Fixtures;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,10 +40,20 @@ public class SiteMinderServletRequestAuthenticatorTest {
 
     @Mock private HttpServletRequest request;
 
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+        Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
+    }
+
     @BeforeEach
     public void setUp() throws Exception {
-        Fixtures.reconfigureOpenfireHome();
         authenticator = new SiteMinderServletRequestAuthenticator();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     @Test

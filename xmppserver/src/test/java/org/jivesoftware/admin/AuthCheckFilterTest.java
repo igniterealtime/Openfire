@@ -19,6 +19,7 @@ package org.jivesoftware.admin;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,20 +59,22 @@ public class AuthCheckFilterTest {
     @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
     }
 
     @BeforeEach
     public void setUp() {
-
-        Fixtures.clearExistingProperties();
-
         lenient().doReturn("/uri/to/page").when(request).getRequestURI();
         lenient().doReturn(httpSession).when(request).getSession();
         lenient().doReturn(remoteAddr).when(request).getRemoteAddr();
 
         lenient().doReturn(true).when(adminManager).isUserAdmin(adminUser, true);
         lenient().doReturn(false).when(adminManager).isUserAdmin(normalUser, true);
+    }
 
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     @Test

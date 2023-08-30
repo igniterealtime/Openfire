@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.cluster;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,13 +42,11 @@ public class ClusterMonitorTest {
     @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
     }
 
     @BeforeEach
     public void setUp() {
-
-        Fixtures.clearExistingProperties();
-
         //noinspection deprecation
         XMPPServer.setInstance(xmppServer);
 
@@ -58,6 +57,11 @@ public class ClusterMonitorTest {
         clusterMonitor = new ClusterMonitor();
         clusterMonitor.initialize(xmppServer);
         clusterMonitor.start();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     @Test

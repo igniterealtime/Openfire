@@ -19,6 +19,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,14 +45,18 @@ public class SessionPacketRouterTest
     @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
     }
 
     @BeforeEach
     public void setUp() {
-        Fixtures.clearExistingProperties();
-
         //noinspection deprecation
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     /**

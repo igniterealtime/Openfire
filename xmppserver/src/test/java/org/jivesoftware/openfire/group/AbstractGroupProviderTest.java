@@ -100,6 +100,8 @@ public class AbstractGroupProviderTest extends DBTestCase {
             field.set(null, null);
             field.setAccessible(false);
         }
+
+        Fixtures.clearExistingProperties();
     }
 
     /**

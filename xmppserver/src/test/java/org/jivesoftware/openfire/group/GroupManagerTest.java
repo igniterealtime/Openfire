@@ -21,10 +21,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,6 +53,7 @@ public class GroupManagerTest {
     @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
         groupCache = CacheFactory.createCache("Group");
         groupCache.clear();
         JiveGlobals.setProperty("provider.group.className", TestGroupProvider.class.getName());

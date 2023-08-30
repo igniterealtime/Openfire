@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.auth.DefaultAuthProvider;
 import org.jivesoftware.openfire.auth.HybridAuthProvider;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.ldap.LdapAuthProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,13 +55,18 @@ public class SystemPropertyTest {
     @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
     }
 
     @SuppressWarnings({"deprecation"})
     @BeforeEach
     public void setUp() {
-        Fixtures.clearExistingProperties();
         XMPPServer.setInstance(xmppServer);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     @Test

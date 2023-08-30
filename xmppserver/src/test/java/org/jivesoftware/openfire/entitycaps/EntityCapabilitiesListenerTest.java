@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.entitycaps;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,13 +56,12 @@ public class EntityCapabilitiesListenerTest
     @BeforeAll
     public static void beforeClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
         CacheFactory.initialize();
     }
 
     @BeforeEach
     public void setupManager() {
-        Fixtures.clearExistingProperties();
-
         //noinspection deprecation
         XMPPServer.setInstance(xmppServer);
 
@@ -69,6 +69,11 @@ public class EntityCapabilitiesListenerTest
         manager.initialize(xmppServer);
         manager.start();
         manager.clearCaches();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
     }
 
     /**

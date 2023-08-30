@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,13 +66,11 @@ public class UserManagerTest {
     @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
     }
 
     @BeforeEach
     public void setUp() throws Exception {
-
-        Fixtures.clearExistingProperties();
-
         // Ensure the cache's are cleared
         CacheFactory.createCache("User").clear();
         CacheFactory.createCache("Remote Users Existence").clear();
@@ -89,7 +88,12 @@ public class UserManagerTest {
 
         XMPPServer.setInstance(xmppServer);
     }
-    
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
+    }
+
     @Test
     public void canGetUserByUserNameForExistingUsers()  throws Exception{
     	final User result = userManager.getUser(USER_ID);

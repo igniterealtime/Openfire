@@ -48,12 +48,30 @@ public class JiveProperties implements Map<String, String> {
     private static final String UPDATE_PROPERTY = "UPDATE ofProperty SET propValue=?, encrypted=?, iv=? WHERE name=?";
     private static final String DELETE_PROPERTY = "DELETE FROM ofProperty WHERE name = ? OR name LIKE ?";
 
+    private static boolean disableDatabasePersistence = false;
     private static JiveProperties instance = null;
 
     // The map of property keys to their values
     private Map<String, String> properties;
     // The map of property keys to a boolean indicating if they are encrypted or not
     private Map<String, Boolean> encrypted;
+
+    /**
+     * Prevent JiveProperties from interacting with the database.
+     *
+     * On rare occasions - that typically involve running tests - Openfire code will be invoked without a database being
+     * available. In such cases, it's undesirable for properties to be retrieved and stored to the database, as this
+     * will require a significant amount of resource usage, but will silently fail.
+     *
+     * This method can only be invoked before {@link #getInstance()} is being invoked. This intends to prevent a
+     * behavioral change at some time after the server was started.
+     */
+    public synchronized static void disableDatabasePersistence() {
+        if (instance != null) {
+            throw new IllegalStateException("Cannot use this method after JiveProperties#getInstance() is already invoked (which it has).");
+        }
+        disableDatabasePersistence = true;
+    }
 
     /**
      * Returns a singleton instance of JiveProperties.
@@ -349,6 +367,10 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void insertProperty(String name, String value, boolean isEncrypted) {
+        if (disableDatabasePersistence) {
+            return;
+        }
+
         Encryptor encryptor = getEncryptor(true);
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -381,6 +403,10 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void updateProperty(String name, String value, boolean isEncrypted) {
+        if (disableDatabasePersistence) {
+            return;
+        }
+
         Encryptor encryptor = getEncryptor(true);
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -413,6 +439,10 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void deleteProperty(String name) {
+        if (disableDatabasePersistence) {
+            return;
+        }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -431,6 +461,9 @@ public class JiveProperties implements Map<String, String> {
     }
 
     private void loadProperties() {
+        if (disableDatabasePersistence) {
+            return;
+        }
         Encryptor encryptor = getEncryptor();
         Connection con = null;
         PreparedStatement pstmt = null;

@@ -1,9 +1,6 @@
 package org.jivesoftware.openfire.keystore;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -58,7 +55,7 @@ public class CheckChainTrustedTest
      * certificate represents the trust anchor (the 'root certificate'). This root certificate is present
      * in {@link #trustStore} (refreshed before every test invocation).
      */
-    private X509Certificate[] validChain;
+    private static X509Certificate[] validChain;
 
     /**
      * A chain of certificates where the first certificate represents the end-entity certificate and the last
@@ -66,7 +63,7 @@ public class CheckChainTrustedTest
      * in {@link #trustStore}. One of the intermediate certificates in this chain is expired. The chain is otherwise
      * valid. (refreshed before every test invocation).
      */
-    private X509Certificate[] expiredIntChain;
+    private static X509Certificate[] expiredIntChain;
 
     /**
      * A chain of certificates where the first certificate represents the end-entity certificate and the last
@@ -74,7 +71,7 @@ public class CheckChainTrustedTest
      * in {@link #trustStore}. The root certificate in this chain is expired. The chain is otherwise
      * valid. (refreshed before every test invocation).
      */
-    private X509Certificate[] expiredRootChain;
+    private static X509Certificate[] expiredRootChain;
 
     /**
      * The system under test (refreshed before every test invocation).
@@ -87,22 +84,28 @@ public class CheckChainTrustedTest
         this.checkValidity = checkValidity;
     }
 
+    @BeforeClass
+    public static void createChains() throws Exception
+    {
+        // Generate re-usable certificate chains (these are resource intensive to generate).
+        validChain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
+        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert().getCertificateChain();
+        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
+    }
+
     @Before
     public void createFixture() throws Exception
     {
         trustStore = KeyStore.getInstance( KeyStore.getDefaultType() );
         trustStore.load( null, null );
 
-        // Generate a valid chain and add its root certificate to the trust store.
-        validChain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
+        // Add root certificate of a valid chain to the trust store.
         trustStore.setCertificateEntry( getLast( validChain ).getSubjectDN().getName(), getLast( validChain ) );
 
-        // Generate a chain with an expired intermediate certificate and add its root certificate to the trust store.
-        expiredIntChain  = KeystoreTestUtils.generateCertificateChainWithExpiredIntermediateCert().getCertificateChain();
+        // Add root certificate of a chain with an expired intermediate certificate to the trust store.
         trustStore.setCertificateEntry( getLast( expiredIntChain ).getSubjectDN().getName(), getLast( expiredIntChain ) );
 
-        // Generate a chain with an expired root certificate and add its root certificate to the trust store.
-        expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
+        // Add root certificate of a chain wwith an expired root certificate to the trust store.
         trustStore.setCertificateEntry( getLast( expiredRootChain ).getSubjectDN().getName(), getLast( expiredRootChain ) );
 
         // Reset the system under test before each test.

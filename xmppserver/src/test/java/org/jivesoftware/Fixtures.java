@@ -32,9 +32,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -79,8 +80,8 @@ public final class Fixtures {
         if (configFile == null) {
             throw new IllegalStateException("Unable to read openfire.xml file; does conf/openfire.xml exist in the test classpath, i.e. test/resources?");
         }
-        final File openfireHome = new File(configFile.toURI()).getParentFile().getParentFile();
-        JiveGlobals.setHomeDirectory(openfireHome.toString());
+        final Path openfireHome = Paths.get(configFile.toURI()).getParent().getParent();
+        JiveGlobals.setHomeDirectory(openfireHome);
     }
 
     /**

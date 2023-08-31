@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -98,7 +97,7 @@ public class FaviconServlet extends HttpServlet {
             .build();
         // Load the default favicon to use when no favicon was found of a remote host
         try {
-           defaultBytes = Files.readAllBytes(Paths.get(JiveGlobals.getHomeDirectory(), "plugins/admin/webapp/images/server_16x16.gif"));
+            defaultBytes = Files.readAllBytes(JiveGlobals.getHomeDirectory().resolve("plugins").resolve("admin").resolve("webapp").resolve("images").resolve("server_16x16.gif"));
         }
         catch (final IOException e) {
             LOGGER.warn("Unable to retrieve default favicon", e);

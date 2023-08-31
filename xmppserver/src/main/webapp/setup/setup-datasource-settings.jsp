@@ -3,10 +3,10 @@
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.EmbeddedConnectionProvider,
                  org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="java.io.File"%>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.nio.file.Files" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -80,7 +80,7 @@
     // Defaults
     if (mode == null) {
         // If the "embedded-database" directory exists, select to the embedded db as the default.
-        if (new File(JiveGlobals.getHomeDirectory(), "embedded-db").exists()) {
+        if (Files.exists(JiveGlobals.getHomeDirectory().resolve("embedded-db"))) {
             mode = EMBEDDED;
         }
         // Otherwise default to standard.

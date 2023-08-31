@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,9 +119,9 @@ public class PluginManager
      *
      * @param pluginDir the directory containing all Openfire plugins, typically OPENFIRE_HOME/plugins/
      */
-    public PluginManager( File pluginDir )
+    public PluginManager( Path pluginDir )
     {
-        this.pluginDirectory = pluginDir.toPath();
+        this.pluginDirectory = pluginDir;
         pluginMonitor = new PluginMonitor( this );
     }
 

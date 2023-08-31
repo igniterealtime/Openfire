@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -166,7 +169,7 @@ public class XMPPServer {
      * Location of the home directory. All configuration files should be
      * located here.
      */
-    private File openfireHome;
+    private Path openfireHome;
     private ClassLoader loader;
 
     private PluginManager pluginManager;
@@ -657,7 +660,7 @@ public class XMPPServer {
             initialize();
 
             // Create PluginManager now (but don't start it) so that modules may use it
-            File pluginDir = new File(openfireHome, "plugins");
+            Path pluginDir = openfireHome.resolve("plugins");
             pluginManager = new PluginManager(pluginDir);
 
             // If the server has already been setup then we can start all the server's modules
@@ -1037,15 +1040,15 @@ public class XMPPServer {
      * @throws java.io.FileNotFoundException if there was a problem with the home
      *                                       directory provided
      */
-    private File verifyHome(String homeGuess, String jiveConfigName) throws FileNotFoundException {
-        File openfireHome = new File(homeGuess);
-        File configFile = new File(openfireHome, jiveConfigName);
-        if (!configFile.exists()) {
+    private Path verifyHome(String homeGuess, String jiveConfigName) throws FileNotFoundException {
+        final Path openfireHome = Paths.get(homeGuess);
+        final Path configFile = openfireHome.resolve(jiveConfigName);
+        if (!Files.exists(configFile)) {
             throw new FileNotFoundException();
         }
         else {
             try {
-                return new File(openfireHome.getCanonicalPath());
+                return openfireHome.toAbsolutePath();
             }
             catch (Exception ex) {
                 throw new FileNotFoundException();
@@ -1085,7 +1088,7 @@ public class XMPPServer {
             // by looking for the config file
             if (openfireHome == null) {
                 try {
-                    openfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
+                    openfireHome = verifyHome("..", jiveConfigName);
                 } catch (IOException ie) {
                     // Ignore.
                 }
@@ -1128,7 +1131,7 @@ public class XMPPServer {
         }
         else {
             // Set the home directory for the config file
-            JiveGlobals.setHomeDirectory(openfireHome.toString());
+            JiveGlobals.setHomeDirectory(openfireHome);
             // Set the name of the config file
             JiveGlobals.setConfigName(configName);
         }

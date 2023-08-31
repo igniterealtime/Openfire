@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,43 +16,25 @@
 
 package org.jivesoftware.openfire.container;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.dom4j.Document;
 import org.jivesoftware.admin.FlashMessageTag;
 import org.jivesoftware.admin.PluginFilter;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.WebXmlUtils;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.GenericServlet;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
+import javax.servlet.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -541,14 +523,14 @@ public class PluginServlet extends HttpServlet {
             contextPath = pathInfo.substring(index + parts[1].length());
         }
 
-        File pluginDirectory = new File(JiveGlobals.getHomeDirectory(), "plugins");
-        File file = new File(pluginDirectory, parts[1] + File.separator + "web" + contextPath);
+        Path pluginDirectory = JiveGlobals.getHomeDirectory().resolve("plugins");
+        Path file = pluginDirectory.resolve(parts[1]).resolve("web").resolve(contextPath);
 
         if ( !ALLOW_LOCAL_FILE_READING.getValue() ) {
             // Ensure that the file that's being served is a file that is part of Openfire. This guards against
             // accessing files from the operating system, or other files that shouldn't be accessible via the web (OF-1886).
-            final Path absoluteHome = new File( JiveGlobals.getHomeDirectory() ).toPath().normalize().toAbsolutePath();
-            final Path absoluteLookup = file.toPath().normalize().toAbsolutePath();
+            final Path absoluteHome = JiveGlobals.getHomeDirectory().normalize().toAbsolutePath();
+            final Path absoluteLookup = file.normalize().toAbsolutePath();
             if ( !absoluteLookup.startsWith( absoluteHome ) )
             {
                 Log.trace("Unable to handle 'other' request (forbidden path): {}", pathInfo);
@@ -557,7 +539,7 @@ public class PluginServlet extends HttpServlet {
             }
         }
 
-        if (!file.exists()) {
+        if (!Files.exists(file)) {
             Log.trace("Unable to handle 'other' request (not found): {}", pathInfo);
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -570,18 +552,18 @@ public class PluginServlet extends HttpServlet {
         response.setContentType(contentType);
         // Write out the resource to the user.
         Log.trace("Handling 'other' request with a response content type of {}: {}", contentType, pathInfo);
-        try (InputStream in = new BufferedInputStream(new FileInputStream(file))) {
-            try (ServletOutputStream out = response.getOutputStream()) {
+        // Set the size of the file.
+        response.setContentLength((int) Files.size(file));
+        Files.readAllBytes(file);
 
-                // Set the size of the file.
-                response.setContentLength((int) file.length());
-
-                // Use a 1K buffer.
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len = in.read(buf)) != -1) {
-                    out.write(buf, 0, len);
-                }
+        try (final BufferedInputStream in = new BufferedInputStream(Files.newInputStream(file));
+             final ServletOutputStream out = response.getOutputStream())
+        {
+            // Use a 32K buffer.
+            final byte[] buf = new byte[32*1024];
+            int len;
+            while ((len = in.read(buf)) != -1) {
+                out.write(buf, 0, len);
             }
         }
     }

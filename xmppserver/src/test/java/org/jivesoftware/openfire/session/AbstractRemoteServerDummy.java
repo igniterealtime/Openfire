@@ -45,7 +45,7 @@ public class AbstractRemoteServerDummy
     private final static KeystoreTestUtils.ResultHolder VALID_CERTIFICATE_CHAIN;
     private final static KeystoreTestUtils.ResultHolder EXPIRED_CERTIFICATE_CHAIN;
 
-    public static final Duration SO_TIMEOUT = Duration.ofMillis(50);
+    public static final Duration SO_TIMEOUT = Duration.ofMillis(100);
     protected boolean useExpiredEndEntityCertificate;
     protected boolean useSelfSignedCertificate;
     protected boolean disableDialback;

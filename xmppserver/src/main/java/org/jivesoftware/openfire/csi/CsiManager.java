@@ -126,6 +126,7 @@ public class CsiManager
                 break;
             case "inactive":
                 deactivate();
+                break;
             default:
                 Log.warn("Unable to process element that was expected to be a CSI nonza for {}: {}", session, nonza);
         }

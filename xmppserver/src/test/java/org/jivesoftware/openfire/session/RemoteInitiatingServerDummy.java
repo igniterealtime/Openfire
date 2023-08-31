@@ -31,7 +31,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
     /**
      * When switched to 'true', most XMPP interaction will be printed to standard-out.
      */
-    public static final boolean doLog = false;
+    public static final boolean doLog = true;
 
     private ServerSocket dialbackAuthoritativeServer;
     private Thread dialbackAcceptThread;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,9 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -63,23 +64,22 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
 
     @Override
     public void start() {
-        File databaseDir = new File(JiveGlobals.getHomeDirectory(), File.separator + "embedded-db");
-        // If the database doesn't exist, create it.
-        if (!databaseDir.exists()) {
-            databaseDir.mkdirs();
+        final Path databaseDir = JiveGlobals.getHomeDirectory().resolve("embedded-db");
+        try {
+            // If the database doesn't exist, create it.
+            if (!Files.exists(databaseDir)) {
+                Files.createDirectory(databaseDir);
+            }
+        } catch (IOException e) {
+            Log.error("Unable to create 'embedded-db' directory", e);
         }
 
-        try {
-            serverURL = "jdbc:hsqldb:" + databaseDir.getCanonicalPath() + File.separator + "openfire";
-        }
-        catch (IOException ioe) {
-            Log.error("EmbeddedConnectionProvider: Error starting connection pool: ", ioe);
-        }
+        serverURL = "jdbc:hsqldb:" + databaseDir.resolve("openfire");
         final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, "sa", "");
         final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         poolableConnectionFactory.setMaxConnLifetimeMillis(Duration.ofHours(12).toMillis());
 
-        final GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+        final GenericObjectPoolConfig<PoolableConnection> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMinIdle(3);
         poolConfig.setMaxTotal(25);
         final GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);

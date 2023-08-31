@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -83,25 +86,10 @@ public class XMLProperties {
      * Note that an instance created by this constructor cannot be used to persist changes (as it is not backed by a file).
      *
      * @throws IOException if an error occurs loading the properties.
-     * @deprecated replaced by {@link #getNonPersistedInstance()}
      */
-    @Deprecated // Make 'private' in or after Openfire 4.8.0.
-    public XMLProperties() throws IOException {
+    private XMLProperties() throws IOException {
         file = null;
         document = buildDoc(new StringReader("<root />"));
-    }
-
-    /**
-     * Creates a new XMLProperties object.
-     *
-     * @param fileName the full path the file that properties should be read from
-     *                 and written to.
-     * @throws IOException if an error occurs loading the properties.
-     * @deprecated use XMLProperties(Path) instead
-     */
-    @Deprecated // Remove in or after Openfire 4.8.0
-    public XMLProperties(String fileName) throws IOException {
-        this(Paths.get(fileName));
     }
 
     /**
@@ -124,10 +112,8 @@ public class XMLProperties {
      *
      * @param in the input stream of XML.
      * @throws IOException if an exception occurs when reading the stream.
-     * @deprecated replaced by {@link #getNonPersistedInstance(InputStream)}
      */
-    @Deprecated // Make 'private' in or after Openfire 4.8.0.
-    public XMLProperties(InputStream in) throws IOException {
+    private XMLProperties(InputStream in) throws IOException {
         file = null;
         try (Reader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
             document = buildDoc(reader);

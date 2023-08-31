@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,15 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -686,25 +691,31 @@ public class UpdateManager extends BasicModule {
         // Write data out to conf/server-update.xml file.
         try {
             // Create the conf folder if required
-            File file = new File(JiveGlobals.getHomeDirectory(), "conf");
-            if (!file.exists()) {
-                file.mkdir();
+            final Path confDir = JiveGlobals.getHomeDirectory().resolve("conf");
+            if (!Files.exists(confDir)) {
+                Files.createDirectory(confDir);
             }
-            file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
-                    "server-update.xml");
-            // Delete the old server-update.xml file if it exists
-            if (file.exists()) {
-                file.delete();
+
+            final Path updateConfig = confDir.resolve("server-update.xml");
+
+            // Create new server-update.xml with returned data.
+            final String xmlString;
+            try (final StringWriter out = new StringWriter()) {
+                final XMLWriter writer = new XMLWriter(out, OutputFormat.createPrettyPrint());
+                writer.write(xmlResponse);
+                writer.flush();
+                xmlString = out.toString();
+                writer.close();
             }
-            // Create new version.xml with returned data
-            try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-                OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
-                XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
-                xmlWriter.write(xmlResponse);
-            }
+
+            // Delete the content of the old server-update.xml file if it exists.
+            Files.writeString(updateConfig,
+                              xmlString,
+                              StandardCharsets.UTF_8,
+                              StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.error("A problem occurred when trying to save latest server info.", e);
         }
     }
 
@@ -731,37 +742,32 @@ public class UpdateManager extends BasicModule {
             component.addAttribute("fileSize", Long.toString(plugin.getFileSize()));
         }
         // Write data out to conf/available-plugins.xml file.
-        Writer writer = null;
         try {
             // Create the conf folder if required
-            File file = new File(JiveGlobals.getHomeDirectory(), "conf");
-            if (!file.exists()) {
-                file.mkdir();
+            final Path confDir = JiveGlobals.getHomeDirectory().resolve("conf");
+            if (!Files.exists(confDir)) {
+                Files.createDirectory(confDir);
             }
-            file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
-                    "available-plugins.xml");
-            // Delete the old version.xml file if it exists
-            if (file.exists()) {
-                file.delete();
+
+            final Path availablePlugins = confDir.resolve("available-plugins.xml");
+
+            final String xmlString;
+            try (final StringWriter out = new StringWriter()) {
+                final XMLWriter writer = new XMLWriter(out, OutputFormat.createPrettyPrint());
+                writer.write(xml);
+                writer.flush();
+                xmlString = out.toString();
+                writer.close();
             }
-            // Create new version.xml with returned data
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
-            OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
-            XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
-            xmlWriter.write(xml);
+
+            // Delete the content of the old available-plugins.xml file if it exists.
+            Files.writeString(availablePlugins,
+                xmlString,
+                StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
-        }
-        finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                }
-                catch (IOException e1) {
-                    Log.error(e1.getMessage(), e1);
-                }
-            }
+            Log.error("A problem occurred when trying to save available plugins.", e);
         }
     }
 

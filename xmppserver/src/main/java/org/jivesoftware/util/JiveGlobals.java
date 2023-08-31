@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.time.Duration;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -39,7 +40,7 @@ import java.util.Map.Entry;
  * When starting up the application this class needs to be configured so that the initial
  * configuration of the application may be loaded from the configuration file. The configuration
  * file holds properties stored in XML format, database configuration and user authentication
- * configuration. Use {@link #setHomeDirectory(String)} and {@link #setConfigName(String)} for
+ * configuration. Use {@link #setHomeDirectory(Path)} and {@link #setConfigName(String)} for
  * setting the home directory and path to the configuration file.<p>
  *
  * XML property names must be in the form <code>prop.name</code> - parts of the name must
@@ -65,7 +66,7 @@ public class JiveGlobals {
      * Location of the jiveHome directory. All configuration files should be
      * located here.
      */
-    private static String home = null;
+    private static Path home = null;
 
     private static boolean failedLoading = false;
 
@@ -257,7 +258,7 @@ public class JiveGlobals {
      *
      * @return the location of the home dir.
      */
-    public static String getHomeDirectory() {
+    public static Path getHomeDirectory() {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
@@ -269,21 +270,20 @@ public class JiveGlobals {
      * user running the application must have read and write permissions over the specified
      * directory.
      *
-     * @param pathname the location of the home dir.
+     * @param homeDir the location of the home dir.
      */
-    public static void setHomeDirectory(String pathname) {
-        File mh = new File(pathname);
+    public static void setHomeDirectory(Path homeDir) {
         // Do a permission check on the new home directory
-        if (!mh.exists()) {
-            Log.error("Error - the specified home directory does not exist (" + pathname + ")");
+        if (!Files.exists(homeDir) || !Files.isDirectory(homeDir)) {
+            Log.error("Error - the specified home directory does not exist or is not a directory (" + homeDir + ")");
         }
-        else if (!mh.canRead() || !mh.canWrite()) {
+        else if (!Files.isReadable(homeDir) || !Files.isWritable(homeDir)) {
                 Log.error("Error - the user running this application can not read " +
-                        "and write to the specified home directory (" + pathname + "). " +
+                        "and write to the specified home directory (" + homeDir + "). " +
                         "Please grant the executing user read and write permissions.");
         }
         else {
-            home = pathname;
+            home = homeDir.normalize().toAbsolutePath();
         }
     }
 
@@ -1246,15 +1246,17 @@ public class JiveGlobals {
     private synchronized static void loadOpenfireProperties() {
         if (openfireProperties == null) {
             // If home is null then log that the application will not work correctly
-            if (home == null && !failedLoading) {
-                failedLoading = true;
-                System.err.println("Critical Error! The home directory has not been configured, \n" +
-                    "which will prevent the application from working correctly.\n\n");
+            if (home == null) {
+                if (!failedLoading) {
+                    failedLoading = true;
+                    System.err.println("Critical Error! The home directory has not been configured, \n" +
+                        "which will prevent the application from working correctly.\n\n");
+                }
             }
             // Create a manager with the full path to the Openfire config file.
             else {
                 try {
-                    openfireProperties = new XMLProperties(home + File.separator + getConfigName());
+                    openfireProperties = new XMLProperties(home.resolve(getConfigName()));
                 }
                 catch (IOException ioe) {
                     Log.error("Unable to load default Openfire properties from: {}{}{}", home, File.separator, getConfigName(), ioe);
@@ -1280,15 +1282,17 @@ public class JiveGlobals {
         
         if (securityProperties == null) {
             // If home is null then log that the application will not work correctly
-            if (home == null && !failedLoading) {
-                failedLoading = true;
-                System.err.println("Critical Error! The home directory has not been configured, \n" +
-                    "which will prevent the application from working correctly.\n\n");
+            if (home == null) {
+                if (!failedLoading) {
+                    failedLoading = true;
+                    System.err.println("Critical Error! The home directory has not been configured, \n" +
+                        "which will prevent the application from working correctly.\n\n");
+                }
             }
             // Create a manager with the full path to the security XML file.
             else {
                 try {
-                    securityProperties = new XMLProperties(home + File.separator + JIVE_SECURITY_FILENAME);
+                    securityProperties = new XMLProperties(home.resolve(JIVE_SECURITY_FILENAME));
                     setupPropertyEncryption();
 
                     // Migrate all secure XML properties into the database automatically

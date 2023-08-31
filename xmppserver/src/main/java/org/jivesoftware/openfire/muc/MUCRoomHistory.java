@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,26 +155,6 @@ public final class MUCRoomHistory implements Externalizable {
      */
     public ListIterator<Message> getReverseMessageHistory() {
         return historyStrategy.getReverseMessageHistory();
-    }
-
-    /**
-     * Creates a new message and adds it to the history. The new message will be created based on
-     * the provided information. This information will likely come from the database when loading
-     * the room history from the database.
-     *
-     * @param senderJID the sender's JID of the message to add to the history.
-     * @param nickname the sender's nickname of the message to add to the history.
-     * @param sentDate the date when the message was sent to the room.
-     * @param subject the subject included in the message.
-     * @param body the body of the message.
-     * @param stanza the stanza to add
-     * @deprecated Replaced by a combination of {@link #parseHistoricMessage} and {@link #addOldMessages}. Less overhead when adding more than one message.
-     */
-    @Deprecated // Remove in Openfire 4.8.0 or later.
-    public void addOldMessage(String senderJID, String nickname, Date sentDate, String subject,
-            String body, String stanza) {
-        final Message message = parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza);
-        historyStrategy.addMessage(message);
     }
 
     /**

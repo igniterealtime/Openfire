@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,8 @@
 
 package org.jivesoftware.util;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import javax.annotation.Nonnull;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.google.common.net.InetAddresses;
+import com.google.common.net.InternetDomainName;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -52,6 +34,23 @@ import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Servlet that gets favicons of webservers and includes them in HTTP responses. This
@@ -129,11 +128,8 @@ public class FaviconServlet extends HttpServlet {
         final String host = request.getParameter("host");
 
         // OF-1885: Ensure that the provided value is a valid hostname.
-        try {
-            //noinspection ResultOfMethodCallIgnored
-            InetAddress.getByName(host);
-        } catch (UnknownHostException e) {
-            LOGGER.info("Request for favicon of hostname that can't be parsed as a valid hostname '{}' is ignored.", host, e);
+        if (!InetAddresses.isInetAddress(host) && !InternetDomainName.isValid(host)) {
+            LOGGER.info("Request for favicon of hostname that can't be parsed as a valid hostname '{}' is ignored.", host);
             writeBytesToStream(defaultBytes, response);
             return;
         }

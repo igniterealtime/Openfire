@@ -32,6 +32,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,13 +117,14 @@ public class LocalIncomingServerSessionTest
      */
     @BeforeEach
     public void setUpEach() throws Exception {
+        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
         XMPPServer.setInstance(xmppServer);
 
         final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 
         // Use a temporary file to hold the identity store that is used by the tests.
-        final CertificateStoreManager certificateStoreManager = mock(CertificateStoreManager.class, withSettings().lenient());
+        final CertificateStoreManager certificateStoreManager = mock(CertificateStoreManager.class, withSettings().strictness(Strictness.LENIENT));
         tmpIdentityStoreFile = new File(tmpDir, "unittest-identitystore-" + System.currentTimeMillis() + ".jks");
         tmpIdentityStoreFile.deleteOnExit();
         final CertificateStoreConfiguration identityStoreConfig = new CertificateStoreConfiguration("jks", tmpIdentityStoreFile, "secret".toCharArray(), tmpDir);

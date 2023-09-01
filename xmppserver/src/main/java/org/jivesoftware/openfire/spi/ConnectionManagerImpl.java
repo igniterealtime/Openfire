@@ -25,7 +25,6 @@ import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
-import org.jivesoftware.openfire.net.SocketSendingTracker;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -666,14 +665,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     public void start() {
         super.start();
         startListeners();
-        SocketSendingTracker.getInstance().start();
         CertificateManager.addListener(this);
     }
 
     @Override
     public void stop() {
         CertificateManager.removeListener(this);
-        SocketSendingTracker.getInstance().shutdown();
         stopListeners();
         super.stop();
     }

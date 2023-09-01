@@ -44,6 +44,7 @@ import java.util.List;
  * stream element and will then keep reading and routing the received packets.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as Netty offers better performance. Currently only in use for server dialback.
  */
 public abstract class SocketReader implements Runnable {
 

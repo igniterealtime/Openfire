@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * client and server.
  *
  * @author Iain Shigeoka
- * @deprecated Old, pre NIO / MINA code. Should not be used as NIO offers better performance. Currently only in use for s2s.
+ * @deprecated Old, pre NIO / MINA code. Should not be used as Netty offers better performance. Currently only in use for server dialback.
  */
 public class SocketConnection implements Connection {
 
@@ -469,8 +469,7 @@ public class SocketConnection implements Connection {
 
     /**
      * Normal connection close will attempt to write the stream end tag. Otherwise this method
-     * forces the connection closed immediately. This method will be called from {@link SocketSendingTracker} 
-     * when sending data over the socket has taken a long time and we need to close the socket, discard
+     * forces the connection closed immediately. This method will be called when  we need to close the socket, discard
      * the connection and its session.
      */
     private void close(boolean force, @Nullable final StreamError error) {

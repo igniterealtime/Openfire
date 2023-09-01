@@ -22,14 +22,11 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.SocketConnection;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
-import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.slf4j.Logger;
@@ -99,7 +96,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * {@code null}.<p>
      *
      * @param serverName hostname of this server.
-     * @param reader reader on the new established connection with the remote server.
+     * @param xpp XML parse that is providing data from the new established connection with the remote server.
      * @param connection the new established connection with the remote server.
      * @param directTLS true of connections are immediately encrypted (as opposed to plain text / startls).
      * @return a new session that will receive packets or null if a problem occured while
@@ -108,11 +105,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing the XML.
      * @throws java.io.IOException if an input/output error occurs while using the connection.
      */
-    public static LocalIncomingServerSession createSession(String serverName, XMPPPacketReader reader,
-            SocketConnection connection, boolean directTLS) throws XmlPullParserException, IOException {
-        return createSession(serverName, reader.getXPPParser(), connection, directTLS, false);
-    }
-
     public static LocalIncomingServerSession createSession(String serverName, XmlPullParser xpp,
                                                            Connection connection, boolean directTLS, boolean doNotSendXMPPStream) throws XmlPullParserException, IOException {
 

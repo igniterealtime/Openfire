@@ -33,6 +33,7 @@ import java.net.Socket;
  * Abstract class for {@link BlockingReadingMode}.
  *
  * @author Gaston Dombiak
+ * @deprecated Old, pre NIO / MINA code. Should not be used as Netty offers better performance. Currently only in use for server dialback.
  */
 abstract class SocketReadingMode {
 

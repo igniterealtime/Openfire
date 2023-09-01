@@ -216,7 +216,7 @@
 
     </td>
 
-    <td style="width: 1%; white-space: nowrap; text-align: center; border-right:1px #ccc solid;">
+    <td style="width: 1%; white-space: nowrap; text-align: center;">
         <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.cliked_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"

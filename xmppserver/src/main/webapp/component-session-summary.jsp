@@ -263,7 +263,7 @@
             <%= sameActiveDay ? JiveGlobals.formatTime(lastActiveDate) : JiveGlobals.formatDateTime(lastActiveDate) %>
         </td>
 
-        <td style="width: 1%; white-space: nowrap; border-right:1px #ccc solid; text-align: center">
+        <td style="width: 1%; white-space: nowrap; text-align: center">
             <a href="component-session-summary.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>&close=true"
              title="<fmt:message key="session.row.cliked_kill_session" />"
              onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"

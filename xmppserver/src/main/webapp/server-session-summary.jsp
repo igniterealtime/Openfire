@@ -40,7 +40,7 @@
     int start = ParamUtils.getIntParameter(request,"start",0);
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("server-session-summary", DEFAULT_RANGE));
     boolean close = ParamUtils.getBooleanParameter(request,"close");
-    String hostname = ParamUtils.getParameter(request,"hostname");
+    String domainName = ParamUtils.getParameter(request,"hostname");
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -60,32 +60,22 @@
     // Get the user manager
     SessionManager sessionManager = webManager.getSessionManager();
 
-    Collection<String> hostnames = new TreeSet<>();
-    // Get the incoming session hostnames
-    Collection<String> inHostnames = sessionManager.getIncomingServers();
-    hostnames.addAll(inHostnames);
-    // Get the outgoing session hostnames
-    Collection<String> outHostnames = sessionManager.getOutgoingServers();
-    hostnames.addAll(outHostnames);
-
-    // Get the session count
-    int sessionCount = hostnames.size();
-
-    // Close all connections related to the specified host
+    // Close all connections related to the specified domain name
     if (close) {
         try {
-            for (Session sess : sessionManager.getIncomingServerSessions(hostname)) {
-                sess.close();
+            final List<IncomingServerSession> incomingServerSessions = sessionManager.getIncomingServerSessions(domainName);
+            for (Session incomingServerSession : incomingServerSessions) {
+                incomingServerSession.close();
             }
 
-            Collection<OutgoingServerSession> sessions = sessionManager.getOutgoingServerSessions(hostname);
-            for (OutgoingServerSession sess : sessions) {
-                if (sess != null) {
-                    sess.close();
+            Collection<OutgoingServerSession> outgoingServerSessions = sessionManager.getOutgoingServerSessions(domainName);
+            for (OutgoingServerSession outgoingServerSession : outgoingServerSessions) {
+                if (outgoingServerSession != null) {
+                    outgoingServerSession.close();
                 }
             }
             // Log the event
-            webManager.logEvent("closed server sessions for "+hostname, null);
+            webManager.logEvent("closed server sessions for "+ domainName, "Closed " + incomingServerSessions.size() + " incoming and " + outgoingServerSessions + " outgoing session(s).");
             // wait one second
             Thread.sleep(1000L);
         }
@@ -96,6 +86,13 @@
         response.sendRedirect("server-session-summary.jsp?close=success");
         return;
     }
+
+    // Get the session count
+    final Set<String> domainNames = new TreeSet<>();
+    domainNames.addAll(sessionManager.getIncomingServers());
+    domainNames.addAll(sessionManager.getOutgoingServers());
+    final int sessionCount = domainNames.size();
+
     // paginator vars
     int numPages = (int)Math.ceil((double)sessionCount/(double)range);
     int curPage = (start/range) + 1;
@@ -119,7 +116,7 @@
 <%  } %>
 
 <p>
-<fmt:message key="server.session.summary.active" />: <b><%= hostnames.size() %></b>
+<fmt:message key="server.session.summary.active" />: <b><%= domainNames.size() %></b>
 
 <%  if (numPages > 1) { %>
 
@@ -180,7 +177,7 @@
 </thead>
 <tbody>
     <%  // Check if no out/in connection to/from a remote server exists
-        if (hostnames.isEmpty()) {
+        if (domainNames.isEmpty()) {
     %>
         <tr>
             <td colspan="9">
@@ -193,8 +190,8 @@
     <%  } %>
 
     <% int count = 0;
-        hostnames = new ArrayList<>(hostnames).subList(start, maxIndex);
-        for (String host : hostnames) {
+        final List<String> paginatedDomainNames = new ArrayList<>(domainNames).subList(start, maxIndex);
+        for (String host : paginatedDomainNames) {
             count++;
             List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(host);
             List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(host);

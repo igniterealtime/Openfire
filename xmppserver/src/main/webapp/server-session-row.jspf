@@ -135,7 +135,7 @@
         <%= lastActivityString %>
     </td>
 
-    <td style="width: 1%; white-space: nowrap; text-align: center; border-right:1px #ccc solid;">
+    <td style="width: 1%; white-space: nowrap; text-align: center;">
         <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.cliked_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"

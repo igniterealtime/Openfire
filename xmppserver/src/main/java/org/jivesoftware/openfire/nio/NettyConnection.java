@@ -463,7 +463,7 @@ public class NettyConnection implements Connection {
 
     @Override
     public String toString() {
-        return super.toString() + " Netty Session: " + channelHandlerContext.name();
+        return this.getClass().getSimpleName() + "{state: " + state + ", session: " + session + ", Netty channel handler context name: " + channelHandlerContext.name() + "}";
     }
 
 }

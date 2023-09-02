@@ -90,4 +90,14 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
     public int getMaxIdleTime() {
         return Math.toIntExact(IDLE_TIMEOUT_PROPERTY.getValue().toSeconds());
     }
+
+    @Override
+    public String toString()
+    {
+        return "NettyServerConnectionHandler{" +
+            "directTLS=" + directTLS +
+            ", sslInitDone=" + sslInitDone +
+            ", configuration=" + configuration +
+            '}';
+    }
 }

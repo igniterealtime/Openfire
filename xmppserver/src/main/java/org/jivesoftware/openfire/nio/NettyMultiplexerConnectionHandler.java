@@ -63,4 +63,13 @@ public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler {
     public int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.multiplex.idle", 5 * 60 * 1000) / 1000;
     }
+
+    @Override
+    public String toString()
+    {
+        return "NettyMultiplexerConnectionHandler{" +
+            "sslInitDone=" + sslInitDone +
+            ", configuration=" + configuration +
+            '}';
+    }
 }

@@ -204,4 +204,12 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         }
     }
 
+    @Override
+    public String toString()
+    {
+        return "NettyConnectionHandler{" +
+            "sslInitDone=" + sslInitDone +
+            ", configuration=" + configuration +
+            '}';
+    }
 }

@@ -46,4 +46,13 @@ public class NettyComponentConnectionHandler extends NettyConnectionHandler {
     public int getMaxIdleTime() {
         return JiveGlobals.getIntProperty("xmpp.component.idle", 6 * 60 * 1000) / 1000;
     }
+
+    @Override
+    public String toString()
+    {
+        return "NettyComponentConnectionHandler{" +
+            "sslInitDone=" + sslInitDone +
+            ", configuration=" + configuration +
+            '}';
+    }
 }

@@ -190,4 +190,15 @@ public class NettySessionInitializer {
         Log.trace("Sending: " + sb);
     }
 
+    @Override
+    public String toString()
+    {
+        return "NettySessionInitializer{" +
+            "domainPair=" + domainPair +
+            ", port=" + port +
+            ", directTLS=" + directTLS +
+            ", workerGroup=" + workerGroup +
+            ", channel=" + channel +
+            '}';
+    }
 }

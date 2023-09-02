@@ -66,4 +66,12 @@ public class NettyClientConnectionHandler extends NettyConnectionHandler{
         return (int) ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toSeconds();
     }
 
+    @Override
+    public String toString()
+    {
+        return "NettyClientConnectionHandler{" +
+            "sslInitDone=" + sslInitDone +
+            ", configuration=" + configuration +
+            '}';
+    }
 }

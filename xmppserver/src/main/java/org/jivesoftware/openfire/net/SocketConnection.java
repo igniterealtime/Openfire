@@ -703,7 +703,7 @@ public class SocketConnection implements Connection {
 
     @Override
     public String toString() {
-        return super.toString() + " socket: " + socket + " session: " + session;
+        return this.getClass().getSimpleName() + "{socket: " + socket + ", state: " + state + ", session: " + session + "}";
     }
 
     public void setSocketReader(SocketReader socketReader) {

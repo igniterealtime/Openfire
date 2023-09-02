@@ -728,7 +728,7 @@ public class XMPPServer {
                             if (field.getType().equals(SystemProperty.class)) {
                                 try {
                                     field.setAccessible(true);
-                                    logger.info("Accessing SystemProperty field {}#{}", className, field.getName());
+                                    logger.debug("Accessing SystemProperty field {}#{}", className, field.getName());
                                     field.get(null);
                                 } catch (final Throwable t) {
                                     logger.warn("Unable to access field {}#{}", className, field.getName(), t);

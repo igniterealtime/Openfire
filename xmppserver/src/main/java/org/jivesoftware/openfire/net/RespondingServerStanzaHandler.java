@@ -23,6 +23,7 @@ import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
@@ -101,6 +102,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
      */
     private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
         session = createLocalOutgoingServerSession(newStreamId, connection);
+        SessionManager sessionManager = SessionManager.getInstance();
+        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
         connection.reinit(session);
         if (isSessionAuthenticated.isDone() && session instanceof LocalOutgoingServerSession) {
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);

@@ -21,9 +21,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
@@ -42,7 +40,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -101,9 +98,18 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
      * @param existingAuthMethod authentication method used previously (possibly null)
      */
     private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
+        // Clear routing table cache of previous sessions for domain pair
+        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+        routingTable.removeServerRoute(domainPair);
+
+
+        // Re-add the session and domain pair to the routing table
         session = createLocalOutgoingServerSession(newStreamId, connection);
+        routingTable.addServerRoute(domainPair, (LocalOutgoingServerSession) session);
         SessionManager sessionManager = SessionManager.getInstance();
         sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+
+        // Transfer new session to existing connection
         connection.reinit(session);
         if (isSessionAuthenticated.isDone() && session instanceof LocalOutgoingServerSession) {
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
@@ -134,6 +140,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 // Create a new session with a new ID if a new stream has started on an existing connection
                 // following TLS negotiation in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
                 if (sessionCreated && isNewStreamId(streamHeaderId)) {
+
                     LocalOutgoingServerSession localOutgoingServerSession = session instanceof LocalOutgoingServerSession ? (LocalOutgoingServerSession) session : null;
                     ServerSession.AuthenticationMethod existingAuthMethod = localOutgoingServerSession != null
                         ? localOutgoingServerSession.getAuthenticationMethod()

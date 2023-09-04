@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Clear routing table cache of previous sessions for domain pair and re-add it.
         RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-        routingTable.replaceServerRoute(domainPair, (LocalOutgoingServerSession) session);
+        routingTable.addServerRoute(domainPair, (LocalOutgoingServerSession) session); // This _replaces_ the pre-existing session in the routing table.
         SessionManager sessionManager = SessionManager.getInstance();
         sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
 

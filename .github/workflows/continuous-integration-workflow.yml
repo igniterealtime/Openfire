@@ -16,7 +16,7 @@ jobs:
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }}
         uses: actions/setup-java@v3
         with:
@@ -182,7 +182,7 @@ jobs:
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
@@ -242,7 +242,7 @@ jobs:
         if: ${{ contains(github.ref, 'refs/tags/') }}
         run: echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main

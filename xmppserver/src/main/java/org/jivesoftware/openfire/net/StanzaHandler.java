@@ -178,10 +178,13 @@ public abstract class StanzaHandler {
             // establishing those prefixes is achieved by wrapping the data-to-be-parsed in a dummy root element on which
             // the prefixes are defined. After the data has been parsed, the dummy root element is discarded. See OF-2556.
             Log.trace("Connection defined namespace prefixes on its original 'stream' element.");
+            if (namespaces.stream().noneMatch(namespace -> namespace.getPrefix().equals("stream"))) {
+                namespaces.add(Namespace.get("stream", "http://etherx.jabber.org/streams"));
+            }
             final StringBuilder sb = new StringBuilder();
-            sb.append("<stream ");
+            sb.append("<stream:stream");
             namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));
-            sb.append(">").append(stanza).append("</stream>");
+            sb.append(">").append(stanza).append("</stream:stream>");
 
             doc = reader.read(new StringReader(sb.toString())).getRootElement().elementIterator().next();
             doc.detach();

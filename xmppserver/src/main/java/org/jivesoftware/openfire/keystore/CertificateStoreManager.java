@@ -568,7 +568,7 @@ public class CertificateStoreManager extends BasicModule
     {
         File file = new File( path );
         if (!file.isAbsolute()) {
-            file = new File( JiveGlobals.getHomeDirectory() + File.separator + path );
+            file = new File( JiveGlobals.getHomePath() + File.separator + path );
         }
 
         return file;

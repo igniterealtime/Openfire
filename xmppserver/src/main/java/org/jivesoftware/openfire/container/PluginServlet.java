@@ -523,13 +523,13 @@ public class PluginServlet extends HttpServlet {
             contextPath = pathInfo.substring(index + parts[1].length());
         }
 
-        Path pluginDirectory = JiveGlobals.getHomeDirectory().resolve("plugins");
+        Path pluginDirectory = JiveGlobals.getHomePath().resolve("plugins");
         Path file = pluginDirectory.resolve(parts[1]).resolve("web").resolve(contextPath);
 
         if ( !ALLOW_LOCAL_FILE_READING.getValue() ) {
             // Ensure that the file that's being served is a file that is part of Openfire. This guards against
             // accessing files from the operating system, or other files that shouldn't be accessible via the web (OF-1886).
-            final Path absoluteHome = JiveGlobals.getHomeDirectory().normalize().toAbsolutePath();
+            final Path absoluteHome = JiveGlobals.getHomePath().normalize().toAbsolutePath();
             final Path absoluteLookup = file.normalize().toAbsolutePath();
             if ( !absoluteLookup.startsWith( absoluteHome ) )
             {

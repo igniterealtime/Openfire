@@ -424,7 +424,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
     }
 
     public Path getHomeDirectory() {
-        return JiveGlobals.getHomeDirectory();
+        return JiveGlobals.getHomePath();
     }
 
     @Override

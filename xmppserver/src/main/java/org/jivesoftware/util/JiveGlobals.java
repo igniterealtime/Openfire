@@ -40,7 +40,7 @@ import java.util.Map.Entry;
  * When starting up the application this class needs to be configured so that the initial
  * configuration of the application may be loaded from the configuration file. The configuration
  * file holds properties stored in XML format, database configuration and user authentication
- * configuration. Use {@link #setHomeDirectory(Path)} and {@link #setConfigName(String)} for
+ * configuration. Use {@link #setHomePath(Path)} and {@link #setConfigName(String)} for
  * setting the home directory and path to the configuration file.<p>
  *
  * XML property names must be in the form <code>prop.name</code> - parts of the name must
@@ -257,8 +257,19 @@ public class JiveGlobals {
      * Returns the location of the <code>home</code> directory.
      *
      * @return the location of the home dir.
+     * @deprecated Replaced by {@link #getHomePath()}
      */
-    public static Path getHomeDirectory() {
+    @Deprecated(since = "4.8.0") // Remove in or after Openfire 4.9.0.
+    public static String getHomeDirectory() {
+        return getHomePath().toString();
+    }
+
+    /**
+     * Returns the location of the <code>home</code> directory.
+     *
+     * @return the location of the home dir.
+     */
+    public static Path getHomePath() {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
@@ -271,8 +282,21 @@ public class JiveGlobals {
      * directory.
      *
      * @param homeDir the location of the home dir.
+     * @deprecated Replaced by {@link #setHomePath(Path)}
      */
-    public static void setHomeDirectory(Path homeDir) {
+    @Deprecated(since = "4.8.0") // Remove in or after Openfire 4.9.0.
+    public static void setHomeDirectory(String homeDir) {
+        setHomePath(new File(homeDir).toPath());
+    }
+
+    /**
+     * Sets the location of the <code>home</code> directory. The directory must exist and the
+     * user running the application must have read and write permissions over the specified
+     * directory.
+     *
+     * @param homeDir the location of the home dir.
+     */
+    public static void setHomePath(Path homeDir) {
         // Do a permission check on the new home directory
         if (!Files.exists(homeDir) || !Files.isDirectory(homeDir)) {
             Log.error("Error - the specified home directory does not exist or is not a directory (" + homeDir + ")");

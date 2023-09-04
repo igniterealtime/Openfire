@@ -1131,7 +1131,7 @@ public class XMPPServer {
         }
         else {
             // Set the home directory for the config file
-            JiveGlobals.setHomeDirectory(openfireHome);
+            JiveGlobals.setHomePath(openfireHome);
             // Set the name of the config file
             JiveGlobals.setConfigName(configName);
         }

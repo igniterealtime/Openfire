@@ -81,7 +81,7 @@ public final class Fixtures {
             throw new IllegalStateException("Unable to read openfire.xml file; does conf/openfire.xml exist in the test classpath, i.e. test/resources?");
         }
         final Path openfireHome = Paths.get(configFile.toURI()).getParent().getParent();
-        JiveGlobals.setHomeDirectory(openfireHome);
+        JiveGlobals.setHomePath(openfireHome);
     }
 
     /**

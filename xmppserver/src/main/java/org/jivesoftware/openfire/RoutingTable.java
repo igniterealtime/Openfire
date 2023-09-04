@@ -357,4 +357,13 @@ public interface RoutingTable {
      * @param onlyLocal true if only client sessions connect to the local JVM will get the message.
      */
     void broadcastPacket(Message packet, boolean onlyLocal);
+
+
+    /**
+     * Replaces all previous sessions associated with the domain pair with a new session.
+     *
+     * @param domainPair the address associated to the route.
+     * @param session the outgoing server session
+     */
+    void replaceServerRoute(DomainPair domainPair, LocalOutgoingServerSession session);
 }

@@ -227,16 +227,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = serversCache.getLock(address);
         lock.lock();
         try {
-            final NodeID oldValue = serversCache.putIfAbsent(address, server.getNodeID());
-            if (oldValue != null && !oldValue.equals(XMPPServer.getInstance().getNodeID())) {
-                // Existing implementation assumes that only one node has an outgoing server connection for a domain. Fail if that's not the case. See: OF-2280
-                throw new IllegalStateException("The local cluster node attempts to established a new S2S connection to '"+address+"', but such a connection already exists on cluster node '"+oldValue+"'.");
-            }
+            checkOnlyOneClusterNodeConnectedToAddress(address);
         }
         finally {
             lock.unlock();
         }
         localRoutingTable.addRoute(address, destination);
+    }
+
+    private void checkOnlyOneClusterNodeConnectedToAddress(DomainPair address) {
+        final NodeID oldValue = serversCache.putIfAbsent(address, server.getNodeID());
+        if (oldValue != null && !oldValue.equals(XMPPServer.getInstance().getNodeID())) {
+            // Existing implementation assumes that only one node has an outgoing server connection for a domain. Fail if that's not the case. See: OF-2280
+            throw new IllegalStateException("The local cluster node attempts to established a new S2S connection to '"+ address +"', but such a connection already exists on cluster node '"+oldValue+"'.");
+        }
+    }
+
+
+    @Override
+    public void replaceServerRoute(DomainPair domainPair, LocalOutgoingServerSession session) {
+        Lock lock = serversCache.getLock(domainPair);
+        lock.lock();
+        try {
+            checkOnlyOneClusterNodeConnectedToAddress(domainPair);
+            serversCache.remove(domainPair);
+            localRoutingTable.removeRoute(domainPair);
+            localRoutingTable.addRoute(domainPair, session);
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     @Override

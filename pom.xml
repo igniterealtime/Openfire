@@ -118,7 +118,7 @@
 
         <!-- Versions -->
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
-        <jetty.version>10.0.15</jetty.version>
+        <jetty.version>10.0.16</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <netty.version>4.1.94.Final</netty.version>
         <bouncycastle.version>1.70</bouncycastle.version>

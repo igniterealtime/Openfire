@@ -129,14 +129,16 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                     .collect(Collectors.toSet());
                 connection.setAdditionalNamespaces(additionalNamespaces);
 
+                String streamHeaderId = rootElement.attribute("id").getValue();
+
                 // Create a new session with a new ID if a new stream has started on an existing connection
                 // following TLS negotiation in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3
-                String newStreamId = rootElement.attribute("id").getValue();
-                if (sessionCreated && newStreamId != null) {
-                    ServerSession.AuthenticationMethod existingAuthMethod = session instanceof LocalOutgoingServerSession
-                        ? ((LocalOutgoingServerSession) session).getAuthenticationMethod()
+                if (sessionCreated && isNewStreamId(streamHeaderId)) {
+                    LocalOutgoingServerSession localOutgoingServerSession = session instanceof LocalOutgoingServerSession ? (LocalOutgoingServerSession) session : null;
+                    ServerSession.AuthenticationMethod existingAuthMethod = localOutgoingServerSession != null
+                        ? localOutgoingServerSession.getAuthenticationMethod()
                         : null;
-                    transferConnectionToNewSession(newStreamId, existingAuthMethod);
+                    transferConnectionToNewSession(streamHeaderId, existingAuthMethod);
                 }
             } catch (DocumentException e) {
                 LOG.error("Failed extract additional namespaces", e);
@@ -154,6 +156,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             parser.setInput(new StringReader(stanza));
             createSession(parser);
         }
+    }
+
+    private boolean isNewStreamId(String streamHeaderId) {
+        return streamHeaderId.equals(session.getStreamID().getID());
     }
 
     private static boolean isRelevantNamespace(Namespace ns) {

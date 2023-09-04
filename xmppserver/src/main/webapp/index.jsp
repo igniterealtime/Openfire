@@ -231,7 +231,7 @@
             <tr>
                 <td class="c1"><fmt:message key="index.home" /></td>
                 <td class="c2">
-                    <%= JiveGlobals.getHomeDirectory() %>
+                    <%= JiveGlobals.getHomePath() %>
                 </td>
             </tr>
             <tr>

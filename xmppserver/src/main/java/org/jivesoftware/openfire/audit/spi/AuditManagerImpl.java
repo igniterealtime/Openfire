@@ -271,7 +271,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
         maxFileSize = JiveGlobals.getIntProperty("xmpp.audit.filesize", MAX_FILE_SIZE);
         retention = Duration.ofDays(JiveGlobals.getIntProperty("xmpp.audit.days", (int)MAX_DAYS.toDays()));
         logTimeout = Duration.ofMillis(JiveGlobals.getIntProperty("xmpp.audit.logtimeout", (int)DEFAULT_LOG_TIMEOUT.toMillis()));
-        logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomeDirectory() +
+        logDir = JiveGlobals.getProperty("xmpp.audit.logdir", JiveGlobals.getHomePath() +
                 File.separator + "logs");
         processIgnoreString(JiveGlobals.getProperty("xmpp.audit.ignore", ""));
 
@@ -368,7 +368,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
                     d = new File(value);
                 }
                 logDir = (d == null || !d.exists() || !d.canRead() || !d.canWrite() || !d
-                        .isDirectory()) ? JiveGlobals.getHomeDirectory()
+                        .isDirectory()) ? JiveGlobals.getHomePath()
                         + File.separator + "logs" : value;
                 auditor.setLogDir(logDir);
                 break;

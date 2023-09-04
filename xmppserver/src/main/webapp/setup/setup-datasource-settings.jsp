@@ -80,7 +80,7 @@
     // Defaults
     if (mode == null) {
         // If the "embedded-database" directory exists, select to the embedded db as the default.
-        if (Files.exists(JiveGlobals.getHomeDirectory().resolve("embedded-db"))) {
+        if (Files.exists(JiveGlobals.getHomePath().resolve("embedded-db"))) {
             mode = EMBEDDED;
         }
         // Otherwise default to standard.

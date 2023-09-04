@@ -180,7 +180,7 @@ public class ResourceServlet extends HttpServlet {
     }
 
     private static InputStream getResourceAsStream(String resourceName) {
-        File file = new File(JiveGlobals.getHomeDirectory() + File.separator +
+        File file = new File(JiveGlobals.getHomePath() + File.separator +
                 "resources" + File.separator + "spank" + File.separator + "scripts", resourceName);
         try {
             return new FileInputStream(file);

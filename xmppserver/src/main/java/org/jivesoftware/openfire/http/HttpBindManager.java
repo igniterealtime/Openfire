@@ -712,7 +712,7 @@ public final class HttpBindManager implements CertificateEventListener {
      */
     protected Handler createStaticContentHandler()
     {
-        final File spankDirectory = new File( JiveGlobals.getHomeDirectory() + File.separator + "resources" + File.separator + "spank" );
+        final File spankDirectory = new File( JiveGlobals.getHomePath() + File.separator + "resources" + File.separator + "spank" );
         if ( spankDirectory.exists() )
         {
             if ( spankDirectory.canRead() )

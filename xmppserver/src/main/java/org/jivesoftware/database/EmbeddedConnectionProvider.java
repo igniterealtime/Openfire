@@ -64,7 +64,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
 
     @Override
     public void start() {
-        final Path databaseDir = JiveGlobals.getHomeDirectory().resolve("embedded-db");
+        final Path databaseDir = JiveGlobals.getHomePath().resolve("embedded-db");
         try {
             // If the database doesn't exist, create it.
             if (!Files.exists(databaseDir)) {

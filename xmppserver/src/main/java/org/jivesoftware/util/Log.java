@@ -129,7 +129,7 @@ public final class Log {
     public static String getLogDirectory() {
         // SLF4J doesn't provide a hook into the logging implementation. We'll have to do this 'direct', bypassing slf4j.
         final StringBuilder sb = new StringBuilder();
-        sb.append(JiveGlobals.getHomeDirectory());
+        sb.append(JiveGlobals.getHomePath());
         if (!sb.substring(sb.length()-1).startsWith(File.separator)) {
             sb.append(File.separator);
         }

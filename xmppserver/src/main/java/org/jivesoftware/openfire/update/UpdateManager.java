@@ -691,7 +691,7 @@ public class UpdateManager extends BasicModule {
         // Write data out to conf/server-update.xml file.
         try {
             // Create the conf folder if required
-            final Path confDir = JiveGlobals.getHomeDirectory().resolve("conf");
+            final Path confDir = JiveGlobals.getHomePath().resolve("conf");
             if (!Files.exists(confDir)) {
                 Files.createDirectory(confDir);
             }
@@ -744,7 +744,7 @@ public class UpdateManager extends BasicModule {
         // Write data out to conf/available-plugins.xml file.
         try {
             // Create the conf folder if required
-            final Path confDir = JiveGlobals.getHomeDirectory().resolve("conf");
+            final Path confDir = JiveGlobals.getHomePath().resolve("conf");
             if (!Files.exists(confDir)) {
                 Files.createDirectory(confDir);
             }
@@ -786,7 +786,7 @@ public class UpdateManager extends BasicModule {
 
     private void loadLatestServerInfo() {
         Document xmlResponse;
-        File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
+        File file = new File(JiveGlobals.getHomePath() + File.separator + "conf",
                 "server-update.xml");
         if (!file.exists()) {
             return;
@@ -839,7 +839,7 @@ public class UpdateManager extends BasicModule {
 
     private void loadAvailablePluginsInfo() {
         Document xmlResponse;
-        File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf",
+        File file = new File(JiveGlobals.getHomePath() + File.separator + "conf",
                 "available-plugins.xml");
         if (!file.exists()) {
             return;

@@ -401,7 +401,7 @@ IFRAME {
 <br>
 
 <span class="jive-description" style="color:#666;">
-<fmt:message key="logviewer.log_dir" />: <%= JiveGlobals.getHomeDirectory() %><%= File.separator %>logs
+<fmt:message key="logviewer.log_dir" />: <%= JiveGlobals.getHomePath() %><%= File.separator %>logs
 </span>
 
 <br><br>

@@ -97,7 +97,7 @@ public class FaviconServlet extends HttpServlet {
             .build();
         // Load the default favicon to use when no favicon was found of a remote host
         try {
-            defaultBytes = Files.readAllBytes(JiveGlobals.getHomeDirectory().resolve("plugins").resolve("admin").resolve("webapp").resolve("images").resolve("server_16x16.gif"));
+            defaultBytes = Files.readAllBytes(JiveGlobals.getHomePath().resolve("plugins").resolve("admin").resolve("webapp").resolve("images").resolve("server_16x16.gif"));
         }
         catch (final IOException e) {
             LOGGER.warn("Unable to retrieve default favicon", e);

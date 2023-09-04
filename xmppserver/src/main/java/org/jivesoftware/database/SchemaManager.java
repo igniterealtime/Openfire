@@ -86,7 +86,7 @@ public class SchemaManager {
                     new ResourceLoader() {
                         @Override
                         public InputStream loadResource(String resourceName) {
-                            File file = new File(JiveGlobals.getHomeDirectory() + File.separator +
+                            File file = new File(JiveGlobals.getHomePath() + File.separator +
                                     "resources" + File.separator + "database", resourceName);
                             try {
                                 return new FileInputStream(file);
@@ -300,7 +300,7 @@ public class SchemaManager {
         InputStream resource = null;
         if ("openfire".equals(schemaKey)) {
             // Resource will be like "/database/upgrade/6/openfire_hsqldb.sql"
-            String path = JiveGlobals.getHomeDirectory() + File.separator + "resources" +
+            String path = JiveGlobals.getHomePath() + File.separator + "resources" +
                     File.separator + "database" + File.separator + "upgrade" + File.separator +
                     upgradeVersion;
             String filename = schemaKey + "_" + DbConnectionManager.getDatabaseType() + ".sql";

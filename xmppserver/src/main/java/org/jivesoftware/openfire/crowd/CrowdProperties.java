@@ -46,7 +46,7 @@ public class CrowdProperties {
     public CrowdProperties() throws IOException {
         props = new Properties();
         
-        File file = new File(JiveGlobals.getHomeDirectory() + File.separator + "conf" + File.separator + "crowd.properties");
+        File file = new File(JiveGlobals.getHomePath() + File.separator + "conf" + File.separator + "crowd.properties");
         if (!file.exists()) {
             throw new IOException("The file crowd.properties is missing from Openfire conf folder");
         } else {

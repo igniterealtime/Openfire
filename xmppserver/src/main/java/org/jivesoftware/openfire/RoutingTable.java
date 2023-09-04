@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,12 @@ import java.util.List;
 public interface RoutingTable {
 
     /**
-     * Adds a route to the routing table for the specified outgoing server session. When running
-     * inside of a cluster this message {@code must} be sent from the cluster node that is
-     * actually holding the physical connection to the remote server.
+     * Adds a route to the routing table for the specified outgoing server session, or replaces a pre-existing one.
+     *
+     * When running inside a cluster, this method <em>must</em> be invoked on the cluster node that is actually holding
+     * the physical connection to the remote server. Additionally, replacing a pre-existing server session can only
+     * occur on the same cluster node as the one that was holding the original session. A runtime exception is thrown
+     * when another cluster node attempts to replace the session.
      *
      * @param route the address associated to the route.
      * @param destination the outgoing server session.
@@ -357,13 +360,4 @@ public interface RoutingTable {
      * @param onlyLocal true if only client sessions connect to the local JVM will get the message.
      */
     void broadcastPacket(Message packet, boolean onlyLocal);
-
-
-    /**
-     * Replaces all previous sessions associated with the domain pair with a new session.
-     *
-     * @param domainPair the address associated to the route.
-     * @param session the outgoing server session
-     */
-    void replaceServerRoute(DomainPair domainPair, LocalOutgoingServerSession session);
 }

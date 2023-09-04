@@ -28,7 +28,6 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.WebAppLoaderFix;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
@@ -766,12 +765,6 @@ public final class HttpBindManager implements CertificateEventListener {
      */
     public void removeJettyHandler( Handler handler )
     {
-        if (handler instanceof WebAppContext) {
-            // A work-around of the Jetty bug described at https://github.com/eclipse/jetty.project/issues/1425
-            // NOTE: According to some comments on WebAppLoaderFix, this may stop working on Java 9.
-            // Hopefully the Jetty team will have fixed the underlying bug by then
-            WebAppLoaderFix.checkAndClose(((WebAppContext) handler).getClassLoader());
-        }
         extensionHandlers.removeHandler( handler );
         if ( handler.isStarted() )
         {

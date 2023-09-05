@@ -35,12 +35,10 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         // Get the XML parser from the channel
         XMLLightweightParser parser = ctx.channel().attr(NettyConnectionHandler.XML_PARSER).get();
 
-        // Check that the buffer is not bigger than 1 Megabyte. For security reasons
+        // Check that the stanza constructed by the parser is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (parser.isMaxBufferSizeExceeded()) {
-            if (in.refCnt() > 0) { // prevent IllegalReferenceCountException if the ByteBuf has already been deallocated.
-                in.release();
-            }
+            in.release();
             return;
         }
 

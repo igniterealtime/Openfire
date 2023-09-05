@@ -155,7 +155,7 @@ class XMLLightweightParser {
     }
 
     public boolean isMaxBufferSizeExceeded() {
-        return maxBufferSizeExceeded;
+        return maxBufferSizeExceeded || buffer.length() > maxBufferSize;
     }
 
     public void read(char[] buf) throws Exception {

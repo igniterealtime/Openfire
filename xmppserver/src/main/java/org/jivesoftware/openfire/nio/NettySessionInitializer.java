@@ -29,7 +29,9 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionAcceptor;
+import org.jivesoftware.openfire.spi.ConnectionListener;
+import org.jivesoftware.openfire.spi.NettyConnectionAcceptor;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -46,7 +48,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
-import static org.jivesoftware.openfire.session.Session.Log;
 
 
 /**
@@ -74,7 +75,7 @@ public class NettySessionInitializer {
         .setDynamic(false)
         .build();
 
-    private static final Logger LOG = LoggerFactory.getLogger(NettySessionInitializer.class);
+    private static final Logger Log = LoggerFactory.getLogger(NettySessionInitializer.class);
     private final DomainPair domainPair;
     private final int port;
     private  boolean directTLS = false;
@@ -87,9 +88,9 @@ public class NettySessionInitializer {
         this.workerGroup = new NioEventLoopGroup();
     }
 
-    public Future<LocalSession> init(ConnectionConfiguration listenerConfiguration) {
+    public Future<LocalSession> init(ConnectionListener listener) {
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
-        LOG.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
+        Log.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
         final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port );
 
         if ( socketToXmppDomain == null ) {
@@ -99,7 +100,7 @@ public class NettySessionInitializer {
         this.directTLS = socketToXmppDomain.getValue();
 
         final SocketAddress socketAddress = socket.getRemoteSocketAddress();
-        LOG.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
+        Log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
 
         try {
             Bootstrap b = new Bootstrap();
@@ -109,7 +110,7 @@ public class NettySessionInitializer {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                    NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listenerConfiguration, domainPair, port);
+                    NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
                     int maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime() > -1 ? businessLogicHandler.getMaxIdleTime() : 0;
                     int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
 
@@ -118,6 +119,18 @@ public class NettySessionInitializer {
                     ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0));
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
                     ch.pipeline().addLast(businessLogicHandler);
+
+                    final ConnectionAcceptor connectionAcceptor = listener.getConnectionAcceptor();
+                    if (connectionAcceptor instanceof NettyConnectionAcceptor) {
+                        ((NettyConnectionAcceptor) connectionAcceptor).getChannelHandlerFactories().forEach(factory -> {
+                            try {
+                                factory.addNewHandlerTo(ch.pipeline());
+                            } catch (Throwable t) {
+                                Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
+                            }
+                        });
+                    }
+
                     // Should have a connection
                     if (directTLS) {
                         ch.attr(CONNECTION).get().startTLS(true, true);
@@ -135,7 +148,7 @@ public class NettySessionInitializer {
                             Log.warn("Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", domainPair.getRemote());
                             directTLS = false;
                             Log.info("Re-establishing connection to {}. Proceeding without directTLS.", domainPair.getRemote());
-                            init(listenerConfiguration);
+                            init(listener);
                         }
                     }
                 }
@@ -175,7 +188,7 @@ public class NettySessionInitializer {
     }
 
     private void sendOpeningStreamHeader(Channel channel) {
-        LOG.debug("Send the stream header and wait for response...");
+        Log.debug("Send the stream header and wait for response...");
         StringBuilder sb = new StringBuilder();
         sb.append("<stream:stream");
         if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {

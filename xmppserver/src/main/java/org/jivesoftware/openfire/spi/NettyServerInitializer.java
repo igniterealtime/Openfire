@@ -8,13 +8,15 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
-
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.SystemProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
 
@@ -22,6 +24,8 @@ import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
  * Creates a newly configured {@link ChannelPipeline} for a new channel.
  */
 public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
+
+    private static final Logger Log = LoggerFactory.getLogger(NettyServerInitializer.class);
 
     /**
      * Controls the write timeout time in seconds to handle stalled sessions and prevent DoS
@@ -34,12 +38,14 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         .build();
 
     public static final String TRAFFIC_HANDLER_NAME = "trafficShapingHandler";
-    private final ChannelGroup allChannels;
+    private final ChannelGroup allChannels; // This is a collection that is managed by the invoking entity.
     private final ConnectionConfiguration configuration;
+    private final Set<NettyChannelHandlerFactory> channelHandlerFactories; // This is a collection that is managed by the invoking entity.
 
-    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels) {
+    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels, Set<NettyChannelHandlerFactory> channelHandlerFactories) {
         this.allChannels = allChannels;
         this.configuration = configuration;
+        this.channelHandlerFactories = channelHandlerFactories;
     }
 
     @Override
@@ -59,6 +65,15 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0))
             .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))
             .addLast(businessLogicHandler);
+
+        // Add ChannelHandler providers implemented by plugins, if any.
+        channelHandlerFactories.forEach(factory -> {
+            try {
+                factory.addNewHandlerTo(ch.pipeline());
+            } catch (Throwable t) {
+                Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
+            }
+        });
 
         if (isDirectTLSConfigured()) {
             ch.attr(CONNECTION).get().startTLS(false, true);

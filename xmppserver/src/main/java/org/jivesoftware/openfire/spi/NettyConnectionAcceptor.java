@@ -254,6 +254,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
      * for ConnectionAcceptor events to be able to re-supply the factory if need be
      *
      * @param factory A factory of ChannelHandler instances.
+     * @see org.jivesoftware.openfire.spi.ConnectionListener.SocketAcceptorEventListener
      */
     public void addChannelHandler(final NettyChannelHandlerFactory factory) {
         // Add to future channels.

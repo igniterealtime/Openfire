@@ -91,7 +91,7 @@ public class ConnectionListener
     private final String clientAuthPolicyPropertyName;
 
     // The entity that performs the acceptance of new (socket) connections.
-    private ConnectionAcceptor connectionAcceptor;
+    private NettyConnectionAcceptor connectionAcceptor;
 
 
     ConnectionListener getConnectionListener( ConnectionType type ) {
@@ -1032,6 +1032,11 @@ public class ConnectionListener
         else {
             return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).getStrictCertificateValidation() );
         }
+    }
+
+    public ConnectionAcceptor getConnectionAcceptor()
+    {
+        return connectionAcceptor;
     }
 
     @Override

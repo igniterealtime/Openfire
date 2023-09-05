@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
@@ -38,9 +39,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -250,17 +249,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
         log.debug("Creating new session...");
 
-        ConnectionConfiguration listenerConfiguration = XMPPServer
+        ConnectionListener listener = XMPPServer
             .getInstance()
             .getConnectionManager()
-            .getListener(ConnectionType.SOCKET_S2S, false)
-            .generateConnectionConfiguration();
-
+            .getListener(ConnectionType.SOCKET_S2S, false);
         NettySessionInitializer sessionInitialiser = new NettySessionInitializer(domainPair, port);
         try {
             // Wait for the future to give us a session...
             // Set a read timeout so that we don't keep waiting forever
-            return (LocalOutgoingServerSession) sessionInitialiser.init(listenerConfiguration).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
+            return (LocalOutgoingServerSession) sessionInitialiser.init(listener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
         } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn("An exception occurred while creating a session. Closing connection.", e);

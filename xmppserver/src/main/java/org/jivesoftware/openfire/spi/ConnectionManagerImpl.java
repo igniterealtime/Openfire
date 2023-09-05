@@ -537,6 +537,18 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     /**
+     * Returns the connection acceptor for a particular connection type and configuration.
+     *
+     * @param type The connection type for which to return the acceptor
+     * @param directTLS DirectTLS or StartTLS selector
+     * @return The connection acceptor for the provided arguments.
+     */
+    public ConnectionAcceptor getConnectionAcceptor( ConnectionType type, boolean directTLS )
+    {
+        return getListener(type, directTLS).getConnectionAcceptor();
+    }
+
+    /**
      * Return if the configuration allows this listener to be enabled (but does not verify that the listener is
      * indeed active)
      *

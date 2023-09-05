@@ -25,9 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * As a server, Openfire accepts connection requests from other network entities. The exact functionality is subject to
@@ -93,6 +91,10 @@ public class ConnectionListener
     // The entity that performs the acceptance of new (socket) connections.
     private NettyConnectionAcceptor connectionAcceptor;
 
+    /**
+     * A collection of socket acceptor event listeners, invoked when they are being stopped or started.
+     */
+    private final Collection<SocketAcceptorEventListener> eventListeners = new ArrayList<>();
 
     ConnectionListener getConnectionListener( ConnectionType type ) {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
@@ -173,7 +175,7 @@ public class ConnectionListener
             return;
         }
 
-            JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
+        JiveGlobals.setProperty( isEnabledPropertyName, Boolean.toString( enable ) );
         restart();
     }
 
@@ -221,12 +223,26 @@ public class ConnectionListener
             else
             {
                 Log.warn( "Stopping (in order to restart) an instance that has already been started, but is idle. This start would have failed if the listener was not idle. The implementation should have called stop() or restart() first, to ensure a clean restart!" );
+                eventListeners.forEach(eventListener -> {
+                    try {
+                        eventListener.acceptorStopping(connectionAcceptor);
+                    } catch (Throwable t) {
+                        Log.warn("SocketAcceptorEventListener '{}' threw exception while processing acceptor stopping event for acceptor: {}", eventListener, connectionAcceptor, t);
+                    }
+                });
                 connectionAcceptor.stop();
             }
         }
 
         Log.debug( "Starting..." );
         connectionAcceptor = new NettyConnectionAcceptor(generateConnectionConfiguration());
+        eventListeners.forEach(eventListener -> {
+            try {
+                eventListener.acceptorStarting(connectionAcceptor);
+            } catch (Throwable t) {
+                Log.warn("SocketAcceptorEventListener '{}' threw exception while processing acceptor stopping event for acceptor: {}", eventListener, connectionAcceptor, t);
+            }
+        });
         connectionAcceptor.start();
         Log.info( "Started." );
     }
@@ -300,6 +316,13 @@ public class ConnectionListener
         Log.debug( "Stopping..." );
         try
         {
+            eventListeners.forEach(eventListener -> {
+                try {
+                    eventListener.acceptorStopping(connectionAcceptor);
+                } catch (Throwable t) {
+                    Log.warn("SocketAcceptorEventListener '{}' threw exception while processing acceptor stopping event for acceptor: {}", eventListener, connectionAcceptor, t);
+                }
+            });
             connectionAcceptor.stop();
         }
         finally
@@ -1048,6 +1071,43 @@ public class ConnectionListener
                 '}';
     }
 
+    /**
+     * Adds an event listener that is invoked when the SocketAcceptor managed by this instance is being stopped or
+     * started.
+     *
+     * @param eventListener The event listener that is to be notified.
+     */
+    public void add(final SocketAcceptorEventListener eventListener) {
+        this.eventListeners.add(eventListener);
+    }
 
+    /**
+     * Removes a previously added listener for SocketAcceptor-related events.
+     *
+     * @param eventListener the listener to be removed.
+     */
+    public void remove(final SocketAcceptorEventListener eventListener) {
+        this.eventListeners.remove(eventListener);
+    }
+
+    /**
+     * An event listener for events related to a SocketAcceptor instance.
+     */
+    public interface SocketAcceptorEventListener
+    {
+        /**
+         * Invoked prior to the start of an acceptor.
+         *
+         * @param connectionAcceptor The acceptor that is being started.
+         */
+        void acceptorStarting(final ConnectionAcceptor connectionAcceptor);
+
+        /**
+         * Invoked prior to the shutdown of an acceptor.
+         *
+         * @param connectionAcceptor The acceptor that is being stopped.
+         */
+        void acceptorStopping(final ConnectionAcceptor connectionAcceptor);
+    }
 }
 

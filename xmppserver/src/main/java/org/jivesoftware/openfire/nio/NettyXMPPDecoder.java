@@ -38,7 +38,9 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (parser.isMaxBufferSizeExceeded()) {
-            in.release();
+            if (in.refCnt() > 0) { // prevent IllegalReferenceCountException if the ByteBuf has already been deallocated.
+                in.release();
+            }
             return;
         }
 

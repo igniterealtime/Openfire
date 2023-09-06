@@ -20,15 +20,20 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.CharsetUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
 
 /**
  * Decoder that parses ByteBuffers and generates XML stanzas. Generated
  * stanzas are then passed to the next filters.
  */
 public class NettyXMPPDecoder extends ByteToMessageDecoder {
+    private static final Logger Log = LoggerFactory.getLogger(NettyXMPPDecoder.class);
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
@@ -50,5 +55,12 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         if (parser.areThereMsgs()) {
             out.addAll(Arrays.asList(parser.getMsgs()));
         }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+        Log.warn("Error occurred while decoding XMPP stanza, closing connection: " + connection, cause);
+        connection.close();
     }
 }

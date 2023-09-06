@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Openfire: TLS/SSL Guide</title>
+    <title>Openfire: TLS Guide</title>
     <link type="text/css" rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,7 +10,7 @@
 
     <header>
         <img src="images/header_logo.gif" alt="Openfire Logo" />
-        <h1>TLS/SSL Guide</h1>
+        <h1>TLS Guide</h1>
     </header>
 
     <nav>
@@ -192,7 +192,7 @@
             <pre>keytool -keypasswd -alias example.com -keystore keystore</pre>
             <p>
                 Keytool will create certificates using the DSA algorithm by default. Some clients
-                expect the server to have RSA certificates or they will fail to use TLS/SSL. Therefore,
+                expect the server to have RSA certificates or they will fail to use TLS. Therefore,
                 it is a good idea to also create RSA certificates in your keystore. To create
                 certificates with the RSA algorithm you need to specify the algorithm to use like this:
             </p>

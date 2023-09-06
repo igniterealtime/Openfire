@@ -107,7 +107,7 @@ public class TLSWrapper {
     }
 
     /**
-     * Attempts to decode SSL/TLS network data into a subsequence of plaintext application data
+     * Attempts to decode TLS network data into a subsequence of plaintext application data
      * buffers. Depending on the state of the TLSWrapper, this method may consume network data
      * without producing any application data (for example, it may consume handshake data.)
      *

@@ -428,7 +428,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     /**
      * Returns a connection listener.
      *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive TLS encrypted data
      * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
      * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
      * is implemented, the parameter value is ignored.
@@ -552,7 +552,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * Return if the configuration allows this listener to be enabled (but does not verify that the listener is
      * indeed active)
      *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive TLS encrypted data
      * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
      * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
      * is implemented, the parameter value is ignored.
@@ -571,7 +571,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * Enables or disables a connection listener. Does nothing if the particular listener is already in the requested
      * state.
      *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive TLS encrypted data
      * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
      * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
      * is implemented, the parameter value is ignored.

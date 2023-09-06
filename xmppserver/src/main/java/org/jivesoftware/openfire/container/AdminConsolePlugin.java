@@ -426,18 +426,18 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     /**
-     * Returns the non-SSL port on which the admin console is currently operating.
+     * Returns the non-TLS port on which the admin console is currently operating.
      *
-     * @return the non-SSL port on which the admin console is currently operating.
+     * @return the non-TLS port on which the admin console is currently operating.
      */
     public int getAdminUnsecurePort() {
         return adminPort;
     }
 
     /**
-     * Returns the SSL port on which the admin console is current operating.
+     * Returns the TLS port on which the admin console is current operating.
      *
-     * @return the SSL port on which the admin console is current operating.
+     * @return the TLS port on which the admin console is current operating.
      */
     public int getAdminSecurePort() {
         if (!sslEnabled) {

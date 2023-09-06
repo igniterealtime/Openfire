@@ -17,12 +17,12 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.dom4j.Namespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
@@ -36,7 +36,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * Handler of XML stanzas sent by remote servers. Remote servers that send stanzas
@@ -97,17 +96,6 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    protected String getAdditionalNamespaces() {
-        final Set<Namespace> namespaces = connection.getAdditionalNamespaces();
-        if (namespaces.isEmpty()) {
-            return "";
-        }
-        final StringBuilder sb = new StringBuilder();
-        namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));
-        return sb.toString();
-    }
-
-    @Override
     String getNamespace() {
         return "jabber:server";
     }
@@ -160,7 +148,9 @@ public class ServerStanzaHandler extends StanzaHandler {
         sb.append("'?>");
         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace()).append("\"");
-        sb.append(getAdditionalNamespaces());
+        if (ServerDialback.isEnabled() && (this.session != null && !this.session.isAuthenticated())) {
+            sb.append(" xmlns:db=\"jabber:server:dialback\"");
+        }
         sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
         sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
         sb.append(" id=\"").append(session.getStreamID()).append("\"");

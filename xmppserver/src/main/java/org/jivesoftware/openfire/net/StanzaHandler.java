@@ -623,17 +623,12 @@ public abstract class StanzaHandler {
         sb.append("'?>");
         sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
         sb.append(getNamespace()).append("\"");
-        sb.append(getAdditionalNamespaces());
         sb.append(" from=\"").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("\"");
         sb.append(" id=\"").append(session.getStreamID()).append("\"");
         sb.append(" xml:lang=\"").append(session.getLanguage().toLanguageTag()).append("\"");
         sb.append(" version=\"").append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
         sb.append("\">");
         return sb.toString();
-    }
-
-    protected String getAdditionalNamespaces() {
-        return "";
     }
 
     /**

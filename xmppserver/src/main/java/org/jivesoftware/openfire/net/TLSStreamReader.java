@@ -113,7 +113,7 @@ public class TLSStreamReader {
         ByteBuffer out = output;
         input.flip();
         do {
-            // Decode SSL/TLS network data and place it in the app buffer
+            // Decode TLS network data and place it in the app buffer
             out = wrapper.unwrap(input, out);
 
             lastStatus = wrapper.getStatus();

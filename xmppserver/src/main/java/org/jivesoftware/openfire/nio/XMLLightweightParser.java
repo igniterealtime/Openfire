@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.nio;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,9 @@ import java.util.Map;
  * @author Gaston Dombiak
  */
 class XMLLightweightParser {
+
+    private static final Logger Log = LoggerFactory.getLogger(XMLLightweightParser.class);
+
     private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
     private static int maxBufferSize;
     // Chars that represent CDATA section start
@@ -163,6 +168,7 @@ class XMLLightweightParser {
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (buffer.length() > maxBufferSize) {
+            Log.debug("Stanza that has filled the XML parser buffer:\n" + buffer);
             // set flag to inform higher level network decoders to stop reading more data
             maxBufferSizeExceeded = true;
             // purge the local buffer / free memory

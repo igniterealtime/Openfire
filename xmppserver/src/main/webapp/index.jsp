@@ -503,72 +503,72 @@
         </td>
         <td>
             <c:choose>
-                <c:when test="${connectionListener.type eq 'SOCKET_C2S' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'SOCKET_C2S' and connectionListener.TLSPolicy ne 'directTLS'}">
                     <fmt:message key="ports.client_to_server.desc"/>
                     <fmt:message key="ports.plaintext.desc">
                         <fmt:param><a href='connection-settings-socket-c2s.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'SOCKET_C2S' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'SOCKET_C2S' and connectionListener.TLSPolicy eq 'directTLS'}">
                     <fmt:message key="ports.client_to_server.desc_old_ssl"/>
-                    <fmt:message key="ports.legacymode.desc">
+                    <fmt:message key="ports.directtls.desc">
                         <fmt:param><a href='connection-settings-socket-c2s.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'SOCKET_S2S' and connectionListener.TLSPolicy ne 'legacyMode'}" >
+                <c:when test="${connectionListener.type eq 'SOCKET_S2S' and connectionListener.TLSPolicy ne 'directTLS'}" >
                     <fmt:message key="ports.server_to_server.desc"/>
                     <fmt:message key="ports.plaintext.desc">
                         <fmt:param><a href='connection-settings-socket-s2s.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'SOCKET_S2S' and connectionListener.TLSPolicy eq 'legacyMode'}" >
+                <c:when test="${connectionListener.type eq 'SOCKET_S2S' and connectionListener.TLSPolicy eq 'directTLS'}" >
                     <fmt:message key="ports.server_to_server.desc"/>
-                    <fmt:message key="ports.legacymode.desc">
+                    <fmt:message key="ports.directtls.desc">
                         <fmt:param><a href='connection-settings-socket-s2s.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy ne 'directTLS'}">
                     <fmt:message key="ports.external_components.desc"/>
                     <fmt:message key="ports.plaintext.desc">
                         <fmt:param><a href='connection-settings-external-components.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'COMPONENT' and connectionListener.TLSPolicy eq 'directTLS'}">
                     <fmt:message key="ports.external_components.desc_old_ssl"/>
-                    <fmt:message key="ports.legacymode.desc">
+                    <fmt:message key="ports.directtls.desc">
                         <fmt:param><a href='connection-settings-external-components.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'CONNECTION_MANAGER' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'CONNECTION_MANAGER' and connectionListener.TLSPolicy ne 'directTLS'}">
                     <fmt:message key="ports.connection_manager.desc"/>
                     <fmt:message key="ports.plaintext.desc">
                         <fmt:param><a href='connection-managers-settings.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'CONNECTION_MANAGER' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'CONNECTION_MANAGER' and connectionListener.TLSPolicy eq 'directTLS'}">
                     <fmt:message key="ports.connection_manager.desc_old_ssl"/>
-                    <fmt:message key="ports.legacymode.desc">
+                    <fmt:message key="ports.directtls.desc">
                         <fmt:param><a href='connection-managers-settings.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'WEBADMIN' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'WEBADMIN' and connectionListener.TLSPolicy ne 'directTLS'}">
                     <fmt:message key="ports.admin_console.desc_unsecured"/>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'WEBADMIN' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'WEBADMIN' and connectionListener.TLSPolicy eq 'directTLS'}">
                     <fmt:message key="ports.admin_console.desc_secured"/>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'BOSH_C2S' and connectionListener.TLSPolicy ne 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'BOSH_C2S' and connectionListener.TLSPolicy ne 'directTLS'}">
                     <fmt:message key="ports.http_bind.desc_unsecured"/>
                 </c:when>
-                <c:when test="${connectionListener.type eq 'BOSH_C2S' and connectionListener.TLSPolicy eq 'legacyMode'}">
+                <c:when test="${connectionListener.type eq 'BOSH_C2S' and connectionListener.TLSPolicy eq 'directTLS'}">
                     <fmt:message key="ports.http_bind.desc_secured"/>
                 </c:when>
             </c:choose>

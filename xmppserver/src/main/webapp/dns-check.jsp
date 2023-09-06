@@ -45,10 +45,10 @@
 
     final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
 
-    final ConnectionConfiguration plaintextClientConfiguration  = manager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
-    final ConnectionConfiguration legacymodeClientConfiguration = manager.getListener( ConnectionType.SOCKET_C2S, true  ).generateConnectionConfiguration();
-    final ConnectionConfiguration plaintextServerConfiguration  = manager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration();
-    final ConnectionConfiguration legacymodeServerConfiguration = manager.getListener( ConnectionType.SOCKET_S2S, true  ).generateConnectionConfiguration();
+    final ConnectionConfiguration plaintextClientConfiguration = manager.getListener( ConnectionType.SOCKET_C2S, false ).generateConnectionConfiguration();
+    final ConnectionConfiguration directtlsClientConfiguration = manager.getListener( ConnectionType.SOCKET_C2S, true  ).generateConnectionConfiguration();
+    final ConnectionConfiguration plaintextServerConfiguration = manager.getListener( ConnectionType.SOCKET_S2S, false ).generateConnectionConfiguration();
+    final ConnectionConfiguration directtlsServerConfiguration = manager.getListener( ConnectionType.SOCKET_S2S, true  ).generateConnectionConfiguration();
 
     pageContext.setAttribute( "xmppDomain", xmppDomain );
     pageContext.setAttribute( "hostname", hostname );
@@ -58,9 +58,9 @@
     pageContext.setAttribute( "dnsSrvRecordsServerTLS", dnsSrvRecordsServerTLS );
     pageContext.setAttribute( "detectedRecordForHostname", detectedRecordForHostname );
     pageContext.setAttribute( "plaintextClientConfiguration", plaintextClientConfiguration );
-    pageContext.setAttribute( "legacymodeClientConfiguration", legacymodeClientConfiguration );
+    pageContext.setAttribute( "directtlsClientConfiguration", directtlsClientConfiguration );
     pageContext.setAttribute( "plaintextServerConfiguration", plaintextServerConfiguration );
-    pageContext.setAttribute( "legacymodeServerConfiguration", legacymodeServerConfiguration );
+    pageContext.setAttribute( "directtlsServerConfiguration", directtlsServerConfiguration );
 %>
 
 <html>
@@ -247,14 +247,14 @@
     <c:if test="${plaintextClientConfiguration.enabled}">
         <li><code>_xmpp-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${plaintextClientConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
-    <c:if test="${legacymodeClientConfiguration.enabled}">
-        <li><code>_xmpps-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${legacymodeClientConfiguration.port} <c:out value="${hostname}"/>.</code></li>
+    <c:if test="${directtlsClientConfiguration.enabled}">
+        <li><code>_xmpps-client._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${directtlsClientConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
     <c:if test="${plaintextServerConfiguration.enabled}">
         <li><code>_xmpp-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${plaintextServerConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
-    <c:if test="${legacymodeServerConfiguration.enabled}">
-        <li><code>_xmpps-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${legacymodeServerConfiguration.port} <c:out value="${hostname}"/>.</code></li>
+    <c:if test="${directtlsServerConfiguration.enabled}">
+        <li><code>_xmpps-server._tcp.<c:out value="${xmppDomain}"/>. 86400 IN SRV 0 5 ${directtlsServerConfiguration.port} <c:out value="${hostname}"/>.</code></li>
     </c:if>
 </ul>
 <p>

@@ -242,7 +242,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     }
 
     private static boolean isDirectTLSConfigured(ConnectionConfiguration configuration) {
-        return configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
+        return configuration.getTlsPolicy() == Connection.TLSPolicy.directTLS;
     }
 
     /**

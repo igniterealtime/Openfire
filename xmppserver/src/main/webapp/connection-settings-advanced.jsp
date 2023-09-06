@@ -42,14 +42,14 @@
     }
 
     final String connectionModeParam = ParamUtils.getParameter( request, "connectionMode" );
-    if ( "plain".equalsIgnoreCase( connectionModeParam ) || "legacy".equalsIgnoreCase( connectionModeParam ) ) {
+    if ( "plain".equalsIgnoreCase( connectionModeParam ) || "directtls".equalsIgnoreCase( connectionModeParam ) ) {
         pageContext.setAttribute( "connectionMode", connectionModeParam.toLowerCase() );
     } else {
         errors.put( "connectionMode", "Unrecognized connection mode." );
     }
 
     final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
-    final boolean startInSslMode = "legacy".equalsIgnoreCase( connectionModeParam );
+    final boolean startInSslMode = "directtls".equalsIgnoreCase( connectionModeParam );
 
     if ( update && errors.isEmpty() )
     {
@@ -156,8 +156,8 @@
         <c:when test="${connectionMode eq 'plain'}">
             <fmt:message key="connection-mode.plain"/>
         </c:when>
-        <c:when test="${connectionMode eq 'legacy'}">
-            <fmt:message key="connection-mode.legacy"/>
+        <c:when test="${connectionMode eq 'directtls'}">
+            <fmt:message key="connection-mode.directtls"/>
         </c:when>
         <c:otherwise>
             <fmt:message key="connection-mode.unspecified"/>

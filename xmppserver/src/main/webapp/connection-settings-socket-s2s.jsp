@@ -24,8 +24,8 @@
 
     pageContext.setAttribute("permissionPolicy", RemoteServerManager.getPermissionPolicy().toString());
 
-    final ConnectionConfiguration plaintextConfiguration  = manager.getListener( connectionType, false ).generateConnectionConfiguration();
-    final ConnectionConfiguration legacymodeConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();
+    final ConnectionConfiguration plaintextConfiguration = manager.getListener( connectionType, false ).generateConnectionConfiguration();
+    final ConnectionConfiguration directtlsConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();
 
     boolean update = request.getParameter( "update" ) != null;
     boolean closeSettings = request.getParameter( "closeSettings" ) != null;
@@ -58,22 +58,22 @@
         final boolean plaintextEnabled = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
         final int plaintextTcpPort = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
 
-        // legacymode
-        final boolean legacymodeEnabled      = ParamUtils.getBooleanParameter( request, "legacymode-enabled" );
-        final int legacymodeTcpPort          = ParamUtils.getIntParameter( request, "legacymode-tcpPort", legacymodeConfiguration.getPort() );
+        // Direct TLS
+        final boolean directtlsEnabled      = ParamUtils.getBooleanParameter( request, "directtls-enabled" );
+        final int directtlsTcpPort          = ParamUtils.getIntParameter( request, "directtls-tcpPort", directtlsConfiguration.getPort() );
 
         // Apply
         final ConnectionListener plaintextListener = manager.getListener( connectionType, false );
-        final ConnectionListener legacymodeListener = manager.getListener( connectionType, true  );
+        final ConnectionListener directtlsListener = manager.getListener( connectionType, true  );
 
         plaintextListener.enable( plaintextEnabled );
         plaintextListener.setPort( plaintextTcpPort );
 
-        legacymodeListener.enable( legacymodeEnabled );
-        legacymodeListener.setPort( legacymodeTcpPort );
+        directtlsListener.enable( directtlsEnabled );
+        directtlsListener.setPort( directtlsTcpPort );
 
         // Log the event
-        webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nlegacy: enabled=" + legacymodeEnabled+ ", port=" + legacymodeTcpPort+ "\n" );
+        webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\n" );
         response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
     }
     else if ( permissionUpdate && errors.isEmpty() )
@@ -214,9 +214,9 @@
         response.sendRedirect( "connection-settings-socket-s2s.jsp?success=delete" );
     }
 
-    pageContext.setAttribute( "errors",                  errors );
-    pageContext.setAttribute( "plaintextConfiguration",  plaintextConfiguration );
-    pageContext.setAttribute( "legacymodeConfiguration", legacymodeConfiguration );
+    pageContext.setAttribute( "errors",                 errors );
+    pageContext.setAttribute( "plaintextConfiguration", plaintextConfiguration );
+    pageContext.setAttribute( "directtlsConfiguration", directtlsConfiguration );
     // pageContext.setAttribute( "clientIdle",              JiveGlobals.getIntProperty(     ConnectionSettings.Client.IDLE_TIMEOUT,    6*60*1000 ) );
     // pageContext.setAttribute( "pingIdleClients",         JiveGlobals.getBooleanProperty( ConnectionSettings.Client.KEEP_ALIVE_PING, true) );
 
@@ -255,7 +255,7 @@
         window.onload = function()
         {
             applyDisplayable( "plaintext" );
-            applyDisplayable( "legacymode" );
+            applyDisplayable( "directtls" );
         };
     </script>
 </head>
@@ -322,21 +322,21 @@
 
     </admin:contentBox>
 
-    <fmt:message key="ssl.settings.server.legacymode.boxtitle" var="legacymodeboxtitle"/>
-    <admin:contentBox title="${legacymodeboxtitle}">
+    <fmt:message key="ssl.settings.server.directtls.boxtitle" var="directtlsboxtitle"/>
+    <admin:contentBox title="${directtlsboxtitle}">
 
-        <p><fmt:message key="ssl.settings.server.legacymode.info"/></p>
+        <p><fmt:message key="ssl.settings.server.directtls.info"/></p>
 
         <table>
             <tr>
-                <td colspan="2"><input type="checkbox" name="legacymode-enabled" id="legacymode-enabled" onclick="applyDisplayable('legacymode')" ${legacymodeConfiguration.enabled ? 'checked' : ''}/><label for="legacymode-enabled"><fmt:message key="ssl.settings.server.legacymode.label_enable"/></label></td>
+                <td colspan="2"><input type="checkbox" name="directtls-enabled" id="directtls-enabled" onclick="applyDisplayable('directtls')" ${directtlsConfiguration.enabled ? 'checked' : ''}/><label for="directtls-enabled"><fmt:message key="ssl.settings.server.directtls.label_enable"/></label></td>
             </tr>
             <tr>
-                <td style="width: 1%; white-space: nowrap"><label for="legacymode-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td><input type="text" name="legacymode-tcpPort" id="legacymode-tcpPort" value="${legacymodeConfiguration.port}"></td>
+                <td style="width: 1%; white-space: nowrap"><label for="directtls-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="text" name="directtls-tcpPort" id="directtls-tcpPort" value="${directtlsConfiguration.port}"></td>
             </tr>
             <tr>
-                <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_S2S&connectionMode=legacy"><fmt:message key="ssl.settings.server.label_custom_info"/>...</a></td>
+                <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_S2S&connectionMode=directtls"><fmt:message key="ssl.settings.server.label_custom_info"/>...</a></td>
             </tr>
         </table>
 

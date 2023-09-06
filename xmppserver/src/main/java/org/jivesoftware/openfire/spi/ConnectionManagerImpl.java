@@ -122,7 +122,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(),
                 ConnectionSettings.Client.MAX_THREADS_SSL,
                 ConnectionSettings.Client.MAX_READ_BUFFER_SSL,
-                Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+                Connection.TLSPolicy.directTLS.name(), // force Direct TLS mode
                 ConnectionSettings.Client.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_C2S ),
@@ -134,7 +134,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionType.BOSH_C2S,
                 HttpBindManager.HTTP_BIND_PORT.getKey(),
                 HttpBindManager.HTTP_BIND_PORT.getDefaultValue(),
-                HttpBindManager.HTTP_BIND_ENABLED.getKey(), // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_ENABLED.getKey(), // TODO this one property enables/disables both normal and Direct TLS port. Should be separated into two.
                 HttpBindManager.HTTP_BIND_THREADS.getKey(),
                 null,
                 Connection.TLSPolicy.disabled.name(), // StartTLS over HTTP? Should use boshSslListener instead.
@@ -148,10 +148,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionType.BOSH_C2S,
                 HttpBindManager.HTTP_BIND_SECURE_PORT.getKey(),
                 HttpBindManager.HTTP_BIND_SECURE_PORT.getDefaultValue(),
-                HttpBindManager.HTTP_BIND_ENABLED.getKey(), // TODO this one property enables/disables both normal and legacymode port. Should be separated into two.
+                HttpBindManager.HTTP_BIND_ENABLED.getKey(), // TODO this one property enables/disables both normal and Direct TLS port. Should be separated into two.
                 HttpBindManager.HTTP_BIND_THREADS.getKey(),
                 null,
-                Connection.TLSPolicy.legacyMode.name(),
+                Connection.TLSPolicy.directTLS.name(),
                 HttpBindManager.HTTP_BIND_AUTH_PER_CLIENTCERT_POLICY.getKey(),
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.BOSH_C2S ),
@@ -180,7 +180,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
             ConnectionSettings.Server.ENABLE_OLD_SSLPORT,
             "xmpp.server.processing.threads",
             null,
-            Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+            Connection.TLSPolicy.directTLS.name(), // force Direct TLS mode
             ConnectionSettings.Server.AUTH_PER_CLIENTCERT_POLICY,
             bindAddress,
             certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.SOCKET_S2S ),
@@ -210,7 +210,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Component.ENABLE_OLD_SSLPORT_PROPERTY.getKey(),
                 ConnectionSettings.Component.MAX_THREADS_SSL,
                 null,
-                Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+                Connection.TLSPolicy.directTLS.name(), // force Direct TLS mode
                 ConnectionSettings.Component.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.COMPONENT ),
@@ -240,7 +240,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Multiplex.ENABLE_OLD_SSLPORT,
                 ConnectionSettings.Multiplex.MAX_THREADS_SSL,
                 null,
-                Connection.TLSPolicy.legacyMode.name(), // force legacy mode
+                Connection.TLSPolicy.directTLS.name(), // force Direct TLS mode
                 ConnectionSettings.Multiplex.AUTH_PER_CLIENTCERT_POLICY,
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.CONNECTION_MANAGER ),
@@ -271,7 +271,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 null,
                 "adminConsole.serverThreads",
                 null,
-                Connection.TLSPolicy.legacyMode.name(),
+                Connection.TLSPolicy.directTLS.name(),
                 null,
                 adminConsoleBindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.WEBADMIN ),
@@ -434,50 +434,50 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * is implemented, the parameter value is ignored.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @return The connection listener (never null).
      */
     @Override
-    public ConnectionListener getListener( ConnectionType type, boolean startInSslMode )
+    public ConnectionListener getListener( ConnectionType type, boolean startInDirectTlsMode )
     {
         switch ( type )
         {
             case SOCKET_C2S:
-                if (startInSslMode) {
+                if (startInDirectTlsMode) {
                     return clientSslListener;
                 } else {
                     return clientListener;
                 }
 
             case BOSH_C2S:
-                if (startInSslMode) {
+                if (startInDirectTlsMode) {
                     return boshSslListener;
                 } else {
                     return boshListener;
                 }
             case SOCKET_S2S:
-                if (startInSslMode) {
+                if (startInDirectTlsMode) {
                     return serverSslListener;
                 } else {
                     return serverListener;
                 }
 
             case COMPONENT:
-                if (startInSslMode) {
+                if (startInDirectTlsMode) {
                     return componentSslListener;
                 } else {
                     return componentListener;
                 }
 
             case CONNECTION_MANAGER:
-                if (startInSslMode) {
+                if (startInDirectTlsMode) {
                     return connectionManagerSslListener;
                 } else {
                     return connectionManagerListener;
                 }
 
             case WEBADMIN:
-                if (startInSslMode) {
+                if (startInDirectTlsMode) {
                     return webAdminSslListener;
                 } else {
                     return webAdminListener;
@@ -558,13 +558,13 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * is implemented, the parameter value is ignored.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @return true if configuration allows this listener to be enabled, otherwise false.
      */
     @Override
-    public boolean isEnabled( ConnectionType type, boolean startInSslMode )
+    public boolean isEnabled( ConnectionType type, boolean startInDirectTlsMode )
     {
-        return getListener( type, startInSslMode ).isEnabled();
+        return getListener( type, startInDirectTlsMode ).isEnabled();
     }
 
     /**
@@ -577,39 +577,39 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
      * is implemented, the parameter value is ignored.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @param enabled true if the listener is to be enabled, otherwise false.
      */
     @Override
-    public void enable( ConnectionType type, boolean startInSslMode, boolean enabled )
+    public void enable( ConnectionType type, boolean startInDirectTlsMode, boolean enabled )
     {
-        getListener( type, startInSslMode ).enable( enabled );
+        getListener( type, startInDirectTlsMode ).enable( enabled );
     }
 
     /**
      * Retrieves the configured TCP port on which a listener accepts connections.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in DirectTLS mode, otherwise false.
      * @return a port number.
      */
     @Override
-    public int getPort( ConnectionType type, boolean startInSslMode )
+    public int getPort( ConnectionType type, boolean startInDirectTlsMode )
     {
-        return getListener( type, startInSslMode ).getPort();
+        return getListener( type, startInDirectTlsMode ).getPort();
     }
 
     /**
      * Sets the TCP port on which a listener accepts connections.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @param port a port number.
      */
     @Override
-    public void setPort( ConnectionType type, boolean startInSslMode, int port )
+    public void setPort( ConnectionType type, boolean startInDirectTlsMode, int port )
     {
-        getListener( type, startInSslMode ).setPort( port );
+        getListener( type, startInDirectTlsMode ).setPort( port );
     }
 
 

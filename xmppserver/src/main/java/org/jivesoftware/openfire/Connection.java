@@ -449,7 +449,7 @@ public interface Connection extends Closeable {
          * 'required' policy, that allows for an initially unencrypted connection to become
          * encrypted through StartTLS.
          */
-        legacyMode
+        directTLS
     }
 
     /**

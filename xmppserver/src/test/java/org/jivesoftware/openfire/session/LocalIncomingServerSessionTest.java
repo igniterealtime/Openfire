@@ -356,7 +356,7 @@ public class LocalIncomingServerSessionTest
         for (final ServerSettings.CertificateState certificateState : ServerSettings.CertificateState.values()) {
             for (final boolean dialbackSupported : List.of(true, false)) {
                 for (final Connection.TLSPolicy tlsPolicy : Connection.TLSPolicy.values()) {
-                    if (tlsPolicy == Connection.TLSPolicy.legacyMode) {
+                    if (tlsPolicy == Connection.TLSPolicy.directTLS) {
                         continue; // TODO add support for DirectTLS in this unit test!
                     }
                     final ServerSettings serverSettings = new ServerSettings(tlsPolicy, certificateState,true, dialbackSupported); // TODO add support for both strict certificate validation settings.

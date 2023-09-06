@@ -486,7 +486,7 @@ public class ServerDialback {
         else {
             Log.debug("ServerDialback: Received a stanza in an invalid namespace while trying to process an incoming session: {}", xpp.getNamespace("db"));
             connection.deliverRawText(
-                    new StreamError(StreamError.Condition.invalid_namespace).toXML());
+                    new StreamError(StreamError.Condition.invalid_namespace, "Invalid namespace: " + xpp.getNamespace("db")).toXML());
             // Close the underlying connection
             connection.close();
             return null;

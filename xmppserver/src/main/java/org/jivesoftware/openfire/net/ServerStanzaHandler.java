@@ -218,7 +218,7 @@ public class ServerStanzaHandler extends StanzaHandler {
             Log.debug("ServerStanzaHandler: Closing IncomingServerSession due to packet with no TO or FROM: " +
                     packet.toXML());
             // Send a stream error saying that the packet includes no TO or FROM
-            StreamError error = new StreamError(StreamError.Condition.improper_addressing);
+            StreamError error = new StreamError(StreamError.Condition.improper_addressing, "Stanza is missing 'from' and/or 'to' address");
             connection.deliverRawText(error.toXML());
             throw new UnauthorizedException("Packet with no TO or FROM attributes");
         }
@@ -228,7 +228,7 @@ public class ServerStanzaHandler extends StanzaHandler {
             // Send a stream error saying that the packet includes an invalid FROM
             StreamError error = new StreamError(StreamError.Condition.invalid_from);
             connection.deliverRawText(error.toXML());
-            throw new UnauthorizedException("Packet with no TO or FROM attributes");
+            throw new UnauthorizedException("Packet with invalid FROM attribute: " + packet.getFrom());
         }
     }
 

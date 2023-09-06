@@ -236,7 +236,8 @@ public class NettyConnection implements Connection {
             rawEndStream += "</stream:stream>";
 
             try {
-                deliverRawText(rawEndStream);
+                ChannelFuture f = channelHandlerContext.writeAndFlush(rawEndStream);
+                updateWrittenBytesCounter(channelHandlerContext);
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
             }
@@ -361,13 +362,15 @@ public class NettyConnection implements Connection {
 
     @Override
     public void deliverRawText(String text) {
-        Log.trace("Sending: " + text);
         if (!isClosed()) {
+            Log.trace("Sending: " + text);
             ChannelFuture f = channelHandlerContext.writeAndFlush(text);
             updateWrittenBytesCounter(channelHandlerContext);
             // TODO - handle errors more specifically
             // Currently errors are handled by the default exceptionCaught method (log error, close channel)
             // We can add a new listener to the ChannelFuture f for more specific error handling.
+        } else {
+            Log.debug("Cannot send data to as connection is already closed: " + this);
         }
     }
 

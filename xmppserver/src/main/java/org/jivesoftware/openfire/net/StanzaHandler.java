@@ -333,7 +333,7 @@ public abstract class StanzaHandler {
             if (packet.getID() == null && JiveGlobals.getBooleanProperty("xmpp.server.validation.enabled", false)) {
                 // IQ packets MUST have an 'id' attribute so close the connection
                 Log.debug( "Closing session, as it sent us an IQ packet that has no ID attribute: {}. Affected session: {}", packet.toXML(), session );
-                StreamError error = new StreamError(StreamError.Condition.invalid_xml);
+                StreamError error = new StreamError(StreamError.Condition.invalid_xml, "Stanza is missing 'id' attribute.");
                 session.deliverRawText(error.toXML());
                 session.close();
                 return;

@@ -35,7 +35,7 @@ public interface ConnectionManager {
      */
     int DEFAULT_PORT = 5222;
     /**
-     * The default legacy Jabber port for Direct TLS traffic. This method uses connections that are encrypted as soon as
+     * The default Jabber port for Direct TLS traffic. This method uses connections that are encrypted as soon as
      * they are created.
      */
     int DEFAULT_SSL_PORT = 5223;
@@ -73,49 +73,49 @@ public interface ConnectionManager {
      * Return if the configuration allows this listener to be enabled (but does not verify that the listener is
      * indeed active)
      *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive TLS encrypted data
      * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
      * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
      * is implemented, the parameter value is ignored.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @return true if configuration allows this listener to be enabled, otherwise false.
      */
-    boolean isEnabled(ConnectionType type, boolean startInSslMode);
+    boolean isEnabled(ConnectionType type, boolean startInDirectTlsMode);
 
     /**
      * Enables or disables a connection listener. Does nothing if the particular listener is already in the requested
      * state.
      *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive TLS encrypted data
      * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
      * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
      * is implemented, the parameter value is ignored.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @param enabled true if the listener is to be enabled, otherwise false.
      */
-    void enable(ConnectionType type, boolean startInSslMode, boolean enabled);
+    void enable(ConnectionType type, boolean startInDirectTlsMode, boolean enabled);
 
     /**
      * Retrieves the configured TCP port on which a listener accepts connections.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @return a port number.
      */
-    int getPort(ConnectionType type, boolean startInSslMode);
+    int getPort(ConnectionType type, boolean startInDirectTlsMode);
 
     /**
      * Sets the TCP port on which a listener accepts connections.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @param port a port number.
      */
-    void setPort(ConnectionType type, boolean startInSslMode, int port);
+    void setPort(ConnectionType type, boolean startInDirectTlsMode, int port);
 
     /**
      * Returns all connection listeners.
@@ -135,14 +135,14 @@ public interface ConnectionManager {
     /**
      * Returns a connection listener.
      *
-     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive SSL encrypted data
+     * The #startInSslMode parameter is used to distinguish between listeners that expect to receive TLS encrypted data
      * immediately, as opposed to connections that initially accept plain text data (the latter are typically subject to
      * StartTLS for in-band encryption configuration). When for a particular connection type only one of these options
      * is implemented, the parameter value is ignored.
      *
      * @param type The connection type for which a listener is to be configured.
-     * @param startInSslMode true when the listener to be configured is in legacy SSL mode, otherwise false.
+     * @param startInDirectTlsMode true when the listener to be configured is in Direct TLS mode, otherwise false.
      * @return The connection listener (never null).
      */
-    ConnectionListener getListener(ConnectionType type, boolean startInSslMode);
+    ConnectionListener getListener(ConnectionType type, boolean startInDirectTlsMode);
 }

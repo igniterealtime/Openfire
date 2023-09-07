@@ -211,7 +211,7 @@ public interface Connection extends Closeable {
     /**
      * Returns true if this connection is secure.
      *
-     * @return true if the connection is secure (e.g. SSL/TLS)
+     * @return true if the connection is secure (e.g. TLS)
      * @deprecated Renamed. Use {@link #isEncrypted()} instead.
      */
     @Deprecated // Remove in Openfire 4.9 or later.
@@ -220,7 +220,7 @@ public interface Connection extends Closeable {
     /**
      * Returns true if this connection is encrypted.
      *
-     * @return true if the connection is encrypted (e.g. uses SSL/TLS)
+     * @return true if the connection is encrypted (e.g. uses TLS)
      */
     default boolean isEncrypted() {
         return isSecure();
@@ -449,7 +449,7 @@ public interface Connection extends Closeable {
          * 'required' policy, that allows for an initially unencrypted connection to become
          * encrypted through StartTLS.
          */
-        legacyMode
+        directTLS
     }
 
     /**

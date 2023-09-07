@@ -4,9 +4,8 @@
         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
             http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
         version="2.1">
-    <tlib-version>1.3</tlib-version>
-    <short-name>Tag Library for Openfire</short-name>
     <description>Tab Library for Openfire Admin Console</description>
+    <tlib-version>1.4</tlib-version>
     <short-name>admin</short-name>
     <uri>admin</uri>
     <tag>
@@ -145,6 +144,14 @@
     <tag-file>
         <name>infoBox</name>
         <path>/META-INF/tags/admin/infoBox.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>identityStoreConfig</name>
+        <path>/META-INF/tags/admin/security/identityStoreConfig.tagx</path>
+    </tag-file>
+    <tag-file>
+        <name>trustStoreConfig</name>
+        <path>/META-INF/tags/admin/security/trustStoreConfig.tagx</path>
     </tag-file>
     <function>
         <name>replaceAll</name>

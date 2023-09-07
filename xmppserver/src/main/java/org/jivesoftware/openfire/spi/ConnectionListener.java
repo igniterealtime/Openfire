@@ -98,7 +98,7 @@ public class ConnectionListener
 
     ConnectionListener getConnectionListener( ConnectionType type ) {
         ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        return connectionManager.getListener( type, getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) );
+        return connectionManager.getListener( type, getTLSPolicy().equals( Connection.TLSPolicy.directTLS) );
     }
 
     /**
@@ -132,8 +132,8 @@ public class ConnectionListener
         this.trustStoreConfiguration = trustStoreConfiguration;
         this.compressionPolicyPropertyName = compressionPolicyPropertyName;
 
-        // A listener cannot be changed into or from legacy mode. That fact is safe to use in the name of the logger..
-        final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ? "-legacyMode" : "" );
+        // A listener cannot be changed into or from Direct TLS mode. That fact is safe to use in the name of the logger..
+        final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.directTLS) ? "-directTLS" : "" );
         this.Log = LoggerFactory.getLogger( ConnectionListener.class.getName() + "[" + name + "]" );
     }
 
@@ -150,7 +150,7 @@ public class ConnectionListener
         {
             return true;
         }
-        // TODO if this is an SSL connection, legacy code required the existence of at least one certificate in the identity store in addition to the property value (although no such requirement is enforced for a TLS connection that might or might not be elevated to encrypted).
+        // TODO if this is an TLS connection, legacy code required the existence of at least one certificate in the identity store in addition to the property value (although no such requirement is enforced for a TLS connection that might or might not be elevated to encrypted).
         return JiveGlobals.getBooleanProperty( isEnabledPropertyName, true );
     }
 
@@ -544,7 +544,7 @@ public class ConnectionListener
      * When TLS is disabled connections are not allowed to be (or become) encrypted. In this case, connections will be
      * closed when encryption is attempted.
      *
-     * This method disallows changing the policy from or into legacy mode. Such a change is logged but otherwise
+     * This method disallows changing the policy from or into Direct TLS mode. Such a change is logged but otherwise
      * ignored.
      *
      * An invocation of this method has no effect if the new policy value is equal to the existing value.
@@ -566,15 +566,15 @@ public class ConnectionListener
             throw new IllegalArgumentException( "The TLS Policy for this listener is hardcoded (to '"+hardcoded+"'). It cannot be changed." );
         }
 
-        if ( Connection.TLSPolicy.legacyMode.equals( policy ) )
+        if ( Connection.TLSPolicy.directTLS.equals( policy ) )
         {
-            Log.warn( "Ignoring TLS Policy change request (to '{}'): You cannot reconfigure an existing connection (from '{}') into legacy mode!", policy, oldPolicy );
+            Log.warn( "Ignoring TLS Policy change request (to '{}'): You cannot reconfigure an existing connection (from '{}') into DirectTLS mode!", policy, oldPolicy );
             return;
         }
 
-        if ( Connection.TLSPolicy.legacyMode.equals( oldPolicy ) )
+        if ( Connection.TLSPolicy.directTLS.equals( oldPolicy ) )
         {
-            Log.warn( "Ignoring TLS Policy change request (to '{}'): You cannot reconfigure an existing connection that is in legacy mode!", policy );
+            Log.warn( "Ignoring TLS Policy change request (to '{}'): You cannot reconfigure an existing connection that is in DirectTLS mode!", policy );
             return;
         }
 
@@ -1065,7 +1065,7 @@ public class ConnectionListener
     @Override
     public String toString()
     {
-        final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.legacyMode ) ? "-legacyMode" : "" );
+        final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.directTLS) ? "-DirectTLS" : "" );
         return "ConnectionListener{" +
                 "name=" + name +
                 '}';

@@ -60,7 +60,7 @@ public class EncryptionArtifactFactory
 
     // lazy loaded factory objects. These re-usable objects should be lazy loaded, preventing initialization in situations where they're never going to be used.
     private transient KeyManagerFactory keyManagerFactory;
-    private transient SslContextFactory sslContextFactory;
+    private transient SslContextFactory.Server sslContextFactory;
 
     /**
      * Creates a new instance of the factory.
@@ -301,7 +301,7 @@ public class EncryptionArtifactFactory
         return sslEngine;
     }
 
-    public synchronized SslContextFactory getSslContextFactory()
+    public synchronized SslContextFactory.Server getSslContextFactory()
     {
         if ( sslContextFactory != null )
         {

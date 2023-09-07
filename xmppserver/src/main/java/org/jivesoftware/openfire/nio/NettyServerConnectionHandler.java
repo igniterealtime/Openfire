@@ -67,7 +67,7 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
     public NettyServerConnectionHandler(ConnectionConfiguration configuration)
     {
         super(configuration);
-        this.directTLS = configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
+        this.directTLS = configuration.getTlsPolicy() == Connection.TLSPolicy.directTLS;
     }
 
     @Override

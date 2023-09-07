@@ -83,6 +83,6 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
     }
 
     private boolean isDirectTLSConfigured() {
-        return this.configuration.getTlsPolicy() == Connection.TLSPolicy.legacyMode;
+        return this.configuration.getTlsPolicy() == Connection.TLSPolicy.directTLS;
     }
 }

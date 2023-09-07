@@ -28,10 +28,10 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.WebAppLoaderFix;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.JMXManager;
@@ -479,7 +479,7 @@ public final class HttpBindManager implements CertificateEventListener {
 
                 final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                 final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
-                final SslContextFactory sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
+                final SslContextFactory.Server sslContextFactory = new EncryptionArtifactFactory(configuration).getSslContextFactory();
 
                 final HttpConfiguration httpsConfig = new HttpConfiguration();
                 httpsConfig.setSecureScheme("https");
@@ -645,12 +645,7 @@ public final class HttpBindManager implements CertificateEventListener {
      */
     protected Handler createBoshHandler()
     {
-        final int options;
-        if(isHttpCompressionEnabled()) {
-            options = ServletContextHandler.SESSIONS | ServletContextHandler.GZIP;
-        } else {
-            options = ServletContextHandler.SESSIONS;
-        }
+        final int options = ServletContextHandler.SESSIONS;
         final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", options );
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
@@ -667,9 +662,10 @@ public final class HttpBindManager implements CertificateEventListener {
 
         // Add compression filter when needed.
         if (isHttpCompressionEnabled()) {
-            final GzipHandler gzipHandler = context.getGzipHandler();
+            final GzipHandler gzipHandler = new GzipHandler();
             gzipHandler.addIncludedPaths("/*");
             gzipHandler.addIncludedMethods(HttpMethod.POST.asString());
+            context.insertHandler(gzipHandler);
         }
 
         return context;
@@ -690,7 +686,7 @@ public final class HttpBindManager implements CertificateEventListener {
         context.setAllowNullPathInfo(true);
         // Add the functionality-providers.
         context.addServlet( new ServletHolder( new OpenfireWebSocketServlet() ), "/*" );
-
+        JettyWebSocketServletContainerInitializer.configure(context, null);
         return context;
     }
 
@@ -769,12 +765,6 @@ public final class HttpBindManager implements CertificateEventListener {
      */
     public void removeJettyHandler( Handler handler )
     {
-        if (handler instanceof WebAppContext) {
-            // A work-around of the Jetty bug described at https://github.com/eclipse/jetty.project/issues/1425
-            // NOTE: According to some comments on WebAppLoaderFix, this may stop working on Java 9.
-            // Hopefully the Jetty team will have fixed the underlying bug by then
-            WebAppLoaderFix.checkAndClose(((WebAppContext) handler).getClassLoader());
-        }
         extensionHandlers.removeHandler( handler );
         if ( handler.isStarted() )
         {

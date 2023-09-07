@@ -161,7 +161,7 @@ public interface Session extends RoutableChannelHandler {
     /**
      * Returns true if this connection is secure.
      *
-     * @return true if the connection is secure (e.g. SSL/TLS)
+     * @return true if the connection is secure (e.g. TLS)
      * @deprecated Renamed. Use {@link #isEncrypted()} instead.
      */
     @Deprecated // Remove in Openfire 4.9 or later.
@@ -170,7 +170,7 @@ public interface Session extends RoutableChannelHandler {
     /**
      * Returns true if this session uses encrypted connections.
      *
-     * @return true if the session is encrypted (e.g. SSL/TLS)
+     * @return true if the session is encrypted (e.g. TLS)
      */
     default boolean isEncrypted() {
         return isSecure();

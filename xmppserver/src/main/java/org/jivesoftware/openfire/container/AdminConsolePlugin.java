@@ -211,7 +211,7 @@ public class AdminConsolePlugin implements Plugin {
 
                     final ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
                     final ConnectionConfiguration configuration = connectionManager.getListener( ConnectionType.WEBADMIN, true ).generateConnectionConfiguration();
-                    final SslContextFactory sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
+                    final SslContextFactory.Server sslContextFactory = new EncryptionArtifactFactory( configuration ).getSslContextFactory();
 
                     final HttpConfiguration httpsConfig = new HttpConfiguration();
                     httpsConfig.setSendServerVersion( false );
@@ -426,18 +426,18 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     /**
-     * Returns the non-SSL port on which the admin console is currently operating.
+     * Returns the non-TLS port on which the admin console is currently operating.
      *
-     * @return the non-SSL port on which the admin console is currently operating.
+     * @return the non-TLS port on which the admin console is currently operating.
      */
     public int getAdminUnsecurePort() {
         return adminPort;
     }
 
     /**
-     * Returns the SSL port on which the admin console is current operating.
+     * Returns the TLS port on which the admin console is current operating.
      *
-     * @return the SSL port on which the admin console is current operating.
+     * @return the TLS port on which the admin console is current operating.
      */
     public int getAdminSecurePort() {
         if (!sslEnabled) {
@@ -489,6 +489,7 @@ public class AdminConsolePlugin implements Plugin {
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+        context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         context.setConfigurations(new Configuration[]{
             new AnnotationConfiguration(),
@@ -501,7 +502,7 @@ public class AdminConsolePlugin implements Plugin {
             new JettyWebXmlConfiguration()
         });
         final URL classes = getClass().getProtectionDomain().getCodeSource().getLocation();
-        context.getMetaData().setWebInfClassesDirs(Collections.singletonList(Resource.newResource(classes)));
+        context.getMetaData().setWebInfClassesResources(Collections.singletonList(Resource.newResource(classes)));
 
         // The index.html includes a redirect to the index.jsp and doesn't bypass
         // the context security when in development mode

@@ -93,11 +93,50 @@ public class SASLAuthentication {
         .setDefaultValue(false)
         .build();
 
+    /**
+     * Require the peer to provide an authorization identity through SASL (typically in the Initial Response) when authenticating
+     * an inbound S2S connection that uses the EXTERNAL SASL mechanism.
+     *
+     * This is not required by the XMPP protocol specification, but it was required by Openfire versions prior to release 4.8.0.
+     * This configuration option is added to allow for backwards compatibility.
+     */
+    public static final SystemProperty<Boolean> EXTERNAL_S2S_REQUIRE_AUTHZID = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.external.server.require-authzid")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
+    /**
+     * Send an authorization identity in the Initial Response when attempting to authenticate using the SASL EXTERNAL
+     * mechanism with a remote XMPP domain. Sending the authzid in this manner is not required by the XMPP protocol
+     * specification, but is recommended in XEP-0178 for compatibility with older server implementations.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0178.html">XEP-0178: Best Practices for Use of SASL EXTERNAL with Certificates</a>
+     */
+    public static final SystemProperty<Boolean> EXTERNAL_S2S_SKIP_SENDING_AUTHZID = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.external.server.skip-sending-authzid")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
 
     private static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
+
+    /**
+     * Java's SaslServer does not allow for null values. This makes it hard to distinguish between an empty (initial)
+     * responses (represented in XMPP as a single equals sign character '=', as per RFC-6120 section 6.4.2), and a
+     * missing/absent response. This can be problematic when a SASL mechanism implemention is to act differently on each
+     * scenario (like the EXTERNAL mechanism, that is to challenge for an authzid when no initial response is provided,
+     * but which is to use the stream's 'from' attribute value when the initial response is empty). To work around this
+     * shortcoming in Java's SASL implementation, this class will add a session attribute using a key that has the name
+     * of this constant's value when it detects a Sasl response that is present, but empty.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-2514">OF-2514: Differentiate between missing and empty initial SASL response</a>
+     */
+    public static final String SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY = "Sasl.last-response-was-provided-but-empty";
 
     private static Set<String> mechanisms = new HashSet<>();
 
@@ -356,13 +395,23 @@ public class SASLAuthentication {
                     // Decode any data that is provided in the client response.
                     final String encoded = doc.getTextTrim();
                     final byte[] decoded;
-                    if ( encoded == null || encoded.isEmpty() || encoded.equals("=") ) // java SaslServer cannot handle a null.
+
+                    // OF-2514: Java SaslServer cannot handle a null, but some SASL mechanisms need to differentiate
+                    //          between having received no initial response, and an empty response.
+                    if ( encoded == null || encoded.isEmpty() )
                     {
+                        session.removeSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY);
+                        decoded = new byte[ 0 ];
+                    }
+                    else if (encoded.equals("="))
+                    {
+                        session.setSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY, true);
                         decoded = new byte[ 0 ];
                     }
                     else
                     {
-                        // TODO: We shouldn't depend on regex-based validation. Instead, use a proper decoder implementation and handle any exceptions that it throws.
+                        session.removeSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY);
+                        // TODO: OF-2515 We shouldn't depend on regex-based validation. Instead, use a proper decoder implementation and handle any exceptions that it throws.
                         if ( !BASE64_ENCODED.matcher( encoded ).matches() )
                         {
                             throw new SaslFailureException( Failure.INCORRECT_ENCODING );

@@ -208,7 +208,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
                 StringBuilder sb = new StringBuilder();
                 sb.append("<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"EXTERNAL\">");
-                sb.append(StringUtils.encodeBase64(domainPair.getLocal()));
+                // XMPP does not _require_ an authzid to be sent (see RFC-6120, section 6.3.8). XEP-0178 suggests doing so for backwards compatibility.
+                if (SASLAuthentication.EXTERNAL_S2S_SKIP_SENDING_AUTHZID.getValue()) {
+                    sb.append("=");
+                } else {
+                    sb.append(StringUtils.encodeBase64(domainPair.getLocal()));
+                }
                 sb.append("</auth>");
                 connection.deliverRawText(sb.toString());
                 startedSASL = true;

@@ -15,12 +15,17 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.util.JiveGlobals;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -65,9 +70,10 @@ public class ExternalServerSaslServerTest
      *
      * The absence of an initial response is represented by a null value being provided as the response to be evaluated,
      * while the provided session <em>does not</em> have this session attribute: {@link SASLAuthentication#SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY}
+     * and @{SASLAuthentication#PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID} is <code>true</code>.
      */
-    @Test
-    public void testNoInitialResponse() throws Exception
+    //@Test @Disabled // TODO This test is disabled until we can figure out a way to set SASLAuthentication#PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID
+    public void testNoInitialResponseWhileRequired() throws Exception
     {
         // Setup test fixture.
         final String streamID = "example.org";
@@ -90,6 +96,39 @@ public class ExternalServerSaslServerTest
         // Verify results.
         assertNotNull(response);
         assertArrayEquals(new byte[0], response);
+    }
+
+    /**
+     * Verify that when <em>no</em> initial response is given, no challenge (for authzid) is returned.
+     *
+     * The absence of an initial response is represented by a null value being provided as the response to be evaluated,
+     * while the provided session <em>does not</em> have this session attribute: {@link SASLAuthentication#SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY}
+     * and @{SASLAuthentication#PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID} is <code>false</code>.
+     */
+    @Test
+    public void testNoInitialResponseWhileNotRequired() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+
+        when(session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY)).thenReturn(null);
+        // TODO explicitly set SASLAuthentication#PROPERTY_SASL_EXTERNAL_SERVER_REQUIRE_AUTHZID instead of depending on the default value.
+
+        // The following stubs are only used when the implementation under test progresses beyond the check for the
+        // emptiness of the initial response. It should not progress beyond that point. I'm leaving the stubs in, for
+        // the test to fail gracefully (rather than throw an exception) when the system under test misbehaves.
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        when(session.getConnection()).thenReturn(connection);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(streamID), anyBoolean())).thenReturn(true);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = new byte[]{};
+
+        // Execute system under test.
+        final byte[] response = server.evaluateResponse(input);
+
+        // Verify results.
+        assertNull(response);
     }
 
     /**

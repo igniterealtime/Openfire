@@ -12,7 +12,7 @@ sequenceDiagram title Message Handling
     DefaultChannelPipeline->>+SslHandler: ChannelInboundHandler.channelRead()
     SslHandler->>+SslHandler: decode()
     SslHandler->>+SslHandler: ChannelHandlerContext.fireChannelRead()
-    Note over NettyXMPPDecoder: Decodes incoming ByteBuffers <br/>into XMMPP stanza strings
+    Note over NettyXMPPDecoder: Decodes incoming ByteBuffers <br/>into XMPP stanza strings
     SslHandler->>+NettyXMPPDecoder: channelRead()
     NettyXMPPDecoder->>+NettyXMPPDecoder: ByteToMessageDecoder.channelRead()
     NettyXMPPDecoder->>+NettyXMPPDecoder: decode()

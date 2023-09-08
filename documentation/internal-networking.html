@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Internal Networking Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
+        img {
+            height: 250px;
+        }
+    </style>
+</head>
+<body>
+
+    <article>
+
+        <header>
+            <img src="images/header_logo.gif" alt="Openfire Logo" />
+            <h1>Internal Networking Guide</h1>
+        </header>
+
+        <nav>
+            <a href="index.html">&laquo; Back to documentation index</a>
+        </nav>
+
+        <section id="intro">
+
+            <h2>Introduction</h2>
+            <p>
+                This guide aims to give developers an overview of the low-level Netty-based networking in Openfire.
+                It is not necessary for administrators of Openfire to read or understand this. It includes detailed
+                information for developers that wish to understand, or make changes to, the Openfire source code.
+            </p>
+            <p>
+                For additional developer resources please see the
+                <a href="https://netty.io/wiki/user-guide-for-4.x.html">Netty 4 user guide</a> and the
+                <a href="https://netty.io/4.1/api/index.html">Netty 4 JavaDoc</a>.
+            </p>
+
+            <p>Topics that are covered in this document:</p>
+
+            <nav>
+                <ul>
+                    <li><a href="#netty-architecture">Netty Architecture</a>
+                    <li><a href="#netty-in-openfire">Netty in Openfire</a>
+                    <li><a href="#server-bootstrap">Server Bootstrapping in Openfire</a>
+                    <li><a href="#message-handling">Message Handling with Netty in Openfire</a>
+                </ul>
+            </nav>
+
+        </section>
+
+        <section id="netty-architecture">
+
+            <h2>Netty Architecture</h2>
+            <p>
+                The following diagram shows the generic architecture of Netty. There is nothing specific to Openfire
+                shown in the diagram, but it is hoped that this will be a useful model for developers to picture when
+                working with Netty in Openfire.
+            </p>
+            <figure>
+                <a href="images/netty-overview.png"><img src="images/netty-overview.png" alt="Diagram showing the generic Netty architecture"></a>
+            <figcaption>The generic Netty architecture.</figcaption>
+            </figure>
+
+        </section>
+
+        <section id="netty-in-openfire">
+
+            <h2>Netty in Openfire</h2>
+            <p>
+                In the diagram below we can start to understand how Netty is used in Openfire.
+            </p>
+            <p>
+                We see that Openfire's ConnectionManagerImpl creates various Connection Listeners that handle
+                connections for the various connection types in Openfire, differentiated by port number, for example
+                Server to Server (S2S) using STARTTLS, Client to Server (C2S) using STARTTLS, S2S using Direct TLS,C2S
+                using Direct TLS, etc.
+            </p>
+            <p>
+                These Connection Listeners each create new NettyConnectionAcceptors which bootstraps networking
+                connection listeners using Netty.
+            </p>
+
+            <figure>
+                <a href="images/netty-in-openfire.png"><img src="images/netty-in-openfire.png" alt="Diagram showing how Netty fits into Openfire"></a>
+            <figcaption>How Netty fits into Openfire.</figcaption>
+            </figure>
+
+            <p>
+                Zooming in on the above diagram to the S2S and C2S child-group channel pipelines we can see specific
+                <a href="https://netty.io/4.1/api/io/netty/channel/ChannelHandler.html">ChannelHandler</a>
+                implementations that handle TLS, XMPP stanza decoding, stalled session logic, and the core Openfire
+                "business logic", with a different business logic connection handler depending on whether this is
+                a Server to Server connection or a Client to Server connection.
+            </p>
+
+            <figure>
+                <a href="images/netty-pipelines.png"><img src="images/netty-pipelines.png" alt="Diagram showing the detail of Netty pipelines in Openfire"></a>
+                <figcaption>A close-up view of Netty child-channel pipelines in Openfire.</figcaption>
+            </figure>
+
+        </section>
+
+        <section id="server-bootstrap">
+
+            <h2>Server Bootstrapping in Openfire</h2>
+            <p>
+                The following sequence diagram shows how Netty is bootstrapped as part of the XMPPServer bootstrapping
+                process. It aims to add enough detail, on top of the information presented above, to enable developers
+                to orientate themselves in the codebase and discover the finer details of the Netty-based connection
+                and channel handling system within Openfire.
+            </p>
+
+            <figure>
+                <a href="images/netty-server-bootstrap.png"><img src="images/netty-server-bootstrap.png" alt="Diagram showing how Netty bootstraps with Openfire"></a>
+                <figcaption>Netty bootstrapping in Openfire.</figcaption>
+            </figure>
+
+            <p>
+                Note that <a href="diagrams/netty-server-bootstrap.md">the source for this diagram</a> is available
+                in the Openfire source repository.
+            </p>
+
+        </section>
+
+        <section id="message-handling">
+
+            <h2>Message Handling with Netty in Openfire</h2>
+            <p>
+                The final sequence diagram shows how Openfire handles network messages using Netty. It aims to add
+                enough detail, on top of the information presented above, to enable developers to orientate themselves
+                in the codebase and discover the finer details of the network message processing and stanza parsing
+                systems within Openfire.
+            </p>
+
+            <figure>
+                <a href="images/netty-message-handling.png"><img src="images/netty-message-handling.png" alt="Diagram showing how Openfire handles messages with Netty"></a>
+                <figcaption>How Openfire handles messages with Netty.</figcaption>
+            </figure>
+
+            <p>
+                Note that <a href="diagrams/netty-message-handling.md">the source for this diagram</a> is available in
+                the Openfire source repository.
+            </p>
+
+        </section>
+
+        <footer>
+            <p>
+                An active support community for Openfire is available at
+                <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+            </p>
+        </footer>
+    </article>
+</body>
+</html>

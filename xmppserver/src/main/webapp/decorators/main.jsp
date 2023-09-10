@@ -59,8 +59,8 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title><%= AdminConsole.getAppName() %> <fmt:message key="login.title" />: <decorator:title /></title>
-        <link rel="stylesheet" href="/style/framework/css/bootstrap.min.css" type="text/css">
-        <link rel="stylesheet" href="/style/framework/css/font-awesome.min.css" type="text/css">
+        <link rel="stylesheet" href="<%= path %>/style/framework/css/bootstrap.min.css" type="text/css">
+        <link rel="stylesheet" href="<%= path %>/style/framework/css/font-awesome.min.css" type="text/css">
         <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
         <script src="<%= path %>/js/cookies.js"></script>
         <script src="<%= path %>/js/behaviour.js"></script>

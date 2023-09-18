@@ -181,6 +181,11 @@ public class NettySessionInitializer {
             return; // Guard against closing more than once (OF-2673).
         }
         if (channel != null) {
+            // Close connection to allow its event handlers to clean up routing table (OF-2674).
+            final NettyConnection connection = channel.attr(CONNECTION).get();
+            if (connection != null) {
+                connection.close();
+            }
             channel.close();
         }
         workerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);

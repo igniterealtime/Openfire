@@ -105,7 +105,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
-        Log.trace("Netty XMPP handler added: " + ctx.channel().localAddress());
+        Log.trace("Netty XMPP handler added: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
 
         // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
         ctx.channel().attr(XML_PARSER).set(new XMLLightweightParser());
@@ -120,7 +120,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
-        Log.trace("Netty XMPP handler removed: " + ctx.channel().localAddress());
+        Log.trace("Netty XMPP handler removed: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
     }
 
     @Override
@@ -134,12 +134,12 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
         // Update counter of read bytes
         updateReadBytesCounter(ctx);
 
-        Log.trace("Handler on " +  ctx.channel().localAddress() + " received: " + message);
+        Log.trace("Handler on {} received: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress(), message);
         // Let the stanza handler process the received stanza
         try {
             ctx.channel().attr(HANDLER).get().process(message, parser);
         } catch (Throwable e) { // Make sure to catch Throwable, not (only) Exception! See OF-2367
-            Log.error("Closing connection due to error while processing message: {}", message, e);
+            Log.error("Closing connection on {} due to error while processing message: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress(), message, e);
             final Connection connection = ctx.channel().attr(CONNECTION).get();
             if ( connection != null ) {
                 connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while processing data raw inbound data."));
@@ -150,7 +150,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         // Close the connection when an exception is raised.
-        Log.error(cause.getMessage(), cause);
+        Log.error("Exception caught on channel {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress(), cause);
         ctx.channel().close();
     }
 
@@ -173,7 +173,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
                 NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
                 connection.setEncrypted(true);
-                Log.debug("TLS negotiation was successful.");
+                Log.debug("TLS negotiation was successful on channel {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
                 ctx.fireChannelActive();
             }
         }

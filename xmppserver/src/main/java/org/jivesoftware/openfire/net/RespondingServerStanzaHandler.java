@@ -100,11 +100,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     private void transferConnectionToNewSession(String newStreamId, ServerSession.AuthenticationMethod existingAuthMethod) {
         session = createLocalOutgoingServerSession(newStreamId, connection);
 
-        // Clear routing table cache of previous sessions for domain pair and re-add it.
-        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
-        routingTable.addServerRoute(domainPair, (LocalOutgoingServerSession) session); // This _replaces_ the pre-existing session in the routing table.
-        SessionManager sessionManager = SessionManager.getInstance();
-        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+//        // Clear routing table cache of previous sessions for domain pair and re-add it.
+//        RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+//        routingTable.addServerRoute(domainPair, (LocalOutgoingServerSession) session); // This _replaces_ the pre-existing session in the routing table.
+//        SessionManager sessionManager = SessionManager.getInstance();
+//        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
 
         // Transfer new session to existing connection
         connection.reinit(session);

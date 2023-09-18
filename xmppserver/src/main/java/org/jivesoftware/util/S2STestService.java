@@ -253,7 +253,7 @@ public class S2STestService {
                 {
                     final IQ iq = (IQ) packet;
                     if ( iq.isResponse() && ping.getID().equals( iq.getID() ) && ping.getTo().equals( iq.getFrom() ) ) {
-                        Log.info("Successful server to server response received.");
+                        Log.info("{} server to server response received.", iq.getType() == Type.result ? "Successful" : "Erroneous");
                         waitUntil.release();
                     }
                 }

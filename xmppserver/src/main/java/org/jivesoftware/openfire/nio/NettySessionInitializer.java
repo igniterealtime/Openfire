@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
 
@@ -78,7 +79,8 @@ public class NettySessionInitializer {
     private static final Logger Log = LoggerFactory.getLogger(NettySessionInitializer.class);
     private final DomainPair domainPair;
     private final int port;
-    private  boolean directTLS = false;
+    private boolean directTLS = false;
+    private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private final EventLoopGroup workerGroup;
     private Channel channel;
 
@@ -175,6 +177,9 @@ public class NettySessionInitializer {
     }
 
     public void stop() {
+        if (!isStopped.compareAndSet(false, true)) {
+            return; // Guard against closing more than once (OF-2673).
+        }
         if (channel != null) {
             channel.close();
         }

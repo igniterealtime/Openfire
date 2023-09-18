@@ -108,10 +108,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Transfer new session to existing connection
         connection.reinit(session);
-        if (isSessionAuthenticated.isDone() && session instanceof LocalOutgoingServerSession) {
+        if (isSessionAuthenticated.isDone()) {
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
         } else {
-            LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
+            LOG.debug("Session not authenticated yet, unable to setAuthenticationMethod().");
         }
     }
 
@@ -292,7 +292,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             if (session instanceof LocalOutgoingServerSession) {
                 ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
             } else {
-                LOG.debug("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod().");
+                LOG.warn("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod(). Session: {}", session);
                 return false;
             }
 

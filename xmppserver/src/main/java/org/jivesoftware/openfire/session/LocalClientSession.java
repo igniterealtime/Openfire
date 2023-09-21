@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.csi.CsiManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.roster.RosterManager;
@@ -50,6 +51,7 @@ import org.xmpp.packet.StreamError;
 
 import java.net.UnknownHostException;
 import java.security.KeyStoreException;
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -291,6 +293,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                     starttls.addElement("required");
                 }
                 sb.append(starttls.asXML());
+            }
+            if (!ConnectionSettings.Client.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
+                final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
+                limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
+                final Duration timeout = ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue();
+                if (!timeout.isNegative() && !timeout.isZero()) {
+                    limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
+                }
+                sb.append(limits.asXML());
             }
         } catch (KeyStoreException e) {
             Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
@@ -850,6 +861,16 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             c.addAttribute("node", EntityCapabilitiesManager.OPENFIRE_IDENTIFIER_NODE);
             c.addAttribute("ver", ver);
             sb.append(c.asXML());
+        }
+
+        if (!ConnectionSettings.Client.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
+            final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
+            limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
+            final Duration timeout = ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue();
+            if (!timeout.isNegative() && !timeout.isZero()) {
+                limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
+            }
+            sb.append(limits.asXML());
         }
 
         return sb.toString();

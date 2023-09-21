@@ -16,15 +16,12 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This is a Light-Weight XML Parser.
@@ -41,8 +38,13 @@ class XMLLightweightParser {
 
     private static final Logger Log = LoggerFactory.getLogger(XMLLightweightParser.class);
 
-    private static final String MAX_PROPERTY_NAME = "xmpp.parser.buffer.size";
-    private static int maxBufferSize;
+    public static final SystemProperty<Long> XMPP_PARSER_BUFFER_SIZE = SystemProperty.Builder.ofType(Long.class)
+        .setKey("xmpp.parser.buffer.size")
+        .setDynamic(true)
+        .setDefaultValue(1048576L)
+        .setMinValue(32L)
+        .build();
+
     // Chars that represent CDATA section start
     protected static char[] CDATA_START = {'<', '!', '[', 'C', 'D', 'A', 'T', 'A', '['};
     // Chars that represent CDATA section end
@@ -95,13 +97,6 @@ class XMLLightweightParser {
     private boolean maxBufferSizeExceeded = false;
 
     protected boolean insideChildrenTag = false;
-
-    static {
-        // Set default max buffer size to 1MB. If limit is reached then close connection
-        maxBufferSize = JiveGlobals.getIntProperty(MAX_PROPERTY_NAME, 1048576);
-        // Listen for changes to this property
-        PropertyEventDispatcher.addListener(new PropertyListener());
-    }
 
     /*
     * true if the parser has found some complete xml message.
@@ -167,7 +162,7 @@ class XMLLightweightParser {
         invalidateBuffer();
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
-        if (buffer.length() > maxBufferSize) {
+        if (buffer.length() > XMPP_PARSER_BUFFER_SIZE.getValue()) {
             Log.debug("Stanza that has filled the XML parser buffer:\n" + buffer);
             // set flag to inform higher level network decoders to stop reading more data
             maxBufferSizeExceeded = true;
@@ -431,35 +426,5 @@ class XMLLightweightParser {
     public static boolean isLegalXmlCharacter(int value) {
         return value == 0x9 || value == 0xA || value == 0xD || (value >= 0x20 && value <= 0xD7FF)
                 || (value >= 0xE000 && value <= 0xFFFD) || (value >= 0x10000 && value <= 0x10FFFF);
-    }
-    
-    private static class PropertyListener implements PropertyEventListener {
-        @Override
-        public void propertySet(String property, Map<String, Object> params) {
-            if (MAX_PROPERTY_NAME.equals(property)) {
-                String value = (String) params.get("value");
-                if (value != null) {
-                    maxBufferSize = Integer.parseInt(value);
-                }
-            }
-        }
-
-        @Override
-        public void propertyDeleted(String property, Map<String, Object> params) {
-            if (MAX_PROPERTY_NAME.equals(property)) {
-                // Use default value when none was specified
-                maxBufferSize = 1048576;
-            }
-        }
-
-        @Override
-        public void xmlPropertySet(String property, Map<String, Object> params) {
-            // Do nothing
-        }
-
-        @Override
-        public void xmlPropertyDeleted(String property, Map<String, Object> params) {
-            // Do nothing
-        }
     }
 }

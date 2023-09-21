@@ -95,6 +95,10 @@
         <servlet-name>dwr-invoker</servlet-name>
     </filter-mapping>
 
+    <filter-mapping>
+        <filter-name>AuthCheck</filter-name>
+        <servlet-name>BlogPostsServlet</servlet-name>
+    </filter-mapping>
 
     <listener>
         <listener-class>org.jivesoftware.openfire.XMPPContextListener</listener-class>
@@ -122,6 +126,11 @@
         <servlet-class>org.jivesoftware.openfire.container.PluginIconServlet</servlet-class>
     </servlet>
 
+    <servlet>
+        <servlet-name>BlogPostsServlet</servlet-name>
+        <servlet-class>org.jivesoftware.admin.servlet.BlogPostServlet</servlet-class>
+    </servlet>
+
     <!--@@JSPC-SERVLETS@@-->
 
     <servlet-mapping>
@@ -137,6 +146,11 @@
     <servlet-mapping>
         <servlet-name>PluginIconServlet</servlet-name>
         <url-pattern>/geticon</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>BlogPostsServlet</servlet-name>
+        <url-pattern>/getblogposts</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

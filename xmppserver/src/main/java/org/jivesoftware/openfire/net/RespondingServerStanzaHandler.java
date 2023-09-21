@@ -158,7 +158,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     private boolean isNewStreamId(String streamHeaderId) {
-        return streamHeaderId.equals(session.getStreamID().getID());
+        return !streamHeaderId.equals(session.getStreamID().getID());
     }
 
     private static boolean isRelevantNamespace(Namespace ns) {

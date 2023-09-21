@@ -76,9 +76,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     @Override
     public int getMaxIdleTime() {
         return Math.toIntExact(
-            Duration.ofMillis(
-                JiveGlobals.getIntProperty(ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY,360000))
-                .toSeconds()
+            ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue().toSeconds()
         );
     }
 

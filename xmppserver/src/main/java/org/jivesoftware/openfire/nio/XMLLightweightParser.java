@@ -34,7 +34,7 @@ import java.util.List;
  * @author Daniele Piras
  * @author Gaston Dombiak
  */
-class XMLLightweightParser {
+public class XMLLightweightParser {
 
     private static final Logger Log = LoggerFactory.getLogger(XMLLightweightParser.class);
 

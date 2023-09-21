@@ -43,6 +43,12 @@ public final class ConnectionSettings {
             .setDynamic(Boolean.TRUE)
             .build();
 
+        public static final SystemProperty<Boolean> STREAM_LIMITS_ADVERTISEMENT_DISABLED = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.client.limits.advertisement.disabled")
+            .setDefaultValue(false)
+            .setDynamic(true)
+            .build();
+
         public static final String TLS_POLICY = "xmpp.client.tls.policy";
         public static final String OLD_SSLPORT = "xmpp.socket.ssl.port";
         public static final SystemProperty<Boolean> ENABLE_OLD_SSLPORT_PROPERTY = SystemProperty.Builder.ofType(Boolean.class)
@@ -74,6 +80,11 @@ public final class ConnectionSettings {
 
     public static final class Server {
 
+        public static final SystemProperty<Boolean> STREAM_LIMITS_ADVERTISEMENT_DISABLED = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.server.limits.advertisement.disabled")
+            .setDefaultValue(false)
+            .setDynamic(true)
+            .build();
         public static final String SOCKET_ACTIVE = "xmpp.server.socket.active";
         public static final String PORT = "xmpp.server.socket.port";
         public static final String OLD_SSLPORT = "xmpp.server.socket.ssl.port";
@@ -100,7 +111,18 @@ public final class ConnectionSettings {
         public static final String PERMISSION_SETTINGS = "xmpp.server.permission";
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.server.cert.policy";
         public static final String ALLOW_ANONYMOUS_OUTBOUND_DATA = "xmpp.server.allow-anonymous-outbound-data";
-        public static final String IDLE_TIMEOUT_PROPERTY = "xmpp.server.idle";
+
+        /**
+         * How much time the server will wait without receiving an inbound message until it is classed as an idle connection
+         * and closed.
+         */
+        public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.server.idle")
+            .setDefaultValue(Duration.ofMinutes(6))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
 
         public static final String STRICT_CERTIFICATE_VALIDATION = "xmpp.socket.ssl.certificate.strict-validation";
     }

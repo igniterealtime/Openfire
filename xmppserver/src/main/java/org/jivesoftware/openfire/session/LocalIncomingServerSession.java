@@ -18,12 +18,14 @@ package org.jivesoftware.openfire.session;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
@@ -40,6 +42,7 @@ import org.xmpp.packet.StreamError;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -198,6 +201,16 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                     // Also offer server dialback (when TLS is not required). Server dialback may be offered
                     // after TLS has been negotiated and a self-signed certificate is being used
                     sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
+                }
+
+                if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
+                    final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
+                    limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
+                    final Duration timeout = ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue();
+                    if (!timeout.isNegative() && !timeout.isZero()) {
+                        limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
+                    }
+                    sb.append(limits.asXML());
                 }
 
                 sb.append("</stream:features>");
@@ -419,7 +432,16 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
             sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
         }
-        
+
+        if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
+            final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
+            limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
+            final Duration timeout = ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue();
+            if (!timeout.isNegative() && !timeout.isZero()) {
+                limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
+            }
+            sb.append(limits.asXML());
+        }
         return sb.toString();
     }
 

@@ -50,6 +50,7 @@
 <%@ page import="org.jivesoftware.util.MemoryUsageMonitor" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.jivesoftware.admin.servlet.BlogPostServlet" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -68,12 +69,6 @@
 <%-- Define Administration Bean --%>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out); %>
-
-<%! long lastRSSFetch = 0;
-    SyndFeed lastBlogFeed = null;
-    String blogFeedRSS = "https://discourse.igniterealtime.org/c/blogs/ignite-realtime-blogs.rss";
-
-%>
 <% // Get parameters //
     boolean serverOn = (webManager.getXMPPServer() != null);
 
@@ -81,7 +76,7 @@
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
     MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
-    boolean rssEnabled = JiveGlobals.getBooleanProperty("rss.enabled", true);
+    boolean rssEnabled = BlogPostServlet.ENABLED.getValue();;
 
     pageContext.setAttribute("memoryUsageAfterLastGC", MemoryUsageMonitor.getInstance().getMemoryUsageAfterLastGC());
 %>
@@ -91,6 +86,42 @@
         <title><fmt:message key="index.title"/></title>
         <meta name="pageID" content="server-settings"/>
         <meta name="helpPage" content="about_the_server.html"/>
+        <% if (rssEnabled) { %>
+        <script>
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", "getblogposts", true);
+            xhr.onload = (e) => {
+                if (xhr.readyState === 4) {
+                    let news = document.getElementById("jive-latest-activity");
+                    if (xhr.status === 200) {
+                        let items = JSON.parse(xhr.responseText).items;
+                        if (items.length > 0) {
+                            for (let i = 0; i < items.length; i++) {
+                                let h5 = document.createElement("h5");
+                                h5.innerHTML = "<a href='" + items[i].link + "' target='_blank'>" + items[i].title + "</a>, <span class='jive-blog-date'>" + items[i].date + "</span>";
+                                news.appendChild(h5);
+                            }
+                        } else {
+                            let span = document.createElement("span");
+                            span.innerHTML = '<fmt:message key="index.cs_blog.unavailable" />';
+                            news.appendChild(span);
+                        }
+                    } else {
+                        let span = document.createElement("span");
+                        span.innerHTML = '<fmt:message key="index.cs_blog.unavailable" />';
+                        news.appendChild(span);
+                    }
+                }
+            };
+            xhr.onerror = (e) => {
+                let news = document.getElementById("jive-latest-activity");
+                let span = document.createElement("span");
+                span.innerHTML = '<fmt:message key="index.cs_blog.unavailable" />';
+                news.appendChild(span);
+            };
+            xhr.send(null);
+        </script>
+        <% } %>
     </head>
     <body>
 
@@ -380,49 +411,9 @@
     <% if (rssEnabled) { %>
     <td style="vertical-align: top; width: 40%">
         <div id="jive-latest-activity">
-
-            <a href="<%= blogFeedRSS %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
+            <a href="<%= BlogPostServlet.URL.getValue() %>" class="jive-feed-icon"><img src="images/feed-icon-16x16.gif" alt="" style="border:0;" /></a>
             <h4><fmt:message key="index.cs_blog" /></h4>
-            <% long nowTime = System.currentTimeMillis();
-                if (lastBlogFeed == null || nowTime - lastRSSFetch > 21600000) {
-
-                    final String proxyHost = JiveGlobals.getProperty("update.proxy.host", "").trim();
-                    final int proxyPort = JiveGlobals.getIntProperty("update.proxy.port", -1);
-                    final HttpRoutePlanner routePlanner;
-                    if( !proxyHost.isEmpty() && proxyPort > 0) {
-                        routePlanner = new DefaultProxyRoutePlanner(new HttpHost(proxyHost, proxyPort, "http"));
-                    } else {
-                        routePlanner = new DefaultRoutePlanner(null);
-                    }
-                    final HttpGet httpGet = new HttpGet(blogFeedRSS);
-
-                    try (final CloseableHttpClient client = HttpClients.custom().setRoutePlanner(routePlanner).build();
-                         final CloseableHttpResponse httpResponse = client.execute(httpGet);
-                         final InputStream stream = httpResponse.getEntity().getContent()) {
-                        final SyndFeedInput input = new SyndFeedInput();
-                        lastBlogFeed = input.build(new InputStreamReader(stream));
-                        lastRSSFetch = nowTime;
-                    } catch (final Throwable throwable) {
-                        LoggerFactory.getLogger("index.jsp").warn("Failed to fetch RSS feed:", throwable);
-                    }
-                }
-
-                %><div class="jive-bottom-line"></div><%
-                if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
-
-                    List<SyndEntry> entries = lastBlogFeed.getEntries();
-                    for (int i = 0; i < entries.size() && i < 7; i++) {
-                        SyndEntry entry = entries.get(i); %>
-                        <h5><a href="<%= entry.getLink() %>" target="_blank"><%= entry.getTitle()%></a>,
-                        <span class="jive-blog-date"><%= JiveGlobals.formatDate(entry.getPublishedDate())%></span></h5>
-                    <% }
-
-                } else { %>
-                    <fmt:message key="index.cs_blog.unavailable" />
-                 <% }
-
-            %>
-
+            <div class="jive-bottom-line"></div>
         </div>
     </td>
     <% } %>

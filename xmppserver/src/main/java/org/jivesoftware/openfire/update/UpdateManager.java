@@ -90,11 +90,11 @@ public class UpdateManager extends BasicModule {
         .setDefaultValue(Duration.ofHours(48))
         .setMinValue(Duration.ofHours(12))
         .build();
-    private static final SystemProperty<String> PROXY_HOST = SystemProperty.Builder.ofType(String.class)
+    public static final SystemProperty<String> PROXY_HOST = SystemProperty.Builder.ofType(String.class)
         .setKey("update.proxy.host")
         .setDynamic(true)
         .build();
-    private static final SystemProperty<Integer> PROXY_PORT = SystemProperty.Builder.ofType(Integer.class)
+    public static final SystemProperty<Integer> PROXY_PORT = SystemProperty.Builder.ofType(Integer.class)
         .setKey("update.proxy.port")
         .setDynamic(true)
         .setDefaultValue(-1)

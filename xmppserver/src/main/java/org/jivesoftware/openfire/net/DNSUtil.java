@@ -177,7 +177,7 @@ public class DNSUtil {
         if (internalDNS == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder(100);
+        StringBuilder sb = new StringBuilder();
         for (String key : internalDNS.keySet()) {
             if (sb.length() > 0) {
                 sb.append(',');

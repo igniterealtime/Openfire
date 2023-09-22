@@ -256,7 +256,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         LocalClientSession session = SessionManager.getInstance().createClientSession(connection, language);
 
         // Build the start packet response
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");

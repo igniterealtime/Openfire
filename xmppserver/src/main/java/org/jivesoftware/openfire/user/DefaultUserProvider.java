@@ -413,7 +413,7 @@ public class DefaultUserProvider implements UserProvider {
         int queries=0;
         ResultSet rs = null;
         try {
-            StringBuilder sql = new StringBuilder(90);
+            StringBuilder sql = new StringBuilder();
             sql.append("SELECT username FROM ofUser WHERE");
             boolean first = true;
             if (fields.contains("Username")) {
@@ -501,7 +501,7 @@ public class DefaultUserProvider implements UserProvider {
      */
     private void LogResults(List<String> listElements) {
         String callingMethod = Thread.currentThread().getStackTrace()[3].getMethodName();
-        StringBuilder sb = new StringBuilder(256);
+        StringBuilder sb = new StringBuilder();
         int count = 0;
         for (String element : listElements)
         {

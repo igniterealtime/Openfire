@@ -101,7 +101,7 @@ abstract class SocketReadingMode {
      */
     protected void tlsNegotiated() throws XmlPullParserException, IOException {
         // Offer stream features including SASL Mechanisms
-        StringBuilder sb = new StringBuilder(620);
+        StringBuilder sb = new StringBuilder();
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
         // Include available SASL Mechanisms
@@ -151,7 +151,7 @@ abstract class SocketReadingMode {
      * to servers or external components)
      */
     protected void saslSuccessful() throws XmlPullParserException, IOException {
-        StringBuilder sb = new StringBuilder(420);
+        StringBuilder sb = new StringBuilder();
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
 
@@ -229,7 +229,7 @@ abstract class SocketReadingMode {
      */
     protected void compressionSuccessful() throws XmlPullParserException, IOException
     {
-        StringBuilder sb = new StringBuilder(340);
+        StringBuilder sb = new StringBuilder();
         sb.append(geStreamHeader());
         sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
@@ -249,7 +249,7 @@ abstract class SocketReadingMode {
     }
 
     private String geStreamHeader() {
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");

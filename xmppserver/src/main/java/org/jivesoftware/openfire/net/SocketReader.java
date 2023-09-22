@@ -422,7 +422,7 @@ public abstract class SocketReader implements Runnable {
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
         if (validateHost() && isHostUnknown(host)) {
-            StringBuilder sb = new StringBuilder(250);
+            StringBuilder sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");
@@ -445,7 +445,7 @@ public abstract class SocketReader implements Runnable {
         else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
-            StringBuilder sb = new StringBuilder(250);
+            StringBuilder sb = new StringBuilder();
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);
             sb.append("'?>");

@@ -506,8 +506,8 @@ public class ConsistencyChecks {
      * The returned multi-map can contain up to four keys: info, fail, pass, data. All entry values are a human readable
      * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
      *
-     * @param sessionInfoCache             The cache that is used to share data across cluster nodes
-     * @param localSessions            The data structure that keeps track of what data was added to the cache by the local cluster node.
+     * @param sessionInfoCache             The cache that is used to share data across cluster nodes. (note that unlike its siblings, this is empty when not clustering!)
+     * @param localSessions                The data structure that keeps track of what data was added to the cache by the local cluster node.
      * @param sessionInfoKeysByClusterNode The data structure that keeps track of what data was added to the cache by the remote cluster nodes.
      * @return A consistency state report.
      */
@@ -588,22 +588,28 @@ public class ConsistencyChecks {
             result.put("fail", String.format("There are %d elements that are both 'remote' (in sessionInfosByClusterNode) as well as 'local' (in SessionManager's localSessionManager): %s", sessionInfosBothLocalAndRemote.size(), sessionInfosBothLocalAndRemote.stream().collect(Collectors.joining(", "))));
         }
 
-        if (nonCachedLocalSessionInfos.isEmpty()) {
-            result.put("pass", String.format("All elements in SessionManager's localSessionManager exist in %s.", sessionInfoCache.getName()));
+        if (!ClusterManager.isClusteringStarted()) {
+            if (!cache.isEmpty()) {
+                result.put("fail", String.format("Clustering is not started. The Cache named %s is expected to be unused when clustering is not used, but is not empty!",  sessionInfoCache.getName()));
+            }
         } else {
-            result.put("fail", String.format("Not all elements in SessionManager's localSessionManager exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedLocalSessionInfos.size(), nonCachedLocalSessionInfos.stream().collect(Collectors.joining(", "))));
-        }
+            if (nonCachedLocalSessionInfos.isEmpty()) {
+                result.put("pass", String.format("All elements in SessionManager's localSessionManager exist in %s.", sessionInfoCache.getName()));
+            } else {
+                result.put("fail", String.format("Not all elements in SessionManager's localSessionManager exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedLocalSessionInfos.size(), nonCachedLocalSessionInfos.stream().collect(Collectors.joining(", "))));
+            }
 
-        if (nonCachedRemoteSessionInfos.isEmpty()) {
-            result.put("pass", String.format("All elements in sessionInfosByClusterNode exist in %s.", sessionInfoCache.getName()));
-        } else {
-            result.put("fail", String.format("Not all elements in sessionInfosByClusterNode exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedRemoteSessionInfos.size(), nonCachedRemoteSessionInfos.stream().collect(Collectors.joining(", "))));
-        }
+            if (nonCachedRemoteSessionInfos.isEmpty()) {
+                result.put("pass", String.format("All elements in sessionInfosByClusterNode exist in %s.", sessionInfoCache.getName()));
+            } else {
+                result.put("fail", String.format("Not all elements in sessionInfosByClusterNode exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedRemoteSessionInfos.size(), nonCachedRemoteSessionInfos.stream().collect(Collectors.joining(", "))));
+            }
 
-        if (nonLocallyStoredCachedSessionInfos.isEmpty()) {
-            result.put("pass", String.format("All cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes.", sessionInfoCache.getName()));
-        } else {
-            result.put("fail", String.format("Not all cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes. These %d entries do not: %s", sessionInfoCache.getName(), nonLocallyStoredCachedSessionInfos.size(), nonLocallyStoredCachedSessionInfos.stream().collect(Collectors.joining(", "))));
+            if (nonLocallyStoredCachedSessionInfos.isEmpty()) {
+                result.put("pass", String.format("All cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes.", sessionInfoCache.getName()));
+            } else {
+                result.put("fail", String.format("Not all cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes. These %d entries do not: %s", sessionInfoCache.getName(), nonLocallyStoredCachedSessionInfos.size(), nonLocallyStoredCachedSessionInfos.stream().collect(Collectors.joining(", "))));
+            }
         }
 
         return result;

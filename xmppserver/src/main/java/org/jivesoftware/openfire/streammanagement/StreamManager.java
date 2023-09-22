@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.dom4j.dom.DOMElement;
@@ -418,11 +419,9 @@ public class StreamManager {
      * @param error PacketError describing the failure.
      */
     private void sendError(PacketError error) {
-        session.deliverRawText(
-            String.format("<failed xmlns='%s'>", namespace)
-                + String.format("<%s xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>", error.getCondition().toXMPP())
-                + "</failed>"
-        );
+        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
+        failed.addElement(QName.get(error.getCondition().toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        session.deliverRawText(failed.asXML());
         this.namespace = null; // isEnabled() is testing this.
     }
 

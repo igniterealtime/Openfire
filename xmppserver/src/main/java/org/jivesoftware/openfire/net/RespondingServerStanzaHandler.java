@@ -16,12 +16,10 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.Namespace;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
@@ -201,16 +199,15 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 LOG.debug("Trying to authenticate with EXTERNAL SASL.");
                 LOG.debug("Starting EXTERNAL SASL for: " + domainPair);
 
-                StringBuilder sb = new StringBuilder();
-                sb.append("<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"EXTERNAL\">");
+                final Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"));
+                auth.addAttribute("mechanism", "EXTERNAL");
                 // XMPP does not _require_ an authzid to be sent (see RFC-6120, section 6.3.8). XEP-0178 suggests doing so for backwards compatibility.
                 if (SASLAuthentication.EXTERNAL_S2S_SKIP_SENDING_AUTHZID.getValue()) {
-                    sb.append("=");
+                    auth.addText("=");
                 } else {
-                    sb.append(StringUtils.encodeBase64(domainPair.getLocal()));
+                    auth.addText(StringUtils.encodeBase64(domainPair.getLocal()));
                 }
-                sb.append("</auth>");
-                connection.deliverRawText(sb.toString());
+                connection.deliverRawText(auth.asXML());
                 startedSASL = true;
                 return true;
             } else if (dialbackOffered && (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned())) {

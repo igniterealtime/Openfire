@@ -16,6 +16,9 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -279,15 +282,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
         // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
 
-        sb = new StringBuilder(490);
+        sb = new StringBuilder();
         sb.append("<stream:features>");
         try {
             if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
-                sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
                 if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-                    sb.append("<required/>");
+                    starttls.addElement("required");
                 }
-                sb.append("</starttls>");
+                sb.append(starttls.asXML());
             }
         } catch (KeyStoreException e) {
             Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
@@ -794,53 +797,59 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             return null;
         }
 
-        StringBuilder sb = new StringBuilder(200);
+        final StringBuilder sb = new StringBuilder();
 
         // Include Stream Compression Mechanism
-        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            sb.append(
-                    "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
+        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
+            final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
+            compression.addElement("method").addText("zlib");
+            sb.append(compression.asXML());
         }
 
         // If a server supports roster versioning, 
         // then it MUST advertise the following stream feature during stream negotiation.
         if (RosterManager.isRosterVersioningEnabled()) {
-            sb.append("<ver xmlns=\"urn:xmpp:features:rosterver\"/>");
+            sb.append(DocumentHelper.createElement(QName.get("ver", "urn:xmpp:features:rosterver")).asXML());
         }
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
-                sb.append("<auth xmlns=\"http://jabber.org/features/iq-auth\"/>");
+                sb.append(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")).asXML());
             }
             // Advertise that the server supports In-Band Registration
             if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
-                sb.append("<register xmlns=\"http://jabber.org/features/iq-register\"/>");
+                sb.append(DocumentHelper.createElement(QName.get("register", "http://jabber.org/features/iq-register")).asXML());
             }
         }
         else {
             // If the session has been authenticated then offer resource binding,
             // and session establishment
-            sb.append("<bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"/>");
-            sb.append("<session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"><optional/></session>");
+            sb.append(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")).asXML());
+            final Element session = DocumentHelper.createElement(QName.get("session", "urn:ietf:params:xml:ns:xmpp-session"));
+            session.addElement("optional");
+            sb.append(session.asXML());
 
             // Offer XEP-0198 stream management capabilities if enabled.
             if(StreamManager.isStreamManagementActive()) {
-                sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V2));
-                sb.append(String.format("<sm xmlns='%s'/>", StreamManager.NAMESPACE_V3));
+                sb.append(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V2)).asXML());
+                sb.append(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V3)).asXML());
             }
 
             // Offer XEP-0352 Client State Indication capabilities if enabled
             if (CsiManager.ENABLED.getValue()) {
-                sb.append(String.format("<csi xmlns='%s'/>", CsiManager.NAMESPACE));
+                sb.append(DocumentHelper.createElement(QName.get("csi", CsiManager.NAMESPACE)).asXML());
             }
          }
 
         // Add XEP-0115 entity capabilities for the server, so that peer can skip service discovery.
         final String ver = EntityCapabilitiesManager.getLocalDomainVerHash();
         if ( ver != null ) {
-            sb.append( String.format( "<c xmlns=\"http://jabber.org/protocol/caps\" hash=\"sha-1\" node=\"%s\" ver=\"%s\"/>", EntityCapabilitiesManager.OPENFIRE_IDENTIFIER_NODE, ver ) );
+            final Element c = DocumentHelper.createElement(QName.get("c", "http://jabber.org/protocol/caps"));
+            c.addAttribute("hash", "sha-1");
+            c.addAttribute("node", EntityCapabilitiesManager.OPENFIRE_IDENTIFIER_NODE);
+            c.addAttribute("ver", ver);
+            sb.append(c.asXML());
         }
 
         return sb.toString();

@@ -56,6 +56,13 @@ public class EncryptionArtifactFactory
         .setDynamic( false )
         .build();
 
+    public static final SystemProperty<Boolean> SNI_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey( "xmpp.auth.ssl.enforce_sni" )
+        .setDefaultValue( false ) // Default to false, as SNI breaks https://localhost:9091
+        .setDynamic( false )
+        .build();
+
+
     private final ConnectionConfiguration configuration;
 
     // lazy loaded factory objects. These re-usable objects should be lazy loaded, preventing initialization in situations where they're never going to be used.
@@ -349,6 +356,9 @@ public class EncryptionArtifactFactory
                     sslContextFactory.setNeedClientAuth( true );
                     break;
             }
+
+            sslContextFactory.setSniRequired(SNI_ENABLED.getValue());
+
             return sslContextFactory;
         }
         catch ( RuntimeException ex )

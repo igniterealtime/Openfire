@@ -484,8 +484,10 @@ public final class HttpBindManager implements CertificateEventListener {
                 final HttpConfiguration httpsConfig = new HttpConfiguration();
                 httpsConfig.setSecureScheme("https");
                 httpsConfig.setSecurePort(securePort);
+                SecureRequestCustomizer secureRequestCustomizer = new SecureRequestCustomizer();
+                secureRequestCustomizer.setSniHostCheck(sslContextFactory.isSniRequired());
+                httpsConfig.addCustomizer( secureRequestCustomizer );
                 configureProxiedConnector(httpsConfig);
-                httpsConfig.addCustomizer(new SecureRequestCustomizer());
                 httpsConfig.setSendServerVersion( false );
 
                 final ServerConnector sslConnector = new ServerConnector(httpBindServer, new SslConnectionFactory(sslContextFactory, "http/1.1"), new HttpConnectionFactory(httpsConfig));

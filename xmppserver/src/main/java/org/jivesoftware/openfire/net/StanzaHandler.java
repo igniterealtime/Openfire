@@ -16,9 +16,9 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.dom4j.Element;
-import org.dom4j.Namespace;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
+import org.dom4j.tree.DefaultNamespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.StreamIDFactory;
@@ -491,7 +491,7 @@ public abstract class StanzaHandler {
      */
     protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {
         // Offer stream features including SASL Mechanisms
-        StringBuilder sb = new StringBuilder(620);
+        StringBuilder sb = new StringBuilder();
         sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include available SASL Mechanisms
@@ -512,7 +512,7 @@ public abstract class StanzaHandler {
      * to servers or external components)
      */
     protected void saslSuccessful() {
-        StringBuilder sb = new StringBuilder(420);
+        StringBuilder sb = new StringBuilder();
         sb.append(getStreamHeader());
         sb.append("<stream:features>");
 
@@ -588,7 +588,7 @@ public abstract class StanzaHandler {
      * to servers or external components)
      */
     protected void compressionSuccessful() {
-        StringBuilder sb = new StringBuilder(340);
+        StringBuilder sb = new StringBuilder();
         sb.append(getStreamHeader());
         sb.append("<stream:features>");
         // Include SASL mechanisms only if client has not been authenticated
@@ -617,7 +617,7 @@ public abstract class StanzaHandler {
     }
 
     protected String getStreamHeader() {
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder();
         sb.append("<?xml version='1.0' encoding='");
         sb.append(CHARSET);
         sb.append("'?>");
@@ -703,7 +703,7 @@ public abstract class StanzaHandler {
         }
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
-            StringBuilder sb = new StringBuilder(250);
+            StringBuilder sb = new StringBuilder();
             if (host == null) host = serverName;
             sb.append("<?xml version='1.0' encoding='");
             sb.append(CHARSET);

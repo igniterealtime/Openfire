@@ -1788,7 +1788,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     }
 
 	private static String encodeWithComma(Collection<String> strings) {
-        StringBuilder sb = new StringBuilder(90);
+        StringBuilder sb = new StringBuilder();
         for (String group : strings) {
             sb.append(group).append(',');
         }

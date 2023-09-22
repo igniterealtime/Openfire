@@ -156,7 +156,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
     }
 
     private void sendStreamFeatures() {
-        StringBuilder sb = new StringBuilder(250);
+        StringBuilder sb = new StringBuilder();
         sb.append("<stream:features xmlns:stream='http://etherx.jabber.org/streams'>");
 
         if (saslStatus != SASLAuthentication.Status.authenticated) {

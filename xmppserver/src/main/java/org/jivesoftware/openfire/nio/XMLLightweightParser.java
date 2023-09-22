@@ -88,7 +88,7 @@ class XMLLightweightParser {
     // Flag used to discover tag in the form <tag />.
     protected boolean insideRootTag = false;
     // Object containing the head tag
-    protected StringBuilder head = new StringBuilder(16);
+    protected StringBuilder head = new StringBuilder();
     // List with all finished messages found.
     protected List<String> msgs = new ArrayList<>();
     private int depth = 0;

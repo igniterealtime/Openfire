@@ -581,15 +581,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public void unregisterIncomingServerSession(@Nonnull final String domain, @Nonnull final LocalIncomingServerSession session)
     {
         final StreamID streamID = session.getStreamID();
+        Log.trace("Unregistering incoming server session for domain {} and stream ID {}", domain, streamID);
+        final Set<String> remaining = session.getValidatedDomains().stream().filter(d -> !d.equals(domain)).collect(Collectors.toSet());
         final Lock lock = incomingServerSessionInfoCache.getLock(streamID);
         lock.lock();
         try {
-            if (session.getValidatedDomains().stream().anyMatch(d->!d.equals(domain))) {
-                // Another validated domain remains. Replace the cache entry with an updated entry.
+            if (!remaining.isEmpty()) {
+                Log.trace("Other validated domain(s) remain ({}). Replace the cache entry with an updated entry", String.join(", ", remaining));
                 localSessionManager.addIncomingServerSessions(streamID, session);
                 incomingServerSessionInfoCache.put(streamID, new IncomingServerSessionInfo(session));
             } else {
-                // This session does not have any validated domains anymore. Remove it completely.
+                Log.trace("This session does not have any validated domains anymore. Remove it completely.");
                 localSessionManager.removeIncomingServerSessions(streamID);
                 incomingServerSessionInfoCache.remove(streamID);
             }
@@ -608,19 +610,23 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     public void unregisterIncomingServerSession(@Nonnull final StreamID streamID)
     {
+        Log.trace("Unregistering incoming server session for stream ID {}", streamID);
+
         final Set<String> domainsToRemove = new HashSet<>();
         final Lock lock = incomingServerSessionInfoCache.getLock(streamID);
         lock.lock();
         try {
-            final LocalIncomingServerSession local = localSessionManager.getIncomingServerSession(streamID);
+            final LocalIncomingServerSession local = localSessionManager.removeIncomingServerSessions(streamID);;
+            Log.trace("Found {} local incoming server session to remove for stream ID {}.", local == null ? "NO" : "a", streamID);
             if (local != null) {
-                localSessionManager.removeIncomingServerSessions(streamID);
                 domainsToRemove.addAll(local.getValidatedDomains());
             }
             final IncomingServerSessionInfo cached = incomingServerSessionInfoCache.remove(streamID);
+            Log.trace("Found {} cached server session info to remove for stream ID {}", local == null ? "NO" : "a", streamID);
             if (cached != null) {
                 domainsToRemove.addAll(cached.getValidatedDomains());
             }
+            Log.trace("Removing validated domain(s) for stream ID {}: {}", streamID, String.join(", ", domainsToRemove));
         } finally {
             lock.unlock();
         }

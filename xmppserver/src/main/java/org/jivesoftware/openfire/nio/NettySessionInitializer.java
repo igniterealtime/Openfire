@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLException;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
@@ -117,7 +118,7 @@ public class NettySessionInitializer {
                     int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
 
                     ch.pipeline().addLast(new NettyXMPPDecoder());
-                    ch.pipeline().addLast(new StringEncoder());
+                    ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
                     ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0));
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
                     ch.pipeline().addLast(businessLogicHandler);

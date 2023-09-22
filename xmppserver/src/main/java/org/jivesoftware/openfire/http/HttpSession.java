@@ -59,7 +59,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * A session represents a series of interactions with an XMPP client sending packets using the HTTP
- * Binding protocol specified in <a href="http://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
+ * Binding protocol specified in <a href="https://www.xmpp.org/extensions/xep-0124.html">XEP-0124</a>.
  * A session can have several client connections open simultaneously while awaiting packets bound
  * for the client from the server.
  *
@@ -249,7 +249,7 @@ public class HttpSession extends LocalClientSession {
 
     @Override
     public String getAvailableStreamFeatures() {
-        StringBuilder sb = new StringBuilder(200);
+        StringBuilder sb = new StringBuilder();
         for (Element element : getAvailableStreamFeaturesElements()) {
             sb.append(element.asXML());
         }

@@ -16,7 +16,9 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
@@ -139,14 +141,14 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
             // Announce stream features.
 
-            sb = new StringBuilder(490);
+            sb = new StringBuilder();
             sb.append("<stream:features>");
             if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
-                sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
                 if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-                    sb.append("<required/>");
+                    starttls.addElement("required");
                 }
-                sb.append("</starttls>");
+                sb.append(starttls.asXML());
             }
             // Include Stream features
             String specificFeatures = session.getAvailableStreamFeatures();
@@ -178,9 +180,10 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         }
 
         // Include Stream Compression Mechanism
-        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            return "<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>";
+        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
+            final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
+            compression.addElement("method").addText("zlib");
+            return compression.asXML();
         }
         return null;
     }

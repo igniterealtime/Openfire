@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.multiplex;
 
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -105,14 +106,13 @@ public class ClientSessionConnection extends VirtualConnection {
                 multiplexerManager.getMultiplexerSession(connectionManagerName,streamID);
         if (multiplexerSession != null) {
             // Wrap packet so that the connection manager can figure out the target session
-            StringBuilder sb = new StringBuilder(200 + text.length());
-            sb.append("<route from=\"").append(serverName);
-            sb.append("\" to=\"").append(connectionManagerName);
-            sb.append("\" streamid=\"").append(streamID.getID()).append("\">");
-            sb.append(text);
-            sb.append("</route>");
+            final Element route = DocumentHelper.createElement("route");
+            route.addAttribute("from", serverName);
+            route.addAttribute("to", connectionManagerName);
+            route.addAttribute("streamid", streamID.getID());
+            route.addText(text);
             // Deliver the wrapped stanza
-            multiplexerSession.deliverRawText(sb.toString());
+            multiplexerSession.deliverRawText(route.asXML());
         }
     }
 

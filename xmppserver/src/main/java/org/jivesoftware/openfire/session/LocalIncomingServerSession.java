@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.session;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -181,14 +182,14 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                     && (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required || connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.optional)
                     && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()
                 ) {
-                    sb.append("<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\">");
+                    final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
                     if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-                        sb.append("<required/>");
+                        starttls.addElement("required");
                     } else if (!ServerDialback.isEnabled()) {
                         Log.debug("Server dialback is disabled so TLS is required");
-                        sb.append("<required/>");
+                        starttls.addElement("required");
                     }
-                    sb.append("</starttls>");
+                    sb.append(starttls.asXML());
                 }
 
                 // Include available SASL Mechanisms
@@ -197,7 +198,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 if (ServerDialback.isEnabled()) {
                     // Also offer server dialback (when TLS is not required). Server dialback may be offered
                     // after TLS has been negotiated and a self-signed certificate is being used
-                    sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
+                    final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                    dialback.addElement("errors");
+                    sb.append(dialback.asXML());
                 }
 
                 sb.append("</stream:features>");
@@ -399,12 +402,13 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
     @Override
     public String getAvailableStreamFeatures() {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         
         // Include Stream Compression Mechanism
-        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled &&
-                !conn.isCompressed()) {
-            sb.append("<compression xmlns=\"http://jabber.org/features/compress\"><method>zlib</method></compression>");
+        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
+            final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
+            compression.addElement("method").addText("zlib");
+            sb.append(compression.asXML());
         }
         
         // Offer server dialback if using self-signed certificates and no authentication has been done yet
@@ -417,7 +421,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
         
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
-            sb.append("<dialback xmlns=\"urn:xmpp:features:dialback\"><errors/></dialback>");
+            final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+            dialback.addElement("errors");
+            sb.append(dialback.asXML());
         }
         
         return sb.toString();

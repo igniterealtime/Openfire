@@ -509,24 +509,15 @@ public class SASLAuthentication {
     }
 
     private static void sendElement(Session session, String element, byte[] data) {
-        StringBuilder reply = new StringBuilder(250);
-        reply.append("<");
-        reply.append(element);
-        reply.append(" xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"");
+        final Element reply = DocumentHelper.createElement(QName.get(element, "urn:ietf:params:xml:ns:xmpp-sasl"));
         if (data != null) {
-            reply.append(">");
             String data_b64 = StringUtils.encodeBase64(data).trim();
-            if ("".equals(data_b64)) {
+            if (data_b64.isEmpty()) {
                 data_b64 = "=";
             }
-            reply.append(data_b64);
-            reply.append("</");
-            reply.append(element);
-            reply.append(">");
-        } else {
-            reply.append("/>");
+            reply.addText(data_b64);
         }
-        session.deliverRawText(reply.toString());
+        session.deliverRawText(reply.asXML());
     }
 
     private static void sendChallenge(Session session, byte[] challenge) {
@@ -564,11 +555,9 @@ public class SASLAuthentication {
     }
 
     private static void authenticationFailed(LocalSession session, Failure failure) {
-        StringBuilder reply = new StringBuilder(80);
-        reply.append("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\"><");
-        reply.append(failure.toString());
-        reply.append("/></failure>");
-        session.deliverRawText(reply.toString());
+        final Element reply = DocumentHelper.createElement(QName.get("failure", "urn:ietf:params:xml:ns:xmpp-sasl"));
+        reply.addElement(failure.toString());
+        session.deliverRawText(reply.asXML());
         // Give a number of retries before closing the connection
         Integer retries = (Integer) session.getSessionData("authRetries");
         if (retries == null) {

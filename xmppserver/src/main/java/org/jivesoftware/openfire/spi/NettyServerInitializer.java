@@ -14,6 +14,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
@@ -60,7 +61,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline()
             .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
             .addLast(new NettyXMPPDecoder())
-            .addLast(new StringEncoder())
+            .addLast(new StringEncoder(StandardCharsets.UTF_8))
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0))
             .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))

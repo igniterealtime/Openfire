@@ -217,7 +217,9 @@ public class AdminConsolePlugin implements Plugin {
                     httpsConfig.setSendServerVersion( false );
                     httpsConfig.setSecureScheme( "https" );
                     httpsConfig.setSecurePort( adminSecurePort );
-                    httpsConfig.addCustomizer( new SecureRequestCustomizer() );
+                    SecureRequestCustomizer secureRequestCustomizer = new SecureRequestCustomizer();
+                    secureRequestCustomizer.setSniHostCheck(sslContextFactory.isSniRequired());
+                    httpsConfig.addCustomizer( secureRequestCustomizer );
                     configureProxiedConnector(httpsConfig);
 
                     final HttpConnectionFactory httpConnectionFactory = new HttpConnectionFactory( httpsConfig );

@@ -223,7 +223,8 @@ public class HttpSession extends LocalClientSession {
      *
      * @return the stream features which are available for this session.
      */
-    public Collection<Element> getAvailableStreamFeaturesElements() {
+    @Override
+    public List<Element> getAvailableStreamFeatures() {
         final List<Element> elements = new ArrayList<>();
 
         // If authentication has not happened yet, include available authentication mechanisms.
@@ -245,15 +246,6 @@ public class HttpSession extends LocalClientSession {
         elements.add(session);
 
         return elements;
-    }
-
-    @Override
-    public String getAvailableStreamFeatures() {
-        StringBuilder sb = new StringBuilder();
-        for (Element element : getAvailableStreamFeaturesElements()) {
-            sb.append(element.asXML());
-        }
-        return sb.toString();
     }
 
     /**
@@ -1214,7 +1206,7 @@ public class HttpSession extends LocalClientSession {
         response.addNamespace("stream", "http://etherx.jabber.org/streams");
 
         final Element features = response.addElement("stream:features");
-        for (Element feature : getAvailableStreamFeaturesElements()) {
+        for (Element feature : getAvailableStreamFeatures()) {
             features.add(feature);
         }
 

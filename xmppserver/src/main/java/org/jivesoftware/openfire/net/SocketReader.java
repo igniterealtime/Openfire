@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
@@ -37,6 +37,7 @@ import org.xmpp.packet.*;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -422,17 +423,18 @@ public abstract class SocketReader implements Runnable {
         // error and close the underlying connection.
         String host = reader.getXPPParser().getAttributeValue("", "to");
         if (validateHost() && isHostUnknown(host)) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("<?xml version='1.0' encoding='");
-            sb.append(CHARSET);
-            sb.append("'?>");
-            // Append stream header
-            sb.append("<stream:stream ");
-            sb.append("from=\"").append(host).append("\" ");
-            sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
-            sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
-            sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
-            sb.append("version=\"1.0\">");
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", xpp.getNamespace("stream")));
+            final Document document = DocumentHelper.createDocument(stream);
+            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+            stream.add(Namespace.get("", xpp.getNamespace(null)));
+            stream.addAttribute("from", host);
+            stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
+            stream.addAttribute("version", "1.0");
+
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
+
             // Send the host_unknown error and close the underlying connection
             connection.close(new StreamError(StreamError.Condition.host_unknown, "The 'to' attribute does not specify an XMPP domain entity served by this service."));
             // Log a warning so that admins can track this cases from the server side
@@ -445,17 +447,18 @@ public abstract class SocketReader implements Runnable {
         else if (!createSession(xpp.getNamespace(null))) {
             // No session was created because of an invalid namespace prefix so answer a stream
             // error and close the underlying connection
-            StringBuilder sb = new StringBuilder();
-            sb.append("<?xml version='1.0' encoding='");
-            sb.append(CHARSET);
-            sb.append("'?>");
-            // Append stream header
-            sb.append("<stream:stream ");
-            sb.append("from=\"").append(host).append("\" ");
-            sb.append("id=\"").append( STREAM_ID_FACTORY.createStreamID() ).append( "\" " );
-            sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
-            sb.append("xmlns:stream=\"").append(xpp.getNamespace("stream")).append("\" ");
-            sb.append("version=\"1.0\">");
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", xpp.getNamespace("stream")));
+            final Document document = DocumentHelper.createDocument(stream);
+            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+            stream.add(Namespace.get("", xpp.getNamespace(null)));
+            stream.addAttribute("from", host);
+            stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
+            stream.addAttribute("version", "1.0");
+
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
+
             // Include the bad-namespace-prefix in the response and close the underlying connection.
             connection.close(new StreamError(StreamError.Condition.bad_namespace_prefix, "The namespace used in the request does not identify functionality that can be provided by this endpoint."));
             // Log a warning so that admins can track this cases from the server side
@@ -486,7 +489,7 @@ public abstract class SocketReader implements Runnable {
      *
      * @return the stream namespace.
      */
-    abstract String getNamespace();
+    abstract Namespace getNamespace();
 
     /**
      * Returns true if the value of the 'to' attribute in the stream header should be
@@ -517,10 +520,6 @@ public abstract class SocketReader implements Runnable {
      */
     abstract boolean createSession(String namespace) throws UnauthorizedException,
             XmlPullParserException, IOException;
-
-    public String getExtraNamespaces() {
-        return null;
-    }
 
     public LocalSession getSession()
     {

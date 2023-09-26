@@ -15,6 +15,9 @@
  */
 package org.jivesoftware.openfire.websocket;
 
+import org.dom4j.*;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
@@ -34,7 +37,10 @@ import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -151,38 +157,42 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
 
     private void openStream() {
         session.incrementClientPacketCount();
-        final String streamHeader = getStreamHeader();
-        connection.deliverRawText(streamHeader);
+        final String result = withoutDeclaration(getStreamHeader()); // Strip closing element.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</open>"));
+        connection.deliverRawText(withoutClosing);
     }
 
     private void sendStreamFeatures() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<stream:features xmlns:stream='http://etherx.jabber.org/streams'>");
-
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         if (saslStatus != SASLAuthentication.Status.authenticated) {
             // Include available SASL Mechanisms
-            sb.append(SASLAuthentication.getSASLMechanisms(session));
+            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+            if (saslMechanisms != null) {
+                features.add(saslMechanisms);
+            }
         }
         // Include Stream features
-        String specificFeatures = session.getAvailableStreamFeatures();
+        final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
-            sb.append(specificFeatures);
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
         }
-
-        sb.append("</stream:features>");
-        connection.deliverRawText(sb.toString());
+        connection.deliverRawText(features.asXML());
     }
 
     @Override
-    protected String getStreamHeader() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<open ");
-        sb.append("from='").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("' ");
-        sb.append("id='").append(session.getStreamID().toString()).append("' ");
-        sb.append("xmlns='").append(FRAMING_NAMESPACE).append("' ");
-        sb.append("xml:lang='").append(session.getLanguage().toLanguageTag()).append("' ");
-        sb.append("version='1.0'/>");
-        return sb.toString();
+    protected Document getStreamHeader() {
+        final Element open = DocumentHelper.createElement("open");
+        final Document document = DocumentHelper.createDocument(open);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        open.add(Namespace.get("", FRAMING_NAMESPACE));
+        open.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+        open.addAttribute("id", session.getStreamID().toString());
+        open.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), session.getLanguage().toLanguageTag());
+        open.addAttribute("version", "1.0");
+
+        return document;
     }
 
     /**
@@ -194,7 +204,9 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
     @Override
     protected void saslSuccessful() {
         // When using websockets, send the stream header in a separate websocket frame!
-        connection.deliverRawText(getStreamHeader());
+        final String result = withoutDeclaration(getStreamHeader()); // Strip closing element.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</open>"));
+        connection.deliverRawText(withoutClosing);
         sendStreamFeatures();
     }
 
@@ -204,5 +216,21 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
 
     protected boolean isEndOfStream(final String xml) {
         return xml.startsWith("<" + STREAM_FOOTER);
+    }
+
+    public static String withoutDeclaration(final Document document) {
+        try {
+            StringWriter out = new StringWriter();
+            OutputFormat format = new OutputFormat();
+            format.setSuppressDeclaration(true);
+            XMLWriter writer = new XMLWriter(out, format);
+
+            writer.write(document);
+            writer.flush();
+            return out.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("IOException while generating "
+                + "textual representation: " + e.getMessage());
+        }
     }
 }

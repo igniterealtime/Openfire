@@ -227,30 +227,28 @@ public class SASLAuthentication {
     }
 
     /**
-     * Returns a string with the valid SASL mechanisms available for the specified session. If
+     * Returns an XML element with the valid SASL mechanisms available for the specified session. If
      * the session's connection is not secured then only include the SASL mechanisms that don't
      * require TLS.
      *
      * @param session The current session
      *
-     * @return a string with the valid SASL mechanisms available for the specified session.
+     * @return The valid SASL mechanisms available for the specified session.
      */
-    public static String getSASLMechanisms( LocalSession session )
+    public static Element getSASLMechanisms( LocalSession session )
     {
         if ( session instanceof ClientSession )
         {
-            final Element result = getSASLMechanismsElement( (ClientSession) session );
-            return result == null ? "" : result.asXML();
+            return getSASLMechanismsElement( (ClientSession) session );
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            final Element result = getSASLMechanismsElement( (LocalIncomingServerSession) session );
-            return result == null ? "" : result.asXML();
+            return getSASLMechanismsElement( (LocalIncomingServerSession) session );
         }
         else
         {
             Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
-            return "";
+            return null;
         }
     }
 

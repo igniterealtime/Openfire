@@ -16,8 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
@@ -28,6 +27,7 @@ import org.xmpp.packet.StreamError;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 /**
  * Abstract class for {@link BlockingReadingMode}.
@@ -99,20 +99,26 @@ abstract class SocketReadingMode {
      * depending on the session type such as auth for Non-SASL authentication and register
      * for in-band registration.
      */
-    protected void tlsNegotiated() throws XmlPullParserException, IOException {
+    protected void tlsNegotiated() throws XmlPullParserException, IOException
+    {
+        final Document document = getStreamHeader();
+
         // Offer stream features including SASL Mechanisms
-        StringBuilder sb = new StringBuilder();
-        sb.append(getStreamHeader());
-        sb.append("<stream:features>");
-        // Include available SASL Mechanisms
-        sb.append(SASLAuthentication.getSASLMechanisms(socketReader.session));
-        // Include specific features such as auth and register for client sessions
-        String specificFeatures = socketReader.session.getAvailableStreamFeatures();
-        if (specificFeatures != null) {
-            sb.append(specificFeatures);
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        final Element mechanisms = SASLAuthentication.getSASLMechanisms(socketReader.session);
+        if (mechanisms != null) {
+            features.add(mechanisms);
         }
-        sb.append("</stream:features>");
-        socketReader.connection.deliverRawText(sb.toString());
+        final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
+        }
+        document.getRootElement().add(features);
+
+        final String result = document.asXML(); // Strip closing root tag.
+        socketReader.connection.deliverRawText(result.substring(0, result.lastIndexOf("</stream:stream>")));
     }
 
     protected boolean authenticateClient(Element doc) throws DocumentException, IOException,
@@ -150,19 +156,22 @@ abstract class SocketReadingMode {
      * resource binding and session establishment should only be offered to clients (i.e. not
      * to servers or external components)
      */
-    protected void saslSuccessful() throws XmlPullParserException, IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getStreamHeader());
-        sb.append("<stream:features>");
+    protected void saslSuccessful() throws XmlPullParserException, IOException
+    {
+        final Document document = getStreamHeader();
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 
-        // Include specific features such as resource binding and session establishment
-        // for client sessions
-        String specificFeatures = socketReader.session.getAvailableStreamFeatures();
+        // Include specific features such as resource binding and session establishment for client sessions
+        final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
-            sb.append(specificFeatures);
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
         }
-        sb.append("</stream:features>");
-        socketReader.connection.deliverRawText(sb.toString());
+        document.getRootElement().add(features);
+
+        final String result = document.asXML(); // Strip closing root tag.
+        socketReader.connection.deliverRawText(result.substring(0, result.lastIndexOf("</stream:stream>")));
     }
 
     /**
@@ -177,35 +186,42 @@ abstract class SocketReadingMode {
      * @throws IOException if an error occurs while starting using compression.
      */
     protected boolean compressClient(Element doc) throws IOException, XmlPullParserException {
-        String error = null;
-        if (socketReader.connection.getConfiguration().getCompressionPolicy() == Connection.CompressionPolicy.disabled) {
+        Element error = null;
+        if (socketReader.connection.getConfiguration().getCompressionPolicy() == Connection.CompressionPolicy.disabled)
+        {
             // Client requested compression but this feature is disabled
-            error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
+            error = DocumentHelper.createElement(QName.get("failure", "http://jabber.org/protocol/compress"));
+            error.addElement("setup-failed");
+
             // Log a warning so that admins can track this case from the server side
-            Log.warn("Client requested compression while compression is disabled. Closing " +
-                    "connection : " + socketReader.connection);
+            Log.warn("Client requested compression while compression is disabled. Closing connection : {}", socketReader.connection);
         }
-        else if (socketReader.connection.isCompressed()) {
+        else if (socketReader.connection.isCompressed())
+        {
             // Client requested compression but connection is already compressed
-            error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
+            error = DocumentHelper.createElement(QName.get("failure", "http://jabber.org/protocol/compress"));
+            error.addElement("setup-failed");
+
             // Log a warning so that admins can track this case from the server side
-            Log.warn("Client requested compression and connection is already compressed. Closing " +
-                    "connection : " + socketReader.connection);
+            Log.warn("Client requested compression and connection is already compressed. Closing connection : {}", socketReader.connection);
         }
-        else {
+        else
+        {
             // Check that the requested method is supported
             String method = doc.elementText("method");
-            if (!"zlib".equals(method)) {
-                error = "<failure xmlns='http://jabber.org/protocol/compress'><unsupported-method/></failure>";
+            if (!"zlib".equals(method))
+            {
+                error = DocumentHelper.createElement(QName.get("failure", "http://jabber.org/protocol/compress"));
+                error.addElement("unsupported-method");
+
                 // Log a warning so that admins can track this case from the server side
-                Log.warn("Requested compression method is not supported: " + method +
-                        ". Closing connection : " + socketReader.connection);
+                Log.warn("Requested compression method is not supported: {}. Closing connection : {}", method, socketReader.connection);
             }
         }
 
         if (error != null) {
             // Deliver stanza
-            socketReader.connection.deliverRawText(error);
+            socketReader.connection.deliverRawText(error.asXML());
             return false;
         }
         else {
@@ -213,7 +229,7 @@ abstract class SocketReadingMode {
             socketReader.connection.addCompression();
 
             // Indicate client that he can proceed and compress the socket
-            socketReader.connection.deliverRawText("<compressed xmlns='http://jabber.org/protocol/compress'/>");
+            socketReader.connection.deliverRawText(DocumentHelper.createElement(QName.get("compressed", "http://jabber.org/protocol/compress")).asXML());
 
             // Start using compression for outgoing traffic
             socketReader.connection.startCompression();
@@ -229,46 +245,41 @@ abstract class SocketReadingMode {
      */
     protected void compressionSuccessful() throws XmlPullParserException, IOException
     {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getStreamHeader());
-        sb.append("<stream:features>");
+        final Document document = getStreamHeader();
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        document.getRootElement().add(features);
+
         // Include SASL mechanisms only if client has not been authenticated
         if (!socketReader.session.isAuthenticated()) {
             // Include available SASL Mechanisms
-            sb.append(SASLAuthentication.getSASLMechanisms(socketReader.session));
+            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(socketReader.session);
+            if (saslMechanisms != null) {
+                features.add(saslMechanisms);
+            }
         }
-        // Include specific features such as resource binding and session establishment
-        // for client sessions
-        String specificFeatures = socketReader.session.getAvailableStreamFeatures();
-        if (specificFeatures != null)
-        {
-            sb.append(specificFeatures);
+        // Include specific features such as resource binding and session establishment for client sessions.
+        final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
         }
-        sb.append("</stream:features>");
-        socketReader.connection.deliverRawText(sb.toString());
+
+        final String result = document.asXML(); // Strip closing root tag.
+        socketReader.connection.deliverRawText(result.substring(0, result.lastIndexOf("</stream:stream>")));
     }
 
-    private String getStreamHeader() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version='1.0' encoding='");
-        sb.append(CHARSET);
-        sb.append("'?>");
-        sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
-        sb.append(socketReader.getNamespace()).append('\"');
-        if (socketReader.getExtraNamespaces() != null) {
-            sb.append(' ');
-            sb.append(socketReader.getExtraNamespaces());
-        }
-        sb.append(" from=\"");
-        sb.append(socketReader.session.getServerName());
-        sb.append("\" id=\"");
-        sb.append(socketReader.session.getStreamID().toString());
-        sb.append("\" xml:lang=\"");
-        sb.append(socketReader.session.getLanguage().toLanguageTag());
-        sb.append("\" version=\"");
-        sb.append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
-        sb.append("\">");
-        return sb.toString();
-    }
+    private Document getStreamHeader()
+    {
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(CHARSET);
+        stream.add(socketReader.getNamespace());
+        stream.addAttribute("from", socketReader.session.getServerName());
+        stream.addAttribute("id", socketReader.session.getStreamID().toString());
+        stream.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), socketReader.session.getLanguage().toLanguageTag());
+        stream.addAttribute("version", Session.MAJOR_VERSION + "." + Session.MINOR_VERSION);
 
+        return document;
+    }
 }

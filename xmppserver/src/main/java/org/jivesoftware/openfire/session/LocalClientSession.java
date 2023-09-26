@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -50,6 +48,7 @@ import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.time.Duration;
 import java.util.*;
@@ -199,19 +198,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing incoming data.
      */
     public static LocalClientSession createSession(String serverName, XmlPullParser xpp, Connection connection)
-            throws XmlPullParserException {
-
-        // Conduct error checking, the opening tag should be 'stream'
-        // in the 'etherx' namespace
+            throws XmlPullParserException
+    {
+        // Conduct error checking, the opening tag should be 'stream' in the 'etherx' namespace
         if (!xpp.getName().equals("stream")) {
-            throw new XmlPullParserException(
-                    LocaleUtils.getLocalizedString("admin.error.bad-stream"));
+            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-stream"));
         }
 
-        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE))
-        {
-            throw new XmlPullParserException(LocaleUtils.getLocalizedString(
-                    "admin.error.bad-namespace"));
+        if (!xpp.getNamespace(xpp.getPrefix()).equals(ETHERX_NAMESPACE)) {
+            throw new XmlPullParserException(LocaleUtils.getLocalizedString("admin.error.bad-namespace"));
         }
 
         if (!isAllowed(connection))
@@ -249,8 +244,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         if (!hasCertificates && connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-            Log.error("Client session rejected. TLS is required but no certificates " +
-                "were created.");
+            Log.error("Client session rejected. TLS is required but no certificates were created.");
             return null;
         }
 
@@ -258,64 +252,59 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         LocalClientSession session = SessionManager.getInstance().createClientSession(connection, language);
 
         // Build the start packet response
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version='1.0' encoding='");
-        sb.append(CHARSET);
-        sb.append("'?>");
-        sb.append("<stream:stream ");
-        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"jabber:client\" from=\"");
-        sb.append(serverName);
-        sb.append("\" id=\"");
-        sb.append(session.getStreamID().toString());
-        sb.append("\" xml:lang=\"");
-        sb.append(language.toLanguageTag());
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(Namespace.get("jabber:client"));
+        stream.addAttribute("from", serverName);
+        stream.addAttribute("id", session.getStreamID().toString());
+        stream.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), language.toLanguageTag());
         // Don't include version info if the version is 0.0.
         if (majorVersion != 0) {
-            sb.append("\" version=\"");
-            sb.append(majorVersion).append('.').append(minorVersion);
+            stream.addAttribute("version", majorVersion + "." + minorVersion);
         }
-        sb.append("\">");
-        connection.deliverRawText(sb.toString());
 
-        // If this is a "Jabber" connection, the session is now initialized and we can
-        // return to allow normal packet parsing.
-        if (majorVersion == 0) {
-            return session;
-        }
-        // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
+        // If this is a "Jabber" connection, the session is now initialized - do not include features but return to allow normal packet parsing.
+        if (majorVersion != 0)
+        {
+            // Otherwise, this is at least XMPP 1.0 so we need to announce stream features.
+            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+            document.getRootElement().add(features);
 
-        sb = new StringBuilder();
-        sb.append("<stream:features>");
-        try {
-            if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
-                final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
-                if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
-                    starttls.addElement("required");
+            try {
+                if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
+                    final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
+                    if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
+                        starttls.addElement("required");
+                    }
+                    features.add(starttls);
                 }
-                sb.append(starttls.asXML());
-            }
-            if (!ConnectionSettings.Client.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
-                final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
-                limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
-                final Duration timeout = ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue();
-                if (!timeout.isNegative() && !timeout.isZero()) {
-                    limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
+                if (!ConnectionSettings.Client.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
+                    final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
+                    limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
+                    final Duration timeout = ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue();
+                    if (!timeout.isNegative() && !timeout.isZero()) {
+                        limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
+                    }
+                    features.add(limits);
                 }
-                sb.append(limits.asXML());
+            } catch (KeyStoreException e) {
+                Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
             }
-        } catch (KeyStoreException e) {
-            Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
+            // Include available SASL Mechanisms
+            features.add(SASLAuthentication.getSASLMechanisms(session));
+            // Include Stream features
+            final List<Element> specificFeatures = session.getAvailableStreamFeatures();
+            if (specificFeatures != null) {
+                for (final Element feature : specificFeatures) {
+                    features.add(feature);
+                }
+            }
         }
-        // Include available SASL Mechanisms
-        sb.append(SASLAuthentication.getSASLMechanisms(session));
-        // Include Stream features
-        String specificFeatures = session.getAvailableStreamFeatures();
-        if (specificFeatures != null) {
-            sb.append(specificFeatures);
-        }
-        sb.append("</stream:features>");
 
-        connection.deliverRawText(sb.toString());
+        final String result = document.asXML(); // Strip closing root tag.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+        connection.deliverRawText(withoutClosing);
         return session;
     }
 
@@ -801,55 +790,55 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-    public String getAvailableStreamFeatures() {
+    public List<Element> getAvailableStreamFeatures() {
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already encrypted
         if (conn.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
-            return null;
+            return Collections.emptyList();
         }
 
-        final StringBuilder sb = new StringBuilder();
+        final List<Element> result = new LinkedList<>();
 
         // Include Stream Compression Mechanism
         if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
             final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
             compression.addElement("method").addText("zlib");
-            sb.append(compression.asXML());
+            result.add(compression);
         }
 
         // If a server supports roster versioning, 
         // then it MUST advertise the following stream feature during stream negotiation.
         if (RosterManager.isRosterVersioningEnabled()) {
-            sb.append(DocumentHelper.createElement(QName.get("ver", "urn:xmpp:features:rosterver")).asXML());
+            result.add(DocumentHelper.createElement(QName.get("ver", "urn:xmpp:features:rosterver")));
         }
 
         if (getAuthToken() == null) {
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
-                sb.append(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")).asXML());
+                result.add(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")));
             }
             // Advertise that the server supports In-Band Registration
             if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {
-                sb.append(DocumentHelper.createElement(QName.get("register", "http://jabber.org/features/iq-register")).asXML());
+                result.add(DocumentHelper.createElement(QName.get("register", "http://jabber.org/features/iq-register")));
             }
         }
         else {
             // If the session has been authenticated then offer resource binding,
             // and session establishment
-            sb.append(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")).asXML());
+            result.add(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")));
             final Element session = DocumentHelper.createElement(QName.get("session", "urn:ietf:params:xml:ns:xmpp-session"));
             session.addElement("optional");
-            sb.append(session.asXML());
+            result.add(session);
 
             // Offer XEP-0198 stream management capabilities if enabled.
             if(StreamManager.isStreamManagementActive()) {
-                sb.append(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V2)).asXML());
-                sb.append(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V3)).asXML());
+                result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V2)));
+                result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V3)));
             }
 
             // Offer XEP-0352 Client State Indication capabilities if enabled
             if (CsiManager.ENABLED.getValue()) {
-                sb.append(DocumentHelper.createElement(QName.get("csi", CsiManager.NAMESPACE)).asXML());
+                result.add(DocumentHelper.createElement(QName.get("csi", CsiManager.NAMESPACE)));
             }
          }
 
@@ -860,7 +849,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             c.addAttribute("hash", "sha-1");
             c.addAttribute("node", EntityCapabilitiesManager.OPENFIRE_IDENTIFIER_NODE);
             c.addAttribute("ver", ver);
-            sb.append(c.asXML());
+            result.add(c);
         }
 
         if (!ConnectionSettings.Client.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
@@ -870,10 +859,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             if (!timeout.isNegative() && !timeout.isZero()) {
                 limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
             }
-            sb.append(limits.asXML());
+            result.add(limits);
         }
 
-        return sb.toString();
+        return result;
     }
 
     /**

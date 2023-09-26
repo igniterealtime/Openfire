@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.net;
 
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
-import org.dom4j.tree.DefaultNamespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.StreamIDFactory;
@@ -41,6 +40,7 @@ import org.xmpp.packet.*;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
@@ -65,10 +65,6 @@ public abstract class StanzaHandler {
      */
     private static final StreamIDFactory STREAM_ID_FACTORY = new BasicStreamIDFactory();
 
-    /**
-     * The utf-8 charset for decoding and encoding Jabber packet streams.
-     */
-    protected static String CHARSET = "UTF-8";
     protected Connection connection;
 
     // DANIELE: Indicate if a session is already created
@@ -490,19 +486,25 @@ public abstract class StanzaHandler {
      * for in-band registration.
      */
     protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        final Document document = getStreamHeader();
+
         // Offer stream features including SASL Mechanisms
-        StringBuilder sb = new StringBuilder();
-        sb.append(getStreamHeader());
-        sb.append("<stream:features>");
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        document.getRootElement().add(features);
+
         // Include available SASL Mechanisms
-        sb.append(SASLAuthentication.getSASLMechanisms(session));
+        features.add(SASLAuthentication.getSASLMechanisms(session));
         // Include specific features such as auth and register for client sessions
-        String specificFeatures = session.getAvailableStreamFeatures();
+        final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
-            sb.append(specificFeatures);
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
         }
-        sb.append("</stream:features>");
-        connection.deliverRawText(sb.toString());
+
+        final String result = document.getRootElement().asXML(); // Strip closing root tag.
+        final String streamStripped = result.substring(0, result.lastIndexOf("</stream:stream>")).trim();
+        connection.deliverRawText(streamStripped);
     }
 
     /**
@@ -512,18 +514,21 @@ public abstract class StanzaHandler {
      * to servers or external components)
      */
     protected void saslSuccessful() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getStreamHeader());
-        sb.append("<stream:features>");
+        final Document document = getStreamHeader();
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        document.getRootElement().add(features);
 
-        // Include specific features such as resource binding and session establishment
-        // for client sessions
-        String specificFeatures = session.getAvailableStreamFeatures();
+        // Include specific features such as resource binding and session establishment for client sessions
+        final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
-            sb.append(specificFeatures);
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
         }
-        sb.append("</stream:features>");
-        connection.deliverRawText(sb.toString());
+
+        final String result = document.asXML(); // Strip closing root tag.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+        connection.deliverRawText(withoutClosing);
     }
 
     /**
@@ -588,22 +593,28 @@ public abstract class StanzaHandler {
      * to servers or external components)
      */
     protected void compressionSuccessful() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getStreamHeader());
-        sb.append("<stream:features>");
+        final Document document = getStreamHeader();
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        document.getRootElement().add(features);
+
         // Include SASL mechanisms only if client has not been authenticated
         if (!session.isAuthenticated()) {
-            // Include available SASL Mechanisms
-            sb.append(SASLAuthentication.getSASLMechanisms(session));
+            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+            if (saslMechanisms != null) {
+                features.add(saslMechanisms);
+            }
         }
-        // Include specific features such as resource binding and session establishment
-        // for client sessions
-        String specificFeatures = session.getAvailableStreamFeatures();
+        // Include specific features such as resource binding and session establishment for client sessions
+        final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
-            sb.append(specificFeatures);
+            for (final Element feature : specificFeatures) {
+                features.add(feature);
+            }
         }
-        sb.append("</stream:features>");
-        connection.deliverRawText(sb.toString());
+
+        final String result = document.asXML(); // Strip closing root tag.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+        connection.deliverRawText(withoutClosing);
     }
 
     /**
@@ -616,19 +627,18 @@ public abstract class StanzaHandler {
                 StreamManager.NAMESPACE_V3.equals(stanza.getNamespace().getStringValue());
     }
 
-    protected String getStreamHeader() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version='1.0' encoding='");
-        sb.append(CHARSET);
-        sb.append("'?>");
-        sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
-        sb.append(getNamespace()).append("\"");
-        sb.append(" from=\"").append(XMPPServer.getInstance().getServerInfo().getXMPPDomain()).append("\"");
-        sb.append(" id=\"").append(session.getStreamID()).append("\"");
-        sb.append(" xml:lang=\"").append(session.getLanguage().toLanguageTag()).append("\"");
-        sb.append(" version=\"").append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
-        sb.append("\">");
-        return sb.toString();
+    protected Document getStreamHeader()
+    {
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(getNamespace());
+        stream.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+        stream.addAttribute("id", session.getStreamID().getID());
+        stream.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), session.getLanguage().toLanguageTag());
+        stream.addAttribute("version", Session.MAJOR_VERSION + "." + Session.MINOR_VERSION);
+
+        return document;
     }
 
     /**
@@ -688,8 +698,8 @@ public abstract class StanzaHandler {
 
             // http://xmpp.org/rfcs/rfc6120.html#streams-error-conditions-invalid-namespace
             // "or the content namespace declared as the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server")."
-            if (!getNamespace().equals(xpp.getNamespace(null))) {
-                throw new StreamErrorException(StreamError.Condition.invalid_namespace, "Invalid namespace in stream header. Expected: 'jabber:client'. Received: '" + xpp.getNamespace(null) + "'.");
+            if (!getNamespace().getURI().equals(xpp.getNamespace(null))) {
+                throw new StreamErrorException(StreamError.Condition.invalid_namespace, "Invalid namespace in stream header. Expected: '" + getNamespace().getURI() + "'. Received: '" + xpp.getNamespace(null) + "'.");
             }
 
             // Create the correct session based on the sent namespace. At this point the server
@@ -703,21 +713,20 @@ public abstract class StanzaHandler {
         }
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
-            StringBuilder sb = new StringBuilder();
-            if (host == null) host = serverName;
-            sb.append("<?xml version='1.0' encoding='");
-            sb.append(CHARSET);
-            sb.append("'?>");
-            // Append stream header
-            sb.append("<stream:stream ");
-            sb.append("from=\"").append(host).append("\" ");
-            sb.append("id=\"").append(STREAM_ID_FACTORY.createStreamID()).append("\" ");
-            sb.append("xmlns=\"").append(xpp.getNamespace(null)).append("\" ");
-            sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
-            sb.append("version=\"1.0\">");
-            sb.append(ex.getStreamError().toXML());
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+            final Document document = DocumentHelper.createDocument(stream);
+            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+            stream.add(Namespace.get(xpp.getNamespace(null)));
+            stream.addAttribute("from", host);
+            stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
+            stream.addAttribute("version", "1.0");
+            stream.add(ex.getStreamError().getElement());
+
             // Deliver stanza
-            connection.deliverRawText(sb.toString());
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
+
             // Close the underlying connection
             connection.close();
         }
@@ -761,7 +770,7 @@ public abstract class StanzaHandler {
      *
      * @return the stream namespace.
      */
-    abstract String getNamespace();
+    abstract Namespace getNamespace();
 
     /**
      * Returns true if the value of the 'to' attribute in the stream header should be
@@ -797,7 +806,7 @@ public abstract class StanzaHandler {
      * @return 'true' if the provided data represents the beginning of an XMPP stream.
      */
     protected boolean isStartOfStream(final String xml) {
-        return xml.startsWith("<stream:stream");
+        return xml.startsWith("<stream:stream") || (xml.startsWith("<?xml ") && xml.contains("<stream:stream"));
     }
 
     /**

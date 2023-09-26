@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.dom4j.Element;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -51,11 +52,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class LocalSession implements Session {
 
     private static final Logger Log = LoggerFactory.getLogger(LocalSession.class);
-
-    /**
-     * The utf-8 charset for decoding and encoding Jabber packet streams.
-     */
-    protected static String CHARSET = "UTF-8";
 
     /**
      * The Address this session is authenticated as.
@@ -471,7 +467,7 @@ public abstract class LocalSession implements Session {
      *
      * @return a text with the available stream features or {@code null} to add nothing.
      */
-    public abstract String getAvailableStreamFeatures();
+    public abstract List<Element> getAvailableStreamFeatures();
 
     @Override
     public void close() {

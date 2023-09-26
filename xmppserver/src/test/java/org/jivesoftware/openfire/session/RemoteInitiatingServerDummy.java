@@ -124,15 +124,17 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
     public synchronized void stopProcessingService() throws InterruptedException
     {
-        processingService.shutdown();
+        if (processingService != null) {
+            processingService.shutdown();
 
-        /* This is graceful, but takes a lot of time when combining all unit test executions.
-        final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
-        while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
-            Thread.sleep(Math.max(100, SO_TIMEOUT.dividedBy(50).toMillis()));
-        } */
-        if (!processingService.isTerminated()) {
-            processingService.shutdownNow();
+            /* This is graceful, but takes a lot of time when combining all unit test executions.
+            final Instant end = Instant.now().plus(SO_TIMEOUT.multipliedBy(20));
+            while (Instant.now().isBefore(end) && !processingService.isTerminated()) {
+                Thread.sleep(Math.max(100, SO_TIMEOUT.dividedBy(50).toMillis()));
+            } */
+            if (!processingService.isTerminated()) {
+                processingService.shutdownNow();
+            }
         }
     }
 

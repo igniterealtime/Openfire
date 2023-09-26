@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
@@ -36,6 +36,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Handler of XML stanzas sent by remote servers. Remote servers that send stanzas
@@ -96,8 +97,8 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    String getNamespace() {
-        return "jabber:server";
+    Namespace getNamespace() {
+        return new Namespace("", "jabber:server");
     }
 
     @Override
@@ -141,24 +142,21 @@ public class ServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    protected String getStreamHeader() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version='1.0' encoding='");
-        sb.append(CHARSET);
-        sb.append("'?>");
-        sb.append("<stream:stream xmlns:stream=\"http://etherx.jabber.org/streams\" xmlns=\"");
-        sb.append(getNamespace()).append("\"");
+    protected Document getStreamHeader() {
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(getNamespace());
         if (ServerDialback.isEnabled() && (this.session != null && !this.session.isAuthenticated())) {
-            sb.append(" xmlns:db=\"jabber:server:dialback\"");
+            stream.add(Namespace.get("db", "jabber:server:dialback"));
         }
-        sb.append(" from=\"").append(domainPair.getLocal()).append("\"");
-        sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
-        sb.append(" id=\"").append(session.getStreamID()).append("\"");
-        sb.append(" xml:lang=\"").append(session.getLanguage().toLanguageTag()).append("\"");
-        sb.append(" version=\"").append(Session.MAJOR_VERSION).append('.').append(Session.MINOR_VERSION);
-        sb.append("\">");
-        return sb.toString();
-}
+        stream.addAttribute("from", domainPair.getLocal());
+        stream.addAttribute("to", domainPair.getRemote());
+        stream.addAttribute("id", session.getStreamID().getID());
+        stream.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), session.getLanguage().toLanguageTag());
+        stream.addAttribute("version", Session.MAJOR_VERSION + "." + Session.MINOR_VERSION);
+        return document;
+    }
 
     @Override
     protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {

@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
@@ -123,8 +124,8 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    String getNamespace() {
-        return "jabber:connectionmanager";
+    Namespace getNamespace() {
+        return new Namespace("", "jabber:connectionmanager");
     }
 
     @Override

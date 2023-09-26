@@ -15,10 +15,7 @@
  */
 package org.jivesoftware.openfire.session;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
@@ -40,13 +37,11 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -148,37 +143,32 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 session.setLocalDomain(serverName);
                 return session;
             }
+
             // Send the stream header
-            StringBuilder openingStream = new StringBuilder();
-            openingStream.append("<stream:stream");
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+            final Document document = DocumentHelper.createDocument(stream);
+            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+            stream.add(Namespace.get("", "jabber:server"));
             if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-                openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+                stream.add(Namespace.get("db", "jabber:server:dialback"));
             }
-            openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            openingStream.append(" xmlns=\"jabber:server\"");
-            openingStream.append(" from=\"").append(toDomain).append("\"");
+            stream.addAttribute("from", toDomain);
             if (fromDomain != null) {
-                openingStream.append(" to=\"").append(fromDomain).append("\"");
+                stream.addAttribute("to", fromDomain);
             }
-            openingStream.append(" id=\"").append(streamID).append("\"");
+            stream.addAttribute("id", streamID.getID());
 
             // OF-443: Not responding with a 1.0 version in the stream header when federating with older
             // implementations appears to reduce connection issues with those domains (patch by Marcin Cieślak).
             if (serverVersion[0] >= 1) {
-                openingStream.append(" version=\"1.0\">");
-            } else {
-                openingStream.append('>');
+                stream.addAttribute("version", "1.0");
             }
-
-            Log.trace("Outbound opening stream: {}", openingStream);
-            connection.deliverRawText(openingStream.toString());
-
-            StringBuilder sb = new StringBuilder();
 
             if (serverVersion[0] >= 1) {
                 Log.trace("Remote server is XMPP 1.0 compliant so offer TLS and SASL to establish the connection (and server dialback)");
 
-                sb.append("<stream:features>");
+                final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+                stream.add(features);
 
                 if (!directTLS
                     && (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required || connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.optional)
@@ -191,18 +181,18 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                         Log.debug("Server dialback is disabled so TLS is required");
                         starttls.addElement("required");
                     }
-                    sb.append(starttls.asXML());
+                    features.add(starttls);
                 }
 
                 // Include available SASL Mechanisms
-                sb.append(SASLAuthentication.getSASLMechanisms(session));
+                features.add(SASLAuthentication.getSASLMechanisms(session));
 
                 if (ServerDialback.isEnabled()) {
                     // Also offer server dialback (when TLS is not required). Server dialback may be offered
                     // after TLS has been negotiated and a self-signed certificate is being used
                     final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
                     dialback.addElement("errors");
-                    sb.append(dialback.asXML());
+                    features.add(dialback);
                 }
 
                 if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
@@ -212,16 +202,17 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                     if (!timeout.isNegative() && !timeout.isZero()) {
                         limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
                     }
-                    sb.append(limits.asXML());
+                    features.add(limits);
                 }
-
-                sb.append("</stream:features>");
             } else {
                 Log.debug("Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443)");
             }
 
-            Log.trace("Outbound feature advertisement: {}", sb);
-            connection.deliverRawText(sb.toString());
+            final String result = document.asXML(); // Strip closing root tag.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+
+            Log.trace("Outbound stream & feature advertisement: {}", withoutClosing);
+            connection.deliverRawText(withoutClosing);
 
             Log.trace("Set the domain or subdomain of the local server targeted by the remote server: {}", serverName);
             session.setLocalDomain(serverName);
@@ -413,14 +404,15 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     }
 
     @Override
-    public String getAvailableStreamFeatures() {
-        final StringBuilder sb = new StringBuilder();
-        
+    public List<Element> getAvailableStreamFeatures()
+    {
+        final List<Element> result = new LinkedList<>();
+
         // Include Stream Compression Mechanism
         if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
             final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
             compression.addElement("method").addText("zlib");
-            sb.append(compression.asXML());
+            result.add(compression);
         }
         
         // Offer server dialback if using self-signed certificates and no authentication has been done yet
@@ -435,7 +427,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
             final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
             dialback.addElement("errors");
-            sb.append(dialback.asXML());
+            result.add(dialback);
         }
 
         if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
@@ -445,9 +437,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             if (!timeout.isNegative() && !timeout.isZero()) {
                 limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
             }
-            sb.append(limits.asXML());
+            result.add(limits);
         }
-        return sb.toString();
+        return result;
     }
 
     @Override

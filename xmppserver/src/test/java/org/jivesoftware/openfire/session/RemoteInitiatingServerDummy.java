@@ -20,8 +20,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.*;
@@ -234,6 +234,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                         stream.addAttribute("version", "1.0");
 
                         String response = null;
+                        read = read.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "").trim();
                         if (read.startsWith("<stream:stream ")) {
                             stream.addElement(QName.get("features", namespace));
                             response = stream.asXML().substring(0, stream.asXML().indexOf("</stream:stream>"));

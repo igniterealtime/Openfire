@@ -301,8 +301,11 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         private synchronized void sendStreamFeatures() throws IOException
         {
-            final Document root = DocumentHelper.createDocument();
-            final Element features = root.addElement("features");
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+            final Document document = DocumentHelper.createDocument(stream);
+            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+            document.getRootElement().add(features);
+
             if (!(socket instanceof SSLSocket)) {
                 if (encryptionPolicy != Connection.TLSPolicy.disabled) {
                     final Element startTLS = features.addElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
@@ -342,7 +345,9 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 }
             }
 
-            send(root.getRootElement().asXML());
+            final String result = stream.asXML(); // String opening and closing element. Opening element needs to be written by parser, to avoid namespace declaration on child element.
+            final String streamStripped = result.substring(result.indexOf('>')+1, result.lastIndexOf("</stream:stream>")).trim();
+            send(streamStripped);
         }
 
         private synchronized void sendStartTlsProceed(Element inbound) throws Exception

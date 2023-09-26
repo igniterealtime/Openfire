@@ -34,6 +34,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -269,14 +270,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             LOG.debug("EXTERNAL SASL was successful.");
 
             // SASL was successful so initiate a new stream
-            StringBuilder sb = new StringBuilder();
-            sb.append("<stream:stream");
-            sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            sb.append(" xmlns=\"jabber:server\"");
-            sb.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
-            sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
-            sb.append(" version=\"1.0\">");
-            connection.deliverRawText(sb.toString());
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+            final Document document = DocumentHelper.createDocument(stream);
+            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+            stream.add(Namespace.get("jabber:server"));
+            stream.addAttribute("from", domainPair.getLocal()); // OF-673
+            stream.addAttribute("to", domainPair.getRemote());
+            stream.addAttribute("version", "1.0");
+
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
 
             connection.init(session);
             // Set the remote domain name as the address of the session.
@@ -329,8 +333,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     @Override
-    String getNamespace() {
-        return "jabber:server";
+    Namespace getNamespace() {
+        return new Namespace("", "jabber:server");
     }
 
     @Override

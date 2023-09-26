@@ -346,7 +346,7 @@ public class HttpSessionManager {
         }
 
         Element features = response.addElement("stream:features");
-        for (Element feature : session.getAvailableStreamFeaturesElements()) {
+        for (Element feature : session.getAvailableStreamFeatures()) {
             features.add(feature);
         }
 

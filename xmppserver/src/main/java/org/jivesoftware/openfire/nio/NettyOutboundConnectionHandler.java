@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
+import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
@@ -32,8 +33,8 @@ import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
-import java.time.Duration;
 
 /**
  * Outbound (S2S) specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -179,17 +180,22 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     }
 
     private void sendNewStreamHeader(NettyConnection connection) {
-        StringBuilder openingStream = new StringBuilder();
-        openingStream.append("<stream:stream");
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(Namespace.get("", "jabber:server"));
         if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-            openingStream.append(" xmlns:db=\"jabber:server:dialback\"");
+            stream.add(Namespace.get("db", "jabber:server:dialback"));
         }
-        openingStream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-        openingStream.append(" xmlns=\"jabber:server\"");
-        openingStream.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
-        openingStream.append(" to=\"").append(domainPair.getRemote()).append("\"");
-        openingStream.append(" version=\"1.0\">");
-        connection.deliverRawText(openingStream.toString());
+        stream.addAttribute("from", domainPair.getLocal()); // OF-673
+        stream.addAttribute("to", domainPair.getRemote());
+        stream.addAttribute("version", "1.0");
+
+        final String result = document.asXML(); // Strip closing element.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+
+        Log.trace("Sending: {}", withoutClosing);
+        connection.deliverRawText(withoutClosing);
     }
 
     private boolean connectionConfigDoesNotRequireTls() {

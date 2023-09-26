@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.server;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
@@ -220,15 +218,18 @@ public class ServerDialback {
             }
 
             log.debug( "Send the stream header and wait for response..." );
-            StringBuilder stream = new StringBuilder();
-            stream.append("<stream:stream");
-            stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-            stream.append(" xmlns=\"jabber:server\"");
-            stream.append(" to=\"").append(domainPair.getRemote()).append("\"");
-            stream.append(" from=\"").append(domainPair.getLocal()).append("\"");
-            stream.append(" xmlns:db=\"jabber:server:dialback\"");
-            stream.append(">");
-            connection.deliverRawText(stream.toString());
+            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+            final Document document = DocumentHelper.createDocument(stream);
+            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+            stream.add(Namespace.get("", "jabber:server"));
+            stream.add(Namespace.get("db", "jabber:server:dialback"));
+            stream.addAttribute("to", domainPair.getRemote());
+            stream.addAttribute("from", domainPair.getLocal());
+
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+
+            connection.deliverRawText(withoutClosing);
 
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever
             int soTimeout = socket.getSoTimeout();
@@ -680,19 +681,19 @@ public class ServerDialback {
         }
 
         log.debug( "Send the Authoritative Server a stream header and wait for answer." );
-        StringBuilder stream = new StringBuilder();
-        stream.append("<stream:stream");
-        stream.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-        stream.append(" xmlns=\"jabber:server\"");
-        stream.append(" xmlns:db=\"jabber:server:dialback\"");
-        stream.append(" to=\"");
-        stream.append(remoteDomain);
-        stream.append("\"");
-        stream.append(" from=\"");
-        stream.append(recipient);
-        stream.append("\"");
-        stream.append(" version=\"1.0\">");
-        writer.write(stream.toString());
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(Namespace.get("", "jabber:server"));
+        stream.add(Namespace.get("db", "jabber:server:dialback"));
+        stream.addAttribute("to", remoteDomain);
+        stream.addAttribute("from", recipient);
+        stream.addAttribute("version", "1.0");
+
+        final String docTxt = document.asXML(); // Strip closing element.
+        final String withoutClosing = docTxt.substring(0, docTxt.lastIndexOf("</stream:stream>"));
+
+        writer.write(withoutClosing);
         writer.flush();
 
         // Get the answer from the Authoritative Server
@@ -750,14 +751,15 @@ public class ServerDialback {
         }
         if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
             log.debug("Request for verification of the key and wait for response");
-            StringBuilder sb = new StringBuilder();
-            sb.append("<db:verify");
-            sb.append(" from=\"").append(recipient).append("\"");
-            sb.append(" to=\"").append(remoteDomain).append("\"");
-            sb.append(" id=\"").append(streamID.getID()).append("\">");
-            sb.append(key);
-            sb.append("</db:verify>");
-            writer.write(sb.toString());
+            final Element verify = DocumentHelper.createElement(QName.get("verify", "db", "jabber:server:dialback"));
+            document.getRootElement().add(verify);
+
+            verify.addAttribute("from", recipient);
+            verify.addAttribute("to", remoteDomain);
+            verify.addAttribute("id", streamID.getID());
+            verify.addText(key);
+
+            writer.write(verify.asXML());
             writer.flush();
 
             try {

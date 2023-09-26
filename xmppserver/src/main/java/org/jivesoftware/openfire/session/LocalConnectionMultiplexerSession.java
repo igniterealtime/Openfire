@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
-import org.dom4j.QName;
+import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthFactory;
@@ -38,7 +36,10 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -70,24 +71,23 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
         Log.debug("LocalConnectionMultiplexerSession: [ConMng] Starting registration of new connection manager for domain: " + domain);
 
-        // Default answer header in case of an error
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version='1.0' encoding='");
-        sb.append(CHARSET);
-        sb.append("'?>");
-        sb.append("<stream:stream ");
-        sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
-        sb.append("xmlns=\"jabber:connectionmanager\" from=\"");
-        sb.append(domain);
-        sb.append("\" version=\"1.0\">");
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(Namespace.get("jabber:connectionmanager"));
+        stream.addAttribute("version", "1.0");
 
         // Check that a domain was provided in the stream header
         if (domain == null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] Domain not specified in stanza: {}", xpp.getText());
             // Include the bad-format in the response and close the underlying connection.
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
             connection.close(new StreamError(StreamError.Condition.bad_format, "Missing 'to' attribute value."));
             return null;
         }
+        stream.addAttribute("from", domain);
 
         // Get the requested domain
         JID address = new JID(domain);
@@ -96,6 +96,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         if (secretKey == null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] A shared secret for connection manager was not found.");
             // Include the internal-server-error in the response and close the underlying connection
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
             connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
@@ -103,6 +106,9 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         if (SessionManager.getInstance().getConnectionMultiplexerSession(address) != null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] Another connection manager is already using domain: {}", domain);
             // Domain already occupied so return a conflict error and close the connection.
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
             connection.close(new StreamError(StreamError.Condition.conflict, "The requested address is already being used by another connection manager."));
             return null;
         }
@@ -115,55 +121,47 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
         // Create a ConnectionMultiplexerSession for the new session originated
         // from the connection manager
-        LocalConnectionMultiplexerSession session =
-                SessionManager.getInstance().createMultiplexerSession(connection, address);
+        LocalConnectionMultiplexerSession session = SessionManager.getInstance().createMultiplexerSession(connection, address);
         // Set the address of the new session
         session.setAddress(address);
         connection.init(session);
 
         try {
-            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Send stream header with ID: " + session.getStreamID() +
-                    " for connection manager with domain: " +
-                    domain);
+            Log.debug("LocalConnectionMultiplexerSession: [ConMng] Send stream header with ID: {} for connection manager with domain: {}", session.getStreamID(), domain);
             // Build the start packet response
-            sb = new StringBuilder();
-            sb.append("<?xml version='1.0' encoding='");
-            sb.append(CHARSET);
-            sb.append("'?>");
-            sb.append("<stream:stream ");
-            sb.append("xmlns:stream=\"http://etherx.jabber.org/streams\" ");
-            sb.append("xmlns=\"jabber:connectionmanager\" from=\"");
-            sb.append(domain);
-            sb.append("\" id=\"");
-            sb.append(session.getStreamID().toString());
-            sb.append("\" version=\"1.0\" >");
-            connection.deliverRawText(sb.toString());
+            stream.addAttribute("id", session.getStreamID().toString());
 
             // Announce stream features.
-
-            sb = new StringBuilder();
-            sb.append("<stream:features>");
+            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+            document.getRootElement().add(features);
             if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
                 final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
                 if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
                     starttls.addElement("required");
                 }
-                sb.append(starttls.asXML());
+                features.add(starttls);
             }
-            // Include Stream features
-            String specificFeatures = session.getAvailableStreamFeatures();
-            if (specificFeatures != null) {
-                sb.append(specificFeatures);
-            }
-            sb.append("</stream:features>");
 
-            connection.deliverRawText(sb.toString());
+            // Include Stream features
+            final List<Element> specificFeatures = session.getAvailableStreamFeatures();
+            if (specificFeatures != null) {
+                for (final Element feature : specificFeatures) {
+                    features.add(feature);
+                }
+            }
+
+            final String result = document.asXML(); // Strip closing root tag.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
 
             return session;
         }
         catch (Exception e) {
             Log.error("An error occurred while creating a Connection Manager Session", e);
             // Close the underlying connection
+            final String result = document.asXML(); // Strip closing element.
+            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            connection.deliverRawText(withoutClosing);
             connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
@@ -174,18 +172,18 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     }
 
     @Override
-    public String getAvailableStreamFeatures() {
+    public List<Element> getAvailableStreamFeatures() {
         if (conn.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
-            return null;
+            return Collections.emptyList();
         }
 
         // Include Stream Compression Mechanism
         if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
             final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
             compression.addElement("method").addText("zlib");
-            return compression.asXML();
+            return List.of(compression);
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

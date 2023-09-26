@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.session;
 
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
+import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
@@ -38,7 +39,9 @@ import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -377,9 +380,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-    public String getAvailableStreamFeatures() {
+    public List<Element> getAvailableStreamFeatures() {
         // Nothing special to add
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

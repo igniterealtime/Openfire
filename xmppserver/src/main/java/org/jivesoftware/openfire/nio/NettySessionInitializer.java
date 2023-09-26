@@ -23,6 +23,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.dom4j.*;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
@@ -200,18 +201,22 @@ public class NettySessionInitializer {
 
     private void sendOpeningStreamHeader(Channel channel) {
         Log.debug("Send the stream header and wait for response...");
-        StringBuilder sb = new StringBuilder();
-        sb.append("<stream:stream");
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(Namespace.get("", "jabber:server"));
         if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-            sb.append(" xmlns:db=\"jabber:server:dialback\"");
+            stream.add(Namespace.get("db", "jabber:server:dialback"));
         }
-        sb.append(" xmlns:stream=\"http://etherx.jabber.org/streams\"");
-        sb.append(" xmlns=\"jabber:server\"");
-        sb.append(" from=\"").append(domainPair.getLocal()).append("\""); // OF-673
-        sb.append(" to=\"").append(domainPair.getRemote()).append("\"");
-        sb.append(" version=\"1.0\">");
-        channel.writeAndFlush(sb.toString());
-        Log.trace("Sending: " + sb);
+        stream.addAttribute("from", domainPair.getLocal()); // OF-673
+        stream.addAttribute("to", domainPair.getRemote());
+        stream.addAttribute("version", "1.0");
+
+        final String result = document.asXML(); // Strip closing element.
+        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+
+        Log.trace("Sending: {}", withoutClosing);
+        channel.writeAndFlush(withoutClosing);
     }
 
     @Override

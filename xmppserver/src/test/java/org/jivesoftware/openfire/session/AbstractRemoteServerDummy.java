@@ -151,14 +151,14 @@ public class AbstractRemoteServerDummy
      */
     public static Element parse(final String xml) throws DocumentException
     {
-        String toParse = xml;
+        String toParse = xml.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "").trim();
 
         // Verify if xml ends with close tag that matches the first tag.
-        final Matcher matcher = Pattern.compile("[A-Za-z:]+").matcher(xml);
+        final Matcher matcher = Pattern.compile("[A-Za-z:]+").matcher(toParse);
         if (matcher.find()) {
             final String fakeEndTag = "</" + matcher.group() + ">";
             final String emptyElementTagPattern = "<" + matcher.group() + "[^/>]*/>";
-            if (!xml.trim().endsWith(fakeEndTag) && !Pattern.compile(emptyElementTagPattern).matcher(xml).find()) {
+            if (!toParse.trim().endsWith(fakeEndTag) && !Pattern.compile(emptyElementTagPattern).matcher(toParse).find()) {
                 toParse += fakeEndTag;
             }
         }

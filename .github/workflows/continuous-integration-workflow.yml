@@ -50,10 +50,8 @@ jobs:
           path: |
             startServer
             stopServer
-            runIntegrationTests
             runAioxmppIntegrationTests
             runConnectivityIntegrationTests
-            test.gradle
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
         uses: actions/upload-artifact@v4
@@ -184,7 +182,6 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./runIntegrationTests
           chmod +x ./startServer
           chmod +x ./stopServer
       - name: Start server from distribution

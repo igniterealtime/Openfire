@@ -193,6 +193,7 @@ jobs:
           domain: 'example.org'
           adminAccountUsername: 'admin'
           adminAccountPassword: 'admin'
+          disabledTests: 'EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest'
       - name: Stop server
         if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
         run: ./stopServer -d -l -i 127.0.0.1

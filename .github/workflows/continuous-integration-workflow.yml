@@ -48,6 +48,8 @@ jobs:
         with:
           name: test-files-java${{ matrix.java }}
           path: |
+            startServer
+            stopServer
             runIntegrationTests
             runAioxmppIntegrationTests
             runConnectivityIntegrationTests
@@ -98,7 +100,7 @@ jobs:
 
       - name: Run aioxmpp tests
         run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
-            
+
       - name: Expose test output
         if: always()
         uses: actions/upload-artifact@v4
@@ -183,8 +185,16 @@ jobs:
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
           chmod +x ./runIntegrationTests
-      - name: Run smack tests
-        run: ./runIntegrationTests -d -l -i 127.0.0.1
+          chmod +x ./startServer
+          chmod +x ./stopServer
+      - name: Start server from distribution
+        id: startServer
+        run: ./startServer -d -l -i 127.0.0.1
+      - name: Run Smack tests against server
+        run: ./runIntegrationTests -d -l
+      - name: Stop server
+        if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        run: ./stopServer -d -l -i 127.0.0.1
 
   should-do-database-upgrade-tests:
     name: Check if database upgrade tests should be run

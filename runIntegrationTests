@@ -6,7 +6,6 @@ GRADLE_VERSION="6.3"
 FORCE_CUSTOM_GRADLE=true
 CURL_ARGS="--location --silent"
 DEBUG=false
-LOCAL_RUN=false
 
 HOST='example.org'
 ADMINUSER='admin'
@@ -14,19 +13,18 @@ ADMINPASS='admin'
 
 usage()
 {
-	echo "Usage: $0 [-d] [-l] [-g] [-i IPADDRESS] [-s SMACK_VERSION] [-h HOST] [-u USERNAME] [-p PASSWORD]"
+	echo "Usage: $0 [-d] [-l] [-g] [-s SMACK_VERSION] [-h HOST] [-u USERNAME] [-p PASSWORD]"
 	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
-	echo "    -l: Launch a local Openfire. (default: off)"
-	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
 	echo "    -g: Use system Gradle, rather than use the known-good (default: off)"
 	echo "    -s: Set Smack to the given version (default: ${SMACK_VERSION})"
+	echo "    -l: Launch a local Openfire. (default: off)"
 	echo "    -h: The hostname for the Openfire under test (default: example.org)"
 	echo "    -u: Admin username for Openfire (default: admin)"
 	echo "    -p: Admin password for Openfire (default: admin)"
 	exit 2
 }
 
-while getopts dlgs:h:i:u:p: OPTION "$@"; do
+while getopts dlgs:h:u:p: OPTION "$@"; do
 	case $OPTION in
 		d)
 			DEBUG=true
@@ -43,9 +41,6 @@ while getopts dlgs:h:i:u:p: OPTION "$@"; do
 			;;
 		h)
 			HOST="${OPTARG}"
-			;;
-		i)
-			IPADDRESS="${OPTARG}"
 			;;
 		u)
 			ADMINUSER="${OPTARG}"
@@ -90,14 +85,6 @@ function cleanup {
 		echo "Removing temp directories"
 		rm -rf "${OFTEMPDIR}"
 	fi
-	if [[ -n "${IPADDRESS-}" ]]; then
-		echo "Resetting hosts file after local running. This may prompt for sudo."
-		sudo sed -i'.original' "/$IPADDRESS $HOST/d" /etc/hosts
-	fi
-	if [[ $LOCAL_RUN == true ]]; then
-		echo "Stopping Openfire"
-		pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
-	fi
 }
 
 function setUpGradleEnvironment {
@@ -121,34 +108,6 @@ function setUpGradleEnvironment {
 	else
 		GRADLE="gradle"
 	fi
-}
-
-function setHostsFile {
-	if [[ -n "${IPADDRESS-}" ]]; then
-		echo "Setting hosts file for local running. This may prompt for sudo."
-		sudo /bin/sh -c "echo \"$IPADDRESS $HOST\" >> /etc/hosts"
-	fi
-}
-
-function launchOpenfire {
-	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
-
-	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
-		./mvnw verify -P ci
-	fi
-
-	rm -f distribution/target/distribution-base/conf/openfire.xml
-	cp distribution/target/distribution-base/conf/openfire-demoboot.xml \
-		distribution/target/distribution-base/conf/openfire.xml
-
-	echo "Starting Openfire…"
-	"${OPENFIRE_SHELL_SCRIPT}" &
-
-	# Wait 120 seconds for Openfire to open up the web interface and
-	# assume Openfire is fully operational once that happens (not sure if
-	# this assumption is correct).
-	echo "Waiting for Openfire…"
-	timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
 }
 
 function runTestsInGradle {
@@ -199,10 +158,4 @@ function runTestsInGradle {
 setBaseDirectory
 trap cleanup EXIT
 setUpGradleEnvironment
-if [[ -n "${IPADDRESS-}" ]]; then
-	setHostsFile
-fi
-if [[ $LOCAL_RUN == true ]]; then
-	launchOpenfire
-fi
 runTestsInGradle

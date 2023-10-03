@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Smack: Minimal Working Example</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Smack: Minimal Working Example</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document provides a minimal working example of a client implementation using the Smack library, making
+            it connect to a running Openfire server.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#preparations">Preparations</a>
+                <li><a href="#code">Code</a>
+                <li><a href="#references">Further Reading</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            Ignite Realtime's <a href="https://www.igniterealtime.org/projects/smack/">Smack project</a> is an Open
+            Source XMPP client library for instant messaging and presence. A pure Java library, it can be embedded into
+            your applications to create anything from a full XMPP client to simple XMPP integrations such as sending
+            notification messages and presence-enabling devices.
+        </p>
+        <p>
+            This guide describes how to use Smack to connect to Openfire. It provides nothing more than a minimal
+            working example, intended as a stepping stone to for client developers that get started with a new project.
+        </p>
+
+    </section>
+
+    <section id="preparations">
+
+        <h2>Preparations</h2>
+
+        <p>
+            In this example, a client connection will be made against a running Openfire server. For ease of
+            configuration, the 'demoboot' setup of Openfire is used.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john' (both using the value 'secret' as their password)</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+
+    </section>
+
+    <section id="code">
+
+        <h2>Code</h2>
+
+        <p>
+            This example uses Apache Maven to define the project and define usage of the Smack library. Other build
+            tools, like Gradle, could also be used.
+        </p>
+
+        <p>
+            To start the project, create a Maven <code>pom.xml</code> file in the root of your project. This file is
+            primarily used to define the Smack library as a dependency of the project.
+        </p>
+
+        <fieldset>
+            <legend>Example pom.xml file</legend>
+            <pre><code>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;project xmlns=&quot;http://maven.apache.org/POM/4.0.0&quot;
+         xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+         xsi:schemaLocation=&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;&gt;
+    &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+
+    &lt;groupId&gt;org.igniterealtime.demo&lt;/groupId&gt;
+    &lt;artifactId&gt;smack-minimal-working-example&lt;/artifactId&gt;
+    &lt;version&gt;1.0-SNAPSHOT&lt;/version&gt;
+
+    &lt;description&gt;A minimal working example of a Smack-based client.&lt;/description&gt;
+
+    &lt;properties&gt;
+        &lt;maven.compiler.source&gt;8&lt;/maven.compiler.source&gt;
+        &lt;maven.compiler.target&gt;8&lt;/maven.compiler.target&gt;
+    &lt;/properties&gt;
+
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.igniterealtime.smack&lt;/groupId&gt;
+            &lt;artifactId&gt;smack-java8-full&lt;/artifactId&gt;
+            &lt;version&gt;4.4.6&lt;/version&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+
+&lt;/project&gt;
+</code></pre>
+        </fieldset>
+
+        <p>
+            A simple Java class file, using nothing but a <code>main</code> method, will be used to create two
+            XMPP connections that connect to Openfire. One connection will start listening for a chat message, while
+            the other connection will send such a message.
+        </p>
+
+        <fieldset>
+            <legend>Example class file</legend>
+            <pre><code>import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.filter.MessageWithBodiesFilter;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.MessageBuilder;
+import org.jivesoftware.smack.tcp.XMPPTCPConnection;
+import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+
+import java.time.Duration;
+
+public class TestClients
+{
+    public static void main(String[] args) throws Exception
+    {
+        //SmackConfiguration.DEBUG = true;
+
+        final XMPPTCPConnectionConfiguration configSender = XMPPTCPConnectionConfiguration.builder()
+            .setUsernameAndPassword("john", "secret")
+            .setXmppDomain("example.org")
+            .setResource("test")
+            .setHost("localhost")
+            .setPort(5222)
+            .addEnabledSaslMechanism("PLAIN")
+            .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+            .build();
+
+        final XMPPTCPConnectionConfiguration configReceiver = XMPPTCPConnectionConfiguration.builder()
+            .setUsernameAndPassword("jane", "secret")
+            .setXmppDomain("example.org")
+            .setHost("localhost")
+            .setPort(5222)
+            .addEnabledSaslMechanism("PLAIN")
+            .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+            .build();
+
+        final XMPPTCPConnection connectionSender = new XMPPTCPConnection(configSender);
+        final XMPPTCPConnection connectionReceiver = new XMPPTCPConnection(configReceiver);
+
+        try
+        {
+            connectionSender.setUseStreamManagement(false); // To reduce output in the debug log.
+            connectionReceiver.setUseStreamManagement(false); // To reduce output in the debug log.
+
+            connectionSender.connect();
+            connectionReceiver.connect();
+
+            connectionSender.login();
+            connectionReceiver.login();
+
+            Thread.sleep(Duration.ofSeconds(2).toMillis());
+
+            // Listen for incoming messages.
+            connectionReceiver.addAsyncStanzaListener((stanza -> System.out.println("Received: " + ((Message) stanza).getBody())), MessageWithBodiesFilter.INSTANCE);
+
+            // Construct and send message.
+            final Message message = MessageBuilder.buildMessage()
+                .to(connectionReceiver.getUser())
+                .setBody("Hello!")
+                .build();
+            connectionSender.sendStanza(message);
+
+            Thread.sleep(Duration.ofSeconds(2).toMillis());
+        }
+        finally
+        {
+            connectionSender.disconnect();
+            connectionReceiver.disconnect();
+        }
+    }
+}
+</code></pre>
+        </fieldset>
+
+        <p>
+            Use your IDE to run the <code>main</code> method. You should see <code>Received Hello!</code> be printed to
+            the standard output. That's it!
+        </p>
+
+        <p>
+            Note that this example disables important security features. You should not use this for anything important!
+        </p>
+
+    </section>
+
+    <section id="references">
+
+        <h2>Further Reading</h2>
+
+        <p>
+            Please use the links below to find more information.
+        </p>
+        <ul>
+            <li><a href="https://www.igniterealtime.org/projects/smack/">Smack project home page</a></li>
+            <li><a href="https://github.com/igniterealtime/Smack/wiki">Smack Wiki</a></li>
+            <li><a href="https://github.com/igniterealtime/Smack/wiki/Readme">Smack READMEs (and upgrade guides)</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

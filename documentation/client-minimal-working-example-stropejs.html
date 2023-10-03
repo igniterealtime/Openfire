@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Strophe.js: Minimal Working Example</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Strophe.js: Minimal Working Example</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document provides a minimal working example of a client implementation using the Strophe.js library,
+            making it connect to a running Openfire server.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#preparations">Preparations</a>
+                <li><a href="#code">Code</a>
+                <li><a href="#references">Further Reading</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            <a href="https://strophe.im/strophejs/">Strophe.js</a> is an XMPP library for JavaScript. Its primary
+            purpose is to enable web-based, real-time XMPP applications that run in any browser.
+        </p>
+        <p>
+            This guide describes how to use Strophe.js to connect to Openfire. It provides nothing more than a minimal
+            working example, intended as a stepping stone to for client developers that get started with a new project.
+        </p>
+
+    </section>
+
+    <section id="preparations">
+
+        <h2>Preparations</h2>
+
+        <p>
+            In this example, a client connection will be made against a running Openfire server. For ease of
+            configuration, the 'demoboot' setup of Openfire is used.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john' (both using the value 'secret' as their password)</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+
+    </section>
+
+    <section id="code">
+
+        <h2>Code</h2>
+
+        <p>
+            Download and build the Strophe.js distribution. Assuming that you have a compatible version of Nodejs
+            installed, this can be as simple as executing the 'dist' make target, as shown below, in the directory in
+            which the Strophe.js release archive was extracted.
+        </p>
+
+        <fieldset>
+            <legend>Build Strope.js distribution</legend>
+            <pre><code class="language-bash">$ make dist</code></pre>
+        </fieldset>
+
+        <p>
+            If the build is successful, several files will have been created in a directory called <code>dist</code>. In
+            this example, the file <code>dist/strophe.umd.js</code> will be used.
+        </p>
+
+        <p>
+            Find (or create) the directory <code>examples</code> in the directory in which the Strophe.js release
+            archive was extracted (it should be a sibling to the <code>dist</code> directory that was created). In the
+            <code>exmples</code> directory, create a file called <code>openfire.html</code> and copy the code shown
+            below.
+        </p>
+        <fieldset>
+            <legend>Stroph.js client example</legend>
+            <pre><code class="language-html">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Strophe.js Basic Example&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id='login' style='text-align: center'&gt;
+      &lt;form name='cred'&gt;
+        &lt;label for='jid'&gt;JID:&lt;/label&gt;
+        &lt;input type='text' id='jid' value='john'&gt;
+        &lt;label for='pass'&gt;Password:&lt;/label&gt;
+        &lt;input type='password' id='pass'&gt;
+        &lt;input type='button' id='connect' value='connect'&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+    &lt;hr&gt;
+    &lt;table id='log'&gt;&lt;/table&gt;
+    &lt;script src='http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js'&gt;&lt;/script&gt;
+    &lt;script src='../dist/strophe.umd.js'&gt;&lt;/script&gt;
+    &lt;script src='https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/vkbeautify/vkbeautify.0.99.00.beta.js'&gt;&lt;/script&gt;
+    &lt;script&gt;
+      var BOSH_SERVICE = 'http://example.org:7070/http-bind';
+      var connection = null;
+
+      function log(msg, data) {
+          var tr = document.createElement('tr');
+          var th = document.createElement('th');
+          th.setAttribute( &quot;style&quot;, &quot;text-align: left; vertical-align: top;&quot; );
+          var td;
+
+          th.appendChild( document.createTextNode(msg) );
+          tr.appendChild( th );
+
+          if (data) {
+              td = document.createElement('td');
+              pre = document.createElement('code');
+              pre.setAttribute(&quot;style&quot;, &quot;white-space: pre-wrap;&quot;);
+              td.appendChild(pre);
+              pre.appendChild( document.createTextNode( vkbeautify.xml(data) ) );
+              tr.appendChild(td);
+          } else {
+              th.setAttribute('colspan', '2');
+          }
+
+          $('#log').append(tr);
+      }
+
+      function rawInput(data)
+      {
+          log('RECV', data);
+      }
+
+      function rawOutput(data)
+      {
+          log('SENT', data);
+      }
+
+      function onConnect(status)
+      {
+          if (status == Strophe.Status.CONNECTING) {
+        log('Strophe is connecting.');
+          } else if (status == Strophe.Status.CONNFAIL) {
+        log('Strophe failed to connect.');
+        $('#connect').get(0).value = 'connect';
+          } else if (status == Strophe.Status.DISCONNECTING) {
+        log('Strophe is disconnecting.');
+          } else if (status == Strophe.Status.DISCONNECTED) {
+        log('Strophe is disconnected.');
+        $('#connect').get(0).value = 'connect';
+          } else if (status == Strophe.Status.CONNECTED) {
+        log('Strophe is connected.');
+        connection.disconnect();
+          }
+      }
+
+      $(document).ready(function () {
+          connection = new Strophe.Connection(BOSH_SERVICE);
+          connection.rawInput = rawInput;
+          connection.rawOutput = rawOutput;
+
+          $('#connect').bind('click', function () {
+        var button = $('#connect').get(0);
+        if (button.value == 'connect') {
+            button.value = 'disconnect';
+
+            connection.connect($('#jid').get(0).value,
+                   $('#pass').get(0).value,
+                   onConnect);
+        } else {
+            button.value = 'connect';
+            connection.disconnect();
+        }
+          });
+      });
+    &lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+        </fieldset>
+
+        <p>
+            Save the file, and open it in a browser. You should be presented with two input fields. Fill out the
+            password for the username <code>john</code> (it's: <code>secret</code>) and press the 'connect' button. You
+            will immediately see all raw XMPP that is being exchanged with the server!
+        </p>
+
+        <p>
+            Note that this example disables important security features. You should not use this for anything important!
+        </p>
+
+    </section>
+
+    <section id="references">
+
+        <h2>Further Reading</h2>
+
+        <p>
+            Please use the links below to find more information.
+        </p>
+        <ul>
+            <li><a href="https://strophe.im/strophejs/">Strophe.js home page</a></li>
+            <li><a href="https://github.com/strophe/strophejs">Strophe.js project page</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

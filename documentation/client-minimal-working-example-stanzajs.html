@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>StanzaJS: Minimal Working Example</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/javascript.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>StanzaJS: Minimal Working Example</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document provides a minimal working example of a client implementation using the StanzaJS library,
+            making it connect to a running Openfire server.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#preparations">Preparations</a>
+                <li><a href="#code">Code</a>
+                <li><a href="#references">Further Reading</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            <a href="https://github.com/legastero/stanza">StanzaJS</a> is a JavaScript/TypeScript library for using
+            modern XMPP, and it does that by exposing everything as JSON. Unless you insist, you have no need to ever
+            see or touch any XML when using StanzaJS.
+        </p>
+        <p>
+            This guide describes how to use StanzaJS to connect to Openfire. It provides nothing more than a minimal
+            working example, intended as a stepping stone to for client developers that get started with a new project.
+        </p>
+
+    </section>
+
+    <section id="preparations">
+
+        <h2>Preparations</h2>
+
+        <p>
+            In this example, a client connection will be made against a running Openfire server. For ease of
+            configuration, the 'demoboot' setup of Openfire is used.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john' (both using the value 'secret' as their password)</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+
+    </section>
+
+    <section id="code">
+
+        <h2>Code</h2>
+
+        <p>
+            Copy the following code in a fresh project.
+        </p>
+
+        <fieldset>
+            <legend>Echo client example</legend>
+            <pre><code class="language-javascript">import * as XMPP from 'stanza';
+
+const client = XMPP.createClient({
+    jid: 'john@example.org',
+    password: 'secret',
+
+    transports: {
+        websocket: 'ws://example.org:7070/ws'
+    }
+});
+
+client.on('session:started', () => {
+    client.getRoster();
+    client.sendPresence();
+});
+
+client.on('chat', msg => {
+    client.sendMessage({
+        to: msg.from,
+        body: 'You sent: ' + msg.body
+    });
+});
+
+client.connect();
+</code></pre>
+        </fieldset>
+
+        <p>
+            When this project is running, have a look at the Openfire Administrative Console: you should notice that the
+            user named 'john' is online! Use any other XMPP client to log in with the user 'jane', and send a message to
+            John. The code above will cause John to echo back the message that you have sent.
+        </p>
+
+        <p>
+            Note that this example disables important security features. You should not use this for anything important!
+        </p>
+
+    </section>
+
+    <section id="references">
+
+        <h2>Further Reading</h2>
+
+        <p>
+            Please use the links below to find more information.
+        </p>
+        <ul>
+            <li><a href="https://stanzajs.org">StanzaJS home page</a></li>
+            <li><a href="https://github.com/legastero/stanza">StanzaJS project page</a></li>
+            <li><a href="https://www.npmjs.com/package/stanza">StanzaJS on nodejs</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

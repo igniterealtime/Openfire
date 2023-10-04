@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Mellium: Minimal Working Example</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Mellium: Minimal Working Example</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document provides a minimal working example of a client implementation using the Mellium library, making
+            it connect to a running Openfire server.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#preparations">Preparations</a>
+                <li><a href="#code">Code</a>
+                <li><a href="#references">Further Reading</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            <a href="https://mellium.im/">Mellium</a> provides a collection of Go libraries, tools, and applications
+            related to XMPP and the Jabber network.
+        </p>
+        <p>
+            This guide describes how to use Mellium to connect to Openfire. It provides nothing more than a minimal
+            working example, intended as a stepping stone to for client developers that get started with a new project.
+        </p>
+
+    </section>
+
+    <section id="preparations">
+
+        <h2>Preparations</h2>
+
+        <p>
+            In this example, a client connection will be made against a running Openfire server. For ease of
+            configuration, the 'demoboot' setup of Openfire is used.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john' (both using the value 'secret' as their password)</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+
+    </section>
+
+    <section id="code">
+
+        <h2>Code</h2>
+
+        <p>
+            To start the project, create a file named <code>test.go</code> in an empty directory, and copy in the code
+            below.
+        </p>
+
+        <fieldset>
+            <legend>Example pom.xml file</legend>
+            <pre><code class="language-go">package main
+
+import (
+	"context"
+	"log"
+
+	"mellium.im/sasl"
+	"mellium.im/xmpp"
+	"mellium.im/xmpp/dial"
+	"mellium.im/xmpp/jid"
+	"mellium.im/xmpp/stanza"
+)
+
+// MessageBody is a message stanza that contains a body. It is normally used for
+// chat messages.
+type MessageBody struct {
+	stanza.Message
+	Body string `xml:"body"`
+}
+
+// TODO: this is just an example, don't hard code passwords!
+const (
+	xmppPass = "secret"
+	xmppUser = "jane@example.com"
+
+	// TODO: normally we'd want to connect to the domainpart of the user
+	// (example.com in this example), but let's override that and set it to
+	// "localhost" since this is an example made to run locally.
+	xmppHost = "localhost:5222"
+)
+
+func main() {
+	j, err := jid.Parse(xmppUser)
+	if err != nil {
+		log.Fatalf("error parsing XMPP address: %v", err)
+	}
+
+	d := dial.Dialer{
+		// TODO: we probably don't want to disable direct TLS connections and we
+		// probably want to lookup the server using SRV records normally, but this
+		// is an example so we're disabling security features.
+		NoLookup: true,
+		NoTLS:    true,
+	}
+	conn, err := d.DialServer(context.TODO(), "tcp", j, xmppHost)
+	if err != nil {
+		log.Fatalf("error dialing TCP connection: %v", err)
+	}
+
+	s, err := xmpp.NewSession(context.TODO(), j.Domain(), j, conn, 0, xmpp.NewNegotiator(func(*xmpp.Session, *xmpp.StreamConfig) xmpp.StreamConfig {
+		return xmpp.StreamConfig{
+			Lang: "en",
+			Features: []xmpp.StreamFeature{
+				xmpp.BindResource(),
+				xmpp.SASL("", xmppPass, sasl.Plain),
+			},
+		}
+	}))
+	if err != nil {
+		log.Fatalf("error connecting to server: %v", err)
+	}
+	defer func() {
+		err := s.Close()
+		if err != nil {
+			log.Fatalf("error closing XMPP session: %v", err)
+		}
+	}()
+
+	// Encode a message to ourself.
+	err = s.Encode(context.TODO(), MessageBody{
+		Message: stanza.Message{
+			To:   s.LocalAddr(),
+			Type: stanza.ChatMessage,
+		},
+		Body: "Hello world!",
+	})
+	if err != nil {
+		log.Fatalf("error sending message to self: %v", err)
+	}
+}</code></pre>
+        </fieldset>
+
+        <p>
+            Finally, build and run the test client, using the instructions below.
+        </p>
+
+        <fieldset>
+            <legend>Build and run Mellium test client</legend>
+            <pre><code class="language-bash">$ go mod init example.com/melliumexample
+$ go mod tidy
+$ go run test.go</code></pre>
+        </fieldset>
+
+        <p>
+            You should see TBD.
+        </p>
+
+        <p>
+            Note that this example disables important security features. You should not use this for anything important!
+        </p>
+
+    </section>
+
+    <section id="references">
+
+        <h2>Further Reading</h2>
+
+        <p>
+            Please use the links below to find more information.
+        </p>
+        <ul>
+            <li><a href="https://mellium.im/">Mellium project home page</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

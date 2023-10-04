@@ -9,6 +9,9 @@ work/
 atlassian-ide-plugin.xml
 out/
 
+# _allow_ Intellij shared resources
+!.idea/icon.svg
+
 # Ignore Eclipse project files
 .settings
 .project

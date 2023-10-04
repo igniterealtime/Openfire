@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Twisted Words: Minimal Working Example</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Twisted Words: Minimal Working Example</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document provides a minimal working example of a client implementation using the Twisted Words library,
+            making it connect to a running Openfire server.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#preparations">Preparations</a>
+                <li><a href="#code">Code</a>
+                <li><a href="#references">Further Reading</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            <a href="https://twisted.org/">Twisted</a> is an event-based framework for internet applications, supporting
+            Python 3.6+. It includes modules for many different purposes, including the Words module, that adds support
+            for the XMPP protocol.
+        </p>
+        <p>
+            This guide describes how to use Twisted Words to connect to Openfire. It provides nothing more than a minimal
+            working example, intended as a stepping stone to for client developers that get started with a new project.
+        </p>
+
+    </section>
+
+    <section id="preparations">
+
+        <h2>Preparations</h2>
+
+        <p>
+            In this example, a client connection will be made against a running Openfire server. For ease of
+            configuration, the 'demoboot' setup of Openfire is used.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john' (both using the value 'secret' as their password)</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+
+    </section>
+
+    <section id="code">
+
+        <h2>Code</h2>
+
+        <p>
+            First, create the Twisted module for Python, as shown below.
+        </p>
+
+        <fieldset>
+            <legend>Install the Python Twisted module</legend>
+            <pre><code class="language-bash">$ python -m pip install twisted</code></pre>
+        </fieldset>
+
+        <p>
+            Create a file named <code>xmpp_client.py</code> and copy the code shown below.
+        </p>
+
+        <fieldset>
+            <legend>Twisted Words client example</legend>
+            <pre><code class="language-python">#!/usr/bin/python
+# Copyright (c) Twisted Matrix Laboratories.
+# See LICENSE for details.
+
+"""
+A very simple twisted xmpp-client (Jabber ID)
+
+To run the script:
+$ python xmpp_client.py &lt;jid&gt; &lt;secret&gt;
+"""
+
+
+import sys
+
+from twisted.internet.defer import Deferred
+from twisted.internet.task import react
+from twisted.internet._sslverify import (ClientTLSOptions,
+                                         OpenSSLCertificateOptions)
+from twisted.names.srvconnect import SRVConnector
+from twisted.words.xish import domish
+from twisted.words.protocols.jabber import xmlstream, client
+from twisted.words.protocols.jabber.jid import JID
+
+
+class Client:
+    def __init__(self, reactor, jid, secret, configurationForTLS):
+        self.reactor = reactor
+        f = client.XMPPClientFactory(jid, secret,
+                                     configurationForTLS=configurationForTLS)
+        f.addBootstrap(xmlstream.STREAM_CONNECTED_EVENT, self.connected)
+        f.addBootstrap(xmlstream.STREAM_END_EVENT, self.disconnected)
+        f.addBootstrap(xmlstream.STREAM_AUTHD_EVENT, self.authenticated)
+        f.addBootstrap(xmlstream.INIT_FAILED_EVENT, self.init_failed)
+        connector = SRVConnector(reactor, "xmpp-client", jid.host, f, defaultPort=5222)
+        connector.connect()
+        self.finished = Deferred()
+
+    def rawDataIn(self, buf):
+        print("RECV: %r" % buf)
+
+    def rawDataOut(self, buf):
+        print("SEND: %r" % buf)
+
+    def connected(self, xs):
+        print("Connected.")
+
+        self.xmlstream = xs
+
+        # Log all traffic
+        xs.rawDataInFn = self.rawDataIn
+        xs.rawDataOutFn = self.rawDataOut
+
+    def disconnected(self, reason):
+        print("Disconnected.")
+        print(reason)
+
+        self.finished.callback(None)
+
+    def authenticated(self, xs):
+        print("Authenticated.")
+
+        presence = domish.Element((None, "presence"))
+        xs.send(presence)
+
+        self.reactor.callLater(5, xs.sendFooter)
+
+    def init_failed(self, failure):
+        print("Initialization failed.")
+        print(failure)
+
+        self.xmlstream.sendFooter()
+
+
+def main(reactor, jid, secret):
+    """
+    Connect to the given Jabber ID and return a L{Deferred} which will be
+    called back when the connection is over.
+
+    @param reactor: The reactor to use for the connection.
+    @param jid: A L{JID} to connect to.
+    @param secret: A C{str}
+    """
+    configurationForTLS = ClientTLSOptions(JID(jid).host,
+                                           OpenSSLCertificateOptions().getContext())
+    return Client(reactor, JID(jid), secret,
+                  configurationForTLS=configurationForTLS).finished
+
+
+if __name__ == "__main__":
+    react(main, sys.argv[1:])</code></pre>
+        </fieldset>
+
+        <p>
+            Execute the example client, and provide the JID of 'john' as well as it's password, as shown below:
+        </p>
+
+        <fieldset>
+            <legend>Run the example</legend>
+            <pre><code class="language-bash">$ python xmpp_client.py john@example.org secret</code></pre>
+        </fieldset>
+
+        <p>
+            If all goes well, this will print a short exchange of XMPP data.
+        </p>
+
+        <p>
+            Note that this example is based on <a href="https://github.com/twisted/twisted/blob/trunk/docs/words/examples/xmpp_client.py">Twisted's example code</a>,
+            but modified to disable important security features. You should not use this for anything important!
+        </p>
+
+    </section>
+
+    <section id="references">
+
+        <h2>Further Reading</h2>
+
+        <p>
+            Please use the links below to find more information.
+        </p>
+        <ul>
+            <li><a href="https://twisted.org/">Twisted home page</a></li>
+            <li><a href="https://docs.twisted.org/en/stable/words/index.html">Twisted Words documentation</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

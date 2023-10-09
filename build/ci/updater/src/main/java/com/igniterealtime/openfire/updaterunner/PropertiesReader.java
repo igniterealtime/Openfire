@@ -17,9 +17,11 @@ public class PropertiesReader {
         if(!f.exists()){
             throw new IOException("Property file doesn't exist!");
         }
-        FileInputStream is = new FileInputStream(propertyFileName);
         this.properties = new Properties();
-        this.properties.load(is);
+
+        try (FileInputStream is = new FileInputStream(propertyFileName)) {
+            this.properties.load(is);
+        }
     }
 
     public String getProperty(String propertyName) {

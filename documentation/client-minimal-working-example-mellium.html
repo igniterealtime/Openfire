@@ -102,6 +102,7 @@
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
 
 	"mellium.im/sasl"
@@ -110,6 +111,15 @@ import (
 	"mellium.im/xmpp/jid"
 	"mellium.im/xmpp/stanza"
 )
+
+type logWriter struct {
+	tag string
+}
+
+func (w logWriter) Write(p []byte) (int, error) {
+	log.Printf("%s %s\n", w.tag, p)
+	return len(p), nil
+}
 
 // MessageBody is a message stanza that contains a body. It is normally used for
 // chat messages.
@@ -121,12 +131,7 @@ type MessageBody struct {
 // TODO: this is just an example, don't hard code passwords!
 const (
 	xmppPass = "secret"
-	xmppUser = "jane@example.com"
-
-	// TODO: normally we'd want to connect to the domainpart of the user
-	// (example.com in this example), but let's override that and set it to
-	// "localhost" since this is an example made to run locally.
-	xmppHost = "localhost:5222"
+	xmppUser = "jane@example.org"
 )
 
 func main() {
@@ -142,7 +147,11 @@ func main() {
 		NoLookup: true,
 		NoTLS:    true,
 	}
-	conn, err := d.DialServer(context.TODO(), "tcp", j, xmppHost)
+	// TODO: normally we'd want to connect to the domainpart of the user
+	// (example.org in this example), but let's override that and set it to
+	// "localhost" since this is an example made to run locally.
+	lo := jid.MustParse("localhost")
+	conn, err := d.Dial(context.TODO(), "tcp", lo)
 	if err != nil {
 		log.Fatalf("error dialing TCP connection: %v", err)
 	}
@@ -153,7 +162,14 @@ func main() {
 			Features: []xmpp.StreamFeature{
 				xmpp.BindResource(),
 				xmpp.SASL("", xmppPass, sasl.Plain),
+				xmpp.StartTLS(&tls.Config{
+					// TODO: this is for example purposes only. We *really* don't want to
+					// do this in prod. Use a nil TLS config for sane defaults.
+					InsecureSkipVerify: true,
+				}),
 			},
+			TeeIn:  logWriter{tag: "RECV"},
+			TeeOut: logWriter{tag: "SENT"},
 		}
 	}))
 	if err != nil {
@@ -186,13 +202,13 @@ func main() {
 
         <fieldset>
             <legend>Build and run Mellium test client</legend>
-            <pre><code class="language-bash">$ go mod init example.com/melliumexample
+            <pre><code class="language-bash">$ go mod init example.org/melliumexample
 $ go mod tidy
 $ go run .</code></pre>
         </fieldset>
 
         <p>
-            You should see TBD.
+            You should see the raw XMPP exchange with the server, ending with a closing stream element.
         </p>
 
         <p>

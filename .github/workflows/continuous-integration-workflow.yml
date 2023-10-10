@@ -24,7 +24,12 @@ jobs:
           distribution: ${{ matrix.distribution }}
           cache: maven
       - name: Build with Maven
-        run: ./mvnw -B package -Pcoverage --file pom.xml
+        run: |
+          if [[ ${{ github.ref_name }} == 'main' ]]; then            
+            ./mvnw -B package -Pcoverage --file pom.xml
+          else
+            ./mvnw -B package
+          fi
       - name: Upload failed test reports
         uses: actions/upload-artifact@v3
         if: always()
@@ -48,7 +53,7 @@ jobs:
             runConnectivityIntegrationTests
             test.gradle
       - name: Upload coverage report for 'xmppserver' module
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 }}
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
         uses: actions/upload-artifact@v3
         with:
           name: Coverage Report for 'xmppserver' module

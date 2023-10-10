@@ -171,6 +171,10 @@ public final class Fixtures {
         return connectionListener;
     }
 
+    public static RoutingTable mockRoutingTable() {
+        return  mock(RoutingTable.class, withSettings().lenient());
+    }
+
     public static class StubUserProvider implements UserProvider {
         final Map<String, User> users = new HashMap<>();
 

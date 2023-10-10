@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.session;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.DNSUtil;
@@ -140,10 +141,13 @@ public class LocalOutgoingServerSessionTest
 
         final ConnectionManager connectionManager = Fixtures.mockConnectionManager();
         final ConnectionListener connectionListener = Fixtures.mockConnectionListener();
+        final RoutingTable routingTable = Fixtures.mockRoutingTable();
         doAnswer(new ConnectionConfigurationAnswer(identityStoreConfig, trustStoreConfig)).when(connectionListener).generateConnectionConfiguration();
         doReturn(Set.of(connectionListener)).when(connectionManager).getListeners(any(ConnectionType.class));
         doReturn(connectionListener).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
         doReturn(connectionManager).when(xmppServer).getConnectionManager();
+        doReturn(routingTable).when(xmppServer).getRoutingTable();
+
         setUp();
     }
 

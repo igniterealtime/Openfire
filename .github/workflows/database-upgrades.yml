@@ -22,12 +22,50 @@ on:
 
 
 jobs:
+  build:
+
+    name: Install Openfire for Database Updater tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v4
+      - name: Set up JDK 11 Zulu
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: zulu
+          cache: maven
+      - name: Build with Maven
+        run: ./mvnw -Dmaven.test.skip install
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Upload distribution
+        if: ${{ matrix.distribution == 'zulu' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: distribution-java${{ matrix.java }}
+          path: distribution/target/distribution-base
+
   sqlserver:
     name: Test SQL Server Upgrades
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Openfire
       uses: actions/checkout@v4
+    - name: Set up JDK 11 Zulu
+      uses: actions/setup-java@v3
+      with:
+        java-version: 11
+        distribution: zulu
+        cache: maven
     - name: Set environment variables
       run: |
         echo "CONNECTION_STRING=jdbc:sqlserver://localhost:1433;databaseName=openfire;applicationName=Openfire" >> $GITHUB_ENV
@@ -50,8 +88,6 @@ jobs:
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
-    - name: Build openfire
-      run: ./mvnw -Dmaven.test.skip install
     - name: Build & run update tester
       run: |
         pushd ./build/ci/updater
@@ -61,10 +97,17 @@ jobs:
 
   postgres:
     name: Test Postgres Upgrades
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
+      - name: Set up JDK 11 Zulu
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: zulu
+          cache: maven
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:postgresql://localhost:5432/openfire" >> $GITHUB_ENV
@@ -87,8 +130,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-      - name: Build openfire
-        run: ./mvnw -Dmaven.test.skip install
       - name: Build & run update tester
         run: |
           pushd ./build/ci/updater
@@ -98,10 +139,17 @@ jobs:
 
   mysql:
     name: Test MySQL Upgrades
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
+      - name: Set up JDK 11 Zulu
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: zulu
+          cache: maven
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:mysql://localhost:3306/openfire?rewriteBatchedStatements=true&characterEncoding=UTF-8&characterSetResults=UTF-8&serverTimezone=UTC" >> $GITHUB_ENV
@@ -124,8 +172,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-      - name: Build openfire
-        run: ./mvnw -Dmaven.test.skip install
       - name: Build & run update tester
         run: |
           pushd ./build/ci/updater

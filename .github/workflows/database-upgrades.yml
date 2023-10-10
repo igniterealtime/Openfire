@@ -51,7 +51,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
     - name: Build openfire
-      run: ./mvnw install
+      run: ./mvnw -Dmaven.test.skip install
     - name: Build & run update tester
       run: |
         pushd ./build/ci/updater
@@ -88,7 +88,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Build openfire
-        run: ./mvnw install
+        run: ./mvnw -Dmaven.test.skip install
       - name: Build & run update tester
         run: |
           pushd ./build/ci/updater
@@ -125,7 +125,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Build openfire
-        run: ./mvnw install
+        run: ./mvnw -Dmaven.test.skip install
       - name: Build & run update tester
         run: |
           pushd ./build/ci/updater

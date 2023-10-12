@@ -194,7 +194,6 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         final String result = document.asXML(); // Strip closing element.
         final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
 
-        Log.trace("Sending: {}", withoutClosing);
         connection.deliverRawText(withoutClosing);
     }
 

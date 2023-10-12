@@ -168,7 +168,9 @@ public class NettySessionInitializer {
             this.channel.closeFuture().addListener(future -> stop());
 
             // Start the session negotiation
-            sendOpeningStreamHeader(channel);
+            if (!directTLS) {
+                sendOpeningStreamHeader(channel);
+            }
 
             return waitForSession(channel);
         } catch (InterruptedException e) {

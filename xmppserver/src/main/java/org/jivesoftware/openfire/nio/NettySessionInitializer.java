@@ -167,8 +167,10 @@ public class NettySessionInitializer {
             // Make sure we free up resources (worker group NioEventLoopGroup) when the channel is closed
             this.channel.closeFuture().addListener(future -> stop());
 
-            // Start the session negotiation
+            // When using directTLS a Netty SSLHandler is added to the pipeline from instantiation. This initiates the TLS handshake, and as such we do not need to send an opening stream element.
+            // The opening stream element will be sent by the StanzaHandler once TLS has been negotiated.
             if (!directTLS) {
+                // Start the session negotiation for startTLS
                 sendOpeningStreamHeader(channel);
             }
 

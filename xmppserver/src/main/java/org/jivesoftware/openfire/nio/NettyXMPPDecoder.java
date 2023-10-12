@@ -22,6 +22,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.StreamError;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +44,10 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         // Check that the stanza constructed by the parser is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (parser.isMaxBufferSizeExceeded()) {
-            in.release();
+            in.clear();
+            NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+            Log.warn("Maximum buffer size was exceeded, closing connection: " + connection);
+            connection.close(new StreamError(StreamError.Condition.policy_violation, "Maximum stanza length exceeded"));
             return;
         }
 
@@ -61,6 +65,6 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         NettyConnection connection = ctx.channel().attr(CONNECTION).get();
         Log.warn("Error occurred while decoding XMPP stanza, closing connection: " + connection, cause);
-        connection.close();
+        connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"));
     }
 }

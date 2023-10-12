@@ -163,7 +163,7 @@ public class XMLLightweightParser {
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (buffer.length() > XMPP_PARSER_BUFFER_SIZE.getValue()) {
-            Log.debug("Stanza that has filled the XML parser buffer:\n" + buffer);
+            Log.debug("Stanza that has filled the XML parser buffer:\n" + buffer.substring(0, (int) Math.min(XMPP_PARSER_BUFFER_SIZE.getValue(), 1024) ) + "...(truncated)");
             // set flag to inform higher level network decoders to stop reading more data
             maxBufferSizeExceeded = true;
             // purge the local buffer / free memory

@@ -272,7 +272,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             document.getRootElement().add(features);
 
             try {
-                if (connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
+                if (!connection.isEncrypted() && connection.getConfiguration().getTlsPolicy() != Connection.TLSPolicy.disabled && !connection.getConfiguration().getIdentityStore().getAllCertificates().isEmpty()) {
                     final Element starttls = DocumentHelper.createElement(QName.get("starttls", "urn:ietf:params:xml:ns:xmpp-tls"));
                     if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required) {
                         starttls.addElement("required");

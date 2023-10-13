@@ -44,6 +44,9 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         // Check that the stanza constructed by the parser is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
         if (parser.isMaxBufferSizeExceeded()) {
+            // Clear out the buffer to prevent endless exceptions being thrown while the connection is closed.
+            // De-allocation of the buffer from this channel will occur following the channel closure, so there is
+            // no need to call in.release() as this will cause an IllegalReferenceCountException.
             in.clear();
             NettyConnection connection = ctx.channel().attr(CONNECTION).get();
             Log.warn("Maximum buffer size was exceeded, closing connection: " + connection);

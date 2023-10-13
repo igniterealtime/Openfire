@@ -383,4 +383,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     public void setAttemptedAllAuthenticationMethods() {
         this.attemptedAllAuthenticationMethods.complete(null);
     }
+
+    public String getRemoteDomain() {
+        return domainPair.getRemote();
+    }
 }

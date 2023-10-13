@@ -139,8 +139,9 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
 
                 if (isCertificateException(event)){
                     if (configRequiresStrictCertificateValidation()) {
-                        Log.warn("Aborting attempt to create outgoing session as TLS handshake failed, and strictCertificateValidation is enabled.");
-                        throw new RuntimeException(event.cause());
+                        Log.warn("Aborting attempt to create outgoing session to {} as TLS handshake failed, and strictCertificateValidation is enabled.", stanzaHandler.getRemoteDomain());
+                        Log.debug("Error due to strictCertificateValidation", event.cause());
+                        abandonSession(stanzaHandler);
                     } else {
                         Log.warn("TLS handshake failed due to a certificate validation error");
                     }

@@ -271,14 +271,18 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             addValidatedDomain(remoteDomain);
 
             // Report success to the peer.
+            final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
             final Document outbound = DocumentHelper.createDocument();
             final Element root = outbound.addElement("root");
-            root.addNamespace("db", "urn:xmpp:features:dialback");
-            final Element result = root.addElement("db:result");
+            root.add(ns);
+            final Element result = root.addElement(QName.get("result", ns));
             result.addAttribute("from", recipient);
             result.addAttribute("to", remoteDomain);
             result.addAttribute("type", "valid");
-            getConnection().deliverRawText(result.asXML());
+
+            // The namespace was already defined in a parent element that was sent earlier. Strip it from the XML.
+            final String send = result.asXML().replaceAll(ns.asXML(), "").replace("  "," ");
+            getConnection().deliverRawText(send);
 
             return true;
         } catch (StreamErrorException e) {
@@ -291,10 +295,18 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         } catch (ServerDialbackErrorException e) {
             Log.debug( "Unable to validate domain '{}': (full stack trace is logged on debug level): {}", fromDomain, e.getError().getText());
             Log.debug("Unable to validate domain '{}'", fromDomain, e);
-            getConnection().deliverRawText(e.toXML().asXML());
+
+            // The namespace was already defined in a parent element that was sent earlier. Strip it from the XML.
+            final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
+            final String send = e.toXML().asXML().replaceAll(ns.asXML(), "").replace("  "," ");
+            getConnection().deliverRawText(send);
         } catch (ServerDialbackKeyInvalidException e) {
             Log.debug( "Dialback key is invalid. Sending verification result to remote domain." );
-            getConnection().deliverRawText(e.toXML().asXML());
+
+            // The namespace was already defined in a parent element that was sent earlier. Strip it from the XML.
+            final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
+            final String send = e.toXML().asXML().replaceAll(ns.asXML(), "").replace("  "," ");
+            getConnection().deliverRawText(send);
             Log.debug( "Close the underlying connection as key verification failed." );
             getConnection().close();
         }

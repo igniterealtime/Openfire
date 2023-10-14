@@ -15,9 +15,7 @@
  */
 package org.jivesoftware.openfire.server;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentHelper;
-import org.dom4j.Element;
+import org.dom4j.*;
 import org.xmpp.packet.PacketError;
 
 /**
@@ -64,10 +62,11 @@ public class ServerDialbackErrorException extends Exception
 
     public Element toXML()
     {
+        final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
         final Document outbound = DocumentHelper.createDocument();
         final Element root = outbound.addElement("root");
-        root.addNamespace("db", "urn:xmpp:features:dialback");
-        final Element result = root.addElement("db:result");
+        root.add(ns);
+        final Element result = root.addElement(QName.get("result", ns));
         result.addAttribute("from", from);
         result.addAttribute("to", to);
         result.addAttribute("type", "error");

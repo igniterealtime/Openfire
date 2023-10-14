@@ -271,7 +271,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             addValidatedDomain(remoteDomain);
 
             // Report success to the peer.
-            final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
+            final Namespace ns = Namespace.get("db", "jabber:server:dialback");
             final Document outbound = DocumentHelper.createDocument();
             final Element root = outbound.addElement("root");
             root.add(ns);
@@ -297,14 +297,14 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             Log.debug("Unable to validate domain '{}'", fromDomain, e);
 
             // The namespace was already defined in a parent element that was sent earlier. Strip it from the XML.
-            final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
+            final Namespace ns = Namespace.get("db", "jabber:server:dialback");
             final String send = e.toXML().asXML().replaceAll(ns.asXML(), "").replace("  "," ");
             getConnection().deliverRawText(send);
         } catch (ServerDialbackKeyInvalidException e) {
             Log.debug( "Dialback key is invalid. Sending verification result to remote domain." );
 
             // The namespace was already defined in a parent element that was sent earlier. Strip it from the XML.
-            final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
+            final Namespace ns = Namespace.get("db", "jabber:server:dialback");
             final String send = e.toXML().asXML().replaceAll(ns.asXML(), "").replace("  "," ");
             getConnection().deliverRawText(send);
             Log.debug( "Close the underlying connection as key verification failed." );

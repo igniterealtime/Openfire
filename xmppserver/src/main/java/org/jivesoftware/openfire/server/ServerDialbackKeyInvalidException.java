@@ -45,7 +45,7 @@ public class ServerDialbackKeyInvalidException extends Exception
     }
 
     public Element toXML() {
-        final Namespace ns = Namespace.get("db", "urn:xmpp:features:dialback");
+        final Namespace ns = Namespace.get("db", "jabber:server:dialback");
         final Document outbound = DocumentHelper.createDocument();
         final Element root = outbound.addElement("root");
         root.add(ns);

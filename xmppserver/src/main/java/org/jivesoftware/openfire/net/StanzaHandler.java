@@ -170,16 +170,16 @@ public abstract class StanzaHandler {
         } else {
             // When the peer defined namespace prefixes on the 'stream' element, other than the default namespaces, then
             // these need to be 'put back' for the parser to be able to parse any data that is prefixed with those. The
-            // only known case occurring 'in the wild' for this is Dialback, but it's valid XML / XMPP regardless). Re-
-            // establishing those prefixes is achieved by wrapping the data-to-be-parsed in a dummy root element on which
+            // only known case occurring 'in the wild' for this is Server Dialback, but it's valid XML / XMPP regardless.
+            // Reestablishing those prefixes is achieved by wrapping the data-to-be-parsed in a dummy root element on which
             // the prefixes are defined. After the data has been parsed, the dummy root element is discarded. See OF-2556.
             Log.trace("Connection defined namespace prefixes on its original 'stream' element.");
-            if (namespaces.stream().noneMatch(namespace -> namespace.getPrefix().equals("stream"))) {
-                namespaces.add(Namespace.get("stream", "http://etherx.jabber.org/streams"));
-            }
             final StringBuilder sb = new StringBuilder();
             sb.append("<stream:stream");
             namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));
+            if (namespaces.stream().noneMatch(namespace -> namespace.getPrefix().equals("stream"))) {
+                sb.append(" ").append(Namespace.get("stream", "http://etherx.jabber.org/streams").asXML());
+            }
             sb.append(">").append(stanza).append("</stream:stream>");
 
             doc = reader.read(new StringReader(sb.toString())).getRootElement().elementIterator().next();

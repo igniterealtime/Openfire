@@ -457,7 +457,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
             if (encryptionPolicy == Connection.TLSPolicy.required && !(socket instanceof SSLSocket)) {
                 final Document outbound = DocumentHelper.createDocument();
-                final Element result = outbound.addElement(QName.get("result", "db", "urn:xmpp:features:dialback"));
+                final Element result = outbound.addElement(QName.get("result", "db", "jabber:server:dialback"));
                 result.addAttribute("from", XMPP_DOMAIN);
                 result.addAttribute("to", inbound.attributeValue("from", null));
                 result.addAttribute("type", "error");
@@ -475,7 +475,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
             // Skip the check with an Authoritative Server (which is what Dialback _should_ do). Simply report a faked validation result.
             final Document outbound = DocumentHelper.createDocument();
-            final Element result = outbound.addElement(QName.get("result", "db", "urn:xmpp:features:dialback"));
+            final Element result = outbound.addElement(QName.get("result", "db", "jabber:server:dialback"));
             result.addAttribute("from", XMPP_DOMAIN);
             result.addAttribute("to", inbound.attributeValue("from", null));
             result.addAttribute("type", "valid");

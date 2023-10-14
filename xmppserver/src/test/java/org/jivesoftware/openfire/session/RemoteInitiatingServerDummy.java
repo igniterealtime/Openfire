@@ -598,12 +598,12 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             final String key = "UNITTESTDIALBACKKEY";
 
             final Document outbound = DocumentHelper.createDocument();
-            final Element root = outbound.addElement(QName.get("result", "db", "urn:xmpp:features:dialback"));
+            final Element root = outbound.addElement(QName.get("result", "db", "jabber:server:dialback"));
             root.addAttribute("from", XMPP_DOMAIN);
             root.addAttribute("to", connectTo);
             root.setText(key);
 
-            send(root.asXML().replace(" xmlns:db=\"urn:xmpp:features:dialback\"",""));
+            send(root.asXML().replace(" xmlns:db=\"jabber:server:dialback\"",""));
         }
 
         private void processDialbackResult(final Element result) throws IOException {

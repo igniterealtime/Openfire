@@ -128,6 +128,8 @@ public abstract class LocalSession implements Session {
         this.sessionManager = SessionManager.getInstance();
         this.streamManager = new StreamManager(this);
         this.language = language;
+        this.lastActiveDate = startDate;
+
     }
 
     /**

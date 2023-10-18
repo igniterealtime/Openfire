@@ -106,10 +106,12 @@ class LocalSessionManager {
     }
 
     public void addIncomingServerSessions(StreamID streamID, LocalIncomingServerSession session) {
+        Log.trace("IncomingServerSession added to local session manager: " + streamID);
         incomingServerSessions.put(streamID, session);
     }
 
     public LocalIncomingServerSession removeIncomingServerSessions(StreamID streamID) {
+        Log.trace("IncomingServerSession removed from local session manager: " + streamID);
         return incomingServerSessions.remove(streamID);
     }
 

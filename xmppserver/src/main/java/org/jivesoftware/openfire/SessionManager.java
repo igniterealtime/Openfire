@@ -561,6 +561,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         try {
             // Add this instance (possibly replacing an older version, if the session already existed but now has an additional validated domain).
             localSessionManager.addIncomingServerSessions(streamID, session);
+            Log.trace("IncomingServerSession added to incoming server session info cache: " + streamID);
             incomingServerSessionInfoCache.put(streamID, new IncomingServerSessionInfo(session));
         } finally {
             lock.unlock();
@@ -589,10 +590,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             if (!remaining.isEmpty()) {
                 Log.trace("Other validated domain(s) remain ({}). Replace the cache entry with an updated entry", String.join(", ", remaining));
                 localSessionManager.addIncomingServerSessions(streamID, session);
+                Log.trace("IncomingServerSession added to incoming server session info cache: " + streamID);
                 incomingServerSessionInfoCache.put(streamID, new IncomingServerSessionInfo(session));
             } else {
                 Log.trace("This session does not have any validated domains anymore. Remove it completely.");
                 localSessionManager.removeIncomingServerSessions(streamID);
+                Log.trace("IncomingServerSession removed from incoming server session info cache: " + streamID);
                 incomingServerSessionInfoCache.remove(streamID);
             }
         } finally {
@@ -622,6 +625,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 domainsToRemove.addAll(local.getValidatedDomains());
             }
             final IncomingServerSessionInfo cached = incomingServerSessionInfoCache.remove(streamID);
+            Log.trace("IncomingServerSession removed from incoming server session info cache: " + streamID);
             Log.trace("Found {} cached server session info to remove for stream ID {}", local == null ? "NO" : "a", streamID);
             if (cached != null) {
                 domainsToRemove.addAll(cached.getValidatedDomains());

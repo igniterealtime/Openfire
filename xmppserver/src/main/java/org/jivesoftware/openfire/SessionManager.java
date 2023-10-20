@@ -78,7 +78,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
     public static final String CM_CACHE_NAME = "Connection Managers Sessions";
     public static final String ISS_CACHE_NAME = "Incoming Server Session Info Cache";
-    public static final String DOMAIN_SESSIONS_CACHE_NAME = "Sessions by Domain";
+    public static final String DOMAIN_SESSIONS_CACHE_NAME = "Sessions by Hostname"; // although it's "by domain" rather than "by hostname", changing the name would require changes in the Hazelcast plugin!
     public static final String C2S_INFO_CACHE_NAME = "Client Session Info Cache";
 
     public static final int NEVER_KICK = -1;

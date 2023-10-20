@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.util.cache;
 
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -129,10 +130,11 @@ public class CacheFactory {
         cacheNames.put("Routing User Sessions", "routeUserSessions");
         cacheNames.put("Routing Result Listeners", "routeResultListeners");
         cacheNames.put("Components", "components");
-        cacheNames.put("Components Sessions", "componentsSessions");
-        cacheNames.put("Connection Managers Sessions", "connManagerSessions");
-        cacheNames.put("Incoming Server Sessions", "incServerSessions");
-        cacheNames.put("Sessions by Hostname", "sessionsHostname");
+        cacheNames.put(SessionManager.COMPONENT_SESSION_CACHE_NAME, "componentsSessions");
+        cacheNames.put(SessionManager.CM_CACHE_NAME, "connManagerSessions");
+        cacheNames.put(SessionManager.C2S_INFO_CACHE_NAME, "c2sInfoSessions");
+        cacheNames.put(SessionManager.DOMAIN_SESSIONS_CACHE_NAME, "sessionsHostname");
+        cacheNames.put(SessionManager.ISS_CACHE_NAME, "incServerSessions");
         cacheNames.put("Secret Keys Cache", "secretKeys");
         cacheNames.put("Validated Domains", "validatedDomains");
         cacheNames.put("Directed Presences", "directedPresences");
@@ -206,6 +208,8 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "componentsSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "connManagerSessions" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "connManagerSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "c2sInfoSessions" + PROPERTY_SUFFIX_SIZE, -1L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "c2sInfoSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "incServerSessions" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "incServerSessions" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "sessionsHostname" + PROPERTY_SUFFIX_SIZE, -1L);

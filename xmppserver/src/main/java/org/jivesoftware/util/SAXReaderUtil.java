@@ -54,6 +54,9 @@ public final class SAXReaderUtil
 
     private static final Logger Log = LoggerFactory.getLogger(SAXReaderUtil.class);
 
+    /**
+     * The number of threads to keep in the SAX Reader pool, even if they are idle.
+     */
     public static final SystemProperty<Integer> PARSER_SERVICE_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
                                                                                     .setKey("xmpp.xmlutil.parser.core-pool-size")
                                                                                     .setMinValue(0)
@@ -61,6 +64,9 @@ public final class SAXReaderUtil
                                                                                     .setDynamic(false)
                                                                                     .build();
 
+    /**
+     * The maximum number of threads to allow in the SAX Reader pool.
+     */
     public static final SystemProperty<Integer> PARSER_SERVICE_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
                                                                                     .setKey("xmpp.xmlutil.parser.maximum-pool-size")
                                                                                     .setMinValue(1)
@@ -68,6 +74,9 @@ public final class SAXReaderUtil
                                                                                     .setDynamic(false)
                                                                                     .build();
 
+    /**
+     * When the number of threads in the SAX reader pool is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
     public static final SystemProperty<Duration> PARSER_SERVICE_KEEP_ALIVE_TIME = SystemProperty.Builder.ofType(Duration.class)
                                                                                     .setKey("xmpp.xmlutil.parser.keep_alive_time")
                                                                                     .setChronoUnit(ChronoUnit.SECONDS)

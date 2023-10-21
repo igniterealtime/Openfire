@@ -72,6 +72,9 @@ public class OccupantManager implements MUCEventListener
 {
     private static final Logger Log = LoggerFactory.getLogger(OccupantManager.class);
 
+    /**
+     * Controls if blocking or non-blocking tasks are used when synchronizing MUC occupant data over an Openfire cluster.
+     */
     public static final SystemProperty<Boolean> PROPERTY_USE_NONBLOCKING_CLUSTERTASKS = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.muc.occupants.clustertask.non-blocking")
         .setDynamic(true)

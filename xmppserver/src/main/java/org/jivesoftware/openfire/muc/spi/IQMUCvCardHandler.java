@@ -53,6 +53,9 @@ public class IQMUCvCardHandler extends IQHandler
 
     private static final Logger Log = LoggerFactory.getLogger(IQMUCvCardHandler.class);
 
+    /**
+     * Controls if MUC occupants can request vCards / avatars.
+     */
     public static SystemProperty<Boolean> PROPERTY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.muc.vcard.enabled")
         .setDynamic(true)

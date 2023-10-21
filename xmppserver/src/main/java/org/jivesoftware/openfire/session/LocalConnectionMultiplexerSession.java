@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -81,9 +82,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         if (domain == null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] Domain not specified in stanza: {}", xpp.getText());
             // Include the bad-format in the response and close the underlying connection.
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.bad_format, "Missing 'to' attribute value."));
             return null;
         }
@@ -96,9 +95,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         if (secretKey == null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] A shared secret for connection manager was not found.");
             // Include the internal-server-error in the response and close the underlying connection
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
@@ -106,9 +103,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
         if (SessionManager.getInstance().getConnectionMultiplexerSession(address) != null) {
             Log.debug("LocalConnectionMultiplexerSession: [ConMng] Another connection manager is already using domain: {}", domain);
             // Domain already occupied so return a conflict error and close the connection.
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.conflict, "The requested address is already being used by another connection manager."));
             return null;
         }
@@ -150,18 +145,14 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
                 }
             }
 
-            final String result = document.asXML(); // Strip closing root tag.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             return session;
         }
         catch (Exception e) {
             Log.error("An error occurred while creating a Connection Manager Session", e);
             // Close the underlying connection
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }

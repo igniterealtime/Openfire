@@ -226,10 +226,7 @@ public class ServerDialback {
             stream.addAttribute("to", domainPair.getRemote());
             stream.addAttribute("from", domainPair.getLocal());
 
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             // Set a read timeout (of 5 seconds) so we don't keep waiting forever
             int soTimeout = socket.getSoTimeout();

@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -302,9 +303,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
         }
 
-        final String result = document.asXML(); // Strip closing root tag.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-        connection.deliverRawText(withoutClosing);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
         return session;
     }
 

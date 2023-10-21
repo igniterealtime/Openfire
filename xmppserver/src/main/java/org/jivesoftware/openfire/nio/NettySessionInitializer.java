@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.spi.ConnectionAcceptor;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.NettyConnectionAcceptor;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,8 +217,7 @@ public class NettySessionInitializer {
         stream.addAttribute("to", domainPair.getRemote());
         stream.addAttribute("version", "1.0");
 
-        final String result = document.asXML(); // Strip closing element.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+        final String withoutClosing = StringUtils.asUnclosedStream(document);
 
         Log.trace("Sending: {}", withoutClosing);
         channel.writeAndFlush(withoutClosing);

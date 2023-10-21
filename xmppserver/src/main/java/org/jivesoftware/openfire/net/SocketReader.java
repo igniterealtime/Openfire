@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -431,9 +432,7 @@ public abstract class SocketReader implements Runnable {
             stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
             stream.addAttribute("version", "1.0");
 
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             // Send the host_unknown error and close the underlying connection
             connection.close(new StreamError(StreamError.Condition.host_unknown, "The 'to' attribute does not specify an XMPP domain entity served by this service."));
@@ -455,9 +454,7 @@ public abstract class SocketReader implements Runnable {
             stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
             stream.addAttribute("version", "1.0");
 
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             // Include the bad-namespace-prefix in the response and close the underlying connection.
             connection.close(new StreamError(StreamError.Condition.bad_namespace_prefix, "The namespace used in the request does not identify functionality that can be provided by this endpoint."));

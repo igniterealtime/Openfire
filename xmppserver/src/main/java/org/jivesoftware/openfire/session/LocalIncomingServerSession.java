@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.StreamErrorException;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -208,8 +209,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 Log.debug("Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443)");
             }
 
-            final String result = document.asXML(); // Strip closing root tag.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
+            final String withoutClosing = StringUtils.asUnclosedStream(document);
 
             Log.trace("Outbound stream & feature advertisement: {}", withoutClosing);
             connection.deliverRawText(withoutClosing);

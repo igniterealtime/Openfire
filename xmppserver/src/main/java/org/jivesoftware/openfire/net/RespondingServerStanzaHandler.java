@@ -278,9 +278,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             stream.addAttribute("to", domainPair.getRemote());
             stream.addAttribute("version", "1.0");
 
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             connection.init(session);
             // Set the remote domain name as the address of the session.

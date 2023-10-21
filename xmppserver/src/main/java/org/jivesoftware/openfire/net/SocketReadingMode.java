@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.net;
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -117,8 +118,7 @@ abstract class SocketReadingMode {
         }
         document.getRootElement().add(features);
 
-        final String result = document.asXML(); // Strip closing root tag.
-        socketReader.connection.deliverRawText(result.substring(0, result.lastIndexOf("</stream:stream>")));
+        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     protected boolean authenticateClient(Element doc) throws DocumentException, IOException,
@@ -170,8 +170,7 @@ abstract class SocketReadingMode {
         }
         document.getRootElement().add(features);
 
-        final String result = document.asXML(); // Strip closing root tag.
-        socketReader.connection.deliverRawText(result.substring(0, result.lastIndexOf("</stream:stream>")));
+        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     /**
@@ -265,8 +264,7 @@ abstract class SocketReadingMode {
             }
         }
 
-        final String result = document.asXML(); // Strip closing root tag.
-        socketReader.connection.deliverRawText(result.substring(0, result.lastIndexOf("</stream:stream>")));
+        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     private Document getStreamHeader()

@@ -30,6 +30,7 @@ import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,10 +193,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         stream.addAttribute("to", domainPair.getRemote());
         stream.addAttribute("version", "1.0");
 
-        final String result = document.asXML(); // Strip closing element.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-
-        connection.deliverRawText(withoutClosing);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     private boolean connectionConfigDoesNotRequireTls() {

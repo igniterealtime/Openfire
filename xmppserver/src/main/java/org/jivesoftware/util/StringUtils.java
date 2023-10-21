@@ -17,12 +17,17 @@
 package org.jivesoftware.util;
 
 import org.apache.commons.codec.binary.Base32;
+import org.dom4j.Document;
+import org.dom4j.io.OutputFormat;
+import org.dom4j.io.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.net.IDN;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -41,6 +46,24 @@ import java.util.concurrent.ConcurrentMap;
 public final class StringUtils {
 
     private static final Logger Log = LoggerFactory.getLogger(StringUtils.class);
+
+    /**
+     * Controls if an XML declaration is generated before a 'stream' open tag is sent.
+     */
+    public static final SystemProperty<Boolean> XMPP_STREAM_SUPPRESS_XML_DECLARATION = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.xml.xml-declaration.suppress")
+        .setDefaultValue(new OutputFormat().isSuppressDeclaration())
+        .setDynamic(true)
+        .build();
+
+    /**
+     * Controls if a newline is added after a generated XML declaration and the 'stream' open tag.
+     */
+    public static final SystemProperty<Boolean> XMPP_STREAM_SUPPRESS_NEWLINE_AFTER_XML_DECLARATION = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.xml.xml-declaration.suppress-newline")
+        .setDefaultValue(new OutputFormat().isNewLineAfterDeclaration())
+        .setDynamic(true)
+        .build();
 
     // Constants used by escapeHTMLTags
     private static final char[] QUOTE_ENCODE = "&quot;".toCharArray();
@@ -1222,5 +1245,37 @@ public final class StringUtils {
             tokens.add(current.toString());
         }
         return tokens;
+    }
+
+    /**
+     * Formats the XML document, that is required to have a root element named 'stream', as a string. This method will
+     * strip the closing 'stream' tag from the string prior to returning it.
+     *
+     * @param document The document for which to return a string representation
+     * @return the string-representation of the document
+     * @throws IllegalArgumentException when the document's root element is not named 'stream'
+     */
+    public static String asUnclosedStream(final Document document) {
+        if (!document.getRootElement().getName().equals("stream")) {
+            throw new IllegalArgumentException("Document's root element is expected to be named 'stream', but was named '" + document.getRootElement().getName() + "'");
+        }
+
+        final OutputFormat format = new OutputFormat();
+        format.setEncoding(document.getXMLEncoding());
+        format.setNewLineAfterDeclaration(!XMPP_STREAM_SUPPRESS_NEWLINE_AFTER_XML_DECLARATION.getValue());
+        format.setSuppressDeclaration(XMPP_STREAM_SUPPRESS_XML_DECLARATION.getValue());
+
+        try {
+            final StringWriter out = new StringWriter();
+            org.dom4j.io.XMLWriter writer = new XMLWriter(out, format);
+            writer.write(document);
+            writer.flush();
+
+            // Strip closing root tag.
+            final String result = out.toString();
+            return result.substring(0, result.lastIndexOf("</stream:stream>"));
+        } catch (IOException e) {
+            throw new RuntimeException("IOException while generating textual representation: ", e);
+        }
     }
 }

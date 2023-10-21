@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.component.ExternalComponentManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -91,9 +92,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         if (domain == null) {
             Log.debug("LocalComponentSession: [ExComp] Domain not specified in stanza: {}", xpp.getText());
             // Include the bad-format in the response and close the underlying connection.
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.bad_format, "Domain not specified in 'to' attribute."));
             return null;
         }
@@ -111,9 +110,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         if (!ExternalComponentManager.canAccess(subdomain)) {
             Log.debug("LocalComponentSession: [ExComp] Component is not allowed to connect with subdomain: {}", subdomain);
             // Close the underlying connection
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.host_unknown, "Component is not allowed to connect with the requested subdomain."));
             return null;
         }
@@ -122,9 +119,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         if (secretKey == null) {
             Log.debug("LocalComponentSession: [ExComp] A shared secret for the component was not found.");
             // Include the internal-server-error in the response and close the underlying connection.
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.internal_server_error));
             return null;
         }
@@ -132,9 +127,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         if (!allowMultiple && InternalComponentManager.getInstance().hasComponent(componentJID)) {
             Log.debug("LocalComponentSession: [ExComp] Another component is already using domain: {}", domain);
             // Domain already occupied so return a conflict error and close the connection
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
             connection.close(new StreamError(StreamError.Condition.conflict, "The requested domain is already being used by another component."));
             return null;
         }
@@ -149,9 +142,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             Log.debug("LocalComponentSession: [ExComp] Send stream header with ID: {} for component with domain: {}", session.getStreamID(), domain);
             stream.addAttribute("id", session.getStreamID().toString());
 
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             // Return session although session has not been authentication yet. Until it is authenticated traffic will
             // be rejected except for authentication requests

@@ -28,10 +28,7 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.StreamErrorException;
-import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -502,9 +499,7 @@ public abstract class StanzaHandler {
             }
         }
 
-        final String result = document.getRootElement().asXML(); // Strip closing root tag.
-        final String streamStripped = result.substring(0, result.lastIndexOf("</stream:stream>")).trim();
-        connection.deliverRawText(streamStripped);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     /**
@@ -526,9 +521,7 @@ public abstract class StanzaHandler {
             }
         }
 
-        final String result = document.asXML(); // Strip closing root tag.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-        connection.deliverRawText(withoutClosing);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     /**
@@ -612,9 +605,7 @@ public abstract class StanzaHandler {
             }
         }
 
-        final String result = document.asXML(); // Strip closing root tag.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-        connection.deliverRawText(withoutClosing);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
     /**
@@ -723,9 +714,7 @@ public abstract class StanzaHandler {
             stream.add(ex.getStreamError().getElement());
 
             // Deliver stanza
-            final String result = document.asXML(); // Strip closing element.
-            final String withoutClosing = result.substring(0, result.lastIndexOf("</stream:stream>"));
-            connection.deliverRawText(withoutClosing);
+            connection.deliverRawText(StringUtils.asUnclosedStream(document));
 
             // Close the underlying connection
             connection.close();

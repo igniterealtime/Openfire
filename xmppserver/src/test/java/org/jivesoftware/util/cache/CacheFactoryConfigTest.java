@@ -46,7 +46,7 @@ public class CacheFactoryConfigTest {
      */
     @ParameterizedTest
     @MethodSource("arguments")
-    public void testCacheConfig(final String cacheName) throws Exception
+    public void testCacheConfig(final String cacheName)
     {
         // Instantiate cache
         Cache<String, Serializable> cache = CacheFactory.createCache(cacheName);

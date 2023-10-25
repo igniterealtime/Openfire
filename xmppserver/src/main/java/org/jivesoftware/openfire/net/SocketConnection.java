@@ -21,7 +21,6 @@ import com.jcraft.jzlib.ZOutputStream;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -88,7 +87,6 @@ public class SocketConnection extends AbstractConnection {
      */
     private PacketDeliverer backupDeliverer;
 
-    private LocalSession session;
     private boolean isEncrypted;
     private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
@@ -238,17 +236,6 @@ public class SocketConnection extends AbstractConnection {
             }
         }
         return !isClosed();
-    }
-
-    @Override
-    public void init(LocalSession owner) {
-        session = owner;
-    }
-
-    @Override
-    public void reinit(LocalSession owner) {
-        super.reinit(owner);
-        session = owner;
     }
 
     @Override

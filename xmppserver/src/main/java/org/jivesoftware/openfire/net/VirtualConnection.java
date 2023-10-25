@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.openfire.PacketDeliverer;
-import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -41,8 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class VirtualConnection extends AbstractConnection
 {
     private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
-
-    protected LocalSession session;
 
     private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
@@ -114,17 +111,6 @@ public abstract class VirtualConnection extends AbstractConnection
     public boolean validate() {
         // Return true since the virtual connection is valid until it no longer exists
         return true;
-    }
-
-    @Override
-    public void init(LocalSession session) {
-        this.session = session;
-    }
-
-    @Override
-    public void reinit(LocalSession owner) {
-        super.reinit(owner);
-        this.session = owner;
     }
 
     @Override

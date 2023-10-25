@@ -97,7 +97,7 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
      */
     private void sendPingPacket(ChannelHandlerContext ctx) throws UnauthorizedException {
         NettyConnection connection = ctx.channel().attr(CONNECTION).get();
-        JID entity = connection.session == null ? null : connection.session.getAddress();
+        JID entity = connection.getSession() == null ? null : connection.getSession().getAddress();
         if (entity != null) {
             // Ping the connection to see if it is alive.
             final IQ pingRequest = new IQ(IQ.Type.get);

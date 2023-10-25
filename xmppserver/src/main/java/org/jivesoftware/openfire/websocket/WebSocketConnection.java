@@ -209,11 +209,6 @@ public class WebSocketConnection extends VirtualConnection
     }
 
     @Override
-    public void init(LocalSession session) {
-        super.init(session);
-    }
-
-    @Override
     public void reinit(LocalSession session) {
         super.reinit(session);
         stanzaHandler.setSession(session);

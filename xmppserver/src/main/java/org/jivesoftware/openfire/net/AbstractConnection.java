@@ -70,15 +70,37 @@ public abstract class AbstractConnection implements Connection
      */
     final protected Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
 
+    /**
+     * The session that owns this connection.
+     */
+    protected LocalSession session;
+
     @Override
-    public void reinit(final LocalSession session)
+    public void init(LocalSession owner) {
+        session = owner;
+    }
+
+    @Override
+    public void reinit(final LocalSession owner)
     {
+        this.session = owner;
+
         // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
         // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
         // during the callback. OF-2014
         closeListeners.entrySet().stream()
             .filter(entry -> entry.getValue() instanceof LocalSession)
-            .forEach(entry -> entry.setValue(session));
+            .forEach(entry -> entry.setValue(owner));
+    }
+
+    /**
+     * Returns the session that owns this connection, if the connection has been initialized.
+     *
+     * @return session that owns this connection.
+     */
+    public LocalSession getSession() {
+        // TODO is it needed to expose this publicly? This smells.
+        return session;
     }
 
     @Override

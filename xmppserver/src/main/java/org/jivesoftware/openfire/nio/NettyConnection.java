@@ -64,12 +64,6 @@ public class NettyConnection extends AbstractConnection
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
     private final ConnectionConfiguration configuration;
-
-    /**
-     * The utf-8 charset for decoding and encoding XMPP packet streams.
-     */
-    public static final String CHARSET = "UTF-8";
-
     private final ChannelHandlerContext channelHandlerContext;
 
     /**

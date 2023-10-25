@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.nio;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -29,6 +28,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.AbstractConnection;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -62,8 +62,8 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public class NettyConnection implements Connection {
-
+public class NettyConnection extends AbstractConnection
+{
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
     private final ConnectionConfiguration configuration;
@@ -468,5 +468,4 @@ public class NettyConnection implements Connection {
     public String toString() {
         return this.getClass().getSimpleName() + "{state: " + state + ", session: " + session + ", Netty channel handler context name: " + channelHandlerContext.name() + "}";
     }
-
 }

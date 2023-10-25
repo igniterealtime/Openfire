@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,15 +37,7 @@ import java.util.Set;
  * @author Iain Shigeoka
  */
 public interface Connection extends Closeable {
-/**
-     * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
-     * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
-     * stanzas or other elements that are defined in that namespace (eg: are prefixed), these namespaces are recorded
-     * here.
-     *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2556">Issue OF-2556</a>
-     */
-    Set<Namespace> additionalNamespaces = new HashSet<>();
+
     /**
      * Verifies that the connection is still live. Typically this is done by
      * sending a whitespace character between packets.
@@ -385,10 +376,7 @@ public interface Connection extends Closeable {
      *
      * @return A collection that contains all non-default namespaces that the peer defined when last opening a new stream.
      */
-    @Nonnull
-    default Set<Namespace> getAdditionalNamespaces() {
-        return additionalNamespaces;
-    }
+    Set<Namespace> getAdditionalNamespaces();
 
     /**
      * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
@@ -399,10 +387,7 @@ public interface Connection extends Closeable {
      * @param additionalNamespaces A collection that contains all non-default namespaces that the peer defined when last
      *                            opening a new stream.
      */
-    default void setAdditionalNamespaces(@Nonnull final Set<Namespace> additionalNamespaces) {
-        this.additionalNamespaces.clear();
-        this.additionalNamespaces.addAll(additionalNamespaces);
-    }
+    void setAdditionalNamespaces(@Nonnull final Set<Namespace> additionalNamespaces);
 
     /**
      * Enumeration of possible compression policies required to interact with the server.

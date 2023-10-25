@@ -51,13 +51,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An object to track the state of a XMPP client-server session.
- * Currently this class contains the socket channel connecting the
+ * Currently, this class contains the socket channel connecting the
  * client and server.
  *
  * @author Iain Shigeoka
  * @deprecated Old, pre NIO / MINA code. Should not be used as Netty offers better performance. Currently only in use for server dialback.
  */
-public class SocketConnection implements Connection {
+public class SocketConnection extends AbstractConnection {
 
     private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 

@@ -75,9 +75,6 @@ public class SocketConnection extends AbstractConnection {
      */
     private long idleTimeout = -1;
 
-    final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<>();
-
     private Socket socket;
     private SocketReader socketReader;
 
@@ -250,37 +247,13 @@ public class SocketConnection extends AbstractConnection {
 
     @Override
     public void reinit(LocalSession owner) {
+        super.reinit(owner);
         session = owner;
-
-        // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
-        // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
-        // during the callback. OF-2014
-        for ( final Map.Entry<ConnectionCloseListener, Object> entry : listeners.entrySet() )
-        {
-            if ( entry.getValue() instanceof LocalSession ) {
-                entry.setValue( owner );
-            }
-        }
     }
 
     @Override
     public boolean isInitialized() {
         return session != null && !isClosed();
-    }
-
-    @Override
-    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
-        if (isClosed()) {
-            listener.onConnectionClose(handbackMessage);
-        }
-        else {
-            listeners.put(listener, handbackMessage);
-        }
-    }
-
-    @Override
-    public void removeCloseListener(ConnectionCloseListener listener) {
-        listeners.remove(listener);
     }
 
     @Override
@@ -483,7 +456,7 @@ public class SocketConnection extends AbstractConnection {
                 
             closeConnection();
             notifyCloseListeners();
-            listeners.clear();
+            closeListeners.clear();
         }
     }
 
@@ -631,23 +604,6 @@ public class SocketConnection extends AbstractConnection {
             }
             if (errorDelivering) {
                 close();
-            }
-        }
-    }
-
-    /**
-     * Notifies all close listeners that the connection has been closed.
-     * Used by subclasses to properly finish closing the connection.
-     */
-    private void notifyCloseListeners() {
-        synchronized (listeners) {
-            for (ConnectionCloseListener listener : listeners.keySet()) {
-                try {
-                    listener.onConnectionClose(listeners.get(listener));
-                }
-                catch (Exception e) {
-                    Log.error("Error notifying listener: " + listener, e);
-                }
             }
         }
     }

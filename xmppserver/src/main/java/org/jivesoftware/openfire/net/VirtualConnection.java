@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -27,8 +26,6 @@ import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
 import java.security.cert.Certificate;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -47,10 +44,7 @@ public abstract class VirtualConnection extends AbstractConnection
 
     protected LocalSession session;
 
-    final private Map<ConnectionCloseListener, Object> listeners =
-            new HashMap<>();
-
-   private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
+    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     @Override
     public Certificate[] getLocalCertificates() {
@@ -128,18 +122,9 @@ public abstract class VirtualConnection extends AbstractConnection
     }
 
     @Override
-    public void reinit(LocalSession session) {
-        this.session = session;
-
-        // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
-        // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
-        // during the callback. OF-2014
-        for ( final Map.Entry<ConnectionCloseListener, Object> entry : listeners.entrySet() )
-        {
-            if ( entry.getValue() instanceof LocalSession ) {
-                entry.setValue( session );
-            }
-        }
+    public void reinit(LocalSession owner) {
+        super.reinit(owner);
+        this.session = owner;
     }
 
     @Override
@@ -182,43 +167,12 @@ public abstract class VirtualConnection extends AbstractConnection
             // their session was closed. Effectively, the bug prevents the MUC room from getting a
             // presence update to notify it that the user logged off.
             notifyCloseListeners();
-            listeners.clear();
+            closeListeners.clear();
 
             try {
                 closeVirtualConnection(error);
             } catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
-            }
-        }
-    }
-
-    @Override
-    public void registerCloseListener(ConnectionCloseListener listener, Object handbackMessage) {
-        if (isClosed()) {
-            listener.onConnectionClose(handbackMessage);
-        }
-        else {
-            listeners.put(listener, handbackMessage);
-        }
-    }
-
-    @Override
-    public void removeCloseListener(ConnectionCloseListener listener) {
-        listeners.remove(listener);
-    }
-
-    /**
-     * Notifies all close listeners that the connection has been closed.
-     */
-    private void notifyCloseListeners() {
-        synchronized (listeners) {
-            for (ConnectionCloseListener listener : listeners.keySet()) {
-                try {
-                    listener.onConnectionClose(listeners.get(listener));
-                }
-                catch (Exception e) {
-                    Log.error("Error notifying listener: " + listener, e);
-                }
             }
         }
     }

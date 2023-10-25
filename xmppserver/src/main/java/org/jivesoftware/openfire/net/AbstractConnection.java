@@ -17,9 +17,15 @@ package org.jivesoftware.openfire.net;
 
 import org.dom4j.Namespace;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.ConnectionCloseListener;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,6 +36,8 @@ import java.util.Set;
  */
 public abstract class AbstractConnection implements Connection
 {
+    private static final Logger Log = LoggerFactory.getLogger(AbstractConnection.class);
+
     /**
      * The major version of XMPP being used by this connection (major_version.minor_version). In most cases, the version
      * should be "1.0". However, older clients using the "Jabber" protocol do not set a version. In that case, the
@@ -53,6 +61,25 @@ public abstract class AbstractConnection implements Connection
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2556">Issue OF-2556</a>
      */
     private final Set<Namespace> additionalNamespaces = new HashSet<>();
+
+    /**
+     * Contains all registered listener for close event notification. Registrations after the Session is closed will be
+     * immediately notified <em>before</em> the registration call returns (within the context of the registration call).
+     * An optional handback object can be associated with the registration if the same listener is registered to listen
+     * for multiple connection closures.
+     */
+    final protected Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
+
+    @Override
+    public void reinit(final LocalSession session)
+    {
+        // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
+        // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
+        // during the callback. OF-2014
+        closeListeners.entrySet().stream()
+            .filter(entry -> entry.getValue() instanceof LocalSession)
+            .forEach(entry -> entry.setValue(session));
+    }
 
     @Override
     public int getMajorXMPPVersion() {
@@ -80,5 +107,37 @@ public abstract class AbstractConnection implements Connection
     public void setAdditionalNamespaces(@Nonnull final Set<Namespace> additionalNamespaces) {
         this.additionalNamespaces.clear();
         this.additionalNamespaces.addAll(additionalNamespaces);
+    }
+
+    @Override
+    public void registerCloseListener(ConnectionCloseListener listener, Object callback) {
+        if (isClosed()) {
+            listener.onConnectionClose(callback);
+        }
+        else {
+            closeListeners.put( listener, callback );
+        }
+    }
+
+    @Override
+    public void removeCloseListener(ConnectionCloseListener listener) {
+        closeListeners.remove( listener );
+    }
+
+    /**
+     * Notifies all close listeners that the connection has been closed. Used by subclasses to properly finish closing
+     * the connection.
+     */
+    protected void notifyCloseListeners() {
+        for( final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
+        {
+            if (entry.getKey() != null) {
+                try {
+                    entry.getKey().onConnectionClose(entry.getValue());
+                } catch (Exception e) {
+                    Log.error("Error notifying listener: " + entry.getKey(), e);
+                }
+            }
+        }
     }
 }

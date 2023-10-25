@@ -25,7 +25,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.AbstractConnection;
@@ -47,8 +46,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -75,8 +72,6 @@ public class NettyConnection extends AbstractConnection
 
     public LocalSession session;
     private final ChannelHandlerContext channelHandlerContext;
-
-    final private Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
 
     /**
      * Deliverer to use when the connection is closed or was closed when delivering
@@ -108,21 +103,6 @@ public class NettyConnection extends AbstractConnection
         }
         deliverRawText(" ");
         return !isClosed();
-    }
-
-    @Override
-    public void registerCloseListener(ConnectionCloseListener listener, Object callback) {
-        if (isClosed()) {
-            listener.onConnectionClose(session);
-        }
-        else {
-            closeListeners.put( listener, callback );
-        }
-    }
-
-    @Override
-    public void removeCloseListener(ConnectionCloseListener listener) {
-        closeListeners.remove( listener );
     }
 
     @Override
@@ -256,22 +236,7 @@ public class NettyConnection extends AbstractConnection
         close(new StreamError(StreamError.Condition.system_shutdown));
     }
 
-    /**
-     * Notifies all close listeners that the connection has been closed.
-     * Used by subclasses to properly finish closing the connection.
-     */
-    private void notifyCloseListeners() {
-        for( final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
-        {
-            if (entry.getKey() != null) {
-                try {
-                    entry.getKey().onConnectionClose(entry.getValue());
-                } catch (Exception e) {
-                    Log.error("Error notifying listener: " + entry.getKey(), e);
-                }
-            }
-        }
-    }
+
 
     @Override
     public void init(LocalSession owner) {
@@ -280,19 +245,10 @@ public class NettyConnection extends AbstractConnection
 
     @Override
     public void reinit(LocalSession owner) {
+        super.reinit(owner);
         session = owner;
         StanzaHandler stanzaHandler = this.channelHandlerContext.channel().attr(NettyConnectionHandler.HANDLER).get();
         stanzaHandler.setSession(owner);
-
-        // ConnectionCloseListeners are registered with their session instance as a callback object. When re-initializing,
-        // this object needs to be replaced with the new session instance (or otherwise, the old session will be used
-        // during the callback. OF-2014
-        for ( final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
-        {
-            if ( entry.getValue() instanceof LocalSession ) {
-                entry.setValue( owner );
-            }
-        }
     }
 
     @Override

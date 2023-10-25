@@ -60,8 +60,7 @@ public class SocketConnection extends AbstractConnection {
 
     private static final Logger Log = LoggerFactory.getLogger(SocketConnection.class);
 
-    private static Map<SocketConnection, String> instances =
-            new ConcurrentHashMap<>();
+    private static final Map<SocketConnection, String> instances = new ConcurrentHashMap<>();
 
     /**
      * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
@@ -74,23 +73,22 @@ public class SocketConnection extends AbstractConnection {
      */
     private long idleTimeout = -1;
 
-    private Socket socket;
+    private final Socket socket;
     private SocketReader socketReader;
 
     private Writer writer;
-    private AtomicBoolean writing = new AtomicBoolean(false);
-    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
+    private final AtomicBoolean writing = new AtomicBoolean(false);
+    private final AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     /**
      * Deliverer to use when the connection is closed or was closed when delivering
      * a packet.
      */
-    private PacketDeliverer backupDeliverer;
+    private final PacketDeliverer backupDeliverer;
 
     private boolean isEncrypted;
     private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
-    private String language = null;
     private TLSStreamHandler tlsStreamHandler;
 
     private long writeStarted = -1;

@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -42,8 +41,8 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Gaston Dombiak
  */
-public abstract class VirtualConnection implements Connection  {
-
+public abstract class VirtualConnection extends AbstractConnection
+{
     private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
 
     protected LocalSession session;

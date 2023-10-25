@@ -70,7 +70,6 @@ public class NettyConnection extends AbstractConnection
      */
     public static final String CHARSET = "UTF-8";
 
-    public LocalSession session;
     private final ChannelHandlerContext channelHandlerContext;
 
     /**
@@ -236,17 +235,9 @@ public class NettyConnection extends AbstractConnection
         close(new StreamError(StreamError.Condition.system_shutdown));
     }
 
-
-
-    @Override
-    public void init(LocalSession owner) {
-        session = owner;
-    }
-
     @Override
     public void reinit(LocalSession owner) {
         super.reinit(owner);
-        session = owner;
         StanzaHandler stanzaHandler = this.channelHandlerContext.channel().attr(NettyConnectionHandler.HANDLER).get();
         stanzaHandler.setSession(owner);
     }

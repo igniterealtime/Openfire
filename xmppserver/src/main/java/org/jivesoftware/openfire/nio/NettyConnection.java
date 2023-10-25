@@ -83,8 +83,6 @@ public class NettyConnection extends AbstractConnection
      * a packet.
      */
     private final PacketDeliverer backupDeliverer;
-    private int majorVersion = 1;
-    private int minorVersion = 0;
 
     private boolean usingSelfSignedCertificate;
 
@@ -441,22 +439,6 @@ public class NettyConnection extends AbstractConnection
     public ConnectionConfiguration getConfiguration()
     {
         return configuration;
-    }
-
-    @Override
-    public int getMajorXMPPVersion() {
-        return majorVersion;
-    }
-
-    @Override
-    public int getMinorXMPPVersion() {
-        return minorVersion;
-    }
-
-    @Override
-    public void setXMPPVersion(int majorVersion, int minorVersion) {
-        this.majorVersion = majorVersion;
-        this.minorVersion = minorVersion;
     }
 
     @Override

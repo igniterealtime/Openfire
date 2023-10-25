@@ -95,8 +95,6 @@ public class SocketConnection extends AbstractConnection {
     private boolean isEncrypted;
     private boolean compressed;
     private org.jivesoftware.util.XMLWriter xmlSerializer;
-    private int majorVersion = 1;
-    private int minorVersion = 0;
     private String language = null;
     private TLSStreamHandler tlsStreamHandler;
 
@@ -379,30 +377,6 @@ public class SocketConnection extends AbstractConnection {
      */
     public void setIdleTimeout(long timeout) {
         this.idleTimeout = timeout;
-    }
-
-    @Override
-    public int getMajorXMPPVersion() {
-        return majorVersion;
-    }
-
-    @Override
-    public int getMinorXMPPVersion() {
-        return minorVersion;
-    }
-
-    /**
-     * Sets the XMPP version information. In most cases, the version should be "1.0".
-     * However, older clients using the "Jabber" protocol do not set a version. In that
-     * case, the version is "0.0".
-     *
-     * @param majorVersion the major version.
-     * @param minorVersion the minor version.
-     */
-    @Override
-    public void setXMPPVersion(int majorVersion, int minorVersion) {
-        this.majorVersion = majorVersion;
-        this.minorVersion = minorVersion;
     }
 
     @Override

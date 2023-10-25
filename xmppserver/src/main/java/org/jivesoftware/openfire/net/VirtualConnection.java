@@ -53,18 +53,6 @@ public abstract class VirtualConnection extends AbstractConnection
    private AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
 
     @Override
-    public int getMajorXMPPVersion() {
-        // Information not available. Return any value. This is not actually used.
-        return 0;
-    }
-
-    @Override
-    public int getMinorXMPPVersion() {
-        // Information not available. Return any value. This is not actually used.
-        return 0;
-    }
-
-    @Override
     public Certificate[] getLocalCertificates() {
         // Ignore
         return new Certificate[0];
@@ -94,11 +82,6 @@ public abstract class VirtualConnection extends AbstractConnection
     public boolean isCompressed() {
         // Return false since compression is not used for virtual connections
         return false;
-    }
-
-    @Override
-    public void setXMPPVersion(int majorVersion, int minorVersion) {
-        //Ignore
     }
 
     @Override

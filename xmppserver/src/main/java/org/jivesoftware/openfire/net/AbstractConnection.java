@@ -31,6 +31,20 @@ import java.util.Set;
 public abstract class AbstractConnection implements Connection
 {
     /**
+     * The major version of XMPP being used by this connection (major_version.minor_version). In most cases, the version
+     * should be "1.0". However, older clients using the "Jabber" protocol do not set a version. In that case, the
+     * version is "0.0".
+     */
+    private int majorVersion = 1;
+
+    /**
+     * The minor version of XMPP being used by this connection (major_version.minor_version). In most cases, the version
+     * should be "1.0". However, older clients using the "Jabber" protocol do not set a version. In that case, the
+     * version is "0.0".
+     */
+    private int minorVersion = 0;
+
+    /**
      * When a connection is used to transmit an XML data, the root element of that data can define XML namespaces other
      * than the ones that are default (eg: 'jabber:client', 'jabber:server', etc). For an XML parser to be able to parse
      * stanzas or other elements that are defined in that namespace (eg: are prefixed), these namespaces are recorded
@@ -39,6 +53,22 @@ public abstract class AbstractConnection implements Connection
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2556">Issue OF-2556</a>
      */
     private final Set<Namespace> additionalNamespaces = new HashSet<>();
+
+    @Override
+    public int getMajorXMPPVersion() {
+        return majorVersion;
+    }
+
+    @Override
+    public int getMinorXMPPVersion() {
+        return minorVersion;
+    }
+
+    @Override
+    public void setXMPPVersion(int majorVersion, int minorVersion) {
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
+    }
 
     @Override
     @Nonnull

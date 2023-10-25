@@ -39,7 +39,7 @@ import java.util.Set;
 public interface Connection extends Closeable {
 
     /**
-     * Verifies that the connection is still live. Typically this is done by
+     * Verifies that the connection is still live. Typically, this is done by
      * sending a whitespace character between packets.
      *
      * @return true if the socket remains valid, false otherwise.

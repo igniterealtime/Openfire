@@ -147,7 +147,7 @@ public class ServerStanzaHandler extends StanzaHandler {
         final Document document = DocumentHelper.createDocument(stream);
         document.setXMLEncoding(StandardCharsets.UTF_8.toString());
         stream.add(getNamespace());
-        if (ServerDialback.isEnabled() && (this.session != null && !this.session.isAuthenticated())) {
+        if (ServerDialback.isEnabled() && this.session != null) {
             stream.add(Namespace.get("db", "jabber:server:dialback"));
         }
         stream.addAttribute("from", domainPair.getLocal());

@@ -27,7 +27,6 @@ import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
@@ -121,7 +120,7 @@ public class OutgoingSessionPromise {
         // Create a pool of threads that will process queued packets.
         threadPool = new ThreadPoolExecutor(QUEUE_MIN_THREADS.getValue(), QUEUE_MAX_THREADS.getValue(),
                         QUEUE_THREAD_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS,
-                        new LinkedBlockingQueue<>(QUEUE_SIZE.getValue()),
+                        new SynchronousQueue<>(),
                         new NamedThreadFactory("S2SOutgoingPromise-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY),
                         new ThreadPoolExecutor.CallerRunsPolicy());
     }
@@ -231,7 +230,7 @@ public class OutgoingSessionPromise {
         private final DomainPair domainPair;
 
         @Nonnull
-        private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( JiveGlobals.getIntProperty(ConnectionSettings.Server.QUEUE_SIZE, 2000) );
+        private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( QUEUE_SIZE.getValue() );
 
         public PacketsProcessor(@Nonnull final DomainPair domainPair) {
             this.domainPair = domainPair;

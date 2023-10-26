@@ -116,12 +116,11 @@ public class NettySessionInitializer {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
                     NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
-                    int maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime() > -1 ? businessLogicHandler.getMaxIdleTime() : 0;
-                    int maxIdleTimeBeforePinging = maxIdleTimeBeforeClosing / 2;
+                    Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
                     ch.pipeline().addLast(new NettyXMPPDecoder());
                     ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
-                    ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing, maxIdleTimeBeforePinging, 0));
+                    ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS));
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
                     ch.pipeline().addLast(businessLogicHandler);
 

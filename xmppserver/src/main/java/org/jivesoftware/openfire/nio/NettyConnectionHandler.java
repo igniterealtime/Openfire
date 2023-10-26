@@ -33,6 +33,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
+import java.time.Duration;
+
 import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 
 /**
@@ -53,6 +55,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     public static final AttributeKey<Long> READ_BYTES = AttributeKey.valueOf("READ_BYTES");
     public static final AttributeKey<Long> WRITTEN_BYTES = AttributeKey.valueOf("WRITTEN_BYTES");
     static final AttributeKey<StanzaHandler> HANDLER = AttributeKey.valueOf("HANDLER");
+    public static final AttributeKey<Boolean> IDLE_FLAG = AttributeKey.valueOf("IDLE_FLAG");
 
 
     protected static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
@@ -96,12 +99,11 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     abstract StanzaHandler createStanzaHandler(NettyConnection connection);
 
     /**
-     * Returns the max number of seconds a connection can be idle (both ways) before
-     * being closed.<p>
+     * Returns the time that a connection can be idle before being closed.
      *
-     * @return the max number of seconds a connection can be idle.
+     * @return the time a connection can be idle.
      */
-    public abstract int getMaxIdleTime();
+    public abstract Duration getMaxIdleTime();
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
@@ -200,6 +202,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
                 delta = currentBytes - prevBytes;
             }
             ctx.channel().attr(READ_BYTES).set(currentBytes);
+            ctx.channel().attr(IDLE_FLAG).set(null);
             ServerTrafficCounter.incrementIncomingCounter(delta);
         }
     }

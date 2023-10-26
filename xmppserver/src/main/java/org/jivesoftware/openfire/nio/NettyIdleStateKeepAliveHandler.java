@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.nio;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.timeout.IdleState;
@@ -30,26 +31,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.IDLE_FLAG;
 
 /**
- * A NettyIdleStateKeepAliveHandler listens for IdleStateEvents triggered by an
- * IdleStateHandler. The readerIdleTimeSeconds in IdleStateHandler should be set to
- * a value higher than  writerIdleTimeSeconds (typically double), else the connection
- * will always be closed.
+ * A NettyIdleStateKeepAliveHandler listens for IdleStateEvents triggered by an IdleStateHandler.
  *
- * XMPP entities must respond with either an IQ result or an IQ error
- * (feature-unavailable) stanza upon receiving the XMPP ping stanza. Both
- * responses will be received by Openfire and will cause the connection idle
- * count to be reset.
+ * When invoked, the existence of a flag on the ChannelHandlerContext is determined. If this flag does not exist, then
+ * a keep-alive check if performed and the flag is set. If the does exist, then it is assumed that the peer failed the
+ * keep-alive check and the connection should be closed.
  *
- * Entities that do not respond to the IQ Ping stanzas can be considered
- * dead, and their connection will be closed when the IdleStateHandler triggers an idle
- * read state.
+ * The keep-alive check is implemented as an XMPP ping request. XMPP entities must respond with either an IQ result or
+ * an IQ error (feature-unavailable) stanza upon receiving the XMPP ping stanza. Both responses will be received by
+ * Openfire. As any inbound data will cause the flag to be reset, the connection will no longer be deemed 'idle'.
  *
- * Note that whitespace pings that are sent by XMPP entities will also cause
- * the connection idle count to be reset.
+ * Entities that do not respond to the IQ Ping stanzas can be considered dead, and their connection will be closed when
+ * the IdleStateHandler triggers the second idle event in a row.
+ *
+ * Note that whitespace pings that are sent by XMPP entities will also cause the connection idle count to be reset.
  *
  * @see IdleStateEvent
  * @see io.netty.handler.timeout.IdleStateHandler
@@ -77,13 +78,19 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
      */
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent e = (IdleStateEvent) evt;
+        if (evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == IdleState.READER_IDLE) {
             final boolean doPing = ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue() && clientConnection;
-            if (e.state() == IdleState.READER_IDLE) {
-                ctx.channel().attr(CONNECTION).get().close();
-            } else if (doPing && e.state() == IdleState.WRITER_IDLE) {
-                sendPingPacket(ctx);
+            final Channel channel = ctx.channel();
+            if (channel.attr(IDLE_FLAG).getAndSet(true) == null) {
+                // Idle flag is now set, but wasn't present before.
+                if (doPing) {
+                    sendPingPacket(channel);
+                }
+            } else {
+                // Idle flag already present. Connection has been idle for a while. Close it.
+                final NettyConnection connection = channel.attr(CONNECTION).get();
+                Log.debug("Closing connection because of inactivity: {}", connection);
+                connection.close(new StreamError(StreamError.Condition.connection_timeout, doPing ? "Connection has been idle and did not respond to a keep-alive check." : "Connection has been idle."));
             }
         }
         super.userEventTriggered(ctx, evt);
@@ -92,11 +99,11 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
     /**
      * Sends an IQ ping packet on the channel associated with the channel handler context.
      *
-     * @param ctx ChannelHandlerContext
+     * @param channel Channel over which to send a ping.
      * @throws UnauthorizedException when attempting to deliver ping packet
      */
-    private void sendPingPacket(ChannelHandlerContext ctx) throws UnauthorizedException {
-        NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+    private void sendPingPacket(Channel channel) throws UnauthorizedException {
+        NettyConnection connection = channel.attr(CONNECTION).get();
         JID entity = connection.getSession() == null ? null : connection.getSession().getAddress();
         if (entity != null) {
             // Ping the connection to see if it is alive.
@@ -105,19 +112,16 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
             pingRequest.setFrom(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
             pingRequest.setTo(entity);
 
-            if (Log.isDebugEnabled()) {
-                Log.debug("Pinging connection that has been idle: " + connection);
-            }
+            Log.debug("Pinging connection that has been idle: {}", connection);
 
             // OF-1497: Ensure that data sent to the client is processed through LocalClientSession, to avoid
             // synchronisation issues with stanza counts related to Stream Management (XEP-0198)!
-            LocalClientSession ofSession = (LocalClientSession) SessionManager.getInstance().getSession( entity );
+            LocalClientSession ofSession = (LocalClientSession) SessionManager.getInstance().getSession(entity);
             if (ofSession == null) {
-                Log.warn( "Trying to ping a Netty connection that's idle, but has no corresponding Openfire session. Netty Connection: " + connection );
+                Log.warn("Trying to ping a Netty connection that's idle, but has no corresponding Openfire session. Netty Connection: {}", connection);
             } else {
-                ofSession.deliver( pingRequest );
+                ofSession.deliver(pingRequest);
             }
         }
     }
-
 }

@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 /**
  * Server-specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -76,8 +75,8 @@ public class NettyServerConnectionHandler extends NettyConnectionHandler
         super.handlerAdded(ctx);
     }
 
-    public int getMaxIdleTime() {
-        return Math.toIntExact(ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue().toSeconds());
+    public Duration getMaxIdleTime() {
+        return ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue();
     }
 
     @Override

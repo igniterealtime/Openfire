@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
+import java.time.Duration;
 
 /**
  * Outbound (S2S) specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
@@ -76,10 +77,8 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
     }
 
     @Override
-    public int getMaxIdleTime() {
-        return Math.toIntExact(
-            ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue().toSeconds()
-        );
+    public Duration getMaxIdleTime() {
+        return ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue();
     }
 
     @Override

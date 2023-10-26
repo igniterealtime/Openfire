@@ -22,9 +22,11 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
 import org.jivesoftware.openfire.net.MultiplexerStanzaHandler;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
+
+import java.time.Duration;
 
 /**
  * ConnectionHandler that knows which subclass of {@link StanzaHandler} should
@@ -60,8 +62,8 @@ public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler {
     }
 
     @Override
-    public int getMaxIdleTime() {
-        return JiveGlobals.getIntProperty("xmpp.multiplex.idle", 5 * 60 * 1000) / 1000;
+    public Duration getMaxIdleTime() {
+        return ConnectionSettings.Multiplex.IDLE_TIMEOUT_PROPERTY.getValue();
     }
 
     @Override

@@ -138,7 +138,19 @@ public final class ConnectionSettings {
         public static final String ENABLE_OLD_SSLPORT = "xmpp.multiplex.ssl.active";
         public static final String MAX_THREADS ="xmpp.multiplex.processing.threads";
         public static final String MAX_THREADS_SSL = "xmpp.multiplex.ssl.processing.threads";
-        public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.multiplex.cert.policy" ;
+        public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.multiplex.cert.policy";
+
+        /**
+         * How much time the server will wait without receiving an inbound message until it is classed as an idle connection
+         * and closed.
+         */
+        public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.multiplex.idle")
+            .setDefaultValue(Duration.ofMinutes(5))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 
     public static final class Component {
@@ -155,5 +167,17 @@ public final class ConnectionSettings {
         public static final String AUTH_PER_CLIENTCERT_POLICY = "xmpp.component.cert.policy";
         public static final String TLS_POLICY = "xmpp.component.tls.policy";
         public static final String COMPRESSION_SETTINGS = "xmpp.component.compression.policy";
+
+        /**
+         * How much time the server will wait without receiving an inbound message until it is classed as an idle connection
+         * and closed.
+         */
+        public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.component.idle")
+            .setDefaultValue(Duration.ofMinutes(6))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 }

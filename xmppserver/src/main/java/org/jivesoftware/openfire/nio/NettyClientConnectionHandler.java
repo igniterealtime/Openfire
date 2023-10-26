@@ -25,6 +25,8 @@ import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.SystemProperty;
 
+import java.time.Duration;
+
 /**
  * Client-specific ConnectionHandler that knows which subclass of {@link StanzaHandler} should be created
  * and how to build and configure a {@link NettyConnection}.
@@ -62,8 +64,8 @@ public class NettyClientConnectionHandler extends NettyConnectionHandler{
     }
 
     @Override
-    public int getMaxIdleTime() {
-        return (int) ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toSeconds();
+    public Duration getMaxIdleTime() {
+        return ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue();
     }
 
     @Override

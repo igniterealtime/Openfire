@@ -51,7 +51,7 @@ var Behaviour = {
     },
     
     apply : function(){
-        for (const sheet of Behaviour){
+        for (const sheet of Behaviour.list){
             for (let selector in sheet){
                 let list = document.getElementsBySelector(selector);
                 
@@ -117,7 +117,7 @@ document.getElementsBySelector = function(selector) {
   // Split selector in to tokens
   const tokens = selector.split(' ');
   let currentContext = new Array(document);
-  for (const retrievedToken in tokens) {
+  for (const retrievedToken of tokens) {
     let token = retrievedToken.replace(/^\s+/,'').replace(/\s+$/,'');
 
     let bits;
@@ -163,7 +163,7 @@ document.getElementsBySelector = function(selector) {
       }
       currentContext = [];
       let currentContextIndex = 0;
-      for (const element in found) {
+      for (const element of found) {
         if (element.className && element.className.match(new RegExp('\\b'+className+'\\b'))) {
           currentContext[currentContextIndex++] = element;
         }
@@ -182,14 +182,14 @@ document.getElementsBySelector = function(selector) {
       // Grab all the tagName elements within current context
       found = [];
       foundCount = 0;
-      for (const contextElement in currentContext) {
+      for (const contextElement of currentContext) {
         let elements;
         if (tagName === '*') {
             elements = getAllChildren(currentContext[h]);
         } else {
             elements = contextElement.getElementsByTagName(tagName);
         }
-        for (const element in elements) {
+        for (const element of elements) {
           found[foundCount++] = element;
         }
       }
@@ -219,7 +219,7 @@ document.getElementsBySelector = function(selector) {
       }
       currentContext = [];
       let currentContextIndex = 0;
-      for (const item in found) {
+      for (const item of found) {
         if (checkFunction(item)) {
           currentContext[currentContextIndex++] = item;
         }
@@ -237,7 +237,7 @@ document.getElementsBySelector = function(selector) {
     foundCount = 0;
     for (const contextElement of currentContext) {
       let elements = contextElement.getElementsByTagName(tagName);
-      for (const element in elements) {
+      for (const element of elements) {
         found[foundCount++] = element;
       }
     }

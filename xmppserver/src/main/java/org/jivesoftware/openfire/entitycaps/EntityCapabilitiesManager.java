@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,6 +218,16 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             registerCapabilities( packet.getFrom(), caps );
         }
         else {
+            // OF-2696: Do not attempt to resolve the 'ver' hash if the entity that sent it is a MUC occupant. Openfire
+            // will generate a lot of requests when users are joining busy MUCs, but as Openfire is not an occupant of
+            // those MUCS, its requests are likely to fail anyway.
+            if (packet.getChildElement("x", "http://jabber.org/protocol/muc") != null
+                || packet.getChildElement("x", "http://jabber.org/protocol/muc#user") != null
+                || packet.getChildElement("x", "http://jabber.org/protocol/muc#admin") != null
+                || packet.getChildElement("x", "http://jabber.org/protocol/muc#owner") != null) {
+                return;
+            }
+
             final Lock lock = this.entityCapabilitiesUserMap.getLock(packet.getFrom().asBareJID());
             lock.lock();
             try {

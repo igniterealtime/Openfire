@@ -125,7 +125,7 @@ public class IQRouter extends BasicModule {
         }
         catch (PacketRejectedException e) {
             if (session != null) {
-                // An interceptor rejected this packet so answer a not_allowed error
+                // An interceptor rejected this packet so answer with an error
                 IQ reply = new IQ();
                 if (childElement != null) {
                     reply.setChildElement(childElement.createCopy());
@@ -133,10 +133,16 @@ public class IQRouter extends BasicModule {
                 reply.setID(packet.getID());
                 reply.setTo(session.getAddress());
                 reply.setFrom(packet.getTo());
-                reply.setError(PacketError.Condition.not_allowed);
+
+                if (e.getRejectionError() != null) {
+                    reply.setError(e.getRejectionError());
+                } else {
+                    reply.setError(PacketError.Condition.not_allowed);
+                }
                 session.process(reply);
+
                 // Check if a message notifying the rejection should be sent
-                if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                if (e.getRejectionMessage() != null && !e.getRejectionMessage().trim().isEmpty()) {
                     // A message for the rejection will be sent to the sender of the rejected packet
                     Message notification = new Message();
                     notification.setTo(session.getAddress());

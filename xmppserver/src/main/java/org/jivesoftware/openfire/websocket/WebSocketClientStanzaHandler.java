@@ -181,10 +181,9 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
 
     @Override
     protected Document getStreamHeader() {
-        final Element open = DocumentHelper.createElement("open");
+        final Element open = DocumentHelper.createElement(QName.get("open", FRAMING_NAMESPACE));
         final Document document = DocumentHelper.createDocument(open);
         document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-        open.add(Namespace.get("", FRAMING_NAMESPACE));
         open.addAttribute("from", XMPPServer.getInstance().getServerInfo().getXMPPDomain());
         open.addAttribute("id", session.getStreamID().toString());
         open.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), session.getLanguage().toLanguageTag());
@@ -219,23 +218,13 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
             StringWriter out = new StringWriter();
             OutputFormat format = new OutputFormat();
             format.setSuppressDeclaration(true);
+            format.setExpandEmptyElements(false);
             XMLWriter writer = new XMLWriter(out, format);
 
             writer.write(document);
             writer.flush();
 
-            // OF-2703: Smack does not like expanded 'open' tags. For some reason, format.setExpandEmptyElements(false)
-            // does not collapse the dom4j elements. Instead, this snippet uses direct string manipulation to collapse
-            // the element.
-            String result = out.toString();
-            if (document.getRootElement().elements().isEmpty()) {
-                final String rootElementName = document.getRootElement().getName();
-                if (result.endsWith("></" + rootElementName + ">")) {
-                    result = result.replace("></" + rootElementName + ">", "/>");
-                }
-            }
-
-            return result;
+            return out.toString();
         } catch (IOException e) {
             throw new RuntimeException("IOException while generating "
                 + "textual representation: " + e.getMessage());

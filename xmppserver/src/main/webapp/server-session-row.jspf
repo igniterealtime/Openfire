@@ -49,7 +49,7 @@
     <td style="width: 47%; white-space: nowrap">
         <table>
             <tr>
-            <td style="width: 1%" ><img src="getFavicon?host=<%=URLEncoder.encode(host, "UTF-8")%>" width="16" height="16" alt=""></td>
+            <td style="width: 1%; padding-right: 0.5em" ><img src="getFavicon?host=<%=URLEncoder.encode(host, "UTF-8")%>" width="16" height="16" alt=""></td>
             <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key='session.row.cliked' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
             </tr>
         </table>

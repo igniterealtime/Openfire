@@ -40,10 +40,9 @@ public class WebSocketClientStanzaHandlerTest
     public void ensureOpenElementCollapsedTest() throws Exception
     {
         // Setup test fixture.
-        final Element open = DocumentHelper.createElement("open");
+        final Element open = DocumentHelper.createElement(QName.get("open", "urn:ietf:params:xml:ns:xmpp-framing"));
         final Document document = DocumentHelper.createDocument(open);
         document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-        open.add(Namespace.get("", "urn:ietf:params:xml:ns:xmpp-framing"));
         open.addAttribute("from", "example.org");
         open.addAttribute("id", "unittest123");
         open.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), "en");

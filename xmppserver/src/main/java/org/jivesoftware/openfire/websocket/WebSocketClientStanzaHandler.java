@@ -157,9 +157,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
 
     private void openStream() {
         session.incrementClientPacketCount();
-        final String result = withoutDeclaration(getStreamHeader()); // Strip closing element.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</open>"));
-        connection.deliverRawText(withoutClosing);
+        connection.deliverRawText(withoutDeclaration(getStreamHeader()));
     }
 
     private void sendStreamFeatures() {
@@ -204,9 +202,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
     @Override
     protected void saslSuccessful() {
         // When using websockets, send the stream header in a separate websocket frame!
-        final String result = withoutDeclaration(getStreamHeader()); // Strip closing element.
-        final String withoutClosing = result.substring(0, result.lastIndexOf("</open>"));
-        connection.deliverRawText(withoutClosing);
+        connection.deliverRawText(withoutDeclaration(getStreamHeader()));
         sendStreamFeatures();
     }
 
@@ -227,7 +223,19 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
 
             writer.write(document);
             writer.flush();
-            return out.toString();
+
+            // OF-2703: Smack does not like expanded 'open' tags. For some reason, format.setExpandEmptyElements(false)
+            // does not collapse the dom4j elements. Instead, this snippet uses direct string manipulation to collapse
+            // the element.
+            String result = out.toString();
+            if (document.getRootElement().elements().isEmpty()) {
+                final String rootElementName = document.getRootElement().getName();
+                if (result.endsWith("></" + rootElementName + ">")) {
+                    result = result.replace("></" + rootElementName + ">", "/>");
+                }
+            }
+
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("IOException while generating "
                 + "textual representation: " + e.getMessage());

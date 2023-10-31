@@ -145,12 +145,18 @@ public interface RoutingTable {
      *
      * @param jid the recipient of the packet to route.
      * @param packet the packet to route.
-     * @param fromServer true if the packet was created by the server. This packets should
-     *        always be delivered
      * @throws PacketException thrown if the packet is malformed (results in the sender's
      *      session being shutdown).
      */
-    void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException;
+    void routePacket(JID jid, Packet packet) throws PacketException;
+
+    /**
+     * @deprecated Replaced by {@link #routePacket(JID, Packet)}
+     */
+    @Deprecated // Remove in or after Openfire 4.9.0.
+    default void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
+        routePacket(jid, packet);
+    }
 
     /**
      * Returns true if a registered user or anonymous user with the specified full JID is

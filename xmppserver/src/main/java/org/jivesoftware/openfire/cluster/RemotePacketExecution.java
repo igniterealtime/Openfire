@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2009 Jive Software. All rights reserved.
+ * Copyright (C) 1999-2009 Jive Software, 2023 Ignite Realtime Community. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class RemotePacketExecution implements ClusterTask<Void> {
     public void run() {
         // Route packet to entity hosted by this node. If delivery fails then the routing table
         // will inform the proper router of the failure and the router will handle the error reply logic
-        XMPPServer.getInstance().getRoutingTable().routePacket(recipient, packet, false);
+        XMPPServer.getInstance().getRoutingTable().routePacket(recipient, packet);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {

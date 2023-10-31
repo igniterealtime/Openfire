@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                             // Stamp the presence with the user's bare JID as the 'from' address,
                             // as required by section 8.2.5 of RFC 3921
                             presenteToSend.setFrom(senderJID.toBareJID());
-                            routingTable.routePacket(jid, presenteToSend, false);
+                            routingTable.routePacket(jid, presenteToSend);
                         }
                     }
                     else {

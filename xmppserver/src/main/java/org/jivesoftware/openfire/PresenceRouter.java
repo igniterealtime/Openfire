@@ -132,7 +132,7 @@ public class PresenceRouter extends BasicModule {
             if (recipientJID != null && !XMPPServer.getInstance().isLocal(recipientJID) &&
                     !XMPPServer.getInstance().isLocal(senderJID)) {
                 // Route the packet
-                routingTable.routePacket(recipientJID, packet, false);
+                routingTable.routePacket(recipientJID, packet);
                 return;
             }
 
@@ -167,7 +167,7 @@ public class PresenceRouter extends BasicModule {
                         // Register the sent directed presence
                         updateHandler.directedPresenceSent(packet, jid, recipientJID.toString());
                         // Route the packet
-                        routingTable.routePacket(jid, packet, false);
+                        routingTable.routePacket(jid, packet);
                     }
                 }
 
@@ -182,7 +182,7 @@ public class PresenceRouter extends BasicModule {
             else if (Presence.Type.probe == type) {
                 // Handle a presence probe sent by a remote server
                 if (!XMPPServer.getInstance().isLocal(recipientJID)) {
-                    routingTable.routePacket(recipientJID, packet, false);
+                    routingTable.routePacket(recipientJID, packet);
                 }
                 else {
                     // Handle probe to a local user
@@ -192,7 +192,7 @@ public class PresenceRouter extends BasicModule {
             else {
                 // It's an unknown or ERROR type, just deliver it because there's nothing
                 // else to do with it
-                routingTable.routePacket(recipientJID, packet, false);
+                routingTable.routePacket(recipientJID, packet);
             }
 
         }

@@ -508,7 +508,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                 Presence presence = new Presence();
                 presence.setFrom(prober);
                 presence.setTo(probee);
-                routingTable.routePacket(probee, presence, false);
+                routingTable.routePacket(probee, presence);
 
                 // No reason to hold onto prober reference.
                 presenceMap.remove(prober);

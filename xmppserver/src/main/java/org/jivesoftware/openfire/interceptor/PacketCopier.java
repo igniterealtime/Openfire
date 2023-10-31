@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
                         childElement.addAttribute("date", XMPPDateTimeFormat.format(interceptedPacket.getCreationDate()));
                         childElement.add(interceptedPacket.getElement().createCopy());
                         // Send message notification to subscribed component
-                        routingTable.routePacket(message.getTo(), message, true);
+                        routingTable.routePacket(message.getTo(), message);
                     }
                     catch (Exception e) {
                         Log.error(LocaleUtils.getLocalizedString("admin.error"), e);

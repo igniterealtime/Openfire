@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Community. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -422,7 +422,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                     presence.setType(Presence.Type.probe);
                     presence.setFrom(prober);
                     presence.setTo(probee);
-                    routingTable.routePacket(probee, presence, true);
+                    routingTable.routePacket(probee, presence);
                 }
                 else {
                     // Check if the probee may be hosted by this server

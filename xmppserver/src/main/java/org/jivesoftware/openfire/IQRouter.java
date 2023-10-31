@@ -343,7 +343,7 @@ public class IQRouter extends BasicModule {
                 (routingTable.hasComponentRoute(recipientJID) ||
                     (packet.getFrom() != null && routingTable.hasServerRoute(new DomainPair(packet.getFrom().getDomain(), recipientJID.getDomain()))))) {
                 // A component/service/remote server was found that can handle the Packet
-                routingTable.routePacket(recipientJID, packet, false);
+                routingTable.routePacket(recipientJID, packet);
                 return;
             }
 
@@ -428,7 +428,7 @@ public class IQRouter extends BasicModule {
                 if (isAcceptable) {
                     // JID is of the form <node@domain/resource> or belongs to a remote server
                     // or to an uninstalled component
-                    routingTable.routePacket(recipientJID, packet, false);
+                    routingTable.routePacket(recipientJID, packet);
                 }
             }
         }

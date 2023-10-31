@@ -730,7 +730,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // RFC 6121 4.4.2 says we always send to the originating resource.
         // Also RFC 6121 4.2.2 for updates.
         presence.setTo(originatingResource);
-        routingTable.routePacket(originatingResource, presence, false);
+        routingTable.routePacket(originatingResource, presence);
         if (!SessionManager.isOtherResourcePresenceEnabled()) {
             return;
         }
@@ -742,7 +742,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 // Send the presence of the session whose presence has changed to
                 // this user's other session(s)
                 presence.setTo(address);
-                routingTable.routePacket(address, presence, false);
+                routingTable.routePacket(address, presence);
             }
         }
     }
@@ -1166,7 +1166,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // TODO broadcast to ALL sessions of the user and not only available
         for (JID address : routingTable.getRoutes(new JID(username, serverName, null), null)) {
             packet.setTo(address);
-            routingTable.routePacket(address, packet, true);
+            routingTable.routePacket(address, packet);
         }
     }
 
@@ -1459,7 +1459,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             // Full JID: address to the session, if one exists.
             for (JID sessionAddress : routingTable.getRoutes(address, null)) {
                 packet.setTo(sessionAddress); // expected to be equal to 'address'.
-                routingTable.routePacket(sessionAddress, packet, true);
+                routingTable.routePacket(sessionAddress, packet);
             }
         }
     }

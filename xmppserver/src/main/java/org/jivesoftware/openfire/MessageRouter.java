@@ -127,7 +127,7 @@ public class MessageRouter extends BasicModule {
                     boolean isPrivate = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2")) != null;
                     try {
                         // Deliver stanza to requested route
-                        routingTable.routePacket(recipientJID, packet, false);
+                        routingTable.routePacket(recipientJID, packet);
                     } catch (Exception e) {
                         log.error("Failed to route packet: " + packet.toXML(), e);
                         routingFailed(recipientJID, packet);
@@ -255,7 +255,7 @@ public class MessageRouter extends BasicModule {
                 if (session != null && session.isInitialized()) {
                     if (session.getPresence().getPriority() >= 0) {
                         // If message was sent to an unavailable full JID of a user then retry using the bare JID.
-                        routingTable.routePacket( recipient.asBareJID(), packet, false );
+                        routingTable.routePacket(recipient.asBareJID(), packet);
                         return;
                     }
                 }

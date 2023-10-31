@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Community. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,21 +53,21 @@ public class SocketPacketWriteHandler implements ChannelHandler {
             JID recipient = packet.getTo();
             // Check if the target domain belongs to a remote server or a component
             if (server.matchesComponent(recipient) || server.isRemote(recipient)) {
-                routingTable.routePacket(recipient, packet, false);
+                routingTable.routePacket(recipient, packet);
             }
             // The target domain belongs to the local server
             else if (recipient == null || (recipient.getNode() == null && recipient.getResource() == null)) {
                 // no TO was found so send back the packet to the sender
-                routingTable.routePacket(packet.getFrom(), packet, false);
+                routingTable.routePacket(packet.getFrom(), packet);
             }
             else if (recipient.getResource() != null || !(packet instanceof Presence)) {
                 // JID is of the form <user@domain/resource>
-                routingTable.routePacket(recipient, packet, false);
+                routingTable.routePacket(recipient, packet);
             }
             else {
                 // JID is of the form <user@domain>
                 for (JID route : routingTable.getRoutes(recipient, null)) {
-                    routingTable.routePacket(route, packet, false);
+                    routingTable.routePacket(route, packet);
                 }
             }
         }

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2021-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -336,18 +335,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * 
      * @param jid the recipient of the packet to route.
      * @param packet the packet to route.
-     * @param fromServer true if the packet was created by the server. This packets should
-     *        always be delivered
      * @throws PacketException thrown if the packet is malformed (results in the sender's
      *      session being shutdown).
      */
     @Override
-    public void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
+    public void routePacket(JID jid, Packet packet) throws PacketException {
         boolean routed = false;
         try {
             if (serverName.equals(jid.getDomain())) {
                 // Packet sent to our domain.
-                routed = routeToLocalDomain(jid, packet, fromServer);
+                routed = routeToLocalDomain(jid, packet);
             }
             else if (jid.getDomain().endsWith(serverName) && hasComponentRoute(jid)) {
                 // Packet sent to component hosted in this server
@@ -390,19 +387,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      *            the recipient of the packet to route.
      * @param packet
      *            the packet to route.
-     * @param fromServer
-     *            true if the packet was created by the server. This packets
-     *            should always be delivered
      * @throws PacketException
      *             thrown if the packet is malformed (results in the sender's
      *             session being shutdown).
      * @return {@code true} if the packet was routed successfully,
      *         {@code false} otherwise.
      */
-    private boolean routeToLocalDomain(JID jid, Packet packet,
-            boolean fromServer) {
-
-
+    private boolean routeToLocalDomain(JID jid, Packet packet)
+    {
         boolean routed = false;
         Element privateElement = packet.getElement().element(QName.get("private", Received.NAMESPACE));
         boolean isPrivate = privateElement != null;
@@ -410,7 +402,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         packet.getElement().remove(privateElement);
 
         if (jid.getResource() == null) {
-            // Packet sent to a bare JID of a user
+            // RFC 6121: 8.5.2. localpart@domainpart (Packet sent to a bare JID of a user)
             if (packet instanceof Message) {
                 // Find best route of local user
                 routed = routeToBareJID(jid, (Message) packet, isPrivate);
@@ -420,36 +412,30 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         else {
-            // Packet sent to local user (full JID)
+            // RFC 6121 section 8.5.3. localpart@domainpart/resourcepart (Packet sent to a full JID of a user)
             ClientRoute clientRoute = getClientRouteForLocalUser(jid);
             if (clientRoute != null) {
-                if (!clientRoute.isAvailable() && routeOnlyAvailable(packet, fromServer) &&
-		                !presenceUpdateHandler.hasDirectPresence(packet.getTo(), packet.getFrom())
-                        && !PresenceUpdateHandler.isPresenceUpdateReflection( packet )) {
-                    Log.debug("Unable to route packet. Packet should only be sent to available sessions and the route is not available. {} ", packet.toXML());
-                    routed = false;
-                } else {
-                    if (localRoutingTable.isLocalRoute(jid)) {
-                        if (!isPrivate && packet instanceof Message) {
-                            ccMessage(jid, (Message) packet);
-                        }
-
-                        // This is a route to a local user hosted in this node
-                        try {
-                            localRoutingTable.getRoute(jid).process(packet);
-                            routed = true;
-                        } catch (UnauthorizedException e) {
-                            Log.error("Unable to route packet " + packet.toXML(), e);
-                        }
+                // RFC-6121 section 8.5.3.1. Resource Matches
+                if (localRoutingTable.isLocalRoute(jid)) {
+                    if (!isPrivate && packet instanceof Message) {
+                        ccMessage(jid, (Message) packet);
                     }
-                    else {
-                        // This is a route to a local user hosted in other node
-                        if (remotePacketRouter != null) {
-                            routed = remotePacketRouter
-                                    .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
-                            if (!routed) {
-                                removeClientRoute(jid); // drop invalid client route
-                            }
+
+                    // This is a route to a local user hosted in this node
+                    try {
+                        localRoutingTable.getRoute(jid).process(packet);
+                        routed = true;
+                    } catch (UnauthorizedException e) {
+                        Log.error("Unable to route packet " + packet.toXML(), e);
+                    }
+                }
+                else {
+                    // This is a route to a local user hosted in other node
+                    if (remotePacketRouter != null) {
+                        routed = remotePacketRouter
+                                .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
+                        if (!routed) {
+                            removeClientRoute(jid); // drop invalid client route
                         }
                     }
                 }
@@ -657,33 +643,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
             }
         }
-    }
-    
-    /**
-     * Returns true if the specified packet must only be route to available client sessions.
-     *
-     * @param packet the packet to route.
-     * @param fromServer true if the packet was created by the server.
-     * @return true if the specified packet must only be route to available client sessions.
-     */
-    private boolean routeOnlyAvailable(Packet packet, boolean fromServer) {
-        if (fromServer) {
-            // Packets created by the server (no matter their FROM value) must always be delivered no
-            // matter the available presence of the user
-            return false;
-        }
-        boolean onlyAvailable = true;
-        JID from = packet.getFrom();
-        boolean hasSender = from != null;
-        if (packet instanceof IQ) {
-            onlyAvailable = hasSender && !(serverName.equals(from.getDomain()) && from.getResource() == null) &&
-                    !componentsCache.containsKey(from.getDomain());
-        }
-        else if (packet instanceof Message || packet instanceof Presence) {
-            onlyAvailable = !hasSender ||
-                    (!serverName.equals(from.toString()) && !componentsCache.containsKey(from.getDomain()));
-        }
-        return onlyAvailable;
     }
 
     /**

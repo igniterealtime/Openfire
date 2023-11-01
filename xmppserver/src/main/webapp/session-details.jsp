@@ -507,9 +507,9 @@
     </div>
 
 <%
+    final EntityCapabilities caps = XMPPServer.getInstance().getEntityCapabilitiesManager().getEntityCapabilities(address);
     if (showCaps) {
         // Show any registered entity capabilities.
-        final EntityCapabilities caps = XMPPServer.getInstance().getEntityCapabilitiesManager().getEntityCapabilities(address);
         if ( caps != null && (!caps.getIdentities().isEmpty() || !caps.getFeatures().isEmpty())) {
 %>
 <br>
@@ -631,7 +631,7 @@
 <%--<%  } %>--%>
     <% if (showCaps) { %>
     <input type="submit" name="hide" value="<fmt:message key="session.details.hide-extended" />">
-    <% } else { %>
+    <% } else if (caps != null && (!caps.getIdentities().isEmpty() || !caps.getFeatures().isEmpty())) { %>
     <input type="submit" name="show" value="<fmt:message key="session.details.show-extended" />">
     <% } %>
     <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">

@@ -39,9 +39,6 @@
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td style="width: 15%; white-space: nowrap">
-        <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
-    </td>
-    <td style="width: 15%; white-space: nowrap">
         <% if (sess.getSoftwareVersion() != null) {
             final String softwareName = sess.getSoftwareVersion().get("name");
             final String softwareVersion = sess.getSoftwareVersion().get("version");

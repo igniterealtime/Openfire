@@ -115,11 +115,6 @@
         final String searchCriteria = searchName.trim();
         filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getNode(), searchCriteria));
     }
-    final String searchResource = ParamUtils.getStringParameter(request, "searchResource", "");
-    if(!searchResource.trim().isEmpty()) {
-        final String searchCriteria = searchResource.trim();
-        filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getResource(), searchCriteria));
-    }
     final String searchVersion = ParamUtils.getStringParameter(request, "searchVersion", "");
         if(!searchVersion.trim().isEmpty()) {
             final String searchCriteria = searchVersion.trim();
@@ -201,10 +196,9 @@
     }
 
     final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter, sessionResultFilter.getSortField(), sessionResultFilter.getSortOrder() == SessionResultFilter.DESCENDING,
-        "refresh", "searchName", "searchResource", "searchVersion", "searchNode", "searchStatus", "searchPresence", "searchHostAddress");
+        "refresh", "searchName", "searchVersion", "searchNode", "searchStatus", "searchPresence", "searchHostAddress");
     pageContext.setAttribute("listPager", listPager);
     pageContext.setAttribute("searchName", searchName);
-    pageContext.setAttribute("searchResource", searchResource);
     pageContext.setAttribute("searchVersion", searchVersion);
     pageContext.setAttribute("searchNode", searchNode);
     pageContext.setAttribute("searchStatus", searchStatus);
@@ -278,7 +272,6 @@
                 </c:if>
             </a>
         </th>
-        <th nowrap><fmt:message key="session.details.resource" /></th>
         <th nowrap><fmt:message key="session.details.version" /></th>
         <c:if test="${clusteringEnabled}">
         <th nowrap><fmt:message key="session.details.node" /></th>
@@ -311,18 +304,6 @@
                    id="searchName"
                    size="20"
                    value="<c:out value="${searchName}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
-        </td>
-        <td nowrap>
-            <input type="search"
-                   id="searchResource"
-                   size="20"
-                   value="<c:out value="${searchResource}"/>"/>
             <img src="images/search-16x16.png"
                  width="16" height="16"
                  alt="search" title="search"

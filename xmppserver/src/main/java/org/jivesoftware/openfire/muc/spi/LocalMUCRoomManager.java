@@ -261,7 +261,7 @@ public class LocalMUCRoomManager
             try {
                 final MUCRoom room = get(roomName);
                 if (room != null && room.getEmptyDate() != null && room.getEmptyDate().before(cleanUpDate)) {
-                    Log.info("Unloading chat room (due to inactivity):" + roomName + "|" + room.getClass().getName());
+                    Log.debug("Unloading chat room (due to inactivity): {}", roomName);
                     remove(roomName);
                     totalChatTime = totalChatTime.plus(Duration.ofMillis(room.getChatLength()));
                 }

@@ -84,6 +84,9 @@
         JID address = new JID(jid);
         try {
             Session sess = sessionManager.getSession(address);
+            if (sess instanceof LocalClientSession) {
+                ((LocalClientSession) sess).getStreamManager().formalClose();
+            }
             sess.close();
             // Log the event
             webManager.logEvent("closed session for address "+address, null);

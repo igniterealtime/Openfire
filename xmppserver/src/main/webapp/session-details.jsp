@@ -161,18 +161,6 @@
             <%  } %>
         </td>
     </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.anon-status"/>:
-        </td>
-        <td>
-            <% if (currentSess.isAnonymousUser()) { %>
-            <fmt:message key="session.details.anon-true" />
-            <% } else { %>
-            <fmt:message key="session.details.anon-false" />
-            <% } %>
-        </td>
-    </tr>
     <% if (clusteringEnabled) { %>
     <tr>
         <td class="c1">
@@ -188,45 +176,10 @@
     </tr>
     <%
         }
-        boolean detached = false;
         if (currentSess instanceof LocalClientSession) {
             LocalClientSession s = (LocalClientSession)currentSess;
 
             %>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.sm-status"/>:
-        </td>
-        <td>
-            <%
-                if (s.isDetached()) {
-                    detached = true;
-                    %><fmt:message key="session.details.sm-detached"/><%
-                } else if (s.getStreamManager().isEnabled()) {
-                    if (s.getStreamManager().getResume()) {
-                        %><fmt:message key="session.details.sm-resume"/><%
-                    } else {
-                        %><fmt:message key="session.details.sm-enabled"/><%
-                    }
-                } else {
-                    %><fmt:message key="session.details.sm-disabled"/><%
-                }
-            %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.csi-status"/>:
-        </td>
-        <td>
-            <% if (s.getCsiManager().isActive()) { %>
-            <fmt:message key="session.details.csi-active"/>
-            <% } else { %>
-            <fmt:message key="session.details.csi-inactive"/>
-            (<fmt:message key="session.details.csi-delayed-stanzas"/>: <%= s.getCsiManager().getDelayQueueSize() %>)
-            <% } %>
-        </td>
-    </tr>
     <tr>
         <td class="c1">
             <fmt:message key="session.details.connection-type"/>:
@@ -248,31 +201,6 @@
         </td>
     </tr>
     <% } %>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.cc-status"/>:
-        </td>
-        <td>
-            <% if (currentSess.isMessageCarbonsEnabled()) { %>
-            <fmt:message key="session.details.cc-enabled" />
-            <% } else { %>
-            <fmt:message key="session.details.cc-disabled" />
-            <% } %>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.flomr-status"/>:
-        </td>
-        <td>
-            <% if (currentSess.isOfflineFloodStopped()) { %>
-            <fmt:message key="session.details.flomr-enabled" />
-            <% } else { %>
-            <fmt:message key="session.details.flomr-disabled" />
-            <% } %>
-        </td>
-    </tr>
-
     <tr>
         <td class="c1">
             <fmt:message key="session.details.status" />:
@@ -307,24 +235,6 @@
             %>
         </td>
     </tr>
-    <% if (currentSess.isEncrypted()) { %>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.tls_version" />:
-        </td>
-        <td>
-            <%=StringUtils.escapeHTMLTags(currentSess.getTLSProtocolName())%>
-        </td>
-    </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.cipher" />:
-        </td>
-        <td>
-            <%=StringUtils.escapeHTMLTags(currentSess.getCipherSuiteName())%>
-        </td>
-    </tr>
-    <% } %>
     <tr>
         <td class="c1">
             <fmt:message key="session.details.presence" />:
@@ -425,7 +335,7 @@
         </td>
         <td>
                 <%
-            if (detached) { %>
+            if (currentSess instanceof LocalClientSession && ((LocalClientSession) currentSess).isDetached()) { %>
             <fmt:message key="session.details.sm-detached"/>
                 <% } else {
                 try { %>
@@ -440,9 +350,6 @@
 </table>
 </div>
 
-<%  // Show Software Version if there is :
-    if (!currentSess.getSoftwareVersion().isEmpty()) {
-%>
     <br>
 
     <div class="jive-table">
@@ -450,30 +357,154 @@
             <thead>
                 <tr>
                     <th colspan="2">
-                        <fmt:message key="session.details.software_version"/>
+                        <fmt:message key="session.details.security"/>
                     </th>
                 </tr>
             </thead>
             <tbody>
-                <% 
-                    Map<String, String> treeMap = new TreeMap<>(currentSess.getSoftwareVersion());
-                    for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
-                        <tr>
-                            <td class="c1">
-                                <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
-                            </td>
-                            <td>
-                                <%= StringUtils.escapeHTMLTags(entry.getValue())%>
-                            </td>
-                        </tr>
-                    <% 
-                    }
-                %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.anon-status"/>:
+                    </td>
+                    <td>
+                        <% if (currentSess.isAnonymousUser()) { %>
+                        <fmt:message key="session.details.anon-true" />
+                        <% } else { %>
+                        <fmt:message key="session.details.anon-false" />
+                        <% } %>
+                    </td>
+                </tr>
+                <% if (currentSess.isEncrypted()) { %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.tls_version" />:
+                    </td>
+                    <td>
+                        <%=StringUtils.escapeHTMLTags(currentSess.getTLSProtocolName())%>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.cipher" />:
+                    </td>
+                    <td>
+                        <%=StringUtils.escapeHTMLTags(currentSess.getCipherSuiteName())%>
+                    </td>
+                </tr>
+                <% } %>
             </tbody>
         </table>
     </div>
-<%  } %>
 
+    <%  // Show Software Version if there is :
+        if (!currentSess.getSoftwareVersion().isEmpty()) {
+    %>
+    <br>
+
+    <div class="jive-table">
+        <table style="width: 100%">
+            <thead>
+            <tr>
+                <th colspan="2">
+                    <fmt:message key="session.details.software_version"/>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <%
+                Map<String, String> treeMap = new TreeMap<>(currentSess.getSoftwareVersion());
+                for (Map.Entry<String, String> entry : treeMap.entrySet()){ %>
+            <tr>
+                <td class="c1">
+                    <%= StringUtils.escapeHTMLTags(entry.getKey().substring(0, 1).toUpperCase()+""+entry.getKey().substring(1)) %>:
+                </td>
+                <td>
+                    <%= StringUtils.escapeHTMLTags(entry.getValue())%>
+                </td>
+            </tr>
+            <%
+                }
+            %>
+            </tbody>
+        </table>
+    </div>
+    <%  } %>
+
+    <br>
+
+    <div class="jive-table">
+        <table style="width: 100%">
+            <% if (currentSess instanceof LocalClientSession) {
+                LocalClientSession s = (LocalClientSession)currentSess; %>
+            <thead>
+                <tr>
+                    <th colspan="2">
+                        <fmt:message key="session.details.features"/>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.sm-status"/>:
+                    </td>
+                    <td>
+                        <%
+                            if (s.isDetached()) {
+                        %><fmt:message key="session.details.sm-detached"/><%
+                    } else if (s.getStreamManager().isEnabled()) {
+                        if (s.getStreamManager().getResume()) {
+                    %><fmt:message key="session.details.sm-resume"/><%
+                    } else {
+                    %><fmt:message key="session.details.sm-enabled"/><%
+                        }
+                    } else {
+                    %><fmt:message key="session.details.sm-disabled"/><%
+                        }
+                    %>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.csi-status"/>:
+                    </td>
+                    <td>
+                        <% if (s.getCsiManager().isActive()) { %>
+                        <fmt:message key="session.details.csi-active"/>
+                        <% } else { %>
+                        <fmt:message key="session.details.csi-inactive"/>
+                        (<fmt:message key="session.details.csi-delayed-stanzas"/>: <%= s.getCsiManager().getDelayQueueSize() %>)
+                        <% } %>
+                    </td>
+                </tr>
+                <% } %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.cc-status"/>:
+                    </td>
+                    <td>
+                        <% if (currentSess.isMessageCarbonsEnabled()) { %>
+                        <fmt:message key="session.details.cc-enabled" />
+                        <% } else { %>
+                        <fmt:message key="session.details.cc-disabled" />
+                        <% } %>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.flomr-status"/>:
+                    </td>
+                    <td>
+                        <% if (currentSess.isOfflineFloodStopped()) { %>
+                        <fmt:message key="session.details.flomr-enabled" />
+                        <% } else { %>
+                        <fmt:message key="session.details.flomr-disabled" />
+                        <% } %>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
 <%
     if (showCaps) {

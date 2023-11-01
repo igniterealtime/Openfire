@@ -389,6 +389,7 @@ public class NettyConnection extends AbstractConnection
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "{state: " + state + ", session: " + session + ", Netty channel handler context name: " + channelHandlerContext.name() + "}";
+        final SocketAddress peer = channelHandlerContext.channel().remoteAddress();
+        return this.getClass().getSimpleName() + "{peer: " + (peer == null ? "(unknown)" : peer) + ", state: " + state + ", session: " + session + ", Netty channel handler context name: " + channelHandlerContext.name() + "}";
     }
 }

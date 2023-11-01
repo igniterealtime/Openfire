@@ -450,6 +450,7 @@ public class SASLAuthentication {
 
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge );
                     session.removeSessionData( "SaslServer" );
+                    session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     return Status.authenticated;
 
                 default:

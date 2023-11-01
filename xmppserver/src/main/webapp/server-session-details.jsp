@@ -26,6 +26,9 @@
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.net.InetAddress" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.openfire.session.Session" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -35,6 +38,49 @@
 
 <% // Get parameters
     String domainname = ParamUtils.getParameter(request, "hostname");
+    boolean close = request.getParameter("close") != null;
+
+    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
+    String csrfParam = ParamUtils.getParameter(request, "csrf");
+
+    if (close) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            close = false;
+        }
+    }
+    csrfParam = StringUtils.randomString(15);
+    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
+    pageContext.setAttribute("csrf", csrfParam);
+
+    // Get the session manager
+    SessionManager sessionManager = webManager.getSessionManager();
+
+    // Close all connections related to the specified domain name
+    if (close) {
+        try {
+            final List<IncomingServerSession> incomingServerSessions = sessionManager.getIncomingServerSessions(domainname);
+            for (Session incomingServerSession : incomingServerSessions) {
+                incomingServerSession.close();
+            }
+
+            Collection<OutgoingServerSession> outgoingServerSessions = sessionManager.getOutgoingServerSessions(domainname);
+            for (OutgoingServerSession outgoingServerSession : outgoingServerSessions) {
+                if (outgoingServerSession != null) {
+                    outgoingServerSession.close();
+                }
+            }
+            // Log the event
+            webManager.logEvent("closed server sessions for "+ domainname, "Closed " + incomingServerSessions.size() + " incoming and " + outgoingServerSessions + " outgoing session(s).");
+            // wait one second
+            Thread.sleep(250L);
+        }
+        catch (Exception ignored) {
+            // Session might have disappeared on its own
+        }
+        // redirect back to this page
+        response.sendRedirect("server-session-summary.jsp?close=success");
+        return;
+    }
 
     // Handle a "go back" click:
     if (request.getParameter("back") != null) {
@@ -43,7 +89,6 @@
     }
 
     // Get the session & address objects
-    SessionManager sessionManager = webManager.getSessionManager();
     List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(domainname);
     List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(domainname);
 
@@ -349,8 +394,11 @@
         </c:forEach>
 
         <form action="server-session-details.jsp">
+            <input type="hidden" name="hostname" value="<%= StringUtils.escapeForXML(domainname) %>">
+            <input type="hidden" name="csrf" value="<%=csrfParam%>"/>
             <div style="text-align: center;">
                 <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
+                <button name="close" style="padding-left: 24px;background-repeat: no-repeat;background-image: url(images/delete-16x16.gif);background-position-y: center; background-color: lightyellow;border-width: 1px;" onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"><fmt:message key="session.row.cliked_kill_session" /></button>
             </div>
         </form>
 

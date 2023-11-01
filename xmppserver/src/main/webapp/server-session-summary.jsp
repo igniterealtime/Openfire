@@ -57,7 +57,7 @@
         webManager.setRowsPerPage("server-session-summary", range);
     }
 
-    // Get the user manager
+    // Get the session manager
     SessionManager sessionManager = webManager.getSessionManager();
 
     // Close all connections related to the specified domain name
@@ -77,7 +77,7 @@
             // Log the event
             webManager.logEvent("closed server sessions for "+ domainName, "Closed " + incomingServerSessions.size() + " incoming and " + outgoingServerSessions + " outgoing session(s).");
             // wait one second
-            Thread.sleep(1000L);
+            Thread.sleep(250L);
         }
         catch (Exception ignored) {
             // Session might have disappeared on its own

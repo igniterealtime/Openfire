@@ -39,6 +39,7 @@
 <%@ page import="org.jivesoftware.openfire.entitycaps.EntityCapabilities" %>
 <%@ page import="java.util.TreeSet" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
+<%@ page import="org.slf4j.LoggerFactory" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -51,13 +52,42 @@
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
+    boolean close = request.getParameter("close") != null;
 
-    // ATTN: No check here, because no actions.
+    if (close) {
+        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            close = false;
+        }
+    }
+
+    // Get the user manager
+    SessionManager sessionManager = webManager.getSessionManager();
+
+    // Close a connection if requested
+    if (close) {
+
+        JID address = new JID(jid);
+        try {
+            Session sess = sessionManager.getSession(address);
+            sess.close();
+            // Log the event
+            webManager.logEvent("closed session for address "+address, null);
+            // wait one second
+            Thread.sleep(1000L);
+        }
+        catch (Exception e) {
+            // Session might have disappeared on its own
+            LoggerFactory.getLogger("session-details.jsp").warn("Unable to manually close session for address: {}", address, e);
+        }
+        // Redirect back to this page
+        response.sendRedirect("session-summary.jsp?close=success");
+        return;
+    }
 
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
-   // Handle a "go back" click:
+    // Handle a "go back" click:
     if (request.getParameter("back") != null) {
         response.sendRedirect("session-summary.jsp");
         return;
@@ -66,7 +96,6 @@
     boolean showCaps = request.getParameter("show") != null;
 
     // Get the session & address objects
-    SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
     org.jivesoftware.openfire.session.ClientSession currentSess = sessionManager.getSession(address);
     boolean isAnonymous = webManager.getXMPPServer().isLocal(address) &&
@@ -661,18 +690,15 @@
 
 <form action="session-details.jsp" type="post">
 <input type="hidden" name="jid" value="<%= StringUtils.escapeForXML(jid) %>">
+<input type="hidden" name="csrf" value="<%=csrfParam%>"/>
 <div style="text-align: center;">
-<%--<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>--%>
-<%----%>
-<%--    <input type="submit" name="message" value="Message this Session">--%>
-<%----%>
-<%--<%  } %>--%>
     <% if (showCaps) { %>
     <input type="submit" name="hide" value="<fmt:message key="session.details.hide-extended" />">
     <% } else if (caps != null && (!caps.getIdentities().isEmpty() || !caps.getFeatures().isEmpty())) { %>
     <input type="submit" name="show" value="<fmt:message key="session.details.show-extended" />">
     <% } %>
     <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
+    <button name="close" style="padding-left: 24px;background-repeat: no-repeat;background-image: url(images/delete-16x16.gif);background-position-y: center; background-color: lightyellow;border-width: 1px;" onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"><fmt:message key="session.row.cliked_kill_session" /></button>
 
 </div>
 </form>

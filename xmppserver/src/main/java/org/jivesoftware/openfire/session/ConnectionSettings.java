@@ -118,7 +118,7 @@ public final class ConnectionSettings {
          */
         public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
             .setKey("xmpp.server.idle")
-            .setDefaultValue(Duration.ofMinutes(6))
+            .setDefaultValue(Duration.ofMinutes(30))
             .setMinValue(Duration.ofMillis(-1))
             .setChronoUnit(ChronoUnit.MILLIS)
             .setDynamic(Boolean.TRUE)

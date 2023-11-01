@@ -72,13 +72,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     private static final Interner<JID> remoteAuthMutex = Interners.newWeakInterner();
 
-    public static final String XMPP_SERVER_SESSION_INITIALISE_TIMEOUT_KEY = "xmpp.server.session.initialise-timeout";
     /**
      * Controls the S2S outgoing session initialise timeout time in seconds
      */
     public static final SystemProperty<Duration> INITIALISE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
-        .setKey(XMPP_SERVER_SESSION_INITIALISE_TIMEOUT_KEY)
-        .setDefaultValue(Duration.ofSeconds(5))
+        .setKey("xmpp.server.session.initialise-timeout")
+        .setDefaultValue(Duration.ofSeconds(10))
         .setChronoUnit(ChronoUnit.SECONDS)
         .setDynamic(true)
         .build();

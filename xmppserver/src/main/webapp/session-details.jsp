@@ -174,32 +174,6 @@
             <% } %>
         </td>
     </tr>
-    <%
-        }
-        if (currentSess instanceof LocalClientSession) {
-            LocalClientSession s = (LocalClientSession)currentSess;
-
-            %>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.connection-type"/>:
-        </td>
-        <td>
-            <%
-                if (s.isDetached()) {
-                    %><fmt:message key="session.details.sm-detached"/><%
-                } else if (s.getConnection() instanceof NettyConnection) {
-                    %>TCP<%
-                } else if (s.getConnection() instanceof WebSocketConnection) {
-                    %>WebSocket<%
-                } else if (s.getConnection() instanceof HttpSession.HttpVirtualConnection) {
-                    %>BOSH<%
-                } else {
-                    %>Unknown<%
-                }
-            %>
-        </td>
-    </tr>
     <% } %>
     <tr>
         <td class="c1">
@@ -329,26 +303,80 @@
             <%= numFormatter.format(currentSess.getNumClientPackets()) %>/<%= numFormatter.format(currentSess.getNumServerPackets()) %>
         </td>
     </tr>
-    <tr>
-        <td class="c1">
-            <fmt:message key="session.details.hostname" />
-        </td>
-        <td>
-                <%
-            if (currentSess instanceof LocalClientSession && ((LocalClientSession) currentSess).isDetached()) { %>
-            <fmt:message key="session.details.sm-detached"/>
-                <% } else {
-                try { %>
-                <%= currentSess.getHostAddress() %> / <%= currentSess.getHostName() %>
-                <% } catch (java.net.UnknownHostException e) { %>
-            Invalid session/connection
-                <% }
-            } %>
-        </td>
-    </tr>
 </tbody>
 </table>
 </div>
+
+    <br/>
+
+    <div class="jive-table">
+        <table>
+            <thead>
+            <tr>
+                <th colspan="2">
+                    <fmt:message key="session.details.connection" />
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+                <%
+                    if (currentSess instanceof LocalClientSession) {
+                    LocalClientSession s = (LocalClientSession)currentSess;
+                %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.connection-type"/>:
+                    </td>
+                    <td>
+                    <% if (s.isDetached()) {
+                    %><fmt:message key="session.details.sm-detached"/><%
+                    } else if (s.getConnection() instanceof NettyConnection) {
+                    %>TCP<%
+                    } else if (s.getConnection() instanceof WebSocketConnection) {
+                    %>WebSocket<%
+                    } else if (s.getConnection() instanceof HttpSession.HttpVirtualConnection) {
+                    %>BOSH<%
+                    } else {
+                    %>Unknown<%
+                        }
+                    %>
+                    </td>
+                </tr>
+                <% } %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.hostname" />
+                    </td>
+                    <td>
+                        <%
+                            if (currentSess instanceof LocalClientSession && ((LocalClientSession) currentSess).isDetached()) { %>
+                        <fmt:message key="session.details.sm-detached"/>
+                        <% } else {
+                            try { %>
+                        <%= StringUtils.escapeHTMLTags(currentSess.getHostAddress()) %> / <%=StringUtils.escapeHTMLTags(currentSess.getHostName())%>
+                        <% } catch (java.net.UnknownHostException e) { %>
+                        Invalid session/connection
+                        <% }
+                        } %>
+                    </td>
+                </tr>
+                <%
+                    if (currentSess instanceof LocalClientSession) {
+                        LocalClientSession s = (LocalClientSession)currentSess;
+                        if (s.getConnection() != null && s.getConnection().getConfiguration() != null) {
+                %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.connection-local-port"/>:
+                    </td>
+                    <td>
+                        <%=s.getConnection().getConfiguration().getPort()%>
+                    </td>
+                </tr>
+                <% } } %>
+            </tbody>
+        </table>
+    </div>
 
     <br>
 

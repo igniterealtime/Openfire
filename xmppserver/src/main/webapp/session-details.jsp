@@ -75,7 +75,7 @@
             // Log the event
             webManager.logEvent("closed session for address "+address, null);
             // wait one second
-            Thread.sleep(1000L);
+            Thread.sleep(250L);
         }
         catch (Exception e) {
             // Session might have disappeared on its own

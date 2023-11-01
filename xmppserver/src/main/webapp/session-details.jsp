@@ -362,18 +362,6 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="c1">
-                        <fmt:message key="session.details.anon-status"/>:
-                    </td>
-                    <td>
-                        <% if (currentSess.isAnonymousUser()) { %>
-                        <fmt:message key="session.details.anon-true" />
-                        <% } else { %>
-                        <fmt:message key="session.details.anon-false" />
-                        <% } %>
-                    </td>
-                </tr>
                 <% if (currentSess.isEncrypted()) { %>
                 <tr>
                     <td class="c1">
@@ -389,6 +377,28 @@
                     </td>
                     <td>
                         <%=StringUtils.escapeHTMLTags(currentSess.getCipherSuiteName())%>
+                    </td>
+                </tr>
+                <% } %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.anon-status"/>:
+                    </td>
+                    <td>
+                        <% if (currentSess.isAnonymousUser()) { %>
+                        <fmt:message key="session.details.anon-true" />
+                        <% } else { %>
+                        <fmt:message key="session.details.anon-false" />
+                        <% } %>
+                    </td>
+                </tr>
+                <% if (currentSess instanceof LocalSession && ((LocalSession) currentSess).getSessionData("SaslMechanism") != null) { %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.sasl-mechanism"/>:
+                    </td>
+                    <td>
+                        <%=StringUtils.escapeHTMLTags(((LocalSession) currentSess).getSessionData("SaslMechanism").toString())%>
                     </td>
                 </tr>
                 <% } %>

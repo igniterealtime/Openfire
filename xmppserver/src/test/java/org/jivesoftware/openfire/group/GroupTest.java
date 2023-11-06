@@ -21,7 +21,6 @@ import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PersistableMap;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.junit.jupiter.api.*;
@@ -65,6 +64,20 @@ public class GroupTest
         groupManager = GroupManager.getInstance();
     }
 
+    @AfterEach
+    public void tearDown() {
+        // Teardown fixture by removing any groups that have been created.
+        GroupManager.getInstance().getGroups().forEach(group -> {
+            try {
+                GroupManager.getInstance().deleteGroup(group);
+            } catch (GroupNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        groupCache.clear();
+    }
+
     @AfterAll
     public static void afterClass() throws Exception {
 
@@ -76,7 +89,154 @@ public class GroupTest
             field.setAccessible(false);
         }
 
+        GroupManager.getInstance().getGroups().forEach(group -> {
+            try {
+                GroupManager.getInstance().deleteGroup(group);
+            } catch (GroupNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         groupCache.clear();
+    }
+
+    /**
+     * Asserts that when a bare JID is added to a group, it is added successfully.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708: Ensure that Groups operate on bare JIDs</a>
+     */
+    @Test
+    public void testAddBareJid() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-h";
+        final Group group = groupManager.createGroup(groupName);
+        final JID fullJid = new JID("unit-test-user-h", "example.org", "unit-test-resource-h");
+        final JID bareJid = fullJid.asBareJID();
+
+        // Execute system under test.
+        final boolean result = group.getAdmins().add(bareJid);
+
+        // Verify results.
+        assertTrue(result);
+        assertTrue(group.getAdmins().contains(fullJid)); // OF-2708: Contains check should be applied based on the bare-JID equivalent!
+        assertTrue(group.getAdmins().contains(bareJid));
+    }
+
+    /**
+     * Asserts that when a full JID is added to a group, its bare JID representation is added successfully.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708: Ensure that Groups operate on bare JIDs</a>
+     */
+    @Test
+    public void testAddFullJid() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-i";
+        final Group group = groupManager.createGroup(groupName);
+        final JID fullJid = new JID("unit-test-user-i", "example.org", "unit-test-resource-i");
+
+        final JID bareJid = fullJid.asBareJID();
+
+        // Execute system under test.
+        final boolean result = group.getAdmins().add(fullJid);
+
+        // Verify results.
+        assertTrue(result);
+        assertTrue(group.getAdmins().contains(fullJid));
+        assertTrue(group.getAdmins().contains(bareJid));
+    }
+
+    /**
+     * Asserts that an entity can be removed from a group by using its bare JID.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708: Ensure that Groups operate on bare JIDs</a>
+     */
+    @Test
+    public void testRemoveBareJid() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-j";
+        final Group group = groupManager.createGroup(groupName);
+        final JID fullJid = new JID("unit-test-user-j", "example.org", "unit-test-resource-j");
+        final JID bareJid = fullJid.asBareJID();
+        group.getAdmins().add(fullJid);
+
+        // Execute system under test.
+        final boolean result = group.getAdmins().remove(bareJid);
+
+        // Verify results.
+        assertTrue(result);
+        assertFalse(group.getAdmins().contains(fullJid));
+        assertFalse(group.getAdmins().contains(bareJid));
+    }
+
+    /**
+     * Asserts that an entity can be removed from a group by using its full JID.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708: Ensure that Groups operate on bare JIDs</a>
+     */
+    @Test
+    public void testRemoveFullJid() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-k";
+        final Group group = groupManager.createGroup(groupName);
+        final JID fullJid = new JID("unit-test-user-k", "example.org", "unit-test-resource-k");
+        final JID bareJid = fullJid.asBareJID();
+        group.getAdmins().add(bareJid);
+
+        // Execute system under test.
+        final boolean result = group.getAdmins().remove(fullJid);
+
+        // Verify results.
+        assertTrue(result);
+        assertFalse(group.getAdmins().contains(fullJid));
+        assertFalse(group.getAdmins().contains(bareJid));
+    }
+
+    /**
+     * Asserts that when an entity is in a group, added with its bare JID, adding a corresponding full JID does not change the group.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708: Ensure that Groups operate on bare JIDs</a>
+     */
+    @Test
+    public void testOverrideBareJidWithFullJid() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-l";
+        final Group group = groupManager.createGroup(groupName);
+        final JID fullJid = new JID("unit-test-user-l", "example.org", "unit-test-resource-l");
+        final JID bareJid = fullJid.asBareJID();
+        group.getAdmins().add(bareJid);
+
+        // Execute system under test.
+        final boolean result = group.getAdmins().add(fullJid);
+
+        // Verify results.
+        assertFalse(result);
+    }
+
+    /**
+     * Asserts that when an entity is in a group, added with its full JID, adding a corresponding bare JID does not change the group.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708: Ensure that Groups operate on bare JIDs</a>
+     */
+    @Test
+    public void testOverrideFullJidWithBareJid() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-m";
+        final Group group = groupManager.createGroup(groupName);
+        final JID fullJid = new JID("unit-test-user-m", "example.org", "unit-test-resource-m");
+        final JID bareJid = fullJid.asBareJID();
+        group.getAdmins().add(fullJid);
+
+        // Execute system under test.
+        final boolean result = group.getAdmins().add(bareJid);
+
+        // Verify results.
+        assertFalse(result);
     }
 
     /**
@@ -86,9 +246,9 @@ public class GroupTest
     public void testReflectedInCacheGroupCreated() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-n";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-n", "example.org", null);
 
         // Execute system under test.
         group.getAdmins().add(testUser);
@@ -106,7 +266,7 @@ public class GroupTest
     public void testEventListenerInvokedGroupCreated() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-o";
         final RecordingGroupEventListener listener = new RecordingGroupEventListener();
         GroupEventDispatcher.addListener(listener);
 
@@ -124,9 +284,9 @@ public class GroupTest
     public void testReflectedInCacheGroupDeleted() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-p";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-p", "example.org", null);
         group.getAdmins().add(testUser);
 
         // Execute system under test.
@@ -144,7 +304,7 @@ public class GroupTest
     public void testEventListenerInvokedGroupDeleted() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-q";
         final Group group = groupManager.createGroup(groupName);
         final RecordingGroupEventListener listener = new RecordingGroupEventListener();
         GroupEventDispatcher.addListener(listener);
@@ -163,9 +323,9 @@ public class GroupTest
     public void testReflectedInCacheAdminAdded() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-r";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-r", "example.org", null);
 
         // Execute system under test.
         group.getAdmins().add(testUser);
@@ -183,9 +343,9 @@ public class GroupTest
     public void testEventListenerInvokedAdminAdded() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-a";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-a", "example.org", null);
         final RecordingGroupEventListener listener = new RecordingGroupEventListener();
         GroupEventDispatcher.addListener(listener);
 
@@ -204,9 +364,9 @@ public class GroupTest
     public void testReflectedInCacheMemberAdded() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-b";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-b", "example.org", null);
 
         // Execute system under test.
         group.getMembers().add(testUser);
@@ -224,9 +384,9 @@ public class GroupTest
     public void testEventListenerInvokedMemberAdded() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-c";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-c", "example.org", null);
         final RecordingGroupEventListener listener = new RecordingGroupEventListener();
         GroupEventDispatcher.addListener(listener);
 
@@ -245,9 +405,9 @@ public class GroupTest
     public void testReflectedInCacheAdminRemoved() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-d";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-d", "example.org", null);
         group.getAdmins().add(testUser);
 
         // Execute system under test.
@@ -266,9 +426,9 @@ public class GroupTest
     public void testEventListenerInvokedAdminRemoved() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-e";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-e", "example.org", null);
         group.getAdmins().add(testUser);
         final RecordingGroupEventListener listener = new RecordingGroupEventListener();
         GroupEventDispatcher.addListener(listener);
@@ -288,9 +448,9 @@ public class GroupTest
     public void testReflectedInCacheMemberRemoved() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-f";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-f", "example.org", null);
         group.getMembers().add(testUser);
 
         // Execute system under test.
@@ -309,9 +469,9 @@ public class GroupTest
     public void testEventListenerInvokedMemberRemoved() throws Exception
     {
         // Setup test fixture.
-        final String groupName = "unit-test-group-" + StringUtils.randomString(10);
+        final String groupName = "unit-test-group-g";
         final Group group = groupManager.createGroup(groupName);
-        final JID testUser = new JID("unit-test-user-" + StringUtils.randomString(10), "example.org", null);
+        final JID testUser = new JID("unit-test-user-g", "example.org", null);
         group.getMembers().add(testUser);
         final RecordingGroupEventListener listener = new RecordingGroupEventListener();
         GroupEventDispatcher.addListener(listener);

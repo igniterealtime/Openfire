@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,6 @@
 
 package org.jivesoftware.openfire.group;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
-
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.CacheSizes;
@@ -35,12 +28,19 @@ import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Groups organize users into a single entity for easier management.<p>
  *
  * The actual group implementation is controlled by the {@link GroupProvider}, which
- * includes things like the group name, the members, and adminstrators. Each group
+ * includes things like the group name, the members, and administrators. Each group
  * also has properties, which are always stored in the Openfire database.
  *
  * @see GroupManager#createGroup(String)
@@ -62,8 +62,8 @@ public class Group implements Cacheable, Externalizable {
 
     private String name;
     private String description;
-    private ConcurrentSkipListSet<JID> members;
-    private ConcurrentSkipListSet<JID> administrators;
+    private MemberCollection members;
+    private MemberCollection administrators;
 
     /**
      * Constructor added for Externalizable. Do not use this constructor.
@@ -88,8 +88,8 @@ public class Group implements Cacheable, Externalizable {
         this.provider = groupManager.getProvider();
         this.name = name;
         this.description = description;
-        this.members = new ConcurrentSkipListSet<>(members);
-        this.administrators = new ConcurrentSkipListSet<>(administrators);
+        this.members = new MemberCollection(members, false);
+        this.administrators = new MemberCollection(administrators, true);
     }
 
     /**
@@ -106,12 +106,7 @@ public class Group implements Cacheable, Externalizable {
     public Group(String name, String description, Collection<JID> members,
             Collection<JID> administrators, Map<String, String> properties)
     {
-        this.groupManager = GroupManager.getInstance();
-        this.provider = groupManager.getProvider();
-        this.name = name;
-        this.description = description;
-        this.members = new ConcurrentSkipListSet<>(members);
-        this.administrators = new ConcurrentSkipListSet<>(administrators);
+        this(name, description, members, administrators);
 
         this.properties = provider.loadProperties(this);
 
@@ -122,12 +117,7 @@ public class Group implements Cacheable, Externalizable {
             }
         }
         // Remove obsolete properties
-        Iterator<String> oldProps = this.properties.keySet().iterator();
-        while (oldProps.hasNext()) {
-            if (!properties.containsKey(oldProps.next())) {
-                oldProps.remove();
-            }
-        }
+        this.properties.keySet().removeIf(s -> !properties.containsKey(s));
     }
 
     /**
@@ -163,7 +153,7 @@ public class Group implements Cacheable, Externalizable {
      * @param name the name for the group.
      */
     public void setName(String name) {
-        if (name == this.name || (name != null && name.equals(this.name)) || provider.isReadOnly())
+        if (Objects.equals(name, this.name) || provider.isReadOnly())
         {
             // Do nothing
             return;
@@ -204,8 +194,7 @@ public class Group implements Cacheable, Externalizable {
      * @param description the description of the group.
      */
     public void setDescription(String description) {
-        if (description == this.description || (description != null && description.equals(this.description)) ||
-                provider.isReadOnly()) {
+        if (Objects.equals(description, this.description) || provider.isReadOnly()) {
             // Do nothing
             return;
         }
@@ -353,7 +342,7 @@ public class Group implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns a Collection of everyone in the group.
+     * Returns a read-only, unmodifiable collection of everyone in the group.
      *
      * @return a read-only Collection of the group administrators + members.
      */
@@ -364,23 +353,23 @@ public class Group implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns a Collection of the group administrators.
+     * Returns a Collection of the group administrators. Changes made the collection will be applied and persisted via
+     * the GroupProvider.
      *
      * @return a Collection of the group administrators.
      */
     public Collection<JID> getAdmins() {
-        // Return a wrapper that will intercept add and remove commands.
-        return new MemberCollection(administrators, true);
+        return administrators;
     }
 
     /**
-     * Returns a Collection of the group members.
+     * Returns a Collection of the group members. Changes made the collection will be applied and persisted via the
+     * GroupProvider.
      *
      * @return a Collection of the group members.
      */
     public Collection<JID> getMembers() {
-        // Return a wrapper that will intercept add and remove commands.
-        return new MemberCollection(members, false);
+        return members;
     }
 
     /**
@@ -404,7 +393,7 @@ public class Group implements Cacheable, Externalizable {
      * @return true if the provided username belongs to a user of the group.
      */
     public boolean isUser(String username) {
-        if  (username != null) {
+        if (username != null) {
             return isUser(XMPPServer.getInstance().createJID(username, null, true));
         }
         else {
@@ -423,12 +412,8 @@ public class Group implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfString(description);
         size += CacheSizes.sizeOfMap(properties);
 
-        for (JID member: members) {
-            size += CacheSizes.sizeOfString(member.toString());
-        }
-        for (JID admin: administrators) {
-            size += CacheSizes.sizeOfString(admin.toString());
-        }
+        size += CacheSizes.sizeOfCollection(members);
+        size += CacheSizes.sizeOfCollection(administrators);
 
         return size;
     }
@@ -443,32 +428,51 @@ public class Group implements Cacheable, Externalizable {
         if (this == object) {
             return true;
         }
-        if (object != null && object instanceof Group) {
+        if (object instanceof Group) {
             return name.equals(((Group)object).getName());
         }
         else {
             return false;
         }
     }
+
     /**
      * Collection implementation that notifies the GroupProvider of any
      * changes to the collection.
      */
-    private class MemberCollection extends AbstractCollection<JID> {
+    private class MemberCollection extends AbstractCollection<JID>
+    {
+        /**
+         * A representation of the addresses of all members.
+         */
+        private final Set<JID> users; // Must contain only _bare_ JIDs!
 
-        private Collection<JID> users;
-        private boolean adminCollection;
+        /**
+         * True if the users in this group are administrators, otherwise false.
+         */
+        private final boolean adminCollection;
 
-        public MemberCollection(Collection<JID> users, boolean adminCollection) {
-            this.users = users;
+        public MemberCollection(final Collection<JID> users, final boolean adminCollection)
+        {
+            this.users = users.stream()
+                .map(JID::asBareJID)
+                .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet)); // use thread-safe collection type!
             this.adminCollection = adminCollection;
         }
 
+        /**
+         * Returns an iterator over the users in this collection.
+         *
+         * The returned iterator is <i>weakly consistent</i>.
+         *
+         * @return an iterator over the users in this collection
+         */
+        @Nonnull
         @Override
         public Iterator<JID> iterator() {
-            return new Iterator<JID>() {
+            return new Iterator<>() {
 
-                Iterator<JID> iter = users.iterator();
+                final Iterator<JID> iter = users.iterator();
                 JID current = null;
 
                 @Override
@@ -518,6 +522,9 @@ public class Group implements Cacheable, Externalizable {
             if (provider.isReadOnly()) {
                 return false;
             }
+
+            user = user.asBareJID();
+
             // Find out if the user was already a group user.
             boolean alreadyGroupUser;
             if (adminCollection) {
@@ -542,7 +549,6 @@ public class Group implements Cacheable, Externalizable {
                     } catch (Exception e) {
                         Log.error("Failed to add group member", e);
                     }
-
                 }
 
                 // Perform post-processing (cache updates and event notifications).
@@ -556,19 +562,36 @@ public class Group implements Cacheable, Externalizable {
                 // user from the other collection
                 if (alreadyGroupUser) {
                     if (adminCollection) {
-                        if (members.contains(user)) {
-                            members.remove(user);
-                        }
+                        members.remove(user);
                     }
                     else {
-                        if (administrators.contains(user)) {
-                            administrators.remove(user);
-                        }
+                        administrators.remove(user);
                     }
                 }
                 return true;
             }
             return false;
+        }
+
+        @Override
+        public boolean contains(Object o)
+        {
+            if (o instanceof JID) {
+                return users.contains(((JID) o).asBareJID());
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean remove(Object o)
+        {
+            if (o instanceof JID) {
+                // Do not short-circuit this to users.remove(), as we need the handling that happens in the iterator's 'remove' implementation!
+                return super.remove(((JID) o).asBareJID());
+            } else {
+                return false;
+            }
         }
     }
 
@@ -579,8 +602,16 @@ public class Group implements Cacheable, Externalizable {
         if (description != null) {
             ExternalizableUtil.getInstance().writeSafeUTF(out, description);
         }
-        ExternalizableUtil.getInstance().writeSerializableCollection(out, members);
-        ExternalizableUtil.getInstance().writeSerializableCollection(out, administrators);
+
+        ExternalizableUtil.getInstance().writeInt(out, members.size());
+        for (final JID member : members) {
+            ExternalizableUtil.getInstance().writeSerializable(out, member);
+        }
+
+        ExternalizableUtil.getInstance().writeInt(out, administrators.size());
+        for (final JID administrator : administrators) {
+            ExternalizableUtil.getInstance().writeSerializable(out, administrator);
+        }
     }
 
     @Override
@@ -592,10 +623,22 @@ public class Group implements Cacheable, Externalizable {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             description = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        members= new ConcurrentSkipListSet<>();
-        administrators = new ConcurrentSkipListSet<>();
-        ExternalizableUtil.getInstance().readSerializableCollection(in, members, getClass().getClassLoader());
-        ExternalizableUtil.getInstance().readSerializableCollection(in, administrators, getClass().getClassLoader());
+
+        final int memberSize = ExternalizableUtil.getInstance().readInt(in);
+        final List<JID> tmpMembers = new ArrayList<>(memberSize);
+        for (int i = 0; i < memberSize; i++) {
+            final JID member = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+            tmpMembers.add(member);
+        }
+        members = new MemberCollection(tmpMembers, false);
+
+        final int administratorSize = ExternalizableUtil.getInstance().readInt(in);
+        final List<JID> tmpAdministrators = new ArrayList<>(administratorSize);
+        for (int i = 0; i < administratorSize; i++) {
+            final JID administrator = (JID) ExternalizableUtil.getInstance().readSerializable(in);
+            tmpAdministrators.add(administrator);
+        }
+        administrators = new MemberCollection(tmpAdministrators, true);
     }
 
     /**
@@ -633,5 +676,4 @@ public class Group implements Cacheable, Externalizable {
         }
         return result;
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,7 +330,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             }
         }
         else {
-            username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toString();
+            username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toBareJID();
         }
         // Do nothing if the user is empty or null
         if (username == null || "".equals(username)) {
@@ -600,7 +600,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                             // This is a JID of a component or node of a server's component
                             String node = username.substring(0, position);
                             String escapedUsername = JID.escapeNode(node);
-                            userJID = new JID(escapedUsername + "@" + serverName);
+                            userJID = new JID(escapedUsername + "@" + serverName).asBareJID();
                         }
                         members.add(userJID);
                     }

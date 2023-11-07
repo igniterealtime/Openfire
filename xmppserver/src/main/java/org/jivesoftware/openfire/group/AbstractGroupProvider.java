@@ -38,7 +38,7 @@ import org.xmpp.packet.JID;
 import javax.annotation.Nonnull;
 
 /**
- * Shared base class for Openfire GroupProvider implementations. By default
+ * Shared base class for Openfire GroupProvider implementations. By default,
  * all mutator methods throw {@link UnsupportedOperationException}. In
  * addition, group search operations are disabled.
  * 
@@ -301,6 +301,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
 
     @Override
     public Collection<String> getSharedGroupNames(JID user) {
+        user = user.asBareJID();
         HashSet<String> groupNames;
         synchronized (sharedGroupMetaCache) {
             groupNames = getSharedGroupsForUserFromCache(user.getNode());

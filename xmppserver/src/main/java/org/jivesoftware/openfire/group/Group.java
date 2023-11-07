@@ -37,7 +37,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Groups organize users into a single entity for easier management.<p>
+ * Groups organize users into a single entity for easier management.
+ *
+ * As grouped entities are thought to represent end-user entities, a group can be thought of as a collection of
+ * <em>bare</em> (not full) JIDs. The method of the Group class and its associated API will accept both bare and full
+ * JIDs, but are expected to 'cast down' a full JID to a bare JID prior to processing it.
  *
  * The actual group implementation is controlled by the {@link GroupProvider}, which
  * includes things like the group name, the members, and administrators. Each group

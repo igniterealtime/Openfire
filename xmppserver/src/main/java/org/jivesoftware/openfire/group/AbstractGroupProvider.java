@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
     }
 
     /**
-     * @throws GroupAlreadyExistsException if the group alrady exists
+     * @throws GroupAlreadyExistsException if the group already exists
      * @throws UnsupportedOperationException if the provider is read only
      */
     @Override
@@ -508,7 +508,6 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private Boolean getHasSharedGroupsFromCache() {
         synchronized (sharedGroupMetaCache) {
             final Object value = sharedGroupMetaCache.get(HAS_SHARED_GROUPS_KEY);
@@ -547,6 +546,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
         return GROUP_SHARED_GROUPS_KEY + groupName;
     }
 
+    @SuppressWarnings("unchecked")
     private HashSet<String> getSharedGroupsForGroupFromCache(final String groupName) {
         synchronized (sharedGroupMetaCache) {
             return (HashSet<String>) sharedGroupMetaCache.get(getSharedGroupsForGroupKey(groupName));

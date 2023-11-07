@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2013-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,10 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
     private static final String INSERT_PROPERTY =
         "INSERT INTO ofGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
 
-    private Group group;
+    private final Group group;
     
     /**
-     * Group properties map constructor; requires associated {@link Group} instance
+     * Group properties map constructor; requires an associated {@link Group} instance
      * @param group The group that owns these properties
      */
     public DefaultGroupPropertyMap(Group group) {
@@ -148,10 +148,10 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      */
     private class PersistenceAwareKeySet<E> extends AbstractSet<K> {
 
-        private Set<K> delegate;
+        private final Set<K> delegate;
         
         /**
-         * Sole constructor; requires wrapped {@link Set} for delegation
+         * Sole constructor; requires a wrapped {@link Set} for delegation
          * @param delegate A collection of keys from the map
          */
         public PersistenceAwareKeySet(Set<K> delegate) {
@@ -174,11 +174,11 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      */
     private class KeyIterator<E> implements Iterator<K> {
 
-        private Iterator<K> delegate;
+        private final Iterator<K> delegate;
         private K current;
         
         /**
-         * Sole constructor; requires wrapped {@link Iterator} for delegation
+         * Sole constructor; requires a wrapped {@link Iterator} for delegation
          * @param delegate An iterator for all the keys from the map
          */
         public KeyIterator(Iterator<K> delegate) {
@@ -221,10 +221,10 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      */
     private class PersistenceAwareEntrySet<E> implements Set<Entry<K, V>> {
 
-        private Set<Entry<K, V>> delegate;
+        private final Set<Entry<K, V>> delegate;
         
         /**
-         * Sole constructor; requires wrapped {@link Set} for delegation
+         * Sole constructor; requires a wrapped {@link Set} for delegation
          * @param delegate A collection of entries ({@link Map.Entry}) from the map
          */
         public PersistenceAwareEntrySet(Set<Entry<K, V>> delegate) {
@@ -379,11 +379,11 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      */
     private class EntryIterator<E> implements Iterator<Entry<K, V>> {
 
-        private Iterator<Entry<K,V>> delegate;
+        private final Iterator<Entry<K,V>> delegate;
         private EntryWrapper<E> current;
         
         /**
-         * Sole constructor; requires wrapped {@link Iterator} for delegation
+         * Sole constructor; requires a wrapped {@link Iterator} for delegation
          * @param delegate An iterator for all the keys from the map
          */
         public EntryIterator(Iterator<Entry<K,V>> delegate) {
@@ -426,10 +426,10 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
      * Update the database when a group property is updated via {@link Map.Entry#setValue}
      */
     private class EntryWrapper<E> implements Entry<K,V> {
-        private Entry<K,V> delegate;
+        private final Entry<K,V> delegate;
 
         /**
-         * Sole constructor; requires wrapped {@link Map.Entry} for delegation
+         * Sole constructor; requires a wrapped {@link Map.Entry} for delegation
          * @param delegate The corresponding entry from the map
          */
         public EntryWrapper(Entry<K,V> delegate) {

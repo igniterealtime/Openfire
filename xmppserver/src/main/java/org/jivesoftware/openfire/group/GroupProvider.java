@@ -254,7 +254,7 @@ public interface GroupProvider {
 
     /**
      * Returns the names of groups that have a property matching the given
-     * key/value pair. This provides an simple extensible search mechanism
+     * key/value pair. This provides a simple extensible search mechanism
      * for providers with differing property sets and storage models.
      * 
      * The semantics of the key/value matching (wildcard support, scoping, etc.) 

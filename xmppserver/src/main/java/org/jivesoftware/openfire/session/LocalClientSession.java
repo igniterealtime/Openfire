@@ -929,18 +929,23 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-    public void deliver(Packet packet) throws UnauthorizedException {
-        final List<Packet> packets = csiManager.queueOrPush(packet);
-        if (packets.isEmpty()) {
+    public void deliver(Packet queueOrPushStanza) throws UnauthorizedException {
+        // Queue this stanza, possibly returning it immediately in line with any previously queued stanzas if this
+        // stanza needs to be pushed to the client immediately.
+        final List<Packet> stanzasToPush = csiManager.queueOrPush(queueOrPushStanza);
+
+        if (stanzasToPush.isEmpty()) {
             return;
         }
-        synchronized ( streamManager )
+        synchronized (streamManager)
         {
-            if ( conn != null )
-            {
-                conn.deliver(packet);
+            // Push stanzas to the client.
+            for (final Packet stanzaToPush : stanzasToPush) {
+                if (conn != null) {
+                    conn.deliver(stanzaToPush);
+                }
+                streamManager.sentStanza(stanzaToPush);
             }
-            streamManager.sentStanza(packet);
         }
     }
 

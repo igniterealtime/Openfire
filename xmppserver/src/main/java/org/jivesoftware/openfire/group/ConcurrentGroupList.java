@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.group;
 
 import java.util.Collection;
@@ -71,7 +86,7 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
     }
     
     /**
-     * Accessor uses the  "double-check idiom" (j2se 5.0+) for proper lazy instantiation.
+     * Accessor uses the "double-check idiom" (j2se 5.0+) for proper lazy instantiation.
      * Additionally, the set is not cached until there is at least one group in the list.
      * 
      * @return the known group names among the items in the list
@@ -84,13 +99,11 @@ public class ConcurrentGroupList<T> extends CopyOnWriteArrayList<T> implements G
                 if (result == null) {
                     result = new HashSet<>();
                     // add all the groups into the group set
-                    Iterator<T> iterator = iterator();
-                    while (iterator.hasNext()) {
-                        T listItem = iterator.next();
+                    for (T listItem : this) {
                         Group group = Group.resolveFrom(listItem);
                         if (group != null) {
                             result.add(group.getName());
-                        };
+                        }
                     }
                     knownGroupNamesInList = result.isEmpty() ? null : result;
                 }

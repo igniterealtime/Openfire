@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     private static final String ALL_GROUPS = "SELECT groupName FROM ofGroup ORDER BY groupName";
     private static final String SEARCH_GROUP_NAME = "SELECT groupName FROM ofGroup WHERE groupName LIKE ? ORDER BY groupName";
 
-    private XMPPServer server = XMPPServer.getInstance();
+    private final XMPPServer server = XMPPServer.getInstance();
 
     @Override
     public Group createGroup(String name) throws GroupNameInvalidException, GroupAlreadyExistsException {
@@ -530,7 +530,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
                     if (!server.matchesComponent(userJID)) {
                         userJID = server.createJID(user, null);
                     } else {
-                        // FIXME else... what? OF-2709
+                        // FIXME else... what? OF-2709 Note that the 'if' condition is _always_ true (should it use 'user' instead of 'userJID'?)
                     }
                 }
                 else {

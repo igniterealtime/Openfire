@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 
 package org.jivesoftware.openfire.group;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 import java.util.AbstractCollection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -30,14 +34,16 @@ import java.util.Collection;
  */
 public class GroupCollection extends AbstractCollection<Group> {
 
-    private String[] elements;
+    private static final Logger Log = LoggerFactory.getLogger(GroupCollection.class);
+
+    private final String[] elements;
 
     /**
      * Constructs a new GroupCollection.
      * @param collection the initial groups in the collection
      */
     public GroupCollection(Collection<String> collection) {
-        this.elements = collection.toArray(new String[collection.size()]);
+        this.elements = collection.toArray(new String[0]);
     }
 
     /**
@@ -48,6 +54,7 @@ public class GroupCollection extends AbstractCollection<Group> {
         this.elements = elements;
     }
 
+    @Nonnull
     @Override
     public Iterator<Group> iterator() {
         return new GroupIterator();
@@ -115,7 +122,7 @@ public class GroupCollection extends AbstractCollection<Group> {
                     element = GroupManager.getInstance().getGroup(elements[currentIndex]);
                 }
                 catch (GroupNotFoundException unfe) {
-                    // Ignore.
+                    Log.debug("Group not for element '{}' not found.", elements[currentIndex], unfe);
                 }
                 if (element != null) {
                     return element;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software. 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,8 @@ public class GroupManager {
         return INSTANCE;
     }
 
-    private Cache<String, CacheableOptional<Group>> groupCache;
-    private Cache<String, Serializable> groupMetaCache;
+    private final Cache<String, CacheableOptional<Group>> groupCache;
+    private final Cache<String, Serializable> groupMetaCache;
     private static GroupProvider provider;
 
     private GroupManager() {
@@ -114,12 +114,12 @@ public class GroupManager {
         });
     }
 
-    private static void initProvider(final Class clazz) {
+    private static void initProvider(final Class<? extends GroupProvider> clazz) {
         if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                provider = (GroupProvider) clazz.newInstance();
+                provider = clazz.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
-                Log.error("Error loading group provider: " + clazz.getName(), e);
+                Log.error("Error loading group provider: {}", clazz.getName(), e);
                 provider = new DefaultGroupProvider();
             }
         }
@@ -410,7 +410,7 @@ public class GroupManager {
     public Collection<Group> getGroups(int startIndex, int numResults) {
         HashSet<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
         if (groupNames == null) {
-            // synchronizing on intern'ed string isn't great, but this value is deemed sufficiently unique for this to be safe here.
+            // synchronizing on interned string isn't great, but this value is deemed sufficiently unique for this to be safe here.
             synchronized (pagedGroupNameKeyInterner.intern(getPagedGroupNameKey(startIndex, numResults))) {
                 groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
                 if (groupNames == null) {
@@ -616,13 +616,13 @@ public class GroupManager {
     private void evictCachedPaginatedGroupNames() {
         groupMetaCache.keySet().stream()
             .filter(key -> key.startsWith(GROUP_NAMES_KEY))
-            .forEach(key -> groupMetaCache.remove(key));
+            .forEach(groupMetaCache::remove);
     }
 
     private void evictCachedUserSharedGroups() {
         groupMetaCache.keySet().stream()
             .filter(key -> key.startsWith(GROUP_NAMES_KEY))
-            .forEach(key -> groupMetaCache.remove(key));
+            .forEach(groupMetaCache::remove);
     }
 
     /**

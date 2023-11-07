@@ -31,7 +31,7 @@ public enum SharedGroupVisibility {
     nobody("nobody"),
 
     /**
-     * Users of this group are shared with all other users in Openfire..
+     * Users of this group are shared with all other users in Openfire.
      */
     everybody ("everybody"),
 

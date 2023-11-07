@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 /**
- * The JDBC group provider allows you to use an external database to define the make up of groups.
+ * The JDBC group provider allows you to use an external database to define the composition of groups.
  * It is best used with the JDBCAuthProvider to provide integration between your external system and
  * Openfire.  All data is treated as read-only so any set operations will result in an exception.
  *
@@ -77,9 +77,9 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
     private String userGroupsSQL;
     private String loadMembersSQL;
     private String loadAdminsSQL;
-    private boolean useConnectionProvider;
+    private final boolean useConnectionProvider;
 
-    private XMPPServer server = XMPPServer.getInstance();  
+    private final XMPPServer server = XMPPServer.getInstance();
 
     /**
      * Constructor of the JDBCGroupProvider class.
@@ -102,10 +102,10 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
             // Load the JDBC driver and connection string.
             String jdbcDriver = JiveGlobals.getProperty("jdbcProvider.driver");
             try {
-                Class.forName(jdbcDriver).newInstance();
+                Class.forName(jdbcDriver).getDeclaredConstructor().newInstance();
             }
             catch (Exception e) {
-                Log.error("Unable to load JDBC driver: " + jdbcDriver, e);
+                Log.error("Unable to load JDBC driver: {}", jdbcDriver, e);
                 return;
             }
             connectionString = JiveGlobals.getProperty("jdbcProvider.connectionString");

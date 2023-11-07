@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.group;
 
 import java.nio.charset.StandardCharsets;
@@ -123,7 +138,7 @@ public class GroupJID extends JID {
     /**
      * Decode the given group name from base32hex (UTF-8). 
      * 
-     * @param name A group name, encoded as base32hex
+     * @param node A group name, encoded as base32hex
      * @return The group name
      */
     private static String decodeNode(String node) {
@@ -166,13 +181,13 @@ public class GroupJID extends JID {
         String groupName = null, node = jid.getNode();
         if (node != null) {
             
-            isGroup = (jid instanceof GroupJID) ? true : 
+            isGroup = (jid instanceof GroupJID) ? true :
                 jid.getResource() != null &&
                 StringUtils.isBase32(node) &&
                 StringUtils.hash(groupName = decodeNode(node)).equals(jid.getResource());
             
             if (isGroup && groupMustExist) {
-                Log.debug("Validating group: " + jid);
+                Log.debug("Validating group: {}", jid);
                 if (XMPPServer.getInstance().isLocal(jid)) {
                     GroupManager.getInstance().getGroup(groupName);
                 } else {
@@ -185,7 +200,7 @@ public class GroupJID extends JID {
 
     /**
      * Returns a JID from the given JID. If the JID represents a group,
-     * returns an instance of this class. Otherwise returns the given JID.
+     * returns an instance of this class, otherwise returns the given JID.
      *
      * @param jid A JID, possibly representing a group
      * @return A new GroupJID if the given JID represents a group, or the given JID
@@ -200,15 +215,14 @@ public class GroupJID extends JID {
 
     /**
      * Creates a JID from the given string. If the string represents a group,
-     * return an instance of this class. Otherwise returns a regular JID.
+     * return an instance of this class, otherwise returns a regular JID.
      *
      * @param jid A JID, possibly representing a group
      * @return A JID with a type appropriate to its content
      * @throws IllegalArgumentException the given string is not a valid JID
      */
     public static JID fromString(String jid) {
-        Log.debug("Parsing JID from string: " + jid);
+        Log.trace("Parsing JID from string: {}", jid);
         return fromJID(new JID(jid));
     }
-    
 }

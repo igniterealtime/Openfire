@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.group;
 
 import java.util.HashSet;
@@ -123,13 +138,11 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
                 if (result == null) {
                     result = new HashSet<>();
                     // add all the groups into the group set
-                    Iterator<K> iterator = keySet().iterator();
-                    while (iterator.hasNext()) {
-                        K key = iterator.next();
+                    for (K key : keySet()) {
                         Group group = Group.resolveFrom(key);
                         if (group != null) {
                             result.add(group.getName());
-                        };
+                        }
                     }
                     knownGroupNamesFromKeys = result.isEmpty() ? null : result;
                 }
@@ -153,13 +166,11 @@ public class ConcurrentGroupMap<K, V> extends ConcurrentHashMap<K, V>  implement
                 if (result == null) {
                     result = new HashSet<>();
                     // add all the groups into the group set
-                    Iterator<V> iterator = values().iterator();
-                    while (iterator.hasNext()) {
-                        V key = iterator.next();
+                    for (V key : values()) {
                         Group group = Group.resolveFrom(key);
                         if (group != null) {
                             result.add(group.getName());
-                        };
+                        }
                     }
                     knownGroupNamesFromValues = result.isEmpty() ? null : result;
                 }

@@ -15,10 +15,7 @@
  */
 package org.jivesoftware.util;
 
-import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x509.Extension;
@@ -192,7 +189,7 @@ public class CertificateManagerTest
                 subjectKeyPair.getPublic()
         );
 
-        final DERSequence otherName = new DERSequence( new ASN1Encodable[] {DNS_SRV_OID, new DERUTF8String( "_xmpp-server."+subjectAltNameDnsSrv ) });
+        final DERSequence otherName = new DERSequence( new ASN1Encodable[] {DNS_SRV_OID, new DERIA5String( "_xmpp-server."+subjectAltNameDnsSrv ) });
         final GeneralNames subjectAltNames = new GeneralNames( new GeneralName(GeneralName.otherName, otherName ) );
         builder.addExtension( Extension.subjectAlternativeName, true, subjectAltNames );
 

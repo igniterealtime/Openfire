@@ -157,7 +157,7 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
             {
                 throw new IllegalArgumentException( "subjectAltName 'otherName' sequence's second object is expected to be a tagged value of which the tag number is 0. The tag number that was detected: " + tagNo );
             }
-            final ASN1Primitive value = taggedValue.getObject();
+            final ASN1Primitive value = taggedValue.toASN1Primitive();
 
             switch ( typeId.getId() )
             {
@@ -208,8 +208,10 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      */
     protected String parseOtherNameDnsSrv( ASN1Primitive srvName )
     {
-        // RFC 4985 says that this should be a IA5 String. Lets be tolerant and allow all text-based values.
-        final String value = ( (ASN1String) srvName ).getString();
+        // RFC 4985 says that this should be a IA5 String.
+        final ASN1TaggedObject taggedObject = (ASN1TaggedObject) srvName;
+        final ASN1IA5String instance = ASN1IA5String.getInstance(taggedObject, true);
+        final String value = instance.getString();
 
         if ( value.toLowerCase().startsWith( "_xmpp-server." ) )
         {
@@ -235,17 +237,10 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
      */
     protected String parseOtherNameXmppAddr( ASN1Primitive xmppAddr )
     {
-        // Get the nested object if the value is an ASN1TaggedObject or a sub-type of it
-        if (ASN1TaggedObject.class.isAssignableFrom(xmppAddr.getClass())) {
-            ASN1TaggedObject taggedObject = (ASN1TaggedObject) xmppAddr;
-            ASN1Primitive objectPrimitive = taggedObject.getObject();
-            if (ASN1String.class.isAssignableFrom(objectPrimitive.getClass())) {
-                return ((ASN1String) objectPrimitive).getString();
-            }
-        }
-
-        // RFC 6120 says that this should be a UTF8String. Lets be tolerant and allow all text-based values.
-        return ( (ASN1String) xmppAddr ).getString();
+        // RFC 6120 says that this should be a UTF8String.
+        final ASN1TaggedObject taggedObject = (ASN1TaggedObject) xmppAddr;
+        final ASN1UTF8String instance = ASN1UTF8String.getInstance(taggedObject, true);
+        return instance.getString();
     }
     
     /**
@@ -258,11 +253,9 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
     {
         String otherName = null;
         if (value instanceof ASN1TaggedObject) {
-            ASN1TaggedObject taggedObject = (ASN1TaggedObject) value;
-            ASN1Primitive objectPrimitive = taggedObject.getObject();
-            if (objectPrimitive instanceof ASN1String) {
-                otherName = ((ASN1String)objectPrimitive).getString();
-            }
+            final ASN1TaggedObject taggedObject = (ASN1TaggedObject) value;
+            final ASN1UTF8String instance = ASN1UTF8String.getInstance(taggedObject, true);
+            otherName = instance.getString();
         }
         if (otherName == null) {
             Log.warn("UPN type unexpected, UPN extraction failed: " + value.getClass().getName() + ":" + value.toString());

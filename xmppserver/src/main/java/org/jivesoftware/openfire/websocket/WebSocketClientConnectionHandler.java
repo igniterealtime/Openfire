@@ -62,7 +62,7 @@ public class WebSocketClientConnectionHandler
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2479">OF-2479: Allow Tsung to test with websockets</a>
      */
-    private static final SystemProperty<Boolean> STREAM_SUBSTITUTION_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+    public static final SystemProperty<Boolean> STREAM_SUBSTITUTION_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.websocket.stream-substitution-enabled")
         .setDefaultValue(false)
         .setDynamic(true)

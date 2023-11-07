@@ -68,7 +68,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
     @Override
     protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception
     {
-        // Found an stream:stream tag...
+        // Found a stream:stream tag...
         if (!sessionCreated) {
             sessionCreated = true;
             MXParser parser = reader.getXPPParser();

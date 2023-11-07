@@ -33,6 +33,8 @@ import javax.annotation.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 
+import static org.jivesoftware.openfire.websocket.WebSocketClientConnectionHandler.STREAM_SUBSTITUTION_ENABLED;
+
 /**
  * Following the conventions of the BOSH implementation, this class extends {@link VirtualConnection}
  * and delegates the expected XMPP connection behaviors to the corresponding {@link WebSocketClientConnectionHandler}.
@@ -62,6 +64,14 @@ public class WebSocketConnection extends VirtualConnection
             if (error != null) {
                 deliverRawText0(error.toXML());
             }
+
+            final String closeElement;
+            if (STREAM_SUBSTITUTION_ENABLED.getValue()) {
+                closeElement = "</stream:stream>";
+            } else {
+                closeElement = "<" + WebSocketClientStanzaHandler.STREAM_FOOTER + " xmlns='"+WebSocketClientStanzaHandler.FRAMING_NAMESPACE+"'/>";
+            }
+            deliverRawText0(closeElement);
         } finally {
             socket.getWsSession().close();
         }

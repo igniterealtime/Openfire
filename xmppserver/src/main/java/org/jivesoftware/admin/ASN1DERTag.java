@@ -49,7 +49,7 @@ public class ASN1DERTag extends BodyTagSupport {
             return doCollection(((ASN1Set) primitive).toArray());
         } else if (primitive instanceof DERTaggedObject) {
             final DERTaggedObject tagged = ((DERTaggedObject) primitive);
-            return "<table><tr><td>" + /* tagged.getTagNo() + */ "</td><td>" + doPrimitive(tagged.getObject()) + "</td></tr></table>";
+            return "<table><tr><td>" + /* tagged.getTagNo() + */ "</td><td>" + doPrimitive(tagged.getBaseUniversal(false, tagged.getTagNo())) + "</td></tr></table>";
         } else {
             return "<table><tr><td colspan='2'>" + asString(primitive) + "</td></tr></table>";
         }

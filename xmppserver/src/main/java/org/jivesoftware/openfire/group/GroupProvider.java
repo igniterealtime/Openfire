@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,14 @@ import org.jivesoftware.util.PersistableMap;
 import org.xmpp.packet.JID;
 
 /**
- * Provider interface for groups. Users that wish to integrate with
- * their own group system must implement this class and then register
- * the implementation with Openfire in the {@code openfire.xml}
- * file. An entry in that file would look like the following:
+ * Provider interface for groups.
+ *
+ * As grouped entities are thought to represent end-user entities, a group can be thought of as a collection of
+ * <em>bare</em> (not full) JIDs. The method of the Group class and its associated API will accept both bare and full
+ * JIDs, but are expected to 'cast down' a full JID to a bare JID prior to processing it.
+ *
+ * Developers that wish to integrate with their own group system must implement this class and then register the
+ * implementation with Openfire in the {@code openfire.xml} file. An entry in that file would look like the following:
  *
  * <pre>
  *   &lt;provider&gt;
@@ -67,7 +71,7 @@ public interface GroupProvider {
     void deleteGroup(String name) throws GroupNotFoundException;
 
     /**
-     * Returns a group based on it's name.
+     * Returns a group based on its name.
      *
      * @param name the name of the group.
      * @return the group with the given name.
@@ -127,7 +131,9 @@ public interface GroupProvider {
     
     /**
      * Returns an unmodifiable Collection of all shared groups in the system for a given user.
-     * 
+     *
+     * Implementations should use the bare JID representation of the JID passed as an argument to this method.
+     *
      * @param user The bare JID for the user (node@domain)
      * @return unmodifiable Collection of all shared groups in the system for a given user.
      */
@@ -163,7 +169,9 @@ public interface GroupProvider {
     /**
      * Returns the Collection of group names that an entity belongs to.
      *
-     * @param user the JID of the entity.
+     * Implementations should use the bare JID representation of the JID passed as an argument to this method.
+     *
+     * @param user the (bare) JID of the entity.
      * @return the Collection of group names that the user belongs to.
      */
     Collection<String> getGroupNames(JID user);
@@ -171,8 +179,10 @@ public interface GroupProvider {
     /**
      * Adds an entity to a group (optional operation).
      *
+     * Implementations should use the bare JID representation of the JID passed as an argument to this method.
+     *
      * @param groupName the group to add the member to
-     * @param user the JID of the entity to add
+     * @param user the (bare) JID of the entity to add
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
@@ -182,8 +192,10 @@ public interface GroupProvider {
     /**
      * Updates the privileges of an entity in a group.
      *
+     * Implementations should use the bare JID representation of the JID passed as an argument to this method.
+     *
      * @param groupName the group where the change happened
-     * @param user the JID of the entity with new privileges
+     * @param user the (bare) JID of the entity with new privileges
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
@@ -193,8 +205,10 @@ public interface GroupProvider {
     /**
      * Deletes an entity from a group (optional operation).
      *
+     * Implementations should use the bare JID representation of the JID passed as an argument to this method.
+     *
      * @param groupName the group name.
-     * @param user the JID of the entity to delete.
+     * @param user the (bare) JID of the entity to delete.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
      */
@@ -267,7 +281,7 @@ public interface GroupProvider {
      * Loads the group properties (if any) from the backend data store. If
      * the properties can be changed, the provider implementation must ensure
      * that updates to the resulting {@link Map} are persisted to the
-     * backend data store. Otherwise if a mutator method is called, the
+     * backend data store. Otherwise, if a mutator method is called, the
      * implementation should throw an {@link UnsupportedOperationException}.
      * 
      * If there are no corresponding properties for the given group, or if the
@@ -278,5 +292,4 @@ public interface GroupProvider {
      * @return The properties for the given group
      */
     PersistableMap<String,String> loadProperties(Group group);
-    
 }

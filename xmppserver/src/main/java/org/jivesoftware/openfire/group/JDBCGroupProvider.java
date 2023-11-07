@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,6 +208,12 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
                         final String processedNode = assumePersistedDataIsEscaped() ? user : JID.escapeNode( user );
                         userJID = server.createJID(processedNode, null);
                     }
+
+                    if (userJID.getResource() != null) {
+                        Log.warn("Group '{}' has a member that is persisted using its full JID, instead of a bare JID: '{}'. This is unexpected, and possibly a data consistency error. Groups should only contain bare JIDs.", groupName, userJID);
+                        userJID = userJID.asBareJID();
+                    }
+
                     members.add(userJID);
                 }
             }
@@ -295,6 +301,7 @@ public class JDBCGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> getGroupNames(JID user) {
+        user = user.asBareJID();
         List<String> groupNames = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;

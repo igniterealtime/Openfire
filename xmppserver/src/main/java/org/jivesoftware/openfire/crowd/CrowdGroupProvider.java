@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     
     @Override
     public Collection<String> getGroupNames(JID user) {
+        user = user.asBareJID();
         Cache<JID, ArrayList<String>> userMembershipCache = CacheFactory.createCache(USER_MEMBERSHIP_CACHE_NAME);
         ArrayList<String> groups = userMembershipCache.get(user);
         if (groups != null) {

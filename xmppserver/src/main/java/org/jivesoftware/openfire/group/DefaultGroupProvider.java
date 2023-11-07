@@ -104,8 +104,11 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+
+        // TODO Replace these two database queries with one. OF-2710
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
+
         return new Group(name, "", members, administrators);
     }
 
@@ -133,8 +136,11 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+
+        // TODO Replace these two database queries with one. OF-2710
         Collection<JID> members = getMembers(name, false);
         Collection<JID> administrators = getMembers(name, true);
+
         return new Group(name, description, members, administrators);
     }
 
@@ -338,7 +344,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_GROUPS);
-            pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toString());
+            pstmt.setString(1, server.isLocal(user) ? user.getNode() : user.toBareJID());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 groupNames.add(rs.getString(1));
@@ -369,7 +375,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ADD_USER);
             pstmt.setString(1, groupName);
-            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.asBareJID().toString());
+            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.toBareJID());
             pstmt.setInt(3, administrator ? 1 : 0);
             pstmt.executeUpdate();
         }
@@ -398,7 +404,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             pstmt = con.prepareStatement(UPDATE_USER);
             pstmt.setInt(1, administrator ? 1 : 0);
             pstmt.setString(2, groupName);
-            pstmt.setString(3, server.isLocal(user) ? user.getNode() : user.toString());
+            pstmt.setString(3, server.isLocal(user) ? user.getNode() : user.toBareJID());
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -419,7 +425,7 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(REMOVE_USER);
             pstmt.setString(1, groupName);
-            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.toString());
+            pstmt.setString(2, server.isLocal(user) ? user.getNode() : user.toBareJID());
             pstmt.executeUpdate();
         }
         catch (SQLException e) {
@@ -442,13 +448,13 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
 
     @Override
     public Collection<String> search(String query, int startIndex, int numResults) {
-        if (query == null || "".equals(query)) {
+        if (query == null || query.isEmpty()) {
             return Collections.emptyList();
         }
         // SQL LIKE queries don't map directly into a keyword/wildcard search like we want.
-        // Therefore, we do a best approximiation by replacing '*' with '%' and then
+        // Therefore, we do a best approximation by replacing '*' with '%' and then
         // surrounding the whole query with two '%'. This will return more data than desired,
-        // but is better than returning less data than desired.
+        // but is better than returning fewer data than desired.
         query = "%" + query.replace('*', '%') + "%";
         if (query.endsWith("%%")) {
             query = query.substring(0, query.length()-1);
@@ -523,10 +529,17 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
                     // Create JID of local user if JID does not match a component's JID
                     if (!server.matchesComponent(userJID)) {
                         userJID = server.createJID(user, null);
+                    } else {
+                        // FIXME else... what? OF-2709
                     }
                 }
                 else {
                     userJID = new JID(user);
+                }
+
+                if (userJID != null && userJID.getResource() != null) {
+                    Log.warn("Group '{}' has a member that is persisted using its full JID, instead of a bare JID: '{}'. This is unexpected, and possibly a data consistency error. Groups should only contain bare JIDs.", groupName, userJID);
+                    userJID = userJID.asBareJID();
                 }
                 members.add(userJID);
             }
@@ -539,5 +552,4 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         }
         return members;
     }
-
 }

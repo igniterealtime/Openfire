@@ -657,7 +657,8 @@ public class GroupTest
         }
 
         @Override
-        public Collection<String> getGroupNames(final JID user) {
+        public Collection<String> getGroupNames(JID user) {
+            user = user.asBareJID();
             final Set<String> result = new HashSet<>();
             for (final Map.Entry<String, List<JID>> entry : membersByGroupName.entrySet()) {
                 if (entry.getValue().contains(user)) {
@@ -673,7 +674,9 @@ public class GroupTest
         }
 
         @Override
-        public void addMember(final String groupName, final JID user, final boolean administrator) throws GroupNotFoundException {
+        public void addMember(final String groupName, JID user, final boolean administrator) throws GroupNotFoundException {
+            user = user.asBareJID();
+
             if (!descriptionsByGroupName.containsKey(groupName)) {
                 throw new GroupNotFoundException();
             }
@@ -685,7 +688,9 @@ public class GroupTest
         }
 
         @Override
-        public void updateMember(final String groupName, final JID user, final boolean administrator) throws GroupNotFoundException {
+        public void updateMember(final String groupName, JID user, final boolean administrator) throws GroupNotFoundException {
+            user = user.asBareJID();
+
             if (!descriptionsByGroupName.containsKey(groupName)) {
                 throw new GroupNotFoundException();
             }
@@ -699,7 +704,8 @@ public class GroupTest
         }
 
         @Override
-        public void deleteMember(final String groupName, final JID user) {
+        public void deleteMember(final String groupName, JID user) {
+            user = user.asBareJID();
             membersByGroupName.getOrDefault(groupName, new ArrayList<>()).remove(user);
             adminsByGroupName.getOrDefault(groupName, new ArrayList<>()).remove(user);
         }

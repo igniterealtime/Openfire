@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.nio;
 
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.compression.JZlibDecoder;
@@ -76,7 +75,7 @@ public class NettyConnection extends AbstractConnection
 
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
-     * is an asynch operation so instead of waiting for the connection to be actually closed just
+     * is an async operation so instead of waiting for the connection to be actually closed just
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
@@ -194,6 +193,8 @@ public class NettyConnection extends AbstractConnection
     public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
 
+            Log.trace("Closing connection {}: {}", this, error);
+
             // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
 
             if (session != null) {
@@ -207,7 +208,8 @@ public class NettyConnection extends AbstractConnection
             rawEndStream += "</stream:stream>";
 
             try {
-                ChannelFuture f = channelHandlerContext.writeAndFlush(rawEndStream);
+                channelHandlerContext.writeAndFlush(rawEndStream).sync();
+                Log.trace("Sent stream close tag: {}", rawEndStream);
                 updateWrittenBytesCounter(channelHandlerContext);
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag: " + e.getMessage());
@@ -216,11 +218,14 @@ public class NettyConnection extends AbstractConnection
             try {
                 // TODO don't block, handle errors async with custom ChannelFutureListener
                 this.channelHandlerContext.channel().close().addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE).sync();
+                Log.trace("Closed Netty session");
             } catch (Exception e) {
                 Log.error("Exception while closing Netty session", e);
             }
+
             notifyCloseListeners(); // clean up session, etc.
             closeListeners.clear();
+            Log.trace("Finished closing connection {}.", this);
         }
     }
 
@@ -273,8 +278,10 @@ public class NettyConnection extends AbstractConnection
         else {
             boolean errorDelivering = false;
             try {
-                ChannelFuture f = channelHandlerContext.writeAndFlush(packet.getElement().asXML());
-                updateWrittenBytesCounter(channelHandlerContext);
+                channelHandlerContext.writeAndFlush(packet.getElement().asXML())
+                    .addListener(l ->
+                        updateWrittenBytesCounter(channelHandlerContext)
+                    );
                 // TODO - handle errors more specifically
                 // Currently errors are handled by the default exceptionCaught method (log error, close channel)
                 // We can add a new listener to the ChannelFuture f for more specific error handling.
@@ -303,8 +310,9 @@ public class NettyConnection extends AbstractConnection
     public void deliverRawText(String text) {
         if (!isClosed()) {
             Log.trace("Sending: " + text);
-            ChannelFuture f = channelHandlerContext.writeAndFlush(text);
-            updateWrittenBytesCounter(channelHandlerContext);
+            channelHandlerContext.writeAndFlush(text).addListener(l ->
+                updateWrittenBytesCounter(channelHandlerContext)
+            );
             // TODO - handle errors more specifically
             // Currently errors are handled by the default exceptionCaught method (log error, close channel)
             // We can add a new listener to the ChannelFuture f for more specific error handling.
@@ -314,8 +322,7 @@ public class NettyConnection extends AbstractConnection
     }
 
     /**
-     * Updates the system counter of written bytes. This information is used by the outgoing
-     * bytes statistic.
+     * Updates the system counter of written bytes. This information is used by the "outgoing bytes" statistic.
      *
      * @param ctx the context for the channel writing bytes
      */

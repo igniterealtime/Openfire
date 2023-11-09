@@ -75,7 +75,7 @@ public class NettyConnection extends AbstractConnection
 
     /**
      * Flag that specifies if the connection should be considered closed. Closing a NIO connection
-     * is an async operation so instead of waiting for the connection to be actually closed just
+     * is an asynchronous operation so instead of waiting for the connection to be actually closed just
      * keep this flag to avoid using the connection between #close was used and the socket is actually
      * closed.
      */
@@ -192,11 +192,9 @@ public class NettyConnection extends AbstractConnection
     @Override
     public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
-
-            Log.trace("Closing connection {}: {}", this, error);
+            Log.trace("Closing {} with optional error: {}", this, error);
 
             // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
-
             if (session != null) {
                 session.setStatus(Session.Status.CLOSED);
             }
@@ -209,16 +207,18 @@ public class NettyConnection extends AbstractConnection
 
             try {
                 channelHandlerContext.writeAndFlush(rawEndStream)
-                    .addListener(l -> updateWrittenBytesCounter(channelHandlerContext))
-                    .addListener(ChannelFutureListener.CLOSE);
-                Log.trace("Sent stream close tag and closed the connection");
+                    .addListener(e -> Log.trace("Written end-of-stream, closing connection."))
+                    .addListener(ChannelFutureListener.CLOSE)
+                    .addListener(e -> {
+                        Log.trace("Notifying close listeners.");
+                        notifyCloseListeners();
+                        closeListeners.clear();
+                    })
+                    .addListener(e -> Log.trace("Finished closing connection."))
+                    .sync();
             } catch (Exception e) {
                 Log.error("Failed to deliver stream close tag or to close the connection", e);
             }
-
-            notifyCloseListeners(); // clean up session, etc.
-            closeListeners.clear();
-            Log.trace("Finished closing connection {}.", this);
         }
     }
 
@@ -274,7 +274,7 @@ public class NettyConnection extends AbstractConnection
                 channelHandlerContext.writeAndFlush(packet.getElement().asXML())
                     .addListener(l ->
                         updateWrittenBytesCounter(channelHandlerContext)
-                    );
+                    ).sync();
                 // TODO - handle errors more specifically
                 // Currently errors are handled by the default exceptionCaught method (log error, close channel)
                 // We can add a new listener to the ChannelFuture f for more specific error handling.
@@ -302,10 +302,14 @@ public class NettyConnection extends AbstractConnection
     @Override
     public void deliverRawText(String text) {
         if (!isClosed()) {
-            Log.trace("Sending: " + text);
-            channelHandlerContext.writeAndFlush(text).addListener(l ->
-                updateWrittenBytesCounter(channelHandlerContext)
-            );
+            Log.trace("Sending: {}", text);
+            try {
+                channelHandlerContext.writeAndFlush(text).addListener(l ->
+                    updateWrittenBytesCounter(channelHandlerContext)
+                ).sync();
+            } catch (InterruptedException e) {
+                Log.warn("An exception occurred while sending data to: {}", this);
+            }
             // TODO - handle errors more specifically
             // Currently errors are handled by the default exceptionCaught method (log error, close channel)
             // We can add a new listener to the ChannelFuture f for more specific error handling.
@@ -340,8 +344,8 @@ public class NettyConnection extends AbstractConnection
         final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
 
         final SslContext sslContext;
-        if ( clientMode ) {
-            sslContext= factory.createClientModeSslContext();
+        if (clientMode) {
+            sslContext = factory.createClientModeSslContext();
         } else {
             sslContext = factory.createServerModeSslContext(directTLS);
         }

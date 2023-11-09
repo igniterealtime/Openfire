@@ -208,19 +208,12 @@ public class NettyConnection extends AbstractConnection
             rawEndStream += "</stream:stream>";
 
             try {
-                channelHandlerContext.writeAndFlush(rawEndStream).sync();
-                Log.trace("Sent stream close tag: {}", rawEndStream);
-                updateWrittenBytesCounter(channelHandlerContext);
+                channelHandlerContext.writeAndFlush(rawEndStream)
+                    .addListener(l -> updateWrittenBytesCounter(channelHandlerContext))
+                    .addListener(ChannelFutureListener.CLOSE);
+                Log.trace("Sent stream close tag and closed the connection");
             } catch (Exception e) {
-                Log.error("Failed to deliver stream close tag: " + e.getMessage());
-            }
-
-            try {
-                // TODO don't block, handle errors async with custom ChannelFutureListener
-                this.channelHandlerContext.channel().close().addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE).sync();
-                Log.trace("Closed Netty session");
-            } catch (Exception e) {
-                Log.error("Exception while closing Netty session", e);
+                Log.error("Failed to deliver stream close tag or to close the connection", e);
             }
 
             notifyCloseListeners(); // clean up session, etc.

@@ -274,7 +274,7 @@ public class NettyConnection extends AbstractConnection
                 channelHandlerContext.writeAndFlush(packet.getElement().asXML())
                     .addListener(l ->
                         updateWrittenBytesCounter(channelHandlerContext)
-                    ).sync();
+                    );
                 // TODO - handle errors more specifically
                 // Currently errors are handled by the default exceptionCaught method (log error, close channel)
                 // We can add a new listener to the ChannelFuture f for more specific error handling.
@@ -303,13 +303,9 @@ public class NettyConnection extends AbstractConnection
     public void deliverRawText(String text) {
         if (!isClosed()) {
             Log.trace("Sending: {}", text);
-            try {
-                channelHandlerContext.writeAndFlush(text).addListener(l ->
-                    updateWrittenBytesCounter(channelHandlerContext)
-                ).sync();
-            } catch (InterruptedException e) {
-                Log.warn("An exception occurred while sending data to: {}", this);
-            }
+            channelHandlerContext.writeAndFlush(text).addListener(l ->
+                updateWrittenBytesCounter(channelHandlerContext)
+            );
             // TODO - handle errors more specifically
             // Currently errors are handled by the default exceptionCaught method (log error, close channel)
             // We can add a new listener to the ChannelFuture f for more specific error handling.

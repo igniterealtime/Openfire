@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLException;
+import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -105,6 +106,13 @@ public class NettySessionInitializer {
         this.directTLS = socketToXmppDomain.getValue();
 
         final SocketAddress socketAddress = socket.getRemoteSocketAddress();
+        try {
+            //TODO: Finish https://igniterealtime.atlassian.net/browse/OF-2721 by removing the need for an extraneous extra socket at all.
+            socket.close();
+        } catch (IOException e) {
+            Log.warn("Unable to close socket to remote address: {}", socketAddress, e);
+        }
+
         Log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
 
         try {

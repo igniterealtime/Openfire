@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.nio;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.compression.JZlibDecoder;
@@ -194,20 +195,28 @@ public class NettyConnection extends AbstractConnection
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             Log.trace("Closing {} with optional error: {}", this, error);
 
-            // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
-            if (session != null) {
-                session.setStatus(Session.Status.CLOSED);
-            }
+            ChannelFuture f;
 
-            String rawEndStream = "";
-            if (error != null) {
-                rawEndStream = error.toXML();
+            if (session != null) {
+                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
+                session.setStatus(Session.Status.CLOSED);
+
+                // Only send errors or stream closures if the open <stream:stream> occurred, inferred by having a session.
+                // TODO: Are there edge cases here?
+                String rawEndStream = "";
+                if (error != null) {
+                    rawEndStream = error.toXML();
+                }
+                rawEndStream += "</stream:stream>";
+
+                f = channelHandlerContext.writeAndFlush(rawEndStream);
+            } else {
+                f = channelHandlerContext.newSucceededFuture();
+
             }
-            rawEndStream += "</stream:stream>";
 
             try {
-                channelHandlerContext.writeAndFlush(rawEndStream)
-                    .addListener(e -> Log.trace("Written end-of-stream, closing connection."))
+                    f.addListener(e -> Log.trace("Flushed any final bytes, closing connection."))
                     .addListener(ChannelFutureListener.CLOSE)
                     .addListener(e -> {
                         Log.trace("Notifying close listeners.");
@@ -217,7 +226,7 @@ public class NettyConnection extends AbstractConnection
                     .addListener(e -> Log.trace("Finished closing connection."))
                     .sync();
             } catch (Exception e) {
-                Log.error("Failed to deliver stream close tag or to close the connection", e);
+                Log.error("Problem during connection close or cleanup", e);
             }
         }
     }

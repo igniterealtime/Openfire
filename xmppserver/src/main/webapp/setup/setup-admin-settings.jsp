@@ -11,7 +11,7 @@
                  org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="javax.servlet.http.HttpSession" %>
+<%@ page import="jakarta.servlet.http.HttpSession" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>

@@ -36,14 +36,14 @@
     catch (Throwable t) {}
     // Check for Servlet 2.3:
     try {
-        Class c = ClassUtils.forName("javax.servlet.http.HttpSession");
+        Class c = ClassUtils.forName("jakarta.servlet.http.HttpSession");
         Method m = c.getMethod("getAttribute",new Class[]{String.class});
         servlet22Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}
     // Check for JSP 1.1:
     try {
-        ClassUtils.forName("javax.servlet.jsp.tagext.Tag");
+        ClassUtils.forName("jakarta.servlet.jsp.tagext.Tag");
         jsp11Installed = true;
     }
     catch (ClassNotFoundException cnfe) {}

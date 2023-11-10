@@ -15,7 +15,7 @@ import org.xmpp.packet.JID;
 
 import java.util.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class PubSubServiceInfo {
 

@@ -3,9 +3,9 @@ package org.jivesoftware.admin;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 
-import javax.servlet.http.HttpSessionEvent;
-import javax.servlet.http.HttpSessionListener;
-import javax.servlet.annotation.WebListener;
+import jakarta.servlet.http.HttpSessionEvent;
+import jakarta.servlet.http.HttpSessionListener;
+import jakarta.servlet.annotation.WebListener;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 

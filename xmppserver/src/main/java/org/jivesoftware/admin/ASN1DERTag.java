@@ -2,8 +2,8 @@ package org.jivesoftware.admin;
 
 import org.bouncycastle.asn1.*;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
 
 /**

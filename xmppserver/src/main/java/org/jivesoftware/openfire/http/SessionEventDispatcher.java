@@ -18,7 +18,7 @@ package org.jivesoftware.openfire.http;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.AsyncContext;
+import jakarta.servlet.AsyncContext;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 

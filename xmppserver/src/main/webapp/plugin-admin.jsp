@@ -15,20 +15,19 @@
   - limitations under the License.
 --%>
 
-<%@ page import="java.io.InputStream,
-                 java.util.List,
-                 org.apache.commons.fileupload.FileItem,
-                 org.apache.commons.fileupload.FileItemFactory,
-                 org.apache.commons.fileupload.FileUploadException,
-                 org.apache.commons.fileupload.disk.DiskFileItemFactory,
-                 org.apache.commons.fileupload.servlet.ServletFileUpload"
-        %>
+<%@ page import="java.io.InputStream" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
 <%@ page import="org.slf4j.Logger" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="org.apache.commons.fileupload2.core.FileItemFactory" %>
+<%@ page import="org.apache.commons.fileupload2.core.DiskFileItemFactory" %>
+<%@ page import="org.apache.commons.fileupload2.core.FileItem" %>
+<%@ page import="org.apache.commons.fileupload2.core.FileUploadException" %>
+<%@ page import="org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload" %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -100,10 +99,10 @@
         boolean installed = false;
 
         // Create a factory for disk-based file items
-        FileItemFactory factory = new DiskFileItemFactory();
+        FileItemFactory factory = DiskFileItemFactory.builder().get();
 
         // Create a new file upload handler
-        ServletFileUpload upload = new ServletFileUpload(factory);
+        JakartaServletFileUpload upload = new JakartaServletFileUpload(factory);
         // I'm not sure that the file count can exceed 1, but limiting is good practice under CVE-2023-24998
         upload.setFileCountMax(20);
 

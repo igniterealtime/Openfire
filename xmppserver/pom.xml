@@ -292,14 +292,9 @@
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.taglibs</groupId>
-            <artifactId>taglibs-standard-impl</artifactId>
-            <version>${standard-taglib.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.taglibs</groupId>
-            <artifactId>taglibs-standard-spec</artifactId>
-            <version>${standard-taglib.version}</version>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>glassfish-jstl</artifactId>
+            <version>${jetty.version}</version>
         </dependency>
 
         <!-- Netty -->

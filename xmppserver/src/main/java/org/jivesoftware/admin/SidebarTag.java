@@ -18,10 +18,10 @@ package org.jivesoftware.admin;
 
 import org.dom4j.Element;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspWriter;
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspWriter;
+import jakarta.servlet.jsp.tagext.BodyTagSupport;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;

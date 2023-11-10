@@ -24,10 +24,10 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -182,7 +182,7 @@ public class PluginServlet extends HttpServlet {
 
                     final Object instance = theClass.newInstance();
                     if (!(instance instanceof GenericServlet)) {
-                        Log.warn("Could not load servlet '{}' of plugin '{}'. Its class ({}) is not an instance of javax.servlet.GenericServlet.", servletName, pluginName, className);
+                        Log.warn("Could not load servlet '{}' of plugin '{}'. Its class ({}) is not an instance of {}.", servletName, pluginName, className, GenericServlet.class);
                         continue;
                     }
 
@@ -248,7 +248,7 @@ public class PluginServlet extends HttpServlet {
                 final Object instance = theClass.newInstance();
                 if ( !(instance instanceof Filter) )
                 {
-                    Log.warn( "Could not load filter '{}' of plugin '{}'. Its class ({}) is not an instance of javax.servlet.Filter.", filterName, pluginName, className );
+                    Log.warn( "Could not load filter '{}' of plugin '{}'. Its class ({}) is not an instance of {}.", filterName, pluginName, className, Filter.class );
                     continue;
                 }
 

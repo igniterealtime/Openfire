@@ -16,8 +16,8 @@
 
 package org.jivesoftware.openfire;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
 /**
  * An XMPPContextListener starts an XMPPServer when a ServletContext is initialized and stops

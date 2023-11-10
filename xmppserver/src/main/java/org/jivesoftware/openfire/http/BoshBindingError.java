@@ -15,7 +15,7 @@
  */
 package org.jivesoftware.openfire.http;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *  An enum defining all errors which can happen during a BOSH session.

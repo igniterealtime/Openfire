@@ -16,9 +16,9 @@
 
 package org.jivesoftware.util;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class CookieUtils {
 
@@ -84,7 +84,7 @@ public class CookieUtils {
     /**
      * Stores a value in a cookie. By default this cookie will persist for 30 days.
      *
-     * @see #setCookie(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse,String,String,int)
+     * @see #setCookie(HttpServletRequest, HttpServletResponse, String, String, int)
      * @param request the servlet request.
      * @param response the servlet response.
      * @param name a name to identify the cookie.
@@ -101,7 +101,7 @@ public class CookieUtils {
      * Stores a value in a cookie. This cookie will persist for the amount
      * specified in the {@code saveTime} parameter.
      *
-     * @see #setCookie(javax.servlet.http.HttpServletRequest,javax.servlet.http.HttpServletResponse,String,String)
+     * @see #setCookie(HttpServletRequest, HttpServletResponse, String, String)
      * @param request the servlet request.
      * @param response the servlet response.
      * @param name a name to identify the cookie.

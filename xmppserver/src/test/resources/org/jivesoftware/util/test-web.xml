@@ -20,7 +20,7 @@
     </context-param>
 
     <context-param>
-        <param-name>javax.servlet.jsp.jstl.fmt.localizationContext</param-name>
+        <param-name>jakarta.servlet.jsp.jstl.fmt.localizationContext</param-name>
         <param-value>openfire_i18n</param-value>
     </context-param>
 

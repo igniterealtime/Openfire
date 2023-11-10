@@ -17,10 +17,10 @@
 
 package org.jivesoftware.util;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.jstl.core.Config;
-import javax.servlet.jsp.jstl.fmt.LocalizationContext;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.jstl.core.Config;
+import jakarta.servlet.jsp.jstl.fmt.LocalizationContext;
 import java.io.IOException;
 import java.util.ResourceBundle;
 

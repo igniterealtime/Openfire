@@ -16,8 +16,8 @@
 
 package org.jivesoftware.admin;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.JspTagException;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspTagException;
 
 /**
  * <p>A simple tag to gather its body content and pass it to the parent tag. This tag must be used
@@ -60,7 +60,7 @@ public class SubSidebarTag extends SidebarTag {
      * {@link #EVAL_BODY_BUFFERED} is returned.
      *
      * @return {@link #EVAL_BODY_BUFFERED} if no errors.
-     * @throws javax.servlet.jsp.JspException if a parent SidebarTag is not found.
+     * @throws JspException if a parent SidebarTag is not found.
      */
     @Override
     public int doStartTag() throws JspException {

@@ -190,6 +190,7 @@ function runTestsInGradle {
 			-Dsinttest.replyTimeout=60000 \
 			-Dsinttest.adminAccountUsername="${ADMINUSER}" \
 			-Dsinttest.adminAccountPassword="${ADMINPASS}" \
+			-Dsinttest.enabledConnections=tcp \
 			-Dsinttest.dnsResolver=javax \
 			${SINTTEST_DISABLED_TESTS_ARGUMENT}
 }

@@ -368,6 +368,13 @@
             <version>${openfire.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.igniterealtime.openfire</groupId>
+            <artifactId>xmppserver</artifactId>
+            <version>${openfire.version}</version>
+            <classifier>taglib</classifier>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

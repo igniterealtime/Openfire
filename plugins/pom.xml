@@ -340,6 +340,7 @@
                                 <sourceVersion>11</sourceVersion>
                                 <targetVersion>11</targetVersion>
                                 <keepSources>true</keepSources>
+                                <scanManifest>false</scanManifest>
                             </configuration>
                         </execution>
                     </executions>

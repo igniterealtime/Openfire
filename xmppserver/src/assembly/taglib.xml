@@ -10,7 +10,7 @@
     <fileSets>
         <fileSet>
             <outputDirectory>META-INF/tags/admin</outputDirectory>
-            <directory>${project.basedir}/../src/web/WEB-INF/tags/admin</directory>
+            <directory>${project.basedir}/src/main/webapp/WEB-INF/classes/META-INF/tags/admin</directory>
             <includes>
                 <include>**/*.tag</include>
                 <include>**/*.tagx</include>
@@ -19,7 +19,7 @@
 
         <fileSet>
             <outputDirectory>META-INF/</outputDirectory>
-            <directory>${project.basedir}/src/main/webapp/META-INF/</directory>
+            <directory>${project.basedir}/src/main/webapp/WEB-INF/classes/META-INF/</directory>
             <includes>
                 <include>*.tld</include>
             </includes>

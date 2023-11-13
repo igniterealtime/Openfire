@@ -102,4 +102,11 @@
         <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
         <cve>CVE-2022-34305</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Openfire doesn't use the ROOT webapp. Additional testing on 2023-11-13 against 7a53b23e565cdf06a541af82560a6c49d6c9d2ae.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cve>CVE-2023-41080</cve>
+    </suppress>
 </suppressions>

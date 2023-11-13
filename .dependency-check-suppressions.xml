@@ -47,4 +47,11 @@
         <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty/jetty\-servlets@.*$</packageUrl>
         <vulnerabilityName>CVE-2023-36479</vulnerabilityName>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Ignore a withdrawn CVE (see https://github.com/joker-xiaoyan/XXE-SAXReader/issues/1 and https://github.com/dom4j/dom4j/issues/171#issuecomment-1781547256)
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.dom4j/dom4j@.*$</packageUrl>
+        <cve>CVE-2023-45960</cve>
+    </suppress>
 </suppressions>

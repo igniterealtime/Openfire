@@ -81,4 +81,11 @@
         <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
         <cve>CVE-2022-29885</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Rapid Reset was fixed in Jetty 10.0.18, which brings in this dependency.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cve>CVE-2023-44487</cve>
+    </suppress>
 </suppressions>

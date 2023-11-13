@@ -74,4 +74,11 @@
    ]]></notes>
         <cve>CVE-2023-4586</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Ignore a CVE regarding Tomcat clustering, which isn't used in Openfire.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cve>CVE-2022-29885</cve>
+    </suppress>
 </suppressions>

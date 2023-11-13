@@ -26,15 +26,6 @@
    </suppress>
     <suppress>
         <notes><![CDATA[
-        Ignore a CVE related to JDom2 when setExpandEntities is enabled. JDom2 is used by Rome, which doesn't use this feature, so is immune.
-        https://github.com/rometools/rome/issues/469
-   file name: jdom2-2.0.6.jar
-   ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jdom/jdom2@.*$</packageUrl>
-        <cve>CVE-2021-33813</cve>
-    </suppress>
-    <suppress>
-        <notes><![CDATA[
        Ignore an old CVE related to permissions when calling com.google.common.io.Files.createTempDir - we don't use this method
    ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.google\.guava/guava@.*$</packageUrl>

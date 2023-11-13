@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"
+	xmlns:discourse="http://www.discourse.org/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:dc="http://purl.org/dc/elements/1.1/">
+	<channel>
+		<title>Ignite Realtime Blogs - Ignite Realtime Community Forums</title>
+		<link>https://discourse.igniterealtime.org/c/blogs/ignite-realtime-blogs/5</link>
+		<description>Topics in the &#39;Ignite Realtime Blogs&#39; category </description>
+		<lastBuildDate>Mon, 28 Aug 2023 08:21:16 +0000</lastBuildDate>
+		<atom:link href="https://discourse.igniterealtime.org/c/blogs/ignite-realtime-blogs/5.rss" rel="self" type="application/rss+xml" />
+		<item>
+			<title>CVE-2023-32315: Openfire vulnerability (update)</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>A few months ago, we <a href="https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-administration-console-authentication-bypass/">published details</a> about an important security vulnerability in Openfire that is identified as CVE-2023-32315.</p><p>To summarize: Openfire’s administrative console (the Admin Console), a web-based application, was found to be vulnerable to a path traversal attack via the setup environment. This permitted an unauthenticated user to access restricted pages in the Openfire Admin Console reserved for administrative users.</p><p>Leveraging this, a malicious actor can gain access to all of Openfire, and, by extension (through installing custom plugins), much of the infrastructure that is used to run Openfire. The Ignite Realtime community has made available new Openfire releases in which the issue is addressed, and published various mitigation strategies for those who cannot immediately apply an update. Details can be found in <a href="https://github.com/igniterealtime/Openfire/security/advisories/GHSA-gw42-f939-fhvm">the security advisory</a> that we released back in May.</p><p>In the last few days, this issue has seen a considerable increase in exposure: there have been numerous articles and podcasts that discuss the vulnerability. Many of these seem to refer back to a recent blogpost by <a href="https://vulncheck.com/blog/openfire-cve-2023-32315">Jacob Banes at Vulncheck.com</a>, and those that do not seem to include very similar content.</p><p>Many of these articles point out that there’s a “new way” to exploit the vulnerability. We indeed see that there are various methods being used, in the wild, in which this vulnerability is abused. Some of these methods leave less traces than others, but the level of access that can be obtained through each of these methods is pretty similar (and, sadly, similarly severe).</p><p>Given the renewed attention, we’d like to make clear that there is no <em>new</em> vulnerability in Openfire. The issue, solutions and mitigations that are documented in the original security advisory are still accurate and up to date.</p><p>Malicous actors use a significant amount of automation. By now, it’s almost safe to assume that your instance has been compromised if you’re running an unpatched instance of Openfire that has its administrative console exposed to the unrestricted internet. Tell-tale signs are high CPU loads (of crypto-miners being installed) and the appearance of new plugins (which carry the malicious code), but this by no means is true for every system that’s compromised.</p><p>We continue to urge everyone to <strong>update Openfire</strong> to its last release, and carefully review <a href="https://github.com/igniterealtime/Openfire/security/advisories/GHSA-gw42-f939-fhvm">the security advisory</a> that we released back in May, to apply applicable mitigations where possible.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-vulnerability-update/93166">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-vulnerability-update/93166</link>
+			<pubDate>Mon, 28 Aug 2023 08:21:16 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93166</guid>
+			<source url="https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-vulnerability-update/93166.rss">CVE-2023-32315: Openfire vulnerability (update)</source>
+		</item>
+		<item>
+			<title>SparkWeb lives again</title>
+			<dc:creator>
+				<![CDATA[Dele_Olajide]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>I have been recently working on a proprietary Openfire commercial plugin for Openfire that integrates XMPP with Azure Communication Services (ACS).</p><p>This plugin adds support for a whole range of modern web service connections to Openfire/XMPP via the embedded Jetty web server in a different way to the traditional persistent client XMPP session over TCP/5222 or Bosh/7443 or Websockets/7443 used by native binary clients.</p><p>It uses :</p><ul><li>JWTs (JSON Web Tokens) instead of traditional username/passwords combined with Web Authentication and Web Credentials to authenticate user requests and manage the user permissions and entitlements that apply for the request or entitlement.</li><li>REST APIs to make requests and receive immediate responses.</li><li>Server Sent Events (SSE) and</li><li>Web-Push to push events to users when they are online or offline.</li></ul><p>A user has a singleton xmpp session in Openfire that is created on demand and removed when it expires. This single user session can have many active REST and SSE connections depending on how many browsers tabs, browser windows or browser instances are connected to Openfire from applications in web pages opened on behalf of the user.</p><p>The xmpp session has the full feature set of an XMPP client that is based on Smack/Spark. It also has User Interface (UI) consisting of web-components that can bind directly to Spark features. For example, a contacts roster widget and a chat conversation widget. that work independent of each other and can be hosted in different web pages or different browsers but end up pointing at the same xmpp session.</p><p>A fully working XMPP client can be constructed in a web page with minimal HTML and JavaScript.</p><p>Over the next few weeks and months in my spare time, I will be extracting the open source aspects of the commercial plugin in to a new Openfire plugin I have aptly named SparkWeb.</p><p>Please post any comments or feedback if you want to get involved or want to influence the development of this community plugin,. Now is the time to get your ideas and suggestions in.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>2 posts - 2 participants</small></p><p><a href="https://discourse.igniterealtime.org/t/sparkweb-lives-again/93130">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/sparkweb-lives-again/93130</link>
+			<pubDate>Mon, 14 Aug 2023 12:39:54 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93130</guid>
+			<source url="https://discourse.igniterealtime.org/t/sparkweb-lives-again/93130.rss">SparkWeb lives again</source>
+		</item>
+		<item>
+			<title>Galene Openfire Plugin release 0.0.3</title>
+			<dc:creator>
+				<![CDATA[Dele_Olajide]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime Community is pleased to announce the first release of <a href="https://igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=galene">Galene plugin for Openfire</a></p><p><a href="https://galene.org/">Galene</a> is technically an audio/video SFU like Jitsi, however it handles a different use case from Jitsi. While Jitsi does audio/video conferencing very well with bi-directional media streams for an equal number of speakers and listeners, Galene does webinars and lectures much better with single uni-drectional streams for very few speakers and a larger number of listeners.</p><p>This plugin hosts a Galene server and also implements an <a href="https://igniterealtime.github.io/openfire-galene-plugin/xep/xep-xxx-sfu_01-01.xml">XEP for in-band SFU sessions</a> that I am currently working on. This XEP is used  by the <a href="https://igniterealtime.org/projects/pade/">Pàdé client</a> and the <a href="https://github.com/conversejs/community-plugins/tree/master/packages/galene#readme">Galene ConverseJS community plugin.</a> for supporting audio/video in webinars and lectures.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/galene-openfire-plugin-release-0-0-3/93120">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/galene-openfire-plugin-release-0-0-3/93120</link>
+			<pubDate>Thu, 10 Aug 2023 10:59:31 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93120</guid>
+			<source url="https://discourse.igniterealtime.org/t/galene-openfire-plugin-release-0-0-3/93120.rss">Galene Openfire Plugin release 0.0.3</source>
+		</item>
+		<item>
+			<title>Jabber Browsing Openfire Plugin 1.0.1 released</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the Jabber Browsing plugin for Openfire.</p><p>This is a plugin for the Openfire Real-time Communications server. It provides an implementation for service discovery using the <code>jabber:iq:browse</code> namespace, as specified in <a href="https://xmpp.org/extensions/xep-0011.html">XEP-0011: Jabber Browsing</a>. Note that this feature is considered obsolete! The plugin should only be used by people that seek backwards compatibility with <em>very</em> old and <em>very</em> specific IM clients.</p><p>This release is a maintenance release. It adds translations and fixes one bug. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/1.0.1/jabberbrowsing/changelog.html">changelog</a>.</p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=jabberbrowsing">Jabber Browsing plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/jabber-browsing-openfire-plugin-1-0-1-released/93059">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/jabber-browsing-openfire-plugin-1-0-1-released/93059</link>
+			<pubDate>Mon, 24 Jul 2023 17:34:52 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93059</guid>
+			<source url="https://discourse.igniterealtime.org/t/jabber-browsing-openfire-plugin-1-0-1-released/93059.rss">Jabber Browsing Openfire Plugin 1.0.1 released</source>
+		</item>
+		<item>
+			<title>Agent Information plugin for Openfire release 1.0.1</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the Agent Information plugin for Openfire.</p><p>This plugin implements the XEP-0094 ‘Agent Information’ specification for service discovery using the jabber:iq:agents namespace. Note that this feature is considered obsolete! The plugin should only be used by people that seek backwards compatibility with <em>very</em> old and <em>very</em> specific IM clients.</p><p>This release is a maintenance release. It adds translations and fixes one bug. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/1.0.1/agentinformation/changelog.html">changelog</a>.</p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=agentinformation">Agent Information plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/agent-information-plugin-for-openfire-release-1-0-1/93057">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/agent-information-plugin-for-openfire-release-1-0-1/93057</link>
+			<pubDate>Mon, 24 Jul 2023 09:25:07 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93057</guid>
+			<source url="https://discourse.igniterealtime.org/t/agent-information-plugin-for-openfire-release-1-0-1/93057.rss">Agent Information plugin for Openfire release 1.0.1</source>
+		</item>
+		<item>
+			<title>Certificate Manager plugin for Openfire release 1.1.1</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the Certificate Manager plugin for Openfire.</p><p>This plugin allows you to automate TLS certificate management tasks. This is particularly helpful when your certificates are short-lived, like the ones issued by Let’s Encrypt.</p><p>This release is a maintenance release. It adds translations. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/1.1.1/certificatemanager/changelog.html">changelog</a>.</p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=certificatemanager">Certificate Manager plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/certificate-manager-plugin-for-openfire-release-1-1-1/93046">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/certificate-manager-plugin-for-openfire-release-1-1-1/93046</link>
+			<pubDate>Thu, 20 Jul 2023 17:31:53 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93046</guid>
+			<source url="https://discourse.igniterealtime.org/t/certificate-manager-plugin-for-openfire-release-1-1-1/93046.rss">Certificate Manager plugin for Openfire release 1.1.1</source>
+		</item>
+		<item>
+			<title>JmxWeb plugin for Openfire 0.9.1 release</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the JmxWeb plugin for Openfire.</p><p>This plugin provides a web based platform for managing and monitoring Openfire via JMX</p><p>This release is a maintenance release. It adds translations and fixes one bug. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/0.9.1/jmxweb/changelog.html">changelog</a>.</p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=jmxweb">JmxWeb plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/jmxweb-plugin-for-openfire-0-9-1-release/93045">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/jmxweb-plugin-for-openfire-0-9-1-release/93045</link>
+			<pubDate>Thu, 20 Jul 2023 17:07:07 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93045</guid>
+			<source url="https://discourse.igniterealtime.org/t/jmxweb-plugin-for-openfire-0-9-1-release/93045.rss">JmxWeb plugin for Openfire 0.9.1 release</source>
+		</item>
+		<item>
+			<title>Push Notification Openfire plugin 0.9.2 released</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the Push Notification plugin for Openfire.</p><p>This plugin enables clients to register for push notifications.</p><p>This release is a maintenance release. It adds translations and a configuration page. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/0.9.2/pushnotification/changelog.html">changelog</a></p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=pushnotification">Push Notification plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/push-notification-openfire-plugin-0-9-2-released/93044">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/push-notification-openfire-plugin-0-9-2-released/93044</link>
+			<pubDate>Thu, 20 Jul 2023 17:02:11 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93044</guid>
+			<source url="https://discourse.igniterealtime.org/t/push-notification-openfire-plugin-0-9-2-released/93044.rss">Push Notification Openfire plugin 0.9.2 released</source>
+		</item>
+		<item>
+			<title>Search Openfire plugin 0.7.4 release!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the Search plugin for Openfire.</p><p>This plugin adds features to Openfire that makes it easier for users to find each-other.</p><p>This release is a maintenance release. It adds translations. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/1.7.4/search/changelog.html">changelog</a></p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=search">Search plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/search-openfire-plugin-0-7-4-release/93043">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/search-openfire-plugin-0-7-4-release/93043</link>
+			<pubDate>Thu, 20 Jul 2023 16:57:24 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93043</guid>
+			<source url="https://discourse.igniterealtime.org/t/search-openfire-plugin-0-7-4-release/93043.rss">Search Openfire plugin 0.7.4 release!</source>
+		</item>
+		<item>
+			<title>Candy plugin for Openfire 2.2.0 Release 4 now available!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce a new release of the Openfire plugin for Candy.</p><p>Candy is a <a href="http://candy-chat.github.io/candy/">third-party chat client</a>. The Openfire plugin makes deploying it a one-click affair!</p><p>This release is a maintenance release. It adds translations and updates dependencies on third-party libraries. More details are available in the <a href="https://www.igniterealtime.org/projects/openfire/plugins/2.2.0-release-4/candy/changelog.html">changelog</a>.</p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=candy">candy plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/candy-plugin-for-openfire-2-2-0-release-4-now-available/93042">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/candy-plugin-for-openfire-2-2-0-release-4-now-available/93042</link>
+			<pubDate>Thu, 20 Jul 2023 15:47:12 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-93042</guid>
+			<source url="https://discourse.igniterealtime.org/t/candy-plugin-for-openfire-2-2-0-release-4-now-available/93042.rss">Candy plugin for Openfire 2.2.0 Release 4 now available!</source>
+		</item>
+		<item>
+			<title>Openfire inVerse plugin v10.1.4-1 release!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce the immediate release of version “10.1.4 release 1” of the inVerse plugin for Openfire!</p><p>The inVerse plugin adds a Converse-based web client to Openfire (<a href="https://conversejs.org/">Converse</a> is a third party implementation). With this plugin, you’ll be able to set up a fully functional Converse-based chat clients with just a few mouse-clicks!</p><p>This update includes an update of the converse.js library (to version 10.1.4), which brings <a href="https://www.igniterealtime.org/projects/openfire/plugins/10.1.4.1/inverse/changelog.html">various improvements</a>.</p><p>Your instance of Openfire should automatically display the availability of the update in the next few hours. Alternatively, you can download the new release of the plugin at the <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=inverse">inVerse plugin archive page</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/openfire-inverse-plugin-v10-1-4-1-release/92969">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/openfire-inverse-plugin-v10-1-4-1-release/92969</link>
+			<pubDate>Tue, 27 Jun 2023 16:59:09 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92969</guid>
+			<source url="https://discourse.igniterealtime.org/t/openfire-inverse-plugin-v10-1-4-1-release/92969.rss">Openfire inVerse plugin v10.1.4-1 release!</source>
+		</item>
+		<item>
+			<title>CVE-2023-32315: Openfire Administration Console authentication bypass</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>We’ve had an important security issue reported that affects all recent versions of Openfire. We’ve fixed it in the newly published <a href="https://discourse.igniterealtime.org/t/openfire-4-6-8-release/">4.6.8</a> and <a href="https://discourse.igniterealtime.org/t/openfire-4-7-5-release/">4.7.5</a> releases. We recommend people upgrade as soon as possible. More info, including mitigations for those who cannot upgrade quickly, is available in this security advisory: <a href="https://github.com/igniterealtime/Openfire/security/advisories/GHSA-gw42-f939-fhvm">CVE-2023-32315: Administration Console authentication bypass</a>.</p><p>Related to this issue, we have also made available updates to three of our plugins:</p><ul><li><a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=randomavatar">Random Avatar plugin</a> version 1.1.0.</li><li><a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=monitoring">Monitoring Service plugin</a> version 2.5.0.</li><li><a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=httpfileupload">HTTP File Upload plugin</a> version 1.3.0.</li></ul><p>If you’re using these plugins, it is recommended to update them immediately.</p><p>When you are using the REST API plugin, or any proprietary plugins, updating Openfire might affect availability of their functionality. Please find work-arounds in the <a href="https://github.com/igniterealtime/Openfire/security/advisories/GHSA-gw42-f939-fhvm">security advisory</a>.</p><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>24 posts - 11 participants</small></p><p><a href="https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-administration-console-authentication-bypass/92869">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-administration-console-authentication-bypass/92869</link>
+			<pubDate>Tue, 23 May 2023 16:47:33 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92869</guid>
+			<source url="https://discourse.igniterealtime.org/t/cve-2023-32315-openfire-administration-console-authentication-bypass/92869.rss">CVE-2023-32315: Openfire Administration Console authentication bypass</source>
+		</item>
+		<item>
+			<title>Openfire 4.7.5 Release</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime Community is happy to announce the <code>4.7.5</code> release of Openfire!</p><p>This release primarily addresses the issue that is subject of <a href="https://github.com/igniterealtime/Openfire/security/advisories/GHSA-gw42-f939-fhvm">security advisory CVE-2023-32315</a>, but also pulls in <a href="https://download.igniterealtime.org/openfire/docs/4.7.5/changelog.html">a number of improvements and bugfixes</a></p><p>You can find download artifacts <a href="https://igniterealtime.org/downloads/#openfire">available here</a> with the following <code>sha256sum</code> values</p><pre><code class="lang-auto">f70faf11b4798fefb26a20f7d60288d275a6d568db78faf79a4194cbae72eab4  openfire-4.7.5-1.noarch.rpm
+d1283d417dacb74d67334c06420679aae62d088bd3439c8135ccfc272fd5b95b  openfire_4.7.5_all.deb
+60d8efb96a1891cda2deac2cda9808cf6adec259f090d3a7fb2b7ca21484d75b  openfire_4_7_5.exe
+98d36c2318706c545345274234e2f5ccbf0f72f7801133effea342e2776b8bb0  openfire_4_7_5.tar.gz
+e95348be890aff64a7447295ab18eebb29db4bdc346b802df0c878ebbbf1d18e  openfire_4_7_5_x64.exe
+a5bb8c9b944b915bdf7ecf92cd2a689d0cf09e88bfc2df960f38000f6b788194  openfire_4_7_5.zip
+</code></pre><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>. We are always looking for volunteers interested in helping out with Openfire development!</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/openfire-4-7-5-release/92868">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/openfire-4-7-5-release/92868</link>
+			<pubDate>Tue, 23 May 2023 16:42:46 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92868</guid>
+			<source url="https://discourse.igniterealtime.org/t/openfire-4-7-5-release/92868.rss">Openfire 4.7.5 Release</source>
+		</item>
+		<item>
+			<title>Openfire 4.6.8 Release</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime Community is happy to announce the <code>4.6.8</code> release of Openfire!</p><p>We have made available a new release of this older version to addresses the issue that is subject of <a href="https://github.com/igniterealtime/Openfire/security/advisories/GHSA-gw42-f939-fhvm">security advisory CVE-2023-32315</a>.</p><p>We are aware that for some, the process of deploying a new major version of Openfire is not a trivial matter, as it may encompass a lot more than only performing the update of the executables. Depending on regulations that are in place, this process can require a lot of effort and take a long time to complete. To facilitate users that currently use an older version of Openfire, we are also making available this new release in the older 4.6 branch of Openfire. An upgrade to this version will, for some, require a lot less effort. Note well: although we are making available a new version in the 4.6 branch of Openfire, we strongly recommend that you upgrade to the latest version of Openfire (currently in the 4.7 branch), as that includes important fixes and improvements that are not available in 4.6.</p><p>You can find download artifacts <a href="https://github.com/igniterealtime/Openfire/releases/tag/v4.6.8">available here</a> with the following <code>sha256sum</code> values</p><pre><code class="lang-auto">aa1947097895a6d41bc8d1ac29f6ea60507bce69caadc497b4794a2a4110dc20  openfire-4.6.8-1.i686.rpm
+346871c71eff8e3b085fecd2f8dce5bfbf387885cfa7aff2076d42bd7273f70b  openfire-4.6.8-1.noarch.rpm
+37e4cc510cc2a59de50288c0e3baa53dcc702631433a01873a9270eeb7c789db  openfire-4.6.8-1.x86_64.rpm
+e92c5a0b76da5964b2e3fa43686ad63db29ef891ec7266ab16fe3a93b06c9e01  openfire_4.6.8_all.deb
+c6e0e40c55a81276881e93469ce88a862226ce33e58c8811e760427b878ebed4  openfire_4_6_8_bundledJRE.exe
+1b4c209453fffb6a6310354b425995bb92c1f09944eed35a1fd61a30201355bc  openfire_4_6_8_bundledJRE_x64.exe
+6b19394dc3f275ca039f85af59ca4f2fc5f628e2505cb39e59f5cfa55d605788  openfire_4_6_8.exe
+b22fce993bce4930346183d5edc1e9e38827a47ed8f64c41486a105f574cc116  openfire_4_6_8.tar.gz
+7c5769c7c8869ce2dfbb93fbbf1ec97a4e8509d61f8c14ba3f6be20abd05e90e  openfire_4_6_8_x64.exe
+72f27d063446479e1d4ceb2a46ac838f5462dfca53032cfa068eb96ef08d0697  openfire_4_6_8.zip
+</code></pre><p>If you have any questions, please stop by our <a href="https://discourse.igniterealtime.org/">community forum</a> or our <a href="https://www.igniterealtime.org/support/group_chat.jsp">live groupchat</a>. We are always looking for volunteers interested in helping out with Openfire development!</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/openfire-4-6-8-release/92867">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/openfire-4-6-8-release/92867</link>
+			<pubDate>Tue, 23 May 2023 16:41:51 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92867</guid>
+			<source url="https://discourse.igniterealtime.org/t/openfire-4-6-8-release/92867.rss">Openfire 4.6.8 Release</source>
+		</item>
+		<item>
+			<title>Spark 3.0.2 Released</title>
+			<dc:creator>
+				<![CDATA[ilyaHlevnoy]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>The Ignite Realtime community is happy to announce the availability of Spark version 3.0.2</p><p>The release contains bug fixes and updates two plugins Translator and Roar.</p><p>Many Spark translations are incomplete. Please help us <a href="https://explore.transifex.com/igniterealtime/spark/">translate Spark</a></p><p>Full list of changes can be found in the <a href="http://download.igniterealtime.org/spark/docs/3.0.2/changelog.html">changelog </a>.</p><p>We encourage users and developers to get involved with Spark project by providing feedback in the forums or submitting pull requests on our <a href="https://github.com/igniterealtime/Spark">GitHub </a> page.</p><p>You can download Spark from the <a href="https://www.igniterealtime.org/downloads/">Downloads </a> page. Below are the sha256 checksums:</p><pre><code class="lang-auto">db7febafd05a064ffed4800066d11d0a2d27288aa3c0b174ed21a20672ab4669 *spark_3_0_2-64bit.exe
+647712b43942f7dc399901c9078ea1de7fcca14de3b5898bc3bdeee7751cf1b3 *spark_3_0_2-64bit.msi
+c1415417081095656c5fd7eb42e09ac6168f550af3c5254eb35506a404283a3c *spark_3_0_2-arm.exe
+78994eaa31d6c074bc72b9ac7a1f38f63488f9272c1a8870524f986dda618b6b *spark_3_0_2-with-jre.dmg
+ef3ba8eef5b88edc5e4ce9e13e9fa41ef2fad136cc6b518c52da79051c2a7c39 *spark_3_0_2-with-jre.exe
+d18dd7613333647f3fae6728731df7e3ef957103a84686ce1bb7befb9d32285f *spark_3_0_2-with-jre.msi
+39b03b4f4363bc053d2c5ed0c7452f97ced38a1c307ab77ce7f8b0e36459f498 *spark_3_0_2.deb
+5bc3bf000b4fe8a49d424ea53ccd6b62dae9291e987394f08c62ff0d69f0aec9 *spark_3_0_2.dmg
+e511c10db5f72e8b311f79dc3ac810040d44c5488f606cb860d7250d1dcf3709 *spark_3_0_2.exe
+f54d3990dd0ca76a1ca447af0bef9b4244861c7da9f6ab38a755c9cc578344c8 *spark_3_0_2.msi
+fff7fa157fe187b5307ef2383c87b8193a0416ffe41ffcb2ea0b0e6672a917f9 *spark_3_0_2.rpm
+a5cf06ccbe82dc308f2d2493bc0d89f552729fb993af392003263f0cd9caac16 *spark_3_0_2.sh
+03eae1e4e88fdc303752f3b5c0ef8bb00653cfdf28ee964699bba892e45110e4 *spark_3_0_2.tar.gz
+</code></pre><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/spark-3-0-2-released/92705">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/spark-3-0-2-released/92705</link>
+			<pubDate>Fri, 31 Mar 2023 18:16:46 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92705</guid>
+			<source url="https://discourse.igniterealtime.org/t/spark-3-0-2-released/92705.rss">Spark 3.0.2 Released</source>
+		</item>
+		<item>
+			<title>Openfire Pàdé plugin 1.7.6 released!</title>
+			<dc:creator>
+				<![CDATA[Dele_Olajide]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>Ignite Realtime community is happy to be able to announce the release of <a href="https://github.com/igniterealtime/openfire-pade-plugin/releases/tag/v1.7.6">Openfire plugin for Pàdé version 1.7.6 </a>.</p><p>This version upgrades to the latest <a href="https://download.jitsi.org/jitsi-meet/src/jitsi-meet-1.0.6991.tar.bz2">Jitsi Meet - 1.0.6991 </a> and <a href="https://xmpp.org/software/clients/pade/">Pàdé 2.1.2 client </a> and fixes a few compatibility issues.</p><p>Your instance of Openfire should automatically display the availability of the new plugin in the next few hours. Alternatively, you can download the the plugin directly from <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=pade">pàdé plugin archive page </a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>3 posts - 2 participants</small></p><p><a href="https://discourse.igniterealtime.org/t/openfire-pade-plugin-1-7-6-released/92674">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/openfire-pade-plugin-1-7-6-released/92674</link>
+			<pubDate>Sat, 18 Mar 2023 14:36:46 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92674</guid>
+			<source url="https://discourse.igniterealtime.org/t/openfire-pade-plugin-1-7-6-released/92674.rss">Openfire Pàdé plugin 1.7.6 released!</source>
+		</item>
+		<item>
+			<title>Release v1.1.0 of the MUC Real-Time Block List plugin for Openfire</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>We are happy to announce the immediate availability of a new version of the MUC Real-Time Block List plugin for <a href="https://www.igniterealtime.org/projects/openfire/">Openfire</a>, our cross-platform real-time collaboration server based on the XMPP protocol! This plugin can help you moderate your chat rooms, especially when your service is part of a larger network of federated XMPP domains.</p><p>From experience, the XMPP community has learned that bad actors tend to spam a wide range of public chat rooms on an equally wide range of different domains. Prior to the functionality provided by this plugin, the administrator of each MUC service had to manually adjust permissions, to keep unwanted entities out. With this new plugin, that process is automated.</p><p>In this new release, several small bugs were fixed, and new features were introduced, including:</p><ul><li>The plugin now, by default, uses a block list as maintained on <a href="https://xmppbl.org/">https://xmppbl.org/</a></li><li>Support for blocking full domains (rather than just individual users) has been added</li><li>Block list entries no longer disappear over time</li></ul><p>The updated plugin should become available for download in your Openfire admin console in the course of the next few hours. Alternatively, you can download the plugin directly, from <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=mucrtbl">the plugin’s archive page</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/release-v1-1-0-of-the-muc-real-time-block-list-plugin-for-openfire/92673">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/release-v1-1-0-of-the-muc-real-time-block-list-plugin-for-openfire/92673</link>
+			<pubDate>Sat, 18 Mar 2023 10:00:24 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92673</guid>
+			<source url="https://discourse.igniterealtime.org/t/release-v1-1-0-of-the-muc-real-time-block-list-plugin-for-openfire/92673.rss">Release v1.1.0 of the MUC Real-Time Block List plugin for Openfire</source>
+		</item>
+		<item>
+			<title>Developing Openfire Efficient XML Interchange (EXI) functionality</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>We am excited to announce that a new plugin for the <a href="https://www.igniterealtime.org/projects/openfire/">Openfire</a> real time collaboration server is in the works! This plugin implements <a href="https://www.w3.org/TR/exi/">Efficient XML Interchange (EXI)</a> functionality and provides an XMPP implementation of EXI as defined in <a href="https://xmpp.org/extensions/xep-0322.html">XEP-0322</a>.</p><p>Efficient XML Interchange (EXI) is a binary XML format for exchange of data on a computer network. It is one of the most prominent efforts to encode XML documents in a binary data format, rather than plain text. Using EXI format reduces the verbosity of XML documents as well as the cost of parsing.</p><p>EXI is useful for:</p><ul><li>a complete range of XML document sizes, from dozens of bytes to terabytes</li><li>reducing computational overhead to speed up parsing of compressed documents</li><li>increasing endurance of small devices by utilizing efficient decompression</li></ul><p>Read more about EXI in its <a href="https://en.wikipedia.org/wiki/Efficient_XML_Interchange">Wikipedia article</a> (where the above definition was taken from).</p><p>The plugin that we’re developing today was first created by Javier Placencio, in 2013 and 2014. In 2023, that now dormant <a href="https://github.com/javpla/openfire">project</a> was forked by the Ignite Realtime community.</p><p>Work on the plugin is progressing steadily. Most of the core functionality is believed to be ready. In preparation for the official release of the plugin, we are looking for opportunities to perform interoperability testing. So far, testing has been done with our own mock client implementations. To be able to release a fully functional plugin, we’d like to test against implementations of other authors. Development builds of the plugin can be downloaded from <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=EXI">the Openfire EXI plugin archive page</a>.</p><p>Are you interested in this? Please reach out to us on the <a href="https://discourse.igniterealtime.org">Ignite Realtime Community</a>, or stop by the <a href="https://igniterealtime.org/support/group_chat.jsp">open chat</a>! We would love to hear from you!</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/developing-openfire-efficient-xml-interchange-exi-functionality/92663">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/developing-openfire-efficient-xml-interchange-exi-functionality/92663</link>
+			<pubDate>Tue, 14 Mar 2023 19:39:42 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92663</guid>
+			<source url="https://discourse.igniterealtime.org/t/developing-openfire-efficient-xml-interchange-exi-functionality/92663.rss">Developing Openfire Efficient XML Interchange (EXI) functionality</source>
+		</item>
+		<item>
+			<title>Botz version 1.2.0 release</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>We have just released version 1.2.0 of the Botz framework for Openfire!</p><p>The Botz library adds to the already rich and extensible Openfire with the ability to create internal user bots.</p><p>In this release, a bug that prevented client sessions for bots from being created was fixed. Hat-tip to<br>
+Kris Iyer for working with us on a fix!</p><p>Download the latest version of the Botz framework from <a href="https://www.igniterealtime.org/projects/botz/">its project page</a>!</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/botz-version-1-2-0-release/92649">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/botz-version-1-2-0-release/92649</link>
+			<pubDate>Thu, 09 Mar 2023 15:46:06 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92649</guid>
+			<source url="https://discourse.igniterealtime.org/t/botz-version-1-2-0-release/92649.rss">Botz version 1.2.0 release</source>
+		</item>
+		<item>
+			<title>HTTP File Upload v1.2.2 released!</title>
+			<dc:creator>
+				<![CDATA[danc]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>We’ve just released version 1.2.2 of the HTTP File Upload plugin for Openfire. This release includes Ukrainian language support, thanks to Yurii Savchuk (svais) and his son Vladislav Savchuk (Bruhmozavr), as well as a few updated translations for Portuguese, Russian and English.</p><p>Grab it from the plugins page in your Openfire Admin Console, or download manually from the HTTP File Upload archive page, <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=httpfileupload">here</a>.</p><p>For other release announcements and news follow us on <a href="https://twitter.com/IgniteRealtime">Twitter</a> and <a href="https://toot.igniterealtime.org/@news">Mastodon</a>.</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/http-file-upload-v1-2-2-released/92639">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/http-file-upload-v1-2-2-released/92639</link>
+			<pubDate>Sun, 05 Mar 2023 19:04:22 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92639</guid>
+			<source url="https://discourse.igniterealtime.org/t/http-file-upload-v1-2-2-released/92639.rss">HTTP File Upload v1.2.2 released!</source>
+		</item>
+		<item>
+			<title>Translations everywhere!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>Two months ago, we <a href="https://discourse.igniterealtime.org/t/help-us-translate-spark-and-openfire">started using Transifex</a> as a platform that can be easily used by anyone to provide translations for our projects, like Openfire and Spark.</p><p>It is great to see that new translations are pouring in! In the last few months, more than 20,000 translated words have been provided by our community!</p><p></p><div class="lightbox-wrapper"><a class="lightbox" href="https://discourse.igniterealtime.org/uploads/default/original/2X/c/caed4b5c3237604b7e24302a6279dac0cc0b310c.jpeg" data-download-href="https://discourse.igniterealtime.org/uploads/default/caed4b5c3237604b7e24302a6279dac0cc0b310c" title="image"><img src="https://discourse.igniterealtime.org/uploads/default/original/2X/c/caed4b5c3237604b7e24302a6279dac0cc0b310c.jpeg" alt="image" data-base62-sha1="sXaQGXxjx8uCeOGVe50VvMhlHA0" width="690" height="469" data-dominant-color="876758"></a></div><p></p><p>We’ve enabled the Transifex platform for most of the Openfire plugins (that require translations) today. If you are proficient in a non-English language, please join the <a href="https://explore.transifex.com/igniterealtime/">translation effort</a>!</p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/translations-everywhere/92628">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/translations-everywhere/92628</link>
+			<pubDate>Thu, 02 Mar 2023 13:46:17 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92628</guid>
+			<source url="https://discourse.igniterealtime.org/t/translations-everywhere/92628.rss">Translations everywhere!</source>
+		</item>
+		<item>
+			<title>inVerse Openfire plugin 10.1.2-1 released!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>Earlier today, version 10.1.2 release 1 of the Openfire inVerse plugin was released. This plugin allows you to easily deploy the third-party <a href="https://conversejs.org/">Converse client</a> in Openfire. In this release, the version of the client that is bundled in the plugin is updated to 10.1.2!</p><p>The updated plugin should become available for download in your Openfire admin console in the course of the next few hours. Alternatively, you can download the plugin directly, from <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=inVerse">the plugin’s archive page</a>.</p><p><a href="https://twitter.com/IgniteRealtime">For other release announcements and news follow us on Twitter</a></p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/inverse-openfire-plugin-10-1-2-1-released/92591">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/inverse-openfire-plugin-10-1-2-1-released/92591</link>
+			<pubDate>Fri, 24 Feb 2023 21:11:42 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92591</guid>
+			<source url="https://discourse.igniterealtime.org/t/inverse-openfire-plugin-10-1-2-1-released/92591.rss">inVerse Openfire plugin 10.1.2-1 released!</source>
+		</item>
+		<item>
+			<title>New: Openfire MUC Real-Time Block List plugin!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>A new plugin has been made available for Openfire, our cross-platform real-time collaboration server based on the XMPP protocol. We have named this new plugin the MUC Real-Time Block List plugin.</p><p>This plugin can help you moderate your chat rooms, especially when your service is part of a larger network of federated XMPP domains. From experience, the XMPP community has learned that bad actors tend to spam a wide range of public chat rooms on an equally wide range of different domains. Prior to the functionality provided by this plugin, the administrator of each MUC service had to manually adjust permissions, to keep unwanted entities out. With this new plugin, that process is automated.</p><p>This plugin can be used to subscribe to a Publish/Subscribe node (as defined in <a href="https://xmpp.org/extensions/xep-0060.html">XEP-0060</a>), that can live on a remote XMPP domain, but curated by a trusted (group of) administrators). It is expected that this node contains a list of banned entities. When Openfire, through the plugin, is notified that the list has received a new banned entity, it will prevent that entity from joining a chat room in Openfire (if they’re already in, they will be kicked out automatically). Using this mechanism, moderation efforts centralized in one federated Pub/Sub service can be used by any server that uses this plugin.</p><p>This plugin is heavily inspired, and aspires to be compatible with, <a href="https://modules.prosody.im/mod_muc_rtbl.html">Prosody’s mod_muc_rtbl</a> and the pub/sub services that it uses.</p><p>The first version of this plugin is now available <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=mucrtbl">on our website</a> and should become available in the list of installable plugins in your instance of Openfire in the next few hours. Please give it a test! We are interested in hearing back from you!</p><p><a href="https://twitter.com/IgniteRealtime">For other release announcements and news follow us on Twitter</a></p><p><small>1 post - 1 participant</small></p><p><a href="https://discourse.igniterealtime.org/t/new-openfire-muc-real-time-block-list-plugin/92587">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/new-openfire-muc-real-time-block-list-plugin/92587</link>
+			<pubDate>Thu, 23 Feb 2023 20:30:26 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92587</guid>
+			<source url="https://discourse.igniterealtime.org/t/new-openfire-muc-real-time-block-list-plugin/92587.rss">New: Openfire MUC Real-Time Block List plugin!</source>
+		</item>
+		<item>
+			<title>Help us translate Spark and Openfire!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>We have started to experiment with an online tool that facilitates the process of translating Spark and Openfire. Both already have a bunch of translations, but none are complete.</p><p>I’m looking for people wanting to test the tool and/or provide translations. The aim is to make providing translations become so easy that little technological know-how is required.</p><p>If you’re interested, please sign up to <a href="https://explore.transifex.com/igniterealtime/" class="inline-onebox">Ignite Realtime localization | Transifex</a> and let me know what you think!</p><p><small>8 posts - 4 participants</small></p><p><a href="https://discourse.igniterealtime.org/t/help-us-translate-spark-and-openfire/92399">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/help-us-translate-spark-and-openfire/92399</link>
+			<pubDate>Sat, 24 Dec 2022 11:20:40 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92399</guid>
+			<source url="https://discourse.igniterealtime.org/t/help-us-translate-spark-and-openfire/92399.rss">Help us translate Spark and Openfire!</source>
+		</item>
+		<item>
+			<title>New Mastodon service for the Ignite Realtime community!</title>
+			<dc:creator>
+				<![CDATA[guus]]>
+			</dc:creator>
+			<category>Ignite Realtime Blogs</category>
+			<description>
+				<![CDATA[
+            <p>Some of you might already have followed along with the discussion on this in the open_chat chatroom, but: the Ignite Realtime community now has its own Mastodon service at <a href="https://toot.igniterealtime.org">toot.igniterealtime.org</a>! This service is graciously sponsored by <a href="https://www.free-solutions.ch/">Free Solutions Sàrl</a> - a big thank you to Claude and his team!</p><div align="center"><p></p><div class="lightbox-wrapper"><a class="lightbox" href="https://discourse.igniterealtime.org/uploads/default/original/2X/7/76dd6261bc50689758b08810b728ae0d70ad5d3d.png" data-download-href="https://discourse.igniterealtime.org/uploads/default/76dd6261bc50689758b08810b728ae0d70ad5d3d" title=""><img src="https://discourse.igniterealtime.org/uploads/default/optimized/2X/7/76dd6261bc50689758b08810b728ae0d70ad5d3d_2_690x360.png" alt="" data-base62-sha1="gXwECzExsAqyXPeGdTYHBv9avvv" width="690" height="360" srcset="https://discourse.igniterealtime.org/uploads/default/optimized/2X/7/76dd6261bc50689758b08810b728ae0d70ad5d3d_2_690x360.png, https://discourse.igniterealtime.org/uploads/default/optimized/2X/7/76dd6261bc50689758b08810b728ae0d70ad5d3d_2_1035x540.png 1.5x, https://discourse.igniterealtime.org/uploads/default/original/2X/7/76dd6261bc50689758b08810b728ae0d70ad5d3d.png 2x" data-small-upload="https://discourse.igniterealtime.org/uploads/default/optimized/2X/7/76dd6261bc50689758b08810b728ae0d70ad5d3d_2_10x10.png"></a></div><p></p></div><p>The idea is to have a Mastodon service with accounts from like-minded people with regards to open source / open standards real time collaboration. That way, both our local as well as federated timelines should become more applicable to us, as the users of this service, as compared to one of the larger, generic servers that are out there. Also, decentralizing by moving away from some of those gigantic services is a Good Thing©®!</p><p>We are inviting our community members to join <a href="http://toot.igniterealtime.org">toot.igniterealtime.org</a>! If you don’t have a Mastodon account yet, or if you want an additional one, or want to migrate your existing account, please join us!</p><p>At least for now, this server is not accepting public sign-ups. While we are gaining experience with running a Mastodon service, we will limit new accounts to people from the community that we recognize. This will largely be based on <a href="https://blog.discourse.org/2018/06/understanding-discourse-trust-levels/">the trust levels</a> that software running our forum is assigning to people.</p><p>When you <a href="https://toot.igniterealtime.org/auth/sign_up">sign up on our Mastodon service</a>, please use the same mail address that you used to sign up to our forum, so that we can cross-reference who’s who. It helps if you fill out your forum username in the answer to the “Why do you want to join?” question that’s part of the application. The approval process is manual, so please allow for some time for that to happen. If you think that we’ve missed your request (Mastodon doesn’t always send out notifications, it appears), please let us know by reaching out in the forum, or in the <a href="https://www.igniterealtime.org/support/group_chat.jsp">open_chat chatroom</a>!</p><p>We are looking forward to hearing from you in the Fediverse!</p><p><small>3 posts - 3 participants</small></p><p><a href="https://discourse.igniterealtime.org/t/new-mastodon-service-for-the-ignite-realtime-community/92389">Read full topic</a></p>
+          ]]>
+			</description>
+			<link>https://discourse.igniterealtime.org/t/new-mastodon-service-for-the-ignite-realtime-community/92389</link>
+			<pubDate>Wed, 21 Dec 2022 13:56:14 +0000</pubDate>
+			<discourse:topicPinned>No</discourse:topicPinned>
+			<discourse:topicClosed>No</discourse:topicClosed>
+			<discourse:topicArchived>No</discourse:topicArchived>
+			<guid isPermaLink="false">discourse.igniterealtime.org-topic-92389</guid>
+			<source url="https://discourse.igniterealtime.org/t/new-mastodon-service-for-the-ignite-realtime-community/92389.rss">New Mastodon service for the Ignite Realtime community!</source>
+		</item>
+	</channel>
+</rss>

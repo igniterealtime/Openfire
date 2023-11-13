@@ -15,9 +15,6 @@
  */
 package org.jivesoftware.admin.servlet;
 
-import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndFeed;
-import com.rometools.rome.io.SyndFeedInput;
 import org.apache.http.HttpHost;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -26,8 +23,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.DefaultRoutePlanner;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.Node;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +40,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.json.*;
 
@@ -77,7 +80,7 @@ public class BlogPostServlet extends HttpServlet {
 
     private static final Logger Log = LoggerFactory.getLogger(BlogPostServlet.class);
     private static Instant lastRSSFetch = Instant.EPOCH;
-    private SyndFeed lastBlogFeed = null;
+    private JSONArray lastItems = null;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -88,7 +91,7 @@ public class BlogPostServlet extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         synchronized (this) {
-            if (lastBlogFeed == null || Duration.between(lastRSSFetch, Instant.now()).compareTo(REFRESH.getDefaultValue()) > 0) {
+            if (lastItems == null || Duration.between(lastRSSFetch, Instant.now()).compareTo(REFRESH.getDefaultValue()) > 0) {
                 Log.debug("Trying to obtain latest blog posts from IgniteRealtime.org");
 
                 final String proxyHost = UpdateManager.PROXY_HOST.getValue();
@@ -105,8 +108,8 @@ public class BlogPostServlet extends HttpServlet {
                 try (final CloseableHttpClient client = HttpClients.custom().setRoutePlanner(routePlanner).build();
                      final CloseableHttpResponse httpResponse = client.execute(httpGet);
                      final InputStream stream = httpResponse.getEntity().getContent()) {
-                    final SyndFeedInput input = new SyndFeedInput();
-                    lastBlogFeed = input.build(new InputStreamReader(stream));
+
+                    lastItems = parseFirstEntries(stream, 7);
                     lastRSSFetch = Instant.now();
                 } catch (final Throwable throwable) {
                     Log.warn("Unable to download blogposts from igniterealtime.org", throwable);
@@ -114,29 +117,50 @@ public class BlogPostServlet extends HttpServlet {
             }
         }
 
-        final JSONArray items = new JSONArray();
-        int count = 0;
-        final int max = 7;
-        if (lastBlogFeed != null && !lastBlogFeed.getEntries().isEmpty()) {
-            Log.debug("Parsing {} blog posts to JSON.", Math.min(lastBlogFeed.getEntries().size(), max));
-            for (SyndEntry entry : lastBlogFeed.getEntries()) {
-                final JSONObject o = new JSONObject();
-                o.put("link", entry.getLink());
-                o.put("title", entry.getTitle());
-                o.put("date", JiveGlobals.formatDate(entry.getPublishedDate()));
-                items.put(o);
-
-                if (++count >= max) {
-                    break;
-                }
-            }
-        }
-
         final JSONObject result = new JSONObject();
-        result.put("items", items);
+        result.put("items", lastItems);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(result.toString(2));
+    }
+
+    /**
+     * Parses the input stream, expected to contain RSS data, into the proprietary format used by the admin console.
+     *
+     * @param inputStream An input stream of RSS data
+     * @param count The maximum number of items to return.
+     * @return A collection or RSS items.
+     */
+    static JSONArray parseFirstEntries(final InputStream inputStream, final int count) throws ExecutionException, InterruptedException
+    {
+        final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z");
+
+        final JSONArray result = new JSONArray();
+
+        final Document document = SAXReaderUtil.readDocument(inputStream);
+        final List<Node> nodes = document.selectNodes("/rss/channel/item");
+        for (final Node node : nodes) {
+            if (!(node instanceof Element)) {
+                continue;
+            }
+
+            try {
+                final Element item = (Element) node;
+
+                final JSONObject o = new JSONObject();
+                o.put("link", item.elementText("link"));
+                o.put("title", item.elementText("title"));
+                o.put("date", JiveGlobals.formatDate(dateFormat.parse(item.elementText("pubDate"))));
+                result.put(o);
+            } catch (Exception e) {
+                Log.debug("Unable to parse element as RSS data: {}", node.asXML(), e);
+            }
+
+            if (result.length() >= count) {
+                break;
+            }
+        }
+        return result;
     }
 }

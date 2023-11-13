@@ -54,4 +54,18 @@
         <packageUrl regex="true">^pkg:maven/org\.dom4j/dom4j@.*$</packageUrl>
         <cve>CVE-2023-45960</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress eclipse:jetty issues for jetty-servlet-api@4.0.x since it's incorrectly pulling in all Jetty issues after Jetty v4, whereas jetty-servlet-api v4 is included in Jetty v10.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty\.toolchain/jetty\-servlet\-api@4\.0\..*$</packageUrl>
+        <cpe>cpe:/a:eclipse:jetty</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress jetty:jetty issues for jetty-servlet-api@4.0.x since it's incorrectly pulling in all Jetty issues after Jetty v4, whereas jetty-servlet-api v4 is included in Jetty v10.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty\.toolchain/jetty\-servlet\-api@4\.0\..*$</packageUrl>
+        <cpe>cpe:/a:jetty:jetty</cpe>
+    </suppress>
 </suppressions>

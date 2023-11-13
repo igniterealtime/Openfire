@@ -68,4 +68,10 @@
         <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty\.toolchain/jetty\-servlet\-api@4\.0\..*$</packageUrl>
         <cpe>cpe:/a:jetty:jetty</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Ignore CVE about Netty defaults for hostname validation, since Openfire implements its own configurable hostname validation.
+   ]]></notes>
+        <cve>CVE-2023-4586</cve>
+    </suppress>
 </suppressions>

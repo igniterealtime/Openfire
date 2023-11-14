@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
@@ -107,77 +108,89 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
             if (event.isSuccess()) {
                 sslInitDone = true;
 
-                NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
-                connection.setEncrypted(true);
-                Log.debug("TLS negotiation was successful. Connection encrypted. Proceeding with authentication...");
+                final NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
 
-                // If TLS cannot be used for authentication, it is permissible to use another authentication mechanism
-                // such as dialback. RFC 6120 does not explicitly allow this, as it does not take into account any other
-                // authentication mechanism other than TLS (it does mention dialback in an interoperability note. However,
-                // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
-                // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
-                // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
                 if (SASLAuthentication.verifyCertificates(connection.getPeerCertificates(), domainPair.getRemote(), true)) {
-                    Log.debug("SASL authentication will be attempted");
-                    Log.debug("Send the stream header and wait for response...");
+                    Log.debug("TLS negotiation with '{}' was successful. Connection encrypted. Proceeding with authentication.", domainPair.getRemote());
                     sendNewStreamHeader(connection);
-                } else if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
-                    Log.warn("Aborting attempt to create outgoing session as certificate verification failed, and strictCertificateValidation is enabled.");
-                    abandonSession(stanzaHandler);
-                } else if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
-                    Log.debug("Failed to verify certificates for SASL authentication. Will continue with dialback.");
-                    sendNewStreamHeader(connection);
+                    connection.setEncrypted(true);
+                    ctx.fireChannelActive();
                 } else {
-                    Log.warn("Unable to authenticate the connection: Failed to verify certificates for SASL authentication and dialback is not available.");
-                    abandonSession(stanzaHandler);
-                }
+                    Log.debug("TLS negotiation with '{}' was successful, but peer's certificates are not valid for its domain.", domainPair.getRemote());
 
-                ctx.fireChannelActive();
+                    if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, true)) {
+                        Log.warn("Strict certificate validation is enabled. Aborting session with '{}' as its certificates are not valid for its domain.", domainPair.getRemote());
+                        stanzaHandler.setSession(null);
+                        stanzaHandler.setAttemptedAllAuthenticationMethods();
+                        ctx.close();
+                        return;
+                    }
+
+                    if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+                        Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is disabled by configuration. Aborting session, as this leaves no available authentication mechanisms.", domainPair.getRemote());
+                        stanzaHandler.setSession(null);
+                        stanzaHandler.setAttemptedAllAuthenticationMethods();
+                        ctx.close();
+                        return;
+                    }
+
+                    // If TLS cannot be used for authentication, it is permissible to use another authentication mechanism
+                    // such as dialback. RFC 6120 does not explicitly allow this, as it does not take into account any other
+                    // authentication mechanism other than TLS (it does mention dialback in an interoperability note. However,
+                    // RFC 7590 Section 3.4 writes: "In particular for XMPP server-to-server interactions, it can be reasonable
+                    // for XMPP server implementations to accept encrypted but unauthenticated connections when Server Dialback
+                    // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
+
+                    Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is available.", domainPair.getRemote());
+
+                    sendNewStreamHeader(connection);
+                    connection.setEncrypted(true);
+                    ctx.fireChannelActive();
+                }
             } else {
                 // SSL Handshake has failed
-                stanzaHandler.setSession(null);
+                Log.debug("TLS negotiation with '{}' was unsuccessful", domainPair.getRemote(), event.cause());
+                ctx.pipeline().remove(SslHandler.class);
 
-                if (isCertificateException(event)){
-                    if (configRequiresStrictCertificateValidation()) {
-                        Log.warn("Aborting attempt to create outgoing session to {} as TLS handshake failed, and strictCertificateValidation is enabled.", stanzaHandler.getRemoteDomain());
-                        Log.debug("Error due to strictCertificateValidation", event.cause());
-                        abandonSession(stanzaHandler);
-                    } else {
-                        Log.warn("TLS handshake failed due to a certificate validation error");
-                    }
+                if (isCertificateException(event) && configRequiresStrictCertificateValidation()) {
+                    Log.warn("TLS negotiation with '{}' was unsuccessful, caused by a certificate issue. Aborting session, as by configuration Openfire is prohibited to set up a connection with a peer that provides an invalid certificate.", domainPair.getRemote(), event.cause());
+                    stanzaHandler.setSession(null);
+                    stanzaHandler.setAttemptedAllAuthenticationMethods();
+                    ctx.close();
+                    return;
                 }
 
-                // fall back to dialback
                 if (ServerDialback.isEnabled() && connectionConfigDoesNotRequireTls()) {
-                    Log.debug("Unable to create a new TLS session. Going to try connecting using server dialback as a fallback.");
+                    Log.debug("By configuration, TLS is not required. As the Server Dialback authentication mechanism is available, it may be used for authentication over a plain connection.");
 
-                    // Use server dialback (pre XMPP 1.0) over a plain connection
+                    // The original connection is probably unusable, as the TLS handshake failed (which the peer will know about).
+                    // Instead of attempting Server Dialback on this connection, create a new connection and try it on that.
                     final LocalOutgoingServerSession outgoingSession = new ServerDialback(domainPair).createOutgoingSession(port);
                     if (outgoingSession != null) {
-                        Log.debug("Successfully created new session (using dialback as a fallback)!");
+                        Log.info("TLS negotiation with '{}' was unsuccessful, but Server Dialback authentication over a plain connection (as a fallback) succeeded. Session successfully established on an unencrypted connection.", domainPair.getRemote());
                         stanzaHandler.setSession(outgoingSession);
                         stanzaHandler.setSessionAuthenticated();
+                        ctx.fireChannelActive();
+                        return;
                     } else {
-                        Log.warn("Unable to create a new session: Dialback (as a fallback) failed.");
+                        Log.warn("TLS negotiation with '{}' was unsuccessful, and Server Dialback over a plain connection (as a fallback) failed. Aborting session.", domainPair.getRemote());
+                        stanzaHandler.setSession(null);
+                        stanzaHandler.setAttemptedAllAuthenticationMethods();
+                        ctx.close();
+                        return;
                     }
-                } else {
-                    Log.warn("Unable to create a new session: exhausted all options (not trying dialback as a fallback, as server dialback is disabled by configuration.");
                 }
 
+                Log.warn("TLS negotiation with '{}' was unsuccessful. Unable to create a new session: exhausted all options", domainPair.getRemote());
+                stanzaHandler.setSession(null);
                 stanzaHandler.setAttemptedAllAuthenticationMethods();
+                ctx.close();
             }
         }
-
-        super.userEventTriggered(ctx, evt);
     }
 
     private static boolean isCertificateException(SslHandshakeCompletionEvent event) {
         return event.cause().getCause() instanceof CertificateException;
-    }
-
-    private static void abandonSession(RespondingServerStanzaHandler stanzaHandler) {
-        stanzaHandler.setSession(null);
-        stanzaHandler.setAttemptedAllAuthenticationMethods();
     }
 
     private void sendNewStreamHeader(NettyConnection connection) {

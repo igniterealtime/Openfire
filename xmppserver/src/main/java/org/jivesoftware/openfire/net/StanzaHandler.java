@@ -40,6 +40,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A StanzaHandler is the main responsible for handling incoming stanzas. Some stanzas like startTLS
@@ -159,7 +160,6 @@ public abstract class StanzaHandler {
             return;
         }
 
-        Log.trace("Create DOM object from received stanza");
         Element doc;
         final Set<Namespace> namespaces = connection.getAdditionalNamespaces();
         if (namespaces.isEmpty()) {
@@ -170,7 +170,7 @@ public abstract class StanzaHandler {
             // only known case occurring 'in the wild' for this is Server Dialback, but it's valid XML / XMPP regardless.
             // Reestablishing those prefixes is achieved by wrapping the data-to-be-parsed in a dummy root element on which
             // the prefixes are defined. After the data has been parsed, the dummy root element is discarded. See OF-2556.
-            Log.trace("Connection defined namespace prefixes on its original 'stream' element.");
+            Log.trace("Connection '{}' defined namespace prefixes on its original 'stream' element: {}", connection.getAddress(), namespaces.stream().map(Namespace::asXML).collect(Collectors.joining(", ")));
             final StringBuilder sb = new StringBuilder();
             sb.append("<stream:stream");
             namespaces.forEach(namespace -> sb.append(" ").append(namespace.asXML()));
@@ -215,7 +215,7 @@ public abstract class StanzaHandler {
                 waitingCompressionACK = true;
             }
         } else if (isStreamManagementStanza(doc)) {
-            Log.trace("Client is sending stream management stanza.");
+            Log.trace("Client '{}' is sending stream management stanza.", session.getAddress());
             session.getStreamManager().process( doc );
         }
         else {
@@ -236,7 +236,7 @@ public abstract class StanzaHandler {
 
         String tag = doc.getName();
         if ("error".equals(tag)) {
-            Log.info("The stream is being closed by the peer, which sent this stream error: " + doc.asXML());
+            Log.info("The stream is being closed by the peer ('{}'), which sent this stream error: {}", session.getAddress(), doc.asXML());
             session.close();
         }
         else if ("message".equals(tag)) {
@@ -245,7 +245,7 @@ public abstract class StanzaHandler {
                 packet = new Message(doc, !validateJIDs());
             }
             catch (IllegalArgumentException e) {
-                Log.debug("Rejecting packet. JID malformed", e);
+                Log.debug("Rejecting stanza from '{}'. JID malformed", session.getAddress(), e);
                 // The original packet contains a malformed JID so answer with an error.
                 Message reply = new Message();
                 reply.setID(doc.attributeValue("id"));
@@ -263,7 +263,7 @@ public abstract class StanzaHandler {
                 packet = new Presence(doc, !validateJIDs());
             }
             catch (IllegalArgumentException e) {
-                Log.debug("Rejecting packet. JID malformed", e);
+                Log.debug("Rejecting stanza from '{}'. JID malformed", session.getAddress(), e);
                 // The original packet contains a malformed JID so answer an error
                 Presence reply = new Presence();
                 reply.setID(doc.attributeValue("id"));
@@ -278,7 +278,7 @@ public abstract class StanzaHandler {
                 packet.getType();
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid presence type", e);
+                Log.warn("Invalid presence type '{}' received from '{}'", packet.getElement().attributeValue("type"), session.getAddress(), e);
                 // The presence packet contains an invalid presence type so replace it with
                 // an available presence type
                 packet.setType(null);
@@ -288,7 +288,7 @@ public abstract class StanzaHandler {
                 packet.getShow();
             }
             catch (IllegalArgumentException e) {
-                Log.debug("Invalid presence show for -" + packet.toXML(), e);
+                Log.debug("Invalid presence show '{}' received from '{}'", packet.getElement().elementText("show"), e);
                 // The presence packet contains an invalid presence show so replace it with
                 // an available presence show
                 packet.setShow(null);
@@ -297,7 +297,7 @@ public abstract class StanzaHandler {
                 // Ignore available presence packets sent from a closed session. A closed
                 // session may have buffered data pending to be processes so we want to ignore
                 // just Presences of type available
-                Log.warn("Ignoring available presence packet of closed session: " + packet);
+                Log.warn("Ignoring available presence packet received on closed session '{}': {} ", session.getAddress(), packet);
                 return;
             }
             processPresence(packet);
@@ -308,7 +308,7 @@ public abstract class StanzaHandler {
                 packet = getIQ(doc);
             }
             catch (IllegalArgumentException e) {
-                Log.debug("Rejecting packet. JID malformed", e);
+                Log.debug("Rejecting packet from '{}'. JID malformed", session.getAddress(), e);
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();
                 if (!doc.elements().isEmpty()) {
@@ -335,7 +335,7 @@ public abstract class StanzaHandler {
         }
         else {
             if (!processUnknowPacket(doc)) {
-                Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") + doc.asXML() + ". Closing session: " + session);
+                Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") + "{}. Closing session: {}", doc.asXML(), session);
                 session.close();
             }
         }
@@ -347,14 +347,14 @@ public abstract class StanzaHandler {
             return new Roster(doc);
         }else if (query != null && "jabber:iq:version".equals(query.getNamespaceURI())) {
             try {
-                List<Element> elements =  query.elements();
-                if (elements.size() >0){
+                List<Element> elements = query.elements();
+                if (!elements.isEmpty()){
                     for (Element element : elements){
                         session.setSoftwareVersionData(element.getName(), element.getStringValue());
                     }
                 }    
             } catch (Exception e) {
-                Log.error(e.getMessage(), e);
+                Log.error("Unexpected exception while processing IQ Version stanza from '{}'", session.getAddress(), e);
             }
             return new IQ(doc, !validateJIDs());
         }else if(query != null && "http://jabber.org/protocol/disco#info".equals(query.getNamespaceURI())){
@@ -466,7 +466,7 @@ public abstract class StanzaHandler {
             startTLS();
         }
         catch (Exception e) {
-            Log.error("Error while negotiating TLS", e);
+            Log.error("Error while negotiating TLS with connection {}", connection, e);
             connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
             connection.close();
             return false;
@@ -540,15 +540,13 @@ public abstract class StanzaHandler {
             // Client requested compression but this feature is disabled
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
             // Log a warning so that admins can track this case from the server side
-            Log.warn("Client requested compression while compression is disabled. Closing " +
-                    "connection : " + connection);
+            Log.warn("Client requested compression while compression is disabled. Closing connection: {}", connection);
         }
         else if (connection.isCompressed()) {
             // Client requested compression but connection is already compressed
             error = "<failure xmlns='http://jabber.org/protocol/compress'><setup-failed/></failure>";
             // Log a warning so that admins can track this case from the server side
-            Log.warn("Client requested compression and connection is already compressed. Closing " +
-                    "connection : " + connection);
+            Log.warn("Client requested compression and connection is already compressed. Closing connection: {}", connection);
         }
         else {
             // Check that the requested method is supported
@@ -556,8 +554,7 @@ public abstract class StanzaHandler {
             if (!"zlib".equals(method)) {
                 error = "<failure xmlns='http://jabber.org/protocol/compress'><unsupported-method/></failure>";
                 // Log a warning so that admins can track this case from the server side
-                Log.warn("Requested compression method is not supported: " + method +
-                        ". Closing connection : " + connection);
+                Log.warn("Requested compression method is not supported: {}. Closing connection: {}", method, connection);
             }
         }
 

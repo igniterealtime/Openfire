@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -116,7 +117,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         if (startOfStream) {
             // We initiate the stream for a RespondingServerStanzaHandler, so we need to add the stream namespace
             // Pull namespaces off of the stream:stream stanza and add them to the additional
-            List<Namespace> receivedNamespaces = null;
+            List<Namespace> receivedNamespaces;
             try {
                 Element rootElement = DocumentHelper.parseText(stanza + "</stream:stream>").getRootElement();
                 receivedNamespaces = rootElement.declaredNamespaces();
@@ -126,7 +127,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                     .collect(Collectors.toSet());
                 connection.setAdditionalNamespaces(additionalNamespaces);
 
-                String streamHeaderId = rootElement.attribute("id").getValue();
+                final String streamHeaderId = rootElement.attributeValue("id");
+                if (streamHeaderId == null || streamHeaderId.isBlank()) { // OF-2692: the peer is required to send a Stream ID. Some servers do not, when they are sending a stream error.
+                    LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party to supply a stream ID value. The peer that sent this stream element did not: {}", connection, stanza);
+                    connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a stream ID value, but none was received."));
+                    return;
+                }
 
                 // Create a new session with a new ID if a new stream has started on an existing connection
                 // following TLS negotiation in accordance with RFC 6120 § 5.4.3.3. See https://datatracker.ietf.org/doc/html/rfc6120#section-5.4.3.3

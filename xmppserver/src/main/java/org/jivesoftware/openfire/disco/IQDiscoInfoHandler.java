@@ -133,6 +133,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     @Override
     public IQ handleIQ(IQ packet) {
+        if (packet.isResponse()) {
+            // ignore
+            return null;
+        }
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error

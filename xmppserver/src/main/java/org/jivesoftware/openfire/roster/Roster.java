@@ -404,7 +404,7 @@ public class Roster implements Cacheable, Externalizable {
         // broadcast roster update
         // Do not push items with a state of "None + Pending In"
         if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE && !isSubscriptionRejected(item)) {
+                item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
             broadcast(item, true);
         }
         /*if (item.getSubStatus() == RosterItem.SUB_BOTH || item.getSubStatus() == RosterItem.SUB_TO) {
@@ -412,18 +412,6 @@ public class Roster implements Cacheable, Externalizable {
         }*/
         // Fire event indicating that a roster item has been updated
         RosterEventDispatcher.contactUpdated(this, item);
-    }
-
-    /**
-     * Returns true if roster item represents a rejected subscription request.
-     *
-     * @param item The roster item.
-     * @return True, if the roster item represents a rejected subscription request.
-     */
-    private static boolean isSubscriptionRejected(RosterItem item) {
-        return item.getSubStatus() == RosterItem.SUB_NONE &&
-                item.getRecvStatus() == RosterItem.RECV_NONE &&
-                item.getAskStatus() == RosterItem.AskType.NONE;
     }
 
     /**
@@ -549,7 +537,7 @@ public class Roster implements Cacheable, Externalizable {
             }
             // Do not push items with a state of "None + Pending In"
             if (item.getSubStatus() != RosterItem.SUB_NONE ||
-                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE && !isSubscriptionRejected(item)) {
+                    item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
                 roster.addItem(item.getJid(), item.getNickname(), ask, sub, groups);
             }
         }

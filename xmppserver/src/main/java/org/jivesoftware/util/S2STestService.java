@@ -37,6 +37,7 @@ import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.IQ.Type;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 import javax.xml.bind.DatatypeConverter;
@@ -62,13 +63,13 @@ public class S2STestService {
 
     private Semaphore waitUntil;
 
-    private String domain;
+    private final JID domain;
 
     /**
      * @param domain The host to test.
      */
-    public S2STestService(String domain) {
-        this.domain = domain;
+    public S2STestService(JID domain) {
+        this.domain = domain.asBareJID();
     }
 
     /**
@@ -79,11 +80,11 @@ public class S2STestService {
     public Map<String, String> run() throws Exception {
         waitUntil = new Semaphore(0);
         Map<String, String> results = new HashMap<>();
-        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
+        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain.getDomain());
 
         // Tear down existing routes.
         final SessionManager sessionManager = SessionManager.getInstance();
-        for (final Session incomingServerSession : sessionManager.getIncomingServerSessions( domain ) )
+        for (final Session incomingServerSession : sessionManager.getIncomingServerSessions( domain.getDomain() ) )
         {
             incomingServerSession.close();
         }
@@ -97,7 +98,7 @@ public class S2STestService {
         final IQ pingRequest = new IQ( Type.get );
         pingRequest.setChildElement( "ping", IQPingHandler.NAMESPACE );
         pingRequest.setFrom( pair.getLocal() );
-        pingRequest.setTo( domain );
+        pingRequest.setTo( domain.getDomain() );
 
         // Intercept logging.
         final Writer logs = new StringWriter();
@@ -110,7 +111,7 @@ public class S2STestService {
         // Send ping.
         try
         {
-            Log.info( "Sending server to server ping request to " + domain );
+            Log.info( "Sending server to server ping request to " + domain.getDomain() );
             XMPPServer.getInstance().getIQRouter().route( pingRequest );
 
             // Wait for success or exceed socket timeout.
@@ -168,7 +169,7 @@ public class S2STestService {
      * Logs the status of the session.
      */
     private void logSessionStatus() {
-        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
+        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain.getDomain());
         OutgoingServerSession session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(pair);
         if (session != null) {
             Log.info("Session is {}.", session.getStatus());
@@ -181,7 +182,7 @@ public class S2STestService {
      * @return A String representation of the certificate chain for the connection to the domain under test.
      */
     private String getCertificates() {
-        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain);
+        final DomainPair pair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), domain.getDomain());
         Session session = XMPPServer.getInstance().getSessionManager().getOutgoingServerSession(pair);
         StringBuilder certs = new StringBuilder();
         if (session != null) {
@@ -218,7 +219,7 @@ public class S2STestService {
      * Packet interceptor for the duration of our S2S test.
      */
     private class S2SInterceptor implements PacketInterceptor {
-        private StringBuilder xml = new StringBuilder();
+        private final StringBuilder xml = new StringBuilder();
 
         private final IQ ping;
 

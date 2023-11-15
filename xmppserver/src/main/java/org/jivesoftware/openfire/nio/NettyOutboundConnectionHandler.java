@@ -122,7 +122,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                         Log.warn("Strict certificate validation is enabled. Aborting session with '{}' as its certificates are not valid for its domain.", domainPair.getRemote());
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
-                        ctx.close();
+                        ctx.channel().close();
                         return;
                     }
 
@@ -130,7 +130,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                         Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is disabled by configuration. Aborting session, as this leaves no available authentication mechanisms.", domainPair.getRemote());
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
-                        ctx.close();
+                        ctx.channel().close();
                         return;
                     }
 
@@ -156,7 +156,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                     Log.warn("TLS negotiation with '{}' was unsuccessful, caused by a certificate issue. Aborting session, as by configuration Openfire is prohibited to set up a connection with a peer that provides an invalid certificate.", domainPair.getRemote(), event.cause());
                     stanzaHandler.setSession(null);
                     stanzaHandler.setAttemptedAllAuthenticationMethods();
-                    ctx.close();
+                    ctx.channel().close();
                     return;
                 }
 
@@ -176,7 +176,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                         Log.warn("TLS negotiation with '{}' was unsuccessful, and Server Dialback over a plain connection (as a fallback) failed. Aborting session.", domainPair.getRemote());
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
-                        ctx.close();
+                        ctx.channel().close();
                         return;
                     }
                 }
@@ -184,7 +184,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                 Log.warn("TLS negotiation with '{}' was unsuccessful. Unable to create a new session: exhausted all options", domainPair.getRemote());
                 stanzaHandler.setSession(null);
                 stanzaHandler.setAttemptedAllAuthenticationMethods();
-                ctx.close();
+                ctx.channel().close();
             }
         }
     }

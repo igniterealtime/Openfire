@@ -20,6 +20,8 @@
                  org.jivesoftware.util.*"
          errorPage="error.jsp"
 %>
+<%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -47,19 +49,50 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
+    // Validate domain input;
+    JID domain = null;
+    if (s2sTest) {
+        try {
+            domain = new JID(s2sTestingDomain);
+        } catch (IllegalArgumentException e) {
+            // Be forgiving for some common copy/paste mistakes.
+            String parsedValue = s2sTestingDomain.trim();
+            if (parsedValue.startsWith("http://")) {
+                parsedValue = parsedValue.substring("http://".length());
+            }
+            if (parsedValue.startsWith("https://")) {
+                parsedValue = parsedValue.substring("https://".length());
+            }
+            if (parsedValue.endsWith("/")) {
+                parsedValue = parsedValue.substring(0, parsedValue.length() - 2);
+            }
+            try {
+                domain = new JID(parsedValue);
+            } catch (IllegalArgumentException e2) {
+                errors.put("s2sTestingDomain", "invalid");
+            }
+        }
+    }
+
+    if (XMPPServer.getInstance().isLocal(domain)) {
+        errors.put("s2sTestingDomain", "ours");
+    }
+
     if (errors.isEmpty() && s2sTest)
     {
-        final Map<String, String> results = new S2STestService(s2sTestingDomain).run();
+        final Map<String, String> results = new S2STestService(domain).run();
 
-        pageContext.setAttribute("s2sDomain", s2sTestingDomain);
+        pageContext.setAttribute("s2sDomain", domain.getDomain());
         pageContext.setAttribute("s2sTest", true);
         pageContext.setAttribute("stanzas", results.get("stanzas"));
         pageContext.setAttribute("logs", results.get("logs"));
         pageContext.setAttribute("certs", results.get("certs"));
+    } else {
+        pageContext.setAttribute("s2sDomain", s2sTestingDomain);
+        pageContext.setAttribute("s2sTest", false);
     }
 
     pageContext.setAttribute("errors", errors);
-
 %>
 
 <html>
@@ -68,11 +101,20 @@
     <meta name="pageID" content="server-connectiontest"/>
 </head>
 <body>
-    <c:if test="${not empty errors}">
+
+    <!-- Display all errors -->
+    <c:forEach var="err" items="${errors}">
         <admin:infobox type="error">
-            <fmt:message key="server2server.settings.testing.error" />
+            <c:choose>
+                <c:when test="${err.key eq 's2sTestingDomain'}"><fmt:message key="server2server.settings.testing.domain-invalid" /></c:when>
+                <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                <c:otherwise>
+                    <fmt:message key="server2server.settings.testing.error" />
+                </c:otherwise>
+            </c:choose>
         </admin:infobox>
-    </c:if>
+    </c:forEach>
+
     <p>
         <fmt:message key="server2server.settings.testing.info" />
     </p>

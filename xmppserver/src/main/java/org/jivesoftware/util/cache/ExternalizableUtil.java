@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 
 package org.jivesoftware.util.cache;
 
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.util.SAXReaderUtil;
-import org.xml.sax.SAXException;
 
 import java.io.*;
 import java.util.Collection;
@@ -30,19 +27,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
- * Utility methods to assist in working with the Externalizable interfaces. This class
- * is only used when running inside of a Cluser. When using the open source version
- * this class will use a dummy implementation. Anyway, this class is not used when
- * not using the Enterprise edition.<p>
- *
- * ExternalizableLite is very similar to the standard Externalizable interface, except that
- * it uses DataOutput/DataInput instead of the Object stream equivalents.
+ * Utility methods to assist in working with the {@link Externalizable} interfaces.
  *
  * @author Gaston Dombiak
  */
 public class ExternalizableUtil {
 
-    private static ExternalizableUtil instance;
+    private static final ExternalizableUtil instance;
 
     private ExternalizableUtilStrategy strategy = new DefaultExternalizableUtil();
 

@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire;
 
-import org.dom4j.QName;
 import org.jivesoftware.openfire.carbons.Sent;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.forward.Forwarded;
@@ -124,7 +123,6 @@ public class MessageRouter extends BasicModule {
                     }
                 }
                 if (isAcceptable) {
-                    boolean isPrivate = packet.getElement().element(QName.get("private", "urn:xmpp:carbons:2")) != null;
                     try {
                         // Deliver stanza to requested route
                         routingTable.routePacket(recipientJID, packet);
@@ -134,8 +132,7 @@ public class MessageRouter extends BasicModule {
                     }
 
                     // Sent carbon copies to other resources of the sender:
-                    // When a client sends a <message/> of type "chat"
-                    if (packet.getType() == Message.Type.chat && !isPrivate && session != null) { // && session.isMessageCarbonsEnabled() ??? // must the own session also be carbon enabled?
+                    if (session != null && Forwarded.isEligibleForCarbonsDelivery(packet)) {
                         List<JID> routes = routingTable.getRoutes(packet.getFrom().asBareJID(), null);
                         for (JID route : routes) {
                             // The sending server SHOULD NOT send a forwarded copy to the sending full JID if it is a Carbons-enabled resource.

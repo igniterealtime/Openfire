@@ -221,7 +221,7 @@
     </c:when>
 </c:choose>
 
-<form name="f" action="user-create.jsp" method="get">
+<form name="f" action="user-create.jsp" method="get" autocomplete="off">
     <input type="hidden" name="csrf" value="${csrf}">
 
     <div class="jive-contentBoxHeader">

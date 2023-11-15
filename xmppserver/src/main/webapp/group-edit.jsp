@@ -575,7 +575,7 @@
                         <fmt:message key="group.edit.add_user" />
                     </td>
                     <td class="c1" style="text-align: left; white-space: nowrap">
-                         <input type="text" size="45" name="username"/>
+                         <input type="text" size="45" name="username" autocomplete="off"/>
                         &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
                     </td>
                     <c:if test="${not empty errors['addMember']}">

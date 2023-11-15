@@ -56,7 +56,7 @@
 <%    if (errors.size() > 0) { %>
 <p class="jive-error-text"><fmt:message key="user.search.not_found" /></p>
 <%    } %>
-<form name="f" action="user-search.jsp">
+<form name="f" action="user-search.jsp" autocomplete="off">
   <input type="hidden" name="search" value="true"/>
   <fieldset>
     <legend><fmt:message key="user.search.search_user" /></legend>

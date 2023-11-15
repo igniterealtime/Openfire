@@ -501,7 +501,7 @@
         </c:otherwise>
     </c:choose>
 
-    <form action="muc-room-edit-form.jsp">
+    <form action="muc-room-edit-form.jsp" autocomplete="off">
         <c:if test="${not create}">
             <input type="hidden" name="roomJID" value="${fn:escapeXml(roomJIDBare)}">
         </c:if>

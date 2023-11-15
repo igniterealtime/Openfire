@@ -121,7 +121,7 @@
 <fmt:message key="user.password.info" />
 </p>
 
-<form action="user-password.jsp" name="passform" method="post">
+<form action="user-password.jsp" name="passform" method="post" autocomplete="off">
 <input type="hidden" name="username" value="<%=StringUtils.escapeForXML(username) %>">
     <input type="hidden" name="csrf" value="${csrf}">
 
@@ -143,7 +143,7 @@
                 <label for="password"><fmt:message key="user.password.new_pwd" />:</label>
             </td>
             <td class="c2">
-                <input type="password" id="password" name="password" value="" size="20" maxlength="50">
+                <input type="password" id="password" name="password" value="" size="20" maxlength="50" autocomplete="new-password">
             </td>
         </tr>
         <tr>
@@ -151,7 +151,7 @@
                 <label for="passwordConfirm"><fmt:message key="user.password.confirm_new_pwd" />:</label>
             </td>
             <td class="c2">
-                <input type="password" id="passwordConfirm" name="passwordConfirm" value="" size="20" maxlength="50">
+                <input type="password" id="passwordConfirm" name="passwordConfirm" value="" size="20" maxlength="50" autocomplete="new-password">
             </td>
         </tr>
     </tbody>

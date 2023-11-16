@@ -8,6 +8,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -58,6 +59,7 @@
 
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("owner", owner );
+    pageContext.setAttribute("locale", JiveGlobals.getLocale());
 %>
 
 <html>
@@ -122,7 +124,7 @@
         </tr>
     </thead>
     <tbody>
-        <c:forEach var="field" items="${node.configurationForm.fields}">
+        <c:forEach var="field" items="${node.getConfigurationForm(locale).fields}">
         <tr>
             <td>
             <c:out value="${field.label}"/>

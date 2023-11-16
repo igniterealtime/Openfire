@@ -74,7 +74,7 @@
         }
     }
 
-    if (XMPPServer.getInstance().isLocal(domain)) {
+    if (XMPPServer.getInstance().isLocal(domain) || XMPPServer.getInstance().matchesComponent(domain)) {
         errors.put("s2sTestingDomain", "ours");
     }
 

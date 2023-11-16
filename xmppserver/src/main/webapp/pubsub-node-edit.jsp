@@ -146,7 +146,7 @@
 
         window.onload = function() {
             oldValue = document.getElementById('pubsub#max_items').value;
-            evalMaxItemsUI()
+            evalMaxItemsUI();
 
             document.getElementById("pubsub#persist_items").addEventListener('change', function() {
                 evalMaxItemsUI();

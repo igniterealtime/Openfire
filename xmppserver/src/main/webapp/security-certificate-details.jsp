@@ -138,9 +138,9 @@
             <fmt:param value="${alias}"/>
             <fmt:param>
                 <c:choose>
-                    <c:when test="${param.type eq 'c2s'}"><fmt:message key="ssl.certificates.truststore.c2s-title"/></c:when>
-                    <c:when test="${param.type eq 's2s'}"><fmt:message key="ssl.certificates.truststore.s2s-title"/></c:when>
-                    <c:when test="${param.type eq 'server'}"><fmt:message key="ssl.certificates.keystore.title"/></c:when>
+                    <c:when test="${!param.isTrustStore}"><fmt:message key="ssl.certificates.keystore.title"/></c:when>
+                    <c:when test="${param.connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.truststore.c2s-title"/></c:when>
+                    <c:when test="${param.connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.truststore.s2s-title"/></c:when>
                 </c:choose>
             </fmt:param>
         </fmt:message>

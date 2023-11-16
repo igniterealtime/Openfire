@@ -64,7 +64,7 @@
                 parsedValue = parsedValue.substring("https://".length());
             }
             if (parsedValue.endsWith("/")) {
-                parsedValue = parsedValue.substring(0, parsedValue.length() - 2);
+                parsedValue = parsedValue.substring(0, parsedValue.length() - 1);
             }
             try {
                 domain = new JID(parsedValue);

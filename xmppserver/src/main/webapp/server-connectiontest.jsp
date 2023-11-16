@@ -159,19 +159,19 @@
                     <tr>
                         <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-stanzas"><fmt:message key="server2server.settings.testing.xmpp"/></label></td>
                         <td>
-                            <textarea name="server2server-testing-stanzas" id="server2server-testing-stanzas" style="width: 100%" rows="12"><c:out value="${stanzas}" /></textarea>
+                            <textarea name="server2server-testing-stanzas" id="server2server-testing-stanzas" style="width: 100%" rows="12" readonly><c:out value="${stanzas}" /></textarea>
                         </td>
                     </tr>
                     <tr>
                         <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-certs"><fmt:message key="server2server.settings.testing.certificates"/></label></td>
                         <td>
-                            <textarea name="server2server-testing-certs" id="server2server-testing-certs" style="width: 100%" rows="12"><c:out value="${certs}" /></textarea>
+                            <textarea name="server2server-testing-certs" id="server2server-testing-certs" style="width: 100%" rows="12" readonly><c:out value="${certs}" /></textarea>
                         </td>
                     </tr>
                     <tr>
                         <td style="width: 1%; white-space: nowrap"><label for="server2server-testing-logs"><fmt:message key="server2server.settings.testing.logs"/></label></td>
                         <td>
-                            <textarea name="server2server-testing-logs" id="server2server-testing-logs" style="width: 100%" rows="12"><c:out value="${logs}" /></textarea>
+                            <textarea name="server2server-testing-logs" id="server2server-testing-logs" style="width: 100%" rows="12" readonly><c:out value="${logs}" /></textarea>
                         </td>
                     </tr>
                 </c:if>

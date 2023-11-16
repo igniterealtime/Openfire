@@ -128,7 +128,30 @@
             for(let i = 0; i < elements.length; i++){
                 elements[i].selected = false;
             }
-          }
+        }
+
+        function evalMaxItemsUI() {
+            if (document.getElementById("pubsub#persist_items").checked) {
+                document.getElementById("pubsub#max_items").removeAttribute("disabled");
+                document.getElementById("pubsub#max_items").value = oldValue;
+            } else {
+                oldValue = document.getElementById("pubsub#max_items").value;
+                document.getElementById("pubsub#max_items").value = "1";
+                document.getElementById("pubsub#max_items").setAttribute("disabled","disabled");
+            }
+        }
+
+        // Used to store the previous pubsub#max_items value when toggling pubsub#persist_items, prior to submitting the form.
+        let oldValue = 1;
+
+        window.onload = function() {
+            oldValue = document.getElementById('pubsub#max_items').value;
+            evalMaxItemsUI();
+
+            document.getElementById("pubsub#persist_items").addEventListener('change', function() {
+                evalMaxItemsUI();
+            });
+        }
         </script>
     </head>
     <body>

@@ -433,28 +433,6 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             getPersistenceProvider().createDefaultConfiguration(this.getUniqueIdentifier(), collectionDefaultConfiguration);
         }
 
-        // Load nodes to memory
-        getPersistenceProvider().loadNodes(this);
-
-        // Ensure that we have a root collection node
-        String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", "");
-        if (nodes.isEmpty()) {
-            Log.debug( "Create a new root collection node" );
-            // Create root collection node
-            String creator = JiveGlobals.getProperty("xmpp.pubsub.root.creator");
-//            JID creatorJID = creator != null ? new JID(creator) : server.getAdmins().iterator().next();
-            JID creatorJID = creator != null ? new JID(creator) : new JID(server.getServerInfo().getXMPPDomain());
-            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, rootNodeID, creatorJID, collectionDefaultConfiguration);
-            // Add the creator as the node owner
-            rootCollectionNode.addOwner(creatorJID);
-            // Save new root node
-            rootCollectionNode.saveToDB();
-        }
-        else {
-            Log.debug( "Load root collection node ('{}') from database.", rootNodeID );
-            rootCollectionNode = (CollectionNode) getNode(rootNodeID);
-        }
-
         XMPPServer.getInstance().getEntityCapabilitiesManager().addListener(this);
     }
 
@@ -467,6 +445,28 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
         Log.debug( "Starting service with name '{}'.", serviceName );
         super.start();
+
+        // Load nodes to memory
+        getPersistenceProvider().loadNodes(this);
+
+        // Ensure that we have a root collection node
+        String rootNodeID = JiveGlobals.getProperty("xmpp.pubsub.root.nodeID", "");
+        if (nodes.isEmpty()) {
+            Log.debug( "Create a new root collection node" );
+            // Create root collection node
+            String creator = JiveGlobals.getProperty("xmpp.pubsub.root.creator");
+            JID creatorJID = creator != null ? new JID(creator) : new JID(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, rootNodeID, creatorJID, collectionDefaultConfiguration);
+            // Add the creator as the node owner
+            rootCollectionNode.addOwner(creatorJID);
+            // Save new root node
+            rootCollectionNode.saveToDB();
+        }
+        else {
+            Log.debug( "Load root collection node ('{}') from database.", rootNodeID );
+            rootCollectionNode = (CollectionNode) getNode(rootNodeID);
+        }
+
         // Add the route to this service
         routingTable.addComponentRoute(getAddress(), this);
         // Start the pubsub engine

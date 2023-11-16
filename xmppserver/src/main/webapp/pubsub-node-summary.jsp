@@ -89,10 +89,16 @@
     final List<String> additionalParams = new ArrayList<>(Arrays.asList(pubsubNodeResultFilter.getFilterParams()));
     additionalParams.add("username");
 
+    boolean disabled = false;
+    if (pubSubServiceInfo != null) {
+        disabled = pubSubServiceInfo.getServiceConfigurationForm().getField("pubsub#serviceEnabled").getFirstValue().equals("0");
+    }
+
     final ListPager<Node> listPager = new ListPager<>(request, response, nodes, pubsubNodeResultFilter.getFilter(), pubsubNodeResultFilter.getSortColumnNumber(), pubsubNodeResultFilter.getSortOrder() == PubsubNodeResultFilter.DESCENDING, additionalParams.toArray(new String[0]));
     pageContext.setAttribute("listPager", listPager);
     pageContext.setAttribute("owner", owner);
     pageContext.setAttribute("PEPMode", PEPMode);
+    pageContext.setAttribute("disabled", disabled);
 
 %>
 <html>
@@ -231,6 +237,7 @@
     <tr>
         <td style="text-align: center" colspan="${PEPMode ? 8 : 9}">
             <c:choose>
+                <c:when test="${disabled}"><fmt:message key="pubsub.node.summary.disabled-no-info" /></c:when>
                 <c:when test="${listPager.filtered}"><fmt:message key="pubsub.node.summary.table.no_nodes_matching" /></c:when>
                 <c:otherwise><fmt:message key="pubsub.node.summary.table.no_nodes" /></c:otherwise>
             </c:choose>

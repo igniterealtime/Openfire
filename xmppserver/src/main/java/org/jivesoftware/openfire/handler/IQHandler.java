@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
@@ -55,9 +57,45 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         super(moduleName);
     }
 
+    /**
+     * RFC 6121 8.5.1. "No Such User" specifies how the server must respond to a request made against a non-existing user.
+     *
+     * The abstract IQ Handler plugin can act accordingly, but allows implementations to override this behavior. By
+     * default, Openfire will perform a non-existing user check and act according to the RFC 6121. Subclasses can
+     * disable this behavior by overriding this method, and returning 'false'.
+     *
+     * @return 'true' if the Abstract IQ Handler implementation should detect if the IQ request is made against a non-existing user and return an error.
+     * @see <a href="http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser">RFC 6121 8.5.1. "No Such User"</a>
+     * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-880">OF-880</a>
+     */
+    public boolean performNoSuchUserCheck() {
+        return true;
+    }
+
     @Override
     public void process(Packet packet) throws PacketException {
         IQ iq = (IQ) packet;
+        JID recipientJID = iq.getTo();
+
+        // RFC 6121 8.5.1.  No Such User http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser
+        // If the 'to' address specifies a bare JID <localpart@domainpart> or full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.
+        // If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.
+        // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
+        if (performNoSuchUserCheck()
+            && iq.isRequest() && recipientJID != null && recipientJID.getNode() != null
+            && !UserManager.getInstance().isRegisteredUser(recipientJID, false)
+            && !UserManager.isPotentialFutureLocalUser(recipientJID) && sessionManager.getSession(recipientJID) == null
+            && !(recipientJID.asBareJID().equals(packet.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(packet.getFrom())) // A pre-authenticated session queries the server about itself.
+        )
+        {
+            // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
+            IQ response = IQ.createResultIQ(iq);
+            response.setChildElement(iq.getChildElement().createCopy());
+            response.setError(PacketError.Condition.service_unavailable);
+            sessionManager.getSession(iq.getFrom()).process(response);
+            return;
+        }
+
         try {
             IQ reply = handleIQ(iq);
             if (reply != null) {

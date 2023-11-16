@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,12 @@ public class IQSessionEstablishmentHandler extends IQHandler {
     public IQSessionEstablishmentHandler() {
         super("Session Establishment handler");
         info = new IQHandlerInfo("session", "urn:ietf:params:xml:ns:xmpp-session");
+    }
+
+    @Override
+    public boolean performNoSuchUserCheck()
+    {
+        return false;
     }
 
     @Override

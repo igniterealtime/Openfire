@@ -348,14 +348,19 @@ public class NettyConnection extends AbstractConnection
 
         final EncryptionArtifactFactory factory = new EncryptionArtifactFactory( configuration );
 
-        final SslContext sslContext;
+        final SslHandler sslHandler;
         if (clientMode) {
-            sslContext = factory.createClientModeSslContext();
+            final SslContext sslContext = factory.createClientModeSslContext();
+
+            // OF-2738: Send along the XMPP domain that's needed for SNI
+            final NettyOutboundConnectionHandler handler = channelHandlerContext.channel().pipeline().get(NettyOutboundConnectionHandler.class);
+
+            sslHandler = sslContext.newHandler(channelHandlerContext.alloc(), handler.getDomainPair().getRemote(), handler.getPort());
         } else {
-            sslContext = factory.createServerModeSslContext(directTLS);
+            final SslContext sslContext = factory.createServerModeSslContext(directTLS);
+            sslHandler = sslContext.newHandler(channelHandlerContext.alloc());
         }
 
-        final SslHandler sslHandler = sslContext.newHandler(channelHandlerContext.alloc());
         channelHandlerContext.pipeline().addFirst(SSL_HANDLER_NAME, sslHandler);
 
         if ( !clientMode && !directTLS ) {

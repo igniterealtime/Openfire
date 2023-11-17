@@ -212,6 +212,16 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
         return this.configuration.getTlsPolicy() != Connection.TLSPolicy.required;
     }
 
+    public DomainPair getDomainPair()
+    {
+        return domainPair;
+    }
+
+    public int getPort()
+    {
+        return port;
+    }
+
     @Override
     public String toString()
     {

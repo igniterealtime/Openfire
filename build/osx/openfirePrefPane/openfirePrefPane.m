@@ -46,18 +46,10 @@
     if((ps=popen(pscmd, "r")) == NULL)
     {
         // There was an error opening the pipe. Alert the user.
-        NSBeginAlertSheet(
-            @"Error!",
-            @"OK",
-            nil,
-            nil,
-            [NSApp mainWindow],
-            self,
-            nil,
-            nil,
-            self,
-            @"An error occured while detecting a running Openfire process.",
-            nil);
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleWarning;
+        alert.messageText = @"An error occured while detecting a running Openfire process.";
+        [alert runModal];
         
         return NO;
     }
@@ -92,18 +84,10 @@
 	if(ourStatus != errAuthorizationSuccess)
 	{
 		// alert user the startup has failed
-		NSBeginAlertSheet(
-						  @"Error!",
-						  @"OK",
-						  nil,
-						  nil,
-						  [NSApp mainWindow],
-						  self,
-						  nil,
-						  nil,
-						  self,
-						  @"Could not toggle Openfire startup.",
-						  nil);
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleWarning;
+        alert.messageText = @"Could not toggle Openfire startup.";
+        [alert runModal];
 		[statusTimer invalidate];
 		[self checkStatus];
 	}
@@ -176,18 +160,11 @@
 	if(ourStatus != errAuthorizationSuccess)
 	{
 		// alert user the startup has failed
-		NSBeginAlertSheet(
-			@"Error!",
-			@"OK",
-			nil,
-			nil,
-			[NSApp mainWindow],
-			self,
-			nil,
-			nil,
-			self,
-			@"Could not start the Openfire server.",
-			nil);
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleWarning;
+        alert.messageText = @"Could not start the Openfire server.";
+        [alert runModal];
+        
 		[statusTimer invalidate];
 		[self checkStatus];
 	}
@@ -205,18 +182,11 @@
 	if(ourStatus != errAuthorizationSuccess)
 	{
 		// alert user the startup has failed
-		NSBeginAlertSheet(
-			@"Error!",
-			@"OK",
-			nil,
-			nil,
-			[NSApp mainWindow],
-			self,
-			nil,
-			nil,
-			self,
-			@"Could not stop the Openfire server.",
-			nil);
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleWarning;
+        alert.messageText = @"Could not stop the Openfire server.";
+        [alert runModal];
+        
 		[statusTimer invalidate];
 		[self checkStatus];
 	}

@@ -45,6 +45,12 @@
         <implements rdf:resource="https://xmpp.org/rfcs/rfc7395.html"/>
         <implements>
             <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0011.html"/>
+                <xmpp:note xml:lang='en'>Provided by the 'Jabber Browsing' plugin</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0368.html"/>
             </xmpp:SupportedXep>
         </implements>
@@ -266,6 +272,12 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0094.html"/>
+                <xmpp:note xml:lang='en'>Provided by the 'Agent Information' plugin</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0096.html"/>
             </xmpp:SupportedXep>
         </implements>
@@ -389,6 +401,18 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0321.html"/>
                 <xmpp:note xml:lang='en'>Provided by the 'GoJara' plugin</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0322.html"/>
+                <xmpp:note xml:lang='en'>Provided by the 'EXI' plugin</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0328.html"/>
+                <xmpp:note xml:lang='en'>Provided by the 'JID Validation' plugin</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>

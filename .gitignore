@@ -29,6 +29,10 @@ nbbuild/
 # Microsoft Visual Studio Code
 .vscode/
 
+#Xcode noise
+build/osx/openfirePrefPane/build
+xcuserdata/
+
 # build temp folders
 rpmbuild/
 debian/

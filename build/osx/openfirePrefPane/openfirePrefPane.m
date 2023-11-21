@@ -66,7 +66,7 @@
 		BOOL running = NO;
         if(fgets(buff, 1024, ps)) {
 			running = YES;
-			printf(buff);
+            printf("%s", buff);
 		}
         pclose(ps);
         return running;

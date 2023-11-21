@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		37DA65C62B0BC0F40024B9A0 /* openfirePrefPane.xib in Resources */ = {isa = PBXBuildFile; fileRef = 37DA65C42B0BC0F40024B9A0 /* openfirePrefPane.xib */; };
 		6305C7110BCEE09200D552C4 /* jivesoftware_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 6305C7100BCEE09200D552C4 /* jivesoftware_logo.png */; };
 		633BEA0B0B39DF03003AD355 /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */; };
 		633BEA7A0B39EB60003AD355 /* authTool.c in Sources */ = {isa = PBXBuildFile; fileRef = 633BEA790B39EB60003AD355 /* authTool.c */; };
@@ -20,7 +21,6 @@
 		8D202CEA0486D31800D8A456 /* openfirePrefPane_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32DBCFA20370C41700C91783 /* openfirePrefPane_Prefix.pch */; };
 		8D202CEB0486D31800D8A456 /* openfirePrefPane.h in Headers */ = {isa = PBXBuildFile; fileRef = F506C03C013D9D7901CA16C8 /* openfirePrefPane.h */; };
 		8D202CED0486D31800D8A456 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
-		8D202CEF0486D31800D8A456 /* openfirePrefPane.nib in Resources */ = {isa = PBXBuildFile; fileRef = F506C042013D9D8C01CA16C8 /* openfirePrefPane.nib */; };
 		8D202CF10486D31800D8A456 /* openfirePrefPane.m in Sources */ = {isa = PBXBuildFile; fileRef = F506C03D013D9D7901CA16C8 /* openfirePrefPane.m */; };
 		8D202CF30486D31800D8A456 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */; };
 		8D202CF40486D31800D8A456 /* PreferencePanes.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F506C035013D953901CA16C8 /* PreferencePanes.framework */; };
@@ -55,6 +55,7 @@
 		089C167FFE841241C02AAC07 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1058C7ADFEA557BF11CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		32DBCFA20370C41700C91783 /* openfirePrefPane_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openfirePrefPane_Prefix.pch; sourceTree = "<group>"; };
+		37DA65C52B0BC0F40024B9A0 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/openfirePrefPane.xib; sourceTree = "<group>"; };
 		6305C7100BCEE09200D552C4 /* jivesoftware_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = jivesoftware_logo.png; sourceTree = "<group>"; };
 		633BEA0A0B39DF03003AD355 /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = /System/Library/Frameworks/SecurityInterface.framework; sourceTree = "<absolute>"; };
 		633BEA760B39EB2B003AD355 /* HelperTool */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HelperTool; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,7 +71,6 @@
 		F506C035013D953901CA16C8 /* PreferencePanes.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PreferencePanes.framework; path = /System/Library/Frameworks/PreferencePanes.framework; sourceTree = "<absolute>"; };
 		F506C03C013D9D7901CA16C8 /* openfirePrefPane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openfirePrefPane.h; sourceTree = "<group>"; };
 		F506C03D013D9D7901CA16C8 /* openfirePrefPane.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = openfirePrefPane.m; sourceTree = "<group>"; };
-		F506C043013D9D8C01CA16C8 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/openfirePrefPane.nib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,7 +126,7 @@
 				8D202CF70486D31800D8A456 /* Info.plist */,
 				089C167DFE841241C02AAC07 /* InfoPlist.strings */,
 				65E2E7380A5E8F1600DFFC2E /* Images */,
-				F506C042013D9D8C01CA16C8 /* openfirePrefPane.nib */,
+				37DA65C42B0BC0F40024B9A0 /* openfirePrefPane.xib */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -246,9 +246,17 @@
 /* Begin PBXProject section */
 		089C1669FE841209C02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+			};
 			buildConfigurationList = 65E2E72D0A5E8C0F00DFFC2E /* Build configuration list for PBXProject "openfirePrefPane" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = en;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+				Base,
+				English,
+			);
 			mainGroup = 089C166AFE841209C02AAC07 /* openfirePrefPane */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -265,11 +273,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D202CED0486D31800D8A456 /* InfoPlist.strings in Resources */,
-				8D202CEF0486D31800D8A456 /* openfirePrefPane.nib in Resources */,
 				65E2E73A0A5E8F2900DFFC2E /* openfire-logo.png in Resources */,
 				650096350A60403400B6046A /* jivesoftware_logo.png in Resources */,
 				63A50BAD0BB338EF009E9FD0 /* openfire-logo-notext.tif in Resources */,
 				63A719E80BB339C4002929AA /* openfire-logo-notext.png in Resources */,
+				37DA65C62B0BC0F40024B9A0 /* openfirePrefPane.xib in Resources */,
 				6305C7110BCEE09200D552C4 /* jivesoftware_logo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -322,12 +330,12 @@
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
-		F506C042013D9D8C01CA16C8 /* openfirePrefPane.nib */ = {
+		37DA65C42B0BC0F40024B9A0 /* openfirePrefPane.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				F506C043013D9D8C01CA16C8 /* English */,
+				37DA65C52B0BC0F40024B9A0 /* English */,
 			);
-			name = openfirePrefPane.nib;
+			name = openfirePrefPane.xib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

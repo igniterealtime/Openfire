@@ -320,7 +320,7 @@ public class MessageRouter extends BasicModule {
             return;
         }
         try {
-            log.trace( "Bouncing a message stanza." );
+            log.trace( "Bouncing a message stanza: {}", message);
 
             // Generate a rejection response to the sender
             final Message errorResponse = message.createCopy();

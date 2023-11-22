@@ -83,11 +83,13 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
         if (performNoSuchUserCheck()
             && iq.isRequest() && recipientJID != null && recipientJID.getNode() != null
+            && !XMPPServer.getInstance().isRemote(recipientJID)
             && !UserManager.getInstance().isRegisteredUser(recipientJID, false)
             && !UserManager.isPotentialFutureLocalUser(recipientJID) && sessionManager.getSession(recipientJID) == null
             && !(recipientJID.asBareJID().equals(packet.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(packet.getFrom())) // A pre-authenticated session queries the server about itself.
         )
         {
+            Log.trace("Responding with 'service-unavailable' since the intended recipient isn't a local user ('no-such-user' check) to: {}", iq);
             // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
             IQ response = IQ.createResultIQ(iq);
             response.setChildElement(iq.getChildElement().createCopy());

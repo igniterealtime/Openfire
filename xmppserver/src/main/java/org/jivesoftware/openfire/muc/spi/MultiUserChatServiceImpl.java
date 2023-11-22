@@ -494,6 +494,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         XMPPServer.getInstance().getPacketRouter().route(reply);
                     }
                 } catch (final UnauthorizedException e) {
+                    Log.trace("Responding with 'service-unavailable' due to authorization exception, to: {}", iq, e);
                     final IQ reply = IQ.createResultIQ(iq);
                     reply.setType(IQ.Type.error);
                     reply.setError(PacketError.Condition.service_unavailable);
@@ -1735,7 +1736,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         pingRequest.setFrom( occupant.getRoomName() + "@" + getServiceDomain() );
         pingRequest.setTo( occupant.getRealJID() );
         pingRequest.setID( UUID.randomUUID().toString() ); // Generate unique ID, to prevent duplicate cache entries.
-        XMPPServer.getInstance().getPacketRouter().route(pingRequest);
         PINGS_SENT.put(pingRequest.getID(), pingRequest.getTo());
 
         // Schedule a check to see if the ping was answered, kicking the occupant if it wasn't.
@@ -1744,6 +1744,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         final CheckPingResponseTask task = new CheckPingResponseTask(occupant, pingRequest.getID());
         occupant.setPendingPingTask(task);
         TaskEngine.getInstance().schedule(task, timeoutMs);
+
+        XMPPServer.getInstance().getPacketRouter().route(pingRequest);
     }
 
     /**

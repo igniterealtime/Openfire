@@ -426,12 +426,14 @@ public abstract class LocalSession implements Session {
                 result.setTo(message.getFrom());
                 result.setFrom(message.getTo());
                 result.setError(PacketError.Condition.service_unavailable);
+                Log.trace("Responding with 'service-unavailable' as message cannot be processed to: {}", packet);
                 XMPPServer.getInstance().getPacketRouter().route(result);
             } else if (packet instanceof IQ) {
                 // For IQ stanzas of type "get" or "set", the server MUST return an error, which SHOULD be <service-unavailable/>.
                 // IQ stanzas of other types MUST be silently dropped by the server.
                 IQ iq = (IQ) packet;
                 if (iq.getType() == IQ.Type.get || iq.getType() == IQ.Type.set) {
+                    Log.trace("Responding with 'service-unavailable' as IQ request cannot be processed to: {}", packet);
                     IQ result = IQ.createResultIQ(iq);
                     result.setError(PacketError.Condition.service_unavailable);
                     XMPPServer.getInstance().getPacketRouter().route(result);

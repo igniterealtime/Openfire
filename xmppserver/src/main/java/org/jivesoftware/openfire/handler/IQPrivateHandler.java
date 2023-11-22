@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.user.UserManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -58,6 +60,8 @@ import java.util.Iterator;
  */
 public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvider {
 
+    private static final Logger Log = LoggerFactory.getLogger(IQPrivacyHandler.class);
+
     public static final String NAMESPACE = "jabber:iq:private";
 
     private IQHandlerInfo info;
@@ -76,6 +80,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
         Element dataElement = child.elementIterator().next();
 
         if ( !UserManager.getInstance().isRegisteredUser( packet.getFrom(), false ) ) {
+            Log.trace("Responding with 'service-unavailable': service unavailable to non-local, unregistered users: {}", packet);
             replyPacket.setChildElement(packet.getChildElement().createCopy());
             replyPacket.setError(PacketError.Condition.service_unavailable);
             replyPacket.getError().setText( "Service available only to locally registered users." );
@@ -96,6 +101,7 @@ public class IQPrivateHandler extends IQHandler implements ServerFeaturesProvide
                 if (privateStorage.isEnabled()) {
                     privateStorage.add(packet.getFrom().getNode(), dataElement);
                 } else {
+                    Log.trace("Responding with 'service-unavailable': private storage is not enabled: {}", packet);
                     replyPacket.setChildElement(packet.getChildElement().createCopy());
                     replyPacket.setError(PacketError.Condition.service_unavailable);
                 }

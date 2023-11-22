@@ -211,6 +211,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 IQ reply = iqDiscoInfoHandler.handleIQ(iq);
                 router.route(reply);
             } else {
+                Log.trace("Responding with 'service-unavailable' due to unavailable Disco Info Handler to: {}", iq);
                 sendServiceUnavailablePacket(iq);
                 return;
             }
@@ -220,6 +221,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 IQ reply = iqDiscoItemsHandler.handleIQ(iq);
                 router.route(reply);
             } else {
+                Log.trace("Responding with 'service-unavailable' due to unavailable Disco Items Handler to: {}", iq);
                 sendServiceUnavailablePacket(iq);
                 return;
             }
@@ -227,6 +229,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         }
         else {
             // Unknown namespace requested so return error to sender
+            Log.trace("Responding with 'service-unavailable' due to unknown namespace in request to: {}", iq);
             sendServiceUnavailablePacket(iq);
         }
     }

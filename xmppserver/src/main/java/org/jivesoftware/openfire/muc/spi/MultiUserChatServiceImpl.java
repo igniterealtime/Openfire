@@ -1736,7 +1736,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         pingRequest.setFrom( occupant.getRoomName() + "@" + getServiceDomain() );
         pingRequest.setTo( occupant.getRealJID() );
         pingRequest.setID( UUID.randomUUID().toString() ); // Generate unique ID, to prevent duplicate cache entries.
-        XMPPServer.getInstance().getPacketRouter().route(pingRequest);
         PINGS_SENT.put(pingRequest.getID(), pingRequest.getTo());
 
         // Schedule a check to see if the ping was answered, kicking the occupant if it wasn't.
@@ -1745,6 +1744,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         final CheckPingResponseTask task = new CheckPingResponseTask(occupant, pingRequest.getID());
         occupant.setPendingPingTask(task);
         TaskEngine.getInstance().schedule(task, timeoutMs);
+
+        XMPPServer.getInstance().getPacketRouter().route(pingRequest);
     }
 
     /**

@@ -169,11 +169,6 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0198.html"/>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0352.html"/>
             </xmpp:SupportedXep>
         </implements>

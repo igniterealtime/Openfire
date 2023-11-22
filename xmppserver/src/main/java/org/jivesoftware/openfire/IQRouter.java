@@ -410,6 +410,7 @@ public class IQRouter extends BasicModule {
                 // If the 'to' address specifies a bare JID <localpart@domainpart> or full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.
                 // If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.
                 if (packet.isRequest() && recipientJID != null && recipientJID.getNode() != null
+                    && !XMPPServer.getInstance().isRemote(recipientJID)
                     && !userManager.isRegisteredUser(recipientJID, false)
                     && !UserManager.isPotentialFutureLocalUser(recipientJID)
                     && sessionManager.getSession(recipientJID) == null

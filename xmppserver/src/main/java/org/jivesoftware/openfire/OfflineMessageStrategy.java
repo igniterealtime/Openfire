@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2022-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,7 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
                     Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.service_unavailable, message);
                     return;
                 }
+                Log.trace("Responding with 'service-unavailable' as the message was blocked by a privacy list, to: {}", message);
                 Message result = message.createCopy();
                 result.setTo(message.getFrom());
                 result.setFrom(message.getTo());

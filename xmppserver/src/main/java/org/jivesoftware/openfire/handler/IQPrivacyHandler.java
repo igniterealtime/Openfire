@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, Ignite Realtime Foundation 2023. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.jivesoftware.openfire.privacy.PrivacyListProvider;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -45,6 +47,7 @@ import java.util.Map;
 public class IQPrivacyHandler extends IQHandler
         implements ServerFeaturesProvider, UserEventListener {
 
+    private static final Logger Log = LoggerFactory.getLogger(IQPrivacyHandler.class);
     private IQHandlerInfo info;
     private PrivacyListManager manager = PrivacyListManager.getInstance();
     private PrivacyListProvider provider = PrivacyListProvider.getInstance();
@@ -60,6 +63,7 @@ public class IQPrivacyHandler extends IQHandler
         JID from = packet.getFrom();
         if (from.getNode() == null || !UserManager.getInstance().isRegisteredUser(from, false)) {
             // Service is unavailable for anonymous users
+            Log.trace("Responding with 'service-unavailable': service unavailable to anonymous users: {}", packet);
             IQ result = IQ.createResultIQ(packet);
             result.setChildElement(packet.getChildElement().createCopy());
             result.setError(PacketError.Condition.service_unavailable);

@@ -494,6 +494,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         XMPPServer.getInstance().getPacketRouter().route(reply);
                     }
                 } catch (final UnauthorizedException e) {
+                    Log.trace("Responding with 'service-unavailable' due to authorization exception, to: {}", iq, e);
                     final IQ reply = IQ.createResultIQ(iq);
                     reply.setType(IQ.Type.error);
                     reply.setError(PacketError.Condition.service_unavailable);

@@ -283,7 +283,7 @@ public class PresenceRouter extends BasicModule {
             return;
         }
         try {
-            Log.trace( "Bouncing a presence stanza." );
+            Log.trace( "Bouncing a presence stanza: {}", presence);
 
             // Generate a rejection response to the sender
             final Presence errorResponse = presence.createCopy();

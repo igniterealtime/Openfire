@@ -375,6 +375,7 @@ public class IQRouter extends BasicModule {
                             // Communication is blocked
                             if (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType()) {
                                 // Answer that the service is unavailable
+                                Log.trace("Responding with 'service-unavailable' as IQ request blocked by privacy list, to: {}", packet);
                                 sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                             }
                             return;
@@ -384,6 +385,7 @@ public class IQRouter extends BasicModule {
                     if (handler == null) {
                         if (recipientJID == null) {
                             // Answer an error since the server can't handle the requested namespace
+                            Log.trace("Responding with 'service-unavailable' since the server can't handle the requested namespace, to: {}", packet);
                             sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                         else if (recipientJID.getNode() == null ||
@@ -393,7 +395,7 @@ public class IQRouter extends BasicModule {
                         }
                         else {
                             // JID is of the form <node@domain>
-                            // Answer an error since the server can't handle packets sent to a node
+                            Log.trace("Responding with 'service-unavailable' since the server can't handle packets sent to a node, to: {}", packet);
                             sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                     }
@@ -415,6 +417,7 @@ public class IQRouter extends BasicModule {
                 )
                 {
                     // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
+                    Log.trace("Responding with 'service-unavailable' since there's no such local user that matches the addressee, to: {}", packet);
                     sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                     return;
                 }

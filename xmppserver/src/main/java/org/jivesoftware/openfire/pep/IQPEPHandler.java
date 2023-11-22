@@ -367,6 +367,7 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     public IQ handleIQ(IQ packet) {
         // Do nothing if server is not enabled
         if (!ENABLED.getValue()) {
+            Log.trace("Responding with 'service-unavailable' since to service is not enabled, to: {}", packet);
             IQ reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.service_unavailable);

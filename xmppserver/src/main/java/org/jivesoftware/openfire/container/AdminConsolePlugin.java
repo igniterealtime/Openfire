@@ -32,10 +32,12 @@ import org.eclipse.jetty.util.resource.Resource;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.*;
+import org.jivesoftware.admin.AdminContentSecurityPolicyFilter;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.admin.AuthCheckFilter;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.http.HttpBindContentSecurityPolicyFilter;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -68,7 +70,7 @@ public class AdminConsolePlugin implements Plugin {
     private static final Logger Log = LoggerFactory.getLogger(AdminConsolePlugin.class);
 
     /**
-     * Enable / Disable parsing a 'X-Forwarded-For' style HTTP header of BOSH requests.
+     * Enable / Disable parsing a 'X-Forwarded-For' style HTTP header of HTTP requests.
      */
     public static final SystemProperty<Boolean> ADMIN_CONSOLE_FORWARDED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("adminConsole.forwarded.enabled")
@@ -115,6 +117,24 @@ public class AdminConsolePlugin implements Plugin {
         .setDynamic(false)
         .setDefaultValue(null)
         .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .build();
+
+    /**
+     * Enable / Disable adding a 'Content-Security-Policy' HTTP header to the response to requests made against the admin console.
+     */
+    public static final SystemProperty<Boolean> ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("adminConsole.CSP.enabled")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+
+    /**
+     * The header value when adding a 'Content-Security-Policy' HTTP header to the response to requests made against the admin console.
+     */
+    public static final SystemProperty<String> ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.CSP.responsevalue")
+        .setDynamic(true)
+        .setDefaultValue("default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; base-uri 'self'; form-action 'self'; img-src 'self' igniterealtime.org;")
         .build();
 
     /**
@@ -505,6 +525,9 @@ public class AdminConsolePlugin implements Plugin {
         });
         final URL classes = getClass().getProtectionDomain().getCodeSource().getLocation();
         context.getMetaData().setWebInfClassesResources(Collections.singletonList(Resource.newResource(classes)));
+
+        // Add CSP headers for all HTTP responses (errors, etc.)
+        context.addFilter(AdminContentSecurityPolicyFilter.class, "/*", null);
 
         // The index.html includes a redirect to the index.jsp and doesn't bypass
         // the context security when in development mode

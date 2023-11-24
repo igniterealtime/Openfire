@@ -134,7 +134,7 @@
         downloading = true;
         document.getElementById(id + "-image").innerHTML = '<img src="images/working-16x16.gif" alt="Downloading..."/>';
         document.getElementById(id).style.background = "#FFFFCC";
-        setTimeout("startDownload('" + url + "','" + version + "','" + id + "')", 1000);
+        setTimeout(startDownload, 1000, url, version, id);
     }
 
     function startDownload(url, version, id) {

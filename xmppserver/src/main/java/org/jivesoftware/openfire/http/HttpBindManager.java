@@ -46,6 +46,7 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.DispatcherType;
 import java.io.File;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -224,6 +225,24 @@ public final class HttpBindManager implements CertificateEventListener {
         .setDynamic(true)
         .setDefaultValue(Collections.singleton(HTTP_BIND_CORS_ALLOW_ORIGIN_ALL))
         .buildSet(String.class);
+
+    /**
+     * Enable / Disable adding a 'Content-Security-Policy' HTTP header to the response to requests made against the BOSH endpoint.
+     */
+    public static final SystemProperty<Boolean> HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("httpbind.CSP.enabled")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+
+    /**
+     * The header value when adding a 'Content-Security-Policy' HTTP header to the response to requests made against the BOSH endpoint.
+     */
+    public static final SystemProperty<String> HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.CSP.responsevalue")
+        .setDynamic(true)
+        .setDefaultValue("default-src 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'none';")
+        .build();
 
     /**
      * The HTTP methods that are accepted in the BOSH endpoint.
@@ -670,6 +689,9 @@ public final class HttpBindManager implements CertificateEventListener {
             context.insertHandler(gzipHandler);
         }
 
+        // Add CSP headers for all HTTP responses (errors, etc.)
+        context.addFilter(HttpBindContentSecurityPolicyFilter.class, "/*", null);
+
         return context;
     }
 
@@ -689,6 +711,10 @@ public final class HttpBindManager implements CertificateEventListener {
         // Add the functionality-providers.
         context.addServlet( new ServletHolder( new OpenfireWebSocketServlet() ), "/*" );
         JettyWebSocketServletContainerInitializer.configure(context, null);
+
+        // Add CSP headers for all HTTP responses (errors, etc.)
+        context.addFilter(HttpBindContentSecurityPolicyFilter.class, "/*", null);
+
         return context;
     }
 
@@ -717,6 +743,9 @@ public final class HttpBindManager implements CertificateEventListener {
             {
                 final WebAppContext context = new WebAppContext( null, spankDirectory.getPath(), "/" );
                 context.setWelcomeFiles( new String[] { "index.html" } );
+
+                // Add CSP headers for all HTTP responses (errors, etc.)
+                context.addFilter(HttpBindContentSecurityPolicyFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 
                 return context;
             }

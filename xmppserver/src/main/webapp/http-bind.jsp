@@ -49,7 +49,9 @@
             final int requestedSecurePort = ParamUtils.getIntParameter( request, "securePort", HttpBindManager.HTTP_BIND_SECURE_PORT.getValue() );
             final boolean isCORSEnabled = ParamUtils.getBooleanParameter( request, "CORSEnabled", HttpBindManager.HTTP_BIND_CORS_ENABLED.getValue() );
             final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", HttpBindManager.HTTP_BIND_FORWARDED.getValue() );
+            final boolean isCSPEnabled = ParamUtils.getBooleanParameter( request, "CSPEnabled", HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.getValue() );
             final String CORSDomains = ParamUtils.getParameter( request, "CORSDomains", true );
+            final String cspValue = ParamUtils.getParameter( request, "CSPValue", true);
 
             final ConnectionManager manager = XMPPServer.getInstance().getConnectionManager();
             final ConnectionConfiguration configuration = manager.getListener( ConnectionType.BOSH_C2S, true ).generateConnectionConfiguration();
@@ -68,7 +70,7 @@
                 HttpBindManager.HTTP_BIND_CORS_ENABLED.setValue(isCORSEnabled);
 
                 final Set<String> update = new HashSet<>();
-                if (CORSDomains == null || CORSDomains.trim().length() == 0)
+                if (CORSDomains == null || CORSDomains.trim().isEmpty())
                     update.add(HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
                 else {
                     update.addAll(Arrays.asList(CORSDomains.replaceAll("\\s+", "").split(",")));
@@ -80,28 +82,35 @@
                 if (xffHeader == null || xffHeader.trim().isEmpty()) {
                     HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(null);
                 } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(xffHeader);
+                    HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(xffHeader.trim());
                 }
 
                 final String xffServerHeader = ParamUtils.getParameter( request, "XFFServerHeader" );
                 if (xffServerHeader == null || xffServerHeader.trim().isEmpty()) {
                     HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(null);
                 } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader);
+                    HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader.trim());
                 }
 
                 final String xffHostHeader = ParamUtils.getParameter( request, "xffHostHeader" );
                 if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
                     HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(null);
                 } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(xffHostHeader);
+                    HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(xffHostHeader.trim());
                 }
 
                 final String name = ParamUtils.getParameter( request, "XFFHostName" );
                 if (name == null || name.trim().isEmpty()) {
                     HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(null);
                 } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(name);
+                    HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(name.trim());
+                }
+
+                HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.setValue( isCSPEnabled );
+                if (cspValue == null || cspValue.trim().isEmpty()) {
+                    HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(null);
+                } else {
+                    HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(cspValue.trim());
                 }
 
                 manager.getListener( ConnectionType.BOSH_C2S, true ).setClientAuth( mutualAuthentication );
@@ -173,7 +182,7 @@
             $("XFFHostHeader").disabled = !enabled;
             $("XFFHostName").disabled = !enabled;
         };
-        window.onload = setTimeout("setEnabled()", 500);
+        window.onload = setTimeout(setEnabled, 500);
     </script>
 </head>
 <body>
@@ -366,7 +375,37 @@
         </table>
     </admin:contentBox>
     <!-- XFF -->
-    
+
+    <!-- Content-Security-Policy -->
+    <fmt:message key="httpbind.settings.csp.group" var="csp_boxtitle"/>
+    <admin:contentBox title="${csp_boxtitle}">
+        <table>
+            <tbody>
+            <tr>
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
+                    <input type="radio" name="CSPEnabled" value="true" id="rb09" ${HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.value ? "checked" : ""}>
+                </td>
+                <td>
+                    <label for="rb09"><b><fmt:message key="httpbind.settings.csp.label_enable"/></b> - <fmt:message key="httpbind.settings.csp.label_enable_info"/></label>
+                    <table>
+                        <tr><td><label for="CSPValue"><fmt:message key="httpbind.settings.csp.value"/></label></td></tr>
+                        <tr><td><input id="CSPValue" type="text" size="80" name="CSPValue" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.value == null ? "" : HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.value)}"></td></tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
+                    <input type="radio" name="CSPEnabled" value="false" id="rb10" ${HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.value ? "" : "checked"}>
+                </td>
+                <td>
+                    <label for="rb10"><b><fmt:message key="httpbind.settings.csp.label_disable"/></b> - <fmt:message key="httpbind.settings.csp.label_disable_info"/></label>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </admin:contentBox>
+    <!-- Content-Security-Policy -->
+
     <input type="submit" id="settingsUpdate" name="update" value="<fmt:message key="global.save_settings" />">
 </form>
 </body>

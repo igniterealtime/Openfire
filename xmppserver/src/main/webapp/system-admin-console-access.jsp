@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin " %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -49,9 +50,13 @@
 <%  final Map<String, String> errors = new HashMap<>();
 
     // Get parameters
+    final String formtype = ParamUtils.getParameter(request, "formtype");
     final String blockedIPs = request.getParameter("blockedIPs");
     final String allowedIPs = request.getParameter("allowedIPs");
     final boolean ignoreExcludes = ParamUtils.getBooleanParameter(request, "ignore-excludes");
+    final boolean isXFFEnabled = ParamUtils.getBooleanParameter( request, "XFFEnabled", AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.getValue() );
+    final boolean isCSPEnabled = ParamUtils.getBooleanParameter( request, "CSPEnabled", AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_ENABLED.getValue() );
+    final String cspValue = ParamUtils.getParameter( request, "CSPValue", true);
 
     boolean save = ParamUtils.getParameter(request, "save") != null;
     boolean success = ParamUtils.getBooleanParameter(request, "success");
@@ -71,45 +76,112 @@
     pageContext.setAttribute("csrf", csrfParam);
 
     if (save) {
-        // do validation
-        final Set<String> blockedSet = new HashSet<>();
-        for (final String address : blockedIPs.split("[,\\s]+") ) {
-            if (!address.isEmpty()) {
-                if (isValidIpOrRange(address)) {
-                    blockedSet.add(address);
-                } else {
-                    if (errors.containsKey("invalid-blocklist-ips")) {
-                        errors.put("invalid-blocklist-ips", errors.get("invalid-blocklist-ips") + ", " + address);
-                    } else {
-                        errors.put("invalid-blocklist-ips", address);
+        switch (formtype)
+        {
+            case "ip":
+                // do validation
+                final Set<String> blockedSet = new HashSet<>();
+                for (final String address : blockedIPs.split("[,\\s]+")) {
+                    if (!address.isEmpty()) {
+                        if (isValidIpOrRange(address)) {
+                            blockedSet.add(address);
+                        } else {
+                            if (errors.containsKey("invalid-blocklist-ips")) {
+                                errors.put("invalid-blocklist-ips", errors.get("invalid-blocklist-ips") + ", " + address);
+                            } else {
+                                errors.put("invalid-blocklist-ips", address);
+                            }
+                        }
                     }
                 }
-            }
-        }
-        final Set<String> allowedSet = new HashSet<>();
-        for (final String address : allowedIPs.split("[,\\s]+") ) {
-            if (!address.isEmpty()) {
-                if (isValidIpOrRange(address)) {
-                    allowedSet.add(address);
-                } else {
-                    if (errors.containsKey("invalid-allowlist-ips")) {
-                        errors.put("invalid-allowlist-ips", errors.get("invalid-allowlist-ips") + ", " + address);
-                    } else {
-                        errors.put("invalid-allowlist-ips", address);
+                final Set<String> allowedSet = new HashSet<>();
+                for (final String address : allowedIPs.split("[,\\s]+")) {
+                    if (!address.isEmpty()) {
+                        if (isValidIpOrRange(address)) {
+                            allowedSet.add(address);
+                        } else {
+                            if (errors.containsKey("invalid-allowlist-ips")) {
+                                errors.put("invalid-allowlist-ips", errors.get("invalid-allowlist-ips") + ", " + address);
+                            } else {
+                                errors.put("invalid-allowlist-ips", address);
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        if (errors.isEmpty()) {
-            AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(blockedSet);
-            AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(allowedSet);
-            AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(ignoreExcludes);
+                if (errors.isEmpty()) {
+                    AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(blockedSet);
+                    AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(allowedSet);
+                    AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(ignoreExcludes);
 
-            // Log the event
-            webManager.logEvent("Updated Admin Console access configuration.", "Blocklist = {" + String.join(", ", blockedSet) + "}\nAllowlist = {" + String.join(", ", allowedSet) + "}\nIgnore excludes = " + ignoreExcludes);
-            response.sendRedirect("system-admin-console-access.jsp?success=true");
-            return;
+                    // Log the event
+                    webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Blocklist = {" + String.join(", ", blockedSet) + "}\nAllowlist = {" + String.join(", ", allowedSet) + "}\nIgnore excludes = " + ignoreExcludes);
+                    response.sendRedirect("system-admin-console-access.jsp?success=true");
+                    return;
+                }
+                break;
+
+            case "xff":
+
+                if (errors.isEmpty())
+                {
+                    AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.setValue( isXFFEnabled );
+
+                    final String xffHeader = ParamUtils.getParameter( request, "XFFHeader" );
+                    if (xffHeader == null || xffHeader.trim().isEmpty()) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.setValue(null);
+                    } else {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.setValue(xffHeader.trim());
+                    }
+
+                    final String xffServerHeader = ParamUtils.getParameter( request, "XFFServerHeader" );
+                    if (xffServerHeader == null || xffServerHeader.trim().isEmpty()) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_SERVER.setValue(null);
+                    } else {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_SERVER.setValue(xffServerHeader.trim());
+                    }
+
+                    final String xffHostHeader = ParamUtils.getParameter( request, "xffHostHeader" );
+                    if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST.setValue(null);
+                    } else {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST.setValue(xffHostHeader.trim());
+                    }
+
+                    final String name = ParamUtils.getParameter( request, "XFFHostName" );
+                    if (name == null || name.trim().isEmpty()) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.setValue(null);
+                    } else {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.setValue(name.trim());
+                    }
+
+                    // Log the event
+                    webManager.logEvent("Updated Admin Console access configuration (X-Forwarded-For).", "X-Forwarded-For enabled: " + isXFFEnabled + "\nHeader: " + xffHeader + "\nServer Header: " + xffServerHeader + "\nHost Name: " + name );
+                    response.sendRedirect("system-admin-console-access.jsp?success=true");
+                    return;
+                }
+                break;
+
+            case "csp":
+                if (errors.isEmpty())
+                {
+                    AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_ENABLED.setValue(isCSPEnabled);
+
+                    if (cspValue == null || cspValue.trim().isEmpty()) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(null);
+                    } else {
+                        AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(cspValue.trim());
+                    }
+
+                    // Log the event
+                    webManager.logEvent("Updated Admin Console access configuration (Content-Security-Policy).", "Content-Security-Policy enabled: " + isCSPEnabled + "\nHeader Value: " + cspValue);
+                    response.sendRedirect("system-admin-console-access.jsp?success=true");
+                    return;
+                }
+                break;
+
+            default:
+                errors.put("unknown formtype value", null);
         }
     }
 
@@ -172,6 +244,7 @@
 
     <form action="system-admin-console-access.jsp" method="post">
         <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="formtype" value="ip">
 
         <p><fmt:message key="system.admin.console.access.iplists.blocklist.info" /></p>
         <table>
@@ -198,6 +271,96 @@
         <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
     </form>
 </admin:contentBox>
+
+<!-- XFF -->
+<fmt:message key="system.admin.console.settings.xff.group" var="xff_boxtitle"/>
+<admin:contentBox title="${xff_boxtitle}">
+
+    <form action="system-admin-console-access.jsp" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="formtype" value="xff">
+
+        <table>
+            <tbody>
+            <tr>
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
+                    <input type="radio" name="XFFEnabled" value="true" id="rb07" ${AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.value ? "checked" : ""}>
+                </td>
+                <td>
+                    <label for="rb07"><b><fmt:message key="system.admin.console.xff.label_enable"/></b> - <fmt:message key="system.admin.console.xff.label_enable_info"/></label>
+                    <table>
+                        <tr>
+                            <td><label for="XFFHeader"><fmt:message key="system.admin.console.xff.forwarded_for"/></label></td>
+                            <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.value)}"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="XFFServerHeader"><fmt:message key="system.admin.console.xff.forwarded_server"/></label></td>
+                            <td><input id="XFFServerHeader" type="text" size="40" name="XFFServerHeader" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_SERVER.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_SERVER.value)}"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="XFFHostHeader"><fmt:message key="system.admin.console.xff.forwarded_host"/></label></td>
+                            <td><input id="XFFHostHeader" type="text" size="40" name="XFFHostHeader" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST.value)}"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="XFFHostName"><fmt:message key="system.admin.console.xff.host_name"/></label></td>
+                            <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.value)}"></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
+                    <input type="radio" name="XFFEnabled" value="false" id="rb08" ${AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.value ? "" : "checked"}>
+                </td>
+                <td>
+                    <label for="rb08"><b><fmt:message key="system.admin.console.xff.label_disable"/></b> - <fmt:message key="system.admin.console.xff.label_disable_info"/></label>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+    </form>
+</admin:contentBox>
+<!-- XFF -->
+
+<!-- Content-Security-Policy -->
+<fmt:message key="system.admin.console.csp.group" var="csp_boxtitle"/>
+<admin:contentBox title="${csp_boxtitle}">
+
+    <form action="system-admin-console-access.jsp" method="post">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <input type="hidden" name="formtype" value="csp">
+
+        <table>
+            <tbody>
+            <tr>
+                <td style="width: 1%; white-space: nowrap; vertical-align: top">
+                    <input type="radio" name="CSPEnabled" value="true" id="rb09" ${AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_ENABLED.value ? "checked" : ""}>
+                </td>
+                <td>
+                    <label for="rb09"><b><fmt:message key="system.admin.console.csp.label_enable"/></b> - <fmt:message key="system.admin.console.csp.label_enable_info"/></label>
+                    <table>
+                        <tr><td><label for="CSPValue"><fmt:message key="system.admin.console.csp.value"/></label></td></tr>
+                        <tr><td><input id="CSPValue" type="text" size="80" name="CSPValue" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE.value)}"></td></tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
+                    <input type="radio" name="CSPEnabled" value="false" id="rb10" ${AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_ENABLED.value ? "" : "checked"}>
+                </td>
+                <td>
+                    <label for="rb10"><b><fmt:message key="system.admin.console.csp.label_disable"/></b> - <fmt:message key="system.admin.console.csp.label_disable_info"/></label>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+    </form>
+</admin:contentBox>
+<!-- Content-Security-Policy -->
 
 </body>
 </html>

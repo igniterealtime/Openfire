@@ -36,12 +36,15 @@ jobs:
         with:
           name: surefire-reports_java${{ matrix.java }}
           path: xmppserver/target/surefire-reports
+      - name: tar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        if: ${{ matrix.distribution == 'zulu' }}
+        run: tar -cf distribution-artifact.tar distribution/target/distribution-base
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v4
         with:
           name: distribution-java${{ matrix.java }}
-          path: distribution/target/distribution-base
+          path: distribution-artifact.tar
       - name: Upload test files
         if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v4
@@ -79,7 +82,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/distribution-base
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
       - name: Download test files from build job.
         uses: actions/download-artifact@v4
         with:
@@ -170,7 +175,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/distribution-base
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
       - name: Download test files from build job.
         uses: actions/download-artifact@v4
         with:
@@ -364,7 +371,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/distribution-base
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
       - name: Download test files from build job.
         uses: actions/download-artifact@v4
         with:

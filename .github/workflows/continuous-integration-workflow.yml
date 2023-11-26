@@ -50,7 +50,6 @@ jobs:
           path: |
             startServer
             stopServer
-            runAioxmppIntegrationTests
             runConnectivityIntegrationTests
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
@@ -88,24 +87,55 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./runAioxmppIntegrationTests
-
+          chmod +x ./startServer
+          chmod +x ./stopServer
+      - name: Checkout aioxmpp devel/head
+        uses: actions/checkout@v4
+        with:
+          repository: horazont/aioxmpp
+          ref: devel
+          path: aioxmpp
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
           check-latest: true # attempt to prevent to use 3.11.3 by enticing the runner to update (to something later)
-
+      - name: Install aoixmpp dependencies
+        run: python -m pip install setuptools pytest pytest-cov coveralls pyOpenSSL pytz
+      - name: Build aioxmpp
+        working-directory: ./aioxmpp
+        run: python -m pip install .
+      - name: Create Openfire config file for aioxmpp
+        working-directory: ./aioxmpp
+        run: |
+          cat >"openfire-config.ini" <<EOL
+          [global]
+          provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
+          
+          [aioxmpp.e2etest.provision.AnonymousProvisioner]
+          domain=example.org
+          host=localhost
+          port=5222
+          no_verify=true
+          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
+          EOL
+      - name: Start server from distribution
+        id: startServer
+        run: ./startServer -d -l -i 127.0.0.1
       - name: Run aioxmpp tests
-        run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
-
+        working-directory: ./aioxmpp
+        run: |
+          mkdir output
+          python -m pytest -p aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only -k 'not test_set_topic and not test_publish_and_purge and not test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
       - name: Expose test output
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aioxmpp test output
           path: aioxmpp/output
-
+      - name: Stop server
+        if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        run: ./stopServer -d -l -i 127.0.0.1
       - name: Expose openfire output
         if: always()
         uses: actions/upload-artifact@v4

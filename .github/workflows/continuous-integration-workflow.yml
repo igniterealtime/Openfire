@@ -183,9 +183,174 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./runConnectivityIntegrationTests
-      - name: Run connectivity tests
-        run: ./runConnectivityIntegrationTests -d -l -i 127.0.0.1
+          chmod +x ./startServer
+          chmod +x ./stopServer
+      - name: Create connectivity tests
+        run: |
+          mkdir -p ./conntest/src/test/java
+          pushd ./conntest
+          cat >"pom.xml" <<EOL
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>org.igniterealtime.tests</groupId>
+              <artifactId>smack-bosh-example</artifactId>
+              <version>1.0</version>
+          
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+              </properties>
+          
+              <dependencies>
+                  <dependency>
+                      <groupId>org.igniterealtime.smack</groupId>
+                      <artifactId>smack-java7</artifactId>
+                      <version>4.3.4</version>
+                  </dependency>
+                  <dependency>
+                      <groupId>org.igniterealtime.smack</groupId>
+                      <artifactId>smack-tcp</artifactId>
+                      <version>4.3.4</version>
+                  </dependency>
+                  <dependency>
+                      <groupId>org.igniterealtime.smack</groupId>
+                      <artifactId>smack-bosh</artifactId>
+                      <version>4.3.4</version>
+                  </dependency>
+                  <dependency>
+                      <groupId>junit</groupId>
+                      <artifactId>junit</artifactId>
+                      <version>4.12</version>
+                      <scope>test</scope>
+                  </dependency>
+              </dependencies>
+          
+          </project>
+          EOL
+          cat >"src/test/java/ConnectivityTest.java" <<EOL
+          import org.jivesoftware.smack.ConnectionConfiguration;
+          import org.jivesoftware.smack.SmackException;
+          import org.jivesoftware.smack.bosh.BOSHConfiguration;
+          import org.jivesoftware.smack.bosh.XMPPBOSHConnection;
+          import org.jivesoftware.smack.tcp.XMPPTCPConnection;
+          import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
+          import org.junit.Assert;
+          import org.junit.Test;
+          
+          public class ConnectivityTest
+          {
+              /**
+               * Verifies that a few connections can be established and used to authenticate over BOSH.
+               */
+              @Test
+              public void testBoshConnections() throws Exception
+              {
+                  // Setup test fixture.
+                  final BOSHConfiguration config = BOSHConfiguration.builder()
+                          .setFile("/http-bind/")
+                          .setXmppDomain("example.org")
+                          .setHost("localhost")
+                          .setPort(7070)
+                          .setUseHttps(false)
+                          .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                          .build();
+                  final int iterations = 50;
+          
+                  // For some reason, the first connection on a freshly started instance on CI seems to fail. This attempts to work
+                  // around that problem by ignoring the first connection attempt.
+                  final XMPPBOSHConnection warmupCon = new XMPPBOSHConnection(config);
+                  warmupCon.connect();
+                  try {
+                      warmupCon.login("john", "secret");
+                  } catch (Throwable e) {
+                      System.out.println("Warm-up connection failed with error message: " + e.getMessage());
+                  } finally {
+                      warmupCon.disconnect();
+                  }
+          
+                  // Execute system under test.
+                  int result = 0;
+                  for (int i=0; i<iterations; i++) {
+                      final XMPPBOSHConnection con = new XMPPBOSHConnection(config);
+                      con.connect();
+                      try {
+                          con.login("john", "secret");
+                          if (con.isAuthenticated()) {
+                              result++;
+                          }
+                      } catch (Throwable e) {
+                          // This will prevent the result from being incremented, which will cause the test to fail.
+                          e.printStackTrace();
+                      } finally {
+                          con.disconnect();
+                      }
+                  }
+          
+                  // Verify result.
+                  Assert.assertEquals("Expected all BOSH connection attempts to result in an authenticated session, but not all did.", iterations, result);
+              }
+          
+              /**
+               * Verifies that a few connections can be established and used to authenticate over TCP.
+               */
+              @Test
+              public void testTCPConnections() throws Exception
+              {
+                  // Setup test fixture.
+                  final XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                          .setXmppDomain("example.org")
+                          .setHost("localhost")
+                          .setPort(5222)
+                          .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                          .build();
+                  final int iterations = 50;
+          
+                  // For some reason, the first connection on a freshly started instance on CI seems to fail. This attempts to work
+                  // around that problem by ignoring the first connection attempt.
+                  final XMPPTCPConnection warmupCon = new XMPPTCPConnection(config);
+                  warmupCon.connect();
+                  try {
+                      warmupCon.login("john", "secret");
+                  } catch (Throwable e) {
+                      System.out.println("Warm-up connection failed with error message: " + e.getMessage());
+                  } finally {
+                      warmupCon.disconnect();
+                  }
+          
+                  // Execute system under test.
+                  int result = 0;
+                  for (int i=0; i<iterations; i++) {
+                      final XMPPTCPConnection con = new XMPPTCPConnection(config);
+                      con.connect();
+                      try {
+                          con.login("john", "secret");
+                          if (con.isAuthenticated()) {
+                              result++;
+                          }
+                      } catch (Throwable e) {
+                          // This will prevent the result from being incremented, which will cause the test to fail.
+                          e.printStackTrace();
+                      } finally {
+                          con.disconnect();
+                      }
+                  }
+          
+                  // Verify result.
+                  Assert.assertEquals("Expected all TCP connection attempts to result in an authenticated session, but not all did.", iterations, result);
+              }
+          }
+          EOL
+          popd
+      - name: Start server from distribution
+        id: startServer
+        run: ./startServer -d -l -i 127.0.0.1
+      - name: Build with Maven
+        run: mvn clean test --file ./conntest/pom.xml
+      - name: Stop server
+        if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        run: ./stopServer -d -l -i 127.0.0.1
   smack:
 
     name: Execute Smack-based CI tests

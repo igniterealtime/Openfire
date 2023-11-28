@@ -51,8 +51,8 @@ jobs:
         with:
           name: test-files-java${{ matrix.java }}
           path: |
-            startServer
-            stopServer
+            startCIServer
+            stopCIServer
             runConnectivityIntegrationTests
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
@@ -92,8 +92,8 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./startServer
-          chmod +x ./stopServer
+          chmod +x ./startCIServer
+          chmod +x ./stopCIServer
       - name: Checkout aioxmpp devel/head
         uses: actions/checkout@v4
         with:
@@ -124,9 +124,9 @@ jobs:
           no_verify=true
           quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
           EOL
-      - name: Start server from distribution
-        id: startServer
-        run: ./startServer -d -l -i 127.0.0.1
+      - name: Start CI server from distribution
+        id: startCIServer
+        run: ./startCIServer -d -l -i 127.0.0.1
       - name: Run aioxmpp tests
         working-directory: ./aioxmpp
         run: |
@@ -138,9 +138,9 @@ jobs:
         with:
           name: aioxmpp test output
           path: aioxmpp/output
-      - name: Stop server
-        if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        run: ./stopServer -d -l -i 127.0.0.1
+      - name: Stop CI server
+        if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        run: ./stopCIServer -d -l -i 127.0.0.1
       - name: Expose openfire output
         if: always()
         uses: actions/upload-artifact@v4
@@ -190,8 +190,8 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./startServer
-          chmod +x ./stopServer
+          chmod +x ./startCIServer
+          chmod +x ./stopCIServer
       - name: Create connectivity tests
         run: |
           mkdir -p ./conntest/src/test/java
@@ -350,14 +350,14 @@ jobs:
           }
           EOL
           popd
-      - name: Start server from distribution
-        id: startServer
-        run: ./startServer -d -l -i 127.0.0.1
+      - name: Start CI server from distribution
+        id: startCIServer
+        run: ./startCIServer -d -l -i 127.0.0.1
       - name: Build with Maven
         run: mvn clean test --file ./conntest/pom.xml
-      - name: Stop server
-        if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        run: ./stopServer -d -l -i 127.0.0.1
+      - name: Stop CI server
+        if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        run: ./stopCIServer -d -l -i 127.0.0.1
   smack:
 
     name: Execute Smack-based CI tests
@@ -386,11 +386,11 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./startServer
-          chmod +x ./stopServer
-      - name: Start server from distribution
-        id: startServer
-        run: ./startServer -d -l -i 127.0.0.1
+          chmod +x ./startCIServer
+          chmod +x ./stopCIServer
+      - name: Start CI server from distribution
+        id: startCIServer
+        run: ./startCIServer -d -l -i 127.0.0.1
       - name: Run Smack tests against server
         uses: guusdk/sint-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
         with:
@@ -398,9 +398,9 @@ jobs:
           adminAccountUsername: 'admin'
           adminAccountPassword: 'admin'
           disabledTests: 'EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest'
-      - name: Stop server
-        if: ${{ always() && steps.startServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        run: ./stopServer -d -l -i 127.0.0.1
+      - name: Stop CI server
+        if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        run: ./stopCIServer -d -l -i 127.0.0.1
 
   should-do-database-upgrade-tests:
     name: Check if database upgrade tests should be run

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Starts an Openfire server (used in Continuous integration testing)
 set -euo pipefail
 
 LOCAL_RUN=false

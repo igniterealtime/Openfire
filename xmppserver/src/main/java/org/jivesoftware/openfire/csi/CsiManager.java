@@ -248,7 +248,12 @@ public class CsiManager
                 }
 
                 if (!message.getElement().elements("encrypted").isEmpty()) {
-                    // OMEMO messages never have a body element. We do not know what is being encrypted, but lets assume its important to err on the side of caution.
+                    // OMEMO messages never have a body element. We do not know what is being encrypted, but let's assume it's important to err on the side of caution.
+                    return false;
+                }
+
+                if (message.getElement().elements().stream().anyMatch(element -> element.getNamespaceURI().startsWith("urn:xmpp:jingle-message:"))) {
+                    // Typically, things that have to do with setting up an audio/video call. The user wants to see this as soon as possible, so do not delay. (OF-2750)
                     return false;
                 }
 

@@ -520,7 +520,7 @@ public class PluginServlet extends HttpServlet {
         String contextPath = "";
         int index = pathInfo.indexOf(parts[1]);
         if (index != -1) {
-            contextPath = pathInfo.substring(index + parts[1].length());
+            contextPath = pathInfo.substring(index + parts[1].length() + 1);
         }
 
         Path pluginDirectory = JiveGlobals.getHomePath().resolve("plugins");

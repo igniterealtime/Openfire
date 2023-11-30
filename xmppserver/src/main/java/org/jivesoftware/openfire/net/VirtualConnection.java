@@ -118,6 +118,39 @@ public abstract class VirtualConnection extends AbstractConnection
         return session != null && !isClosed();
     }
 
+    @Override
+    public void onUnexpectedDisconnect()
+    {
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+            Log.trace("Remote peer unexpectedly disconnected: {}, cleaning up connection.", this);
+
+            if (session != null) {
+                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
+                session.setStatus(Session.Status.CLOSED);
+            }
+
+            // See OF-1596
+            // The notification will trigger some shutdown procedures that, amongst other things,
+            // check what type of session (eg: anonymous) is being closed. This check depends on the
+            // session still being available.
+            //
+            // For that reason, it's important to first notify the listeners, and then close the
+            // session - not the other way around.
+            //
+            // This fixes a very visible bug where MUC users would remain in the MUC room long after
+            // their session was closed. Effectively, the bug prevents the MUC room from getting a
+            // presence update to notify it that the user logged off.
+            notifyCloseListeners();
+            closeListeners.clear();
+
+            try {
+                onVirtualUnexpectedDisconnect();
+            } catch (Exception e) {
+                Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
+            }
+        }
+    }
+
     /**
      * Closes the session, the virtual connection and notifies listeners that the connection
      * has been closed.
@@ -138,6 +171,9 @@ public abstract class VirtualConnection extends AbstractConnection
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             
             if (session != null) {
+                // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
+                session.getStreamManager().formalClose();
+
                 session.setStatus(Session.Status.CLOSED);
             }
 
@@ -170,4 +206,12 @@ public abstract class VirtualConnection extends AbstractConnection
      * @param error If non-null, this error will be sent to the peer before the connection is disconnected.
      */
     public abstract void closeVirtualConnection(@Nullable final StreamError error);
+
+    /**
+     * Processes an event where the network connection between Openfire and the remote peer has been disconnected.
+     * At this point the session has a CLOSED state.
+     *
+     * Implementations should free up resources without attempting to send data to the peer.
+     */
+    public abstract void onVirtualUnexpectedDisconnect();
 }

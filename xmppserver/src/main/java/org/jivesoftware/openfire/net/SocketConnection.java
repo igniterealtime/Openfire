@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.net;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
@@ -374,9 +376,29 @@ public class SocketConnection extends AbstractConnection {
         return backupDeliverer;
     }
 
+    @Override
+    public void onUnexpectedDisconnect()
+    {
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+            Log.trace("Remote peer unexpectedly disconnected: {}, cleaning up connection.", this);
+
+            if (session != null) {
+                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
+                session.setStatus(Session.Status.CLOSED);
+            }
+
+            closeConnection();
+            notifyCloseListeners();
+            closeListeners.clear();
+        }
+    }
+
     /**
      * Closes the connection without sending any data (not even a stream end-tag).
+     *
+     * @deprecated replaced by #onUnexpectedDisconnect
      */
+    @Deprecated // Remove in or after Openfire 4.9.0
     public void forceClose() {
         close(true, null);
     }
@@ -408,6 +430,10 @@ public class SocketConnection extends AbstractConnection {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             
             if (session != null) {
+                if (!force) {
+                    // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
+                    session.getStreamManager().formalClose();
+                }
                 session.setStatus(Session.STATUS_CLOSED);
             }
 
@@ -476,7 +502,7 @@ public class SocketConnection extends AbstractConnection {
                 Log.debug("Closing connection: " + this + " that started sending data at: " +
                         new Date(writeTimestamp));
             }
-            forceClose();
+            onUnexpectedDisconnect();
             return true;
         }
         else {
@@ -489,7 +515,7 @@ public class SocketConnection extends AbstractConnection {
                 if (Log.isDebugEnabled()) {
                     Log.debug("Closing connection that has been idle: " + this);
                 }
-                forceClose();
+                onUnexpectedDisconnect();
                 return true;
             }
         }

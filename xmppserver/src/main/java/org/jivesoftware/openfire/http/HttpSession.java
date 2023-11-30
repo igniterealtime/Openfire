@@ -1051,38 +1051,40 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
-    private void closeSession(@Nullable final StreamError error) {
+    private void closeSession(@Nullable final StreamError error, boolean allowWrite) {
         try {
-            // There generally should not be a scenario where there are pending connections, as well as pending elements
-            // to deliver, as when a new connection becomes available while there are pending elements, those will be
-            // delivered on that connection immediately. There's an edge-case where there are pending connections which
-            // do not have the correct, expected Request ID (+1 in the sequence). In that case, those connections are
-            // not eligible to receive data. These facts combines should rule out the need to flush pending elements to
-            // open connections in this method.
-            synchronized (connectionQueue) {
-                boolean isFirst = true;
-                while (!connectionQueue.isEmpty()) {
-                    final HttpConnection toClose = connectionQueue.poll();
-                    assert !toClose.isClosed();
-                    try {
-                        // XEP-0124, section 13: "The connection manager SHOULD acknowledge the session termination on
-                        // the oldest connection with an HTTP 200 OK containing a <body/> element of the type
-                        // 'terminate'. On all other open connections, the connection manager SHOULD respond with an
-                        // HTTP 200 OK containing an empty <body/> element.
-                        final String body;
-                        if (isFirst) {
-                            isFirst = false;
-                            body = this.createEmptyBody(true);
-                        } else {
-                            body = null;
+            if (allowWrite) {
+                // There generally should not be a scenario where there are pending connections, as well as pending elements
+                // to deliver, as when a new connection becomes available while there are pending elements, those will be
+                // delivered on that connection immediately. There's an edge-case where there are pending connections which
+                // do not have the correct, expected Request ID (+1 in the sequence). In that case, those connections are
+                // not eligible to receive data. These facts combines should rule out the need to flush pending elements to
+                // open connections in this method.
+                synchronized (connectionQueue) {
+                    boolean isFirst = true;
+                    while (!connectionQueue.isEmpty()) {
+                        final HttpConnection toClose = connectionQueue.poll();
+                        assert !toClose.isClosed();
+                        try {
+                            // XEP-0124, section 13: "The connection manager SHOULD acknowledge the session termination on
+                            // the oldest connection with an HTTP 200 OK containing a <body/> element of the type
+                            // 'terminate'. On all other open connections, the connection manager SHOULD respond with an
+                            // HTTP 200 OK containing an empty <body/> element.
+                            final String body;
+                            if (isFirst) {
+                                isFirst = false;
+                                body = this.createEmptyBody(true);
+                            } else {
+                                body = null;
+                            }
+                            toClose.deliverBody(body, true);
+                        } catch (HttpConnectionClosedException e) {
+                            // Probably benign.
+                            Log.debug("Closing an already closed connection.", e);
+                        } catch (IOException e) {
+                            // Likely caused by closing a stale session / connection.
+                            Log.debug("An unexpected exception occurred while closing a session.", e);
                         }
-                        toClose.deliverBody(body, true);
-                    } catch (HttpConnectionClosedException e) {
-                        // Probably benign.
-                        Log.debug("Closing an already closed connection.", e);
-                    } catch (IOException e) {
-                        // Likely caused by closing a stale session / connection.
-                        Log.debug("An unexpected exception occurred while closing a session.", e);
                     }
                 }
             }
@@ -1249,8 +1251,13 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
+        public void onVirtualUnexpectedDisconnect() {
+            ((HttpSession) session).closeSession(null, false);
+        }
+
+        @Override
         public void closeVirtualConnection(@Nullable final StreamError error) {
-            ((HttpSession) session).closeSession(error);
+            ((HttpSession) session).closeSession(error, true);
         }
 
         @Override

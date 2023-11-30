@@ -214,4 +214,9 @@ public class ClientSessionConnection extends VirtualConnection {
             }
         }
     }
+
+    @Override
+    public void onVirtualUnexpectedDisconnect() {
+        throw new IllegalStateException("Unable to process disconnect event.");
+    }
 }

@@ -186,6 +186,33 @@ public class NettyConnection extends AbstractConnection
     }
 
     @Override
+    public void onUnexpectedDisconnect()
+    {
+        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
+            Log.trace("Remote peer unexpectedly disconnected: {}, cleaning up connection.", this);
+
+            if (session != null) {
+                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
+                session.setStatus(Session.Status.CLOSED);
+            }
+
+            try {
+                final ChannelFuture f = channelHandlerContext.newSucceededFuture();
+                f.addListener(ChannelFutureListener.CLOSE)
+                    .addListener(e -> {
+                        Log.trace("Notifying close listeners.");
+                        notifyCloseListeners();
+                        closeListeners.clear();
+                    })
+                    .addListener(e -> Log.trace("Finished closing connection."))
+                    .sync();
+            } catch (Exception e) {
+                Log.error("Problem during connection close or cleanup", e);
+            }
+        }
+    }
+
+    @Override
     public void close() {
         close(null);
     }
@@ -198,6 +225,9 @@ public class NettyConnection extends AbstractConnection
             ChannelFuture f;
 
             if (session != null) {
+                // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
+                session.getStreamManager().formalClose();
+
                 // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
                 session.setStatus(Session.Status.CLOSED);
 
@@ -212,7 +242,6 @@ public class NettyConnection extends AbstractConnection
                 f = channelHandlerContext.writeAndFlush(rawEndStream);
             } else {
                 f = channelHandlerContext.newSucceededFuture();
-
             }
 
             try {

@@ -58,6 +58,12 @@ public class WebSocketConnection extends VirtualConnection
     }
 
     @Override
+    public void onVirtualUnexpectedDisconnect()
+    {
+        socket.getWsSession().close();
+    }
+
+    @Override
     public void closeVirtualConnection(@Nullable final StreamError error)
     {
         try {

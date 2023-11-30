@@ -119,7 +119,7 @@ public class WebSocketClientConnectionHandler
     @OnWebSocketClose
     public void onClose(int statusCode, String reason)
     {
-        wsConnection.close();
+        wsConnection.close(); // or: wsConnection.onVirtualUnexpectedDisconnect(); ??
     }
 
     @OnWebSocketMessage
@@ -172,6 +172,7 @@ public class WebSocketClientConnectionHandler
                     wsConnection.close(new StreamError(StreamError.Condition.internal_server_error));
                 } else {
                     Log.debug("Error detected on websocket that isn't open (any more):", error);
+                    wsConnection.onVirtualUnexpectedDisconnect();
                 }
             } catch (Exception e) {
                 Log.error("Error disconnecting websocket", e);

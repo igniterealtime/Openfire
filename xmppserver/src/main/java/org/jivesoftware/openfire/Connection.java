@@ -154,15 +154,35 @@ public interface Connection extends Closeable {
      * @return true if the other peer of this session presented a self-signed certificate.
      */
     boolean isUsingSelfSignedCertificate();
-    
+
     /**
-     * Close this session including associated socket connection. The order of
-     * events for closing the session is:
+     * Processes an event where the network connection between Openfire and the remote peer has been disconnected.
+     *
+     * Handling is comparable to that of an invocation of {@link #close()} or {@link #close(StreamError)}, with two
+     * differences:
+     * <ul>
+     *     <li>As the network connection is assumed to be broken, no data is send to the peer</li>
+     *     <li>When stream management is active, the session will be resumable (under the applicable configuration restrictions)</li>
+     * </ul>
+     */
+    void onUnexpectedDisconnect();
+
+    /**
+     * Close this connection including associated session. The order of
+     * events for closing the connection is:
      * <ul>
      *      <li>Set closing flag to prevent redundant shutdowns.
      *      <li>Call notifyEvent all listeners that the channel is shutting down.
      *      <li>Close the socket.
      * </ul>
+     *
+     * Not all implementations use the same order of events.
+     *
+     * Invocation of this method is expected to occur when a coordinated, 'clean' disconnect occurs. Such disconnects
+     * are expected to be user (or server) initiated. As a result, a session closed by this method is not resumable,
+     * even if Stream Management was activated for this session. Refer to {@link #onUnexpectedDisconnect()} for processing
+     * of unexpected disconnects (that <em>are</em> potentially resumable).
+     *
      * Note this method overrides the base interface to suppress exceptions. However,
      * it otherwise fulfills the requirements of the {@link Closeable#close()} contract
      * (idempotent, try-with-resources, etc.)
@@ -171,8 +191,8 @@ public interface Connection extends Closeable {
     void close();
 
     /**
-     * Close this session including associated socket connection, optionally citing a
-     * stream error. The events for closing the session are:
+     * Close this connection including associated session, optionally citing a
+     * stream error. The events for closing the connection are:
      * <ul>
      *      <li>Set closing flag to prevent redundant shutdowns.
      *      <li>Close the socket.
@@ -180,6 +200,11 @@ public interface Connection extends Closeable {
      * </ul>
      *
      * Not all implementations use the same order of events.
+     *
+     * Invocation of this method is expected to occur when a coordinated, 'clean' disconnect occurs. Such disconnects
+     * are expected to be user (or server) initiated. As a result, a session closed by this method is not resumable,
+     * even if Stream Management was activated for this session. Refer to {@link #onUnexpectedDisconnect()} for processing
+     * of unexpected disconnects (that <em>are</em> potentially resumable).
      *
      * @param error If non-null, the end-stream tag will be preceded with this error.
      */

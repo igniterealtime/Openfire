@@ -47,7 +47,7 @@ public class ClientSessionTask extends RemoteSessionTask {
         super();
     }
 
-    protected ClientSessionTask(JID address, Operation operation) {
+    public ClientSessionTask(JID address, Operation operation) {
         super(operation);
         this.address = address;
     }

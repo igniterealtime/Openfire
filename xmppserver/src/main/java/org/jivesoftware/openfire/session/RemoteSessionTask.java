@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -133,6 +134,27 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         else if (operation == Operation.validate) {
             result = getSession().validate();
         }
+        else if (operation == Operation.removeDetached) {
+            final Session session = getSession();
+            if (session instanceof LocalSession) {
+                Log.debug("Terminating local session as instructed by another cluster node: {}", session);
+
+                final Future<?> future = TaskEngine.getInstance().submit( () -> {
+                    try {
+                        SessionManager.getInstance().terminateDetached((LocalSession) session);
+                    } catch (Exception e) {
+                        Log.info("An exception was logged while closing session: {}", session, e);
+                    }
+                });
+                // Wait until the close operation is done or timeout is met
+                try {
+                    future.get(15, TimeUnit.SECONDS);
+                }
+                catch (Exception e) {
+                    Log.info("An exception was logged while executing RemoteSessionTask to close session: {}", session, e);
+                }
+            }
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -169,6 +191,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         getHostAddress,
         getHostName,
         validate,
+        removeDetached,
         
         /**
          * Operations of c2s sessions

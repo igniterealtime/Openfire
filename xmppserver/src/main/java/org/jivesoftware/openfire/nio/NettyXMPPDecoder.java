@@ -67,13 +67,8 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        NettyConnection connection = ctx.channel().attr(CONNECTION).get();
-        if (cause instanceof IOException) {
-            Log.warn("IOException caught by XMPP decoder. Marking connection as 'closed' (but potentially resumable): {}", connection, cause);
-            connection.onUnexpectedDisconnect();
-        } else {
-            Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
-            connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"));
-        }
+        final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+        Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
+        connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"), cause instanceof IOException);
     }
 }

@@ -1251,11 +1251,6 @@ public class HttpSession extends LocalClientSession {
         }
 
         @Override
-        public void onVirtualUnexpectedDisconnect() {
-            ((HttpSession) session).closeSession(null, false);
-        }
-
-        @Override
         public void closeVirtualConnection(@Nullable final StreamError error) {
             ((HttpSession) session).closeSession(error, true);
         }

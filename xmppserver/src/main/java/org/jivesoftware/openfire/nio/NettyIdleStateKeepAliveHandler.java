@@ -90,7 +90,7 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
                 // Idle flag already present. Connection has been idle for a while. Close it.
                 final NettyConnection connection = channel.attr(CONNECTION).get();
                 Log.debug("Closing connection because of inactivity: {}", connection);
-                connection.close(new StreamError(StreamError.Condition.connection_timeout, doPing ? "Connection has been idle and did not respond to a keep-alive check." : "Connection has been idle."));
+                connection.close(new StreamError(StreamError.Condition.connection_timeout, doPing ? "Connection has been idle and did not respond to a keep-alive check." : "Connection has been idle."), doPing);
             }
         }
         super.userEventTriggered(ctx, evt);

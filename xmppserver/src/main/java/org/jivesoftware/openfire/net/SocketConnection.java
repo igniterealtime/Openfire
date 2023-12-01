@@ -18,8 +18,6 @@ package org.jivesoftware.openfire.net;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
@@ -226,7 +224,7 @@ public class SocketConnection extends AbstractConnection {
         }
         catch (Exception e) {
             Log.warn("Closing no longer valid connection" + "\n" + this, e);
-            close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while trying to validate this connection."));
+            close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while trying to validate this connection."), true);
         }
         finally {
             // Register that we finished sending data on the connection
@@ -376,49 +374,18 @@ public class SocketConnection extends AbstractConnection {
         return backupDeliverer;
     }
 
-    @Override
-    public void onUnexpectedDisconnect()
-    {
-        if (state.compareAndSet(State.OPEN, State.CLOSED)) {
-            Log.trace("Remote peer unexpectedly disconnected: {}, cleaning up connection.", this);
-
-            if (session != null) {
-                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
-                session.setStatus(Session.Status.CLOSED);
-            }
-
-            closeConnection();
-            notifyCloseListeners();
-            closeListeners.clear();
-        }
-    }
-
     /**
      * Closes the connection without sending any data (not even a stream end-tag).
      *
-     * @deprecated replaced by #onUnexpectedDisconnect
+     * @deprecated replaced by {@link #close(StreamError, boolean)}
      */
     @Deprecated // Remove in or after Openfire 4.9.0
     public void forceClose() {
-        close(true, null);
+        close(null,false, true);
     }
 
-    /**
-     * Closes the connection after trying to send a stream end tag.
-     */
-    @Override
-    public void close() {
-        close(false, null);
-    }
-
-    /**
-     * Closes the connection after trying to send an optional error and stream end tag.
-     *
-     * @param error If non-null, the end-stream tag will be preceded with this error.
-     */
-    @Override
-    public void close(@Nullable final StreamError error) {
-        close(false, error);
+    public void close(@Nullable final StreamError error, final boolean networkInterruption) {
+        close(error, networkInterruption, false);
     }
 
     /**
@@ -426,11 +393,11 @@ public class SocketConnection extends AbstractConnection {
      * forces the connection closed immediately. This method will be called when  we need to close the socket, discard
      * the connection and its session.
      */
-    private void close(boolean force, @Nullable final StreamError error) {
+    private void close(@Nullable final StreamError error, final boolean networkInterruption, final boolean force) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             
             if (session != null) {
-                if (!force) {
+                if (!force && !networkInterruption) {
                     // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
                     session.getStreamManager().formalClose();
                 }
@@ -502,7 +469,7 @@ public class SocketConnection extends AbstractConnection {
                 Log.debug("Closing connection: " + this + " that started sending data at: " +
                         new Date(writeTimestamp));
             }
-            onUnexpectedDisconnect();
+            close(new StreamError(StreamError.Condition.connection_timeout, "Unable to validate the connection. Connection has been idle long enough for it to be considered 'unhealthy'."), true);
             return true;
         }
         else {
@@ -515,7 +482,7 @@ public class SocketConnection extends AbstractConnection {
                 if (Log.isDebugEnabled()) {
                     Log.debug("Closing connection that has been idle: " + this);
                 }
-                onUnexpectedDisconnect();
+                close(new StreamError(StreamError.Condition.connection_timeout, "Not received data recently. Connection has been idle long enough for it to be considered 'unhealthy'."), true);
                 return true;
             }
         }

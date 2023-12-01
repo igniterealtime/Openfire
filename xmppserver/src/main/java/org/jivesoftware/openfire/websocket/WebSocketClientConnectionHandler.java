@@ -169,10 +169,10 @@ public class WebSocketClientConnectionHandler
             try {
                 if (isWebSocketOpen()) {
                     Log.warn("Attempting to close connection on which an error occurred: {}", wsConnection, error);
-                    wsConnection.close(new StreamError(StreamError.Condition.internal_server_error));
+                    wsConnection.close(new StreamError(StreamError.Condition.internal_server_error), !isWebSocketOpen());
                 } else {
                     Log.debug("Error detected on websocket that isn't open (any more):", error);
-                    wsConnection.onVirtualUnexpectedDisconnect();
+                    wsConnection.close(null, !isWebSocketOpen());
                 }
             } catch (Exception e) {
                 Log.error("Error disconnecting websocket", e);

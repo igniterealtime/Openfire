@@ -24,13 +24,13 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
@@ -54,6 +54,12 @@ public class StreamManager {
 
     public static SystemProperty<Boolean> LOCATION_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.location.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
+    public static SystemProperty<Boolean> LOCATION_TERMINATE_OTHERS_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.location.terminate-others.enabled")
         .setDefaultValue(true)
         .setDynamic(true)
         .build();
@@ -319,12 +325,21 @@ public class StreamManager {
         // Locate existing session.
         final ClientSession route = XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
         if (route == null) {
+            Log.debug("Not able for client of '{}' to resume a session on this cluster node. No session was found for this client.", fullJid);
+            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
+                // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
+                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
+            }
             sendError(new PacketError(PacketError.Condition.item_not_found));
             return;
         }
 
         if (!(route instanceof LocalClientSession)) {
             Log.debug("Not allowing a client of '{}' to resume a session on this cluster node. The session can only be resumed on the Openfire cluster node where the original session was connected.", fullJid);
+            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
+                // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
+                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
+            }
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;
         }

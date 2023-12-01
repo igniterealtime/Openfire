@@ -256,18 +256,68 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Terminate a session that is detached.
+     *
+     * A presence 'unavailable' is broadcast for the session that's being terminated. The session will be removed from
+     * the routing table.
+     *
+     * When the provided session is not recognized as a detached session (on this cluster node), then this method will
+     * log a message but not apply any changes.
+     *
+     * @param session The (detached) session to be terminated.
+     */
+    public synchronized void terminateDetached(LocalSession session) {
+        if (!(session instanceof LocalClientSession)) {
+            Log.trace("Silently ignoring a request to terminate a non LocalClientSession: {}", session);
+            return;
+        }
+        Log.debug("Terminating detached session '{}' ({})", session.getAddress(), session.getStreamID());
+        if (!removeDetached(session)) {
+            Log.info("Unable to terminate detachment of session '{}' ({}), as it was not registered as being a detached.", session.getAddress(), session.getStreamID());
+            return;
+        }
+        final LocalClientSession clientSession = (LocalClientSession)session;
+
+        // OF-1923: Only close the session if it has not been replaced by another session (if the session
+        // has been replaced, then the condition below will compare to distinct instances). This *should* not
+        // occur (but has been observed, prior to the fix of OF-1923). This check is left in as a safeguard.
+        if (session == routingTable.getClientRoute(session.getAddress())) {
+            try {
+                if ((clientSession.getPresence().isAvailable() || !clientSession.wasAvailable()) &&
+                    routingTable.hasClientRoute(session.getAddress())) {
+                    // Send an unavailable presence to the user's subscribers
+                    // Note: This gives us a chance to send an unavailable presence to the
+                    // entities that the user sent directed presences
+                    Presence presence = new Presence();
+                    presence.setType(Presence.Type.unavailable);
+                    presence.setFrom(session.getAddress());
+                    router.route(presence);
+                }
+
+                session.getStreamManager().onClose(router, serverAddress);
+            } finally {
+                // Remove the session
+                removeSession(clientSession);
+            }
+        } else {
+            Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session.", session.getAddress(), session.getStreamID());
+        }
+    }
+
+    /**
      * Remove a session as being detached. This is idempotent.
      * This should be called by the LocalSession itself either when resumed or when
      * closed.
      *
      * @param localSession the LocalSession (this) which has been resumed or closed.
      */
-    public synchronized void removeDetached(LocalSession localSession) {
+    public synchronized boolean removeDetached(LocalSession localSession) {
         LocalSession other = this.detachedSessions.get(localSession.getStreamID());
         if (other == localSession) {
             Log.trace( "Removing detached session '{}' ({}).", localSession.getAddress(), localSession.getStreamID() );
-            this.detachedSessions.remove(localSession.getStreamID());
+            return this.detachedSessions.remove(localSession.getStreamID()) != null;
         }
+        return false;
     }
 
     /**
@@ -1898,33 +1948,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                     Log.trace("Iterating over detached session '{}' ({}) to determine if it needs to be cleaned up.", session.getAddress(), session.getStreamID());
                     if (session.getLastActiveDate().getTime() < deadline) {
                         Log.debug("Detached session '{}' ({}) has been detached for longer than {} and will be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(idleTime));
-                        removeDetached(session);
-                        LocalClientSession clientSession = (LocalClientSession)session;
-
-                        // OF-1923: Only close the session if it has not been replaced by another session (if the session
-                        // has been replaced, then the condition below will compare to distinct instances). This *should* not
-                        // occur (but has been observed, prior to the fix of OF-1923). This check is left in as a safeguard.
-                        if (session == routingTable.getClientRoute(session.getAddress())) {
-                            try {
-                                if ((clientSession.getPresence().isAvailable() || !clientSession.wasAvailable()) &&
-                                    routingTable.hasClientRoute(session.getAddress())) {
-                                    // Send an unavailable presence to the user's subscribers
-                                    // Note: This gives us a chance to send an unavailable presence to the
-                                    // entities that the user sent directed presences
-                                    Presence presence = new Presence();
-                                    presence.setType(Presence.Type.unavailable);
-                                    presence.setFrom(session.getAddress());
-                                    router.route(presence);
-                                }
-
-                                session.getStreamManager().onClose(router, serverAddress);
-                            } finally {
-                                // Remove the session
-                                removeSession(clientSession);
-                            }
-                        } else {
-                            Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session.", session.getAddress(), session.getStreamID());
-                        }
+                        terminateDetached(session);
                     } else {
                         Log.trace("Detached session '{}' ({}) has been detached for {}, which is not longer than the configured maximum of {}. It will not (yet) be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(System.currentTimeMillis()-session.getLastActiveDate().getTime()), Duration.ofMillis(idleTime));
                     }

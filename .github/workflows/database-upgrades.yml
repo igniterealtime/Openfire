@@ -31,7 +31,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v4
       - name: Set up JDK 11 Zulu
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: zulu
@@ -61,7 +61,7 @@ jobs:
     - name: Checkout Openfire
       uses: actions/checkout@v4
     - name: Set up JDK 11 Zulu
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: 11
         distribution: zulu
@@ -103,7 +103,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v4
       - name: Set up JDK 11 Zulu
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: zulu
@@ -145,7 +145,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v4
       - name: Set up JDK 11 Zulu
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: zulu

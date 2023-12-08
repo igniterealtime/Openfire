@@ -182,7 +182,7 @@
                                             </textFieldCell>
                                         </textField>
                                         <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="106">
-                                            <rect key="frame" x="377" y="0.0" width="145" height="76"/>
+                                            <rect key="frame" x="378" y="0.0" width="145" height="76"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="openfire-logo" id="139"/>
                                         </imageView>

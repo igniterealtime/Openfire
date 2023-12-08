@@ -36,7 +36,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Build with Maven
-        run: mvn -B package -Pcoverage --file pom.xml
+        run: ./mvnw -B package -Pcoverage --file pom.xml
 
       - name: Build Artifact
         run: |

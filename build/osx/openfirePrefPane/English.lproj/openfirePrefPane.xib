@@ -29,13 +29,13 @@
                 <rect key="frame" x="0.0" y="0.0" width="591" height="368"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <tabView misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="98">
-                        <rect key="frame" x="17" y="22" width="556" height="334"/>
+                    <tabView translatesAutoresizingMaskIntoConstraints="NO" id="98">
+                        <rect key="frame" x="17" y="22" width="557" height="334"/>
                         <font key="font" metaFont="system"/>
                         <tabViewItems>
                             <tabViewItem label="Server" identifier="1" id="101">
                                 <view key="view" autoresizesSubviews="NO" id="102">
-                                    <rect key="frame" x="10" y="33" width="536" height="288"/>
+                                    <rect key="frame" x="10" y="33" width="537" height="288"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="103">
@@ -167,17 +167,16 @@
                             </tabViewItem>
                             <tabViewItem label="About" identifier="2" id="99">
                                 <view key="view" autoresizesSubviews="NO" id="100">
-                                    <rect key="frame" x="10" y="33" width="536" height="288"/>
+                                    <rect key="frame" x="10" y="33" width="537" height="288"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="113">
-                                            <rect key="frame" x="17" y="74" width="502" height="194"/>
-                                            <autoresizingMask key="autoresizingMask"/>
+                                        <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="113">
+                                            <rect key="frame" x="17" y="188" width="503" height="80"/>
                                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" id="140">
                                                 <font key="font" metaFont="system"/>
                                                 <string key="title">Openfire is a leading Open Source, cross-platform IM server based on the XMPP (Jabber) protocol. It has great performance, is easy to setup and use, and delivers an innovative feature set.
 
-JiveSoftware.org brings solid, scalable real-time technologies to individuals and companies using a combination of open source and open standards. A large and growing community of developers is helping the Jive EIM suite become the open alternative to proprietary solutions.</string>
+</string>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -185,14 +184,14 @@ JiveSoftware.org brings solid, scalable real-time technologies to individuals an
                                         <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="106">
                                             <rect key="frame" x="377" y="0.0" width="145" height="76"/>
                                             <autoresizingMask key="autoresizingMask"/>
-                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="wildfire-logo" id="139"/>
-                                        </imageView>
-                                        <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="133">
-                                            <rect key="frame" x="20" y="2" width="81" height="73"/>
-                                            <autoresizingMask key="autoresizingMask"/>
-                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="jivesoftware_logo" id="141"/>
+                                            <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="openfire-logo" id="139"/>
                                         </imageView>
                                     </subviews>
+                                    <constraints>
+                                        <constraint firstItem="113" firstAttribute="centerX" secondItem="100" secondAttribute="centerX" id="YWO-ga-ebj"/>
+                                        <constraint firstItem="113" firstAttribute="leading" secondItem="100" secondAttribute="leading" constant="19" id="dWc-48-hcV"/>
+                                        <constraint firstItem="113" firstAttribute="top" secondItem="100" secondAttribute="top" constant="20" id="rzI-B1-vze"/>
+                                    </constraints>
                                 </view>
                             </tabViewItem>
                         </tabViewItems>
@@ -205,12 +204,10 @@ JiveSoftware.org brings solid, scalable real-time technologies to individuals an
                     <constraint firstItem="98" firstAttribute="leading" secondItem="6" secondAttribute="leading" constant="24" id="d9W-wS-iBt"/>
                 </constraints>
             </view>
-            <point key="canvasLocation" x="22" y="139"/>
+            <point key="canvasLocation" x="21.5" y="139"/>
         </window>
     </objects>
     <resources>
-        <image name="jivesoftware_logo" width="84" height="80"/>
         <image name="openfire-logo" width="140" height="41"/>
-        <image name="wildfire-logo" width="128" height="128"/>
     </resources>
 </document>

@@ -59,7 +59,7 @@ static int GetPathToSelf(char **pathToSelfPtr)
 	return err;
 }
 
-static bool openfireIsRunning()
+static bool openfireIsRunning(void)
 {
     FILE *ps;
     char buff[1024];
@@ -79,7 +79,7 @@ static bool openfireIsRunning()
     }
 }
 
-static void toggleStartOpenfireAtBoot()
+static void toggleStartOpenfireAtBoot(void)
 {
 	CFURLRef propFile = CFURLCreateWithFileSystemPath(kCFAllocatorDefault,
 													  CFSTR("/Library/LaunchDaemons/org.jivesoftware.openfire.plist"),
@@ -110,7 +110,7 @@ static void toggleStartOpenfireAtBoot()
 	CFQRelease(propFile);
 }
 
-static void toggleOpenfire()
+static void toggleOpenfire(void)
 {
 	char *args[4];
 	args[0] = "launchctl";

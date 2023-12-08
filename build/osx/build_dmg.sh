@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Script to build Openfire Mac DMG artifact
+# shellcheck disable=SC2155,SC2164
 set -x
 
 export OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)

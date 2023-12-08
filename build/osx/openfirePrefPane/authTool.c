@@ -1,3 +1,5 @@
+//  Copyright (c) 2006-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
+
 #include <unistd.h>
 #include <stdbool.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -130,7 +132,7 @@ int main(int inArgsCount, char * const inArgs[])
 	if(err == 0 && strncmp(correctPath, selfPath, strlen(correctPath)) == 0) {
 		//if setuid somehow fails, it's unsafe to continue
 		if(setuid(0) != 0)
-			return;
+			return -1;
 
 		if(inArgs[1] && strlen(inArgs[1]) == strlen("boot") && strncmp("boot", inArgs[1], strlen("boot")) == 0) {
 			toggleStartOpenfireAtBoot();

@@ -6,7 +6,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="wildfirePrefPane">
+        <customObject id="-2" userLabel="File's Owner" customClass="openfirePrefPane">
             <connections>
                 <outlet property="_window" destination="12" id="26"/>
                 <outlet property="authView" destination="136" id="137"/>
@@ -20,7 +20,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window title="Wildfire" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" deferred="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="12" userLabel="PrefPane">
+        <window title="Openfire" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" deferred="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="12" userLabel="PrefPane">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="302" y="73" width="591" height="368"/>
@@ -204,8 +204,12 @@
                     <constraint firstItem="98" firstAttribute="leading" secondItem="6" secondAttribute="leading" constant="24" id="d9W-wS-iBt"/>
                 </constraints>
             </view>
+            <connections>
+                <binding destination="O9f-1l-eJe" name="representedFilename" keyPath="values" id="5sm-4a-u3h"/>
+            </connections>
             <point key="canvasLocation" x="21.5" y="139"/>
         </window>
+        <userDefaultsController representsSharedInstance="YES" id="O9f-1l-eJe"/>
     </objects>
     <resources>
         <image name="openfire-logo" width="140" height="41"/>

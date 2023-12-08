@@ -36,6 +36,7 @@ xcuserdata/
 # build temp folders
 rpmbuild/
 debian/
+distribution/build/osx/
 
 .gradle
 

@@ -83,7 +83,7 @@ jobs:
           chmod +x ./runAioxmppIntegrationTests
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
           check-latest: true # attempt to prevent to use 3.11.3 by enticing the runner to update (to something later)

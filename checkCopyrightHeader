@@ -1,0 +1,201 @@
+#!/bin/bash
+
+# This script checks for the presence of the current year in the license header of all java files in the repo.
+# Inspired by (and somewhat copied from) https://github.com/palaniraja/whatchanged/blob/master/whatchanged.sh
+
+THIS_YEAR=$(date +%Y)
+IGNITE_FOUNDED="2016-10-21"
+JIVE_ENDED="2010-01-31"
+REPO_STARTED="2004-10-17"
+
+read -r -d '' JAVA_LICENSE << EOM
+/*
+ * Copyright (C) ###TOKEN###. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+EOM
+
+read -r -d '' JSP_LICENSE << EOM
+<%--
+  -
+  - Copyright (C) ###TOKEN###. All rights reserved.
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+--%>
+EOM
+
+getDateFormattedGitLog() {
+    local FILE=$1
+    git log --format="%cd" --date="format:%Y-%m-%d" --invert-grep --grep="Update to Apache 2.0" --follow "$FILE"
+}
+
+getDateFormattedGitLogBetweenTwoDates() {
+    local FILE=$1
+    local FROM_DATE=$2
+    local TO_DATE=$3
+
+    getDateFormattedGitLog "$FILE" | awk -v fromdate="$FROM_DATE" -v todate="$TO_DATE" '$1 >= fromdate && $1 <= todate'
+}
+
+getCopyrightAttribution() {
+    FROM_DATE=$1
+    TO_DATE=$2
+    ATTRIBUTE_TO=$3
+
+    FIRST_COMMIT_YEAR=$(getDateFormattedGitLogBetweenTwoDates "$line" "$FROM_DATE" "$TO_DATE" | tail -n 1 | awk -F'-' '{print $1}')
+    LAST_COMMIT_YEAR=$(getDateFormattedGitLogBetweenTwoDates "$line" "$FROM_DATE" "$TO_DATE" | head -n 1 | awk -F'-' '{print $1}')
+
+    if [ "$FIRST_COMMIT_YEAR" -ne "$LAST_COMMIT_YEAR" ]; then
+        COPYRIGHT_YEARS="$FIRST_COMMIT_YEAR-$LAST_COMMIT_YEAR"
+    else
+        COPYRIGHT_YEARS="$FIRST_COMMIT_YEAR"
+    fi
+
+    ATTRIBUTION="$COPYRIGHT_YEARS $ATTRIBUTE_TO"
+
+    echo $ATTRIBUTION
+}
+
+getCopyrightAttributionForIgnite(){
+    local START=$IGNITE_FOUNDED
+    local END="$THIS_YEAR-12-31"
+    local WHO="Ignite Realtime Foundation"
+    getCopyrightAttribution "$START" "$END" "$WHO"
+}
+
+getCopyrightAttributionForJive(){
+    local START=$REPO_STARTED
+    local END=$JIVE_ENDED
+    local WHO="Jive Software"
+    getCopyrightAttribution "$START" "$END" "$WHO"
+}
+
+existedInTheJiveSoftwareEra() {
+    # We can't use 'git log --before' because git history will cut off trees and return blank results - we need to follow all the way, then filter
+    LOGCOUNT=$(getDateFormattedGitLog "$line" | awk -v jiveended="$JIVE_ENDED" '$1 < jiveended' | wc -l)
+    if [ $LOGCOUNT -gt 0 ]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
+fixMissingCopyrightLine() {
+    # Fixes
+        COPYRIGHT_NEEDLE=". All rights reserved"
+        FIXED="Not fixed."
+        head -5 "$line" | grep "$COPYRIGHT_NEEDLE" > /dev/null
+        if [ $? -eq 0 ]; then
+            sed -i "1,5 s/$COPYRIGHT_NEEDLE/, $INTENDED_IGNITE_MENTION$COPYRIGHT_NEEDLE/" "$line"
+            FIXED="Fixed."
+        fi
+}
+
+fixIncorrectCopyrightLine(){
+    CORRECT_ATTRIBUTION=$1
+    ATTRIBUTE_TO=$2
+    DATE_REGEX="[0-9]{4}(-[0-9]{4})?"
+    COPYRIGHT_NEEDLE="$DATE_REGEX $ATTRIBUTE_TO"
+    FIXED=0
+    head -5 "$line" | grep -E "$COPYRIGHT_NEEDLE" > /dev/null
+    if [ $? -eq 0 ]; then
+        sed -i -E "1,5 s/$COPYRIGHT_NEEDLE/$CORRECT_ATTRIBUTION/" "$line"
+        echo FIXED!
+        FIXED=1
+    else
+        echo "$COPYRIGHT_NEEDLE not found in $line"
+    fi
+    return $FIXED
+}
+
+processFiles(){
+    # Only git tracked files
+    git ls-tree -r main --name-only | grep '\.java$\|\.jsp$' | sort -u | while read line
+    do
+        if ! [ -n "${line}" ] || ! [ -e "${line}" ] ||
+            [[ ${line} == *"/package-info.java" ]] || # No functional code
+            [[ ${line} == "xmppserver/src/main/java/org/dom4j/io/XMPPPacketReader.java" ]] || # Special license via DOM4J
+            [[ ${line} == "xmppserver/src/main/java/org/jivesoftware/util/FastDateFormat.java" ]]; # Special license via Disney //TODO: https://igniterealtime.atlassian.net/browse/OF-2754
+                then
+            continue
+        fi
+
+        grep '\.java$' <<< "$line" > /dev/null
+        IS_JAVA=$?
+
+        grep '\.jsp$' <<< "$line" > /dev/null
+        IS_JSP=$?
+
+        MISSING_LICENSE_HEADER=0
+        MISSING_IGNITE_MENTION=0
+
+        # Check for license
+        grep "Licensed under the Apache License" "$line" > /dev/null
+        if [ $? -eq 1 ]; then
+            MISSING_LICENSE_HEADER=1
+            FILE_CREATION_DATE=$(git log --diff-filter=A --follow --format=%ad --date="format:%Y-%m-%d" -1 -- "$line")
+            echo "Missing license header in: $line (created $FILE_CREATION_DATE)"
+            continue
+        fi
+
+        # Calculate what the Jive attribution should be
+        existedInTheJiveSoftwareEra
+        EXISTED_IN_THE_JIVE_SOFTWARE_ERA=$?
+        if [ $EXISTED_IN_THE_JIVE_SOFTWARE_ERA -eq 1 ]; then
+            JIVE_ATTRIBUTION=$(getCopyrightAttributionForJive)
+
+            grep "Copyright .* Jive Software" "$line" > /dev/null
+            if [ $? -eq 1 ]; then
+                #MISSING_IGNITE_MENTION=1
+                echo "Copyright header not found in: $line - needs to read: $JIVE_ATTRIBUTION"
+            fi
+        fi
+
+        # Calculate what the Ignite attribution should be
+        IGNITE_ATTRIBUTION=$(getCopyrightAttributionForIgnite)
+
+        grep "Copyright .* Ignite Realtime Foundation" "$line" > /dev/null
+        if [ $? -eq 1 ]; then
+            MISSING_IGNITE_MENTION=1
+            echo "Copyright header not found in: $line - needs to read: $IGNITE_ATTRIBUTION"
+        else
+            grep "Copyright .* $IGNITE_ATTRIBUTION" "$line" > /dev/null
+            if [ $? -eq 1 ]; then
+                INCORRECT_IGNITE_MENTION=1
+                echo "Copyright header incorrect in: $line - needs to read: $IGNITE_ATTRIBUTION"
+                fixIncorrectCopyrightLine \
+                    "$IGNITE_ATTRIBUTION" \
+                    "Ignite Realtime Foundation"
+            fi
+        fi
+        continue
+
+    done
+
+    echo "Done."
+
+}
+
+processFiles
+#getDateFormattedGitLogBetweenTwoDates "starter/src/main/java/org/jivesoftware/openfire/launcher/DroppableFrame.java" "2004-10-17" "2010-01-31"

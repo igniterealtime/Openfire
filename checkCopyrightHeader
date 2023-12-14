@@ -51,7 +51,7 @@ EOM
 
 getDateFormattedGitLog() {
     local FILE=$1
-    git log --format="%cd" --date="format:%Y-%m-%d" --invert-grep --grep="Update to Apache 2.0" --follow "$FILE"
+    git log --format="%cd" --date="format:%Y-%m-%d" --invert-grep --grep="Update to Apache 2.0|OF-2716" --follow "$FILE"
 }
 
 getDateFormattedGitLogBetweenTwoDates() {
@@ -111,16 +111,17 @@ fixMissingCopyrightAttribution() {
         return 0
     fi
 
-    local INTENDED_MENTION=$1
+    local FILE=$1
+    local INTENDED_MENTION=$2
     COPYRIGHT_NEEDLE=". All rights reserved"
     FIXED=0
-    head -5 "$line" | grep "$COPYRIGHT_NEEDLE" > /dev/null
+    head -5 "$FILE" | grep "$COPYRIGHT_NEEDLE" > /dev/null
     if [ $? -eq 0 ]; then
-        sed -i "1,5 s/$COPYRIGHT_NEEDLE/, $INTENDED_MENTION$COPYRIGHT_NEEDLE/" "$line"
-        echo FIXED!
+        sed -i "1,5 s/$COPYRIGHT_NEEDLE/, $INTENDED_MENTION$COPYRIGHT_NEEDLE/" "$FILE"
+        echo "=> Fixed missing attribution!"
         FIXED=1
     else
-        echo "$COPYRIGHT_NEEDLE not found in $line"
+        echo "=> FAILED: $COPYRIGHT_NEEDLE not found in $FILE"
     fi
     return $FIXED
 }
@@ -131,18 +132,19 @@ fixIncorrectCopyrightLine(){
         return 0
     fi
 
-    CORRECT_ATTRIBUTION=$1
-    ATTRIBUTE_TO=$2
+    local FILE=$1
+    local CORRECT_ATTRIBUTION=$2
+    local ATTRIBUTE_TO=$3
     DATE_REGEX="[0-9]{4}(-[0-9]{4})?"
     COPYRIGHT_NEEDLE="$DATE_REGEX $ATTRIBUTE_TO"
     FIXED=0
-    head -5 "$line" | grep -E "$COPYRIGHT_NEEDLE" > /dev/null
+    head -5 "$FILE" | grep -E "$COPYRIGHT_NEEDLE" > /dev/null
     if [ $? -eq 0 ]; then
-        sed -i -E "1,5 s/$COPYRIGHT_NEEDLE/$CORRECT_ATTRIBUTION/" "$line"
-        echo FIXED!
+        sed -i -E "1,5 s/$COPYRIGHT_NEEDLE/$CORRECT_ATTRIBUTION/" "$FILE"
+        echo "=> Fixed incorrect attribution!"
         FIXED=1
     else
-        echo "$COPYRIGHT_NEEDLE not found in $line"
+        echo "=> FAILED: $COPYRIGHT_NEEDLE not found in $FILE"
     fi
     return $FIXED
 }
@@ -161,21 +163,20 @@ fixMissingLicenseHeader() {
         return 0
     fi
 
-    echo "Adding license header to $FILE"
-    echo "Intended attributions: $INTENDED_ATTRIBUTIONS"
-
     THIS_LICENSE=${THIS_LICENSE//###TOKEN###/$INTENDED_ATTRIBUTIONS}
 
     TMPFILE=$(mktemp)
     echo "$THIS_LICENSE" > "$TMPFILE"
     cat "$FILE" >> "$TMPFILE"
     mv "$TMPFILE" "$FILE"
+    echo "=> Fixed missing license header in $FILE"
 }
 
 processFiles(){
     # Only git tracked files
     git ls-tree -r main --name-only | grep '\.java$\|\.jsp$' | sort -u | while read line
     do
+        #echo Processing "$line"
         if ! [ -n "${line}" ] || ! [ -e "${line}" ] ||
             [[ ${line} == *"/package-info.java" ]] || # No functional code
             [[ ${line} == "xmppserver/src/main/java/org/dom4j/io/XMPPPacketReader.java" ]] || # Special license via DOM4J
@@ -186,6 +187,7 @@ processFiles(){
 
         MISSING_LICENSE_HEADER=0
         MISSING_IGNITE_MENTION=0
+        INCORRECT_IGNITE_MENTION=0
 
         # Check for license
         grep "Licensed under the Apache License" "$line" > /dev/null
@@ -214,18 +216,17 @@ processFiles(){
 
         # Calculate what the Ignite attribution should be
         IGNITE_ATTRIBUTION=$(getCopyrightAttributionForIgnite)
-        echo "Ignite attribution: $IGNITE_ATTRIBUTION"
 
         grep "Copyright .* Ignite Realtime Foundation" "$line" > /dev/null
         if [ $? -eq 1 ]; then
             MISSING_IGNITE_MENTION=1
             echo "Copyright header not found in: $line - needs to read: $IGNITE_ATTRIBUTION"
-        else
-            grep "Copyright .* $IGNITE_ATTRIBUTION" "$line" > /dev/null
-            if [ $? -eq 1 ]; then
-                INCORRECT_IGNITE_MENTION=1
-                echo "Copyright header incorrect in: $line - needs to read: $IGNITE_ATTRIBUTION"
-            fi
+        #else
+        #    grep "Copyright .* $IGNITE_ATTRIBUTION" "$line" > /dev/null
+        #    if [ $? -eq 1 ]; then
+        #        INCORRECT_IGNITE_MENTION=1
+        #        echo "Copyright header incorrect in: $line - needs to read: $IGNITE_ATTRIBUTION"
+        #    fi
         fi
 
         ## Fixes
@@ -247,16 +248,17 @@ processFiles(){
                 fi
             fi
             fixMissingLicenseHeader "$line" "$SET_OF_ATTRIBUTIONS"
-#        else
-#            # Fix missing Ignite attribution
-#            if [ $MISSING_IGNITE_MENTION -eq 1 ]; then
-#                fixMissingLicenseHeader "$line" "$IGNITE_ATTRIBUTION"
-#            fi
-#
-#            # Fix incorrect Ignite attribution
-#            if [ $INCORRECT_IGNITE_MENTION -eq 1 ]; then
-#                fixIncorrectIgniteAttribution "$line" "$IGNITE_ATTRIBUTION"
-#            fi
+        else
+            # Fix missing Ignite attribution
+            if [ $MISSING_IGNITE_MENTION -eq 1 ]; then
+                fixMissingCopyrightAttribution "$line" "$IGNITE_ATTRIBUTION"
+            fi
+
+            # Fix incorrect Ignite attribution
+            if [ $INCORRECT_IGNITE_MENTION -eq 1 ]; then
+                fixIncorrectCopyrightLine "$line" "$IGNITE_ATTRIBUTION" \
+                    "Ignite Realtime Foundation"
+            fi
         fi
 
     done

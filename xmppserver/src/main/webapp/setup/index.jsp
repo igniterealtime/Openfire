@@ -5,6 +5,7 @@
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Locale"%>
 <%@ page import="java.util.Map"%>
+<%@ page import="java.util.regex.*"%>
 <%@ page import="org.jivesoftware.util.*" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -29,9 +30,8 @@
     // Check for JRE 1.8
     try {
         String version = System.getProperty("java.version");
-        int pos = version.indexOf('.');
-        pos = version.indexOf('.', pos+1);
-        jreVersionCompatible = Double.parseDouble ( version.substring ( 0, pos)) >= 11;
+        Matcher matcher = Pattern.compile("^\\d+(\\.\\d+)?").matcher(version);
+        boolean jreVersionCompatible = matcher.find() && Double.parseDouble(matcher.group(0)) >= 11;
     }
     catch (Throwable t) {}
     // Check for Servlet 2.3:

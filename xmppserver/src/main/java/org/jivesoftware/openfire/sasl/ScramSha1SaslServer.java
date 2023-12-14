@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Surevine Ltd
+ * Copyright (C) 2015 Surevine Ltd, 2016-2020 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

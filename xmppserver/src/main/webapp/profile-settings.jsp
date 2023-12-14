@@ -1,12 +1,5 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.util.JiveGlobals" %>
-<%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
-<%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
-<%@ page import="org.jivesoftware.openfire.ldap.LdapAuthProvider" %>
-<%@ page import="javax.naming.ldap.LdapName" %>
 <%--
-  -
-  - Copyright (C) 2005-2008 Jive Software. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -20,6 +13,13 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
 --%>
+
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="org.jivesoftware.util.JiveGlobals" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapManager" %>
+<%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
+<%@ page import="org.jivesoftware.openfire.ldap.LdapAuthProvider" %>
+<%@ page import="javax.naming.ldap.LdapName" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>

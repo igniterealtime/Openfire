@@ -8,6 +8,8 @@ IGNITE_FOUNDED="2016-10-21"
 JIVE_ENDED="2010-01-31"
 REPO_STARTED="2004-10-17"
 
+FIXES_ENABLED=true
+
 read -r -d '' JAVA_LICENSE << EOM
 /*
  * Copyright (C) ###TOKEN###. All rights reserved.
@@ -24,6 +26,7 @@ read -r -d '' JAVA_LICENSE << EOM
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 EOM
 
 read -r -d '' JSP_LICENSE << EOM
@@ -43,6 +46,7 @@ read -r -d '' JSP_LICENSE << EOM
   - See the License for the specific language governing permissions and
   - limitations under the License.
 --%>
+
 EOM
 
 getDateFormattedGitLog() {
@@ -101,18 +105,32 @@ existedInTheJiveSoftwareEra() {
     fi
 }
 
-fixMissingCopyrightLine() {
-    # Fixes
-        COPYRIGHT_NEEDLE=". All rights reserved"
-        FIXED="Not fixed."
-        head -5 "$line" | grep "$COPYRIGHT_NEEDLE" > /dev/null
-        if [ $? -eq 0 ]; then
-            sed -i "1,5 s/$COPYRIGHT_NEEDLE/, $INTENDED_IGNITE_MENTION$COPYRIGHT_NEEDLE/" "$line"
-            FIXED="Fixed."
-        fi
+# Adds an attribution to the end of an existing copyright line in an existing license header
+fixMissingCopyrightAttribution() {
+    if [ "$FIXES_ENABLED" == "false" ]; then
+        return 0
+    fi
+
+    local INTENDED_MENTION=$1
+    COPYRIGHT_NEEDLE=". All rights reserved"
+    FIXED=0
+    head -5 "$line" | grep "$COPYRIGHT_NEEDLE" > /dev/null
+    if [ $? -eq 0 ]; then
+        sed -i "1,5 s/$COPYRIGHT_NEEDLE/, $INTENDED_MENTION$COPYRIGHT_NEEDLE/" "$line"
+        echo FIXED!
+        FIXED=1
+    else
+        echo "$COPYRIGHT_NEEDLE not found in $line"
+    fi
+    return $FIXED
 }
 
+# Fixes the years for an existing copyright attribution in an existing license header
 fixIncorrectCopyrightLine(){
+    if [ "$FIXES_ENABLED" == "false" ]; then
+        return 0
+    fi
+
     CORRECT_ATTRIBUTION=$1
     ATTRIBUTE_TO=$2
     DATE_REGEX="[0-9]{4}(-[0-9]{4})?"
@@ -129,6 +147,31 @@ fixIncorrectCopyrightLine(){
     return $FIXED
 }
 
+fixMissingLicenseHeader() {
+    local FILE=$1
+    local INTENDED_ATTRIBUTIONS=$2
+    local FILE_EXTENSION=$(echo "$FILE" | awk -F'.' '{print $NF}')
+
+    if [ "$FILE_EXTENSION" == "java" ]; then
+        THIS_LICENSE=$JAVA_LICENSE
+    elif [ "$FILE_EXTENSION" == "jsp" ]; then
+        THIS_LICENSE=$JSP_LICENSE
+    else
+        echo "Unknown file extension: $FILE_EXTENSION"
+        return 0
+    fi
+
+    echo "Adding license header to $FILE"
+    echo "Intended attributions: $INTENDED_ATTRIBUTIONS"
+
+    THIS_LICENSE=${THIS_LICENSE//###TOKEN###/$INTENDED_ATTRIBUTIONS}
+
+    TMPFILE=$(mktemp)
+    echo "$THIS_LICENSE" > "$TMPFILE"
+    cat "$FILE" >> "$TMPFILE"
+    mv "$TMPFILE" "$FILE"
+}
+
 processFiles(){
     # Only git tracked files
     git ls-tree -r main --name-only | grep '\.java$\|\.jsp$' | sort -u | while read line
@@ -141,12 +184,6 @@ processFiles(){
             continue
         fi
 
-        grep '\.java$' <<< "$line" > /dev/null
-        IS_JAVA=$?
-
-        grep '\.jsp$' <<< "$line" > /dev/null
-        IS_JSP=$?
-
         MISSING_LICENSE_HEADER=0
         MISSING_IGNITE_MENTION=0
 
@@ -156,24 +193,28 @@ processFiles(){
             MISSING_LICENSE_HEADER=1
             FILE_CREATION_DATE=$(git log --diff-filter=A --follow --format=%ad --date="format:%Y-%m-%d" -1 -- "$line")
             echo "Missing license header in: $line (created $FILE_CREATION_DATE)"
-            continue
         fi
 
         # Calculate what the Jive attribution should be
         existedInTheJiveSoftwareEra
         EXISTED_IN_THE_JIVE_SOFTWARE_ERA=$?
+
         if [ $EXISTED_IN_THE_JIVE_SOFTWARE_ERA -eq 1 ]; then
             JIVE_ATTRIBUTION=$(getCopyrightAttributionForJive)
 
-            grep "Copyright .* Jive Software" "$line" > /dev/null
-            if [ $? -eq 1 ]; then
-                #MISSING_IGNITE_MENTION=1
-                echo "Copyright header not found in: $line - needs to read: $JIVE_ATTRIBUTION"
-            fi
+        # I'm not sure I'm happy fixing copyright headers for other folk.
+        # Jive already did this themselves in https://github.com/igniterealtime/Openfire/commit/ff0fa13dc3f67ca269da7bceef161e4a49663259
+        # So I'm going to leave this commented out for now.
+        #    grep "Copyright .* Jive Software" "$line" > /dev/null
+        #    if [ $? -eq 1 ]; then
+        #        MISSING_JIVE_MENTION=1
+        #        echo "Copyright header not found in: $line - needs to read: $JIVE_ATTRIBUTION"
+        #    fi
         fi
 
         # Calculate what the Ignite attribution should be
         IGNITE_ATTRIBUTION=$(getCopyrightAttributionForIgnite)
+        echo "Ignite attribution: $IGNITE_ATTRIBUTION"
 
         grep "Copyright .* Ignite Realtime Foundation" "$line" > /dev/null
         if [ $? -eq 1 ]; then
@@ -184,12 +225,39 @@ processFiles(){
             if [ $? -eq 1 ]; then
                 INCORRECT_IGNITE_MENTION=1
                 echo "Copyright header incorrect in: $line - needs to read: $IGNITE_ATTRIBUTION"
-                fixIncorrectCopyrightLine \
-                    "$IGNITE_ATTRIBUTION" \
-                    "Ignite Realtime Foundation"
             fi
         fi
-        continue
+
+        ## Fixes
+        if [ "$FIXES_ENABLED" == "false" ]; then
+            continue
+        fi
+
+        # Fix missing license header
+        if [ $MISSING_LICENSE_HEADER -eq 1 ]; then
+            SET_OF_ATTRIBUTIONS=""
+            if [ $EXISTED_IN_THE_JIVE_SOFTWARE_ERA -eq 1 ]; then
+                SET_OF_ATTRIBUTIONS="$JIVE_ATTRIBUTION"
+            fi
+            if [ $MISSING_IGNITE_MENTION -eq 1 ]; then
+                if [ -n "$SET_OF_ATTRIBUTIONS" ]; then
+                    SET_OF_ATTRIBUTIONS="$SET_OF_ATTRIBUTIONS, $IGNITE_ATTRIBUTION"
+                else
+                    SET_OF_ATTRIBUTIONS="$IGNITE_ATTRIBUTION"
+                fi
+            fi
+            fixMissingLicenseHeader "$line" "$SET_OF_ATTRIBUTIONS"
+#        else
+#            # Fix missing Ignite attribution
+#            if [ $MISSING_IGNITE_MENTION -eq 1 ]; then
+#                fixMissingLicenseHeader "$line" "$IGNITE_ATTRIBUTION"
+#            fi
+#
+#            # Fix incorrect Ignite attribution
+#            if [ $INCORRECT_IGNITE_MENTION -eq 1 ]; then
+#                fixIncorrectIgniteAttribution "$line" "$IGNITE_ATTRIBUTION"
+#            fi
+        fi
 
     done
 

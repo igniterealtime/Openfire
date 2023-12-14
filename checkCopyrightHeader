@@ -172,6 +172,19 @@ fixMissingLicenseHeader() {
     echo "=> Fixed missing license header in $FILE"
 }
 
+fixMissingC() {
+    local FILE=$1
+    sed -i -E "1,5 s/Copyright/Copyright (C)/" "$FILE"
+    echo "=> Fixed missing (C) in $FILE"
+}
+
+fixMissingAllRightsReserved() {
+    local FILE=$1
+    #/192.168.1.2/s/$/ myalias/
+    sed -i -E "/Copyright/s/$/. All rights reserved/" "$FILE"
+    echo "=> Fixed missing 'All rights reserved' in $FILE"
+}
+
 processFiles(){
     # Only git tracked files
     git ls-tree -r main --name-only | grep '\.java$\|\.jsp$' | sort -u | while read line
@@ -188,6 +201,14 @@ processFiles(){
         MISSING_LICENSE_HEADER=0
         MISSING_IGNITE_MENTION=0
         INCORRECT_IGNITE_MENTION=0
+        MISSING_C=0
+        MISSING_RIGHTS_RESERVED=0
+
+        head -5 "$line" | grep -E "Copyright [0-9]{4}" > /dev/null
+        if [ $? -eq 0 ]; then
+            MISSING_C=1
+            echo "Missing (C) in Copyright line: $line"
+        fi
 
         # Check for license
         grep "Licensed under the Apache License" "$line" > /dev/null
@@ -195,6 +216,16 @@ processFiles(){
             MISSING_LICENSE_HEADER=1
             FILE_CREATION_DATE=$(git log --diff-filter=A --follow --format=%ad --date="format:%Y-%m-%d" -1 -- "$line")
             echo "Missing license header in: $line (created $FILE_CREATION_DATE)"
+        fi
+
+
+        grep -E "Copyright.*[0-9]{4}" "$line" > /dev/null
+        if [ $? -eq 0 ]; then
+            grep -E "Copyright.*[0-9]{4}.*All rights reserved" "$line" > /dev/null
+            if [ $? -eq 1 ]; then
+                MISSING_RIGHTS_RESERVED=1
+                echo "Missing 'All rights reserved' in: $line"
+            fi
         fi
 
         # Calculate what the Jive attribution should be
@@ -234,6 +265,16 @@ processFiles(){
             continue
         fi
 
+        # Fix missing (C)
+        if [ $MISSING_C -eq 1 ]; then
+            fixMissingC "$line"
+        fi
+
+        # Fix missing 'All rights reserved'
+        if [ $MISSING_RIGHTS_RESERVED -eq 1 ]; then
+            fixMissingAllRightsReserved "$line"
+        fi
+
         # Fix missing license header
         if [ $MISSING_LICENSE_HEADER -eq 1 ]; then
             SET_OF_ATTRIBUTIONS=""
@@ -260,12 +301,9 @@ processFiles(){
                     "Ignite Realtime Foundation"
             fi
         fi
-
     done
 
     echo "Done."
-
 }
 
 processFiles
-#getDateFormattedGitLogBetweenTwoDates "starter/src/main/java/org/jivesoftware/openfire/launcher/DroppableFrame.java" "2004-10-17" "2010-01-31"

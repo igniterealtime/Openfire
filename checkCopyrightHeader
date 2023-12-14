@@ -51,7 +51,7 @@ EOM
 
 getDateFormattedGitLog() {
     local FILE=$1
-    git log --format="%cd" --date="format:%Y-%m-%d" --invert-grep --grep="Update to Apache 2.0|OF-2716" --follow "$FILE"
+    git log --format="%cd" --date="format:%Y-%m-%d" --invert-grep --grep="Update to Apache 2.0" --grep="OF-2716" --follow "$FILE"
 }
 
 getDateFormattedGitLogBetweenTwoDates() {
@@ -221,12 +221,12 @@ processFiles(){
         if [ $? -eq 1 ]; then
             MISSING_IGNITE_MENTION=1
             echo "Copyright header not found in: $line - needs to read: $IGNITE_ATTRIBUTION"
-        #else
-        #    grep "Copyright .* $IGNITE_ATTRIBUTION" "$line" > /dev/null
-        #    if [ $? -eq 1 ]; then
-        #        INCORRECT_IGNITE_MENTION=1
-        #        echo "Copyright header incorrect in: $line - needs to read: $IGNITE_ATTRIBUTION"
-        #    fi
+        else
+            grep "Copyright .* $IGNITE_ATTRIBUTION" "$line" > /dev/null
+            if [ $? -eq 1 ]; then
+                INCORRECT_IGNITE_MENTION=1
+                echo "Copyright header incorrect in: $line - needs to read: $IGNITE_ATTRIBUTION"
+            fi
         fi
 
         ## Fixes

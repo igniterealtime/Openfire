@@ -107,10 +107,6 @@ existedInTheJiveSoftwareEra() {
 
 # Adds an attribution to the end of an existing copyright line in an existing license header
 fixMissingCopyrightAttribution() {
-    if [ "$FIXES_ENABLED" == "false" ]; then
-        return 0
-    fi
-
     local FILE=$1
     local INTENDED_MENTION=$2
     COPYRIGHT_NEEDLE=". All rights reserved"
@@ -128,10 +124,6 @@ fixMissingCopyrightAttribution() {
 
 # Fixes the years for an existing copyright attribution in an existing license header
 fixIncorrectCopyrightLine(){
-    if [ "$FIXES_ENABLED" == "false" ]; then
-        return 0
-    fi
-
     local FILE=$1
     local CORRECT_ATTRIBUTION=$2
     local ATTRIBUTE_TO=$3

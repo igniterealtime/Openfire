@@ -47,7 +47,7 @@
     try {
         String version = System.getProperty("java.version");
         Matcher matcher = Pattern.compile("^\\d+(\\.\\d+)?").matcher(version);
-        boolean jreVersionCompatible = matcher.find() && Double.parseDouble(matcher.group(0)) >= 11;
+        jreVersionCompatible = matcher.find() && Double.parseDouble(matcher.group(0)) >= 11;
     }
     catch (Throwable t) {}
     // Check for Servlet 2.3:

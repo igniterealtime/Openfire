@@ -69,12 +69,12 @@ jobs:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-files
       - name: Fix file permissions
@@ -129,12 +129,12 @@ jobs:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-files
       - name: Set up Java
@@ -159,12 +159,12 @@ jobs:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
       - name: Download test files from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-files
       - name: Set up Java
@@ -254,7 +254,7 @@ jobs:
           ref: ${{ github.event.push.after }}
 
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: distribution-java11
           path: distribution/target/distribution-base

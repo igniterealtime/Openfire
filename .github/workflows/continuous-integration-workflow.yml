@@ -31,20 +31,20 @@ jobs:
             ./mvnw -B package
           fi
       - name: Upload failed test reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: surefire-reports_java${{ matrix.java }}
           path: xmppserver/target/surefire-reports
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base
       - name: Upload test files
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-files
           path: |
@@ -54,7 +54,7 @@ jobs:
             test.gradle
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
@@ -93,14 +93,14 @@ jobs:
             
       - name: Expose test output
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: aioxmpp test output
           path: aioxmpp/output
 
       - name: Expose openfire output
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: openfire logs
           path: distribution/target/distribution-base/logs/*

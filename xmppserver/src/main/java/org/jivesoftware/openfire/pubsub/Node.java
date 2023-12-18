@@ -27,6 +27,8 @@ import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -50,6 +52,8 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * @author Matt Tucker
  */
 public abstract class Node implements Cacheable, Externalizable {
+
+    private static final Logger Log = LoggerFactory.getLogger(Node.class);
 
     /**
      * Unique reference to the publish and subscribe service.
@@ -2096,9 +2100,11 @@ public abstract class Node implements Cacheable, Externalizable {
         // Note however that this may be somewhat in conflict with the following:
         //   12.3 "Presence-Based Delivery of Events" - automatically detect user's presence
         //
-        if (subscriberJID.getResource() == null ||
+        if (!XMPPServer.getInstance().isLocal(subscriberJID) || subscriberJID.getResource() == null ||
             SessionManager.getInstance().getSession(subscriberJID) != null) {
             getService().sendNotification(this, notification, subscriberJID);
+        } else {
+            Log.debug("Suppressing pub/sub notification for {} to subscriber {} as intended recipient is known to be offline.", getUniqueIdentifier(), subscriberJID);
         }
 
         if (headers != null) {

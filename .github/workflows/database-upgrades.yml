@@ -48,7 +48,7 @@ jobs:
 
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: distribution-java${{ matrix.java }}
           path: distribution/target/distribution-base

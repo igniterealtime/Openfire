@@ -80,7 +80,9 @@ public class PublishedItem implements Serializable {
      * XML representation of the payload (for serialization)
      */
     private String payloadXML;
-    
+
+    private boolean savedToDB = false;
+
     /**
      * Creates a published item
      * @param node The node the published item is created in
@@ -285,6 +287,14 @@ public class PublishedItem implements Serializable {
     public static UniqueIdentifier getUniqueIdentifier(String serviceId, String nodeId, String itemId)
     {
         return new UniqueIdentifier( serviceId, nodeId, itemId );
+    }
+
+    void setSavedToDB(boolean savedToDB) {
+        this.savedToDB = savedToDB;
+    }
+
+    public boolean isSavedToDB() {
+        return this.savedToDB;
     }
 
     /**

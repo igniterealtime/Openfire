@@ -1817,11 +1817,25 @@ public abstract class Node implements Cacheable, Externalizable {
             setSavedToDB(true);
             // Save the existing node affiliates to the DB
             for (NodeAffiliate affiliate : affiliates) {
-                persistenceProvider.createAffiliation(this, affiliate);
+                if (!affiliate.isSavedToDB())
+                {
+                    persistenceProvider.createAffiliation(this, affiliate);
+                }
+                else
+                {
+                    persistenceProvider.updateAffiliation(this, affiliate);
+                }
             }
             // Add new subscriptions to the database
             for (NodeSubscription subscription : subscriptionsByID.values()) {
-                persistenceProvider.createSubscription(this, subscription);
+                if (!subscription.isSavedToDB())
+                {
+                    persistenceProvider.createSubscription(this, subscription);
+                }
+                else
+                {
+                    persistenceProvider.updateSubscription(this, subscription);
+                }
             }
             // Add the new node to the list of available nodes
             getService().addNode(this);
@@ -2178,7 +2192,14 @@ public abstract class Node implements Cacheable, Externalizable {
 
         if (savedToDB) {
             // Add the new subscription to the database
-            XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().createSubscription(this, subscription);
+            if (!subscription.isSavedToDB())
+            {
+                XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().createSubscription(this, subscription);
+            }
+            else
+            {
+                XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().updateSubscription(this, subscription);
+            }
         }
 
         if (originalIQ != null) {

@@ -856,6 +856,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             }
             NodeAffiliate affiliate = new NodeAffiliate(node, new JID(rs.getString(2)));
             affiliate.setAffiliation(NodeAffiliate.Affiliation.valueOf(rs.getString(3)));
+            affiliate.setSavedToDB(true);
             node.addAffiliate(affiliate);
         }
         catch (SQLException sqle) {
@@ -996,12 +997,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
+
             pstmt = con.prepareStatement(ADD_AFFILIATION);
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.setString(4, affiliate.getAffiliation().name());
             pstmt.executeUpdate();
+            affiliate.setSavedToDB(true);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while creating an affiliation ({}) to a node ({}) in the database.", affiliate, node.getUniqueIdentifier(), sqle);
@@ -1046,6 +1049,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setString(3, affiliate.getJID().toString());
             pstmt.executeUpdate();
+            affiliate.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while removing an affiliation ({}) to a node ({}) in the database.", affiliate, node.getUniqueIdentifier(), sqle);
@@ -1163,6 +1167,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(subscription.getNode().getNodeID()));
             pstmt.setString(3, subscription.getID());
             pstmt.executeUpdate();
+            subscription.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             log.error("An exception occurred while removing a subscription ({}) in the database.", subscription, sqle);
@@ -1176,7 +1181,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     public void savePublishedItem(PublishedItem item) {
         // When an item with the given itemId exists, it must be overwritten (says the XEP)
         final boolean create = getPublishedItem( item.getNode(), item.getUniqueIdentifier() ) == null;
-        if ( create ) {
+        if ( create && !item.isSavedToDB()) {
             createPublishedItem( item );
         } else {
             updatePublishedItem( item );
@@ -1199,6 +1204,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(5, StringUtils.dateToMillis( item.getCreationDate()));
             pstmt.setString(6, item.getPayloadXML());
             pstmt.execute();
+            item.setSavedToDB(true);
         } catch (SQLException ex) {
             log.error("Published item could not be created in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
         } finally {
@@ -1253,10 +1259,15 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                     pstmt.addBatch();
                 } else {
                     pstmt.execute();
+                    item.setSavedToDB(true);
                 }
             }
             if (hasBatchItems) {
                 pstmt.executeBatch();
+                for ( final PublishedItem item : addList)
+                {
+                    item.setSavedToDB(true);
+                }
             }
         } finally {
             DbConnectionManager.closeStatement(pstmt);
@@ -1274,6 +1285,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(item.getNode().getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.execute();
+            item.setSavedToDB(false);
         } catch (SQLException ex) {
             log.error("Failed to delete published item from DB: {}", item.getUniqueIdentifier(), ex);
         } finally {
@@ -1302,10 +1314,15 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                     pstmt.addBatch();
                 } else {
                     pstmt.execute();
+                    item.setSavedToDB(false);
                 }
             }
             if (hasBatchItems) {
                 pstmt.executeBatch();
+                for ( final PublishedItem item : delList)
+                {
+                    item.setSavedToDB(false);
+                }
             }
         } finally {
             DbConnectionManager.closeStatement(pstmt);
@@ -1628,6 +1645,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 					results.add(item);
 				else
 					results.addFirst(item);
+				
+				item.setSavedToDB(true);
                 counter++;
             }
         }
@@ -1668,6 +1687,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 if (rs.getString(4) != null) {
                 	item.setPayloadXML(rs.getString(4));
                 }
+                item.setSavedToDB(true);
             }
         }
         catch (Exception sqle) {
@@ -1704,6 +1724,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 if (rs.getString(3) != null) {
                     result.setPayloadXML(rs.getString(3));
                 }
+                result.setSavedToDB(true);
                 log.debug("Loaded item from DB");
                 return result;
             }

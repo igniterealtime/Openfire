@@ -396,7 +396,14 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
                 break;
 
             case CREATE_AFFILIATION:
-                delegate.createAffiliation( operation.node, operation.affiliate );
+                if (!operation.affiliate.isSavedToDB())
+                {
+                    delegate.createAffiliation( operation.node, operation.affiliate );
+                }
+                else
+                {
+                    delegate.updateAffiliation( operation.node, operation.affiliate );
+                }
                 break;
 
             case UPDATE_AFFILIATION:
@@ -408,7 +415,14 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
                 break;
 
             case CREATE_SUBSCRIPTION:
-                delegate.createSubscription( operation.node, operation.subscription );
+                if (!operation.subscription.isSavedToDB())
+                {
+                    delegate.createSubscription( operation.node, operation.subscription );
+                }
+                else
+                {
+                    delegate.updateSubscription( operation.node, operation.subscription );
+                }
                 break;
 
             case UPDATE_SUBSCRIPTION:

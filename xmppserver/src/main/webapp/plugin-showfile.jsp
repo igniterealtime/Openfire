@@ -1,10 +1,5 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.openfire.container.Plugin" %>
-<%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
-<%@ page import="java.nio.file.Path" %>
-<%@ page import="java.io.*" %><%--
-  - Copyright (C) 2017 Ignite Realtime Foundation. All rights reserved.
+<%--
+  - Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,6 +13,14 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
 --%>
+
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.openfire.container.Plugin" %>
+<%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
+<%@ page import="java.nio.file.Path" %>
+<%@ page import="java.io.*" %>
+
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <%
     webManager.init(request, response, session, application, out );

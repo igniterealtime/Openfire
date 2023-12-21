@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software. All rights reserved.
- * Copyright 2008-2016 Robert Marcano
+ * Copyright (C) 2008-2016 Robert Marcano, 2017-2021 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

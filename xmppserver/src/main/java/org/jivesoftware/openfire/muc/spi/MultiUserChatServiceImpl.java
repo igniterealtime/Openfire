@@ -456,34 +456,46 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         if ("jabber:iq:register".equals(namespace)) {
             final IQ reply = registerHandler.handleIQ(iq);
-            XMPPServer.getInstance().getPacketRouter().route(reply);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
         }
         else if ("jabber:iq:search".equals(namespace)) {
             final IQ reply = searchHandler.handleIQ(iq);
-            XMPPServer.getInstance().getPacketRouter().route(reply);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
         }
         else if (IQMuclumbusSearchHandler.NAMESPACE.equals(namespace)) {
             final IQ reply = muclumbusSearchHandler.handleIQ(iq);
-            XMPPServer.getInstance().getPacketRouter().route(reply);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
         }
         else if (IQMUCvCardHandler.NAMESPACE.equals(namespace)) {
             final IQ reply = mucVCardHandler.handleIQ(iq);
-            XMPPServer.getInstance().getPacketRouter().route(reply);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
         }
         else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
-            // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes
-            // a component
+            // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes a component
             final IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
-            XMPPServer.getInstance().getPacketRouter().route(reply);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
         }
         else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
-            // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes
-            // a component
+            // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes a component
             final IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
-            XMPPServer.getInstance().getPacketRouter().route(reply);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
         }
         else if ("urn:xmpp:ping".equals(namespace)) {
-            XMPPServer.getInstance().getPacketRouter().route( IQ.createResultIQ(iq) );
+            if (iq.isRequest()) {
+                XMPPServer.getInstance().getPacketRouter().route( IQ.createResultIQ(iq) );
+            }
         }
         else if (this.iqHandlers != null) {
             final IQHandler h = this.iqHandlers.get(namespace);

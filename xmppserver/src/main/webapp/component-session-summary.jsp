@@ -191,14 +191,14 @@
     <tr>
         <td style="width: 1%; white-space: nowrap"><%= count %></td>
         <td style="width: 43%; white-space: nowrap" nowrap>
-            <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"><%= componentSession.getAddress() %></a>
+            <a href="component-session-details.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.click" />"><%= componentSession.getAddress() %></a>
         </td>
         <td style="width: 1%">
             <%  if (componentSession.isEncrypted()) {
                 if (componentSession.getPeerCertificates() != null && componentSession.getPeerCertificates().length > 0) { %>
-            <img src="images/lock_both.gif" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+            <img src="images/lock_both.gif" title="<fmt:message key='session.row.click_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.click_ssl' /> (mutual authentication)">
             <%      } else { %>
-            <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />: <%= componentSession.getTLSProtocolName() + " (" + componentSession.getCipherSuiteName() +")" %>" alt="<fmt:message key='session.row.cliked_ssl' />: <%= componentSession.getTLSProtocolName() + " (" + componentSession.getCipherSuiteName() +")" %>">
+            <img src="images/lock.gif" title="<fmt:message key='session.row.click_ssl' />: <%= componentSession.getTLSProtocolName() + " (" + componentSession.getCipherSuiteName() +")" %>" alt="<fmt:message key='session.row.click_ssl' />: <%= componentSession.getTLSProtocolName() + " (" + componentSession.getCipherSuiteName() +")" %>">
             <%      }
             } else { %>
             <img src="images/blank.gif" width="1" height="1" alt="">
@@ -265,7 +265,7 @@
 
         <td style="width: 1%; white-space: nowrap; text-align: center">
             <a href="component-session-summary.jsp?jid=<%= URLEncoder.encode(componentSession.getAddress().toString(), "UTF-8") %>&close=true"
-             title="<fmt:message key="session.row.cliked_kill_session" />"
+             title="<fmt:message key="session.row.click_kill_session" />"
              onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
              ><img src="images/delete-16x16.gif" alt=""></a>
         </td>

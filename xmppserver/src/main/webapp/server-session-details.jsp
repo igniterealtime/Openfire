@@ -398,7 +398,7 @@
             <input type="hidden" name="csrf" value="<%=csrfParam%>"/>
             <div style="text-align: center;">
                 <input type="submit" name="back" value="<fmt:message key="session.details.back_button" />">
-                <button name="close" style="padding-left: 24px;background-repeat: no-repeat;background-image: url(images/delete-16x16.gif);background-position-y: center; background-color: lightyellow;border-width: 1px;" onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"><fmt:message key="session.row.cliked_kill_session" /></button>
+                <button name="close" style="padding-left: 24px;background-repeat: no-repeat;background-image: url(images/delete-16x16.gif);background-position-y: center; background-color: lightyellow;border-width: 1px;" onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"><fmt:message key="session.row.click_kill_session" /></button>
             </div>
         </form>
 

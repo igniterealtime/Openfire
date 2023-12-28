@@ -216,7 +216,7 @@
                                             <c:param name="alias" value="${alias}"/>
                                             <c:param name="isTrustStore" value="true"/>
                                         </c:url>
-                                        <a href="<c:out value="${url}"/>" title="<fmt:message key='session.row.cliked'/>">
+                                        <a href="<c:out value="${url}"/>" title="<fmt:message key='session.row.click'/>">
                                             <c:choose>
                                                 <c:when test="${empty fn:trim(organization)}">
                                                     <c:out value="${commonname}"/>

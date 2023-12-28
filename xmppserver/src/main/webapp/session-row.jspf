@@ -35,7 +35,7 @@
     <td style="width: 1%; white-space: nowrap"><%= count %></td>
     <td style="width: 10%; white-space: nowrap">
         <%  String name = sess.getAddress().getNode(); %>
-            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key='session.row.cliked' />"
+            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key='session.row.click' />"
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td style="width: 15%; white-space: nowrap">
@@ -98,9 +98,9 @@
                     <img src="images/working-16x16.gif" width="1" height="1" alt="">
         <%  } else if (sess.isEncrypted()) {
                 if (sess.getPeerCertificates() != null && sess.getPeerCertificates().length > 0) { %>
-                    <img src="images/lock_both.gif" title="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.cliked_ssl' /> (mutual authentication)">
+                    <img src="images/lock_both.gif" title="<fmt:message key='session.row.click_ssl' /> (mutual authentication)" alt="<fmt:message key='session.row.click_ssl' /> (mutual authentication)">
         <%      } else { %>
-                    <img src="images/lock.gif" title="<fmt:message key='session.row.cliked_ssl' />: <%= sess.getTLSProtocolName() + " (" + sess.getCipherSuiteName() +")" %>" alt="<fmt:message key='session.row.cliked_ssl' />: <%= sess.getTLSProtocolName() + " (" + sess.getCipherSuiteName() +")" %>">
+                    <img src="images/lock.gif" title="<fmt:message key='session.row.click_ssl' />: <%= sess.getTLSProtocolName() + " (" + sess.getCipherSuiteName() +")" %>" alt="<fmt:message key='session.row.click_ssl' />: <%= sess.getTLSProtocolName() + " (" + sess.getCipherSuiteName() +")" %>">
         <%      }
             } else { %>
                     <img src="images/blank.gif" width="1" height="1" alt="">
@@ -215,7 +215,7 @@
 
     <td style="width: 1%; white-space: nowrap; text-align: center;">
         <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true&csrf=${csrf}"
-         title="<fmt:message key="session.row.cliked_kill_session" />"
+         title="<fmt:message key="session.row.click_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" alt=""></a>
     </td>

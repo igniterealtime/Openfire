@@ -307,7 +307,7 @@
                             %>
                             <tr>
                                 <td>
-                                    <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=false" title="<fmt:message key='session.row.cliked'/>">
+                                    <a href="security-certificate-details.jsp?connectionType=${connectionType}&alias=${alias}&isTrustStore=false" title="<fmt:message key='session.row.click'/>">
                                         <c:forEach items="${identities}" var="currentItem" varStatus="stat">
                                             <c:out value="${stat.first ? '' : ','} ${currentItem}"/>
                                         </c:forEach>

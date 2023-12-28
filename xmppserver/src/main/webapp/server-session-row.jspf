@@ -50,7 +50,7 @@
         <table>
             <tr>
             <td style="width: 1%; padding-right: 0.5em" ><img src="getFavicon?host=<%=URLEncoder.encode(host, "UTF-8")%>" width="16" height="16" alt=""></td>
-            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key='session.row.cliked' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
+            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key='session.row.click' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
             </tr>
         </table>
     </td>
@@ -137,7 +137,7 @@
 
     <td style="width: 1%; white-space: nowrap; text-align: center;">
         <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true&csrf=${csrf}"
-         title="<fmt:message key="session.row.cliked_kill_session" />"
+         title="<fmt:message key="session.row.click_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" alt="Delete"></a>
     </td>

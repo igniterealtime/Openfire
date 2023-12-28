@@ -503,8 +503,6 @@
 
     <div class="jive-table">
         <table style="width: 100%">
-            <% if (currentSess instanceof LocalClientSession) {
-                LocalClientSession s = (LocalClientSession)currentSess; %>
             <thead>
                 <tr>
                     <th colspan="2">
@@ -513,6 +511,8 @@
                 </tr>
             </thead>
             <tbody>
+                <% if (currentSess instanceof LocalClientSession) {
+                    LocalClientSession s = (LocalClientSession)currentSess; %>
                 <tr>
                     <td class="c1">
                         <fmt:message key="session.details.sm-status"/>:

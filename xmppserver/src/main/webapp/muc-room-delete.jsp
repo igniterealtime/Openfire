@@ -109,7 +109,7 @@
 <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
 
 <fieldset>
-    <legend><fmt:message key="muc.room.delete.destructon_title" /></legend>
+    <legend><fmt:message key="muc.room.delete.destruction_title" /></legend>
     <div>
     <table style="width: 100%">
     <tbody>

@@ -168,9 +168,9 @@ docker build . -t openfire:mything</code></pre>
         <section id="tooling-dependencies">
             <h3>Dependencies</h3>
             <p>Testing for out-of-date dependencies is important, especially as a release approaches. You can test for ones with known CVEs using dependency-check from within the project using what's built into the POM:</p>
-            <pre>mvn verify -P deps</pre>
+            <pre>./mvnw verify -P deps</pre>
             <p>Or to see all dependencies with potential updates:</p>
-            <pre>mvn versions:display-dependency-updates</pre>
+            <pre>./mvnw versions:display-dependency-updates</pre>
         </section>
 
         <section id="tooling-dockerstacks">

@@ -99,7 +99,7 @@
 <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 
 <fieldset>
-    <legend><fmt:message key="muc.service.delete.destructon_title" /></legend>
+    <legend><fmt:message key="muc.service.delete.destruction_title" /></legend>
     <div>
     <table style="width: 100%">
     <tbody>

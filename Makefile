@@ -5,16 +5,16 @@ all: build-openfire
 # Can not use 'build' as target name, because there is a
 # directory called build
 build-openfire:
-	mvn package
+	./mvnw package
 
 clean:
-	mvn clean
+	./mvnw clean
 
 dist:
-	mvn package
+	./mvnw package
 
 plugins:
-	mvn package
+	./mvnw package
 
 eclipse: .settings .classpath .project
 

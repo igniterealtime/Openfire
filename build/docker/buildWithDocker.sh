@@ -1,3 +1,4 @@
+#!/bin/bash
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 OFROOT=$(realpath "$SCRIPTPATH/../../")
 DOMAPMAVEN=true
@@ -51,8 +52,8 @@ if [ -n "$MAVENMAP" ]; then
 fi
 DOCKERCMD+=(
     -w /usr/src/openfire
-    maven:3.6.3-jdk-11 \
-    mvn clean package
+    eclipse-temurin:11-jdk \
+    ./mvnw clean package
 )
 if [ $SKIPTESTS == true ]; then
     DOCKERCMD+=(

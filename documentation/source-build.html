@@ -133,7 +133,7 @@
                 Navigate into the root directory of this distribution named via the command-line. In that directory,
                 invoke the build tool to compile the Openfire source code:
             </p>
-            <pre>mvn compile</pre>
+            <pre>./mvnw compile</pre>
             <p>
                 If the build tool is invoked correctly and Openfire compiles, you've correctly
                 configured Maven and your copy of the Openfire source distribution.
@@ -152,7 +152,7 @@
             Apache Maven documentation. For more complete help on several commands, read the documentation below.
         </p>
         <p>
-            To execute a build phase, type <code>mvn "phase"</code> where "phase" is one of the keywords listed below:
+            To execute a build phase, type <code>./mvnw "phase"</code> where "phase" is one of the keywords listed below:
         </p>
         <ul>
             <li><a href="#clean">clean</a>
@@ -161,7 +161,7 @@
             <li><a href="#package">package</a>
         </ul>
         <p>
-            Note that you can combine several phases, for example: <code>mvn clean package</code>.
+            Note that you can combine several phases, for example: <code>./mvnw clean package</code>.
             When a phase is given, Maven will execute every phase in the sequence up to and
             including the one defined. For example, when the 'package' phase is executed, the
             'compile' and 'test' phases are also executed (but the 'clean' phase is not, unless
@@ -176,7 +176,7 @@
 
             <fieldset>
                 <legend>Syntax</legend>
-                <pre><code>mvn clean</code></pre>
+                <pre><code>./mvnw clean</code></pre>
             </fieldset>
 
         </section>

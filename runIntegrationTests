@@ -134,7 +134,7 @@ function launchOpenfire {
 	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
 
 	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
-		mvn verify -P ci
+		./mvnw verify -P ci
 	fi
 
 	rm -f distribution/target/distribution-base/conf/openfire.xml

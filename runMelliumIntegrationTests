@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEBUG=false
+LOCAL_RUN=false
+
+DOMAIN='example.org'
+HOST='localhost'
+
+usage()
+{
+	echo "Usage: $0 [-d] [-l] [-i IPADDRESS] [-h HOST] [-s DOMAIN]"
+	echo "    -d: Enable debug mode. Prints commands, and preserves temp directories if used (default: off)"
+	echo "    -l: Launch a local Openfire. (default: off)"
+	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
+	echo "    -h: The hostname for the Openfire under test (default: localhost)"
+	echo "    -s: The XMPP domain name for the Openfire under test (default: example.org)"
+	exit 2
+}
+
+while getopts dlh:i:s: OPTION "$@"; do
+	case $OPTION in
+		d)
+			DEBUG=true
+			set -x
+			;;
+		l)
+			LOCAL_RUN=true
+			;;
+		h)
+			HOST="${OPTARG}"
+			;;
+		i)
+			IPADDRESS="${OPTARG}"
+			;;
+		s)
+			DOMAIN="${OPTARG}"
+			;;
+		\? ) usage;;
+        :  ) usage;;
+        *  ) usage;;
+	esac
+done
+
+if [[ $LOCAL_RUN == true ]] && [[ $DOMAIN != "example.org" ]]; then
+	echo "Domain is fixed if launching a local instance. If you have an already-running instance to test against, omit the -l flag (and provide -h 127.0.0.1 if necessary)."
+	exit 1
+fi
+
+function setBaseDirectory {
+	# Pretty fancy method to get reliable the absolute path of a shell
+	# script, *even if it is sourced*. Credits go to GreenFox on
+	# stackoverflow: http://stackoverflow.com/a/12197518/194894
+	pushd . > /dev/null
+	SCRIPTDIR="${BASH_SOURCE[0]}";
+	while [ -h "${SCRIPTDIR}" ]; do
+		cd "$(dirname "${SCRIPTDIR}")"
+		SCRIPTDIR="$(readlink "$(basename "${SCRIPTDIR}")")";
+	done
+	cd "$(dirname "${SCRIPTDIR}")" > /dev/null
+	SCRIPTDIR="$(pwd)";
+	popd  > /dev/null
+	BASEDIR="${SCRIPTDIR}"
+	cd "${BASEDIR}"
+}
+
+function createTempDirectory {
+	OFTEMPDIR=$(mktemp -d)
+}
+
+function cleanup {
+	if [[ $DEBUG == false && -n "${OFTEMPDIR-}" ]]; then
+		echo "Removing temp directories"
+		rm -rf "${OFTEMPDIR}"
+	fi
+	if [[ $LOCAL_RUN == true ]]; then
+		echo "Stopping Openfire"
+		pkill -f openfire.lib #TODO: Can this be made more future-proof against changes in the start script?
+	fi
+}
+
+function setUpMelliumEnvironment {
+    MELLIUMDIR="${BASEDIR}/mellium"
+    AIOXMPPCONFIG="${MELLIUMDIR}/openfire-config.ini"
+	if [ -d "${MELLIUMDIR}" ]; then
+		pushd "${MELLIUMDIR}"
+		git pull
+	else
+    	git clone -b main https://github.com/mellium/xmpp "${MELLIUMDIR}"
+    	pushd "${MELLIUMDIR}"
+	fi
+    popd
+}
+
+function setHostsFile {
+	if [[ -n "${IPADDRESS-}" ]]; then
+		echo "Setting hosts file for local running. This may prompt for sudo."
+		sudo /bin/sh -c "echo \"$IPADDRESS $HOST\" >> /etc/hosts"
+	fi
+}
+
+function launchOpenfire {
+	declare -r OPENFIRE_SHELL_SCRIPT="${BASEDIR}/distribution/target/distribution-base/bin/openfire.sh"
+
+	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
+		mvn verify -P ci
+	fi
+
+	rm -f distribution/target/distribution-base/conf/openfire.xml
+	cp distribution/target/distribution-base/conf/openfire-demoboot.xml \
+		distribution/target/distribution-base/conf/openfire.xml
+
+	echo "Starting Openfire…"
+	"${OPENFIRE_SHELL_SCRIPT}" &
+
+	# Wait 120 seconds for Openfire to open up the web interface and
+	# assume Openfire is fully operational once that happens (not sure if
+	# this assumption is correct).
+	echo "Waiting for Openfire…"
+	timeout 120 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 0.3; done' localhost 7070
+}
+
+function runTests {
+	echo "Starting Integration Tests (using Mellium)…"
+    pushd "${MELLIUMDIR}"
+	if [ -d output ]; then rm -Rf output; fi
+    mkdir output
+
+    pushd "${MELLIUMDIR}/examples/echobot"
+    go build
+    ./echobot -vv 2>&1 | tee "${MELLIUMDIR}/output/mellium.test.output.txt"
+	if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
+    popd
+
+    # Mellium's integration test require hooks that will launch new servers on demand. Not currently supported by this script.
+    # go build
+    # go test -v -tags "integration" -run Integration ./... 2>&1 | tee output/mellium.test.output.txt
+    # if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
+    popd
+}
+
+setBaseDirectory
+trap cleanup EXIT
+setUpMelliumEnvironment
+if [[ -n "${IPADDRESS-}" ]]; then
+	setHostsFile
+fi
+if [[ $LOCAL_RUN == true ]]; then
+	launchOpenfire
+fi
+runTests

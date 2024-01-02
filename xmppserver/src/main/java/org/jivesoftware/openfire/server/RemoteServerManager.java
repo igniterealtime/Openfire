@@ -66,7 +66,7 @@ public class RemoteServerManager {
     private static final String LOAD_CONFIGURATIONS =
         "SELECT xmppDomain,remotePort FROM ofRemoteServerConf where permission=?";
 
-    private static Cache configurationsCache;
+    private static final Cache<String, RemoteServerConfiguration> configurationsCache;
 
     static {
         configurationsCache = CacheFactory.createCache("Remote Server Configurations");
@@ -248,11 +248,10 @@ public class RemoteServerManager {
      * @return the configuration for a remote server or {@code null} if none was found.
      */
     public static RemoteServerConfiguration getConfiguration(String domain) {
-        Object value = configurationsCache.get(domain);
-        if ("null".equals(value)) {
+        RemoteServerConfiguration configuration = configurationsCache.get(domain);
+        if (configuration != null && configuration.getPermission() == null) {
             return null;
         }
-        RemoteServerConfiguration configuration = (RemoteServerConfiguration) value;
         if (configuration == null) {
             java.sql.Connection con = null;
             PreparedStatement pstmt = null;
@@ -278,7 +277,8 @@ public class RemoteServerManager {
                 configurationsCache.put(domain, configuration);
             }
             else {
-                configurationsCache.put(domain, "null");
+                // Config without a permission, cached to prevent continuous database lookups.
+                configurationsCache.put(domain, new RemoteServerConfiguration(domain));
             }
         }
         return configuration;

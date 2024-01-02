@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -46,6 +47,15 @@ import org.slf4j.LoggerFactory;
 public class RemoteServerManager {
 
     private static final Logger Log = LoggerFactory.getLogger(RemoteServerManager.class);
+
+    /**
+     * Defines if the permission setting for server-to-server connection applies recursively for subdomains.
+     */
+    public static final SystemProperty<Boolean> RECURSE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.server.permission-apply-recursive")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
 
     private static final String ADD_CONFIGURATION =
         "INSERT INTO ofRemoteServerConf (xmppDomain,remotePort,permission) VALUES (?,?,?)";
@@ -123,6 +133,13 @@ public class RemoteServerManager {
         Permission permission = null;
 
         RemoteServerConfiguration config = getConfiguration(domain);
+        if (config == null && RECURSE.getValue()) {
+            final int dot = domain.indexOf('.');
+            if (dot > -1) {
+                return canAccess(domain.substring(dot+1));
+            }
+        }
+
         if (config != null) {
             permission = config.getPermission();
         }

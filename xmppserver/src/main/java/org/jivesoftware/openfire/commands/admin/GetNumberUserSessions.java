@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to retrieve the number of user sessions at any one moment. That means
@@ -40,6 +42,8 @@ public class GetNumberUserSessions extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -49,7 +53,7 @@ public class GetNumberUserSessions extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(getLabel());
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberusersessions.form.field.onlineuserssessionsnum.label", preferredLocale));
         field.setVariable("onlineuserssessionsnum");
         SessionManager sessionManager = SessionManager.getInstance();
         field.addValue(sessionManager.getUserSessionsCount(false));
@@ -70,8 +74,7 @@ public class GetNumberUserSessions extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        // TODO Use i18n
-        return "Number of Connected User Sessions";
+        return LocaleUtils.getLocalizedString("commands.admin.getnumberusersessions.label");
     }
 
     @Override

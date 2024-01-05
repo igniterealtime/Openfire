@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,32 @@
 package org.jivesoftware.openfire.commands.admin.group;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Command that allows to retrieve list members of a given group.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
  */
 public class GetListGroupUsers extends AdHocCommand {
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting List of Group Members");
-        form.addInstruction("Fill out this form to request list of group members and admins.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -52,7 +51,7 @@ public class GetListGroupUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Group Name");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.form.field.group.label", preferredLocale));
         field.setVariable("group");
         field.setRequired(true);
 
@@ -62,6 +61,8 @@ public class GetListGroupUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         Group group;
         try {
             group = GroupManager.getInstance().getGroup(data.getData().get("group").get(0));
@@ -69,14 +70,14 @@ public class GetListGroupUsers extends AdHocCommand {
             // Group not found
             Element note = command.addElement("note");
             note.addAttribute("type", "error");
-            note.setText("Group name does not exist");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.note.group-does-not-exist", preferredLocale));
             return;
         }
 
         DataForm form = new DataForm(DataForm.Type.result);
 
-        form.addReportedField("jid", "User", FormField.Type.jid_single);
-        form.addReportedField("admin", "Description", FormField.Type.boolean_type);
+        form.addReportedField("jid", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.form.reportedfield.jid.label", preferredLocale), FormField.Type.jid_single);
+        form.addReportedField("admin", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.form.reportedfield.admin.label", preferredLocale), FormField.Type.boolean_type);
 
         // Add group members the result
         for (JID memberJID : group.getMembers()) {
@@ -102,7 +103,7 @@ public class GetListGroupUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get List of Group Members";
+        return LocaleUtils.getLocalizedString("commands.admin.group.getlistgroupusers.label");
     }
 
     @Override

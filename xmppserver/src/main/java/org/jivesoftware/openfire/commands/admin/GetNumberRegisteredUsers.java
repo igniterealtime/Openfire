@@ -16,13 +16,16 @@
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to retrieve the number of registered users
@@ -30,7 +33,6 @@ import java.util.List;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-registered-users-num">XEP-0133 Service Administration: Get Number of Registered Users</a>
  */
-// TODO Use i18n
 public class GetNumberRegisteredUsers extends AdHocCommand {
 
     @Override
@@ -40,6 +42,8 @@ public class GetNumberRegisteredUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -49,7 +53,7 @@ public class GetNumberRegisteredUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(getLabel());
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberregisteredusers.form.field.registeredusersnum.label", preferredLocale));
         field.setVariable("registeredusersnum");
         field.addValue(UserManager.getInstance().getUserCount());
 
@@ -69,8 +73,7 @@ public class GetNumberRegisteredUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        // TODO Use i18n
-        return "The number of registered users";
+        return LocaleUtils.getLocalizedString("commands.admin.getnumberregisteredusers.label");
     }
 
     @Override

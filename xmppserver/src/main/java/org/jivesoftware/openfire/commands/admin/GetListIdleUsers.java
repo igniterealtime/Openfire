@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
@@ -33,14 +34,15 @@ import java.util.*;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-idle-users-list">XEP-0133 Service Administration: Get List of Idle Users</a>
  */
-// TODO Use i18n
 public class GetListIdleUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting List of Idle Users");
-        form.addInstruction("Fill out this form to request the idle users of this service.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -49,7 +51,7 @@ public class GetListIdleUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Maximum number of items to show");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.max_items", preferredLocale));
         field.setVariable("max_items");
         field.addOption("25", "25");
         field.addOption("50", "50");
@@ -57,7 +59,7 @@ public class GetListIdleUsers extends AdHocCommand {
         field.addOption("100", "100");
         field.addOption("150", "150");
         field.addOption("200", "200");
-        field.addOption("None", "none");
+        field.addOption(LocaleUtils.getLocalizedString("commands.global.operation.pagination.none", preferredLocale), "none");
 
         // Add the form to the command
         command.add(form.getElement());
@@ -65,6 +67,8 @@ public class GetListIdleUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && !"none".equals(max_items)) {
@@ -85,7 +89,7 @@ public class GetListIdleUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The list of idle users");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.form.field.activeuserjids.label", preferredLocale));
         field.setVariable("activeuserjids"); // The XEP uses this variable ('active') rather than something like 'idleuserjids'.
 
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
@@ -94,6 +98,10 @@ public class GetListIdleUsers extends AdHocCommand {
         for (ClientSession session : sessions) {
             if (!session.getPresence().isAvailable()) {
                 users.add(session.getAddress().toBareJID());
+
+                if (maxItems > 0 && users.size() >= maxItems) {
+                    break;
+                }
             }
         }
 
@@ -111,7 +119,7 @@ public class GetListIdleUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get List of Idle Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.label");
     }
 
     @Override

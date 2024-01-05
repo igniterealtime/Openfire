@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
@@ -30,16 +31,17 @@ import java.util.*;
  * Command that allows to retrieve a list of all active users.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-list">XEP-0133 Service Administration: Get List of Active Users</a>
  */
 public class GetListActiveUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting List of Active Users");
-        form.addInstruction("Fill out this form to request the active users of this service.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -48,7 +50,7 @@ public class GetListActiveUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Maximum number of items to show");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.max_items", preferredLocale));
         field.setVariable("max_items");
         field.addOption("25", "25");
         field.addOption("50", "50");
@@ -56,7 +58,7 @@ public class GetListActiveUsers extends AdHocCommand {
         field.addOption("100", "100");
         field.addOption("150", "150");
         field.addOption("200", "200");
-        field.addOption("None", "none");
+        field.addOption(LocaleUtils.getLocalizedString("commands.global.operation.pagination.none", preferredLocale), "none");
 
         // Add the form to the command
         command.add(form.getElement());
@@ -64,6 +66,8 @@ public class GetListActiveUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && !"none".equals(max_items)) {
@@ -84,7 +88,7 @@ public class GetListActiveUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The list of active users");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.field.activeuserjids.label", preferredLocale));
         field.setVariable("activeuserjids");
 
         // Get list of users (i.e. bareJIDs) that are connected to the server
@@ -112,7 +116,7 @@ public class GetListActiveUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get List of Active Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.label");
     }
 
     @Override

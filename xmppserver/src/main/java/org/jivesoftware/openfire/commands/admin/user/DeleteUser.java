@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.commands.admin.user;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -23,21 +24,18 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Delete a user from Openfire if the provider is not read-only. See
- * <a href="http://www.xmpp.org/extensions/xep-0133.html#delete-user">Service Administration:
- * Delete User</a>
  *
  * @author John Georgiadis
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#delete-user">XEP-0133 Service Administration: Delete User</a>
  */
 public class DeleteUser extends AdHocCommand {
     @Override
@@ -47,7 +45,7 @@ public class DeleteUser extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Delete a User";
+        return LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.label");
     }
 
     @Override
@@ -57,11 +55,13 @@ public class DeleteUser extends AdHocCommand {
 
     @Override
     public void execute(SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
         // Check if users cannot be modified (backend is read-only)
         if (UserManager.getUserProvider().isReadOnly()) {
             note.addAttribute("type", "error");
-            note.setText("User provider is read only. Users cannot be deleted.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.users-readonly", preferredLocale));
             return;
         }
         Map<String, List<String>> data = sessionData.getData();
@@ -79,7 +79,7 @@ public class DeleteUser extends AdHocCommand {
                 if ( !XMPPServer.getInstance().isLocal( account ) )
                 {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot delete remote user: " + accountjid );
+                    note.setText( LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.jid-not-local", List.of(accountjid), preferredLocale));
                     requestError = true;
                 }
                 else
@@ -91,13 +91,13 @@ public class DeleteUser extends AdHocCommand {
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "JID required parameter." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.jid-required", preferredLocale));
                 requestError = true;
             }
             catch ( UserNotFoundException e )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "User not found: " + accountjid );
+                note.setText( LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.user-does-not-exist", List.of(accountjid), preferredLocale));
                 requestError = true;
             }
         }
@@ -115,14 +115,16 @@ public class DeleteUser extends AdHocCommand {
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Deleting one or more users");
-        form.addInstruction("Fill out this form to delete users.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -131,7 +133,7 @@ public class DeleteUser extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The Jabber ID(s) for the account to be deleted");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 

@@ -21,13 +21,16 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to retrieve a list of all registered users.
@@ -35,14 +38,15 @@ import java.util.*;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-registered-users-list">XEP-0133 Service Administration: Get List of Registered Users</a>
  */
-// TODO Use i18n
 public class GetListRegisteredUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting List of Registered Users");
-        form.addInstruction("Fill out this form to request the registered users of this service.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -51,7 +55,7 @@ public class GetListRegisteredUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Maximum number of items to show");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.max_items", preferredLocale));
         field.setVariable("max_items");
         field.addOption("25", "25");
         field.addOption("50", "50");
@@ -59,7 +63,7 @@ public class GetListRegisteredUsers extends AdHocCommand {
         field.addOption("100", "100");
         field.addOption("150", "150");
         field.addOption("200", "200");
-        field.addOption("None", "none");
+        field.addOption(LocaleUtils.getLocalizedString("commands.global.operation.pagination.none", preferredLocale), "none");
 
         // Add the form to the command
         command.add(form.getElement());
@@ -67,6 +71,8 @@ public class GetListRegisteredUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && !"none".equals(max_items)) {
@@ -87,7 +93,7 @@ public class GetListRegisteredUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The list of all users");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.field.registereduserjids.label", preferredLocale));
         field.setVariable("registereduserjids");
 
         // Get list of users (i.e. bareJIDs) that are connected to the server
@@ -107,7 +113,7 @@ public class GetListRegisteredUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get List of Registered Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.label");
     }
 
     @Override

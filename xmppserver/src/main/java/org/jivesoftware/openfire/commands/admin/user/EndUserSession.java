@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -34,7 +35,6 @@ import java.util.*;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#end-user-session">XEP-0133 Service Administration: End User Session</a>
  */
-// TODO Use i18n
 public class EndUserSession extends AdHocCommand
 {
     @Override
@@ -44,7 +44,7 @@ public class EndUserSession extends AdHocCommand
 
     @Override
     public String getDefaultLabel() {
-        return "End User Session";
+        return LocaleUtils.getLocalizedString("commands.admin.user.endusersession.label");
     }
 
     @Override
@@ -55,6 +55,8 @@ public class EndUserSession extends AdHocCommand
     @Override
     public void execute(SessionData sessionData, Element command)
     {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -72,7 +74,7 @@ public class EndUserSession extends AdHocCommand
                 if ( !XMPPServer.getInstance().isLocal( address ) )
                 {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot end session of remote user: " + accountjid );
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.user.endusersession.note.jid-not-local", List.of(accountjid), preferredLocale));
                     requestError = true;
                 } else {
                     addresses.add(address);
@@ -81,13 +83,13 @@ public class EndUserSession extends AdHocCommand
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "JID required parameter." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.endusersession.note.jid-required", preferredLocale));
                 requestError = true;
             }
             catch (IllegalArgumentException npe)
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "Invalid values were provided. Please provide one or more valid JIDs." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.endusersession.note.jid-invalid", preferredLocale));
                 requestError = true;
             }
         }
@@ -118,14 +120,16 @@ public class EndUserSession extends AdHocCommand
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Ending a User Session");
-        form.addInstruction("Fill out this form to end a user's session.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.endusersession.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.endusersession.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -134,7 +138,7 @@ public class EndUserSession extends AdHocCommand
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The Jabber ID(s) for which to end sessions");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.endusersession.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 

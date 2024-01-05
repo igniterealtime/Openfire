@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.commands.admin.user;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ConnectionException;
@@ -27,12 +28,14 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Takes a user's username and password to authenticate them against the Openfire authprovider.
@@ -47,7 +50,7 @@ public class AuthenticateUser extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Authenticate User";
+        return LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.label");
     }
 
     @Override
@@ -57,6 +60,8 @@ public class AuthenticateUser extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         Element note = command.addElement("note");
         JID account;
         try {
@@ -64,12 +69,12 @@ public class AuthenticateUser extends AdHocCommand {
         }
         catch (NullPointerException ne) {
             note.addAttribute("type", "error");
-            note.setText("JID required parameter.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.note.jid-required", preferredLocale));
             return;
         }
         if (!XMPPServer.getInstance().isLocal(account)) {
             note.addAttribute("type", "error");
-            note.setText("Cannot authenticate remote user.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.note.jid-not-local", preferredLocale));
             return;
         }
         String password = data.getData().get("password").get(0);
@@ -81,7 +86,7 @@ public class AuthenticateUser extends AdHocCommand {
         catch (UserNotFoundException e) {
             // User not found
             note.addAttribute("type", "error");
-            note.setText("User does not exists.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.note.user-does-not-exist", preferredLocale));
             return;
         }
 
@@ -91,19 +96,21 @@ public class AuthenticateUser extends AdHocCommand {
         catch (UnauthorizedException | ConnectionException | InternalUnauthenticatedException e) {
             // Auth failed
             note.addAttribute("type", "error");
-            note.setText("Authentication failed.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.note.authentication-failed", preferredLocale));
             return;
         }
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully.");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Authenticating a user");
-        form.addInstruction("Fill out this form to authenticate a user.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -112,13 +119,13 @@ public class AuthenticateUser extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The username for this account");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjid");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_private);
-        field.setLabel("The password for this account");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.form.field.password.label", preferredLocale));
         field.setVariable("password");
         field.setRequired(true);
 

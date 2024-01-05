@@ -20,13 +20,11 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Command that allows to retrieve the number of idle users. Idle users are those that are online, but not active.
@@ -35,7 +33,6 @@ import java.util.Set;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-idle-users-num">XEP-0133 Service Administration: Get Number of Idle Users</a>
  */
-// TODO Use i18n
 public class GetNumberIdleUsers extends AdHocCommand {
 
     @Override
@@ -45,6 +42,8 @@ public class GetNumberIdleUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -54,7 +53,7 @@ public class GetNumberIdleUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(getLabel());
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberidleusers.form.field.idleusersnum.label", preferredLocale));
         field.setVariable("idleusersnum");
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
@@ -82,8 +81,7 @@ public class GetNumberIdleUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        // TODO Use i18n
-        return "Number of Idle Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getnumberidleusers.label");
     }
 
     @Override

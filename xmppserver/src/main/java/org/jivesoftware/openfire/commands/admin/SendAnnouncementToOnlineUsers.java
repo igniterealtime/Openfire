@@ -16,14 +16,17 @@
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -32,7 +35,6 @@ import java.util.Map;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#announce">XEP-0133 Send Announcement to Online Users</a>
  */
-// TODO Use i18n
 public class SendAnnouncementToOnlineUsers extends AdHocCommand
 {
     @Override
@@ -42,7 +44,7 @@ public class SendAnnouncementToOnlineUsers extends AdHocCommand
 
     @Override
     public String getDefaultLabel() {
-        return "Send Announcement to Online Users";
+        return LocaleUtils.getLocalizedString("commands.admin.sendannouncementtoonlineusers.label");
     }
 
     @Override
@@ -53,6 +55,8 @@ public class SendAnnouncementToOnlineUsers extends AdHocCommand
     @Override
     public void execute(SessionData sessionData, Element command)
     {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -61,7 +65,7 @@ public class SendAnnouncementToOnlineUsers extends AdHocCommand
         final List<String> announcement = data.get("announcement");
         if (announcement == null || announcement.isEmpty()) {
             note.addAttribute( "type", "error" );
-            note.setText("Please provide text for the announcement.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.sendannouncementtoonlineusers.note.text-required", preferredLocale));
             requestError = true;
         }
 
@@ -76,14 +80,16 @@ public class SendAnnouncementToOnlineUsers extends AdHocCommand
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Making an Announcement");
-        form.addInstruction("Fill out this form to make an announcement to all active users of this service.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.sendannouncementtoonlineusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.sendannouncementtoonlineusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -92,7 +98,7 @@ public class SendAnnouncementToOnlineUsers extends AdHocCommand
 
         field = form.addField();
         field.setType(FormField.Type.text_multi);
-        field.setLabel("Announcement");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.sendannouncementtoonlineusers.form.field.announcement.label", preferredLocale));
         field.setVariable("announcement");
         field.setRequired(true);
 

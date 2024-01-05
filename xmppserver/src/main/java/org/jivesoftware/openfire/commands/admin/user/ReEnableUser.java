@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.commands.admin.user;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -24,14 +25,12 @@ import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Re-Enables a user.
@@ -42,7 +41,6 @@ import java.util.Map;
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#reenable-user">XEP-0133 Service Administration: Re-Enable User</a>
  * @see LockOutManager
  */
-// TODO Use i18n
 public class ReEnableUser extends AdHocCommand
 {
     @Override
@@ -52,7 +50,7 @@ public class ReEnableUser extends AdHocCommand
 
     @Override
     public String getDefaultLabel() {
-        return "Re-Enable a User";
+        return LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.label");
     }
 
     @Override
@@ -63,12 +61,14 @@ public class ReEnableUser extends AdHocCommand
     @Override
     public void execute(SessionData sessionData, Element command)
     {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         // Check if locks can be set (backend is read-only)
         if (LockOutManager.getLockOutProvider().isReadOnly()) {
             note.addAttribute("type", "error");
-            note.setText("LockOut provider is read only. Users cannot be re-enabled.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.note.lockout-readonly", preferredLocale));
             return;
         }
 
@@ -87,7 +87,7 @@ public class ReEnableUser extends AdHocCommand
                 if ( !XMPPServer.getInstance().isLocal( account ) )
                 {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot re-enable remote user: " + accountjid );
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.note.jid-not-local", List.of(accountjid), preferredLocale));
                     requestError = true;
                 }
                 else
@@ -99,19 +99,19 @@ public class ReEnableUser extends AdHocCommand
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "JID required parameter." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.note.jid-required", preferredLocale));
                 requestError = true;
             }
             catch (IllegalArgumentException npe)
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "Invalid values were provided. Please provide one or more valid JIDs." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.note.jid-invalid", preferredLocale));
                 requestError = true;
             }
             catch ( UserNotFoundException e )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "User not found: " + accountjid );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.note.user-does-not-exist", List.of(accountjid), preferredLocale));
                 requestError = true;
             }
         }
@@ -129,14 +129,16 @@ public class ReEnableUser extends AdHocCommand
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Re-enable one or more users");
-        form.addInstruction("Fill out this form to re-enable one or more users.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -145,7 +147,7 @@ public class ReEnableUser extends AdHocCommand
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The Jabber ID(s) to re-enable");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.reenableuser.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 

@@ -16,12 +16,14 @@
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.server.RemoteServerConfiguration;
 import org.jivesoftware.openfire.server.RemoteServerManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -34,7 +36,6 @@ import java.util.*;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#edit-blacklist">XEP-0133 Service Administration: Edit Blacklist</a>
  */
-// TODO Use i18n
 public class EditBlockedList extends AdHocCommand
 {
     @Override
@@ -44,7 +45,7 @@ public class EditBlockedList extends AdHocCommand
 
     @Override
     public String getDefaultLabel() {
-        return "Edit Blocked List";
+        return LocaleUtils.getLocalizedString("commands.admin.editblockedlist.label");
     }
 
     @Override
@@ -55,6 +56,8 @@ public class EditBlockedList extends AdHocCommand
     @Override
     public void execute(SessionData sessionData, Element command)
     {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -69,13 +72,13 @@ public class EditBlockedList extends AdHocCommand
                 domain = new JID( blacklistjid );
                 if (domain.getResource() != null || domain.getNode() != null) {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot add an address that contains a node or resource part (only use domains): " + blacklistjid );
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.note.jid-domain-required", List.of(blacklistjid), preferredLocale));
                     requestError = true;
                 }
 
                 if (XMPPServer.getInstance().isLocal(domain)) {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot add our own address: " + blacklistjid );
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.note.jid-self", List.of(blacklistjid), preferredLocale));
                     requestError = true;
                 }
 
@@ -84,13 +87,13 @@ public class EditBlockedList extends AdHocCommand
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "JID required parameter." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.note.jid-required", preferredLocale));
                 requestError = true;
             }
             catch (IllegalArgumentException npe)
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "Invalid values were provided. Please provide one or more valid JIDs." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.note.jid-invalid", preferredLocale));
                 requestError = true;
             }
         }
@@ -117,14 +120,16 @@ public class EditBlockedList extends AdHocCommand
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Editing the Blocked list");
-        form.addInstruction("Fill out this form to edit the list of entities with whom communications are disallowed.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -133,7 +138,7 @@ public class EditBlockedList extends AdHocCommand
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The blocked list");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.editblockedlist.form.field.blacklistjids.label", preferredLocale));
         field.setVariable("blacklistjids");
         field.setRequired(true);
         for (RemoteServerConfiguration blockedServer : RemoteServerManager.getBlockedServers()) {

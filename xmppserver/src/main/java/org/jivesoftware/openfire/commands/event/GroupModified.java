@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package org.jivesoftware.openfire.commands.event;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -43,7 +45,8 @@ public class GroupModified extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Group modified";
+        return LocaleUtils.getLocalizedString("commands.event.groupmodified.label")
+            ;
     }
 
     @Override
@@ -53,6 +56,8 @@ public class GroupModified extends AdHocCommand {
 
     @Override
     public void execute(SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -63,12 +68,12 @@ public class GroupModified extends AdHocCommand {
         Group group = null;
         final String groupName = get(data, "groupName", 0);
         if (StringUtils.isBlank(groupName)) {
-            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+            inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.groupname-required", preferredLocale));
         } else {
             try {
                 group = GroupManager.getInstance().getGroup(groupName);
             } catch (GroupNotFoundException e) {
-                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+                inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.group-does-not-exist", List.of(groupName), preferredLocale));
             }
         }
 
@@ -76,42 +81,42 @@ public class GroupModified extends AdHocCommand {
         final String originalValue = get(data, "originalValue", 0);
         final String propertyKey = get(data, "propertyKey", 0);
         if (StringUtils.isBlank(type)) {
-            inputValidationErrors.add("The parameter 'changeType' is required, but is missing.");
+            inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.changetype-required", preferredLocale));
         } else {
             switch (type) {
                 case "nameModified":
                     if (StringUtils.isBlank(originalValue)) {
-                        inputValidationErrors.add("For changeType 'nameModified', parameter 'originalValue' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-namemodified-originalvalue-required", preferredLocale));
                     }
                     break;
 
                 case "descriptionModified":
                     if (StringUtils.isBlank(originalValue)) {
-                        inputValidationErrors.add("For changeType 'descriptionModified', parameter 'originalValue' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-descriptionmodified-originalvalue-required", preferredLocale));
                     }
                     break;
 
                 case "propertyAdded":
                     if (StringUtils.isBlank(propertyKey)) {
-                        inputValidationErrors.add("For changeType 'propertyAdded', parameter 'propertyKey' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-propertyadded-propertykey-required", preferredLocale));
                     }
                     break;
 
                 case "propertyModified":
                     if (StringUtils.isBlank(originalValue)) {
-                        inputValidationErrors.add("For changeType 'propertyModified', parameter 'originalValue' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-propertymodified-originalvalue-required", preferredLocale));
                     }
                     if (StringUtils.isBlank(propertyKey)) {
-                        inputValidationErrors.add("For changeType 'propertyModified', parameter 'propertyKey' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-propertymodified-propertykey-required", preferredLocale));
                     }
                     break;
 
                 case "propertyDeleted":
                     if (StringUtils.isBlank(originalValue)) {
-                        inputValidationErrors.add("For changeType 'propertyDeleted', parameter 'originalValue' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-propertydeleted-originalvalue-required", preferredLocale));
                     }
                     if (StringUtils.isBlank(propertyKey)) {
-                        inputValidationErrors.add("For changeType 'propertyDeleted', parameter 'propertyKey' is required.");
+                        inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmodified.note.for-propertydeleted-propertykey-required", preferredLocale));
                     }
                     break;
             }
@@ -148,14 +153,16 @@ public class GroupModified extends AdHocCommand {
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Dispatching a group created event.");
-        form.addInstruction("Fill out this form to dispatch a group created event.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -164,29 +171,29 @@ public class GroupModified extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The group name of the group that was created");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.groupname.label", preferredLocale));
         field.setVariable("groupName");
         field.setRequired(true);
 
         field.setType(FormField.Type.list_single);
-        field.setLabel("Change type");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.label", preferredLocale));
         field.setVariable("changeType");
-        field.addOption("Name modified", "nameModified");
-        field.addOption("Description modified", "descriptionModified");
-        field.addOption("Property modified", "propertyModified");
-        field.addOption("Property added", "propertyAdded");
-        field.addOption("Property deleted", "propertyDeleted");
-        field.addOption("Other", "other");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.option.namemodified.label", preferredLocale), "nameModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.option.descriptionmodified.label", preferredLocale), "descriptionModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.option.propertymodified.label", preferredLocale), "propertyModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.option.propertyadded.label", preferredLocale), "propertyAdded");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.option.propertydeleted.label", preferredLocale), "propertyDeleted");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.changetype.option.other.label", preferredLocale), "other");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Original value");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.originalvalue.label", preferredLocale));
         field.setVariable("originalValue");
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Name of the property");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupmodified.form.field.propertykey.label", preferredLocale));
         field.setVariable("propertyKey");
 
 

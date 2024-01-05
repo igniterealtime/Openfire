@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -29,21 +30,22 @@ import org.xmpp.packet.JID;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to retrieve the presence of all active users.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
  */
 public class GetUsersPresence extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting Presence of Active Users");
-        form.addInstruction("Fill out this form to request the active users presence of this service.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getuserspresence.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getuserspresence.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -52,7 +54,7 @@ public class GetUsersPresence extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Maximum number of items to return");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.max_items", preferredLocale));
         field.setVariable("max_items");
         field.addOption("25", "25");
         field.addOption("50", "50");
@@ -60,7 +62,7 @@ public class GetUsersPresence extends AdHocCommand {
         field.addOption("100", "100");
         field.addOption("150", "150");
         field.addOption("200", "200");
-        field.addOption("None", "none");
+        field.addOption(LocaleUtils.getLocalizedString("commands.global.operation.pagination.none", preferredLocale), "none");
 
         // Add the form to the command
         command.add(form.getElement());
@@ -68,6 +70,8 @@ public class GetUsersPresence extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && !"none".equals(max_items)) {
@@ -88,7 +92,7 @@ public class GetUsersPresence extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_multi);
-        field.setLabel("The presences of active users");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getuserspresence.form.field.activeuserpresences.label", preferredLocale));
         field.setVariable("activeuserpresences");
 
         // Get list of users (i.e. bareJIDs) that are connected to the server
@@ -112,7 +116,7 @@ public class GetUsersPresence extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get Presence of Active Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getuserspresence.label");
     }
 
     @Override

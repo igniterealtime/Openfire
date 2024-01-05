@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -42,7 +43,6 @@ import java.util.*;
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#disable-user">XEP-0133 Service Administration: Disable User</a>
  * @see LockOutManager
  */
-// TODO Use i18n
 public class DisableUser extends AdHocCommand
 {
     @Override
@@ -52,7 +52,7 @@ public class DisableUser extends AdHocCommand
 
     @Override
     public String getDefaultLabel() {
-        return "Disable a User";
+        return LocaleUtils.getLocalizedString("commands.admin.user.disableuser.label");
     }
 
     @Override
@@ -63,12 +63,14 @@ public class DisableUser extends AdHocCommand
     @Override
     public void execute(SessionData sessionData, Element command)
     {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         // Check if locks can be set (backend is read-only)
         if (LockOutManager.getLockOutProvider().isReadOnly()) {
             note.addAttribute("type", "error");
-            note.setText("LockOut provider is read only. Users cannot be deleted.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.note.lockout-readonly", preferredLocale));
             return;
         }
 
@@ -87,7 +89,7 @@ public class DisableUser extends AdHocCommand
                 if ( !XMPPServer.getInstance().isLocal( account ) )
                 {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot disable remote user: " + accountjid );
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.note.jid-not-local", List.of(accountjid), preferredLocale));
                     requestError = true;
                 }
                 else
@@ -99,19 +101,19 @@ public class DisableUser extends AdHocCommand
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "JID required parameter." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.note.jid-required", preferredLocale));
                 requestError = true;
             }
             catch (IllegalArgumentException npe)
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "Invalid values were provided. Please provide one or more valid JIDs." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.note.jid-invalid", preferredLocale));
                 requestError = true;
             }
             catch ( UserNotFoundException e )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "User not found: " + accountjid );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.note.user-does-not-exist", List.of(accountjid), preferredLocale));
                 requestError = true;
             }
         }
@@ -137,14 +139,16 @@ public class DisableUser extends AdHocCommand
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Disable one or more users");
-        form.addInstruction("Fill out this form to disable one or more users.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -153,7 +157,7 @@ public class DisableUser extends AdHocCommand
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The Jabber ID(s) to disable");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.disableuser.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 

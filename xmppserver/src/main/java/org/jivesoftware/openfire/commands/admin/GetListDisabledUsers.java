@@ -17,18 +17,21 @@
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to retrieve a list of all disabled users.
@@ -36,14 +39,15 @@ import java.util.List;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-disabled-users-list">XEP-0133 Service Administration: Get List of Disabled Users</a>
  */
-// TODO Use i18n
 public class GetListDisabledUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting List of Disabled Users");
-        form.addInstruction("Fill out this form to request the disabled users of this service.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistdisabledusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistdisabledusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -52,7 +56,7 @@ public class GetListDisabledUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Maximum number of items to show");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.max_items", preferredLocale));
         field.setVariable("max_items");
         field.addOption("25", "25");
         field.addOption("50", "50");
@@ -60,7 +64,7 @@ public class GetListDisabledUsers extends AdHocCommand {
         field.addOption("100", "100");
         field.addOption("150", "150");
         field.addOption("200", "200");
-        field.addOption("None", "none");
+        field.addOption(LocaleUtils.getLocalizedString("commands.global.operation.pagination.none", preferredLocale), "none");
 
         // Add the form to the command
         command.add(form.getElement());
@@ -68,6 +72,8 @@ public class GetListDisabledUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         String max_items = data.getData().get("max_items").get(0);
         int maxItems = -1;
         if (max_items != null && !"none".equals(max_items)) {
@@ -88,7 +94,7 @@ public class GetListDisabledUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The list of all disabled users");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistdisabledusers.form.field.disableduserjids.label", preferredLocale));
         field.setVariable("disableduserjids");
 
         // TODO improve on this, as this is not efficient on systems with large amounts of users.
@@ -96,6 +102,10 @@ public class GetListDisabledUsers extends AdHocCommand {
         for (final User user : UserManager.getInstance().getUsers()) {
             if (lockOutManager.isAccountDisabled(user.getUsername())) {
                 field.addValue(XMPPServer.getInstance().createJID(user.getUsername(), null));
+
+                if (maxItems > 0 && field.getValues().size() >= maxItems) {
+                    break;
+                }
             }
         }
 
@@ -109,7 +119,7 @@ public class GetListDisabledUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get List of Disabled Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getlistdisabledusers.label");
     }
 
     @Override

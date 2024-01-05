@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.commands.admin.user;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
@@ -24,14 +25,12 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.roster.Roster;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Gets the roster of a user
@@ -41,7 +40,6 @@ import java.util.Map;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-user-roster">XEP-0133 Service Administration: Get User Roster</a>
  */
-// TODO Use i18n
 public class GetUserRoster extends AdHocCommand
 {
     @Override
@@ -51,7 +49,7 @@ public class GetUserRoster extends AdHocCommand
 
     @Override
     public String getDefaultLabel() {
-        return "Get User Roster";
+        return LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.label");
     }
 
     @Override
@@ -62,12 +60,14 @@ public class GetUserRoster extends AdHocCommand
     @Override
     public void execute(SessionData sessionData, Element command)
     {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         // Check if rosters are enabled
         if (!RosterManager.isRosterServiceEnabled()) {
             note.addAttribute("type", "error");
-            note.setText("Roster service is disabled.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.rosterservice-disabled", preferredLocale));
             return;
         }
 
@@ -86,7 +86,7 @@ public class GetUserRoster extends AdHocCommand
                 if ( !XMPPServer.getInstance().isLocal( account ) )
                 {
                     note.addAttribute( "type", "error" );
-                    note.setText( "Cannot obtain roster for: " + accountjid );
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.jid-not-local", List.of(accountjid), preferredLocale));
                     requestError = true;
                 }
                 else
@@ -97,26 +97,26 @@ public class GetUserRoster extends AdHocCommand
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "JID required parameter." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.jid-required", preferredLocale));
                 requestError = true;
             }
             catch (IllegalArgumentException npe)
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "Invalid values were provided. Please provide one or more valid JIDs." );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.jid-invalid", preferredLocale));
                 requestError = true;
             }
             catch ( UserNotFoundException e )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( "User not found: " + accountjid );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.user-does-not-exist", List.of(accountjid), preferredLocale));
                 requestError = true;
             }
         }
 
         if (rosters.size() > 1) {
             note.addAttribute( "type", "error" );
-            note.setText( "Unable to return rosters for more than one user at a time." );
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.cannot-return-multiple", preferredLocale));
             requestError = true;
         }
 
@@ -155,14 +155,16 @@ public class GetUserRoster extends AdHocCommand
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Get user roster");
-        form.addInstruction("Fill out this form to get the roster of a user.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -171,7 +173,7 @@ public class GetUserRoster extends AdHocCommand
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The Jabber ID of the user for which to retrieve the roster.");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@ package org.jivesoftware.openfire.commands.event;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -43,7 +45,7 @@ public class GroupMemberRemoved extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Group member removed";
+        return LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.label");
     }
 
     @Override
@@ -53,6 +55,8 @@ public class GroupMemberRemoved extends AdHocCommand {
 
     @Override
     public void execute(SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -63,25 +67,25 @@ public class GroupMemberRemoved extends AdHocCommand {
         Group group = null;
         final String groupName = get(data, "groupName", 0);
         if (StringUtils.isBlank(groupName)) {
-            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+            inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.note.groupname-required", preferredLocale));
         } else {
             try {
                 group = GroupManager.getInstance().getGroup(groupName);
             } catch (GroupNotFoundException e) {
-                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+                inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.note.group-does-not-exist", List.of(groupName), preferredLocale));
             }
         }
 
         JID member;
         final String memberValue = get(data, "member", 0);
         if (StringUtils.isBlank(memberValue)) {
-            inputValidationErrors.add("The parameter 'member' is required, but is missing.");
+            inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.note.member-required", preferredLocale));
             return;
         } else {
             try {
                 member = new JID(memberValue);
             } catch (IllegalArgumentException e) {
-                inputValidationErrors.add("The value for parameter 'member' should be a valid JID, but '" + memberValue + "' is not.");
+                inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.note.member-jid-invalid", List.of(memberValue), preferredLocale));
                 return;
             }
         }
@@ -97,14 +101,16 @@ public class GroupMemberRemoved extends AdHocCommand {
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Dispatching a group member removed event.");
-        form.addInstruction("Fill out this form to dispatch a group member removed event.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -113,13 +119,13 @@ public class GroupMemberRemoved extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The group name of the group");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.form.field.groupname.label", preferredLocale));
         field.setVariable("groupName");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Member");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupmemberremoved.form.field.member.label", preferredLocale));
         field.setVariable("member");
         field.setRequired(true);
 

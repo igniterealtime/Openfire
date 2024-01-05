@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,20 @@
 package org.jivesoftware.openfire.commands.admin.muc;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -46,7 +45,7 @@ public class CreateMUCRoom extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Create a Multi-user Chat";
+        return LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.label");
     }
 
     @Override
@@ -56,11 +55,13 @@ public class CreateMUCRoom extends AdHocCommand {
 
     @Override
     public void execute(SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
         Collection<JID> admins = XMPPServer.getInstance().getAdmins();
         if (admins.size() <= 0) {
             note.addAttribute("type", "error");
-            note.setText("Server needs admin user to be able to create rooms.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.server-needs-admin", preferredLocale));
             return;
         }
         Map<String, List<String>> data = sessionData.getData();
@@ -69,7 +70,7 @@ public class CreateMUCRoom extends AdHocCommand {
         String servicehostname = get(data, "servicename", 0);
         if (servicehostname == null) {
             note.addAttribute("type", "error");
-            note.setText("Service name must be specified.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.servicename-missing", preferredLocale));
             return;
         }
         // Remove the server's domain name from the passed hostname
@@ -78,19 +79,19 @@ public class CreateMUCRoom extends AdHocCommand {
         mucService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(servicename);
         if (mucService == null) {
             note.addAttribute("type", "error");
-            note.setText("Invalid service name specified.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.servicename-invalid", preferredLocale));
             return;
         }
         if (!mucService.isServiceEnabled()) {
             note.addAttribute("type", "error");
-            note.setText("Multi user chat is disabled for specified service.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.service-disabled", preferredLocale));
             return;
         }
         // Let's create the jid and check that they are a local user
         String roomname = get(data, "roomname", 0);
         if (roomname == null) {
             note.addAttribute("type", "error");
-            note.setText("Room name must be specified.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.roomname-missing", preferredLocale));
             return;
         }
         roomname = JID.nodeprep(roomname);
@@ -106,7 +107,7 @@ public class CreateMUCRoom extends AdHocCommand {
             }
         } catch ( ParseException e ) {
             note.addAttribute("type", "error");
-            note.setText("persistent has invalid value. Needs to be boolean.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.persistent-invalid", preferredLocale));
             return;
         }
 
@@ -120,7 +121,7 @@ public class CreateMUCRoom extends AdHocCommand {
             }
         } catch ( ParseException e ) {
             note.addAttribute("type", "error");
-            note.setText("public has invalid value. Needs to be boolean.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.public-invalid", preferredLocale));
             return;
         }
 
@@ -133,7 +134,7 @@ public class CreateMUCRoom extends AdHocCommand {
             }
             catch (NotAllowedException e) {
                 note.addAttribute("type", "error");
-                note.setText("No permission to create rooms.");
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.no-permission", preferredLocale));
                 return;
             }
 
@@ -154,9 +155,11 @@ public class CreateMUCRoom extends AdHocCommand {
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Create a multi-user chat room");
-        form.addInstruction("Fill out this form to create a multi-user chat room.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -165,34 +168,34 @@ public class CreateMUCRoom extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The name of the room");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.field.roomname.label", preferredLocale));
         field.setVariable("roomname");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The service (hostname) to create the room on");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.field.servicename.label", preferredLocale));
         field.setVariable("servicename");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_private);
-        field.setLabel("The password for this account");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.field.password.label", preferredLocale));
         field.setVariable("password");
 
         field = form.addField();
         field.setType(FormField.Type.text_private);
-        field.setLabel("Retype password");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.field.password-verify.label", preferredLocale));
         field.setVariable("password-verify");
 
         field = form.addField();
         field.setType(FormField.Type.boolean_type);
-        field.setLabel("Room is persistent");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.field.persistent.label", preferredLocale));
         field.setVariable("persistent");
 
         field = form.addField();
         field.setType(FormField.Type.boolean_type);
-        field.setLabel("Is the room public");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.form.field.public.label", preferredLocale));
         field.setVariable("public");
 
         // Add the form to the command

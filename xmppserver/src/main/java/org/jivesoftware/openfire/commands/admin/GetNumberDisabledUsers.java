@@ -16,16 +16,19 @@
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to retrieve the number of disabled users
@@ -33,7 +36,6 @@ import java.util.List;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-disabled-users-num">XEP-0133 Service Administration: Get Number of Disabled Users</a>
  */
-// TODO Use i18n
 public class GetNumberDisabledUsers extends AdHocCommand {
 
     @Override
@@ -43,6 +45,8 @@ public class GetNumberDisabledUsers extends AdHocCommand {
 
     @Override
     public void execute(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -52,7 +56,7 @@ public class GetNumberDisabledUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(getLabel());
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberdisabledusers.form.field.disabledusersnum.label", preferredLocale));
         field.setVariable("disabledusersnum");
 
         // TODO improve on this, as this is not efficient on systems with large amounts of users.
@@ -81,8 +85,7 @@ public class GetNumberDisabledUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        // TODO Use i18n
-        return "The number of disabled users";
+        return LocaleUtils.getLocalizedString("commands.admin.getnumberdisabledusers.label");
     }
 
     @Override

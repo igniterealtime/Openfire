@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,20 @@
 package org.jivesoftware.openfire.commands.event;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.vcard.VCardEventDispatcher;
 import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -43,7 +46,7 @@ public class VCardDeleting extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Deleting a VCard";
+        return LocaleUtils.getLocalizedString("commands.event.vcarddeleting.label");
     }
 
     @Override
@@ -53,6 +56,8 @@ public class VCardDeleting extends AdHocCommand {
 
     @Override
     public void execute(SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -64,7 +69,7 @@ public class VCardDeleting extends AdHocCommand {
         }
         catch (NullPointerException npe) {
             note.addAttribute("type", "error");
-            note.setText("Username required parameter.");
+            note.setText(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.note.username-required", preferredLocale));
             return;
         }
 
@@ -73,7 +78,7 @@ public class VCardDeleting extends AdHocCommand {
 
         if (vCard == null) {
             note.addAttribute("type", "error");
-            note.setText("VCard not found.");
+            note.setText(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.note.vcard-does-not-exist", preferredLocale));
             return;
         }
 
@@ -82,14 +87,16 @@ public class VCardDeleting extends AdHocCommand {
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
     protected void addStageInformation(SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Dispatching a vCard deleting event.");
-        form.addInstruction("Fill out this form to dispatch a vCard deleting event.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -98,7 +105,7 @@ public class VCardDeleting extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The username of the user who's vCard is being deleted");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.form.field.username.label", preferredLocale));
         field.setVariable("username");
         field.setRequired(true);
 

@@ -18,13 +18,16 @@ package org.jivesoftware.openfire.commands;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +45,26 @@ import java.util.concurrent.locks.Lock;
  * @author Gaston Dombiak
  */
 public class AdHocCommandManager {
+
+    /**
+     * The maximum allowed simultaneous command sessions per user.
+     */
+    public static final SystemProperty<Integer> COMMAND_LIMIT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.command.limit")
+        .setDefaultValue(100)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * The maximum allowed duration of a command session (all stages of a command need to have provided by the user
+     * within this time).
+     */
+    public static final SystemProperty<Duration> COMMAND_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.command.timeout")
+        .setDefaultValue(Duration.ofMinutes(10))
+        .setDynamic(true)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .build();
 
     private static final String NAMESPACE = "http://jabber.org/protocol/commands";
 
@@ -163,8 +186,7 @@ public class AdHocCommandManager {
                     // command sessions.
                     AtomicInteger counter = sessionsCounter.computeIfAbsent(from, e->new AtomicInteger(0));
 
-                    int limit = JiveGlobals.getIntProperty("xmpp.command.limit", 100);
-                    if (counter.incrementAndGet() > limit) {
+                    if (counter.incrementAndGet() > COMMAND_LIMIT.getValue()) {
                         counter.decrementAndGet();
                         // Answer a not_allowed error since the user has exceeded limit. This
                         // checking prevents bad users from consuming all the system memory by not
@@ -198,9 +220,8 @@ public class AdHocCommandManager {
                 return reply;
             }
 
-            // Check if the Session data has expired (default is 10 minutes)
-            int timeout = JiveGlobals.getIntProperty("xmpp.command.timeout", 10 * 60 * 1000);
-            if (System.currentTimeMillis() - session.getCreationStamp() > timeout) {
+            // Check if the Session data has expired
+            if (Duration.between(session.getCreationInstant(), Instant.now()).compareTo(COMMAND_TIMEOUT.getValue()) > 0) {
                 // TODO Check all sessions that might have timed out (use another thread?)
                 // Remove the old session
                 removeSessionData(sessionid, from);

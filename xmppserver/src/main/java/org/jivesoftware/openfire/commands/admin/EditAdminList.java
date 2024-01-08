@@ -31,7 +31,7 @@ import org.xmpp.packet.JID;
 import java.util.*;
 
 /**
- * Edits the list of external domains that are allowed to connect to Openfire
+ * Edits the list of Openfire administrators
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0133.html#edit-admin">XEP-0133 Service Administration: Edit Admin List</a>

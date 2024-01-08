@@ -25,6 +25,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -50,13 +51,13 @@ public class Ping extends AdHocCommand
     }
 
     @Override
-    public int getMaxStages( final SessionData data )
+    public int getMaxStages(@Nonnull final SessionData data )
     {
         return 0;
     }
 
     @Override
-    public void execute( final SessionData data, final Element command )
+    public void execute(@Nonnull final SessionData data, final Element command )
     {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
@@ -78,20 +79,20 @@ public class Ping extends AdHocCommand
     }
 
     @Override
-    protected void addStageInformation( final SessionData data, final Element command )
+    protected void addStageInformation(@Nonnull final SessionData data, final Element command )
     {
         // Do nothing since there are no stages.
     }
 
     @Override
-    protected List<Action> getActions( final SessionData data )
+    protected List<Action> getActions(@Nonnull final SessionData data )
     {
         // Do nothing since there are no stages.
         return null;
     }
 
     @Override
-    protected Action getExecuteAction( final SessionData data )
+    protected Action getExecuteAction(@Nonnull final SessionData data )
     {
         // Do nothing since there are no stages.
         return null;

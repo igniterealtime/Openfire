@@ -26,6 +26,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -47,12 +48,12 @@ public class UserProperties extends AdHocCommand {
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -100,7 +101,7 @@ public class UserProperties extends AdHocCommand {
     }
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
@@ -123,12 +124,12 @@ public class UserProperties extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 }

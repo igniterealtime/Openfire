@@ -30,6 +30,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,7 +47,7 @@ public class AddGroupUsers extends AdHocCommand {
     private static final Logger Log = LoggerFactory.getLogger(AddGroupUsers.class);
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
@@ -82,7 +83,7 @@ public class AddGroupUsers extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         Element note = command.addElement("note");
@@ -139,17 +140,17 @@ public class AddGroupUsers extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

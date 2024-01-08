@@ -25,6 +25,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
@@ -38,7 +39,7 @@ import java.util.*;
 public class GetListOnlineUsers extends AdHocCommand {
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
@@ -67,7 +68,7 @@ public class GetListOnlineUsers extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         String max_items = data.getData().get("max_items").get(0);
@@ -120,17 +121,17 @@ public class GetListOnlineUsers extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
         return Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

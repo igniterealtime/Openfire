@@ -27,6 +27,7 @@ import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
@@ -37,7 +38,7 @@ import java.util.*;
 public class GetListGroups extends AdHocCommand {
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
@@ -82,7 +83,7 @@ public class GetListGroups extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         String start = data.getData().get("start").get(0);
@@ -168,17 +169,17 @@ public class GetListGroups extends AdHocCommand {
     }
 
     @Override
-    protected List<AdHocCommand.Action> getActions(SessionData data) {
+    protected List<AdHocCommand.Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

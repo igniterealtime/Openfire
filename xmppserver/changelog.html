@@ -160,7 +160,7 @@ hr {
     
     <div id="pageBody">
 
-<h2>4.8.0 Beta -- <span style="font-weight: normal;">Nov 17, 2023</span></h2>
+<h2>4.8.0 -- <span style="font-weight: normal;">Jan 12, 2024</span></h2>
 
 <h2>Improvement</h2>
 <ul>
@@ -181,7 +181,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2494">OF-2494</a>] - Upgrade HSQLDB to a more recent version.</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2513">OF-2513</a>] - Do not require authzid on SASL EXTERNAL for S2S</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2514">OF-2514</a>] - Differentiate between missing and empty initial SASL response</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2521">OF-2521</a>] - S2S: Allow 'client auth' \(required for SASL EXTERNAL\) by default</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2521">OF-2521</a>] - S2S: Allow 'client auth' (required for SASL EXTERNAL) by default</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2523">OF-2523</a>] - Use less predictable resource value</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2540">OF-2540</a>] - Update SLF4j to 2.x</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2542">OF-2542</a>] - Drop Java 8 support</li>
@@ -206,18 +206,18 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2633">OF-2633</a>] - When S2S TLS is required, announce that</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2638">OF-2638</a>] - Update Installation guide to suggest it is not okay to open-admin-console-to-internet</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2639">OF-2639</a>] - Server-to-Server SASL EXTERNAL should not require authz</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2642">OF-2642</a>] - Remove \(unused?\) PEP restriction for XEP-0084</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2642">OF-2642</a>] - Remove (unused?) PEP restriction for XEP-0084</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2644">OF-2644</a>] - Do not use getters in Session#toString</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2650">OF-2650</a>] - Failed S2S due to peer's certificate being invalid should be less verbose</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2653">OF-2653</a>] - hostname validation should not try to resolve host</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2654">OF-2654</a>] - Implement toString\(\) in various Netty classes</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2654">OF-2654</a>] - Implement toString() in various Netty classes</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2663">OF-2663</a>] - Don't overly verbose log receiving IQ responses addressed to the server</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2669">OF-2669</a>] - Update postgresql driver to 42.6.0</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2670">OF-2670</a>] - Netty debug should log remote address when available</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2671">OF-2671</a>] - S2S tester can stop waiting after a bounce</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2673">OF-2673</a>] - Prevent double-closure of outbound s2s session</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2678">OF-2678</a>] - Prefer XML data type usage over String manipulation</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2693">OF-2693</a>] - Make XML declaration \(and newline\) configurable</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2693">OF-2693</a>] - Make XML declaration (and newline) configurable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2697">OF-2697</a>] - Set up multiple S2S connections concurrently</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2699">OF-2699</a>] - PacketRejection should allow for PacketError to be defined</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2703">OF-2703</a>] - Websocket 'open' should be a collapsed element</li>
@@ -225,10 +225,11 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2707">OF-2707</a>] - When closing session on admin console, kill its stream management</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2708">OF-2708</a>] - Ensure that Groups operate on bare JIDs</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2713">OF-2713</a>] - Update Bouncy Castle to 1.76</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2714">OF-2714</a>] - Switch to Java 1.8\+ variant of Bouncy Castle</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2724">OF-2724</a>] - Resolve \(non-breaking\) errors while compiling plugin JSP pages against Openfire 4.8</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2714">OF-2714</a>] - Switch to Java 1.8+ variant of Bouncy Castle</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2724">OF-2724</a>] - Resolve (non-breaking) errors while compiling plugin JSP pages against Openfire 4.8</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2731">OF-2731</a>] - Update support for XEP-0280: Message Carbons</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2732">OF-2732</a>] - Update bundled search plugin to 1.7.4</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2746">OF-2746</a>] - Add Content Security Policy (CSP) headers to web endpoints</li>
 </ul>
 
 <h2>Story</h2>
@@ -245,17 +246,20 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2476">OF-2476</a>] - Add trunking/gateway support to Openfire</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2572">OF-2572</a>] - Detect thread obtaining more than one database connection</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2579">OF-2579</a>] - Add Ukrainian translation</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2646">OF-2646</a>] - Allow property persistence to be skipped \(for tests\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2646">OF-2646</a>] - Allow property persistence to be skipped (for tests)</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2658">OF-2658</a>] - Dynamically modify Netty pipeline</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2676">OF-2676</a>] - Add support for XEP-0478: Stream Limits Advertisement</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2753">OF-2753</a>] - Kill detached session when resumption is attempted at different cluster node</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2766">OF-2766</a>] - Apply s2s permissions recursively</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2770">OF-2770</a>] - Add pub/sub debug logging</li>
 </ul>
 
 <h2>Task</h2>
 <ul>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1382">OF-1382</a>] - Admin Console reuses \`username\` and \`password\` form fields, which fools browser auto-fill</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1382">OF-1382</a>] - Admin Console reuses `username` and `password` form fields, which fools browser auto-fill</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2395">OF-2395</a>] - Remove code that was deprecated prior to 4.7.0</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2406">OF-2406</a>] - Phase out calendarjs</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2407">OF-2407</a>] - Phase out /js/tooltip/\*</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2407">OF-2407</a>] - Phase out /js/tooltip/*</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2418">OF-2418</a>] - Phase out Scriptaculous</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2419">OF-2419</a>] - Remove unused pngfix.js library</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2420">OF-2420</a>] - Phase out lightbox.js</li>
@@ -271,6 +275,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2727">OF-2727</a>] - Update mysql-connector from 8.0.32 to 8.2.0</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2728">OF-2728</a>] - Remove Rome</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2733">OF-2733</a>] - Sync Openfire's truststore with Mozilla's shipped CAs</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2767">OF-2767</a>] - Don't have separate database CI workflow</li>
 </ul>
 
 <h2>Sub-task</h2>
@@ -281,15 +286,15 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2599">OF-2599</a>] - Avoid having setup-specific auth-excludes after install</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2600">OF-2600</a>] - Upgrade Jetty</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2604">OF-2604</a>] - Bind admin console to loopback interface by default</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2609">OF-2609</a>] - Broken Tests - Expect NO\_CONN, Get PLAIN\_DIALB</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2609">OF-2609</a>] - Broken Tests - Expect NO_CONN, Get PLAIN_DIALB</li>
 </ul>
 
 <h2>Bug</h2>
 <ul>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-880">OF-880</a>] - Server MUST return <service-unavailable/> for IQ requests to unknown user. \(RFC 6120 10.5.3.1.\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-880">OF-880</a>] - Server MUST return <service-unavailable/> for IQ requests to unknown user. (RFC 6120 10.5.3.1.)</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-945">OF-945</a>] - Openfire returns Stanza error instead of Stream error when client tries to send stanzas over unauthenticated connections</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1183">OF-1183</a>] - Roster request denial is not pushed back to requester</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1224">OF-1224</a>] - No roster push after unsubscribe \(probably only if presence subscription is not 'both"\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1224">OF-1224</a>] - No roster push after unsubscribe (probably only if presence subscription is not 'both")</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1389">OF-1389</a>] - PubSub Admin Console - Unable to click Node ID</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1394">OF-1394</a>] - PubSub Admin Console - Re-enabling service doesn't reload nodes</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1399">OF-1399</a>] - PubSub Admin Console - 'Max number of items to persist' appears configurable when it's not</li>
@@ -300,7 +305,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1831">OF-1831</a>] - TLS fails with "input record too big" exceptions</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1913">OF-1913</a>] - Various S2S interop issues</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2242">OF-2242</a>] - No possible to filter by Client Version on Sessions page</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2378">OF-2378</a>] - \(deprecated\) XMLProperties.getName\(\) throws ClassCastException</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2378">OF-2378</a>] - (deprecated) XMLProperties.getName() throws ClassCastException</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2382">OF-2382</a>] - When searching for shared groups by user, all groups are returned</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2383">OF-2383</a>] - Group methods are only validated on the frontend, or not at all</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2391">OF-2391</a>] - NPE during/directly after setup</li>
@@ -311,7 +316,9 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2429">OF-2429</a>] - Fix count in database reconnect attempts</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2435">OF-2435</a>] - TLSv1.3 suffers from timing issue</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2443">OF-2443</a>] - SASL PLAIN should use authorization mapping</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2492">OF-2492</a>] - mvnw isn't executable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2551">OF-2551</a>] - Server-to-Server TLS policy changes cause breakage</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2552">OF-2552</a>] - javax.el.MethodNotFoundException in offline-messages.jsp</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2555">OF-2555</a>] - Openfire allows S2S TLS to continue when certificate fails to validate</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2567">OF-2567</a>] - S2S with Direct TLS seems to be unstable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2568">OF-2568</a>] - Stream Management roll-over detection</li>
@@ -325,7 +332,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2621">OF-2621</a>] - Incorrect link on MUC Service admin console page</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2622">OF-2622</a>] - Do not accept Dialback when disabled</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2626">OF-2626</a>] - Dialback status race condition</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2627">OF-2627</a>] - Deleting a group with a '\+' character in its name fails</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2627">OF-2627</a>] - Deleting a group with a '+' character in its name fails</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2630">OF-2630</a>] - SystemProperties are not encrypted on Admin Console</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2641">OF-2641</a>] - Cannot establish S2S with conference subdomain</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2648">OF-2648</a>] - S2S stanza parsing of errors fails</li>
@@ -334,7 +341,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2655">OF-2655</a>] - Closing S2S session fails to close outbound</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2656">OF-2656</a>] - TLS information missing for outbound S2S connections</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2657">OF-2657</a>] - Stream parsing failure</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2659">OF-2659</a>] - Remote \(ejabberd\) servers close stream with 'duplicate attribute' stream error</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2659">OF-2659</a>] - Remote (ejabberd) servers close stream with 'duplicate attribute' stream error</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2660">OF-2660</a>] - Outbound DirectTLS S2S connections seem to stall</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2661">OF-2661</a>] - Peer closing stream leads to timeout</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2662">OF-2662</a>] - S2S prefix issue</li>
@@ -348,19 +355,34 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2680">OF-2680</a>] - NullPointer in idle handler</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2681">OF-2681</a>] - Failure to define Dialback XML prefix</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2682">OF-2682</a>] - ConcurrentModificationException in Netty S2S</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2689">OF-2689</a>] - DirectTLS client-to-server \(5223\) broken</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2689">OF-2689</a>] - DirectTLS client-to-server (5223) broken</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2690">OF-2690</a>] - Incorrect namespace definitions on server dialback elements</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2692">OF-2692</a>] - NullPointerException in S2S when ID attribute is missing</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2696">OF-2696</a>] - Cannot resolve CAPS for MUC occupants</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2698">OF-2698</a>] - Netty idle state detects mixes 'read' and 'write' idle events</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2700">OF-2700</a>] - X-Forwarded-For header content not in audit log</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2704">OF-2704</a>] - Closing websockets should send `close` element</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2705">OF-2705</a>] - Route stanzas addressed to full JIDs of connected resource</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2711">OF-2711</a>] - CSI delays don't then deliver stanzas</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2712">OF-2712</a>] - Session accounting differs on alternate sides of the S2S conversation</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2715">OF-2715</a>] - Websocket 'close' frame whould be sent when closing a connection</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2716">OF-2716</a>] - Missing Copyright Notices</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2730">OF-2730</a>] - Stop S2S under strict verification mode, when TLS fails.</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2734">OF-2734</a>] - JspPropertyNotFoundException on Pubsub node detail page</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2735">OF-2735</a>] - Certificate Details doesn't show store name</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2738">OF-2738</a>] - Server-to-Server SNI issue / connecting to a host that serves multiple domains</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2740">OF-2740</a>] - Incorrect determination of macOS JAVA_HOME when none is set</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2745">OF-2745</a>] - MUC Occupants get kicked for being idle, after responding to idle check</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2750">OF-2750</a>] - CSI-enabled client does not receive Jingle invitations</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2751">OF-2751</a>] - Disable Stream Management when server closes stream with error</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2752">OF-2752</a>] - Disable Stream Management when server closes stream</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2755">OF-2755</a>] - NullPointerException in S2S when cluster node is switched off</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2756">OF-2756</a>] - setup fails to properly detect JRE 21</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2757">OF-2757</a>] - pub/sub notifications not sent to full JIDs on remote domains</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2761">OF-2761</a>] - NullPointerException when MUC Service processes an IQ result</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2763">OF-2763</a>] - HTTP requests for 'other' plugin files (eg: images) return 403</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2764">OF-2764</a>] - Typo in i18n key 'cliked'</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2765">OF-2765</a>] - Some mvn references aren't using mvnw</li>
 </ul>
 
 <h2>4.7.5 -- <span style="font-weight: normal;">May 23, 2023</span></h2>
@@ -547,7 +569,7 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2346">OF-2346</a>] - XMPPServer#matchesComponent shouldn't require full-JID match</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2345">OF-2345</a>] - component-based address incorrectly identified as remote</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2343">OF-2343</a>] - Inconsistent leave presence sending to leaving occupant</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2341">OF-2341</a>] - Apparent thread lock \(deadlock?\) in MUC after clustering reimplementation</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2341">OF-2341</a>] - Apparent thread lock (deadlock?) in MUC after clustering reimplementation</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2339">OF-2339</a>] - Incomplete room list following a cluster split</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2338">OF-2338</a>] - NullPointerException on MUC search if name is empty</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2337">OF-2337</a>] - PEP publishing fails after reboot</li>
@@ -607,10 +629,10 @@ hr {
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2353">OF-2353</a>] - Update Log4j dependency to 2.16.0 to address Log4Shell/LogJam</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2352">OF-2352</a>] - Use plugin-provided servlet context</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2351">OF-2351</a>] - Update Log4j dependency to 2.15.0 to address Log4Shell/LogJam</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2349">OF-2349</a>] - Admin console should show \(full\) default value for system property</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2349">OF-2349</a>] - Admin console should show (full) default value for system property</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2340">OF-2340</a>] - send stanzas that are 'responses' through PacketRouter, not RoutingTable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2320">OF-2320</a>] - MUC room avatars fail</li>
-    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2319">OF-2319</a>] - muc#roomconfig\_allowpm should only affect Message stanzas</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2319">OF-2319</a>] - muc#roomconfig_allowpm should only affect Message stanzas</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2317">OF-2317</a>] - Prevent NPE when admin page obtained without session</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2316">OF-2316</a>] - Make S2S fast-discard timeout configurable</li>
     <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2307">OF-2307</a>] - Changing MUC nickname to one that's already used by your other resource</li>
@@ -4931,7 +4953,7 @@ adjusted vCard to be cached.
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-970'>JM-970</a>] - Fixed deadlock when using old SSL method.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-980'>JM-980</a>] - Fixed DOS attack by closing connection from client that tries to send a "never ending" packet.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-981'>JM-981</a>] - Fixed parsing of packets with nested elements with the same name.</li>
-<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-981'>JM-981</a>] - Fixed parsing of &lt;\stream:stream&gt;.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-981'>JM-981</a>] - Fixed parsing of &lt;stream:stream&gt;.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-968'>JM-968</a>] - The https port was not working in the admin console.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-963'>JM-963</a>] - A throwable exception was preventing users from logging in.</li>
 <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-959'>JM-959</a>] - HTTP-Binding was failing over HTTPS.</li>

@@ -86,24 +86,28 @@ public class GetListGroups extends AdHocCommand {
     public void execute(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
-        String start = data.getData().get("start").get(0);
-        String max_items = data.getData().get("max_items").get(0);
         int nStart = 0;
-        if (start != null) {
-            try {
-                nStart = Integer.parseInt(start);
-            }
-            catch (NumberFormatException e) {
-                // Do nothing. Assume default value
+        final List<String> start_data = data.getData().get("start");
+        if (start_data != null && !start_data.isEmpty()) {
+            String start = start_data.get(0);
+            if (start != null && !"none".equals(start)) {
+                try {
+                    nStart = Integer.parseInt(start);
+                } catch (NumberFormatException e) {
+                    // Do nothing. Assume that all users are being requested
+                }
             }
         }
         int maxItems = 100000;
-        if (max_items != null && !"none".equals(max_items)) {
-            try {
-                maxItems = Integer.parseInt(max_items);
-            }
-            catch (NumberFormatException e) {
-                // Do nothing. Assume that all users are being requested
+        final List<String> max_items_data = data.getData().get("max_items");
+        if (max_items_data != null && !max_items_data.isEmpty()) {
+            String max_items = max_items_data.get(0);
+            if (max_items != null && !"none".equals(max_items)) {
+                try {
+                    maxItems = Integer.parseInt(max_items);
+                } catch (NumberFormatException e) {
+                    // Do nothing. Assume that all users are being requested
+                }
             }
         }
 

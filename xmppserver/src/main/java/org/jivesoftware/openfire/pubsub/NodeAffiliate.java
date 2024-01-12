@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,6 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.pep.PEPService;
@@ -29,8 +23,13 @@ import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.Cacheable;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A NodeAffiliate keeps information about the affiliation of an entity with a node. Possible
@@ -41,14 +40,18 @@ import org.xmpp.packet.Message;
  */
 public class NodeAffiliate implements Cacheable
 {
-    private JID jid;
-    private Node node;
+    private final Logger Log;
+
+    private final JID jid;
+    private final Node node;
 
     private Affiliation affiliation;
 
     public NodeAffiliate(Node node, JID jid) {
         this.node = node;
         this.jid = jid;
+
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + node.getNodeID() + " " + jid +"]");
     }
 
     public Node getNode() {
@@ -93,19 +96,22 @@ public class NodeAffiliate implements Cacheable
      * @param leafNode the leaf node where the items where published.
      * @param publishedItems the list of items that were published. Could be an empty list.
      */
-    void sendPublishedNotifications(Message notification, Element event, LeafNode leafNode,
-            List<PublishedItem> publishedItems) {
-
+    void sendPublishedNotifications(Message notification, Element event, LeafNode leafNode, List<PublishedItem> publishedItems)
+    {
         if (!publishedItems.isEmpty()) {
-            Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs =
-                    getItemsBySubscriptions(leafNode, publishedItems);
+            Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs = getItemsBySubscriptions(leafNode, publishedItems);
+            Log.trace("Sending publication notification for {} published item(s) to {} subscription(s) in {} batch(es).", publishedItems.size(), itemsBySubs.keySet().stream().flatMap(Collection::stream).collect(Collectors.toSet()).size(), itemsBySubs.size());
 
             // Send one notification for published items that affect the same subscriptions
-            for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
+            for (final Map.Entry<List<NodeSubscription>, List<PublishedItem>> entry : itemsBySubs.entrySet()) {
+                final List<NodeSubscription> nodeSubscriptions = entry.getKey();
+                final List<PublishedItem> groupedItems = entry.getValue();
+                Log.trace("Preparing publication notification batch for {} item(s) to {} subscription(s).", groupedItems.size(), nodeSubscriptions.size());
+
                 // Add items information
                 Element items = event.addElement("items");
                 items.addAttribute("node", getNode().getUniqueIdentifier().getNodeId());
-                for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
+                for (PublishedItem publishedItem : groupedItems) {
                     // FIXME: This was added for compatibility with PEP supporting clients.
                     //        Alternate solution needed when XEP-0163 version > 1.0 is released.
                     //
@@ -142,6 +148,8 @@ public class NodeAffiliate implements Cacheable
                     affectedSubscriptions.add(subscription);
                 }
             }
+            Log.trace("Sending publication notification to {} subscription(s)", affectedSubscriptions.size());
+
             // Add item information to the event notification
             Element items = event.addElement("items");
             items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
@@ -153,9 +161,10 @@ public class NodeAffiliate implements Cacheable
 
         // TODO this horribly duplicates part of the functionality above. Code-clutter should be reduced.
         // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification.
-        if ( leafNode.getService() instanceof PEPService ) {
+        if (leafNode.getService() instanceof PEPService) {
             final PEPService service = (PEPService) leafNode.getService();
             final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(service.getAddress().getNode());
+            Log.trace("Sending publication notification to {} session(s) of PEP node owner.", sessions.size());
             for( final ClientSession session : sessions ) {
                 // Add item information to the event notification
                 Element items = event.addElement("items");
@@ -210,27 +219,34 @@ public class NodeAffiliate implements Cacheable
     void sendDeletionNotifications(Message notification, Element event, LeafNode leafNode,
             List<PublishedItem> publishedItems) {
 
-        if (!publishedItems.isEmpty()) {
-            Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs =
-                    getItemsBySubscriptions(leafNode, publishedItems);
+        if (publishedItems.isEmpty()) {
+            Log.debug("Skip sending delete notifications as the list of deleted items was empty.");
+            return;
+        }
 
-            // Send one notification for published items that affect the same subscriptions
-            for (List<NodeSubscription> nodeSubscriptions : itemsBySubs.keySet()) {
-                // Add items information
-                Element items = event.addElement("items");
-                items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
-                for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
-                    // Add retract information to the event notification
-                    Element item = items.addElement("retract");
-                    if (leafNode.isItemRequired()) {
-                        item.addAttribute("id", publishedItem.getID());
-                    }
+        Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs = getItemsBySubscriptions(leafNode, publishedItems);
+        Log.trace("Sending delete notification for {} published item(s) to {} subscription(s) in {} batch(es).", publishedItems.size(), itemsBySubs.keySet().stream().flatMap(Collection::stream).collect(Collectors.toSet()).size(), itemsBySubs.size());
+
+        // Send one notification for published items that affect the same subscriptions
+        for (final Map.Entry<List<NodeSubscription>, List<PublishedItem>> entry : itemsBySubs.entrySet()) {
+            final List<NodeSubscription> nodeSubscriptions = entry.getKey();
+            final List<PublishedItem> groupedItems = entry.getValue();
+            Log.trace("Preparing delete notification batch for {} item(s) to {} subscription(s).", groupedItems.size(), nodeSubscriptions.size());
+
+            // Add items information
+            Element items = event.addElement("items");
+            items.addAttribute("node", leafNode.getUniqueIdentifier().getNodeId());
+            for (PublishedItem publishedItem : itemsBySubs.get(nodeSubscriptions)) {
+                // Add retract information to the event notification
+                Element item = items.addElement("retract");
+                if (leafNode.isItemRequired()) {
+                    item.addAttribute("id", publishedItem.getID());
                 }
-                // Send the event notification
-                sendEventNotification(notification, nodeSubscriptions);
-                // Remove the added items information
-                event.remove(items);
             }
+            // Send the event notification
+            sendEventNotification(notification, nodeSubscriptions);
+            // Remove the added items information
+            event.remove(items);
         }
     }
 
@@ -250,23 +266,18 @@ public class NodeAffiliate implements Cacheable
      * @param notifySubscriptions list of subscriptions that were affected and are going to be
      *        included in the notification message. The list should not be empty.
      */
-    private void sendEventNotification(Message notification,
-            List<NodeSubscription> notifySubscriptions) {
+    private void sendEventNotification(Message notification, List<NodeSubscription> notifySubscriptions) {
         if (node.isMultipleSubscriptionsEnabled()) {
             // Group subscriptions with the same subscriber JID
             Map<JID, Collection<String>> groupedSubs = new HashMap<>();
             for (NodeSubscription subscription : notifySubscriptions) {
-                Collection<String> subIDs = groupedSubs.get(subscription.getJID());
-                if (subIDs == null) {
-                    subIDs = new ArrayList<>();
-                    groupedSubs.put(subscription.getJID(), subIDs);
-                }
-                subIDs.add(subscription.getID());
+                groupedSubs.computeIfAbsent(subscription.getJID(), k -> new ArrayList<>()).add(subscription.getID());
             }
             // Send an event notification to each subscriber with a different JID
-            for (JID subscriberJID : groupedSubs.keySet()) {
-                // Get ID of affected subscriptions
-                Collection<String> subIDs = groupedSubs.get(subscriberJID);
+            for (final Map.Entry<JID, Collection<String>> entry : groupedSubs.entrySet()) {
+                final JID subscriberJID = entry.getKey();
+                final Collection<String> subIDs = entry.getValue();
+
                 // Send the notification to the subscriber
                 node.sendEventNotification(subscriberJID, notification, subIDs);
             }
@@ -286,30 +297,22 @@ public class NodeAffiliate implements Cacheable
         }
     }
 
-    private Map<List<NodeSubscription>, List<PublishedItem>> getItemsBySubscriptions(
-            LeafNode leafNode, List<PublishedItem> publishedItems) {
+    private Map<List<NodeSubscription>, List<PublishedItem>> getItemsBySubscriptions(LeafNode leafNode, List<PublishedItem> publishedItems) {
         // Identify which subscriptions can receive each item
-        Map<PublishedItem, List<NodeSubscription>> subsByItem =
-                new HashMap<>();
+        Map<PublishedItem, List<NodeSubscription>> subsByItem = new HashMap<>();
 
         // Filter affiliate subscriptions and only use approved and configured ones
         Collection<NodeSubscription> subscriptions = getSubscriptions();
         for (PublishedItem publishedItem : publishedItems) {
             for (NodeSubscription subscription : subscriptions) {
                 if (subscription.canSendPublicationEvent(leafNode, publishedItem)) {
-                    List<NodeSubscription> nodeSubscriptions = subsByItem.get(publishedItem);
-                    if (nodeSubscriptions == null) {
-                        nodeSubscriptions = new ArrayList<>();
-                        subsByItem.put(publishedItem, nodeSubscriptions);
-                    }
-                    nodeSubscriptions.add(subscription);
+                    subsByItem.computeIfAbsent(publishedItem, k -> new ArrayList<>()).add(subscription);
                 }
             }
         }
 
         // Identify which items should be sent together to the same subscriptions
-        Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs =
-                new HashMap<>();
+        Map<List<NodeSubscription>, List<PublishedItem>> itemsBySubs = new HashMap<>();
         List<PublishedItem> affectedSubscriptions;
         for (PublishedItem publishedItem : subsByItem.keySet()) {
             affectedSubscriptions = itemsBySubs.get(subsByItem.get(publishedItem));

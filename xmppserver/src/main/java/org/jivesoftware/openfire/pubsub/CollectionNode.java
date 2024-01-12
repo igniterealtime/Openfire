@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -45,6 +47,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Tucker
  */
 public class CollectionNode extends Node {
+
+    private Logger Log;
 
     /**
      * Map that contains the child nodes of this node. The key is the child node ID and the
@@ -71,6 +75,8 @@ public class CollectionNode extends Node {
     public CollectionNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, LeafNodeAssociationPolicy associationPolicy, int maxLeafNodes)
     {
         super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + serviceId + "#" + nodeID +"]");
+
         this.associationPolicy = associationPolicy;
         this.maxLeafNodes = maxLeafNodes;
     }
@@ -78,12 +84,15 @@ public class CollectionNode extends Node {
     public CollectionNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration)
     {
         super(serviceId, parentNode, nodeID, creator, defaultConfiguration);
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + serviceId + "#" + nodeID +"]");
+
         this.associationPolicy = defaultConfiguration.getAssociationPolicy();
         this.maxLeafNodes = defaultConfiguration.getMaxLeafNodes();
     }
 
     public CollectionNode() { // to be used only for serialization;
         super();
+        Log = LoggerFactory.getLogger(getClass().getName()); // _should_ be replaced in readExternal()
     }
 
     @Override
@@ -92,8 +101,9 @@ public class CollectionNode extends Node {
         if ("pubsub#leaf_node_association_policy".equals(field.getVariable()) ||
             "pubsub#children_association_policy".equals(field.getVariable())) {
             values = field.getValues();
-            if (values.size() > 0)  {
+            if (!values.isEmpty())  {
                 associationPolicy = LeafNodeAssociationPolicy.valueOf(values.get(0));
+                Log.trace("Configuring {}: {}", field.getVariable(), associationPolicy);
             }
         }
         else if ("pubsub#leaf_node_association_whitelist".equals(field.getVariable()) ||
@@ -102,9 +112,11 @@ public class CollectionNode extends Node {
             associationTrusted = new ArrayList<>();
             for (String value : field.getValues()) {
                 try {
+                    Log.trace("Configuring {}: {}", field.getVariable(), value);
                     addAssociationTrusted(new JID(value));
                 }
                 catch (Exception e) {
+                    Log.trace("An exception was thrown when applying configuration {}", field.getVariable(), e);
                     // Do nothing
                 }
             }
@@ -112,9 +124,12 @@ public class CollectionNode extends Node {
         else if ("pubsub#leaf_nodes_max".equals(field.getVariable()) ||
                 "pubsub#children_max".equals(field.getVariable())) {
             values = field.getValues();
-            maxLeafNodes = values.size() > 0 ? Integer.parseInt(values.get(0)) : -1;
+            maxLeafNodes = !values.isEmpty() ? Integer.parseInt(values.get(0)) : -1;
+            Log.trace("Configuring {}: {}", field.getVariable(), maxLeafNodes);
         }
         else if ("pubsub#children".endsWith(field.getVariable())) {
+            Log.trace("Configuring {}...", field.getVariable());
+
             values = field.getValues();
             ArrayList<Node> childrenNodes = new ArrayList<>(values.size());
 
@@ -125,8 +140,11 @@ public class CollectionNode extends Node {
 
                 if (childNode == null)
                 {
+                    Log.debug("... trying to add non-existing node: {}", nodeId);
+
                     throw new NotAcceptableException("Child node does not exist");
                 }
+                Log.debug("... adding node: {}", nodeId);
                 childrenNodes.add(childNode);
             }
             // Remove any children not in the new list.
@@ -135,6 +153,7 @@ public class CollectionNode extends Node {
 
             for (Node node : toRemove)
             {
+                Log.debug("... removing pre-existing child node that's not in the new configuration: {}", node);
                 removeChildNode(node);
             }
 
@@ -238,6 +257,7 @@ public class CollectionNode extends Node {
      * @param child the node to add to the list of child nodes.
      */
     void addChildNode(Node child) {
+        Log.trace("Add child node: {}", child.getNodeID());
         nodes.put(child.getUniqueIdentifier(), child);
     }
 
@@ -249,6 +269,7 @@ public class CollectionNode extends Node {
      * @param child the node to remove from the list of child nodes.
      */
     void removeChildNode(Node child) {
+        Log.trace("Remove child node: {}", child.getNodeID());
         nodes.remove(child.getUniqueIdentifier());
     }
 
@@ -270,7 +291,7 @@ public class CollectionNode extends Node {
         if (deliverPayloads) {
             item.add(child.getMetadataForm(null).getElement()); // FIXME: figure out a way to have proper localization.
         }
-        // Broadcast event notification to subscribers
+        Log.trace("Broadcast event notification to subscribers that new child ('{}') was added.", child.getNodeID());
         broadcastCollectionNodeEvent(child, message);
     }
 
@@ -299,7 +320,7 @@ public class CollectionNode extends Node {
         Message message = new Message();
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         event.addElement("delete").addAttribute("node", child.getUniqueIdentifier().getNodeId());
-        // Broadcast event notification to subscribers
+        Log.trace("Broadcast event notification to subscribers that child ('{}') was deleted.", child.getNodeID());
         broadcastCollectionNodeEvent(child, message);
     }
 
@@ -323,12 +344,15 @@ public class CollectionNode extends Node {
         for (NodeSubscription subscription : subscriptions) {
             getService().sendNotification(subscription.getNode(), notification, subscription.getJID());
         }
+        Log.trace("Broadcast event notification to {} subscriber(s) of node '{}'.", subscriptions.size(), child.getNodeID());
 
         // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification
-        if ( getService() instanceof PEPService ) {
+        if (getService() instanceof PEPService) {
             final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(getService().getAddress().getNode());
+            Log.trace("Send event notification to {} PEP owner session(s) of node '{}'.", sessions, child.getNodeID());
             for( final ClientSession session : sessions ) {
                 getService().sendNotification(child, notification, session.getAddress());
+                Log.trace("Send event notification to {} PEP owner session(s) of {} parent node(s) of '{}'.", sessions, getParents().size(), child.getNodeID());
                 for (CollectionNode parentNode : getParents()) {
                     getService().sendNotification(parentNode, notification, session.getAddress());
                 }
@@ -351,6 +375,7 @@ public class CollectionNode extends Node {
                 subscriptions.add(subscription);
             }
         }
+        Log.trace("Got {} subscription(s) for child node '{}'.", subscriptions.size(), child.getNodeID());
         return subscriptions;
     }
 
@@ -569,5 +594,11 @@ public class CollectionNode extends Node {
         associationPolicy = LeafNodeAssociationPolicy.valueOf( util.readSafeUTF( in ) );
         util.readSerializableCollection( in, associationTrusted, getClass().getClassLoader() );
         maxLeafNodes = util.readInt( in );
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + super.serviceIdentifier + "#" + super.getNodeID() +"]");
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return Log;
     }
 }

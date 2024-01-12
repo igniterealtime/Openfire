@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     /**
      * Cache (unlimited, never expire) that holds incoming sessions of remote servers.
      *
-     * Key: stream ID that identifies the socket/session, Value: IncomingServerSesssionInfo
+     * Key: stream ID that identifies the socket/session, Value: IncomingServerSessionInfo
      *
      * @see LocalSessionManager#getIncomingServerSessions() which holds content added by the local cluster node.
      * @see #incomingServerSessionInfoByClusterNode which holds content added by cluster nodes other than the local node.
@@ -1889,17 +1889,17 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Ensure that 'domainSessionsCache' has content that reflects the locally available incoming server sessions
         // (we do not need to restore the info for sessions on other nodes, as those will be dropped right after invoking this method anyway).
         Log.info("Looking for local domain sessions that have 'dropped out' of the cache (likely as a result of a network failure).");
-        final Map<String, StreamID> localDomainSessions = localSessionManager.getIncomingServerSessions().stream().collect(Collectors.toMap(s->s.getAddress().getDomain(), LocalSession::getStreamID));
-        final Set<String> cachedDomainSessions = domainSessionsCache.keySet();
-        final Set<String> domainSessionsNotInCache = new HashSet<>(localDomainSessions.keySet()); // defensive copy - we should not modify localDomainSessions!
-        domainSessionsNotInCache.removeAll(cachedDomainSessions);
+        final Set<LocalIncomingServerSession> domainSessionsNotInCache = localSessionManager.getIncomingServerSessions().stream()
+            .filter(needle -> domainSessionsCache.entrySet().stream().noneMatch(
+                entry -> entry.getKey().equals(needle.getAddress().getDomain()) && entry.getValue().contains(needle.getStreamID())))
+            .collect(Collectors.toSet());
         if (domainSessionsNotInCache.isEmpty()) {
             Log.info("Found no local domain sessions that are missing from the cache.");
         } else {
             Log.warn("Found {} domain sessions that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", domainSessionsNotInCache.size());
-            for (final String missing : domainSessionsNotInCache) {
+            for (final LocalIncomingServerSession missing : domainSessionsNotInCache) {
                 Log.info("Restoring domain session for: {}", missing);
-                CacheUtil.addValueToMultiValuedCache(domainSessionsCache, missing, localDomainSessions.get(missing), ArrayList::new);
+                CacheUtil.addValueToMultiValuedCache(domainSessionsCache, missing.getAddress().getDomain(), missing.getStreamID(), ArrayList::new);
             }
         }
     }

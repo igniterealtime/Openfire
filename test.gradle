@@ -9,7 +9,7 @@ repositories {
 		url 'https://oss.sonatype.org/content/repositories/snapshots'
 	}
 	maven {
-		url 'https://www.igniterealtime.org/archiva/repository/maven/'
+		url 'https://igniterealtime.org/archiva/repository/maven/'
 	}
 }
 

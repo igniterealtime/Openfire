@@ -415,7 +415,7 @@
         <repository>
             <id>igniterealtime</id>
             <name>Ignite Realtime Repository</name>
-            <url>https://www.igniterealtime.org/archiva/repository/maven/</url>
+            <url>https://igniterealtime.org/archiva/repository/maven/</url>
         </repository>
     </distributionManagement>
 

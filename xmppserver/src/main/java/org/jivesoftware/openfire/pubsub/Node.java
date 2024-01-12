@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -52,8 +51,6 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * @author Matt Tucker
  */
 public abstract class Node implements Cacheable, Externalizable {
-
-    private static final Logger Log = LoggerFactory.getLogger(Node.class);
 
     /**
      * Unique reference to the publish and subscribe service.
@@ -340,20 +337,21 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     private NodeAffiliate addAffiliation(JID jid, NodeAffiliate.Affiliation affiliation) {
+        getLogger().trace("Add '{}' as {}", jid, affiliation);
         boolean created = false;
         // Get the current affiliation of the specified JID
         NodeAffiliate affiliate = getAffiliate(jid);
         // Check if the user already has the same affiliation
         if (affiliate != null && affiliation == affiliate.getAffiliation()) {
-            // Do nothing since the user already has the expected affiliation
+            getLogger().trace("Do nothing since the user already has the expected affiliation");
             return affiliate;
         }
         else if (affiliate != null) {
-            // Update existing affiliation with new affiliation type
+            getLogger().trace("Update existing affiliation of type '{}' with new affiliation type", affiliate.getAffiliation());
             affiliate.setAffiliation(affiliation);
         }
         else {
-            // User did not have any affiliation with the node so create a new one
+            getLogger().trace("User did not have any affiliation with the node so create a new one");
             affiliate = new NodeAffiliate(this, jid);
             affiliate.setAffiliation(affiliation);
             addAffiliate(affiliate);
@@ -361,7 +359,7 @@ public abstract class Node implements Cacheable, Externalizable {
         }
 
         if (savedToDB) {
-            // Add or update the affiliate in the database
+            getLogger().trace("Add or update the affiliate in the database");
             final PubSubPersistenceProvider persistenceProvider = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider();
             if ( created ) {
                 persistenceProvider.createAffiliation(this, affiliate);
@@ -370,7 +368,7 @@ public abstract class Node implements Cacheable, Externalizable {
             }
         }
         
-        // Update the other members with the new affiliation
+        getLogger().trace("Update the other cluster members with the new affiliation");
         CacheFactory.doClusterTask(new AffiliationTask(this, jid, affiliation));
 
         return affiliate;
@@ -386,12 +384,15 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     private void removeAffiliation(NodeAffiliate affiliate) {
+        getLogger().trace("Remove '{}' as {}", affiliate.getJID(), affiliate.getAffiliation());
         // Remove the existing affiliate from the list in memory
         affiliates.remove(affiliate);
         if (savedToDB) {
-            // Remove the affiliate from the database
+            getLogger().trace("Remove the affiliate in the database");
             XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removeAffiliation(this, affiliate);
         }
+
+        // TODO OF-2769 Investigate if it is desirable to update the other cluster members with the removed affiliation.
     }
 
     /**
@@ -421,6 +422,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 subscriptions.add(subscription);
             }
         }
+        getLogger().trace("Got {} subscription(s) for '{}'", subscriptions.size(), owner);
         return subscriptions;
     }
 
@@ -430,6 +432,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return all subscriptions to the node.
      */
     Collection<NodeSubscription> getSubscriptions() {
+        getLogger().trace("Got {} subscription(s)", subscriptionsByID.size());
         return subscriptionsByID.values();
     }
 
@@ -442,8 +445,10 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public Collection<NodeSubscription> getAllSubscriptions() {
         if (isMultipleSubscriptionsEnabled()) {
+            getLogger().trace("Got {} subscription(s)", subscriptionsByID.size());
             return subscriptionsByID.values();
         } else {
+            getLogger().trace("Got {} subscription(s)", subscriptionsByJID.size());
             return subscriptionsByJID.values();
         }
     }
@@ -454,7 +459,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return All affiliates of the node.
      */
     public Collection<NodeAffiliate> getAllAffiliates() {
-
+        getLogger().trace("Got {} affiliate(s)", affiliates.size());
         return affiliates;
     }
 
@@ -467,12 +472,15 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return the NodeAffiliate of the specified JID or {@code null} if none was found.
      */
     public NodeAffiliate getAffiliate(JID jid) {
+        NodeAffiliate result = null;
         for (NodeAffiliate affiliate : affiliates) {
             if (jid.equals(affiliate.getJID())) {
-                return affiliate;
+                result = affiliate;
+                break;
             }
         }
-        return null;
+        getLogger().trace("Found {} affiliate for '{}'", result == null ? "no" : result.getAffiliation(), jid);
+        return result;
     }
 
     /**
@@ -490,6 +498,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 jids.add(affiliate.getJID());
             }
         }
+        getLogger().trace("Got {} owner(s)", jids.size());
         return jids;
     }
 
@@ -509,6 +518,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 jids.add(affiliate.getJID());
             }
         }
+        getLogger().trace("Got {} publisher(s)", jids.size());
         return jids;
     }
 
@@ -522,10 +532,12 @@ public abstract class Node implements Cacheable, Externalizable {
      * @throws NotAcceptableException if completed data form tries to leave the node without owners.
      */
     public void configure(DataForm completedForm) throws NotAcceptableException {
+        getLogger().trace("Apply configuration from provided data form...");
+
         boolean wasPresenceBased = isPresenceBasedDelivery();
 
         if (DataForm.Type.cancel.equals(completedForm.getType())) {
-            // Existing node configuration is applied (i.e. nothing is changed)
+            getLogger().trace("... Data form type cancel: Existing node configuration is applied (i.e. nothing is changed).");
         }
         else if (DataForm.Type.submit.equals(completedForm.getType())) {
             List<String> values;
@@ -545,12 +557,15 @@ public abstract class Node implements Cacheable, Externalizable {
                 }
             }
 
-            // Answer a not-acceptable error if all the current owners will be removed
             if (ownersSent && owners.isEmpty()) {
-                throw new NotAcceptableException();
+                getLogger().trace("... data form type submit not acceptable: all the current owners would be removed.");
+                throw new NotAcceptableException("This would remove all current owners.");
             }
 
+
+            getLogger().trace("... data form type submit. Applying fields from form ...");
             for (FormField field : completedForm.getFields()) {
+                getLogger().trace("... processing field '{}' ...", field.getVariable());
                 if ("FORM_TYPE".equals(field.getVariable())) {
                     // Do nothing
                 }
@@ -678,9 +693,12 @@ public abstract class Node implements Cacheable, Externalizable {
                     configure(field);
                 }
             }
+            getLogger().trace("... applied all fields from form.");
 
             // Set new list of owners of the node
             if (ownersSent) {
+                getLogger().trace("... set new list of owners of the node");
+
                 // Calculate owners to remove and remove them from the DB
                 Collection<JID> oldOwners = getOwners();
                 oldOwners.removeAll(owners);
@@ -695,9 +713,10 @@ public abstract class Node implements Cacheable, Externalizable {
                 }
             }
             // TODO Before removing owner or admin check if user was changed from admin to owner or vice versa. This way his subscriptions are not going to be deleted.
-            // Set the new list of publishers
             FormField publisherField = completedForm.getField("pubsub#publisher");
             if (publisherField != null) {
+                getLogger().trace("... set new list of owners of the node");
+
                 // New list of publishers was sent to update publishers of the node
                 List<JID> publishers = new ArrayList<>();
                 for (String value : publisherField.getValues()) {
@@ -721,12 +740,11 @@ public abstract class Node implements Cacheable, Externalizable {
                     addPublisher(jid);
                 }
             }
-            // Let subclasses have a chance to finish node configuration based on
-            // the completed form
+
+            getLogger().trace("... Let subclasses have a chance to finish node configuration based on the completed form");
             postConfigure(completedForm);
 
-            // Update the modification date to reflect the last time when the node's configuration
-            // was modified
+            // Update the modification date to reflect the last time when the node's configuration was modified
             modificationDate = new Date();
 
             // Notify subscribers that the node configuration has changed
@@ -772,8 +790,7 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     private void nodeConfigurationChanged() {
         if (!isNotifiedOfConfigChanges() || !savedToDB) {
-            // Do nothing if node was just created and configure or if notification
-            // of config changes is disabled
+            getLogger().trace("Node configuration changed. No notifications needed: node was just created and configured or notification of config changes is disabled");
             return;
         }
 
@@ -786,12 +803,13 @@ public abstract class Node implements Cacheable, Externalizable {
         if (deliverPayloads) {
             config.add(getConfigurationChangeForm(null).getElement()); // FIXME localize this form for each recipient.
         }
-        // Send notification that the node configuration has changed
+
+        getLogger().trace("Node configuration changed. Broadcast notification that the node configuration has changed.");
         broadcastNodeEvent(message, false);
 
-        // And also to the subscribers of parent nodes with proper subscription depth
         final CollectionNode parent = getParent();
         if (parent != null){
+            getLogger().trace("Node configuration changed. Notify parent node '{}' so that it can notify subscribers with proper subscription depth.", parent);
             parent.childNodeModified(this, message);
         }
     }
@@ -804,6 +822,8 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return the data form to be included in the authorization request.
      */
     DataForm getAuthRequestForm(NodeSubscription subscription, Locale preferredLocale) {
+        getLogger().trace("Get data form to be sent to node owners for them to approve a new subscription request from '{}'", subscription.getJID());
+
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.authorization.title", preferredLocale));
         form.addInstruction(LocaleUtils.getLocalizedString("pubsub.form.authorization.instruction", preferredLocale));
@@ -847,6 +867,8 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return data form used by the owner to edit the node configuration.
      */
     public DataForm getConfigurationForm(Locale preferredLocale) {
+        getLogger().trace("Get data form used by owner to edit the node configuration.");
+
         DataForm form = new DataForm(DataForm.Type.form);
         form.setTitle(LocaleUtils.getLocalizedString("pubsub.form.conf.title", preferredLocale));
         List<String> params = new ArrayList<>();
@@ -1105,6 +1127,8 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return a data form with the node configuration.
      */
     private DataForm getConfigurationChangeForm(Locale preferredLocale) {
+        getLogger().trace("Get data form with node configuration.");
+
         DataForm form = new DataForm(DataForm.Type.result);
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -1124,6 +1148,8 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return a data form with the node configuration.
      */
     public DataForm getMetadataForm(Locale preferredLocale) {
+        getLogger().trace("Get data form with node configuration with meta-data.");
+
         DataForm form = new DataForm(DataForm.Type.result);
         FormField formField = form.addField();
         formField.setVariable("FORM_TYPE");
@@ -1198,15 +1224,19 @@ public abstract class Node implements Cacheable, Externalizable {
      * @return true if the specified user is allowed to administer the node.
      */
     public boolean isAdmin(JID user) {
+        final boolean result;
         if (getOwners().contains(user) || getService().isServiceAdmin(user)) {
-            return true;
+            result = true;
         }
         // Check if we should try again but using the bare JID
-        if (user.getResource() != null) {
+        else if (user.getResource() != null) {
             user = user.asBareJID();
-            return isAdmin(user);
+            result = isAdmin(user);
+        } else {
+            result = false;
         }
-        return false;
+        getLogger().trace("'{}' {} an admin.", user, result ? "is" : "is not");
+        return result;
     }
 
     /**
@@ -1313,20 +1343,22 @@ public abstract class Node implements Cacheable, Externalizable {
         Collection<NodeSubscription> subscriptions = getSubscriptions(user);
         if (!subscriptions.isEmpty()) {
             if (presenceBasedDelivery) {
+                getLogger().trace("Notifications to '{}' will be delivered when the user is online. User has subscriptions, and node is configure for presence-based delivery.", user);
                 // Node sends notifications only to only users so return true
                 return true;
             }
             else {
-                // Check if there is a subscription configured to only send notifications
-                // based on the user presence
+                // Check if there is a subscription configured to only send notifications based on the user presence
                 for (NodeSubscription subscription : subscriptions) {
                     if (!subscription.getPresenceStates().isEmpty()) {
+                        getLogger().trace("Notifications to '{}' will be delivered when the user is online. User has subscriptions of which at least one is presence-based.", user);
                         return true;
                     }
                 }
             }
         }
-        // User is not subscribed to the node so presence subscription is not required
+        //
+        getLogger().trace("Notifications to '{}' will NOT be delivered when the user is online. User is not subscribed to the node.", user);
         return false;
     }
 
@@ -1360,6 +1392,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 }
             }
         }
+        getLogger().trace("Node has {} affiliate(s) that are receiving notifications based on their presence status.", affiliatesJID.size());
         return affiliatesJID;
     }
 
@@ -1579,6 +1612,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 parent = (CollectionNode) service.getNode(parentIdentifier.getNodeId());
             }
         }
+        getLogger().trace("Parent: {}", parent);
         return parent;
     }
 
@@ -1812,6 +1846,7 @@ public abstract class Node implements Cacheable, Externalizable {
         // Make the node persistent
         final PubSubPersistenceProvider persistenceProvider = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider();
         if (!savedToDB) {
+            getLogger().trace("Create node in persistence provider.");
             persistenceProvider.createNode(this);
             // Set that the node is now in the DB
             setSavedToDB(true);
@@ -1831,16 +1866,19 @@ public abstract class Node implements Cacheable, Externalizable {
             }
         }
         else {
+            getLogger().trace("Update node in persistence provider.");
             persistenceProvider.updateNode(this);
         }
     }
 
     public void addAffiliate(NodeAffiliate affiliate) {
+        getLogger().trace("Add '{}' as {}", affiliate.getJID(), affiliate.getAffiliation());
         affiliates.add(affiliate);
     }
 
     public void addSubscription(NodeSubscription subscription)
     {
+        getLogger().trace("Add subscription for '{}' (state: {}).", subscription.getJID(), subscription.getState());
         subscriptionsByID.put(subscription.getID(), subscription);
         subscriptionsByJID.put(subscription.getJID().toString(), subscription);
     }
@@ -1864,7 +1902,9 @@ public abstract class Node implements Cacheable, Externalizable {
             throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +
                     "should be retrieved using subID.");
         }
-        return subscriptionsByJID.get(subscriberJID.toString());
+        final NodeSubscription nodeSubscription = subscriptionsByJID.get(subscriberJID.toString());
+        getLogger().trace("Got subscription by JID '{}': {}", subscriberJID, nodeSubscription);
+        return nodeSubscription;
     }
 
     /**
@@ -1879,7 +1919,9 @@ public abstract class Node implements Cacheable, Externalizable {
      *         if none was found.
      */
     public NodeSubscription getSubscription(String subscriptionID) {
-        return subscriptionsByID.get(subscriptionID);
+        final NodeSubscription nodeSubscription = subscriptionsByID.get(subscriptionID);
+        getLogger().trace("Got subscription by ID '{}': {}", subscriptionID, nodeSubscription);
+        return nodeSubscription;
     }
 
 
@@ -1888,10 +1930,10 @@ public abstract class Node implements Cacheable, Externalizable {
      * that the node has been deleted after the node was successfully deleted.
      */
     public void delete() {
-        // Delete node from the database
+        getLogger().trace("Delete node from the database...");
         XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removeNode(this);
-        // Remove this node from the parent node (if any)
         if (parentIdentifier != null) {
+            getLogger().trace("Remove this node from the parent node {}", parentIdentifier);
             final CollectionNode parent = getParent();
             // Notify the parent that the node has been removed from the parent node
             if (isNotifiedOfDelete()){
@@ -1900,8 +1942,10 @@ public abstract class Node implements Cacheable, Externalizable {
             parent.removeChildNode(this);
         }
         deletingNode();
-        // Broadcast delete notification to subscribers (if enabled)
+
         if (isNotifiedOfDelete()) {
+            getLogger().trace("Broadcast delete notification to subscribers...");
+
             // Build packet to broadcast to subscribers
             Message message = new Message();
             Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
@@ -1941,6 +1985,8 @@ public abstract class Node implements Cacheable, Externalizable {
         if (parent == newParent) {
             return;
         }
+
+        getLogger().trace("Change parent to '{}'", newParent);
 
         if (parentIdentifier != null && newParent != null && !parentIdentifier.equals(newParent.getUniqueIdentifier())) {
             // FIXME: Remove this node from the parent when the parent isn't loaded. A previous commit message suggests
@@ -2012,7 +2058,7 @@ public abstract class Node implements Cacheable, Externalizable {
             entity.addAttribute("jid", affiliate.getJID().toString());
             entity.addAttribute("affiliation", affiliate.getAffiliation().name());
         }
-        // Send reply
+        getLogger().trace("Sending response to IQ request for affiliations to '{}'", reply.getTo());
         getService().send(reply);
     }
 
@@ -2042,7 +2088,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 }
             }
         }
-        // Send reply
+        getLogger().trace("Sending response to IQ request for subscriptions to '{}'", reply.getTo());
         getService().send(reply);
     }
 
@@ -2060,7 +2106,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 jids.add(subscription.getJID());
             }
         }
-        // Broadcast packet to subscribers
+        getLogger().trace("Broadcasting message with node event to {} subscriber(s).", jids.size());
         getService().broadcast(this, message, jids);
     }
 
@@ -2073,8 +2119,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @param subIDs the list of affected subscription IDs or null when node does not
      *        allow multiple subscriptions.
      */
-    protected void sendEventNotification(JID subscriberJID, Message notification,
-            Collection<String> subIDs) {
+    protected void sendEventNotification(JID subscriberJID, Message notification, Collection<String> subIDs) {
         Element headers = null;
         if (subIDs != null) {
             // Notate the event notification with the ID of the affected subscriptions
@@ -2102,9 +2147,10 @@ public abstract class Node implements Cacheable, Externalizable {
         //
         if (!XMPPServer.getInstance().isLocal(subscriberJID) || subscriberJID.getResource() == null ||
             SessionManager.getInstance().getSession(subscriberJID) != null) {
+            getLogger().trace("Send pub/sub notification to subscriber {}", subscriberJID);
             getService().sendNotification(this, notification, subscriberJID);
         } else {
-            Log.debug("Suppressing pub/sub notification for {} to subscriber {} as intended recipient is known to be offline.", getUniqueIdentifier(), subscriberJID);
+            getLogger().trace("Suppressing pub/sub notification to subscriber {} as intended recipient is known to be offline.", subscriberJID);
         }
 
         if (headers != null) {
@@ -2134,6 +2180,8 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public void createSubscription(IQ originalIQ, JID owner, JID subscriber,
             boolean authorizationRequired, DataForm options) {
+        getLogger().trace("Create subscription for '{}' ('{}'). Authorization required: {}", owner, subscriber, authorizationRequired);
+
         // Create a new affiliation if required
         if (getAffiliate(owner) == null) {
             addNoneAffiliation(owner);
@@ -2162,7 +2210,8 @@ public abstract class Node implements Cacheable, Externalizable {
             existing.add( subscriptionsByJID.get( subscription.getJID().toString() ) ); // potentially null
             existing.addAll( subscriptionsByID.values().stream().filter( s -> s.getJID().equals( subscription.getJID() ) ).collect( Collectors.toSet()) );
             if (existing.stream().anyMatch( s -> s != null && s.isAuthorizationPending() ) ) {
-                // This node already has a pending subscription for this JID. The XEP forbids this.
+                getLogger().debug("This node already has a pending subscription for this JID ('{}'). The XEP forbids this.", subscription.getJID());
+
                 if (originalIQ != null ) {
                     final IQ response = IQ.createResultIQ( originalIQ );
                     response.setError( PacketError.Condition.not_authorized );
@@ -2177,26 +2226,26 @@ public abstract class Node implements Cacheable, Externalizable {
         addSubscription(subscription);
 
         if (savedToDB) {
-            // Add the new subscription to the database
+            getLogger().trace("Add the new subscription to the database");
             XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().createSubscription(this, subscription);
         }
 
         if (originalIQ != null) {
             // Reply with subscription and affiliation status indicating if subscription
             // must be configured (only when subscription was made through an IQ packet)
+            getLogger().trace("Reply with subscription and affiliation status");
             subscription.sendSubscriptionState(originalIQ);
         }
 
-        // If subscription is pending then send notification to node owners asking to approve
-        // new subscription
         if (subscription.isAuthorizationPending()) {
+            getLogger().trace("Send notification to node owners asking to approve new subscription.");
             subscription.sendAuthorizationRequest();
         }
 
-        // Update the other members with the new subscription
+        getLogger().trace("Update the other members with the new subscription.");
         CacheFactory.doClusterTask(new NewSubscriptionTask(subscription));
 
-        // Send last published item (if node is leaf node and subscription status is ok)
+        getLogger().trace("Send last published item (if node is leaf node and subscription status is ok).");
         if (isSendItemSubscribe() && subscription.isActive()) {
             PublishedItem lastItem = getLastPublishedItem();
             if (lastItem != null) {
@@ -2204,7 +2253,7 @@ public abstract class Node implements Cacheable, Externalizable {
             }
         }
 
-        // Check if we need to subscribe to the presence of the owner
+        getLogger().trace("Check if we need to subscribe to the presence of the owner.");
         if (isPresenceBasedDelivery() && getSubscriptions(subscription.getOwner()).size() == 1) {
             if (subscription.getPresenceStates().isEmpty()) {
                 // Subscribe to the owner's presence since the node is only sending events to
@@ -2224,6 +2273,7 @@ public abstract class Node implements Cacheable, Externalizable {
      * @param sendToCluster True to forward cancel order to cluster peers
      */
     public void cancelSubscription(NodeSubscription subscription, boolean sendToCluster) {
+        getLogger().trace("Cancelling subscription for '{}' (state: {}). Send-to-cluster: {}", subscription.getJID(), subscription.getState(), sendToCluster);
         // Remove subscription from memory
         subscriptionsByID.remove(subscription.getID());
         subscriptionsByJID.remove(subscription.getJID().toString());
@@ -2307,6 +2357,7 @@ public abstract class Node implements Cacheable, Externalizable {
      *         a node owner.
      */
     public Collection<NodeSubscription> getPendingSubscriptions() {
+        Collection<NodeSubscription> result = Collections.emptyList();
         if (accessModel.isAuthorizationRequired()) {
             List<NodeSubscription> pendingSubscriptions = new ArrayList<>();
             for (NodeSubscription subscription : subscriptionsByID.values()) {
@@ -2314,9 +2365,11 @@ public abstract class Node implements Cacheable, Externalizable {
                     pendingSubscriptions.add(subscription);
                 }
             }
-            return pendingSubscriptions;
+            result = pendingSubscriptions;
         }
-        return Collections.emptyList();
+
+        getLogger().trace("Got {} pending subscription(s).", result.size());
+        return result;
     }
 
     @Override
@@ -2347,16 +2400,16 @@ public abstract class Node implements Cacheable, Externalizable {
      */
     public void approveSubscription(NodeSubscription subscription, boolean approved) {
         if (!subscription.isAuthorizationPending()) {
-            // Do nothing if the subscription is no longer pending
+            getLogger().debug("Not updating node subscription to '{}' as the subscription is no longer pending: {}", approved, subscription);
             return;
         }
         if (approved) {
-            // Mark that the subscription to the node has been approved
+            getLogger().debug("Mark that the subscription to the node has been approved: {}", subscription);
             subscription.approved();
             CacheFactory.doClusterTask(new ModifySubscriptionTask(subscription));
         }
         else  {
-            // Cancel the subscription to the node
+            getLogger().debug("Cancel the subscription to the node is it has not been approved: {}", subscription);
             cancelSubscription(subscription);
         }
     }
@@ -2646,4 +2699,6 @@ public abstract class Node implements Cacheable, Externalizable {
             subscriptionsByJID.put( subscription.getJID().toString(), subscription );
         }
     }
+
+    abstract protected Logger getLogger();
 }

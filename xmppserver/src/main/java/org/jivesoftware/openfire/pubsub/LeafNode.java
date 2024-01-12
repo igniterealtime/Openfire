@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheSizes;
 import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
@@ -48,6 +50,8 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * @author Matt Tucker
  */
 public class LeafNode extends Node {
+
+    private Logger Log;
 
     /**
      * Flag that indicates whether to persist items to storage. Note that when the
@@ -80,6 +84,7 @@ public class LeafNode extends Node {
     public LeafNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, boolean persistPublishedItems, int maxPublishedItems, int maxPayloadSize, boolean sendItemSubscribe)
     {
         super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + serviceId + "#" + nodeID +"]");
         this.persistPublishedItems = persistPublishedItems;
         this.maxPublishedItems = maxPublishedItems;
         this.maxPayloadSize = maxPayloadSize;
@@ -88,6 +93,7 @@ public class LeafNode extends Node {
 
     public LeafNode(PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, DefaultNodeConfiguration defaultConfiguration) {
         super(serviceId, parentNode, nodeID, creator, defaultConfiguration);
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + serviceId + "#" + nodeID +"]");
         this.persistPublishedItems = defaultConfiguration.isPersistPublishedItems();
         this.maxPublishedItems = defaultConfiguration.getMaxPublishedItems();
         this.maxPayloadSize = defaultConfiguration.getMaxPayloadSize();
@@ -96,31 +102,36 @@ public class LeafNode extends Node {
 
     public LeafNode() { // to be used only for serialization;
         super();
+        Log = LoggerFactory.getLogger(getClass().getName()); // _should_ be replaced in readExternal()
     }
 
     @Override
     protected void configure(FormField field) throws NotAcceptableException {
         if ("pubsub#persist_items".equals(field.getVariable())) {
             persistPublishedItems = parseFirstValueAsBoolean( field, true );
+            Log.trace("Configuring {}: {}", field.getVariable(), persistPublishedItems);
         }
         else if ("pubsub#max_payload_size".equals(field.getVariable())) {
             maxPayloadSize = field.getFirstValue() != null ? Integer.parseInt( field.getFirstValue() ) : 5120;
+            Log.trace("Configuring {}: {}", field.getVariable(), maxPayloadSize);
         }
         else if ("pubsub#send_item_subscribe".equals(field.getVariable())) {
             sendItemSubscribe = parseFirstValueAsBoolean( field, true );
+            Log.trace("Configuring {}: {}", field.getVariable(), sendItemSubscribe);
         }
     }
 
     @Override
     void postConfigure(DataForm completedForm) {
         if (!persistPublishedItems) {
-            // Always save the last published item when not configured to use persistent items
+            Log.trace("Configuring to always save the last published item when not configured to use persistent items.");
             maxPublishedItems = 1;
         }
         else {
             FormField field = completedForm.getField("pubsub#max_items");
             if (field != null) {
                 maxPublishedItems = field.getFirstValue() != null ? Integer.parseInt( field.getFirstValue() ) : 50;
+                Log.trace("Configuring {}: {}", field.getVariable(), maxPublishedItems);
             }
         }
     }
@@ -173,8 +184,10 @@ public class LeafNode extends Node {
 
     public synchronized void setLastPublishedItem(PublishedItem item)
     {
-        if ((lastPublished == null) || (item != null) && item.getCreationDate().after(lastPublished.getCreationDate()))
+        if ((lastPublished == null) || (item != null) && item.getCreationDate().after(lastPublished.getCreationDate())) {
+            Log.trace("Set last published item to: {}", item.getID());
             lastPublished = item;
+        }
     }
 
     public int getMaxPayloadSize() {
@@ -231,6 +244,7 @@ public class LeafNode extends Node {
      * @param itemElements list of dom4j elements that contain info about the published items.
      */
     public void publishItems(JID publisher, List<Element> itemElements) {
+        Log.trace("Publisher '{}' is publishing {} item(s)", publisher, itemElements.size());
         List<PublishedItem> newPublishedItems = new ArrayList<>();
         if (isItemRequired()) {
             String itemID;
@@ -249,12 +263,15 @@ public class LeafNode extends Node {
                 // Create a new published item
                 newItem = new PublishedItem(this, publisher, itemID, new Date(CacheFactory.getClusterTime()));
                 newItem.setPayload(payload);
+                Log.trace("Created new PublishedItem instance with itemID {}", itemID);
+
                 // Add the new item to the list of published items
                 newPublishedItems.add(newItem);
                 setLastPublishedItem(newItem);
                 // Add the new published item to the queue of items to add to the database. The
                 // queue is going to be processed by another thread
                 if (isPersistPublishedItems()) {
+                    Log.trace("Adding PublishedItem in persistence provider as node is configured to persist published items");
                     XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().savePublishedItem(newItem);
                 }
             }
@@ -265,6 +282,7 @@ public class LeafNode extends Node {
         Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
         // Broadcast event notification to subscribers and parent node subscribers
         Set<NodeAffiliate> affiliatesToNotify = getAffiliatesToNotify();
+        Log.trace("Built event notification stanza to broadcast notification to {} affiliate(s)", affiliatesToNotify.size());
 
         // TODO Use another thread for this (if # of subscribers is > X)????
         for (NodeAffiliate affiliate : affiliatesToNotify) {
@@ -278,25 +296,34 @@ public class LeafNode extends Node {
      * @return A list of node affiliates. Possibly empty.
      */
     public Set<NodeAffiliate> getAffiliatesToNotify() {
+        Log.trace("Getting affiliates to notify...");
+
         Set<NodeAffiliate> affiliatesToNotify = new HashSet<>(affiliates);
+        Log.trace("... found {} direct affiliate(s)", affiliates.size());
+
         // Get affiliates that are subscribed to a parent in the hierarchy of parent nodes
         for (CollectionNode parentNode : getParents()) {
+            Set<NodeAffiliate> parentAffiliates = new HashSet<>();
             for (NodeSubscription subscription : parentNode.getSubscriptions()) {
                 // OF-2365: Prevent sending notifications to subscribers that are not allowed to access this node.
                 if (parentNode.getAccessModel().canAccessItems(this, subscription.getOwner(), subscription.getJID() )
                     && accessModel.canAccessItems(this, subscription.getOwner(), subscription.getJID()))
                 {
-                    affiliatesToNotify.add(subscription.getAffiliate());
+                    parentAffiliates.add(subscription.getAffiliate());
                 }
             }
+            Log.trace("... found {} applicable affiliate(s) in parent node {}", parentAffiliates.size(), parentNode.getNodeID());
+            affiliatesToNotify.addAll(parentAffiliates);
         }
 
         // XEP-0136 specifies that all connected resources of the owner of the PEP service should also get a notification (pending filtering)
         // To ensure that happens, the affiliate that represents the owner of the PEP server is added here, if it's not already present.
-        if ( getService() instanceof PEPService && affiliatesToNotify.stream().noneMatch( a -> a.getAffiliation().equals(NodeAffiliate.Affiliation.owner))) {
+        if (getService() instanceof PEPService && affiliatesToNotify.stream().noneMatch( a -> a.getAffiliation().equals(NodeAffiliate.Affiliation.owner))) {
             final NodeAffiliate owner = getService().getRootCollectionNode().getAffiliate( getService().getAddress() );
+            Log.trace("... added owner of the PEP service");
             affiliatesToNotify.add(owner);
         }
+        Log.trace("In total {} unique affiliate(s) were identified.", affiliatesToNotify.size());
         return affiliatesToNotify;
     }
 
@@ -311,22 +338,23 @@ public class LeafNode extends Node {
      * @param toDelete list of items that were deleted from the node.
      */
     public void deleteItems(List<PublishedItem> toDelete) {
+        Log.trace("Deleting {} item(s)", toDelete.size());
         // Remove deleted items from the database
         for (PublishedItem item : toDelete) {
+            Log.trace("Removing PublishedItem from persistence provider");
             XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().removePublishedItem(item);
             if (lastPublished != null && lastPublished.getID().equals(item.getID())) {
+                Log.trace("Removed item was previously the last published item. Setting last published item to null.");
                 lastPublished = null;
             }
         }
         if (isNotifiedOfRetract()) {
-            // Broadcast notification deletion to subscribers
             // Build packet to broadcast to subscribers
             Message message = new Message();
-            Element event =
-                    message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
-            // Send notification that items have been deleted to subscribers and parent node
-            // subscribers
+            Element event = message.addChildElement("event", "http://jabber.org/protocol/pubsub#event");
+            // Send notification that items have been deleted to subscribers and parent node subscribers
             Set<NodeAffiliate> affiliatesToNotify = getAffiliatesToNotify();
+            Log.trace("Built event notification stanza to broadcast notification to {} affiliate(s)", affiliatesToNotify.size());
 
             // TODO Use another thread for this (if # of subscribers is > X)????
             for (NodeAffiliate affiliate : affiliatesToNotify) {
@@ -348,7 +376,9 @@ public class LeafNode extends Node {
 
                     // Send the notification
                     final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(service.getAddress().getNode());
-                    for ( final ClientSession session : sessions ) {
+                    Log.trace("Also notifying {} connected resource(s) of the owner of the PEP service: {}", sessions.size(), service.getAddress());
+
+                    for (final ClientSession session : sessions) {
                         service.sendNotification( this, message, session.getAddress() );
                     }
 
@@ -368,6 +398,7 @@ public class LeafNode extends Node {
      * @param publishedItems the list of published items to send to the subscriber.
      */
     void sendPublishedItems(IQ originalRequest, List<PublishedItem> publishedItems) {
+        Log.trace("Sending {} published item(s) in response to request from '{}'", publishedItems.size(), originalRequest.getFrom());
         IQ result = IQ.createResultIQ(originalRequest);
         Element pubsubElem = result.setChildElement("pubsub", "http://jabber.org/protocol/pubsub");
         Element items = pubsubElem.addElement("items");
@@ -387,16 +418,20 @@ public class LeafNode extends Node {
     @Override
     public PublishedItem getPublishedItem(String itemID) {
         if (!isItemRequired()) {
+            Log.trace("Get published item {}, but returning null, as node is configured to not require item.", itemID);
             return null;
         }
 
         final PublishedItem.UniqueIdentifier itemIdentifier = new PublishedItem.UniqueIdentifier( getUniqueIdentifier(), itemID );
         synchronized (this) {
             if (lastPublished != null && lastPublished.getUniqueIdentifier().equals( itemIdentifier )) {
+                Log.trace("Get published item {} that is the last published item", itemID);
                 return lastPublished;
             }
         }
-        return XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().getPublishedItem(this, itemIdentifier);
+        final PublishedItem publishedItem = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().getPublishedItem(this, itemIdentifier);
+        Log.trace("Get published item {} from persistence provider{}", itemID, publishedItem == null ? ", but it did not exist there." : ".");
+        return publishedItem;
     }
 
     @Override
@@ -427,6 +462,7 @@ public class LeafNode extends Node {
                 }
             }
         }
+        Log.trace("Got {} published item(s)", publishedItems.size());
         return publishedItems;
     }
 
@@ -434,6 +470,12 @@ public class LeafNode extends Node {
     public synchronized PublishedItem getLastPublishedItem() {
         if (lastPublished == null){
             lastPublished = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().getLastPublishedItem(this);
+        }
+
+        if (lastPublished == null) {
+            Log.trace("Tried to get last published item, but could not find one.");
+        } else {
+            Log.trace("Got last published item");
         }
         return lastPublished;
     }
@@ -467,9 +509,10 @@ public class LeafNode extends Node {
     /**
      * Purges items that were published to the node. Only owners can request this operation.
      * This operation is only available for nodes configured to store items in the database. All
-     * published items will be deleted with the exception of the last published item.
+     * published items will be deleted except the last published item.
      */
     public void purge() {
+        Log.trace("Purging items that were published to the node and broadcast purge notification to subscribers.");
         XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().purgeNode(this);
         // Broadcast purge notification to subscribers
         // Build packet to broadcast to subscribers
@@ -516,5 +559,11 @@ public class LeafNode extends Node {
         maxPayloadSize = util.readInt( in );
         sendItemSubscribe = util.readBoolean( in );
         // The 'lastPublished' field is transient - it is reloaded from the provider on-demand.
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + super.serviceIdentifier + "#" + super.getNodeID() +"]");
+    }
+
+    @Override
+    protected Logger getLogger() {
+        return Log;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
 import java.text.ParseException;
 import java.util.*;
 
@@ -59,75 +60,89 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  */
 public class NodeSubscription {
 
-    private static final Logger Log = LoggerFactory.getLogger(NodeSubscription.class);
+    private final Logger Log;
 
     private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
 
     /**
      * The node to which this subscription is interested in.
      */
-    private Node node;
+    private final Node node;
+
     /**
      * JID of the entity that will receive the event notifications.
      */
-    private JID jid;
+    private final JID jid;
+
     /**
      * JID of the entity that owns this subscription. This JID is the JID of the
      * NodeAffiliate that is subscribed to the node.
      */
-    private JID owner;
+    private final JID owner;
+
     /**
      * ID that uniquely identifies the subscription of the user in the node.
      */
-    private String id;
+    private final String id;
+
     /**
      * Current subscription state.
      */
     private State state;
+
     /**
      * Flag indicating whether an entity wants to receive or has disabled notifications.
      */
     private boolean deliverNotifications = true;
+
     /**
      * Flag indicating whether an entity wants to receive digests (aggregations) of
      * notifications or all notifications individually.
      */
     private boolean usingDigest = false;
+
     /**
      * The minimum number of milliseconds between sending any two notification digests.
      * Default is 24 hours.
      */
     private int digestFrequency = 86400000;
+
     /**
      * The Date at which a leased subscription will end or has ended. A value of
      * {@code null} means that the subscription will never expire.
      */
     private Date expire = null;
+
     /**
      * Flag indicating whether an entity wants to receive an XMPP message body in
      * addition to the payload format.
      */
     private boolean includingBody = false;
+
     /**
      * The presence states for which an entity wants to receive notifications.
      */
     private Collection<String> presenceStates = new ArrayList<>();
+
     /**
      * When subscribing to collection nodes it is possible to be interested in new nodes
      * added to the collection node or new items published in the children nodes. The default
      * value is "nodes".
      */
     private Type type = Type.nodes;
+
     /**
      * Receive notification from children up to certain depth. Possible values are 1 or 0.
      * Zero means that there is no depth limit.
      */
     private int depth = 1;
+
     /**
      * Keyword that the event needs to match. When {@code null} all event are going to
      * be notified to the subscriber.
      */
     private String keyword = null;
+
     /**
      * Indicates if the subscription is present in the database.
      */
@@ -140,7 +155,7 @@ public class NodeSubscription {
      * @param owner the JID of the entity that owns this subscription.
      * @param jid the JID of the user that owns the subscription.
      * @param state the state of the subscription with the node.
-     * @param id the id the uniquely identifies this subscriptin within the node.
+     * @param id the id the uniquely identifies this subscription within the node.
      */
     public NodeSubscription(Node node, JID owner, JID jid, State state, String id)
     {
@@ -149,6 +164,8 @@ public class NodeSubscription {
         this.owner = owner;
         this.state = state;
         this.id = id;
+
+        Log = LoggerFactory.getLogger(getClass().getName() + "[" + node + " " + id + " " + owner + "]");
     }
 
     /**
@@ -371,7 +388,7 @@ public class NodeSubscription {
     /**
      * Configures the subscription based on the sent {@link DataForm} included in the IQ
      * packet sent by the subscriber. If the subscription was pending of configuration
-     * then the last published item is going to be sent to the subscriber.<p>
+     * then the last published item is going to be sent to the subscriber.
      *
      * The originalIQ parameter may be {@code null} when using this API internally. When no
      * IQ packet was sent then no IQ result will be sent to the sender. The rest of the
@@ -441,7 +458,7 @@ public class NodeSubscription {
             }
             else if ("pubsub#digest_frequency".equals(field.getVariable())) {
                 values = field.getValues();
-                digestFrequency = values.size() > 0 ? Integer.parseInt(values.get(0)) : 86400000;
+                digestFrequency = !values.isEmpty() ? Integer.parseInt(values.get(0)) : 86400000;
             }
             else if ("pubsub#expire".equals(field.getVariable())) {
                 values = field.getValues();
@@ -596,7 +613,7 @@ public class NodeSubscription {
 
     /**
      * Returns true if an event notification can be sent to the subscriber for the specified
-     * published item based on the subsription configuration and subscriber status.
+     * published item based on the subscription configuration and subscriber status.
      *
      * @param leafNode the node that received the publication.
      * @param publishedItem the published item to send or null if the publication didn't
@@ -610,23 +627,29 @@ public class NodeSubscription {
         }
         // Check that any defined keyword was matched (applies only if an item was published)
         if (publishedItem != null && !isKeywordMatched(publishedItem)) {
+            Log.trace("Cannot send publication event: published item does not match the configured keyword filter.");
             return false;
         }
         // Check special conditions when subscribed to collection node
         if (node.isCollectionNode()) {
             // Check if not subscribe to items
             if (Type.items != type) {
+                Log.trace("Cannot send publication event: not subscribed to 'items' of this collection node.");
                 return false;
             }
             // Check if published node is a first-level child of the subscribed node
             if (getDepth() == 1 && !node.isChildNode(leafNode)) {
+                Log.trace("Cannot send publication event: published node is not a first-level node of this subscribed node.");
                 return false;
             }
             // Check if published node is a descendant child of the subscribed node
             if (getDepth() == 0 && !node.isDescendantNode(leafNode)) {
+                Log.trace("Cannot send publication event: published node is not a descendant child of the subscribed node.");
                 return false;
             }
         }
+
+        Log.trace("Can send publication node event.");
         return true;
     }
 
@@ -642,6 +665,7 @@ public class NodeSubscription {
     boolean canSendChildNodeEvent(Node originatingNode) {
         // Check that this is a subscriber to a collection node
         if (!node.isCollectionNode()) {
+            Log.trace("Cannot send child node event: node is not a collection node.");
             return false;
         }
 
@@ -650,16 +674,21 @@ public class NodeSubscription {
         }
         // Check that subscriber is using type "nodes"
         if (Type.nodes != type) {
+            Log.trace("Cannot send child node event: type is not 'nodes'.");
             return false;
         }
         // Check if added/deleted node is a first-level child of the subscribed node
         if (getDepth() == 1 && !node.isChildNode(originatingNode)) {
+            Log.trace("Cannot send child node event: node is not a first-level child of the subscribed node.");
             return false;
         }
         // Check if added/deleted node is a descendant child of the subscribed node
         if (getDepth() == 0 && !node.isDescendantNode(originatingNode)) {
+            Log.trace("Cannot send child node event: node is not a descendant child of the subscribed node.");
             return false;
         }
+
+        Log.trace("Can send child node event.");
         return true;
     }
 
@@ -684,16 +713,19 @@ public class NodeSubscription {
     private boolean canSendEvents() {
         // Check if the subscription is active
         if (!isActive()) {
+            Log.trace("Cannot send any events: subscription is not active.");
             return false;
         }
         // Check if delivery of notifications is disabled
         if (!shouldDeliverNotifications()) {
+            Log.trace("Cannot send any events: delivery of notifications is disabled.");
             return false;
         }
         // Check if delivery is subject to presence-based policy
         if (!getPresenceStates().isEmpty()) {
             Collection<String> shows = node.getService().getShowPresences(jid);
             if (shows.isEmpty() || Collections.disjoint(getPresenceStates(), shows)) {
+                Log.trace("Cannot send any events: delivery is subject to presence-based policy that currently does not apply.");
                 return false;
             }
         }
@@ -702,9 +734,12 @@ public class NodeSubscription {
             // Check that user is online
             if (node.getService().getShowPresences(jid).isEmpty())
             {
+                Log.trace("Cannot send any events: node is only sending events when user is online (and they're not).");
                 return false;
             }
         }
+
+        Log.trace("Can send generic node events.");
         return true;
     }
 
@@ -718,7 +753,7 @@ public class NodeSubscription {
      */
     boolean isKeywordMatched(PublishedItem publishedItem) {
         // Check if keyword was defined and it was not matched
-        if (keyword != null && keyword.length() > 0 && !publishedItem.containsKeyword(keyword)) {
+        if (keyword != null && !keyword.isEmpty() && !publishedItem.containsKeyword(keyword)) {
             return false;
         }
         return true;
@@ -768,7 +803,8 @@ public class NodeSubscription {
         if (node.isSubscriptionConfigurationRequired() && isConfigurationPending()) {
             subscribeOptions.addElement("required");
         }
-        // Send the result
+
+        Log.trace("Send subscription state in response to a request from '{}'", result.getTo());
         node.getService().send(result);
     }
 
@@ -785,20 +821,21 @@ public class NodeSubscription {
      *
      * @param publishedItem the last item that was published to the node.
      */
-    void sendLastPublishedItem(PublishedItem publishedItem) {
+    void sendLastPublishedItem(@Nonnull final PublishedItem publishedItem) {
         // Check to see if we've been disabled
         if (JiveGlobals.getBooleanProperty("xmpp.pubsub.disable-delayed-delivery", false)) {
+            Log.trace("Not sending last published item notification for item '{}', as that has been disabled by configuration.", publishedItem.getID());
             return;
         }
 
         // Check if the published item can be sent to the subscriber
         if (!canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
+            Log.trace("Not sending last published item notification for item '{}', as publication events cannot be sent.", publishedItem.getID());
             return;
         }
         // Send event notification to the subscriber
         Message notification = new Message();
-        Element event = notification.getElement()
-                .addElement("event", "http://jabber.org/protocol/pubsub#event");
+        Element event = notification.getElement().addElement("event", "http://jabber.org/protocol/pubsub#event");
         Element items = event.addElement("items");
         items.addAttribute("node", node.getUniqueIdentifier().getNodeId());
         Element item = items.addElement("item");
@@ -816,7 +853,9 @@ public class NodeSubscription {
         // Include date when published item was created
         notification.getElement().addElement("delay", "urn:xmpp:delay")
                 .addAttribute("stamp", XMPPDateTimeFormat.format(publishedItem.getCreationDate()));
+
         // Send the event notification to the subscriber
+        Log.trace("Sending last published item notification for item '{}'.", publishedItem.getID());
         node.getService().sendNotification(node, notification, jid);
     }
 
@@ -857,6 +896,8 @@ public class NodeSubscription {
             // Do nothing
             return;
         }
+
+        Log.trace("Subscription has been approved by a node owner. Toggling state from {} to {}.", state, State.subscribed);
         state = State.subscribed;
 
         if (savedToDB) {
@@ -868,6 +909,7 @@ public class NodeSubscription {
         if (node.isSendItemSubscribe() && isActive()) {
             PublishedItem lastItem = node.getLastPublishedItem();
             if (lastItem != null) {
+                Log.trace("Send last published item '{}' as node is leaf node and subscription status is ok.", lastItem.getID());
                 sendLastPublishedItem(lastItem);
             }
         }
@@ -902,7 +944,7 @@ public class NodeSubscription {
      * Subscriptions to a node may exist in several states. Delivery of event notifications
      * varies according to the subscription state of the user with the node.
      */
-    public static enum State {
+    public enum State {
 
         /**
          * The node will never send event notifications or payloads to users in this state. Users
@@ -928,7 +970,7 @@ public class NodeSubscription {
         subscribed
     }
 
-    public static enum Type {
+    public enum Type {
 
         /**
          * Receive notification of new items only.

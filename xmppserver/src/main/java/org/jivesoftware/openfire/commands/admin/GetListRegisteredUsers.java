@@ -99,7 +99,7 @@ public class GetListRegisteredUsers extends AdHocCommand {
         field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.field.registereduserjids.label", preferredLocale));
         field.setVariable("registereduserjids");
 
-        // Get list of users (i.e. bareJIDs) that are connected to the server
+        // Get list of users (i.e. bareJIDs) that are registered on the server
         final Collection<User> users = UserManager.getInstance().getUsers(0, maxItems);
 
         // Add users to the result

@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  *  An adhoc command to retrieve the properties of the user.
@@ -95,7 +96,7 @@ public class UserProperties extends AdHocCommand {
             }
 
             jidField.addValue(account);
-            emailField.addValue(user.getEmail());
+            emailField.addValue(Objects.requireNonNullElse(user.getEmail(), ""));
             nameField.addValue(user.getName());
         }
     }

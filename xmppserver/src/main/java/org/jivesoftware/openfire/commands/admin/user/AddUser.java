@@ -75,6 +75,11 @@ public class AddUser extends AdHocCommand {
         try {
             account = new JID(get(data, "accountjid", 0));
         }
+        catch (IllegalArgumentException e) {
+            note.addAttribute("type", "error");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.adduser.note.jid-invalid", preferredLocale));
+            return;
+        }
         catch (NullPointerException npe) {
             note.addAttribute("type", "error");
             note.setText(LocaleUtils.getLocalizedString("commands.admin.user.adduser.note.jid-required", preferredLocale));

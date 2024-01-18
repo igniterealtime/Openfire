@@ -67,13 +67,26 @@ public class ChangeUserPassword extends AdHocCommand {
             note.setText(LocaleUtils.getLocalizedString("commands.admin.user.changeuserpassword.note.users-readonly", preferredLocale));
             return;
         }
-        JID account = new JID(data.getData().get("accountjid").get(0));
-        String newPassword = data.getData().get("password").get(0);
+        JID account;
+        try {
+            account = new JID(data.getData().get("accountjid").get(0));
+        } catch (IllegalArgumentException e) {
+            note.addAttribute("type", "error");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.changeuserpassword.note.jid-invalid", preferredLocale));
+            return;
+        }
+        catch (NullPointerException ne) {
+            note.addAttribute("type", "error");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.changeuserpassword.note.jid-required", preferredLocale));
+            return;
+        }
         if (!XMPPServer.getInstance().isLocal(account)) {
             note.addAttribute("type", "error");
             note.setText(LocaleUtils.getLocalizedString("commands.admin.user.changeuserpassword.note.jid-not-local", preferredLocale));
             return;
         }
+        String newPassword = data.getData().get("password").get(0);
+
         // Get requested group
         User user;
         try {

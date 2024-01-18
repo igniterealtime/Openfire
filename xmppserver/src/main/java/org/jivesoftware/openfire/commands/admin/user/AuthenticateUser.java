@@ -124,7 +124,7 @@ public class AuthenticateUser extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
-        field.setType(FormField.Type.text_single);
+        field.setType(FormField.Type.jid_single);
         field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjid");
         field.setRequired(true);

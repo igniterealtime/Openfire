@@ -148,7 +148,7 @@ public class GetUserRoster extends AdHocCommand
                 .element(QName.get("query", "jabber:iq:roster"));
 
             if (rosterElement != null) {
-                form.getElement().add(rosterElement);
+                form.getElement().add(rosterElement.createCopy());
             }
 
             command.add(form.getElement());

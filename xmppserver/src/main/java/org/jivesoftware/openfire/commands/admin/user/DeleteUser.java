@@ -89,6 +89,11 @@ public class DeleteUser extends AdHocCommand {
                     toDelete.add( user );
                 }
             }
+            catch (IllegalArgumentException e) {
+                note.addAttribute("type", "error");
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.jid-invalid", preferredLocale));
+                return;
+            }
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );

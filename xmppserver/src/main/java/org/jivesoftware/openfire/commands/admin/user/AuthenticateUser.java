@@ -68,6 +68,11 @@ public class AuthenticateUser extends AdHocCommand {
         try {
             account = new JID(data.getData().get("accountjid").get(0));
         }
+        catch (IllegalArgumentException e) {
+            note.addAttribute("type", "error");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.note.jid-invalid", preferredLocale));
+            return;
+        }
         catch (NullPointerException ne) {
             note.addAttribute("type", "error");
             note.setText(LocaleUtils.getLocalizedString("commands.admin.user.authenticateuser.note.jid-required", preferredLocale));

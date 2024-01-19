@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,10 +126,10 @@ public class NettySessionInitializer {
                     NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
                     Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
-                    ch.pipeline().addLast(new NettyXMPPDecoder());
-                    ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
                     ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS));
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
+                    ch.pipeline().addLast(new NettyXMPPDecoder());
+                    ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
                     ch.pipeline().addLast(businessLogicHandler);
 
                     final ConnectionAcceptor connectionAcceptor = listener.getConnectionAcceptor();

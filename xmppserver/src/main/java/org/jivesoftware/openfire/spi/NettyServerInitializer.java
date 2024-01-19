@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,11 +75,11 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
 
         ch.pipeline()
             .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
+            .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
+            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))
             .addLast(new NettyXMPPDecoder())
             .addLast(new StringEncoder(StandardCharsets.UTF_8))
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
-            .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
-            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))
             .addLast(businessLogicHandler);
 
         // Add ChannelHandler providers implemented by plugins, if any.

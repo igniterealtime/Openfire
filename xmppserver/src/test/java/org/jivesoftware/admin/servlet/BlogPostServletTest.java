@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ import org.json.JSONArray;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests that verify the implementation of {@link BlogPostServlet}
@@ -48,6 +49,28 @@ public class BlogPostServletTest
 
             assertEquals("https://discourse.igniterealtime.org/t/sparkweb-lives-again/93130", result.getJSONObject(1).getString("link"));
             assertEquals("SparkWeb lives again", result.getJSONObject(1).getString("title"));
+        }
+    }
+
+    /**
+     * Verifies that the code that parses RSS data for the blog posts generates expect results, even when the default
+     * Locale does not match the locale of the RSS content (assumed to be English).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2775">OF-2775: RSS News Feed appears empty</a>
+     */
+    @Test
+    public void testLocale() throws Exception
+    {
+        // Setup test fixture.
+        final Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.GERMAN);
+
+            // Execute system under test.
+            testRssParsing();
+        } finally {
+            // Teardown test fixture.
+            Locale.setDefault(defaultLocale);
         }
     }
 }

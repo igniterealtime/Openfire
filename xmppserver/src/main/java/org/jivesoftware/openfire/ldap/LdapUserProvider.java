@@ -117,12 +117,12 @@ public class LdapUserProvider implements UserProvider {
             if (emailField != null) {
                 email = (String)emailField.get();
             }
-            Date creationDate = new Date();
+            Date creationDate = null;
             Attribute creationDateField = attrs.get("createTimestamp");
             if (creationDateField != null && "".equals(((String) creationDateField.get()).trim())) {
                 creationDate = parseLDAPDate((String) creationDateField.get());
             }
-            Date modificationDate = new Date();
+            Date modificationDate = null;
             Attribute modificationDateField = attrs.get("modifyTimestamp");
             if (modificationDateField != null && "".equals(((String) modificationDateField.get()).trim())) {
                 modificationDate = parseLDAPDate((String)modificationDateField.get());

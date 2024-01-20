@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.forward;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -85,6 +86,43 @@ public class Forwarded extends PacketExtension {
      */
     public static boolean isEligibleForCarbonsDelivery(final Message stanza)
     {
+        // To properly handle messages exchanged with a MUC (or similar service), the server must be able to identify MUC-related messages.
+        // This can be accomplished by tracking the clients' presence in MUCs, or by checking for the <x xmlns="http://jabber.org/protocol/muc#user">
+        // element in messages. The following rules apply to MUC-related messages:
+        if (stanza.getChildElement("x", "http://jabber.org/protocol/muc#user") != null)
+        {
+            // A <message/> containing a Direct MUC Invitations (XEP-0249) SHOULD be carbon-copied.
+            if (containsChildElement(stanza, Set.of("x"), "jabber:x:conference")) {
+                return true;
+            }
+
+            // A <message/> containing a Mediated Invitation SHOULD be carbon-copied.
+            if (stanza.getChildElement("x", "http://jabber.org/protocol/muc#user") != null
+                && stanza.getChildElement("x", "http://jabber.org/protocol/muc#user").element("invite") != null) {
+                return true;
+            }
+
+            // A private <message/> from a local user to a MUC participant (sent to a full JID) SHOULD be carbon-copied
+            // The server SHOULD limit carbon-copying to the clients sharing a Multi-Session Nick in that MUC, and MAY
+            // inject the <x/> element into such carbon copies. Clients can not respond to carbon-copies of MUC-PMs
+            // related to a MUC they are not joined to. Therefore, they SHOULD either ignore such carbon copies, or
+            // provide a way for the user to join the MUC before answering.
+            if (stanza.getTo() != null && stanza.getTo().getResource() != null
+                && stanza.getFrom() != null && stanza.getFrom().getNode() != null && XMPPServer.getInstance().isLocal(stanza.getFrom()))
+            {
+                return true;
+                // TODO The server SHOULD limit carbon-copying to the clients sharing a Multi-Session Nick in that MUC (OF-2780).
+            }
+
+            // A private <message/> from a MUC participant (received from a full JID) to a local user SHOULD NOT be
+            // carbon-copied (these messages are already replicated by the MUC service to all joined client instances).
+            if (stanza.getFrom() != null && stanza.getFrom().getResource() != null
+                && stanza.getTo() != null && stanza.getTo().getNode() != null && XMPPServer.getInstance().isLocal(stanza.getTo()))
+            {
+                return false;
+            }
+        }
+
         // A <message/> is eligible for carbons delivery if it does not contain a <private/> child element...
         if (containsChildElement(stanza, Set.of("private", "received"), "urn:xmpp:carbons"))
         {
@@ -111,41 +149,12 @@ public class Forwarded extends PacketExtension {
             return true;
         }
 
-        // it is of type "error" and it was sent in response to a <message/> that was eligible for carbons delivery.
-        // TODO implement me.
+        // ... it is of type "error" and it was sent in response to a <message/> that was eligible for carbons delivery.
+        // TODO implement me (OF-2779)
 
-        // To properly handle messages exchanged with a MUC (or similar service), the server must be able to identify MUC-related messages.
-        // This can be accomplished by tracking the clients' presence in MUCs, or by checking for the <x xmlns="http://jabber.org/protocol/muc#user">
-        // element in messages. The following rules apply to MUC-related messages:
-        if (stanza.getChildElement("x", "http://jabber.org/protocol/muc#user") != null)
-        {
-            // A <message/> of type "groupchat" SHOULD NOT be carbon-copied.
-            if (stanza.getType() == Message.Type.groupchat) {
-                return false;
-            }
-
-            // A <message/> containing a Direct MUC Invitations (XEP-0249) SHOULD be carbon-copied.
-            if (containsChildElement(stanza, Set.of("x"), "jabber:x:conference")) {
-                return true;
-            }
-
-            // A <message/> containing a Mediated Invitation SHOULD be carbon-copied.
-            if (stanza.getChildElement("x", "http://jabber.org/protocol/muc#user") != null
-              && stanza.getChildElement("x", "http://jabber.org/protocol/muc#user").element("invite") != null) {
-                return true;
-            }
-
-            // A private <message/> from a local user to a MUC participant (sent to a full JID) SHOULD be carbon-copied
-            // The server SHOULD limit carbon-copying to the clients sharing a Multi-Session Nick in that MUC, and MAY
-            // inject the <x/> element into such carbon copies. Clients can not respond to carbon-copies of MUC-PMs
-            // related to a MUC they are not joined to. Therefore, they SHOULD either ignore such carbon copies, or
-            // provide a way for the user to join the MUC before answering.
-            // TODO implement me.
-
-            // A private <message/> from a MUC participant (received from a full JID) to a local user SHOULD NOT be carbon-copied (these messages are already replicated by the MUC service to all joined client instances).
-            if (stanza.getFrom().getResource() != null) {
-                return false;
-            }
+        // A <message/> of type "groupchat" SHOULD NOT be carbon-copied.
+        if (stanza.getType() == Message.Type.groupchat) {
+            return false;
         }
 
         return false;

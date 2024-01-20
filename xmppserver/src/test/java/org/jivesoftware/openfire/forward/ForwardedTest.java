@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,14 @@
 
 package org.jivesoftware.openfire.forward;
 
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.XMPPServer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.forms.DataForm;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,8 +34,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Christian Schudt
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
+@ExtendWith(MockitoExtension.class)
 public class ForwardedTest
 {
+    @BeforeEach
+    public void setUp() throws Exception {
+        final XMPPServer xmppServer = Fixtures.mockXMPPServer();
+        XMPPServer.setInstance(xmppServer);
+    }
+
     @Test
     public void testForwarded() {
         Message message = new Message();
@@ -135,7 +148,7 @@ public class ForwardedTest
     }
 
     /**
-     * Asserts that a message exchanged with a MUC of type 'chat' is not eligible for Carbons delivery.
+     * Asserts that a message of type 'groupchat' is not eligible for Carbons delivery.
      */
     @Test
     public void testMucGroupChat() throws Exception
@@ -143,6 +156,48 @@ public class ForwardedTest
         // Setup test fixture.
         final Message input = new Message();
         input.setType(Message.Type.groupchat);
+
+        // Execute system under test.
+        final boolean result = Forwarded.isEligibleForCarbonsDelivery(input);
+
+        // Verify results.
+        assertFalse(result);
+    }
+
+    /**
+     * A private <message/> from a local user to a MUC participant (sent to a full JID) SHOULD be carbon-copied.
+     */
+    @Test
+    public void testMucPrivateMessageSent() throws Exception
+    {
+        // Setup test fixture.
+        final Message input = new Message();
+        input.setTo("room@domain/nick");
+        input.setFrom(new JID("user", Fixtures.XMPP_DOMAIN, "resource"));
+        input.setType(Message.Type.chat);
+        input.setBody("test");
+        input.getElement().addElement("x", "http://jabber.org/protocol/muc#user");
+
+        // Execute system under test.
+        final boolean result = Forwarded.isEligibleForCarbonsDelivery(input);
+
+        // Verify results.
+        assertTrue(result);
+    }
+
+    /**
+     * A private <message/> from a MUC participant (received from a full JID) to a local user SHOULD NOT be
+     * carbon-copied (these messages are already replicated by the MUC service to all joined client instances).
+     */
+    @Test
+    public void testMucPrivateMessageReceived() throws Exception
+    {
+        // Setup test fixture.
+        final Message input = new Message();
+        input.setTo(new JID("user", Fixtures.XMPP_DOMAIN, "resource"));
+        input.setFrom("room@domain/nick");
+        input.setType(Message.Type.chat);
+        input.setBody("test");
         input.getElement().addElement("x", "http://jabber.org/protocol/muc#user");
 
         // Execute system under test.

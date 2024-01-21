@@ -146,4 +146,24 @@ public class CacheFactoryTest
         assertSame(resultA, resultB);
         assertInstanceOf(SerializingCache.class, ((CacheWrapper) resultB).getWrappedCache());
     }
+
+    /**
+     * Verifies that after the JVM left the cluster (at which point the cache implementations are swapped) a Serializing
+     * Cache remains a Serializing Cache.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2782">OF-2782</a>
+     */
+    @Test
+    public void testSerializingCacheRetainsTypeAfterLeftCluster() throws Exception
+    {
+        // Setup test fixture.
+        final String name = "unittest-serializingcache-leftcluster";
+        final CacheWrapper cache = CacheFactory.createSerializingCache(name, String.class, String.class);
+
+        // Execute system under test.
+        CacheFactory.leftCluster();
+
+        // Verify results.
+        assertInstanceOf(SerializingCache.class, cache.getWrappedCache());
+    }
 }

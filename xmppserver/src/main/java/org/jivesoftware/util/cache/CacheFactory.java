@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -514,18 +514,18 @@ public class CacheFactory {
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2239">Issue OF-2239: Make it easier to cache plugin class instances</a>
      */
     @SuppressWarnings("unchecked")
-    public static synchronized SerializingCache createSerializingCache(String name, Class keyClass, Class valueClass) {
-        SerializingCache cache = (SerializingCache) caches.get(name);
+    public static synchronized <T extends Cache> T createSerializingCache(String name, Class keyClass, Class valueClass) {
+        T cache = (T) caches.get(name);
         if (cache != null) {
             return cache;
         }
 
         final Cache<String, String> delegate = (Cache<String, String>) cacheFactoryStrategy.createCache(name);
-        cache = new SerializingCache(delegate, keyClass, valueClass);
+        final T sCache = (T) new SerializingCache(delegate, keyClass, valueClass);
 
         log.info("Created serializing cache [" + cacheFactoryStrategy.getClass().getName() + "] for " + name);
 
-        return wrapCache(cache, name);
+        return wrapCache(sCache, name);
     }
 
     /**

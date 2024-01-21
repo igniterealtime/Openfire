@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     private final Cache<String, String> delegate;
     private final Marshaller marshaller;
     private final Unmarshaller unmarshaller;
+    private final Class<K> keyClass;
+    private final Class<V> valueClass;
 
     /**
      * Creates a new serializing cache backed by the provided delegate.
@@ -78,6 +80,8 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
             final JAXBContext jaxbContext = JAXBContext.newInstance(keyClass, valueClass);
             marshaller = jaxbContext.createMarshaller();
             unmarshaller = jaxbContext.createUnmarshaller();
+            this.keyClass = keyClass;
+            this.valueClass = valueClass;
         } catch (JAXBException e) {
             throw new IllegalArgumentException("Unable to create a cache using classes " + keyClass + " and " + valueClass, e);
         }
@@ -111,6 +115,18 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
                 throw new IllegalArgumentException("XML value could not be unmarshalled into an object: " + object);
             }
         }
+    }
+
+    @Nonnull
+    public Class<K> getKeyClass()
+    {
+        return keyClass;
+    }
+
+    @Nonnull
+    public Class<V> getValueClass()
+    {
+        return valueClass;
     }
 
     @Override

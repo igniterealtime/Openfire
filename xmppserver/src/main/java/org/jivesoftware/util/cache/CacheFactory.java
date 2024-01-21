@@ -943,7 +943,11 @@ public class CacheFactory {
             .filter(CacheFactory::isClusterableCache)
             .forEach(cache -> {
                 final CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-                final Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                if (cacheWrapper.getWrappedCache() instanceof SerializingCache) {
+                    final SerializingCache serializingCache = (SerializingCache) cacheWrapper.getWrappedCache();
+                    clusteredCache = new SerializingCache(clusteredCache, serializingCache.getKeyClass(), serializingCache.getValueClass());
+                }
                 cacheWrapper.setWrappedCache(clusteredCache);
             });
         clusteringStarting = false;
@@ -964,7 +968,11 @@ public class CacheFactory {
             .filter(CacheFactory::isClusterableCache)
             .forEach(cache -> {
                 final CacheWrapper cacheWrapper = ((CacheWrapper) cache);
-                final Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
+                if (cacheWrapper.getWrappedCache() instanceof SerializingCache) {
+                    final SerializingCache serializingCache = (SerializingCache) cacheWrapper.getWrappedCache();
+                    standaloneCache = new SerializingCache(standaloneCache, serializingCache.getKeyClass(), serializingCache.getValueClass());
+                }
                 cacheWrapper.setWrappedCache(standaloneCache);
             });
         log.info("Clustering stopped; cache migration complete");

@@ -253,7 +253,14 @@
             %>
         </td>
         <td style="width: 12%">
-            <%= user.getCreationDate() != null ? JiveGlobals.formatDate(user.getCreationDate()) : "&nbsp;" %>
+            <%  if (user.getCreationDate() == null) { %>
+            <span style="color:#999">
+                <i><fmt:message key="user.properties.not_available" /></i>
+                </span>
+
+            <%  } else { %>
+            <%= JiveGlobals.formatDate(user.getCreationDate()) %>
+            <%  } %>
         </td>
         <td style="width: 23%">
             <% if (presenceManager.isAvailable(user)) { %>

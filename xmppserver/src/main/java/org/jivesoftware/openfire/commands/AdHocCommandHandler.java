@@ -192,11 +192,17 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     private void addDefaultCommands() {
-        // TODO Complete when out of the box commands are implemented
+        addCommand(new EditAdminList());
+        addCommand(new GetNumberRegisteredUsers());
+        addCommand(new GetNumberDisabledUsers());
         addCommand(new GetNumberActiveUsers());
         addCommand(new GetNumberOnlineUsers());
+        addCommand(new GetNumberIdleUsers());
         addCommand(new GetNumberUserSessions());
+        addCommand(new GetListRegisteredUsers());
         addCommand(new GetListActiveUsers());
+        addCommand(new GetListDisabledUsers());
+        addCommand(new GetListOnlineUsers());
         addCommand(new GetUsersPresence());
         addCommand(new GetListGroups());
         addCommand(new GetListGroupUsers());
@@ -207,6 +213,10 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new DeleteGroup());
         addCommand(new AddUser());
         addCommand(new DeleteUser());
+        addCommand(new DisableUser());
+        addCommand(new ReEnableUser());
+        addCommand(new EndUserSession());
+        addCommand(new GetUserRoster());
         addCommand(new AuthenticateUser());
         addCommand(new ChangeUserPassword());
         addCommand(new UserProperties());
@@ -228,6 +238,9 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new VCardModified());
         addCommand(new GetAdminConsoleInfo());
         addCommand(new Ping());
+        addCommand(new EditBlockedList());
+        addCommand(new EditAllowedList());
+        addCommand(new SendAnnouncementToOnlineUsers());
     }
 
     private void startCommand(AdHocCommand command) {

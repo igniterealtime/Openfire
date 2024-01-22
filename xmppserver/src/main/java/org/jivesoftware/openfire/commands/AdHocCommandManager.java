@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package org.jivesoftware.openfire.commands;
 
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +46,26 @@ import java.util.concurrent.locks.Lock;
  */
 public class AdHocCommandManager {
 
+    /**
+     * The maximum allowed simultaneous command sessions per user.
+     */
+    public static final SystemProperty<Integer> COMMAND_LIMIT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.command.limit")
+        .setDefaultValue(100)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * The maximum allowed duration of a command session (all stages of a command need to have provided by the user
+     * within this time).
+     */
+    public static final SystemProperty<Duration> COMMAND_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.command.timeout")
+        .setDefaultValue(Duration.ofMinutes(10))
+        .setDynamic(true)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .build();
+
     private static final String NAMESPACE = "http://jabber.org/protocol/commands";
 
     /**
@@ -50,11 +73,13 @@ public class AdHocCommandManager {
      * commandCode matches the node attribute sent by command requesters.
      */
     private final Map<String, AdHocCommand> commands = new ConcurrentHashMap<>();
+
     /**
      * Map that holds the number of command sessions of each requester.
      * Note: Key=requester full's JID, Value=number of sessions
      */
     private final ConcurrentMap<String, AtomicInteger> sessionsCounter = new ConcurrentHashMap<>();
+
     /**
      * Map that holds the command sessions. Used mainly to quickly locate a SessionData.
      * Note: Key=sessionID, Value=SessionData
@@ -138,17 +163,22 @@ public class AdHocCommandManager {
 
                 // Create new session ID
                 sessionid = StringUtils.randomString(15);
+                SessionData session = new SessionData(sessionid, packet.getFrom());
+                sessions.put(sessionid, session);
 
                 Element childElement = reply.setChildElement("command", NAMESPACE);
 
-                if (command.getMaxStages(null) == 0) {
+                if (command.getMaxStages(session) == 0) {
                     // The command does not require any user interaction (returns results only)
                     // Execute the command and return the execution result which may be a
                     // data form (i.e. report data) or a note element
-                    command.execute(null, childElement);
+                    command.execute(session, childElement);
                     childElement.addAttribute("sessionid", sessionid);
                     childElement.addAttribute("node", commandCode);
                     childElement.addAttribute("status", AdHocCommand.Status.completed.name());
+
+                    // No need to keep the session around, as this command doesn't have any other stages.
+                    sessions.remove(sessionid);
                 }
                 else {
                     // The command requires user interactions (ie. has stages)
@@ -156,8 +186,7 @@ public class AdHocCommandManager {
                     // command sessions.
                     AtomicInteger counter = sessionsCounter.computeIfAbsent(from, e->new AtomicInteger(0));
 
-                    int limit = JiveGlobals.getIntProperty("xmpp.command.limit", 100);
-                    if (counter.incrementAndGet() > limit) {
+                    if (counter.incrementAndGet() > COMMAND_LIMIT.getValue()) {
                         counter.decrementAndGet();
                         // Answer a not_allowed error since the user has exceeded limit. This
                         // checking prevents bad users from consuming all the system memory by not
@@ -166,9 +195,6 @@ public class AdHocCommandManager {
                         reply.setError(PacketError.Condition.not_allowed);
                         return reply;
                     }
-                    // Originate a new command session.
-                    SessionData session = new SessionData(sessionid, packet.getFrom());
-                    sessions.put(sessionid, session);
 
                     childElement.addAttribute("sessionid", sessionid);
                     childElement.addAttribute("node", commandCode);
@@ -194,9 +220,8 @@ public class AdHocCommandManager {
                 return reply;
             }
 
-            // Check if the Session data has expired (default is 10 minutes)
-            int timeout = JiveGlobals.getIntProperty("xmpp.command.timeout", 10 * 60 * 1000);
-            if (System.currentTimeMillis() - session.getCreationStamp() > timeout) {
+            // Check if the Session data has expired
+            if (Duration.between(session.getCreationInstant(), Instant.now()).compareTo(COMMAND_TIMEOUT.getValue()) > 0) {
                 // TODO Check all sessions that might have timed out (use another thread?)
                 // Remove the old session
                 removeSessionData(sessionid, from);

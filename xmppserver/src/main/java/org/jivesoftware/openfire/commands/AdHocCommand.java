@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,21 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 
 /**
- * An ad-hoc command is a stateless object responsbile for executing the provided service. Each
+ * An ad-hoc command is a stateless object responsible for executing the provided service. Each
  * subclass will only have one instance that will be shared across all users sessions. Therefore,
  * it is important to not keep any information related to executions as permanent data
  * (i.e. as instance or static variables). Each command has a {@code code} that should be
- * unique within a given JID.<p>
+ * unique within a given JID.
  *
  * Commands may have zero or more stages. Each stage is usually used for gathering information
  * required for the command execution. Users are able to move forward or backward across the
- * different stages. Commands may not be cancelled while they are beig executed. However, users
- * may request the "cancel" action when submiting a stage response indicating that the command
+ * different stages. Commands may not be cancelled while they are being executed. However, users
+ * may request the "cancel" action when submitting a stage response indicating that the command
  * execution should be aborted. Thus, releasing any collected information. Commands that require
  * user interaction (i.e. have more than one stage) will have to provide the data forms the user
  * must complete in each stage and the allowed actions the user might perform during each stage
@@ -61,9 +62,9 @@ public abstract class AdHocCommand {
     }
 
     /**
-     * Returns true if the requester is allowed to execute this command. By default only admins
+     * Returns true if the requester is allowed to execute this command. By default, only admins
      * are allowed to execute commands. Subclasses may redefine this method with any specific
-     * logic.<p>
+     * logic.
      *
      * Note: The bare JID of the requester will be compared with the bare JID of the admins.
      *
@@ -83,11 +84,11 @@ public abstract class AdHocCommand {
     public abstract String getCode();
 
     /**
-     * Returns the default label used for describing this commmand. This information is usually
+     * Returns the default label used for describing this command. This information is usually
      * used when returning commands as disco#items. Admins can later use {@link #setLabel(String)}
      * to set a new label and reset to the default value at any time.
      *
-     * @return the default label used for describing this commmand.
+     * @return the default label used for describing this command.
      */
     public abstract String getDefaultLabel();
 
@@ -97,47 +98,40 @@ public abstract class AdHocCommand {
      * parameter. When the max number of stages has been reached then the command is ready to
      * be executed.
      *
-     * @param data the gathered data through the command stages or {@code null} if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data metadata and the gathered data through the command stages.
      * @return the max number of stages for this command.
      */
-    public abstract int getMaxStages(SessionData data);
+    public abstract int getMaxStages(@Nonnull final SessionData data);
 
     /**
      * Executes the command with the specified session data.
      *
-     * @param data the gathered data through the command stages or {@code null} if the
-     *        command does not have stages.
+     * @param data metadata and the gathered data through the command stages.
      * @param command the command element to be sent to the command requester with a reported
      *        data result or note element with the answer of the execution.
      */
-    public abstract void execute(SessionData data, Element command);
+    public abstract void execute(@Nonnull final SessionData data, Element command);
 
     /**
      * Adds to the command element the data form or notes required by the current stage. The
      * current stage is specified in the SessionData. This method will never be invoked for
      * commands that have no stages.
      *
-     * @param data the gathered data through the command stages or {@code null} if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data metadata and the gathered data through the command stages.
      * @param command the command element to be sent to the command requester.
      */
-    protected abstract void addStageInformation(SessionData data, Element command);
+    protected abstract void addStageInformation(@Nonnull final SessionData data, Element command);
 
     /**
      * Returns a collection with the allowed actions based on the current stage as defined
      * in the SessionData. Possible actions are: {@code prev}, {@code next} and {@code complete}.
      * This method will never be invoked for commands that have no stages.
      *
-     * @param data the gathered data through the command stages or {@code null} if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data metadata and the gathered data through the command stages.
      * @return a collection with the allowed actions based on the current stage as defined
      *         in the SessionData.
      */
-    protected abstract List<Action> getActions(SessionData data);
+    protected abstract List<Action> getActions(@Nonnull final SessionData data);
 
     /**
      * Returns which of the actions available for the current stage is considered the equivalent
@@ -145,22 +139,20 @@ public abstract class AdHocCommand {
      * then the action will be assumed "execute" thus assuming the action returned by this
      * method. This method will never be invoked for commands that have no stages.
      *
-     * @param data the gathered data through the command stages or {@code null} if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data metadata and the gathered data through the command stages.
      * @return which of the actions available for the current stage is considered the equivalent
      *         to "execute".
      */
-    protected abstract Action getExecuteAction(SessionData data);
+    protected abstract Action getExecuteAction(@Nonnull final SessionData data);
 
     /**
      * Increments the stage number by one and adds to the command element the new data form and
      * new allowed actions that the user might perform.
      *
-     * @param data the gathered data through the command stages.
+     * @param data metadata and the gathered data through the command stages.
      * @param command the command element to be sent to the command requester.
      */
-    public void addNextStageInformation(SessionData data, Element command) {
+    public void addNextStageInformation(@Nonnull final SessionData data, Element command) {
         // Increment the stage number to the next stage
         data.setStage(data.getStage() + 1);
         // Return the data form of the current stage to the command requester. The
@@ -175,10 +167,10 @@ public abstract class AdHocCommand {
      * Decrements the stage number by one and adds to the command the data form and allowed
      * actions that the user might perform of the previous stage.
      *
-     * @param data the gathered data through the command stages.
+     * @param data metadata and the gathered data through the command stages.
      * @param command the command element to be sent to the command requester.
      */
-    public void addPreviousStageInformation(SessionData data, Element command) {
+    public void addPreviousStageInformation(@Nonnull final SessionData data, Element command) {
         // Decrement the stage number to the previous stage
         data.setStage(data.getStage() - 1);
         // Return the data form of the current stage to the command requester. The
@@ -193,12 +185,10 @@ public abstract class AdHocCommand {
      * Adds the allowed actions to follow from the current stage. Possible actions are:
      * {@code prev}, {@code next} and {@code complete}.
      *
-     * @param data the gathered data through the command stages or {@code null} if the
-     *        command does not have stages or the requester is requesting the execution for the
-     *        first time.
+     * @param data metadata and the gathered data through the command stages.
      * @param command the command element to be sent to the command requester.
      */
-    protected void addStageActions(SessionData data, Element command) {
+    protected void addStageActions(@Nonnull final SessionData data, Element command) {
         // Add allowed actions to the response
         Element actions = command.addElement("actions");
         List<Action> validActions = getActions(data);

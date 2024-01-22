@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.commands;
 
 import org.xmpp.packet.JID;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,7 @@ public class SessionData {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    private final long creationStamp;
+    private final Instant creationStamp;
 
     private final String id;
     private final JID owner;
@@ -62,7 +63,7 @@ public class SessionData {
 
     public SessionData(String sessionid, JID owner) {
         this.id = sessionid;
-        this.creationStamp = System.currentTimeMillis();
+        this.creationStamp = Instant.now();
         this.stage = -1;
         this.owner = owner;
     }
@@ -80,7 +81,12 @@ public class SessionData {
         return owner;
     }
 
+    @Deprecated // replaced by getCreationInstant. Remove in Openfire 4.9.0 or later.
     public long getCreationStamp() {
+        return creationStamp.toEpochMilli();
+    }
+
+    public Instant getCreationInstant() {
         return creationStamp;
     }
 

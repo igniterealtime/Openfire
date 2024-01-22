@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
 
 /**
- * Command that allows to retrieve the number of online users who are active at any one moment.
- * Active users are those users that have sent an available presence.
+ * Command that allows to retrieve the number of registered users
  *
- * @author Gaston Dombiak
- * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-num">XEP-0133 Service Administration: Get Number of Active Users</a>
+ * @author Guus der Kinderen, guus@goodbytes.nl
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-registered-users-num">XEP-0133 Service Administration: Get Number of Registered Users</a>
  */
-public class GetNumberActiveUsers extends AdHocCommand {
+public class GetNumberRegisteredUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(@Nonnull final SessionData data, Element command) {
@@ -55,17 +54,9 @@ public class GetNumberActiveUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberactiveusers.form.field.activeusersnum.label", preferredLocale));
-        field.setVariable("activeusersnum");
-        // Make sure that we are only counting based on bareJIDs and not fullJIDs
-        Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<>(sessions.size());
-        for (ClientSession session : sessions) {
-            if (session.getPresence().isAvailable()) {
-                users.add(session.getAddress().toBareJID());
-            }
-        }
-        field.addValue(users.size());
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberregisteredusers.form.field.registeredusersnum.label", preferredLocale));
+        field.setVariable("registeredusersnum");
+        field.addValue(UserManager.getInstance().getUserCount());
 
         command.add(form.getElement());
     }
@@ -78,12 +69,12 @@ public class GetNumberActiveUsers extends AdHocCommand {
 
     @Override
     public String getCode() {
-        return "http://jabber.org/protocol/admin#get-active-users-num";
+        return "http://jabber.org/protocol/admin#get-registered-users-num";
     }
 
     @Override
     public String getDefaultLabel() {
-        return LocaleUtils.getLocalizedString("commands.admin.getnumberactiveusers.label");
+        return LocaleUtils.getLocalizedString("commands.admin.getnumberregisteredusers.label");
     }
 
     @Override

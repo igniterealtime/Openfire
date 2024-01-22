@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,25 @@
 package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that returns information about the admin console. This command
@@ -42,12 +46,14 @@ import java.util.List;
 public class GetAdminConsoleInfo extends AdHocCommand {
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         //Do nothing since there are no stages
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -65,7 +71,7 @@ public class GetAdminConsoleInfo extends AdHocCommand {
         int adminSecurePort = adminConsolePlugin.getAdminSecurePort();
 
         if (bindInterface == null) {
-            Enumeration<NetworkInterface> nets = null;
+            Enumeration<NetworkInterface> nets;
             try {
                 nets = NetworkInterface.getNetworkInterfaces();
             } catch (SocketException e) {
@@ -79,9 +85,8 @@ public class GetAdminConsoleInfo extends AdHocCommand {
                     if ("127.0.0.1".equals(address.getHostAddress()) || "0:0:0:0:0:0:0:1".equals(address.getHostAddress())) {
                         continue;
                     }
-                    Socket socket = new Socket();
                     InetSocketAddress remoteAddress = new InetSocketAddress(address, adminPort > 0 ? adminPort : adminSecurePort);
-                    try {
+                    try (Socket socket = new Socket()){
                         socket.connect(remoteAddress);
                         bindInterface = address.getHostAddress();
                         found = true;
@@ -100,28 +105,28 @@ public class GetAdminConsoleInfo extends AdHocCommand {
         if (bindInterface == null) {
             Element note = command.addElement("note");
             note.addAttribute("type", "error");
-            note.setText("Couldn't find a valid interface.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.getadminconsoleinfo.note.no-bind-interface", preferredLocale));
             return;            
         }
 
         // Add the bind interface
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Bind interface");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getadminconsoleinfo.form.field.bindinterface.label", preferredLocale));
         field.setVariable("bindInterface");
         field.addValue(bindInterface);
 
         // Add the port
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Port");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getadminconsoleinfo.form.field.adminport.label", preferredLocale));
         field.setVariable("adminPort");
         field.addValue(adminPort);
 
         // Add the secure port
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Secure port");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getadminconsoleinfo.form.field.adminsecureport.label", preferredLocale));
         field.setVariable("adminSecurePort");
         field.addValue(adminSecurePort);
 
@@ -129,7 +134,7 @@ public class GetAdminConsoleInfo extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
@@ -141,17 +146,17 @@ public class GetAdminConsoleInfo extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get admin console info.";
+        return LocaleUtils.getLocalizedString("commands.admin.getadminconsoleinfo.label");
     }
 
     @Override
-    protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 0;
     }
 

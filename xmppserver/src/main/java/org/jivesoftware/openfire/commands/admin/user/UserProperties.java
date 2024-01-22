@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,21 @@
 package org.jivesoftware.openfire.commands.admin.user;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 /**
  *  An adhoc command to retrieve the properties of the user.
@@ -40,16 +45,16 @@ public class UserProperties extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get User Properties";
+        return LocaleUtils.getLocalizedString("commands.admin.user.userproperties.label");
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -59,7 +64,7 @@ public class UserProperties extends AdHocCommand {
 
         List<String> accounts = data.getData().get("accountjids");
 
-        if (accounts != null && accounts.size() > 0) {
+        if (accounts != null && !accounts.isEmpty()) {
             populateResponseFields(form, accounts);
         }
 
@@ -91,16 +96,18 @@ public class UserProperties extends AdHocCommand {
             }
 
             jidField.addValue(account);
-            emailField.addValue(user.getEmail());
+            emailField.addValue(Objects.requireNonNullElse(user.getEmail(), ""));
             nameField.addValue(user.getName());
         }
     }
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Retrieve Users' Information");
-        form.addInstruction("Fill out this form to retrieve users' information.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.userproperties.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.userproperties.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -109,7 +116,7 @@ public class UserProperties extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("The list of Jabber IDs to retrive the information");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.userproperties.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 
@@ -118,12 +125,12 @@ public class UserProperties extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 }

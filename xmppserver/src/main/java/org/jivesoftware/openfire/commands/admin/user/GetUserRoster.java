@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package org.jivesoftware.openfire.commands.admin.user;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
@@ -33,20 +34,23 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
- * Delete a user from Openfire if the provider is not read-only. See
+ * Gets the roster of a user
  *
- * @author John Georgiadis
- * @see <a href="https://xmpp.org/extensions/xep-0133.html#delete-user">XEP-0133 Service Administration: Delete User</a>
+ * The implementation uses Openfire's LockOutManager to apply the configuration state.
+ *
+ * @author Guus der Kinderen, guus@goodbytes.nl
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-user-roster">XEP-0133 Service Administration: Get User Roster</a>
  */
-public class DeleteUser extends AdHocCommand {
+public class GetUserRoster extends AdHocCommand
+{
     @Override
     public String getCode() {
-        return "http://jabber.org/protocol/admin#delete-user";
+        return "http://jabber.org/protocol/admin#get-user-roster";
     }
 
     @Override
     public String getDefaultLabel() {
-        return LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.label");
+        return LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.label");
     }
 
     @Override
@@ -55,21 +59,24 @@ public class DeleteUser extends AdHocCommand {
     }
 
     @Override
-    public void execute(@Nonnull SessionData sessionData, Element command) {
+    public void execute(@Nonnull SessionData sessionData, Element command)
+    {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
 
         Element note = command.addElement("note");
-        // Check if users cannot be modified (backend is read-only)
-        if (UserManager.getUserProvider().isReadOnly()) {
+
+        // Check if rosters are enabled
+        if (!RosterManager.isRosterServiceEnabled()) {
             note.addAttribute("type", "error");
-            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.users-readonly", preferredLocale));
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.rosterservice-disabled", preferredLocale));
             return;
         }
+
         Map<String, List<String>> data = sessionData.getData();
 
-        // Let's create the jids and check that they are a local user
         boolean requestError = false;
-        final List<User> toDelete = new ArrayList<>();
+        Map<JID, Roster> rosters = new HashMap<>();
+        final RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
         for ( final String accountjid : data.get( "accountjids" ))
         {
             JID account;
@@ -80,43 +87,71 @@ public class DeleteUser extends AdHocCommand {
                 if ( !XMPPServer.getInstance().isLocal( account ) )
                 {
                     note.addAttribute( "type", "error" );
-                    note.setText( LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.jid-not-local", List.of(accountjid), preferredLocale));
+                    note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.jid-not-local", List.of(accountjid), preferredLocale));
                     requestError = true;
                 }
                 else
                 {
-                    User user = UserManager.getInstance().getUser( account.getNode() );
-                    toDelete.add( user );
+                    rosters.put(account, rosterManager.getRoster(account.getNode()));
                 }
-            }
-            catch (IllegalArgumentException e) {
-                note.addAttribute("type", "error");
-                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.jid-invalid", preferredLocale));
-                return;
             }
             catch ( NullPointerException npe )
             {
                 note.addAttribute( "type", "error" );
-                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.jid-required", preferredLocale));
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.jid-required", preferredLocale));
+                requestError = true;
+            }
+            catch (IllegalArgumentException npe)
+            {
+                note.addAttribute( "type", "error" );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.jid-invalid", preferredLocale));
                 requestError = true;
             }
             catch ( UserNotFoundException e )
             {
                 note.addAttribute( "type", "error" );
-                note.setText( LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.note.user-does-not-exist", List.of(accountjid), preferredLocale));
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.user-does-not-exist", List.of(accountjid), preferredLocale));
                 requestError = true;
             }
         }
 
+        if (rosters.size() > 1) {
+            note.addAttribute( "type", "error" );
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.note.cannot-return-multiple", preferredLocale));
+            requestError = true;
+        }
+
         if ( requestError )
         {
-            // We've collected all errors. Return without deleting anything.
+            // We've collected all errors. Return without applying changes.
             return;
         }
 
-        // No errors. Delete all users.
-        for ( final User user : toDelete ) {
-            UserManager.getInstance().deleteUser(user);
+        // No errors.
+        for (final Map.Entry<JID, Roster> entry : rosters.entrySet()) {
+            final JID owner = entry.getKey();
+            final Roster roster = entry.getValue();
+
+            DataForm form = new DataForm(DataForm.Type.result);
+
+            FormField field = form.addField();
+            field.setType(FormField.Type.hidden);
+            field.setVariable("FORM_TYPE");
+            field.addValue("http://jabber.org/protocol/admin");
+
+            field = form.addField();
+            field.setType(FormField.Type.jid_multi);
+            field.setVariable("accountjids");
+            field.addValue(owner);
+
+            final Element rosterElement = roster.getReset().getElement()
+                .element(QName.get("query", "jabber:iq:roster"));
+
+            if (rosterElement != null) {
+                form.getElement().add(rosterElement.createCopy());
+            }
+
+            command.add(form.getElement());
         }
 
         // Answer that the operation was successful
@@ -129,8 +164,8 @@ public class DeleteUser extends AdHocCommand {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.form.title", preferredLocale));
-        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.form.instruction", preferredLocale));
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -139,7 +174,7 @@ public class DeleteUser extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.deleteuser.form.field.accountjid.label", preferredLocale));
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.user.getuserroster.form.field.accountjid.label", preferredLocale));
         field.setVariable("accountjids");
         field.setRequired(true);
 
@@ -153,13 +188,13 @@ public class DeleteUser extends AdHocCommand {
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
-        return AdHocCommand.Action.complete;
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
+        return Action.complete;
     }
 
     @Override
     public boolean hasPermission(JID requester) {
         return (super.hasPermission(requester) || InternalComponentManager.getInstance().hasComponent(requester))
-                && !UserManager.getUserProvider().isReadOnly();
+                && RosterManager.isRosterServiceEnabled();
     }
 }

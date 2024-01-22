@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,32 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.annotation.Nonnull;
+import java.util.*;
 
 /**
  * Command that allows to retrieve the number of registered users who are online at
  * any one moment. By "online user" is meant any user or account that currently has
- * an IM session that may or may no be available.
+ * an IM session that may or may not be available.
  *
  * @author Gaston Dombiak
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-online-users-num">XEP-0133 Service Administration: Get Number of Online Users</a>
  */
 public class GetNumberOnlineUsers extends AdHocCommand {
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         //Do nothing since there are no stages
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.result);
 
         FormField field = form.addField();
@@ -54,7 +56,7 @@ public class GetNumberOnlineUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel(getLabel());
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getnumberonlineusers.form.field.onlineusersnum.label", preferredLocale));
         field.setVariable("onlineusersnum");
 
         // Make sure that we are only counting based on bareJIDs and not fullJIDs
@@ -69,7 +71,7 @@ public class GetNumberOnlineUsers extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
@@ -81,18 +83,17 @@ public class GetNumberOnlineUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        // TODO Use i18n
-        return "Number of Online Users";
+        return LocaleUtils.getLocalizedString("commands.admin.getnumberonlineusers.label");
     }
 
     @Override
-    protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 0;
     }
 }

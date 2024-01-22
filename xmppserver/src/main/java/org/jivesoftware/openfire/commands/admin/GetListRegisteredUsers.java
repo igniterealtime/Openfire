@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,36 @@ package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
-import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 /**
- * Command that allows to retrieve a list of all active users.
+ * Command that allows to retrieve a list of all registered users.
  *
- * @author Gaston Dombiak
- * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-list">XEP-0133 Service Administration: Get List of Active Users</a>
+ * @author Guus der Kinderen, guus@goodbytes.nl
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-registered-users-list">XEP-0133 Service Administration: Get List of Registered Users</a>
  */
-public class GetListActiveUsers extends AdHocCommand {
+public class GetListRegisteredUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.title", preferredLocale));
-        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.instruction", preferredLocale));
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -91,35 +96,27 @@ public class GetListActiveUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.field.activeuserjids.label", preferredLocale));
-        field.setVariable("activeuserjids");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.form.field.registereduserjids.label", preferredLocale));
+        field.setVariable("registereduserjids");
 
-        // Get list of users (i.e. bareJIDs) that are connected to the server
-        Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
-        Set<String> users = new HashSet<>(sessions.size());
-        for (ClientSession session : sessions) {
-            if (session.getPresence().isAvailable()) {
-                users.add(session.getAddress().toBareJID());
-            }
-            if (maxItems > 0 && users.size() >= maxItems) {
-                break;
-            }
-        }
+        // Get list of users (i.e. bareJIDs) that are registered on the server
+        final Collection<User> users = UserManager.getInstance().getUsers(0, maxItems);
+
         // Add users to the result
-        for (String user : users) {
-            field.addValue(user);
+        for (User user : users) {
+            field.addValue(XMPPServer.getInstance().createJID(user.getUsername(), null));
         }
         command.add(form.getElement());
     }
 
     @Override
     public String getCode() {
-        return "http://jabber.org/protocol/admin#get-active-users";
+        return "http://jabber.org/protocol/admin#get-registered-users-list";
     }
 
     @Override
     public String getDefaultLabel() {
-        return LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.label");
+        return LocaleUtils.getLocalizedString("commands.admin.getlistregisteredusers.label");
     }
 
     @Override

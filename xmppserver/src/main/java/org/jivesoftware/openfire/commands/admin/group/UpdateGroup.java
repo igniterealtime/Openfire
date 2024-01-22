@@ -100,7 +100,6 @@ public class UpdateGroup extends AdHocCommand {
             field.setType(FormField.Type.list_single);
             field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.updategroup.form.stage1.field.showinroster.label", preferredLocale));
             field.setVariable("showInRoster");
-            field.addValue("nobody");
             field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.updategroup.form.stage1.field.showinroster.option.nobody.label", preferredLocale), "nobody");
             field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.updategroup.form.stage1.field.showinroster.option.everybody.label", preferredLocale), "everybody");
             field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.updategroup.form.stage1.field.showinroster.option.onlygroup.label", preferredLocale), "onlyGroup");
@@ -128,6 +127,8 @@ public class UpdateGroup extends AdHocCommand {
                         break;
                 }
                 field.addValue(showInRoster);
+            } else {
+                field.addValue("nobody");
             }
 
             field = form.addField();

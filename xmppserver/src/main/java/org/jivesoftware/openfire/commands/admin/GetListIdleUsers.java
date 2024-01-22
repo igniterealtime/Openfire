@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,21 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
- * Command that allows to retrieve a list of all active users.
+ * Command that allows to retrieve the list of idle users. Idle users are those that are online, but not active.
+ * Active users are those users that have sent an available presence.
  *
- * @author Gaston Dombiak
- * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-list">XEP-0133 Service Administration: Get List of Active Users</a>
+ * @author Guus der Kinderen, guus@goodbytes.nl
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-idle-users-list">XEP-0133 Service Administration: Get List of Idle Users</a>
  */
-public class GetListActiveUsers extends AdHocCommand {
+public class GetListIdleUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.title", preferredLocale));
-        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.instruction", preferredLocale));
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -91,20 +92,22 @@ public class GetListActiveUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.field.activeuserjids.label", preferredLocale));
-        field.setVariable("activeuserjids");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.form.field.activeuserjids.label", preferredLocale));
+        field.setVariable("activeuserjids"); // The XEP uses this variable ('active') rather than something like 'idleuserjids'.
 
-        // Get list of users (i.e. bareJIDs) that are connected to the server
+        // Make sure that we are only counting based on bareJIDs and not fullJIDs
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
         Set<String> users = new HashSet<>(sessions.size());
         for (ClientSession session : sessions) {
-            if (session.getPresence().isAvailable()) {
+            if (!session.getPresence().isAvailable()) {
                 users.add(session.getAddress().toBareJID());
-            }
-            if (maxItems > 0 && users.size() >= maxItems) {
-                break;
+
+                if (maxItems > 0 && users.size() >= maxItems) {
+                    break;
+                }
             }
         }
+
         // Add users to the result
         for (String user : users) {
             field.addValue(user);
@@ -114,12 +117,12 @@ public class GetListActiveUsers extends AdHocCommand {
 
     @Override
     public String getCode() {
-        return "http://jabber.org/protocol/admin#get-active-users";
+        return "http://jabber.org/protocol/admin#get-idle-users";
     }
 
     @Override
     public String getDefaultLabel() {
-        return LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.label");
+        return LocaleUtils.getLocalizedString("commands.admin.getlistidleusers.label");
     }
 
     @Override

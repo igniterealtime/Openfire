@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.commands.event;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -23,14 +24,13 @@ import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.Nonnull;
+import java.util.*;
 
 /**
  * Notifies the that a user was modified. It can be used by user providers to notify Openfire of the
@@ -46,16 +46,18 @@ public class UserModified extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "User modified";
+        return LocaleUtils.getLocalizedString("commands.event.usermodified.label");
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 
     @Override
-    public void execute(SessionData sessionData, Element command) {
+    public void execute(@Nonnull SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -67,7 +69,7 @@ public class UserModified extends AdHocCommand {
         }
         catch (NullPointerException npe) {
             note.addAttribute("type", "error");
-            note.setText("Username required parameter.");
+            note.setText(LocaleUtils.getLocalizedString("commands.event.usermodified.note.username-required", preferredLocale));
             return;
         }
 
@@ -78,7 +80,7 @@ public class UserModified extends AdHocCommand {
         }
         catch (NullPointerException npe) {
             note.addAttribute("type", "error");
-            note.setText("Change type required parameter.");
+            note.setText(LocaleUtils.getLocalizedString("commands.event.usermodified.note.changetype-required", preferredLocale));
             return;
         }
 
@@ -90,20 +92,20 @@ public class UserModified extends AdHocCommand {
                 "creationDateModified".equals(type) || "modificationDateModified".equals(type)) {
 
             valueVariable = "originalValue";
-            valueVariableName = "Original value";
+            valueVariableName = LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.originalvalue.label", preferredLocale);
 
         } else if ("propertyModified".equals(type) || "propertyAdded".equals(type) ||
                 "propertyDeleted".equals(type)) {
 
             valueVariable = "propertyKey";
-            valueVariableName = "Property key";
+            valueVariableName = LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.propertykey.label", preferredLocale);
 
         }
 
         // Creates event params.
         Map<String, Object> params = new HashMap<>();
 
-        // Gets the value of the change if it exist
+        // Gets the value of the change if it exists
         String value;
         if (valueVariable != null) {
             try {
@@ -114,7 +116,8 @@ public class UserModified extends AdHocCommand {
 
             } catch (NullPointerException npe) {
                 note.addAttribute("type", "error");
-                note.setText(valueVariableName + " required parameter.");
+                note.setText(LocaleUtils.getLocalizedString("commands.event.usermodified.note.wildcard-required", List.of(valueVariableName), preferredLocale)
+                );
                 return;
             }
         }
@@ -134,20 +137,22 @@ public class UserModified extends AdHocCommand {
 
         } catch (UserNotFoundException e) {
             note.addAttribute("type", "error");
-            note.setText("User not found.");
+            note.setText(LocaleUtils.getLocalizedString("commands.event.usermodified.note.user-does-not-exist", preferredLocale));
             return;
         }
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Dispatching a user updated event.");
-        form.addInstruction("Fill out this form to dispatch a user updated event.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.event.usermodified.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.event.usermodified.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -156,32 +161,32 @@ public class UserModified extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The username of the user that was updated");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.username.label", preferredLocale));
         field.setVariable("username");
         field.setRequired(true);
 
         field.setType(FormField.Type.list_single);
-        field.setLabel("Change type");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.label", preferredLocale));
         field.setVariable("changeType");
-        field.addOption("Name modified", "nameModified");
-        field.addOption("Email modified", "emailModified");
-        field.addOption("Password modified", "passwordModified");
-        field.addOption("Creation date modified", "creationDateModified");
-        field.addOption("Modification date modified", "modificationDateModified");
-        field.addOption("Property modified", "propertyModified");
-        field.addOption("Property added", "propertyAdded");
-        field.addOption("Property deleted", "propertyDeleted");
-        field.addOption("Other", "other");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.namemodified.label", preferredLocale), "nameModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.emailmodified.label", preferredLocale), "emailModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.passwordmodified.label", preferredLocale), "passwordModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.creationdatemodified.label", preferredLocale), "creationDateModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.modificationdatemodified.label", preferredLocale), "modificationDateModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.propertymodified.label", preferredLocale), "propertyModified");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.propertyadded.label", preferredLocale), "propertyAdded");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.propertydeleted.label", preferredLocale), "propertyDeleted");
+        field.addOption(LocaleUtils.getLocalizedString("commands.event.usermodified.form.field.changetype.option.other.label", preferredLocale), "other");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Original value");
+        field.setLabel(LocaleUtils.getLocalizedString("", preferredLocale));
         field.setVariable("originalValue");
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Name of the property");
+        field.setLabel(LocaleUtils.getLocalizedString("", preferredLocale));
         field.setVariable("propertyKey");
 
         // Add the form to the command
@@ -189,12 +194,12 @@ public class UserModified extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
         return Action.complete;
     }
 

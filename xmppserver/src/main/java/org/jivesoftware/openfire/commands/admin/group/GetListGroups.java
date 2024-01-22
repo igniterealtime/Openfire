@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,33 @@
 package org.jivesoftware.openfire.commands.admin.group;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.Nonnull;
+import java.util.*;
 
 /**
  * Command that allows to retrieve a list of existing groups.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
  */
 public class GetListGroups extends AdHocCommand {
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Requesting List of Existing Groups");
-        form.addInstruction("Fill out this form to request list of groups.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -52,7 +52,7 @@ public class GetListGroups extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Start from page number");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.start", preferredLocale));
         field.setVariable("start");
         field.addValue("0");
         field.addOption("0", "0");
@@ -66,7 +66,7 @@ public class GetListGroups extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Maximum number of items to show");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.global.operation.pagination.max_items", preferredLocale));
         field.setVariable("max_items");
         field.addValue("25");
         field.addOption("25", "25");
@@ -75,7 +75,7 @@ public class GetListGroups extends AdHocCommand {
         field.addOption("100", "100");
         field.addOption("150", "150");
         field.addOption("200", "200");
-        field.addOption("None", "none");
+        field.addOption(LocaleUtils.getLocalizedString("commands.global.operation.pagination.none", preferredLocale), "none");
         field.setRequired(true);
 
         // Add the form to the command
@@ -83,37 +83,43 @@ public class GetListGroups extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
-        String start = data.getData().get("start").get(0);
-        String max_items = data.getData().get("max_items").get(0);
+    public void execute(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         int nStart = 0;
-        if (start != null) {
-            try {
-                nStart = Integer.parseInt(start);
-            }
-            catch (NumberFormatException e) {
-                // Do nothing. Assume default value
+        final List<String> start_data = data.getData().get("start");
+        if (start_data != null && !start_data.isEmpty()) {
+            String start = start_data.get(0);
+            if (start != null && !"none".equals(start)) {
+                try {
+                    nStart = Integer.parseInt(start);
+                } catch (NumberFormatException e) {
+                    // Do nothing. Assume that all users are being requested
+                }
             }
         }
         int maxItems = 100000;
-        if (max_items != null && !"none".equals(max_items)) {
-            try {
-                maxItems = Integer.parseInt(max_items);
-            }
-            catch (NumberFormatException e) {
-                // Do nothing. Assume that all users are being requested
+        final List<String> max_items_data = data.getData().get("max_items");
+        if (max_items_data != null && !max_items_data.isEmpty()) {
+            String max_items = max_items_data.get(0);
+            if (max_items != null && !"none".equals(max_items)) {
+                try {
+                    maxItems = Integer.parseInt(max_items);
+                } catch (NumberFormatException e) {
+                    // Do nothing. Assume that all users are being requested
+                }
             }
         }
 
         DataForm form = new DataForm(DataForm.Type.result);
 
-        form.addReportedField("name", "Name", FormField.Type.text_single);
-        form.addReportedField("desc", "Description", FormField.Type.text_multi);
-        form.addReportedField("count", "User Count", FormField.Type.text_single);
-        form.addReportedField("shared", "Shared group?", FormField.Type.boolean_type);
-        form.addReportedField("display", "Display Name", FormField.Type.text_single);
-        form.addReportedField("visibility", "Visibility", FormField.Type.text_single);
-        form.addReportedField("groups", "Show group to members' rosters of these groups", FormField.Type.text_multi);
+        form.addReportedField("name", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.name.label", preferredLocale), FormField.Type.text_single);
+        form.addReportedField("desc", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.desc.label", preferredLocale), FormField.Type.text_multi);
+        form.addReportedField("count", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.count.label", preferredLocale), FormField.Type.text_single);
+        form.addReportedField("shared", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.shared.label", preferredLocale), FormField.Type.boolean_type);
+        form.addReportedField("display", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.display.label", preferredLocale), FormField.Type.text_single);
+        form.addReportedField("visibility", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.visibility.label", preferredLocale), FormField.Type.text_single);
+        form.addReportedField("groups", LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.groups.label", preferredLocale), FormField.Type.text_multi);
 
         // Add groups to the result
         for (Group group : GroupManager.getInstance().getGroups(nStart, maxItems)) {
@@ -131,17 +137,17 @@ public class GetListGroups extends AdHocCommand {
             } else {
                 switch (group.getSharedWith()) {
                     case nobody:
-                        showInRoster = "nobody";
+                        showInRoster = LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.visibility.nobody.label", preferredLocale);
                         break;
                     case everybody:
-                        showInRoster = "everybody";
+                        showInRoster = LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.visibility.everybody.label", preferredLocale);
                         break;
                     case usersOfGroups:
                         final List<String> sharedWith = group.getSharedWithUsersInGroupNames();
                         if (sharedWith.isEmpty() || (sharedWith.size() == 1 && sharedWith.contains(group.getName()))) {
-                            showInRoster = "onlyGroup";
+                            showInRoster = LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.visibility.onlygroup.label", preferredLocale);
                         } else {
-                            showInRoster = "spefgroups";
+                            showInRoster = LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.form.reportedfield.visibility.spefgroups.label", preferredLocale);
                         }
                         break;
                     default:
@@ -163,21 +169,21 @@ public class GetListGroups extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get List of Existing Groups";
+        return LocaleUtils.getLocalizedString("commands.admin.group.getlistgroups.label");
     }
 
     @Override
-    protected List<AdHocCommand.Action> getActions(SessionData data) {
+    protected List<AdHocCommand.Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

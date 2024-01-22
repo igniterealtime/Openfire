@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,26 +30,25 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.text.DecimalFormat;
 import java.util.*;
 
 /**
  * Command that returns information about the server and some basic statistics. This command
  * can only be executed by administrators or components of the server.
- *
- * TODO Use i18n
  * 
  * @author Gaston Dombiak
  */
 public class GetServerStats extends AdHocCommand {
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         //Do nothing since there are no stages
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.result);
@@ -138,7 +137,7 @@ public class GetServerStats extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
@@ -150,17 +149,17 @@ public class GetServerStats extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Get basic statistics of the server.";
+        return LocaleUtils.getLocalizedString("commands.admin.getserverstats.label");
     }
 
     @Override
-    protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
         //Do nothing since there are no stages
         return null;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 0;
     }
 

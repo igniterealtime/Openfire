@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,38 +17,42 @@
 package org.jivesoftware.openfire.commands.admin.group;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNameInvalidException;
+import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * Command that allows to create and configure new goups.
+ * Command that allows to create and configure new groups.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
  */
 public class AddGroup extends AdHocCommand {
     
     private static final Logger Log = LoggerFactory.getLogger(AddGroup.class);
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Create new group");
-        form.addInstruction("Fill out this form to create a new group.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -57,29 +61,29 @@ public class AddGroup extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Group Name");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.group.label", preferredLocale));
         field.setVariable("group");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_multi);
-        field.setLabel("Description");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.desc.label", preferredLocale));
         field.setVariable("desc");
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("Initial members");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.members.label", preferredLocale));
         field.setVariable("members");
 
         field = form.addField();
         field.setType(FormField.Type.list_single);
-        field.setLabel("Shared group visibility");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.showinroster.label", preferredLocale));
         field.setVariable("showInRoster");
         field.addValue("nobody");
-        field.addOption("Disable sharing group in rosters", "nobody");
-        field.addOption("Show group in all users' rosters", "everybody");
-        field.addOption("Show group in group members' rosters", "onlyGroup");
-        field.addOption("Show group to members' rosters of these groups", "spefgroups");
+        field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.showinroster.option.nobody.label", preferredLocale), "nobody");
+        field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.showinroster.option.everybody.label", preferredLocale), "everybody");
+        field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.showinroster.option.onlygroup.label", preferredLocale), "onlyGroup");
+        field.addOption(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.showinroster.option.spefgroups.label", preferredLocale), "spefgroups");
         field.setRequired(true);
 
         field = form.addField();
@@ -91,7 +95,7 @@ public class AddGroup extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Group Display Name");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.form.field.displayname.label", preferredLocale));
         field.setVariable("displayName");
 
         // Add the form to the command
@@ -99,12 +103,14 @@ public class AddGroup extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
             note.addAttribute("type", "error");
-            note.setText("Groups are read only");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.note.groups-readonly", preferredLocale));
             return;
         }
         // Get requested group
@@ -114,12 +120,12 @@ public class AddGroup extends AdHocCommand {
         } catch (GroupAlreadyExistsException e) {
             // Group not found
             note.addAttribute("type", "error");
-            note.setText("Group already exists");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.note.group-exists", preferredLocale));
             return;
         } catch (GroupNameInvalidException e) {
             // Group name not valid
             note.addAttribute("type", "error");
-            note.setText("Group name is not valid");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.addgroup.note.group-name-invalid", preferredLocale));
             return;
         }
 
@@ -182,7 +188,7 @@ public class AddGroup extends AdHocCommand {
         }
 
         note.addAttribute("type", "info");
-        note.setText("Operation finished" + (withErrors ? " with errors" : " successfully"));
+        note.setText(LocaleUtils.getLocalizedString((withErrors ? "commands.global.operation.finished.with-errors" : "commands.global.operation.finished.success"), preferredLocale));
     }
 
     @Override
@@ -192,21 +198,21 @@ public class AddGroup extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Create new group";
+        return LocaleUtils.getLocalizedString("commands.admin.group.addgroup.label");
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

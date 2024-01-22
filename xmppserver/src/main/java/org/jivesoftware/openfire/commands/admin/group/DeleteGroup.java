@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,34 @@
 package org.jivesoftware.openfire.commands.admin.group;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to delete existing groups.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
  */
 public class DeleteGroup extends AdHocCommand {
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Delete group");
-        form.addInstruction("Fill out this form to delete a group.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.group.deletegroup.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.group.deletegroup.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -49,7 +53,7 @@ public class DeleteGroup extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Group Name");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.deletegroup.form.field.group.label", preferredLocale));
         field.setVariable("group");
         field.setRequired(true);
 
@@ -58,12 +62,14 @@ public class DeleteGroup extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
             note.addAttribute("type", "error");
-            note.setText("Groups are read only");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.deletegroup.note.groups-readonly", preferredLocale));
             return;
         }
         // Get requested group
@@ -74,12 +80,12 @@ public class DeleteGroup extends AdHocCommand {
         } catch (GroupNotFoundException e) {
             // Group not found
             note.addAttribute("type", "error");
-            note.setText("Group name does not exist");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.deletegroup.note.group-does-not-exist", preferredLocale));
             return;
         }
 
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
@@ -89,21 +95,21 @@ public class DeleteGroup extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Delete group";
+        return LocaleUtils.getLocalizedString("commands.admin.group.deletegroup.label");
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

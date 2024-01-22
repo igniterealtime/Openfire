@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,38 +17,42 @@
 package org.jivesoftware.openfire.commands.admin.group;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.text.ParseException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Command that allows to add members or admins to a given group.
  *
  * @author Gaston Dombiak
- *
- * TODO Use i18n
  */
 public class AddGroupUsers extends AdHocCommand {
     
     private static final Logger Log = LoggerFactory.getLogger(AddGroupUsers.class);
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Add members or admins to a group");
-        form.addInstruction("Fill out this form to add new members or admins to a group.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -57,20 +61,20 @@ public class AddGroupUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("Group Name");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.form.field.group.label", preferredLocale));
         field.setVariable("group");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.boolean_type);
-        field.setLabel("Admin");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.form.field.admin.label", preferredLocale));
         field.setVariable("admin");
         field.addValue(false);
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel("Users");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.form.field.users.label", preferredLocale));
         field.setVariable("users");
         field.setRequired(true);
 
@@ -79,12 +83,14 @@ public class AddGroupUsers extends AdHocCommand {
     }
 
     @Override
-    public void execute(SessionData data, Element command) {
+    public void execute(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         Element note = command.addElement("note");
         // Check if groups cannot be modified (backend is read-only)
         if (GroupManager.getInstance().isReadOnly()) {
             note.addAttribute("type", "error");
-            note.setText("Groups are read only");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.note.groups-readonly", preferredLocale));
             return;
         }
         // Get requested group
@@ -94,7 +100,7 @@ public class AddGroupUsers extends AdHocCommand {
         } catch (GroupNotFoundException e) {
             // Group not found
             note.addAttribute("type", "error");
-            note.setText("Group name does not exist");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.note.group-does-not-exist", preferredLocale));
             return;
         }
 
@@ -104,7 +110,7 @@ public class AddGroupUsers extends AdHocCommand {
             isAdmin = DataForm.parseBoolean( admin );
         } catch ( ParseException e ) {
             note.addAttribute("type", "error");
-            note.setText("admin has invalid value. Needs to be boolean.");
+            note.setText(LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.note.admin-invalid", preferredLocale));
             return;
         }
         Collection<JID> users = (isAdmin ? group.getAdmins() : group.getMembers());
@@ -120,7 +126,7 @@ public class AddGroupUsers extends AdHocCommand {
         }
 
         note.addAttribute("type", "info");
-        note.setText("Operation finished" + (withErrors ? " with errors" : " successfully"));
+        note.setText(LocaleUtils.getLocalizedString((withErrors ? "commands.global.operation.finished.with-errors" : "commands.global.operation.finished.success"), preferredLocale));
     }
 
     @Override
@@ -130,21 +136,21 @@ public class AddGroupUsers extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Add members or admins to a group";
+        return LocaleUtils.getLocalizedString("commands.admin.group.addgroupusers.label");
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected AdHocCommand.Action getExecuteAction(SessionData data) {
+    protected AdHocCommand.Action getExecuteAction(@Nonnull final SessionData data) {
         return AdHocCommand.Action.complete;
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,24 @@ package org.jivesoftware.openfire.commands.event;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
- * Notifies the that a admin was removed from the group. It can be used by user providers to notify Openfire of the
- * deletion of a admin of the group.
+ * Notifies the that an admin was removed from the group. It can be used by user providers to notify Openfire of the
+ * deletion of an admin of the group.
  *
  * @author Gabriel Guarincerri
  */
@@ -43,16 +46,18 @@ public class GroupAdminRemoved extends AdHocCommand {
 
     @Override
     public String getDefaultLabel() {
-        return "Group admin removed";
+        return LocaleUtils.getLocalizedString("commands.event.groupadminremoved.label");
     }
 
     @Override
-    public int getMaxStages(SessionData data) {
+    public int getMaxStages(@Nonnull final SessionData data) {
         return 1;
     }
 
     @Override
-    public void execute(SessionData sessionData, Element command) {
+    public void execute(@Nonnull SessionData sessionData, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
+
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
@@ -63,25 +68,25 @@ public class GroupAdminRemoved extends AdHocCommand {
         Group group = null;
         final String groupName = get(data, "groupName", 0);
         if (StringUtils.isBlank(groupName)) {
-            inputValidationErrors.add("The parameter 'groupName' is required, but is missing.");
+            inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.note.groupname-required", preferredLocale));
         } else {
             try {
                 group = GroupManager.getInstance().getGroup(groupName);
             } catch (GroupNotFoundException e) {
-                inputValidationErrors.add("The group '" + groupName + "' does not exist.");
+                inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.note.group-does-not-exist", List.of(groupName), preferredLocale));
             }
         }
 
         JID admin;
         final String adminValue = get(data, "admin", 0);
         if (StringUtils.isBlank(adminValue)) {
-            inputValidationErrors.add("The parameter 'admin' is required, but is missing.");
+            inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.note.admin-required", preferredLocale));
             return;
         } else {
             try {
                 admin = new JID(adminValue);
             } catch (IllegalArgumentException e) {
-                inputValidationErrors.add("The value for parameter 'admin' should be a valid JID, but '" + adminValue + "' is not.");
+                inputValidationErrors.add(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.note.admin-jid-invalid", List.of(adminValue), preferredLocale));
                 return;
             }
         }
@@ -97,14 +102,16 @@ public class GroupAdminRemoved extends AdHocCommand {
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText("Operation finished successfully");
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
     }
 
     @Override
-    protected void addStageInformation(SessionData data, Element command) {
+    protected void addStageInformation(@Nonnull final SessionData data, Element command) {
+        final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
+
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle("Dispatching a group admin removed event.");
-        form.addInstruction("Fill out this form to dispatch a group admin removed event.");
+        form.setTitle(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -113,13 +120,13 @@ public class GroupAdminRemoved extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The group name of the group");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.form.field.groupname.label", preferredLocale));
         field.setVariable("groupName");
         field.setRequired(true);
 
         field = form.addField();
         field.setType(FormField.Type.text_single);
-        field.setLabel("The username of the admin");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.event.groupadminremoved.form.field.admin.label", preferredLocale));
         field.setVariable("admin");
         field.setRequired(true);
 
@@ -128,12 +135,12 @@ public class GroupAdminRemoved extends AdHocCommand {
     }
 
     @Override
-    protected List<Action> getActions(SessionData data) {
+    protected List<Action> getActions(@Nonnull final SessionData data) {
         return Collections.singletonList(Action.complete);
     }
 
     @Override
-    protected Action getExecuteAction(SessionData data) {
+    protected Action getExecuteAction(@Nonnull final SessionData data) {
         return Action.complete;
     }
 

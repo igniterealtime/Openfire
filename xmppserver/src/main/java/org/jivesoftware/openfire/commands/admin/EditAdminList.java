@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jivesoftware.openfire.commands.event;
+package org.jivesoftware.openfire.commands.admin;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.vcard.VCardEventDispatcher;
-import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.server.RemoteServerConfiguration;
+import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Notifies the deletion of a vCard. It can be used by user providers to notify Openfire of the
- * deletion of a vCard.
+ * Edits the list of Openfire administrators
  *
- * @author Gabriel Guarincerri
+ * @author Guus der Kinderen, guus@goodbytes.nl
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#edit-admin">XEP-0133 Service Administration: Edit Admin List</a>
  */
-public class VCardDeleting extends AdHocCommand {
+public class EditAdminList extends AdHocCommand
+{
     @Override
     public String getCode() {
-        return "http://jabber.org/protocol/event#vcard-deleting";
+        return "http://jabber.org/protocol/admin#edit-admin";
     }
 
     @Override
     public String getDefaultLabel() {
-        return LocaleUtils.getLocalizedString("commands.event.vcarddeleting.label");
+        return LocaleUtils.getLocalizedString("commands.admin.editadminlist.label");
     }
 
     @Override
@@ -56,35 +55,37 @@ public class VCardDeleting extends AdHocCommand {
     }
 
     @Override
-    public void execute(@Nonnull SessionData sessionData, Element command) {
+    public void execute(@Nonnull SessionData sessionData, Element command)
+    {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(sessionData.getOwner());
-
         Element note = command.addElement("note");
 
         Map<String, List<String>> data = sessionData.getData();
 
-        // Gets the username
-        String username;
-        try {
-            username = get(data, "username", 0);
+        boolean requestError = false;
+        final List<JID> listed = new ArrayList<>();
+        for ( final String adminjid : data.get( "adminjids" ))
+        {
+            try
+            {
+                listed.add(new JID(adminjid));
+            }
+            catch (IllegalArgumentException npe)
+            {
+                note.addAttribute( "type", "error" );
+                note.setText(LocaleUtils.getLocalizedString("commands.admin.editadminlist.note.jid-invalid", preferredLocale));
+                requestError = true;
+            }
         }
-        catch (NullPointerException npe) {
-            note.addAttribute("type", "error");
-            note.setText(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.note.username-required", preferredLocale));
+
+        if ( requestError )
+        {
+            // We've collected all errors. Return without applying changes.
             return;
         }
 
-        // Loads the vCard
-        Element vCard = VCardManager.getInstance().getVCard(username);
-
-        if (vCard == null) {
-            note.addAttribute("type", "error");
-            note.setText(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.note.vcard-does-not-exist", preferredLocale));
-            return;
-        }
-
-        // Fire event.
-        VCardEventDispatcher.dispatchVCardDeleted(username, vCard);
+        // No errors.
+        AdminManager.getInstance().setAdminJIDs(listed);
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
@@ -96,8 +97,8 @@ public class VCardDeleting extends AdHocCommand {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.form.title", preferredLocale));
-        form.addInstruction(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.form.instruction", preferredLocale));
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.editadminlist.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.editadminlist.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -105,10 +106,13 @@ public class VCardDeleting extends AdHocCommand {
         field.addValue("http://jabber.org/protocol/admin");
 
         field = form.addField();
-        field.setType(FormField.Type.text_single);
-        field.setLabel(LocaleUtils.getLocalizedString("commands.event.vcarddeleting.form.field.username.label", preferredLocale));
-        field.setVariable("username");
+        field.setType(FormField.Type.jid_multi);
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.editadminlist.form.field.adminjids.label", preferredLocale));
+        field.setVariable("adminjids");
         field.setRequired(true);
+        for (final JID admin : AdminManager.getInstance().getAdminAccounts()) {
+            field.addValue(admin);
+        }
 
         // Add the form to the command
         command.add(form.getElement());

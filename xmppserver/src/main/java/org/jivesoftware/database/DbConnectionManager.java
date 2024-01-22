@@ -613,7 +613,7 @@ public class DbConnectionManager {
                 // However, it is a good idea to update the meta-data so that
                 // we don't have to incur the cost of catching an exception
                 // each time.
-                Log.error("Disabling JDBC method pstmt.setFetchSize(fetchSize).", t);
+                Log.debug("Disabling JDBC method pstmt.setFetchSize(fetchSize).", t);
                 pstmt_fetchSizeSupported = false;
             }
         }
@@ -774,7 +774,7 @@ public class DbConnectionManager {
                 // However, it is a good idea to update the meta-data so that
                 // we don't have to incur the cost of catching an exception
                 // each time.
-                Log.error("Disabling JDBC method stmt.setMaxRows(maxRows).", t);
+                Log.debug("Disabling JDBC method stmt.setMaxRows(maxRows).", t);
                 maxRowsSupported = false;
             }
         }
@@ -799,7 +799,7 @@ public class DbConnectionManager {
                 // However, it is a good idea to update the meta-data so that
                 // we don't have to incur the cost of catching an exception
                 // each time.
-                Log.error("Disabling JDBC method rs.setFetchSize(fetchSize).", t);
+                Log.debug("Disabling JDBC method rs.setFetchSize(fetchSize).", t);
                 fetchSizeSupported = false;
             }
         }

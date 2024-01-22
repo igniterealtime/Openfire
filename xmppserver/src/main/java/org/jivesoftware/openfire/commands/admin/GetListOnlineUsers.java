@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,22 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 /**
- * Command that allows to retrieve a list of all active users.
+ * Command that allows to retrieve the number of registered users who are online at
+ * any one moment. By "online user" is meant any user or account that currently has
+ * an IM session that may or may not be available.
  *
- * @author Gaston Dombiak
- * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-active-users-list">XEP-0133 Service Administration: Get List of Active Users</a>
+ * @author Guus der Kinderen, guus@goodbytes.nl
+ * @see <a href="https://xmpp.org/extensions/xep-0133.html#get-online-users-list">XEP-0133 Service Administration: Get List of Online Users</a>
  */
-public class GetListActiveUsers extends AdHocCommand {
+public class GetListOnlineUsers extends AdHocCommand {
 
     @Override
     protected void addStageInformation(@Nonnull final SessionData data, Element command) {
         final Locale preferredLocale = SessionManager.getInstance().getLocaleForSession(data.getOwner());
 
         DataForm form = new DataForm(DataForm.Type.form);
-        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.title", preferredLocale));
-        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.instruction", preferredLocale));
+        form.setTitle(LocaleUtils.getLocalizedString("commands.admin.getlistonlineusers.form.title", preferredLocale));
+        form.addInstruction(LocaleUtils.getLocalizedString("commands.admin.getlistonlineusers.form.instruction", preferredLocale));
 
         FormField field = form.addField();
         field.setType(FormField.Type.hidden);
@@ -91,16 +93,14 @@ public class GetListActiveUsers extends AdHocCommand {
 
         field = form.addField();
         field.setType(FormField.Type.jid_multi);
-        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.form.field.activeuserjids.label", preferredLocale));
-        field.setVariable("activeuserjids");
+        field.setLabel(LocaleUtils.getLocalizedString("commands.admin.getlistonlineusers.form.field.onlineuserjids.label", preferredLocale));
+        field.setVariable("onlineuserjids");
 
         // Get list of users (i.e. bareJIDs) that are connected to the server
         Collection<ClientSession> sessions = SessionManager.getInstance().getSessions();
         Set<String> users = new HashSet<>(sessions.size());
         for (ClientSession session : sessions) {
-            if (session.getPresence().isAvailable()) {
-                users.add(session.getAddress().toBareJID());
-            }
+            users.add(session.getAddress().toBareJID());
             if (maxItems > 0 && users.size() >= maxItems) {
                 break;
             }
@@ -114,12 +114,12 @@ public class GetListActiveUsers extends AdHocCommand {
 
     @Override
     public String getCode() {
-        return "http://jabber.org/protocol/admin#get-active-users";
+        return "http://jabber.org/protocol/admin#get-online-users-list";
     }
 
     @Override
     public String getDefaultLabel() {
-        return LocaleUtils.getLocalizedString("commands.admin.getlistactiveusers.label");
+        return LocaleUtils.getLocalizedString("commands.admin.getlistonlineusers.label");
     }
 
     @Override

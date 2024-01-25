@@ -95,7 +95,7 @@
         AnonymousSaslServer.ENABLED.setValue(anonLogin);
         UserManager.ALLOW_FUTURE_USERS.setValue( futureUsersEnabled );
 
-        // Build a Map with the allowed IP addresses
+        // Build a Map with the allowed IP addresses. // TODO Allow both IPv4 as well as IPv6 (OF-2784)
         Pattern pattern = Pattern.compile("(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
                 "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
                 "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");

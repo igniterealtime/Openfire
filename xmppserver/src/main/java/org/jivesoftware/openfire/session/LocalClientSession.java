@@ -349,7 +349,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    // TODO Add IPv6 support
+    // TODO Add IPv6 support (OF-2785)
     public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
         final String range0 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + "." + (address[3] & 0xff);
         final String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";

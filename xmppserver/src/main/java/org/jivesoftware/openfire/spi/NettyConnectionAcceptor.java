@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
      * <p>
      * The parent 'boss' accepts an incoming connection.
      */
-    private static final EventLoopGroup PARENT_GROUP = new NioEventLoopGroup();
+    private final EventLoopGroup parentGroup = new NioEventLoopGroup();
 
     /**
      * A multithreaded event loop that handles I/O operation
@@ -69,7 +69,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
      * The child 'worker', handles the traffic of the accepted connection once the parent accepts the connection
      * and registers the accepted connection to the worker.
      */
-    private static final EventLoopGroup CHILD_GROUP = new NioEventLoopGroup();
+    private final EventLoopGroup childGroup;
 
     /**
      * A thread-safe Set containing all open Channels associated with this ConnectionAcceptor
@@ -95,6 +95,9 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         super(configuration);
 
         String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
+
+        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize());
+
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
     }
 
@@ -104,12 +107,12 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     @Override
     public synchronized void start() {
-        Log.debug("Running Netty on port: " + getPort());
+        Log.debug("Running Netty on port: {}", getPort());
 
         try {
             // ServerBootstrap is a helper class that sets up a server
             ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap.group(PARENT_GROUP, CHILD_GROUP)
+            serverBootstrap.group(parentGroup, childGroup)
                 // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
@@ -162,6 +165,12 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     @Override
     public synchronized void stop() {
         closeMainChannel();
+        if (!parentGroup.isShuttingDown()) {
+            parentGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        }
+        if (!childGroup.isShuttingDown()) {
+            childGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        }
     }
 
     /**
@@ -169,20 +178,8 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
      */
     private void closeMainChannel() {
         if (this.mainChannel != null) {
-            Log.info("Closing channel " + mainChannel);
+            Log.info("Closing channel {}", mainChannel);
             mainChannel.close();
-        }
-    }
-
-    /**
-     * Shuts down event loop groups if they are not already shutdown - this will close all channels.
-     */
-    public static void shutdownEventLoopGroups() {
-        if (!PARENT_GROUP.isShuttingDown()) {
-            PARENT_GROUP.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
-        }
-        if (!CHILD_GROUP.isShuttingDown()) {
-            CHILD_GROUP.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 

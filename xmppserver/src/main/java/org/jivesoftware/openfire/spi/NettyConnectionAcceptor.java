@@ -29,12 +29,14 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.NettyChannelHandlerFactory;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static org.jivesoftware.openfire.nio.NettyConnection.SSL_HANDLER_NAME;
@@ -96,7 +98,8 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
 
         String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
 
-        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize());
+        final ThreadFactory threadFactory = new NamedThreadFactory( name + "-thread-", null, true, null );
+        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize(), threadFactory);
 
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
     }

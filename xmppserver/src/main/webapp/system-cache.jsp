@@ -26,6 +26,7 @@
 <%@ page import="org.jivesoftware.util.cache.Cache" %>
 <%@ page import="org.jivesoftware.util.cache.CacheWrapper" %>
 <%@ page import="org.jivesoftware.util.cache.DefaultCache" %>
+<%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -210,57 +211,87 @@
         }
         // OF-1365: Don't allow caches that do not expire to be purged. Many of these caches store data that cannot be recovered again.
         final boolean canPurge = cache.getMaxLifetime() > -1;
+
+        pageContext.setAttribute("cacheName", cache.getName());
+        pageContext.setAttribute("maxCacheSize", cache.getMaxCacheSize());
+        pageContext.setAttribute("maxLifetime", cache.getMaxLifetime());
+        pageContext.setAttribute("maxLifeTimeDuration", Duration.ofMillis(cache.getMaxLifetime()));
+        pageContext.setAttribute("memUsed", memUsed);
+        pageContext.setAttribute("totalMem", totalMem);
+        pageContext.setAttribute("usedMem", usedMem);
+        pageContext.setAttribute("entries", entries);
+        pageContext.setAttribute("hits", hits);
+        pageContext.setAttribute("misses", misses);
+        pageContext.setAttribute("lowEffec", lowEffec);
+        pageContext.setAttribute("hitPercent", hitPercent);
+        pageContext.setAttribute("hasCulls", culls != null);
+        if (culls != null) {
+            pageContext.setAttribute("culls3", culls[0]);
+            pageContext.setAttribute("culls6", culls[1]);
+            pageContext.setAttribute("culls12", culls[2]);
+        }
+        pageContext.setAttribute("canPurge", canPurge);
 %>
     <tr>
         <td class="c1">
             <table>
             <tr>
                 <td style="width: 1%;" class="icon"><img src="images/cache-16x16.gif" alt=""></td>
-                <td><a href="SystemCacheDetails.jsp?cacheName=<%=java.net.URLEncoder.encode(cache.getName(), "UTF-8")%>"><%= StringUtils.escapeHTMLTags(cache.getName()) %></a></td>
+                <td><a href="SystemCacheDetails.jsp?cacheName=${admin:urlEncode(cacheName)}"><c:out value="${cacheName}"/></a></td>
             </tr>
             </table>
         </td>
         <td class="c2">
-            <% if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) { %>
-                <%= mbFormat.format(totalMem) %> MB
-            <% } else { %>
-                <fmt:message key="global.unlimited" />
-            <% } %>
+            <c:choose>
+                <c:when test="${maxCacheSize ne -1 and maxCacheSize ne 2147483647}">
+                    <fmt:formatNumber type="number" pattern="#0.00" value="${totalMem}" />&nbsp;MB
+                </c:when>
+                <c:otherwise>
+                    <fmt:message key="global.unlimited" />
+                </c:otherwise>
+            </c:choose>
         </td>
         <td class="c2">
-            <% if (cache.getMaxLifetime() != -1) { %>
-                <%= StringUtils.getFullElapsedTime(cache.getMaxLifetime()) %>
-            <% } else { %>
-                <fmt:message key="global.unlimited" />
-            <% } %>
+            <c:choose>
+                <c:when test="${maxLifetime ne -1}">
+                    <c:out value="${admin:fullElapsedTime(maxLifeTimeDuration)}"/>
+                </c:when>
+                <c:otherwise>
+                    <fmt:message key="global.unlimited" />
+                </c:otherwise>
+            </c:choose>
         </td>
         <td class="c3" style="text-align: right; padding-right:0;">
-            <%=numberFormatter.format(entries)%>&nbsp;
+            <fmt:formatNumber type="number" value="${entries}" />
         </td>
         <td class="c3" style="text-align: left; padding-left:0;">
-            / <%= mbFormat.format(memUsed)%> MB
+            &nbsp;/&nbsp;<fmt:formatNumber type="number" pattern="#0.00" value="${memUsed}" />&nbsp;MB
         </td>
         <td class="c3">
-            <% if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Integer.MAX_VALUE) { %>
-                <%= percentFormat.format(usedMem)%>%
-            <% } else { %>
-                N/A
-            <% } %>
+            <c:choose>
+                <c:when test="${maxCacheSize ne -1 and maxCacheSize ne 2147483647}">
+                    <fmt:formatNumber type="number" pattern="#0.0" value="${usedMem}" />%
+                </c:when>
+                <c:otherwise>
+                    N/A
+                </c:otherwise>
+            </c:choose>
         </td>
         <td class="c4" style="text-align: right; padding-right:0;">
-            <%=numberFormatter.format(hits)%>/<%=numberFormatter.format(hits + misses)%>&nbsp;
+            <fmt:formatNumber type="number" value="${hits}" />/<fmt:formatNumber type="number" value="${hits + misses}" />
         </td>
         <td class="c4" style="text-align: left; padding-left:0;">
-            <% if (lowEffec) { %><span style="color: red;"><% } %>
-            (<%=hitPercent%>)
-            <% if (lowEffec) { %>*</span><% } %>
+            <c:if test="${lowEffec}"><span style="color: red;"></c:if>
+            &nbsp;(<c:out value="${hitPercent}"/>)
+            <c:if test="${lowEffec}">*</span></c:if>
         </td>
         <td class="c4" style="text-align: center">
-            <% if (culls != null) {%>
-            <%=culls[0]%>/<%=culls[1]%>/<%=culls[2]%>
-            <% } else { %>
-            N/A
-            <% } %>
+            <c:choose>
+                <c:when test="${hasCulls}">
+                    <fmt:formatNumber type="number" value="${culls3}" />/<fmt:formatNumber type="number" value="${culls6}" />/<fmt:formatNumber type="number" value="${culls12}" />
+                </c:when>
+                <c:otherwise>N/A</c:otherwise>
+            </c:choose>
         </td>
         <td style="width: 1%" class="c5">
             <% if ( canPurge ) {%>

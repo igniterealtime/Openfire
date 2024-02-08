@@ -269,6 +269,11 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     }
 
     @Override
+    public CapacityUnit getCapacityUnit() {
+        return delegate.getCapacityUnit();
+    }
+
+    @Override
     public String getName() {
         return delegate.getName();
     }
@@ -293,12 +298,23 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     }
 
     @Override
+    public String getCacheSizeRemark() {
+        return delegate.getCacheSizeRemark();
+    }
+
+    @Override
     public long getMaxCacheSize() {
         return delegate.getMaxCacheSize();
     }
 
+    @Override
     public void setMaxCacheSize(long maxSize){
         delegate.setMaxCacheSize(maxSize);
+    }
+
+    @Override
+    public String getMaxCacheSizeRemark() {
+        return delegate.getMaxCacheSizeRemark();
     }
 
     @Override

@@ -157,13 +157,13 @@
 <table>
 <thead>
     <tr>
-        <th style="width: 39%" nowrap><fmt:message key="system.cache.head.name" /></th>
-        <th style="width: 10%" nowrap><fmt:message key="system.cache.head.max" /></th>
-        <th style="width: 10%" nowrap><fmt:message key="system.cache.head.lifetime" /></th>
-        <th style="width: 10%; text-align: center;" nowrap colspan="2"><fmt:message key="system.cache.head.current" /></th>
-        <th style="width: 10%" nowrap><fmt:message key="system.cache.head.percent" /></th>
-        <th style="width: 20%; text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
-        <th style="width: 20%; text-align: center;" nowrap><fmt:message key="system.cache.head.culls" /><br/>3/6/12 <fmt:message key="global.hours" /></th>
+        <th><fmt:message key="system.cache.head.name" /></th>
+        <th nowrap><fmt:message key="system.cache.head.max" /></th>
+        <th nowrap><fmt:message key="system.cache.head.lifetime" /></th>
+        <th style="text-align: center;" nowrap colspan="2"><fmt:message key="system.cache.head.current" /></th>
+        <th nowrap><fmt:message key="system.cache.head.percent" /></th>
+        <th style="text-align: center;" colspan="2"><fmt:message key="system.cache.head.effectiveness" /></th>
+        <th style="text-align: center;" nowrap><fmt:message key="system.cache.head.culls" /><br/>3/6/12 <fmt:message key="global.hours" /></th>
         <th style="width: 1%" class="c5"><input type="checkbox" name="" value="" onclick="handleCBClick(this);"></th>
     </tr>
 </thead>
@@ -320,7 +320,7 @@
     <td class="c2">
         <%= new DecimalFormat("#0.00").format(overallTotal/(1024.0*1024.0)) %> MB
     </td>
-    <td style="text-align: right" colspan="7">
+    <td style="text-align: right" colspan="8">
         <input type="submit" name="clear" value="<fmt:message key="system.cache.clear-selected" />" disabled>
     </td>
 </tr>

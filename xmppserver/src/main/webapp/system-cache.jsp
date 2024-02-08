@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -17,16 +17,13 @@
 
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.text.DecimalFormat"%>
-<%@ page import="java.text.NumberFormat"%>
 <%@ page import="java.time.Duration"%>
 <%@ page import="org.jivesoftware.util.CookieUtils"%>
-<%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
 <%@ page import="org.jivesoftware.util.StringUtils"%>
 <%@ page import="org.jivesoftware.util.cache.Cache" %>
 <%@ page import="org.jivesoftware.util.cache.CacheWrapper" %>
 <%@ page import="org.jivesoftware.util.cache.DefaultCache" %>
-<%@ page import="org.jivesoftware.util.cache.CacheFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -128,12 +125,6 @@
             webManager.logEvent(String.format("Cleared cache '%s'", cache.getName()), null);
         }
     }
-
-    NumberFormat numberFormatter = NumberFormat.getNumberInstance(JiveGlobals.getLocale());
-    // decimal formatter for cache values
-    DecimalFormat mbFormat = new DecimalFormat("#0.00");
-    DecimalFormat percentFormat = new DecimalFormat("#0.0");
-    percentFormat.setNegativePrefix("");
 %>
 
 <%  if (doClearCache) { %>
@@ -150,11 +141,10 @@
 
 <%  // cache variables
     double overallTotal = 0.0;
-    double memUsed;
-    double totalMem;
-    double freeMem;
-    double usedMem;
-    String hitPercent;
+    double capacityUsed;
+    double capacityTotal;
+    double capacityUsedPercentage;
+    double hitPercent;
     long hits;
     long misses;
     Long[] culls;
@@ -182,23 +172,22 @@
 <%  // Loop through each cache, print out its info
     for (int i=0; i<caches.length; i++) {
         Cache cache = caches[i];
-        if (cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Long.MAX_VALUE) {
-            overallTotal += (double)cache.getMaxCacheSize();
+        final Cache.CapacityUnit capacityUnit = cache.getCapacityUnit();
+        if (capacityUnit == Cache.CapacityUnit.BYTES && cache.getMaxCacheSize() != -1 && cache.getMaxCacheSize() != Long.MAX_VALUE) {
+            overallTotal += (double) cache.getMaxCacheSize();
         }
-        int entries = cache.size();
-        memUsed = (double)cache.getLongCacheSize()/(1024*1024);
-        totalMem = (double)cache.getMaxCacheSize()/(1024*1024);
-        usedMem = 100*memUsed/totalMem;
+        capacityUsed = (double) cache.getLongCacheSize();
+        capacityTotal = (double) cache.getMaxCacheSize();
+        capacityUsedPercentage = 100 * capacityUsed / capacityTotal;
         hits = cache.getCacheHits();
         misses = cache.getCacheMisses();
         boolean lowEffec = false;
         if (hits + misses == 0) {
-            hitPercent = "N/A";
+            hitPercent = -1;
         }
         else {
-            double hitValue = 100*(double)hits/(hits+misses);
-            hitPercent = percentFormat.format(hitValue) + "%";
-            lowEffec = (hits+misses > 500 && hitValue < 85.0 && usedMem >= 80.0);
+            hitPercent = 100 * (double) hits / (hits+misses);
+            lowEffec = (hits+misses > 500 && hitPercent < 85.0 && capacityUsedPercentage >= 80.0);
         }
         if (cache instanceof CacheWrapper && ((CacheWrapper) cache).getWrappedCache() instanceof DefaultCache) {
             culls = new Long[3];
@@ -213,13 +202,16 @@
         final boolean canPurge = cache.getMaxLifetime() > -1;
 
         pageContext.setAttribute("cacheName", cache.getName());
+        pageContext.setAttribute("capacityUnit", capacityUnit);
         pageContext.setAttribute("maxCacheSize", cache.getMaxCacheSize());
+        pageContext.setAttribute("maxCacheSizeRemark", cache.getMaxCacheSizeRemark());
+        pageContext.setAttribute("cacheSize", cache.getLongCacheSize());
+        pageContext.setAttribute("cacheSizeRemark", cache.getCacheSizeRemark());
         pageContext.setAttribute("maxLifetime", cache.getMaxLifetime());
         pageContext.setAttribute("maxLifeTimeDuration", Duration.ofMillis(cache.getMaxLifetime()));
-        pageContext.setAttribute("memUsed", memUsed);
-        pageContext.setAttribute("totalMem", totalMem);
-        pageContext.setAttribute("usedMem", usedMem);
-        pageContext.setAttribute("entries", entries);
+        pageContext.setAttribute("capacityUsed", capacityUsed); // This is a double representation of cacheSize
+        pageContext.setAttribute("capacityTotal", capacityTotal); // This is a double representation of maxCacheSize
+        pageContext.setAttribute("capacityUsedPercentage", capacityUsedPercentage);
         pageContext.setAttribute("hits", hits);
         pageContext.setAttribute("misses", misses);
         pageContext.setAttribute("lowEffec", lowEffec);
@@ -243,11 +235,23 @@
         </td>
         <td class="c2">
             <c:choose>
-                <c:when test="${maxCacheSize ne -1 and maxCacheSize ne 2147483647}">
-                    <fmt:formatNumber type="number" pattern="#0.00" value="${totalMem}" />&nbsp;MB
+                <c:when test="${empty capacityUnit}">
+                    N/A
+                </c:when>
+                <c:when test="${maxCacheSize eq -1 or maxCacheSize eq 2147483647}">
+                    <fmt:message key="global.unlimited" />
+                </c:when>
+                <c:when test="${capacityUnit == 'BYTES'}">
+                    <fmt:formatNumber type="number" pattern="#0.00" value="${capacityTotal / (1024*1024)}" />&nbsp;MB
+                    <c:if test="${not empty maxCacheSizeRemark}">
+                        (<c:out value="${maxCacheSizeRemark}"/>)
+                    </c:if>
                 </c:when>
                 <c:otherwise>
-                    <fmt:message key="global.unlimited" />
+                    <fmt:formatNumber type="number" value="${maxCacheSize}" />
+                    <c:if test="${not empty maxCacheSizeRemark}">
+                        (<c:out value="${maxCacheSizeRemark}"/>)
+                    </c:if>
                 </c:otherwise>
             </c:choose>
         </td>
@@ -262,18 +266,23 @@
             </c:choose>
         </td>
         <td class="c3" style="text-align: right; padding-right:0;">
-            <fmt:formatNumber type="number" value="${entries}" />
+            <fmt:formatNumber type="number" value="${cacheSize}" />
         </td>
         <td class="c3" style="text-align: left; padding-left:0;">
-            &nbsp;/&nbsp;<fmt:formatNumber type="number" pattern="#0.00" value="${memUsed}" />&nbsp;MB
+            <c:if test="${capacityUnit == 'BYTES'}">
+                &nbsp;/&nbsp;<fmt:formatNumber type="number" pattern="#0.00" value="${capacityUsed / (1024*1024)}" />&nbsp;MB
+            </c:if>
+            <c:if test="${not empty cacheSizeRemark}">
+                &nbsp;(<c:out value="${cacheSizeRemark}"/>)
+            </c:if>
         </td>
         <td class="c3">
             <c:choose>
-                <c:when test="${maxCacheSize ne -1 and maxCacheSize ne 2147483647}">
-                    <fmt:formatNumber type="number" pattern="#0.0" value="${usedMem}" />%
+                <c:when test="${maxCacheSize eq -1 or maxCacheSize eq 2147483647}">
+                    <fmt:message key="global.unlimited" />
                 </c:when>
                 <c:otherwise>
-                    N/A
+                    <fmt:formatNumber type="number" pattern="#0.0" value="${capacityUsedPercentage}" />%
                 </c:otherwise>
             </c:choose>
         </td>
@@ -282,7 +291,9 @@
         </td>
         <td class="c4" style="text-align: left; padding-left:0;">
             <c:if test="${lowEffec}"><span style="color: red;"></c:if>
-            &nbsp;(<c:out value="${hitPercent}"/>)
+            <c:if test="${hitPercent ge 0}">
+                &nbsp;(<fmt:formatNumber type="number" pattern="#0.0" value="${hitPercent}" />%)
+            </c:if>
             <c:if test="${lowEffec}">*</span></c:if>
         </td>
         <td class="c4" style="text-align: center">
@@ -307,7 +318,7 @@
         <fmt:message key="system.cache.total" />
     </td>
     <td class="c2">
-        <%= mbFormat.format(overallTotal/(1024.0*1024.0)) %> MB
+        <%= new DecimalFormat("#0.00").format(overallTotal/(1024.0*1024.0)) %> MB
     </td>
     <td style="text-align: right" colspan="7">
         <input type="submit" name="clear" value="<fmt:message key="system.cache.clear-selected" />" disabled>

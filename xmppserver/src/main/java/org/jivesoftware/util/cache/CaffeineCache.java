@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,17 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
         }
         this.cache = cache;
         this.name = name;
+    }
+
+    /**
+     * Defines the unit used to calculate the capacity of the cache, which for all instances of this class is byte-size
+     * based.
+     *
+     * @return the unit to be used to calculate the capacity of this cache, which will be {@link CapacityUnit#BYTES}.
+     */
+    @Override
+    public CapacityUnit getCapacityUnit() {
+        return CapacityUnit.BYTES;
     }
 
     /**

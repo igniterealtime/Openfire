@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.concurrent.locks.Lock;
  *
  * All cache operations are thread safe.<p>
  *
- * Note that neither keys or values can be null; A {@link NullPointerException}
+ * Note that neither keys nor values can be null; A {@link NullPointerException}
  * will be thrown attempting to place or retrieve null values in to the cache.
  *
  * Caches can (but need not be) used as a mechanism that is used to share data
@@ -60,6 +60,33 @@ import java.util.concurrent.locks.Lock;
  * @see Cacheable
  */
 public interface Cache<K extends Serializable, V extends Serializable> extends java.util.Map<K, V> {
+
+    /**
+     * Defines the unit used to calculate the capacity of the cache.
+     */
+    enum CapacityUnit
+    {
+        /**
+         * The capacity is measured in bytes (an aggregation of the byte-size of all elements).
+         */
+        BYTES,
+
+        /**
+         * The capacity is measured in number of entities (a natural count of the amount of elements).
+         */
+        ENTITIES,
+    }
+
+    /**
+     * Defines the unit used to calculate the capacity of the cache.<p>
+     *
+     * When the unit is unknown, null is returned.
+     *
+     * @return the unit to be used to calculate the capacity of this cache.
+     */
+    default CapacityUnit getCapacityUnit() {
+        return null;
+    }
 
     /**
      * Returns the name of the cache.
@@ -76,25 +103,48 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
     void setName(String name);
 
     /**
-     * Returns the maximum size of the cache in bytes. If the cache grows larger
-     * than the max size, the least frequently used items will be removed. If
-     * the max cache size is set to -1, there is no size limit.
+     * Returns the maximum size of the cache.<p>
      *
-     * @return the maximum size of the cache in bytes.
+     * The value should be placed in context of the unit returned by {@link #getCapacityUnit()}. When, for example, the
+     * capacity unit for this cache is {@link CapacityUnit#BYTES}, then a return value of 2048 should be interpreted as
+     * this cache having a capacity of 2048 bytes (or 2KB). When the capacity unit is {@link CapacityUnit#ENTITIES} then
+     * this cache can contain 2048 elements (irrespective of their byte size).<p>
+     *
+     * If the cache grows larger than the maximum size, the least frequently used items will be removed.<p>
+     *
+     * If the maximum cache size is set to -1, there is no size limit.
+     *
+     * @return the maximum size of the cache.
      */
     long getMaxCacheSize();
 
     /**
-     * Sets the maximum size of the cache in bytes. If the cache grows larger
-     * than the max size, the least frequently used items will be removed. If
-     * the max cache size is set to -1, there is no size limit.
+     * Sets the maximum size of the cache.<p>
      *
-     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
-     * effect until the next time the cache is created</p>
+     * The value should be placed in context of the unit returned by {@link #getCapacityUnit()}. When, for example, the
+     * capacity unit for this cache is {@link CapacityUnit#BYTES}, then a return value of 2048 should be interpreted as
+     * this cache having a capacity of 2048 bytes (or 2KB). When the capacity unit is {@link CapacityUnit#ENTITIES} then
+     * this cache can contain 2048 elements (irrespective of their byte size).<p>
      *
-     * @param maxSize the maximum size of the cache in bytes.
+     * If the cache grows larger than the maximum size, the least frequently used items will be removed. If the maximum
+     * cache size is set to -1, there is no size limit.<p>
+     *
+     * <strong>Note:</strong> If using the Hazelcast clustering plugin, this will only take effect if the cache is
+     * dynamically configured (not defined in the hazelcast-cache-config.xml file), and will not take effect until the
+     * next time the cache is created.
+     *
+     * @param maxSize the maximum size of the cache.
      */
     void setMaxCacheSize(long maxSize);
+
+    /**
+     * An optional, human-readable remark on the maximum cache capacity configuration.
+     *
+     * @return an optional human-readable text
+     */
+    default String getMaxCacheSizeRemark() {
+        return null;
+    }
 
     /**
      * Returns the maximum number of milliseconds that any object can live
@@ -110,24 +160,38 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      * Sets the maximum number of milliseconds that any object can live
      * in cache. Once the specified number of milliseconds passes, the object
      * will be automatically expired from cache. If the max lifetime is set
-     * to -1, then objects never expire.
+     * to -1, then objects never expire.<p>
      *
-     *<p><strong>Note:</strong> If using the Hazelcast clustering plugin, this will not take
-     * effect until the next time the cache is created</p>
+     * <strong>Note:</strong> If using the Hazelcast clustering plugin, this will only take effect if the cache is
+     * dynamically configured (not defined in the hazelcast-cache-config.xml file), and will not take effect until the
+     * next time the cache is created.<p>
      *
      * @param maxLifetime the maximum number of milliseconds before objects are expired.
      */
     void setMaxLifetime(long maxLifetime);
 
     /**
-     * Returns the size of the cache contents in bytes. This value is only a
-     * rough approximation, so cache users should expect that actual VM
-     * memory used by the cache could be significantly higher than the value
-     * reported by this method.
+     * Returns the size of the cache.<p>
      *
-     * @return the size of the cache contents in bytes.
+     * The value should be placed in context of the unit returned by {@link #getCapacityUnit()}. When, for example, the
+     * capacity unit for this cache is {@link CapacityUnit#BYTES}, then a return value of 2048 should be interpreted as
+     * all entities of this cache having a combined size of 2024 bytes (or 2KB). When the capacity unit is
+     * {@link CapacityUnit#ENTITIES} then this cache currently contains 2048 elements.<p>
+     *
+     * The returned value can be an approximation.
+     *
+     * @return the size of the cache contents.
      */
     long getLongCacheSize();
+
+    /**
+     * An optional, human-readable remark on the current size of the cache.
+     *
+     * @return an optional human-readable text
+     */
+    default String getCacheSizeRemark() {
+        return null;
+    }
 
     /**
      * Returns the number of cache hits. A cache hit occurs every

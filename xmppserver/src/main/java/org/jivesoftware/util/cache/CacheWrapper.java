@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,11 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
+    public CapacityUnit getCapacityUnit() {
+        return cache.getCapacityUnit();
+    }
+
+    @Override
     public String getName() {
         return cache.getName();
     }
@@ -67,6 +72,11 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     }
 
     @Override
+    public String getMaxCacheSizeRemark() {
+        return cache.getMaxCacheSizeRemark();
+    }
+
+    @Override
     public long getMaxLifetime() {
         return cache.getMaxLifetime();
     }
@@ -78,6 +88,11 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
 
     public long getLongCacheSize(){
         return cache.getLongCacheSize();
+    }
+
+    @Override
+    public String getCacheSizeRemark() {
+        return cache.getCacheSizeRemark();
     }
 
     @Override

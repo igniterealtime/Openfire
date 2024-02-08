@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -336,6 +336,17 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         synchronized (this) {
             return new HashSet<>(map.keySet());
         }
+    }
+
+    /**
+     * Defines the unit used to calculate the capacity of the cache, which for all instances of this class is byte-size
+     * based.
+     *
+     * @return the unit to be used to calculate the capacity of this cache, which will be {@link CapacityUnit#BYTES}.
+     */
+    @Override
+    public CapacityUnit getCapacityUnit() {
+        return CapacityUnit.BYTES;
     }
 
     /**

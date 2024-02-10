@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,12 @@ package org.jivesoftware.openfire.admin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +89,17 @@ public class AdminManager {
     private AdminManager() {
         // Load an admin provider.
         initProvider(ADMIN_PROVIDER.getValue());
+
+        UserEventDispatcher.addListener(new UserEventListener() {
+            @Override
+            public void userDeleting(final User user, final Map<String, Object> params) {
+                // OF-2758: Ensure that if a user is re-created with the same name, they're not automatically an admin.
+                removeAdminAccount(user.getUsername());
+            }
+
+            @Override public void userCreated(final User user, final Map<String, Object> params) {}
+            @Override public void userModified(final User user, final Map<String, Object> params) {}
+        });
     }
 
     private static void initProvider(final Class clazz) {

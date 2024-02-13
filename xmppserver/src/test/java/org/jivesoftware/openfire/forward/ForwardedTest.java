@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.forward;
 
+import org.dom4j.DocumentHelper;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,6 +157,44 @@ public class ForwardedTest
         // Setup test fixture.
         final Message input = new Message();
         input.setType(Message.Type.groupchat);
+
+        // Execute system under test.
+        final boolean result = Forwarded.isEligibleForCarbonsDelivery(input);
+
+        // Verify results.
+        assertFalse(result);
+    }
+
+    /**
+     * Asserts that a message of type 'groupchat' is not eligible for Carbons delivery.
+     *
+     * The stanza that's the input of the text is taken from a real-world stanza. This intends to make test coverage
+     * more conform real-world scenario's than the basic test in {@link #testMucGroupChat()}
+     */
+    @Test
+    public void testMucGroupChatRawData() throws Exception
+    {
+        // Setup test fixture.
+        final String raw = "<message xmlns=\"jabber:client\" to=\"john@example.org/barfoo\" type=\"groupchat\" id=\"7cb29947-fda2-4a44-b349-ec83fbbf062f\" from=\"room1@muc.example.org/Johnny\">\n" +
+            "        <active xmlns=\"http://jabber.org/protocol/chatstates\" />\n" +
+            "        <markable xmlns=\"urn:xmpp:chat-markers:0\" />\n" +
+            "        <origin-id xmlns=\"urn:xmpp:sid:0\" id=\"7cb29947-fda2-4a44-b349-ec83fbbf062f\" />\n" +
+            "        <encrypted xmlns=\"eu.siacs.conversations.axolotl\">\n" +
+            "          <header sid=\"12121212\">\n" +
+            "            <key rid=\"2334343434\">MOCK-TESTDATA</key>\n" +
+            "            <iv>TESTTEST</iv>\n" +
+            "</header>\n" +
+            "          <payload>TEST</payload>\n" +
+            "</encrypted>\n" +
+            "        <encryption xmlns=\"urn:xmpp:eme:0\" name=\"OMEMO\" namespace=\"eu.siacs.conversations.axolotl\" />\n" +
+            "        <body>You received a message encrypted with OMEMO but your client doesn't support OMEMO.</body>\n" +
+            "        <store xmlns=\"urn:xmpp:hints\" />\n" +
+            "        <stanza-id xmlns=\"urn:xmpp:sid:0\" id=\"d9c123d0-8738-40be-a1a3-497435e0761d\" by=\"room1@muc.example.org\" />\n" +
+            "        <addresses xmlns=\"http://jabber.org/protocol/address\">\n" +
+            "          <address type=\"ofrom\" jid=\"john@example.org\" />\n" +
+            "</addresses>\n" +
+            "</message>\n";
+        final Message input = new Message(DocumentHelper.parseText(raw).getRootElement());
 
         // Execute system under test.
         final boolean result = Forwarded.isEligibleForCarbonsDelivery(input);

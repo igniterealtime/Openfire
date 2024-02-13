@@ -123,6 +123,11 @@ public class Forwarded extends PacketExtension {
             }
         }
 
+        // A <message/> of type "groupchat" SHOULD NOT be carbon-copied.
+        if (stanza.getType() == Message.Type.groupchat) {
+            return false;
+        }
+
         // A <message/> is eligible for carbons delivery if it does not contain a <private/> child element...
         if (containsChildElement(stanza, Set.of("private", "received"), "urn:xmpp:carbons"))
         {
@@ -151,11 +156,6 @@ public class Forwarded extends PacketExtension {
 
         // ... it is of type "error" and it was sent in response to a <message/> that was eligible for carbons delivery.
         // TODO implement me (OF-2779)
-
-        // A <message/> of type "groupchat" SHOULD NOT be carbon-copied.
-        if (stanza.getType() == Message.Type.groupchat) {
-            return false;
-        }
 
         return false;
     }

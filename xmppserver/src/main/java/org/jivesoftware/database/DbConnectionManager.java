@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,28 +244,30 @@ public class DbConnectionManager {
      * @param abortTransaction true if the transaction should be rolled back.
      */
     public static void closeTransactionConnection(Connection con, boolean abortTransaction) {
-        // Rollback or commit the transaction
-        if (isTransactionsSupported()) {
-            try {
-                if (abortTransaction) {
-                    con.rollback();
+        if (con != null) {
+            // Rollback or commit the transaction
+            if (isTransactionsSupported()) {
+                try {
+                    if (abortTransaction) {
+                        con.rollback();
+                    }
+                    else {
+                        con.commit();
+                    }
                 }
-                else {
-                    con.commit();
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
+                }
+                // Reset the connection to auto-commit mode.
+                try {
+                    con.setAutoCommit(true);
+                }
+                catch (Exception e) {
+                    Log.error(e.getMessage(), e);
                 }
             }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
-            // Reset the connection to auto-commit mode.
-            try {
-                con.setAutoCommit(true);              
-            }
-            catch (Exception e) {
-                Log.error(e.getMessage(), e);
-            }
+            closeConnection(con);
         }
-        closeConnection(con);
     }
 
     /**

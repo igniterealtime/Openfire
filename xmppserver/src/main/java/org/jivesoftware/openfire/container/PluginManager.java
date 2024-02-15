@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,9 @@ public class PluginManager
     @GuardedBy("this")
     private final Map<String, Integer> failureToLoadCount = new HashMap<>();
 
+    @GuardedBy("this")
+    private final Map<String, String> lastLoadWarnings = new HashMap<>();
+
     private final PluginMonitor pluginMonitor;
     private boolean executed = false;
 
@@ -162,6 +165,7 @@ public class PluginManager
         classloaders.clear();
         childPluginMap.clear();
         failureToLoadCount.clear();
+        lastLoadWarnings.clear();
     }
 
     /**
@@ -458,6 +462,9 @@ public class PluginManager
      */
     synchronized boolean loadPlugin( String canonicalName, Path pluginDir )
     {
+        // Clean up any warnings that were recorded during a previous attempt to load the plugin.
+        lastLoadWarnings.remove(canonicalName);
+
         final PluginMetadata metadata = PluginMetadata.getInstance( pluginDir );
         pluginMetadata.put( canonicalName, metadata );
 
@@ -467,9 +474,10 @@ public class PluginManager
             return false;
         }
 
-        if ( failureToLoadCount.containsKey( canonicalName ) && failureToLoadCount.get( canonicalName ) > JiveGlobals.getIntProperty( "plugins.loading.retries", 5 ) )
+        final Integer loadFailures = failureToLoadCount.get(canonicalName);
+        if (loadFailures != null && loadFailures > JiveGlobals.getIntProperty("plugins.loading.retries", 5))
         {
-            Log.debug( "The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", canonicalName );
+            Log.debug("The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", canonicalName);
             return false;
         }
 
@@ -481,6 +489,7 @@ public class PluginManager
             {
                 Log.warn( "Plugin '{}' could not be loaded: no plugin.xml file found.", canonicalName );
                 failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.invalidJar"));
                 return false;
             }
 
@@ -493,6 +502,7 @@ public class PluginManager
                 if (metadata.getMinServerVersion().isNewerThan(currentServerVersion.ignoringReleaseStatus())) {
                     Log.warn( "Ignoring plugin '{}': requires server version {}. Current server version is {}.", canonicalName, metadata.getMinServerVersion(), currentServerVersion );
                     failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.minserverversion", List.of(metadata.getMinServerVersion().toString())));
                     return false;
                 }
             }
@@ -506,6 +516,7 @@ public class PluginManager
                 {
                     Log.warn( "Ignoring plugin '{}': compatible with server versions up to but excluding {}. Current server version is {}.", canonicalName, metadata.getPriorToServerVersion(), currentServerVersion );
                     failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.priortoserverversion", List.of(metadata.getPriorToServerVersion().toString())));
                     return false;
                 }
             }
@@ -518,6 +529,7 @@ public class PluginManager
                 {
                     Log.warn( "Ignoring plugin '{}': requires Java specification version {}. Openfire is currently running in Java {}.", canonicalName, metadata.getMinJavaVersion(), System.getProperty( "java.specification.version" ) );
                     failureToLoadCount.put( canonicalName, Integer.MAX_VALUE ); // Don't retry - this cannot be recovered from.
+                    lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.minJavaVersion", List.of(metadata.getMinJavaVersion().toString(), runtimeVersion.getVersionString())));
                     return false;
                 }
             }
@@ -553,6 +565,7 @@ public class PluginManager
                         count = 0;
                     }
                     failureToLoadCount.put( canonicalName, ++count );
+                    lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.missingParent", List.of(parentCanonicalName)));
                     return false;
                 }
                 pluginLoader = classloaders.get( parentPlugin );
@@ -612,6 +625,8 @@ public class PluginManager
             {
                 // The schema was not there and auto-upgrade failed.
                 Log.error( "Error while loading plugin '{}': {}", canonicalName, LocaleUtils.getLocalizedString( "upgrade.database.failure" ) );
+                lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.databaseScript"));
+                // Does not prevent the plugin from being loaded, as many database script errors are benign.
             }
 
             // Load any JSP's defined by the plugin.
@@ -696,6 +711,8 @@ public class PluginManager
             } else {
                 Log.info( "Successfully loaded plugin '{}'.", canonicalName);
             }
+
+            failureToLoadCount.remove(canonicalName);
             return true;
         }
         catch ( Throwable e )
@@ -706,6 +723,7 @@ public class PluginManager
                 count = 0;
             }
             failureToLoadCount.put( canonicalName, ++count );
+            lastLoadWarnings.put(canonicalName, LocaleUtils.getLocalizedString("plugin.admin.failed.unknown"));
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
@@ -823,6 +841,7 @@ public class PluginManager
         Log.debug( "Unloading plugin '{}'...", canonicalName );
 
         failureToLoadCount.remove( canonicalName );
+        lastLoadWarnings.remove(canonicalName);
 
         Plugin plugin = pluginsLoaded.get( canonicalName );
         if ( plugin != null )
@@ -960,6 +979,18 @@ public class PluginManager
             classloaders.put( plugin, pluginLoader );
             pluginMetadata.put( canonicalName, metadata );
         }
+    }
+
+    /**
+     * Returns a human-readable, localized message related to a failure while trying to load a plugin. When the last
+     * time that this plugin was loaded was successful (or when a plugin of this name was never attempted to be loaded
+     * at all), this method returns null.
+     *
+     * @param canonicalPluginName The canonical name of a plugin
+     * @return An optional human-readable, localized failure message.
+     */
+    public String getLoadWarning(final String canonicalPluginName) {
+        return lastLoadWarnings.get(canonicalPluginName);
     }
 
     /**

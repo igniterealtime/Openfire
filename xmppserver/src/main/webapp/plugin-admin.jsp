@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  - Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -252,6 +252,7 @@
 
 tr.regular td,
 tr.unsupported td,
+tr.warning td,
 tr.update td {
     text-align: left;
     font-family: verdana, arial, helvetica, sans-serif;
@@ -275,6 +276,12 @@ tr.unsupported td {
     font-size: 8pt;
     background: #FBCBCC;
     border-color: #CB2B18;
+}
+
+tr.warning td {
+    font-size: 8pt;
+    background: #fbe5cb;
+    border-color: #cb7718;
 }
 
 tr.singleline > td {
@@ -392,13 +399,17 @@ tr.lowerhalf > td:last-child {
     <c:set var="canonicalName" value="${entry.key}"/>
     <c:set var="plugin" value="${entry.value}"/>
     <c:if test="${canonicalName != 'admin'}">
-        <c:set var="minServerVersionFail" value="${not empty plugin.minServerVersion and plugin.minServerVersion.isNewerThan(serverVersion.ignoringReleaseStatus())}"/>
-        <c:set var="priorToServerVersionFail" value="${not empty plugin.priorToServerVersion and not plugin.priorToServerVersion.isNewerThan( serverVersion )}"/>
-        <c:set var="unsupported" value="${ minServerVersionFail or priorToServerVersionFail }"/>
+        <c:set var="loadWarning" value="${pluginManager.getLoadWarning(canonicalName)}"/>
+        <c:set var="unsupported" value="${not empty loadWarning and !pluginManager.isLoaded(canonicalName)}"/>
+        <c:set var="loadedWithWarning" value="${not empty loadWarning and pluginManager.isLoaded(canonicalName)}"/>
         <c:set var="update" value="${updateManager.getPluginUpdate( plugin.name, plugin.version) }"/>
         <c:choose>
             <c:when test="${unsupported}">
                 <c:set var="colorClass" value="unsupported"/>
+                <c:set var="shapeClass" value="upperhalf"/>
+            </c:when>
+            <c:when test="${loadedWithWarning}">
+                <c:set var="colorClass" value="warning"/>
                 <c:set var="shapeClass" value="upperhalf"/>
             </c:when>
             <c:when test="${not empty update}">
@@ -464,7 +475,7 @@ tr.lowerhalf > td:last-child {
             </td>
         </tr>
 
-        <c:if test="${unsupported}">
+        <c:if test="${unsupported or loadedWithWarning}">
             <!-- When the plugin is unsupported, but *also* has an update, make sure that there's no bottom border -->
             <c:set var="overrideStyle" value="${ not empty update ? 'border-bottom-width: 0' : ''}"/>
 
@@ -472,15 +483,8 @@ tr.lowerhalf > td:last-child {
                 <td style="${overrideStyle}">&nbsp;</td>
                 <td style="${overrideStyle}" colspan="6" nowrap>
                     <span class="small-label">
-                        <c:if test="${minServerVersionFail}">
-                            <fmt:message key="plugin.admin.failed.minserverversion">
-                                <fmt:param value="${plugin.minServerVersion}"/>
-                            </fmt:message>
-                        </c:if>
-                        <c:if test="${priorToServerVersionFail}">
-                            <fmt:message key="plugin.admin.failed.priortoserverversion">
-                                <fmt:param value="${plugin.priorToServerVersion}"/>
-                            </fmt:message>
+                        <c:if test="${not empty loadWarning}">
+                            <c:out value="${loadWarning}"/>
                         </c:if>
                     </span>
                 </td>
@@ -489,7 +493,7 @@ tr.lowerhalf > td:last-child {
 
             <tr><td></td></tr>
 
-            <!-- End of update section -->
+            <!-- End of unsupported section -->
         </c:if>
 
         <c:if test="${not empty update}">

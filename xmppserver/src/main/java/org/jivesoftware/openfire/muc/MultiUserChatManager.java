@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import com.google.common.collect.Multimap;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.cluster.ClusterEventListener;
-import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -48,11 +46,7 @@ import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -957,10 +951,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
 
     @Override
     public void userDeleting(User user, Map<String, Object> params) {
-        // Delete any affiliation of the user to any room of any MUC service
+        // When a user is being deleted, all its affiliations need to be removed from chat rooms (OF-2166). Note that
+        // every room is an event listener for the same event, which should update rooms that are loaded into memory
+        // from the database. This event handler intends to update rooms that are not in memory, but only in the database.
         MUCPersistenceManager
                 .removeAffiliationFromDB(XMPPServer.getInstance().createJID(user.getUsername(), null, true));
-        // TODO Delete any user information from the rooms loaded into memory (OF-2166)
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
@@ -36,14 +37,7 @@ import org.xmpp.packet.Presence;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
@@ -160,6 +154,7 @@ public class LocalMUCRoomManager
         }
 
         GroupEventDispatcher.addListener(room); // TODO this event listener is added only in the node where the room is created. Does this mean that events are not propagated in a cluster?
+        UserEventDispatcher.addListener(room);
     }
 
     /**
@@ -234,6 +229,7 @@ public class LocalMUCRoomManager
             if (room != null) {
                 room.getRoomHistory().purge();
                 GroupEventDispatcher.removeListener(room);
+                UserEventDispatcher.removeListener(room);
                 updateNonPersistentRoomStat(room, null);
             }
             localRooms.remove(roomName);

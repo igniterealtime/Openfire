@@ -951,10 +951,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
 
     @Override
     public void userDeleting(User user, Map<String, Object> params) {
-        // Delete any affiliation of the user to any room of any MUC service
+        // When a user is being deleted, all its affiliations need to be removed from chat rooms (OF-2166). Note that
+        // every room is an event listener for the same event, which should update rooms that are loaded into memory
+        // from the database. This event handler intends to update rooms that are not in memory, but only in the database.
         MUCPersistenceManager
                 .removeAffiliationFromDB(XMPPServer.getInstance().createJID(user.getUsername(), null, true));
-        // TODO Delete any user information from the rooms loaded into memory (OF-2166)
     }
 
     @Override

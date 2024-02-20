@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.util.cert;
 
+import org.jivesoftware.util.SystemProperty;
+
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,37 +25,56 @@ import java.util.regex.Pattern;
 
 /**
  * Certificate identity mapping that uses the CommonName as the
- * identity credentials
- * 
- * @author Victor Hong
+ * identity credentials and provides possibility to add optional prefix and suffix
  *
+ * @author Victor Hong
  */
 public class CNCertificateIdentityMapping implements CertificateIdentityMapping {
 
-    private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
-    
+    private static final Pattern CN_PATTERN = Pattern.compile("(?i)(cn=)([^,]*)");
+
+    private String cnPrefix;
+    private String cnSuffix;
+
+    public CNCertificateIdentityMapping() {
+        cnPrefix = SystemProperty.Builder.ofType(String.class)
+            .setKey("provider.clientCertIdentityMap.cn.prefix")
+            .setDefaultValue("")
+            .setDynamic(true)
+            .addListener(value -> cnPrefix = value)
+            .build().getValue();
+
+        cnSuffix = SystemProperty.Builder.ofType(String.class)
+            .setKey("provider.clientCertIdentityMap.cn.suffix")
+            .setDefaultValue("")
+            .setDynamic(true)
+            .addListener(value -> cnSuffix = value)
+            .build().getValue();
+    }
+
     /**
-     * Maps certificate CommonName as identity credentials
-     * 
+     * Maps certificate CommonName as identity credentials with optional prefix and/or suffix.
+     * Prefix and suffix are specified by properties. Default value is an empty string.
+     *
      * @param certificate the certificates to map
      * @return A List of names.
      */
     @Override
     public List<String> mapIdentity(X509Certificate certificate) {
         String name = certificate.getSubjectDN().getName();
-        Matcher matcher = cnPattern.matcher(name);
+        Matcher matcher = CN_PATTERN.matcher(name);
         // Create an array with the detected identities
         List<String> names = new ArrayList<>();
         while (matcher.find()) {
-            names.add(matcher.group(2));
+            names.add(cnPrefix + matcher.group(2) + cnSuffix);
         }
-        
+
         return names;
     }
 
     /**
      * Returns the short name of mapping
-     * 
+     *
      * @return The short name of the mapping
      */
     @Override

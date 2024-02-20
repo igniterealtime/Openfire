@@ -33,24 +33,17 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
 
     private static final Pattern CN_PATTERN = Pattern.compile("(?i)(cn=)([^,]*)");
 
-    private String cnPrefix;
-    private String cnSuffix;
+    public static final SystemProperty<String> CN_PREFIX = SystemProperty.Builder.ofType(String.class)
+        .setKey("provider.clientCertIdentityMap.cn.prefix")
+        .setDefaultValue("")
+        .setDynamic(true)
+        .build();
 
-    public CNCertificateIdentityMapping() {
-        cnPrefix = SystemProperty.Builder.ofType(String.class)
-            .setKey("provider.clientCertIdentityMap.cn.prefix")
-            .setDefaultValue("")
-            .setDynamic(true)
-            .addListener(value -> cnPrefix = value)
-            .build().getValue();
-
-        cnSuffix = SystemProperty.Builder.ofType(String.class)
-            .setKey("provider.clientCertIdentityMap.cn.suffix")
-            .setDefaultValue("")
-            .setDynamic(true)
-            .addListener(value -> cnSuffix = value)
-            .build().getValue();
-    }
+    public static final SystemProperty<String> CN_SUFFIX = SystemProperty.Builder.ofType(String.class)
+        .setKey("provider.clientCertIdentityMap.cn.suffix")
+        .setDefaultValue("")
+        .setDynamic(true)
+        .build();
 
     /**
      * Maps certificate CommonName as identity credentials with optional prefix and/or suffix.
@@ -66,7 +59,7 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
         // Create an array with the detected identities
         List<String> names = new ArrayList<>();
         while (matcher.find()) {
-            names.add(cnPrefix + matcher.group(2) + cnSuffix);
+            names.add(CN_PREFIX.getValue() + matcher.group(2) + CN_SUFFIX.getValue());
         }
 
         return names;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -694,7 +694,8 @@ public class ConsistencyChecks {
         @Nonnull final Cache<String, MUCRoom> clusteredRoomCacheInput,
         @Nonnull final Map<String, MUCRoom> localRoomsInput,
         @Nonnull final Map<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeInput,
-        @Nonnull final Map<OccupantManager.Occupant, Set<NodeID>> nodesByOccupantInput,
+        @Nonnull final Map<OccupantManager.Occupant, NodeID> nodeByOccupantInput,
+        @Nonnull final Set<OccupantManager.Occupant> federatedOccupantsInput,
         @Nonnull final String mucServiceName
     ) {
 
@@ -702,7 +703,8 @@ public class ConsistencyChecks {
         final ConcurrentMap<String, MUCRoom> cache = new ConcurrentHashMap<>(clusteredRoomCacheInput);
         final ConcurrentMap<String, MUCRoom> localRoomsCache = new ConcurrentHashMap<>(localRoomsInput);
         final ConcurrentMap<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = new ConcurrentHashMap<>(occupantsByNodeInput);
-        final ConcurrentMap<OccupantManager.Occupant, Set<NodeID>> nodesByOccupant = new ConcurrentHashMap<>(nodesByOccupantInput);
+        final ConcurrentMap<OccupantManager.Occupant, NodeID> nodeByOccupant = new ConcurrentHashMap<>(nodeByOccupantInput);
+        final Set<OccupantManager.Occupant> federatedOccupants = new HashSet<>(federatedOccupantsInput);
 
         final List<String> allRoomNames = new ArrayList<>(cache.keySet());
         Collections.sort(allRoomNames);
@@ -712,7 +714,7 @@ public class ConsistencyChecks {
         final Set<OccupantManager.Occupant> allOccupantsFromOccupantsByNode = occupantsByNode.values().stream()
             .flatMap(Collection::stream)
             .collect(Collectors.toSet());
-        final Set<OccupantManager.Occupant> allOccupantsFromNodesByOccupant = nodesByOccupant.keySet();
+        final Set<OccupantManager.Occupant> allOccupantsFromNodesByOccupant = nodeByOccupant.keySet();
 
         final Set<OccupantManager.Occupant> occupantsByNodeNotPresentInNodesByOccupant = allOccupantsFromOccupantsByNode.stream()
             .filter(o -> !allOccupantsFromNodesByOccupant.contains(o))

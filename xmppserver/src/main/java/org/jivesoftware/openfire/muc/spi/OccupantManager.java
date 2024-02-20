@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,18 +94,48 @@ public class OccupantManager implements MUCEventListener
     private final String serviceDomain;
 
     /**
-     * Lookup table for finding occupants by node. Occupants are keyed by their 'real JID' property.
+     * Lookup table for finding occupants by node and their JID.
+     *
+     * Users of the local domain have a network connection (TCP, BOSH, websocket) to exactly one cluster node. This
+     * collection keeps a mapping of cluster nodes to users (to occupants). It is intended to be used to recompute the
+     * occupants of the domain when a cluster change occurs (eg: a server leaves the cluster)
+     *
+     * Users of other domains are not explicitly linked to a particular cluster node, as any cluster node can
+     * (re)establish a server-to-server connection to a remote domain. Federated users are therefor not tracked in this
+     * map.
+     *
+     * Occupants are keyed by their 'real JID' property.
+     *
+     * @see #federatedOccupants Equivalent that contains occupants that are users of non-local XMPP domains.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2799">Issue OF-2799</a>
      */
     @Nonnull
     @GuardedBy("mutex")
-    private final ConcurrentMap<NodeID, Map<JID, Set<Occupant>>> occupantsByNode = new ConcurrentHashMap<>();
+    private final ConcurrentMap<NodeID, Map<JID, Set<Occupant>>> localOccupantsByNode = new ConcurrentHashMap<>();
 
     /**
-     * Lookup table for finding nodes by occupant.
+     * Lookup table for finding the cluster node for an occupant.
+     *
+     * This collection contains only users of the local XMPP domain, for the reason documented in the javadoc of the
+     * {@link #localOccupantsByNode} field.
      */
     @Nonnull
     @GuardedBy("mutex")
-    private final ConcurrentMap<Occupant, Set<NodeID>> nodesByOccupant = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Occupant, NodeID> nodeByLocalOccupant = new ConcurrentHashMap<>();
+
+    /**
+     * Lookup table for finding occupants by their JID.
+     *
+     * This collection contains only users of remote XMPP domains, for the reason documented in the javadoc of the
+     * {@link #localOccupantsByNode} field.
+     *
+     * Occupants are keyed by their 'real JID' property.
+     *
+     * @see #localOccupantsByNode Equivalent that contains occupants that are users of the local XMPP domain.
+     */
+    @Nonnull
+    @GuardedBy("mutex")
+    private final ConcurrentMap<JID, Set<Occupant>> federatedOccupants = new ConcurrentHashMap<>();
 
     /**
      * A mutex that guards access to the occupantsByNode and nodeByOccupant collections.
@@ -128,20 +158,33 @@ public class OccupantManager implements MUCEventListener
     /**
      * Registers disappearance of an existing occupant, and/or appearance of a new occupant, on a specific node.
      *
-     * This method maintains the three different occupant lookup tables, and keeps them in sync.
+     * This method maintains the two different occupant lookup tables, and keeps them in sync.
      *
      * Calls to this method must be mode only under guard of a write lock that been obtained from {@link #mutex}.
+     *
+     * This method <em>only</em> should be used for non-federated/local users. For federated users, use
+     * {@link #replaceFederatedOccupant(Occupant, Occupant)}.
      *
      * @param oldOccupant An occupant that is to be removed from the registration of the referred node
      * @param newOccupant An occupant that is to be added to the registration of the referred node
      * @param nodeIDToReplaceOccupantFor The id of the node that the old/new occupant need to be (de)registered under. If null then the occupant is (de)registered for each node.
      */
     @GuardedBy("mutex")
-    private void replaceOccupant(@Nullable final Occupant oldOccupant, @Nullable final Occupant newOccupant, @Nullable final NodeID nodeIDToReplaceOccupantFor)
+    private void replaceLocalOccupant(@Nullable final Occupant oldOccupant, @Nullable final Occupant newOccupant, @Nullable final NodeID nodeIDToReplaceOccupantFor)
     {
+        if (oldOccupant == null && newOccupant == null) {
+            throw new IllegalArgumentException("Arguments 'oldOccupant' and 'newOccupant' cannot both be null (but were).");
+        }
+        if (oldOccupant != null && oldOccupant.isFederated()) {
+            throw new IllegalArgumentException("Argument 'oldOccupant' refers to a federated user '" + oldOccupant + "' (use #replaceFederatedOccupant() instead).");
+        }
+        if (newOccupant != null && newOccupant.isFederated()) {
+            throw new IllegalArgumentException("Argument 'newOccupant' refers to a federated user '" + newOccupant + "' (use #replaceFederatedOccupant() instead).");
+        }
+
         Set<NodeID> nodeIDsToReplaceOccupantFor = new HashSet<>();
         if (nodeIDToReplaceOccupantFor == null) {
-            nodeIDsToReplaceOccupantFor = occupantsByNode.keySet(); // all node ids
+            nodeIDsToReplaceOccupantFor = localOccupantsByNode.keySet(); // all node ids
         } else {
             nodeIDsToReplaceOccupantFor.add(nodeIDToReplaceOccupantFor); // just the one
         }
@@ -152,14 +195,14 @@ public class OccupantManager implements MUCEventListener
 
             // Step 2: add new occupant, if there is any
             if (newOccupant != null) {
-                occupantsByNode.computeIfAbsent(nodeID, (n) -> new HashMap<>())
+                localOccupantsByNode.computeIfAbsent(nodeID, (n) -> new HashMap<>())
                     .computeIfAbsent(newOccupant.getRealJID(), (s) -> new HashSet<>()).add(newOccupant);
-                nodesByOccupant.computeIfAbsent(newOccupant, (n) -> new HashSet<>()).add(nodeID);
+                nodeByLocalOccupant.put(newOccupant, nodeID);
             }
 
-            Log.debug("Replaced occupant {} with {} for node {}", oldOccupant, newOccupant, nodeID);
+            Log.debug("Replaced non-federated occupant {} with {} for node {}", oldOccupant, newOccupant, nodeID);
         }
-        Log.debug("Occupants remaining after replace: {}", nodesByOccupant);
+        Log.debug("Non-federated occupants remaining after replace: {}", nodeByLocalOccupant);
     }
 
     /**
@@ -174,7 +217,7 @@ public class OccupantManager implements MUCEventListener
     private void deleteOccupantFromNode(@Nullable final Occupant oldOccupant, @Nonnull final NodeID nodeID)
     {
         if (oldOccupant != null) {
-            final Map<JID, Set<Occupant>> occupantsOnNode = occupantsByNode.get(nodeID);
+            final Map<JID, Set<Occupant>> occupantsOnNode = localOccupantsByNode.get(nodeID);
             if (occupantsOnNode != null) {
                 final Set<Occupant> occupantsForJID = occupantsOnNode.get(oldOccupant.getRealJID());
                 if (occupantsForJID != null) {
@@ -183,18 +226,12 @@ public class OccupantManager implements MUCEventListener
                     if (occupantsForJID.isEmpty()) {
                         occupantsOnNode.remove(oldOccupant.getRealJID());
                         if (occupantsOnNode.isEmpty()) {
-                            occupantsByNode.remove(nodeID);
+                            localOccupantsByNode.remove(nodeID);
                         }
                     }
                 }
             }
-            if (nodesByOccupant.containsKey(oldOccupant)) {
-                nodesByOccupant.get(oldOccupant).remove(nodeID);
-                if (nodesByOccupant.get(oldOccupant).isEmpty()) {
-                    // Clean up, don't leave behind empty set
-                    nodesByOccupant.remove(oldOccupant);
-                }
-            }
+            nodeByLocalOccupant.remove(oldOccupant);
 
             // When an occupant is being pinged, but removed from the node, cancel the ping.
             final TimerTask pendingPingTask = oldOccupant.getPendingPingTask();
@@ -203,6 +240,51 @@ public class OccupantManager implements MUCEventListener
                 TaskEngine.getInstance().cancelScheduledTask(pendingPingTask);
                 oldOccupant.setPendingPingTask(null);
             }
+        }
+    }
+
+    /**
+     * Registers disappearance of an existing occupant, and/or appearance of a new occupant
+     *
+     * This method maintains the two different occupant lookup tables, and keeps them in sync.
+     *
+     * Calls to this method must be mode only under guard of a write lock that been obtained from {@link #mutex}.
+     *
+     * This method <em>only</em> should be used for federated/non-local users. For local users, use
+     * {@link #replaceLocalOccupant(Occupant, Occupant, NodeID)}.
+     *
+     * @param oldOccupant An occupant that is to be removed from the registration of the referred node
+     * @param newOccupant An occupant that is to be added to the registration of the referred node
+     */
+    @GuardedBy("mutex")
+    private void replaceFederatedOccupant(@Nullable final Occupant oldOccupant, @Nullable final Occupant newOccupant)
+    {
+        if (oldOccupant == null && newOccupant == null) {
+            throw new IllegalArgumentException("Arguments 'oldOccupant' and 'newOccupant' cannot both be null (but were).");
+        }
+        if (oldOccupant != null && !oldOccupant.isFederated()) {
+            throw new IllegalArgumentException("Argument 'oldOccupant' refers to a local/non-federated user '" + oldOccupant + "' (use #replaceLocalOccupant() instead).");
+        }
+        if (newOccupant != null && !newOccupant.isFederated()) {
+            throw new IllegalArgumentException("Argument 'newOccupant' refers to a local/non-federated user '" + newOccupant + "' (use #replaceLocalOccupant() instead).");
+        }
+
+        if (oldOccupant != null) {
+            federatedOccupants.computeIfPresent(oldOccupant.getRealJID(), (jid, occupants) -> {
+                occupants.remove(oldOccupant);
+                return occupants.isEmpty() ? null : occupants; // Delete if no occupants are left.
+            });
+
+            // When an occupant is being pinged, but removed from the node, cancel the ping.
+            final TimerTask pendingPingTask = oldOccupant.getPendingPingTask();
+            if (pendingPingTask != null) {
+                Log.debug("Remove pending ping task for {} that is being deleted.", oldOccupant);
+                TaskEngine.getInstance().cancelScheduledTask(pendingPingTask);
+                oldOccupant.setPendingPingTask(null);
+            }
+        }
+        if (newOccupant != null) {
+            federatedOccupants.computeIfAbsent(newOccupant.getRealJID(), (n) -> new HashSet<>()).add(newOccupant);
         }
     }
 
@@ -323,6 +405,7 @@ public class OccupantManager implements MUCEventListener
     public void occupantNickKicked(JID roomJID, String nickname)
     {
         Log.debug("Informing nodes about kicking occupant with nick {} from room {} of service {}", nickname, roomJID.getNode(), serviceName);
+
         final OccupantKickedForNicknameTask task = new OccupantKickedForNicknameTask(serviceName, roomJID.getNode(), nickname, XMPPServer.getInstance().getNodeID());
         process(task); // On this cluster node.
 
@@ -342,10 +425,16 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantAddedTask task)
     {
+        Log.debug("Processing task to add occupant {} - {}", task.getRealJID(), task.getNickname());
+
         final Occupant newOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         mutex.writeLock().lock();
         try {
-            replaceOccupant(null, newOccupant, task.getOriginator());
+            if (newOccupant.isFederated()) {
+                replaceFederatedOccupant(null, newOccupant);
+            } else {
+                replaceLocalOccupant(null, newOccupant, task.getOriginator());
+            }
         } finally {
             mutex.writeLock().unlock();
         }
@@ -359,12 +448,18 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final OccupantUpdatedTask task)
     {
+        Log.debug("Processing task to update occupant {} - {}", task.getRealJID(), task.getOldNickname());
+
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getOldNickname(), task.getRealJID());
         final Occupant newOccupant = new Occupant(task.getRoomName(), task.getNewNickname(), task.getRealJID());
 
         mutex.writeLock().lock();
         try {
-            replaceOccupant(oldOccupant, newOccupant, task.getOriginator());
+            if (oldOccupant.isFederated()) { // Old and New occupant will both either be federated or not, as they're using the same realJID value.
+                replaceFederatedOccupant(oldOccupant, newOccupant);
+            } else {
+                replaceLocalOccupant(oldOccupant, newOccupant, task.getOriginator());
+            }
         } finally {
             mutex.writeLock().unlock();
         }
@@ -383,7 +478,11 @@ public class OccupantManager implements MUCEventListener
         final Occupant oldOccupant = new Occupant(task.getRoomName(), task.getNickname(), task.getRealJID());
         mutex.writeLock().lock();
         try {
-            replaceOccupant(oldOccupant, null, task.getOriginator());
+            if (oldOccupant.isFederated()) {
+                replaceFederatedOccupant(oldOccupant, null);
+            } else {
+                replaceLocalOccupant(oldOccupant, null, task.getOriginator());
+            }
         } finally {
             mutex.writeLock().unlock();
         }
@@ -401,11 +500,18 @@ public class OccupantManager implements MUCEventListener
     {
         Log.debug("Processing task to remove everyone with nick {} from room {}", task.getNickname(), task.getRoomName());
 
-        final Set<Occupant> occupantsToKick;
+        final Set<Occupant> localOccupantsToKick;
+        final Set<Occupant> federatedOccupantsToKick;
         mutex.readLock().lock();
         try {
-            occupantsToKick = occupantsByNode.values().stream().map(Map::values)
+            localOccupantsToKick = localOccupantsByNode.values().stream().map(Map::values)
                 .flatMap(Collection::stream)
+                .flatMap(Collection::stream)
+                .filter(o -> o.getNickname().equals(task.getNickname()))
+                .filter(o -> o.getRoomName().equals(task.getRoomName()))
+                .collect(Collectors.toSet());
+
+            federatedOccupantsToKick = federatedOccupants.values().stream()
                 .flatMap(Collection::stream)
                 .filter(o -> o.getNickname().equals(task.getNickname()))
                 .filter(o -> o.getRoomName().equals(task.getRoomName()))
@@ -416,7 +522,8 @@ public class OccupantManager implements MUCEventListener
 
         mutex.writeLock().lock();
         try {
-            occupantsToKick.forEach(o -> replaceOccupant(o, null, null));
+            localOccupantsToKick.forEach(o -> replaceLocalOccupant(o, null, null));
+            federatedOccupantsToKick.forEach(o -> replaceFederatedOccupant(o, null));
         } finally {
             mutex.writeLock().unlock();
         }
@@ -431,36 +538,42 @@ public class OccupantManager implements MUCEventListener
      */
     public void process(@Nonnull final SyncLocalOccupantsAndSendJoinPresenceTask task)
     {
-        Set<Occupant> oldOccupants;
+        Set<Occupant> oldLocalOccupants;
 
         mutex.writeLock().lock();
         try {
-            final Map<JID, Set<Occupant>> jidSetMap = occupantsByNode.get(task.getOriginator());
+            final Map<JID, Set<Occupant>> jidSetMap = localOccupantsByNode.get(task.getOriginator());
             if (jidSetMap == null) {
-                oldOccupants = null;
+                oldLocalOccupants = null;
             } else {
-                oldOccupants = jidSetMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+                oldLocalOccupants = jidSetMap.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
             }
-            Log.debug("We received a copy of {} local MUC occupants from node {}. We already had {} occupants in local registration for that node.", task.getOccupants().size(), task.getOriginator(), oldOccupants == null ? 0 : oldOccupants.size());
+            Log.debug("We received a copy of {} local MUC occupants from node {}. We already had {} occupants in local registration for that node.", task.getOccupants().size(), task.getOriginator(), oldLocalOccupants == null ? 0 : oldLocalOccupants.size());
 
-            if (oldOccupants != null) {
+            if (oldLocalOccupants != null) {
                 // Use defensive copy to prevent concurrent modification exceptions.
-                oldOccupants = new HashSet<>(oldOccupants);
+                oldLocalOccupants = new HashSet<>(oldLocalOccupants);
             }
-            if (oldOccupants != null) {
-                Log.debug("Removing {} old occupants", oldOccupants.size());
-                oldOccupants.forEach(oldOccupant -> replaceOccupant(oldOccupant, null, task.getOriginator()));
+            if (oldLocalOccupants != null) {
+                Log.debug("Removing {} old local occupants", oldLocalOccupants.size());
+                oldLocalOccupants.forEach(oldOccupant -> replaceLocalOccupant(oldOccupant, null, task.getOriginator()));
             }
             if (task.getOccupants() != null) {
                 Log.debug("Adding {} new occupants", task.getOccupants().size());
-                task.getOccupants().forEach(newOccupant -> replaceOccupant(null, newOccupant, task.getOriginator()));
+                task.getOccupants().forEach(newOccupant -> {
+                    if (newOccupant.isFederated()) {
+                        replaceFederatedOccupant(null, newOccupant);
+                    } else {
+                        replaceLocalOccupant(null, newOccupant, task.getOriginator());
+                    }
+                });
             }
         } finally {
             mutex.writeLock().unlock(); // Unlock write, still hold read.
         }
 
-        if (oldOccupants != null) {
-            if (oldOccupants.equals(task.getOccupants())) {
+        if (oldLocalOccupants != null) {
+            if (oldLocalOccupants.equals(task.getOccupants().stream().filter(occupant -> !occupant.isFederated()).collect(Collectors.toSet()))) {
                 Log.info("We received a copy of local MUC occupants from node {}, but we already had this information. This hints at a possible inefficient sharing of data across the cluster.", task.getOriginator());
             } else {
                 Log.warn("We received a copy of local MUC occupants from node {}, but we already had occupants for this node. However, the new data is different from the old data!", task.getOriginator());
@@ -479,10 +592,17 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return nodesByOccupant.keySet().stream()
-                .filter(occupant -> realJID.equals(occupant.getRealJID()))
-                .map(occupant -> occupant.roomName)
-                .collect(Collectors.toSet());
+            if (XMPPServer.getInstance().isLocal(realJID)) {
+                return nodeByLocalOccupant.keySet().stream()
+                    .filter(occupant -> realJID.equals(occupant.getRealJID()))
+                    .map(occupant -> occupant.roomName)
+                    .collect(Collectors.toSet());
+            } else {
+                return federatedOccupants.getOrDefault(realJID, new HashSet<>()).stream()
+                    .filter(occupant -> realJID.equals(occupant.getRealJID()))
+                    .map(occupant -> occupant.roomName)
+                    .collect(Collectors.toSet());
+            }
         } finally {
             mutex.readLock().unlock();
         }
@@ -491,15 +611,24 @@ public class OccupantManager implements MUCEventListener
     /**
      * Returns data that is maintained for occupants of the local cluster node.
      *
+     * The returned occupants include occupants that are local to the XMPP domain as well as federated users.
+     *
      * @return all data maintained for the local cluster node.
      */
     @Nonnull
-    public Set<Occupant> getLocalOccupants()
+    public Set<Occupant> getLocalOccupants() // Beware: confusing usage of the word 'local' here. Here, it means 'local to the cluster node' and not 'non-federated'.
     {
         mutex.readLock().lock();
         try {
-            return occupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptyMap())
+            final Set<Occupant> local = localOccupantsByNode.getOrDefault(XMPPServer.getInstance().getNodeID(), Collections.emptyMap())
                 .values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+            final Set<Occupant> federated = federatedOccupants.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+
+            final Set<Occupant> result = new HashSet<>();
+            result.addAll(local);
+            result.addAll(federated);
+
+            return result;
         } finally {
             mutex.readLock().unlock();
         }
@@ -516,11 +645,18 @@ public class OccupantManager implements MUCEventListener
         // Only tracking it for the local cluster node, as those are the only users for which this node will monitor activity anyway
         mutex.writeLock().lock();
         try {
-            final Map<JID, Set<Occupant>> localOccupants = occupantsByNode.get((XMPPServer.getInstance().getNodeID()));
-            if (localOccupants != null) {
-                final Set<Occupant> localOccupantsForUser = localOccupants.get(userJid);
-                if (localOccupantsForUser != null) {
-                    localOccupantsForUser.forEach(occupant -> occupant.setLastActive(Instant.now()));
+            if (XMPPServer.getInstance().isLocal(userJid)) {
+                final Map<JID, Set<Occupant>> localOccupants = localOccupantsByNode.get((XMPPServer.getInstance().getNodeID()));
+                if (localOccupants != null) {
+                    final Set<Occupant> localOccupantsForUser = localOccupants.get(userJid);
+                    if (localOccupantsForUser != null) {
+                        localOccupantsForUser.forEach(occupant -> occupant.setLastActive(Instant.now()));
+                    }
+                }
+            } else {
+                final Set<Occupant> federatedOccupantsForUser = federatedOccupants.get(userJid);
+                if (federatedOccupantsForUser != null) {
+                    federatedOccupantsForUser.forEach(occupant -> occupant.setLastActive(Instant.now()));
                 }
             }
         } finally {
@@ -540,11 +676,21 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            final Map<JID, Set<Occupant>> localOccupants = occupantsByNode.get((XMPPServer.getInstance().getNodeID()));
-            if (localOccupants != null) {
-                final Set<Occupant> localOccupantsForUser = localOccupants.get(userJid);
-                if (localOccupantsForUser != null) {
-                    return localOccupantsForUser.stream()
+            if (XMPPServer.getInstance().isLocal(userJid)) {
+                final Map<JID, Set<Occupant>> localOccupants = localOccupantsByNode.get((XMPPServer.getInstance().getNodeID()));
+                if (localOccupants != null) {
+                    final Set<Occupant> localOccupantsForUser = localOccupants.get(userJid);
+                    if (localOccupantsForUser != null) {
+                        return localOccupantsForUser.stream()
+                            .map(Occupant::getLastActive)
+                            .max(java.util.Comparator.naturalOrder())
+                            .orElse(null);
+                    }
+                }
+            } else {
+                final Set<Occupant> federatedOccupantsForUser = federatedOccupants.get(userJid);
+                if (federatedOccupantsForUser != null) {
+                    return federatedOccupantsForUser.stream()
                         .map(Occupant::getLastActive)
                         .max(java.util.Comparator.naturalOrder())
                         .orElse(null);
@@ -565,7 +711,7 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return nodesByOccupant.size();
+            return nodeByLocalOccupant.size() + federatedOccupants.values().stream().mapToInt(Collection::size).sum();
         } finally {
             mutex.readLock().unlock();
         }
@@ -582,8 +728,15 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return nodesByOccupant.getOrDefault(occupant, new HashSet<>()).stream()
-                .anyMatch(nodeID -> !nodeID.equals(exclude));
+            if (occupant.isFederated()) {
+                return federatedOccupants.getOrDefault(occupant.getRealJID(), Collections.emptySet()).contains(occupant);
+            } else {
+                final NodeID node = nodeByLocalOccupant.get(occupant);
+                if (node == null) {
+                    return false;
+                }
+                return !node.equals(exclude);
+            }
         } finally {
             mutex.readLock().unlock();
         }
@@ -599,34 +752,50 @@ public class OccupantManager implements MUCEventListener
     {
         mutex.readLock().lock();
         try {
-            return nodesByOccupant.containsKey(occupant);
+            if (occupant.isFederated()) {
+                return federatedOccupants.getOrDefault(occupant.getRealJID(), Collections.emptySet()).contains(occupant);
+            } else {
+                return nodeByLocalOccupant.containsKey(occupant);
+            }
         } finally {
             mutex.readLock().unlock();
         }
     }
 
     @Nonnull
-    public Set<Occupant> occupantsForRoomByNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID)
+    public Set<Occupant> occupantsForRoomByNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID, final boolean includeFederated)
     {
         mutex.readLock().lock();
         try {
             // TODO optimize this in a way that it does not need to iterate over all occupants.
-            return occupantsByNode.getOrDefault(nodeID, Collections.emptyMap()).values().stream().flatMap(Collection::stream)
+            final Set<Occupant> local = localOccupantsByNode.getOrDefault(nodeID, Collections.emptyMap()).values().stream().flatMap(Collection::stream)
                 .filter(occupant -> occupant.getRoomName().equals(roomName))
                 .collect(Collectors.toSet());
+
+            final Set<Occupant> result = new HashSet<>();
+            result.addAll(local);
+
+            if (includeFederated) {
+                final Set<Occupant> federated = federatedOccupants.values().stream().flatMap(Collection::stream)
+                    .filter(occupant -> occupant.getRoomName().equals(roomName))
+                    .collect(Collectors.toSet());
+                result.addAll(federated);
+            }
+
+            return result;
         } finally {
             mutex.readLock().unlock();
         }
     }
 
     @Nonnull
-    public Set<Occupant> occupantsForRoomExceptForNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID)
+    public Set<Occupant> occupantsForRoomExceptForNode(@Nonnull final String roomName, @Nonnull final NodeID nodeID, final boolean includeFederated)
     {
         mutex.readLock().lock();
         try {
             // TODO optimize this in a way that it does not need to iterate over all occupants.
             final Set<Occupant> result = new HashSet<>();
-            for (Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : occupantsByNode.entrySet()) {
+            for (Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : localOccupantsByNode.entrySet()) {
                 if (entry.getKey().equals(nodeID)) {
                     continue;
                 }
@@ -639,6 +808,14 @@ public class OccupantManager implements MUCEventListener
                     }
                 }
             }
+
+            if (includeFederated) {
+                final Set<Occupant> federated = federatedOccupants.values().stream().flatMap(Collection::stream)
+                    .filter(occupant -> occupant.getRoomName().equals(roomName))
+                    .collect(Collectors.toSet());
+                result.addAll(federated);
+            }
+
             return result;
         } finally {
             mutex.readLock().unlock();
@@ -655,15 +832,17 @@ public class OccupantManager implements MUCEventListener
     @Nonnull
     public Set<Occupant> leftCluster(@Nonnull final NodeID nodeID)
     {
+        // Note: it is assumed that users on federated domains have _not_ lost connectivity. Federation can be
+        // re-established from the local server, if it previously was established at the node that has now left.
         Set<Occupant> returnValue;
         mutex.writeLock().lock();
         try {
-            Set<Occupant> occupantsBeingRemoved = occupantsByNode.getOrDefault(nodeID, new HashMap<>()).values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+            Set<Occupant> occupantsBeingRemoved = localOccupantsByNode.getOrDefault(nodeID, new HashMap<>()).values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
 
             // Defensive copy to prevent modifying the returned set
             returnValue = new HashSet<>(occupantsBeingRemoved);
 
-            returnValue.forEach(o -> replaceOccupant(o, null, nodeID));
+            returnValue.forEach(o -> replaceLocalOccupant(o, null, nodeID));
         } finally {
             mutex.writeLock().unlock();
         }
@@ -679,13 +858,16 @@ public class OccupantManager implements MUCEventListener
     @Nullable
     public Set<Occupant> leftCluster()
     {
+        // Note: it is assumed that users on federated domains have _not_ lost connectivity. Federation can be
+        // re-established from the local server, if it previously was established at the node that has now left.
+
         final NodeID ownNodeID = XMPPServer.getInstance().getNodeID();
         mutex.writeLock().lock();
         try {
-            final Map<JID, Set<Occupant>> occupantsLeftOnThisNode = occupantsByNode.getOrDefault(ownNodeID, new HashMap<>());
+            final Map<JID, Set<Occupant>> occupantsLeftOnThisNode = localOccupantsByNode.getOrDefault(ownNodeID, new HashMap<>());
 
             final Set<Occupant> occupantsRemoved = new HashSet<>();
-            for (Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : occupantsByNode.entrySet()) {
+            for (Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : localOccupantsByNode.entrySet()) {
                 if (entry.getKey().equals(ownNodeID)) {
                     continue;
                 }
@@ -704,11 +886,11 @@ public class OccupantManager implements MUCEventListener
             }
 
             // Now actually remove what needs to be removed
-            occupantsByNode.entrySet().removeIf(e -> !e.getKey().equals(ownNodeID));
+            localOccupantsByNode.entrySet().removeIf(e -> !e.getKey().equals(ownNodeID));
 
-            nodesByOccupant.clear();
+            nodeByLocalOccupant.clear();
             occupantsLeftOnThisNode.values().stream().flatMap(Collection::stream)
-                .forEach(o -> nodesByOccupant.computeIfAbsent(o, (n) -> new HashSet<>()).add(ownNodeID));
+                .forEach(o -> nodeByLocalOccupant.put(o, ownNodeID));
 
             Log.debug("Reset occupants because we left the cluster");
             return occupantsRemoved;
@@ -718,12 +900,12 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Nonnull
-    public Map<NodeID, Set<Occupant>> getOccupantsByNode()
+    public Map<NodeID, Set<Occupant>> getLocalOccupantsByNode()
     {
         mutex.readLock().lock();
         try {
             final Map<NodeID, Set<Occupant>> result = new HashMap<>();
-            for (final Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : occupantsByNode.entrySet()) {
+            for (final Map.Entry<NodeID, Map<JID, Set<Occupant>>> entry : localOccupantsByNode.entrySet()) {
                 final Set<Occupant> occupants = entry.getValue().values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
                 result.put(entry.getKey(), occupants);
             }
@@ -733,12 +915,22 @@ public class OccupantManager implements MUCEventListener
         }
     }
 
-    @Nonnull
-    public Map<Occupant, Set<NodeID>> getNodesByOccupant()
+    public Set<Occupant> getFederatedOccupants()
     {
         mutex.readLock().lock();
         try {
-            return Collections.unmodifiableMap(nodesByOccupant);
+            return federatedOccupants.values().stream().flatMap(Collection::stream).collect(Collectors.toUnmodifiableSet());
+        } finally {
+            mutex.readLock().unlock();
+        }
+    }
+
+    @Nonnull
+    public Map<Occupant, NodeID> getNodeByLocalOccupant()
+    {
+        mutex.readLock().lock();
+        try {
+            return Collections.unmodifiableMap(nodeByLocalOccupant);
         } finally {
             mutex.readLock().unlock();
         }
@@ -755,9 +947,14 @@ public class OccupantManager implements MUCEventListener
         // When a room is destroyed, remove all registered occupants for that room.
         mutex.writeLock().lock();
         try {
-            nodesByOccupant.entrySet().stream()
+            nodeByLocalOccupant.entrySet().stream()
                 .filter(entry -> entry.getKey().getRoomName().equals(roomJID.getNode()))
-                .forEach(entry -> entry.getValue().forEach(nodeID -> replaceOccupant(entry.getKey(), null, nodeID)));
+                .forEach(entry -> replaceLocalOccupant(entry.getKey(), null, entry.getValue()));
+
+            federatedOccupants.values().stream()
+                .flatMap(Collection::stream)
+                .filter(occupant -> occupant.getRoomName().equals(roomJID.getNode()))
+                .forEach(occupant -> replaceFederatedOccupant(occupant, null));
         } finally {
             mutex.writeLock().unlock();
         }
@@ -846,6 +1043,10 @@ public class OccupantManager implements MUCEventListener
             if (pendingPingTask != null) {
                 this.lastPingRequest = Instant.now();
             }
+        }
+
+        public boolean isFederated() {
+            return !XMPPServer.getInstance().isLocal(realJID);
         }
 
         @Override

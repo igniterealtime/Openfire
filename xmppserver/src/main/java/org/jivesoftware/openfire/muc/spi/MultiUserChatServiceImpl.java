@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2779,9 +2779,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public int getNumberRoomOccupants() {
         int total = 0;
-        for (final Set<OccupantManager.Occupant> nodeSet : occupantManager.getOccupantsByNode().values()) {
+        for (final Set<OccupantManager.Occupant> nodeSet : occupantManager.getLocalOccupantsByNode().values()) {
             total += nodeSet.size();
         }
+        total += occupantManager.getFederatedOccupants().size();
         return total;
     }
 
@@ -3299,7 +3300,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         for (final String lostRoomName : lostRoomNames) {
             try {
                 Log.info("Room '{}' was lost from the data structure that's shared in the cluster (the cache). This room is now considered 'gone' for this cluster node. Occupants will be informed.", lostRoomName);
-                final Set<OccupantManager.Occupant> occupants = occupantManager.occupantsForRoomByNode(lostRoomName, XMPPServer.getInstance().getNodeID());
+                final Set<OccupantManager.Occupant> occupants = occupantManager.occupantsForRoomByNode(lostRoomName, XMPPServer.getInstance().getNodeID(), true);
                 final JID roomJID = new JID(lostRoomName, fullServiceName, null);
                 for (final OccupantManager.Occupant occupant : occupants) {
                     try {
@@ -3455,7 +3456,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // To prevent each (remaining) cluster node from broadcasting the same presence to all occupants of all cluster nodes,
             // this broadcasts only to occupants on the local node.
-            final Set<OccupantManager.Occupant> recipients = occupantManager.occupantsForRoomByNode(occupant.roomName, XMPPServer.getInstance().getNodeID());
+            // This also broadcasts to all federated occupants, as we've not yet identified a reliable way to make at least one cluster node inform these occupants. TODO: find such a reliable way, to prevent each (remaining) node sending presence updates.
+            final Set<OccupantManager.Occupant> recipients = occupantManager.occupantsForRoomByNode(occupant.roomName, XMPPServer.getInstance().getNodeID(), true);
             for (OccupantManager.Occupant recipient : recipients) {
                 Log.trace("Preparing stanza for recipient {} (nickname: {})", recipient.getRealJID(), recipient.getNickname());
                 try {
@@ -3485,6 +3487,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      * Note that this method does not change state (in either the clustered cache, or local equivalents): it only sends stanzas.
      *
      * @param occupantsOnRemovedNodes The occupants for which to send stanzas
+     * @param nodeID the node that left the cluster. Null if the local node left the cluster.
      */
     private void makeOccupantsOnDisconnectedClusterNodesLeave(@Nullable final Set<OccupantManager.Occupant> occupantsOnRemovedNodes, NodeID nodeID)
     {
@@ -3517,12 +3520,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // To prevent each (remaining) cluster node from broadcasting the same presence to all occupants of all remaining nodes,
             // this broadcasts only to occupants on the local node.
+            // This also broadcasts to all federated occupants, as we've not yet identified a reliable way to make at least one cluster node inform these occupants. TODO: find such a reliable way, to prevent each (remaining) node sending presence updates.
             final Set<OccupantManager.Occupant> recipients;
             if (nodeID == null) {
-                recipients = occupantManager.occupantsForRoomByNode(occupant.getRoomName(), XMPPServer.getInstance().getNodeID());
+                recipients = occupantManager.occupantsForRoomByNode(occupant.getRoomName(), XMPPServer.getInstance().getNodeID(), true);
                 Log.trace("Intended recipients, count: {} (occupants of the same room, on local node): {}", recipients.size(), recipients.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
             } else {
-                recipients = occupantManager.occupantsForRoomExceptForNode(occupant.getRoomName(), nodeID);
+                recipients = occupantManager.occupantsForRoomExceptForNode(occupant.getRoomName(), nodeID, true);
                 Log.trace("Intended recipients, count: {} (occupants of the same room, on all remaining cluster nodes): {}", recipients.size(), recipients.stream().map(OccupantManager.Occupant::getRealJID).map(JID::toString).collect(Collectors.joining( ", " )));
             }
             for (OccupantManager.Occupant recipient : recipients) {

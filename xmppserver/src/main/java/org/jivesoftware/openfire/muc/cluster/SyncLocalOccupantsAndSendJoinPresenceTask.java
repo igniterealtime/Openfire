@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Task that is used by a cluster node to inform other cluster nodes of its local occupants. This is intended to be used
  * by a node that is joining a cluster (to send its local occupants to all other nodes), and by nodes in an existing
- * cluster that detect a new node joining (to send their local occupants to the joining node.
+ * cluster that detect a new node joining (to send their local occupants to the joining node).
  *
  * @author Guus der Kinderen
  */

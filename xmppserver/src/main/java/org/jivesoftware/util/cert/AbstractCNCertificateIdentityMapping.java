@@ -15,8 +15,6 @@
  */
 package org.jivesoftware.util.cert;
 
-import org.jivesoftware.util.SystemProperty;
-
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,21 +27,32 @@ import java.util.regex.Pattern;
  *
  * @author Victor Hong
  */
-public class CNCertificateIdentityMapping implements CertificateIdentityMapping {
+public abstract class AbstractCNCertificateIdentityMapping implements CertificateIdentityMapping {
 
-    private static final Pattern CN_PATTERN = Pattern.compile("(?i)(cn=)([^,]*)");
+    private Pattern cnPattern;
+    private String cnPrefix;
+    private String cnSuffix;
 
-    public static final SystemProperty<String> CN_PREFIX = SystemProperty.Builder.ofType(String.class)
-        .setKey("provider.clientCertIdentityMap.cn.prefix")
-        .setDefaultValue("")
-        .setDynamic(true)
-        .build();
+    protected void setCnPattern(String cnPattern) {
+        if (cnPattern == null || cnPattern.isEmpty()) {
+            throw new IllegalArgumentException("CN Pattern can't be null or empty");
+        }
+        this.cnPattern = Pattern.compile(cnPattern);
+    }
 
-    public static final SystemProperty<String> CN_SUFFIX = SystemProperty.Builder.ofType(String.class)
-        .setKey("provider.clientCertIdentityMap.cn.suffix")
-        .setDefaultValue("")
-        .setDynamic(true)
-        .build();
+    protected void setCnPrefix(String cnPrefix) {
+        if (cnPrefix == null) {
+            throw new IllegalArgumentException("CN Prefix can't be null");
+        }
+        this.cnPrefix = cnPrefix;
+    }
+
+    protected void setCnSuffix(String cnSuffix) {
+        if (cnSuffix == null) {
+            throw new IllegalArgumentException("CN Suffix can't be null");
+        }
+        this.cnSuffix = cnSuffix;
+    }
 
     /**
      * Maps certificate CommonName as identity credentials with optional prefix and/or suffix.
@@ -55,24 +64,13 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
     @Override
     public List<String> mapIdentity(X509Certificate certificate) {
         String name = certificate.getSubjectDN().getName();
-        Matcher matcher = CN_PATTERN.matcher(name);
+        Matcher matcher = cnPattern.matcher(name);
         // Create an array with the detected identities
         List<String> names = new ArrayList<>();
         while (matcher.find()) {
-            names.add(CN_PREFIX.getValue() + matcher.group(2) + CN_SUFFIX.getValue());
+            names.add(cnPrefix + matcher.group(2) + cnSuffix);
         }
 
         return names;
     }
-
-    /**
-     * Returns the short name of mapping
-     *
-     * @return The short name of the mapping
-     */
-    @Override
-    public String name() {
-        return "Common Name Mapping";
-    }
-
 }

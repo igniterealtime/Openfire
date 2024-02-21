@@ -782,7 +782,7 @@ public class ConsistencyChecks {
             result.put("fail", String.format("The registration of occupants by node is missing entries that are present in the registration of nodes by occupant. These %d entries are missing: %s", occupantsNotPresentInOccupantsByNode.size(), occupantsNotPresentInOccupantsByNode.stream().map(OccupantManager.Occupant::getNickname).collect(Collectors.joining(", "))));
         }
 
-        if (allOccupantJids.equals(allMucRolesOccupantsJids)) {
+        if (new HashSet<>(allOccupantJids).equals(new HashSet<>(allMucRolesOccupantsJids))) {
             result.put("pass", "The list of occupants registered by node equals the list of occupants seen in rooms.");
         } else {
             result.put("fail", String.format("The sum of the collection of non-federated (%d) and federated (%d) occupants is %d, which does not equal the list of occupants seen in rooms, which has %d elements", allNonFederatedOccupantsJids.size(), allFederatedOccupantsJids.size(), allOccupantJids.size(), allMucRolesOccupantsJids.size()));

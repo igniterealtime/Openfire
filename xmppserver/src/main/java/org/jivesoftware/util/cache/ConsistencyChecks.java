@@ -550,12 +550,8 @@ public class ConsistencyChecks {
         result.put("info", String.format("RoutingTable's getClientsRoutes response is used to track 'local' data to be restored after a cache switch-over. It tracks %d session infos.", localSessionInfosJids.size()));
         result.put("info", String.format("The field sessionInfosByClusterNode is used to track data in the cache from every other cluster node. It contains %d routes for %d cluster nodes.", sessionInfoKeysByClusterNode.values().stream().reduce(0, (subtotal, values) -> subtotal + values.size(), Integer::sum), sessionInfoKeysByClusterNode.size()));
 
-        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", sessionInfoCache.getName(), cache.keySet()
-            .stream()
-            .collect(Collectors.joining("\n"))));
-        result.put("data", String.format("RoutingTable's getClientsRoutes contains these entries (these represent 'local' data):\n%s", localSessionInfosJids
-            .stream()
-            .collect(Collectors.joining("\n"))));
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", sessionInfoCache.getName(), String.join("\n", cache.keySet())));
+        result.put("data", String.format("RoutingTable's getClientsRoutes contains these entries (these represent 'local' data):\n%s", String.join("\n", localSessionInfosJids)));
         result.put("data", String.format("sessionInfosByClusterNode contains these entries (these represent 'remote' data):\n%s", String.join("\n", remoteSessionInfosJidsWithNodeId)));
 
         if (!sessionInfoKeysByClusterNode.containsKey(XMPPServer.getInstance().getNodeID())) {
@@ -573,19 +569,19 @@ public class ConsistencyChecks {
         if (localSessionInfosDuplicates.isEmpty()) {
             result.put("pass", "There is no overlap in local session infos (they are all unique values).");
         } else {
-            result.put("fail", String.format("There is overlap in local session infos (they are not all unique values). These %d values are duplicated: %s", localSessionInfosDuplicates.size(), localSessionInfosDuplicates.stream().collect(Collectors.joining(", "))));
+            result.put("fail", String.format("There is overlap in local session infos (they are not all unique values). These %d values are duplicated: %s", localSessionInfosDuplicates.size(), String.join(", ", localSessionInfosDuplicates)));
         }
 
         if (remoteSessionInfosDuplicates.isEmpty()) {
             result.put("pass", "There is no overlap in sessionInfosByClusterNode (they are all unique values).");
         } else {
-            result.put("fail", String.format("There is overlap in sessionInfosByClusterNode (they are not all unique values). These %d values are duplicated: %s", remoteSessionInfosDuplicates.size(), remoteSessionInfosDuplicates.stream().collect(Collectors.joining(", "))));
+            result.put("fail", String.format("There is overlap in sessionInfosByClusterNode (they are not all unique values). These %d values are duplicated: %s", remoteSessionInfosDuplicates.size(), String.join(", ", remoteSessionInfosDuplicates)));
         }
 
         if (sessionInfosBothLocalAndRemote.isEmpty()) {
             result.put("pass", "There are no elements that are both 'remote' (in sessionInfosByClusterNode) as well as 'local' (in SessionManager's localSessionManager).");
         } else {
-            result.put("fail", String.format("There are %d elements that are both 'remote' (in sessionInfosByClusterNode) as well as 'local' (in SessionManager's localSessionManager): %s", sessionInfosBothLocalAndRemote.size(), sessionInfosBothLocalAndRemote.stream().collect(Collectors.joining(", "))));
+            result.put("fail", String.format("There are %d elements that are both 'remote' (in sessionInfosByClusterNode) as well as 'local' (in SessionManager's localSessionManager): %s", sessionInfosBothLocalAndRemote.size(), String.join(", ", sessionInfosBothLocalAndRemote)));
         }
 
         if (!ClusterManager.isClusteringStarted()) {
@@ -596,19 +592,19 @@ public class ConsistencyChecks {
             if (nonCachedLocalSessionInfos.isEmpty()) {
                 result.put("pass", String.format("All elements in SessionManager's localSessionManager exist in %s.", sessionInfoCache.getName()));
             } else {
-                result.put("fail", String.format("Not all elements in SessionManager's localSessionManager exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedLocalSessionInfos.size(), nonCachedLocalSessionInfos.stream().collect(Collectors.joining(", "))));
+                result.put("fail", String.format("Not all elements in SessionManager's localSessionManager exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedLocalSessionInfos.size(), String.join(", ", nonCachedLocalSessionInfos)));
             }
 
             if (nonCachedRemoteSessionInfos.isEmpty()) {
                 result.put("pass", String.format("All elements in sessionInfosByClusterNode exist in %s.", sessionInfoCache.getName()));
             } else {
-                result.put("fail", String.format("Not all elements in sessionInfosByClusterNode exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedRemoteSessionInfos.size(), nonCachedRemoteSessionInfos.stream().collect(Collectors.joining(", "))));
+                result.put("fail", String.format("Not all elements in sessionInfosByClusterNode exist in %s. These %d entries do not: %s", sessionInfoCache.getName(), nonCachedRemoteSessionInfos.size(), String.join(", ", nonCachedRemoteSessionInfos)));
             }
 
             if (nonLocallyStoredCachedSessionInfos.isEmpty()) {
                 result.put("pass", String.format("All cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes.", sessionInfoCache.getName()));
             } else {
-                result.put("fail", String.format("Not all cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes. These %d entries do not: %s", sessionInfoCache.getName(), nonLocallyStoredCachedSessionInfos.size(), nonLocallyStoredCachedSessionInfos.stream().collect(Collectors.joining(", "))));
+                result.put("fail", String.format("Not all cache entries of %s exist in sessionInfosByClusterNode and/or RoutingTable's getClientsRoutes. These %d entries do not: %s", sessionInfoCache.getName(), nonLocallyStoredCachedSessionInfos.size(), String.join(", ", nonLocallyStoredCachedSessionInfos)));
             }
         }
 
@@ -620,8 +616,6 @@ public class ConsistencyChecks {
         @Nonnull final Cache<String, ClientRoute> usersCache,
         @Nonnull final Cache<String, ClientRoute> anonymousUsersCache
     ) {
-        final Set<NodeID> clusterNodeIDs = ClusterManager.getNodesInfo().stream().map(ClusterNodeInfo::getNodeID).collect(Collectors.toSet());
-
         // Take snapshots of all data structures at as much the same time as possible.
         final ConcurrentMap<String, HashSet<String>> cache = new ConcurrentHashMap<>(usersSessionsCache);
         final Set<String> usersCacheKeys = usersCache.keySet();
@@ -706,9 +700,6 @@ public class ConsistencyChecks {
         final ConcurrentMap<OccupantManager.Occupant, NodeID> nodeByOccupant = new ConcurrentHashMap<>(nodeByOccupantInput);
         final Set<OccupantManager.Occupant> federatedOccupants = new HashSet<>(federatedOccupantsInput);
 
-        final List<String> allRoomNames = new ArrayList<>(cache.keySet());
-        Collections.sort(allRoomNames);
-
         final Set<String> roomsOnlyInLocalCache = localRoomsCache.keySet().stream().filter(jid -> !cache.containsKey(jid)).collect(Collectors.toSet());
 
         final Set<OccupantManager.Occupant> allOccupantsFromOccupantsByNode = occupantsByNode.values().stream()
@@ -761,14 +752,12 @@ public class ConsistencyChecks {
         result.put("intro", String.format("This section concerns the '%s' muc service.", mucServiceName));
         result.put("info", String.format("The cache named %s is used to share data in the cluster, which contains %d muc rooms.", clusteredRoomCacheInput.getName(), cache.size()));
 
-        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", clusteredRoomCacheInput.getName(), cache.entrySet()
+        result.put("data", String.format("%s contains these entries (these are shared in the cluster):\n%s", clusteredRoomCacheInput.getName(), cache.keySet()
             .stream()
-            .map(Map.Entry::getKey)
             .sorted()
             .collect(Collectors.joining("\n"))));
-        result.put("data", String.format("Local rooms cache contains these entries :\n%s", localRoomsCache.entrySet()
+        result.put("data", String.format("Local rooms cache contains these entries :\n%s", localRoomsCache.keySet()
             .stream()
-            .map(Map.Entry::getKey)
             .sorted()
             .collect(Collectors.joining("\n"))));
         result.put("data", String.format("All non-federated occupants from occupant registration :\n%s", String.join("\n", allNonFederatedOccupantsJids)));

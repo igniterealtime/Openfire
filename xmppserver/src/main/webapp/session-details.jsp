@@ -139,6 +139,7 @@
     final boolean clusteringEnabled = ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting();
 
     pageContext.setAttribute("address", address);
+    pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
 %>
 
 <html>
@@ -642,12 +643,18 @@
     <tr>
         <th>&nbsp;</th>
         <th><fmt:message key="session.details.name" /></th>
-        <th><fmt:message key="session.details.resource" /></th>
         <th nowrap><fmt:message key="session.details.version" /></th>
-        <th nowrap><fmt:message key="session.details.node" /></th>
+        <c:if test="${clusteringEnabled}">
+            <th nowrap><fmt:message key="session.details.node" /></th>
+        </c:if>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.if_presence" /></th>
-        <th><fmt:message key="session.details.priority" /></th>
+        <th nowrap title="<fmt:message key="session.details.received" />">
+            <fmt:message key="session.details.received-abbreviation" />
+        </th>
+        <th nowrap title="<fmt:message key="session.details.transmitted" />">
+            <fmt:message key="session.details.transmitted-abbreviation" />
+        </th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>

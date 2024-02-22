@@ -138,7 +138,7 @@ public class ConsistencyChecks {
         if (nonCachedRemoteServerRouteAddressing.isEmpty()) {
             result.put("pass", String.format("All elements in s2sDomainPairsByClusterNode exist in %s.", serversCache.getName()));
         } else {
-            result.put("fail", String.format("Not all route owners in s2sDomainPairsByClusterNode exist in %s. These %d entries do not: %s", serversCache.getName(), nonCachedRemoteServerRouteAddressing.size(), nonCachedLocalServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))));
+            result.put("fail", String.format("Not all route owners in s2sDomainPairsByClusterNode exist in %s. These %d entries do not: %s", serversCache.getName(), nonCachedRemoteServerRouteAddressing.size(), nonCachedRemoteServerRouteAddressing.stream().map(DomainPair::toString).collect(Collectors.joining(", "))));
         }
 
         final Set<DomainPair> nonLocallyStoredCachedServerRouteAddressing = cache.keySet().stream().filter(v -> !localServerRoutesAddressing.contains(v)).filter(v -> !remoteServerRoutesAddressing.contains(v)).collect(Collectors.toSet());

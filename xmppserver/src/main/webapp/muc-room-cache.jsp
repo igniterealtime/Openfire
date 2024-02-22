@@ -34,6 +34,8 @@
 <%@ page import="org.jivesoftware.openfire.muc.spi.OccupantManager" %>
 <%@ page import="org.jivesoftware.openfire.cluster.NodeID" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="java.util.concurrent.ConcurrentHashMap" %>
+<%@ page import="java.util.concurrent.ConcurrentMap" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -71,15 +73,16 @@
     final Set<String> roomsOnlyInClusteredCache = roomsClustered.keySet().stream().filter(jid -> !roomsLocal.containsKey(jid)).collect(Collectors.toSet());
     final Set<String> roomsOnlyInLocalCache = roomsLocal.keySet().stream().filter(jid -> !roomsClustered.containsKey(jid)).collect(Collectors.toSet());
 
-    final Map<NodeID, Set<OccupantManager.Occupant>> occupantsByNode = mucService.getOccupantManager().getOccupantsByNode();
+    final Map<NodeID, Set<OccupantManager.Occupant>> localOccupantsByNode = mucService.getOccupantManager().getLocalOccupantsByNode();
     // Reorganise the occupants-by-node by room name
-    final Map<String, Map<NodeID, Set<OccupantManager.Occupant>>> occupantsByNodeByRoom = new HashMap<>();
-    for (Map.Entry<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeEntry : occupantsByNode.entrySet()) {
+    final Map<String, Map<NodeID, Set<OccupantManager.Occupant>>> localOccupantsByNodeByRoom = new HashMap<>();
+    for (Map.Entry<NodeID, Set<OccupantManager.Occupant>> occupantsByNodeEntry : localOccupantsByNode.entrySet()) {
         for (OccupantManager.Occupant occupant : occupantsByNodeEntry.getValue()) {
-            if (!occupantsByNodeByRoom.containsKey(occupant.getRoomName())) {
-                occupantsByNodeByRoom.put(occupant.getRoomName(), new HashMap<>());
-            }
-            Map<NodeID, Set<OccupantManager.Occupant>> registrationForThisRoom = occupantsByNodeByRoom.get(occupant.getRoomName());
+            if (!localOccupantsByNodeByRoom.containsKey(occupant.getRoomName())) {
+                localOccupantsByNodeByRoom.put(occupant.getRoomName(), new HashMap<>());
+            };
+
+            Map<NodeID, Set<OccupantManager.Occupant>> registrationForThisRoom = localOccupantsByNodeByRoom.get(occupant.getRoomName());
             if (!registrationForThisRoom.containsKey(occupantsByNodeEntry.getKey())) {
                 registrationForThisRoom.put(occupantsByNodeEntry.getKey(), new HashSet<>());
             }
@@ -87,6 +90,12 @@
         }
     }
 
+    final Set<OccupantManager.Occupant> federatedOccupants = mucService.getOccupantManager().getFederatedOccupants();
+    // Reorganise by room name
+    final ConcurrentMap<String, Set<OccupantManager.Occupant>> federatedOccupantsByRoom = new ConcurrentHashMap<>();
+    for (OccupantManager.Occupant occupant : federatedOccupants) {
+        federatedOccupantsByRoom.computeIfAbsent(occupant.getRoomName(), o -> new HashSet<>()).add(occupant);
+    }
     NodeID thisNodeID = XMPPServer.getInstance().getNodeID();
 
     pageContext.setAttribute("mucName", mucName);
@@ -96,7 +105,7 @@
     pageContext.setAttribute("roomsInBothCaches", roomsInBothCaches);
     pageContext.setAttribute("roomsOnlyInClusteredCache", roomsOnlyInClusteredCache);
     pageContext.setAttribute("roomsOnlyInLocalCache", roomsOnlyInLocalCache);
-    pageContext.setAttribute("occupantsByNodeByRoom", occupantsByNodeByRoom);
+    pageContext.setAttribute("occupantsByNodeByRoom", localOccupantsByNodeByRoom);
     pageContext.setAttribute("thisNodeID", thisNodeID);
 %>
 
@@ -206,7 +215,7 @@
             </td>
             <td style="width: 35%;">
                 <%
-                    final Map<NodeID, Set<OccupantManager.Occupant>> occupantsRegistrationForThisRoom = occupantsByNodeByRoom.get(roomName);
+                    final Map<NodeID, Set<OccupantManager.Occupant>> occupantsRegistrationForThisRoom = localOccupantsByNodeByRoom.get(roomName);
                     if (occupantsRegistrationForThisRoom != null) {
                         for(NodeID nodeID : occupantsRegistrationForThisRoom.keySet()) {
                             boolean isCurrentNode = nodeID.equals(thisNodeID);
@@ -219,7 +228,12 @@
                 <%
                         }
                     }
+                    final Set<OccupantManager.Occupant> fOccupants = federatedOccupantsByRoom.get(roomName);
+                            Set<String> occupantDumpItems = fOccupants.stream().map(occupant -> occupant.getNickname() + ":" + occupant.getRealJID().toFullJID()).collect(Collectors.toSet());
+                            String occupantsDump = String.join("\n", occupantDumpItems);
                 %>
+                    <span>Federated</span><br/>
+                    <span title="<%=occupantsDump%>"><%= fOccupants.size() %> occupants</span><br/>
             </td>
         </tr>
         <%

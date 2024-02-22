@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,14 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
 public class OccupantManagerTest
 {
-    @Mock
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private XMPPServer xmppServer;
 
     @Mock
@@ -52,6 +52,10 @@ public class OccupantManagerTest
         doReturn("conference.example.org").when(mockService).getServiceDomain();
 
         when(xmppServer.getNodeID()).thenReturn(NodeID.getInstance(UUID.randomUUID().toString().getBytes()));
+        doAnswer(invocationOnMock -> {
+            final JID jid = invocationOnMock.getArgument(0);
+            return jid.getDomain().equals("example.org");
+        }).when(xmppServer).isLocal(any(JID.class));
 
         //noinspection deprecation
         XMPPServer.setInstance(xmppServer);
@@ -67,8 +71,8 @@ public class OccupantManagerTest
 
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
-        assertEquals(0, occupantManager.getNodesByOccupant().size());
-        assertEquals(0, occupantManager.getOccupantsByNode().size());
+        assertEquals(0, occupantManager.getNodeByLocalOccupant().size());
+        assertEquals(0, occupantManager.getLocalOccupantsByNode().size());
     }
 
     @Test
@@ -89,12 +93,11 @@ public class OccupantManagerTest
         assertEquals(userJID, occupantManager.getLocalOccupants().iterator().next().getRealJID());
         assertEquals(nickname, occupantManager.getLocalOccupants().iterator().next().getNickname());
 
-        assertEquals(1, occupantManager.getNodesByOccupant().size());
-        assertEquals(1, occupantManager.getNodesByOccupant().entrySet().iterator().next().getValue().size());
+        assertEquals(1, occupantManager.getNodeByLocalOccupant().size());
 
-        assertEquals(xmppServer.getNodeID(), occupantManager.getNodesByOccupant().entrySet().iterator().next().getValue().iterator().next());
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(1, occupantManager.getOccupantsByNode().get(xmppServer.getNodeID()).size());
+        assertEquals(xmppServer.getNodeID(), occupantManager.getNodeByLocalOccupant().entrySet().iterator().next().getValue());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().get(xmppServer.getNodeID()).size());
     }
 
     @Test
@@ -112,8 +115,8 @@ public class OccupantManagerTest
 
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
-        assertEquals(0, occupantManager.getNodesByOccupant().size());
-        assertEquals(0, occupantManager.getOccupantsByNode().size());
+        assertEquals(0, occupantManager.getNodeByLocalOccupant().size());
+        assertEquals(0, occupantManager.getLocalOccupantsByNode().size());
     }
 
     @Test
@@ -137,11 +140,11 @@ public class OccupantManagerTest
         assertTrue(occupantManager.getLocalOccupants().stream().allMatch(occupant -> occupant.getRealJID().equals(userJID)));
         assertTrue(occupantManager.getLocalOccupants().stream().allMatch(occupant -> occupant.getNickname().equals(nickname)));
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(xmppServer.getNodeID())));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(xmppServer.getNodeID())));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(xmppServer.getNodeID()).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(xmppServer.getNodeID()).size());
     }
 
     @Test
@@ -165,11 +168,11 @@ public class OccupantManagerTest
         assertTrue(occupantManager.getLocalOccupants().stream().anyMatch(occupant -> occupant.getRoomName().equals(firstRoomJID.getNode()) && occupant.getRealJID().equals(firstUserJID) && occupant.getNickname().equals(firstNickname)));
         assertTrue(occupantManager.getLocalOccupants().stream().anyMatch(occupant -> occupant.getRoomName().equals(secondRoomJID.getNode()) && occupant.getRealJID().equals(secondUserJID) && occupant.getNickname().equals(secondNickname)));
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(xmppServer.getNodeID())));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(xmppServer.getNodeID())));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(xmppServer.getNodeID()).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(xmppServer.getNodeID()).size());
     }
 
     @Test
@@ -191,11 +194,11 @@ public class OccupantManagerTest
         assertTrue(occupantManager.getLocalOccupants().stream().anyMatch(occupant -> occupant.getRoomName().equals(roomJID.getNode()) && occupant.getRealJID().equals(userJID) && occupant.getNickname().equals(firstNickname)));
         assertTrue(occupantManager.getLocalOccupants().stream().anyMatch(occupant -> occupant.getRoomName().equals(roomJID.getNode()) && occupant.getRealJID().equals(userJID) && occupant.getNickname().equals(secondNickname)));
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(xmppServer.getNodeID())));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(xmppServer.getNodeID())));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(xmppServer.getNodeID()).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(xmppServer.getNodeID()).size());
     }
 
     @Test
@@ -218,11 +221,11 @@ public class OccupantManagerTest
         assertTrue(occupantManager.getLocalOccupants().stream().anyMatch(occupant -> occupant.getRoomName().equals(roomJID.getNode()) && occupant.getRealJID().equals(firstUserJID) && occupant.getNickname().equals(firstNickname)));
         assertTrue(occupantManager.getLocalOccupants().stream().anyMatch(occupant -> occupant.getRoomName().equals(roomJID.getNode()) && occupant.getRealJID().equals(secondUserJID) && occupant.getNickname().equals(secondNickname)));
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(xmppServer.getNodeID())));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(xmppServer.getNodeID())));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(xmppServer.getNodeID()).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(xmppServer.getNodeID()).size());
     }
 
     @Test
@@ -242,12 +245,11 @@ public class OccupantManagerTest
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
 
-        assertEquals(1, occupantManager.getNodesByOccupant().size());
-        assertEquals(1, occupantManager.getNodesByOccupant().entrySet().iterator().next().getValue().size());
+        assertEquals(1, occupantManager.getNodeByLocalOccupant().size());
 
-        assertEquals(remoteNode, occupantManager.getNodesByOccupant().entrySet().iterator().next().getValue().iterator().next());
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(1, occupantManager.getOccupantsByNode().get(remoteNode).size());
+        assertEquals(remoteNode, occupantManager.getNodeByLocalOccupant().entrySet().iterator().next().getValue());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().get(remoteNode).size());
     }
 
     @Test
@@ -268,8 +270,8 @@ public class OccupantManagerTest
 
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
-        assertEquals(0, occupantManager.getNodesByOccupant().size());
-        assertEquals(0, occupantManager.getOccupantsByNode().size());
+        assertEquals(0, occupantManager.getNodeByLocalOccupant().size());
+        assertEquals(0, occupantManager.getLocalOccupantsByNode().size());
     }
 
     @Test
@@ -292,11 +294,11 @@ public class OccupantManagerTest
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(remoteNode)));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(remoteNode)));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(remoteNode).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(remoteNode).size());
     }
 
     @Test
@@ -321,11 +323,11 @@ public class OccupantManagerTest
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(remoteNode)));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(remoteNode)));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(remoteNode).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(remoteNode).size());
     }
 
     @Test
@@ -348,11 +350,11 @@ public class OccupantManagerTest
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(remoteNode)));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(remoteNode)));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(remoteNode).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(remoteNode).size());
     }
 
     @Test
@@ -376,11 +378,11 @@ public class OccupantManagerTest
         // Verify results.
         assertEquals(0, occupantManager.getLocalOccupants().size());
 
-        assertEquals(2, occupantManager.getNodesByOccupant().size());
-        assertTrue(occupantManager.getNodesByOccupant().entrySet().stream().allMatch(entry -> entry.getValue().size() == 1 && entry.getValue().contains(remoteNode)));
+        assertEquals(2, occupantManager.getNodeByLocalOccupant().size());
+        assertTrue(occupantManager.getNodeByLocalOccupant().entrySet().stream().allMatch(entry -> entry.getValue().equals(remoteNode)));
 
-        assertEquals(1, occupantManager.getOccupantsByNode().size());
-        assertEquals(2, occupantManager.getOccupantsByNode().get(remoteNode).size());
+        assertEquals(1, occupantManager.getLocalOccupantsByNode().size());
+        assertEquals(2, occupantManager.getLocalOccupantsByNode().get(remoteNode).size());
     }
 
     @Test

@@ -536,7 +536,7 @@ public class DefaultGroupPropertyMap<K,V> extends PersistableMap<K,V> {
 
         // Clean up caches.
         DefaultGroupProvider.sharedGroupMetaCache.clear();
-        GroupManager.getInstance().propertyDeletedPostProcess(group, key, originalValue);
+        GroupManager.getInstance().propertyModifiedPostProcess(group, key, originalValue);
     }
 
     /**

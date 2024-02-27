@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -321,6 +321,7 @@
     pageContext.setAttribute( "errors", errors );
     pageContext.setAttribute( "groupInfoChanged", groupInfoChanged );
     pageContext.setAttribute( "group", group );
+    pageContext.setAttribute( "onlySharedWithOwnGroup", groupNames.isEmpty() || (groupNames.size() == 1 && groupNames.contains(group.getName())));
     pageContext.setAttribute( "groupNames", groupNames );
 
     final List<JID> allMembers = new ArrayList<>();
@@ -495,7 +496,7 @@
                         <table>
                             <tr>
                                 <td style="width: 1%; white-space: nowrap">
-                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.sharedWith eq "nobody" ) or ( group.sharedWith eq "usersOfGroups" and empty groupNames ) ? "checked" : "" }>
+                                    <input type="radio" name="showGroup" value="onlyGroup" id="rb001" ${( group.sharedWith eq "nobody" ) or ( group.sharedWith eq "usersOfGroups" and onlySharedWithOwnGroup ) ? "checked" : "" }>
                                 </td>
                                 <td>
                                     <label for="rb001"><fmt:message key="group.edit.share_group_only" /></label>
@@ -511,7 +512,7 @@
                             </tr>
                             <tr>
                                 <td style="width: 1%; white-space: nowrap">
-                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.sharedWith eq "usersOfGroups" and not empty groupNames ? "checked" : ""}>
+                                    <input type="radio" name="showGroup" value="spefgroups" id="rb003" ${group.sharedWith eq "usersOfGroups" and not onlySharedWithOwnGroup ? "checked" : ""}>
                                 </td>
                                 <td>
                                     <label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>

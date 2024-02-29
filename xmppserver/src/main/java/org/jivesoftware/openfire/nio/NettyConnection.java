@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
@@ -215,6 +217,10 @@ public class NettyConnection extends AbstractConnection
                 f = channelHandlerContext.newSucceededFuture();
             }
 
+            // OF-2808: Ensure that the connection is done invoking its 'close' listeners before returning from this
+            // method, otherwise stream management's "resume" functionality breaks (the 'close' listeners have been
+            // observed to act on a newly attached stream/connection, instead of the old one).
+            final CountDownLatch latch = new CountDownLatch(1);
             try {
                     f.addListener(e -> Log.trace("Flushed any final bytes, closing connection."))
                     .addListener(ChannelFutureListener.CLOSE)
@@ -222,11 +228,18 @@ public class NettyConnection extends AbstractConnection
                         Log.trace("Notifying close listeners.");
                         notifyCloseListeners();
                         closeListeners.clear();
+                        latch.countDown();
                     })
                     .addListener(e -> Log.trace("Finished closing connection."))
-                    .sync();
+                    .sync(); // TODO: OF-2811 Remove this blocking operation (which may have been made redundant by the fix for OF-2808 anyway).
             } catch (Exception e) {
                 Log.error("Problem during connection close or cleanup", e);
+            }
+            try {
+                // TODO: OF-2811 Remove this blocking operation, by allowing the invokers of this method to use a Future.
+                latch.await(10, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                Log.debug("Stopped waiting on connection being closed, as an interrupt happened.", e);
             }
         }
     }

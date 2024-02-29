@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.GroupEventListener;
+import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.*;
 import org.jivesoftware.openfire.muc.spi.*;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.*;
@@ -48,6 +50,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +64,7 @@ import java.util.stream.Collectors;
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
 @JiveID(JiveConstants.MUC_ROOM)
-public class MUCRoom implements GroupEventListener, Externalizable, Result, Cacheable {
+public class MUCRoom implements GroupEventListener, UserEventListener, Externalizable, Result, Cacheable {
 
     private static final Logger Log = LoggerFactory.getLogger(MUCRoom.class);
 
@@ -3817,4 +3820,46 @@ public class MUCRoom implements GroupEventListener, Externalizable, Result, Cach
     public void groupCreated(Group group, Map params) {
         // ignore
     }
+
+    @Override
+    public void userCreated(User user, Map<String, Object> params)
+    {}
+
+    @Override
+    public void userDeleting(User user, Map<String, Object> params)
+    {
+        // When a user is being deleted, all its affiliations need to be removed from chat rooms (OF-2166). Note that
+        // this event handler only works for rooms that are loaded into memory from the database. Corresponding code
+        // in MultiUserChatManager will remove affiliations from rooms that are not in memory, but only in the database.
+        final JID userJid = XMPPServer.getInstance().createJID(user.getUsername(), null);
+
+        final Lock lock = getMUCService().getChatRoomLock(getJID().getNode());
+        try {
+            lock.lock();
+
+            if (getAffiliation(userJid) == MUCRole.Affiliation.none) {
+                // User had no affiliation with this room.
+                return;
+            }
+
+            // Cannot remove the last owner of a chat room. To prevent issues, replace the owner with an administrative account.
+            if (getOwners().contains(userJid) && getOwners().size() == 1) {
+                final JID adminJid = XMPPServer.getInstance().getAdmins().iterator().next();
+                Log.info("User '{}' is being deleted, but is also the only owner of MUC room '{}'. To prevent having a room without owner, server admin '{}' was made owner of the room.", user.getUsername(), getJID(), adminJid);
+                addOwner(adminJid, getRole());
+            }
+
+            // Remove the affiliation of the deleted user with the room
+            addNone(userJid, getRole());
+            getMUCService().syncChatRoom(this);
+        } catch (Throwable t) {
+            Log.warn("A problem occurred while trying to update room '{}' as a result of user '{}' being deleted from Openfire.", getJID(), user);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void userModified(User user, Map<String, Object> params)
+    {}
 }

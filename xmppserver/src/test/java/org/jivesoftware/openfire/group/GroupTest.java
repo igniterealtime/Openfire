@@ -484,6 +484,56 @@ public class GroupTest
         assertEquals(testUser.toString(), listener.lastParams.get("member"));
     }
 
+
+    /**
+     * Verifies that when a group is explicitly shared with 1 other group, that it is then shared with that group and itself
+     */
+    @Test
+    public void testGroupSharingSingle() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-sharing-single";
+        final String groupNameSharedWith = "unit-test-group-sharedWith";
+        final Group group = groupManager.createGroup(groupName);
+        final Group groupSharedWith = groupManager.createGroup(groupNameSharedWith);
+
+        // Execute system under test.
+        group.shareWithUsersInGroups(List.of(groupSharedWith.getName()), "TestGroupSharing");
+
+        // Verify results.
+        List<String> sharedWithGroups = group.getSharedWithUsersInGroupNames();
+        assertEquals( sharedWithGroups.size(), 2);
+        assertTrue(sharedWithGroups.contains(groupName));
+        assertTrue(sharedWithGroups.contains(groupNameSharedWith));
+    }
+
+    /**
+     * Verifies that when a group is explicitly shared with multiple other groups, that it is then shared with those groups and itself
+     */
+    @Test
+    public void testGroupSharingMultiple() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-sharing-multiple";
+        final String groupNameSharedWith1 = "unit-test-group-sharedWith1";
+        final String groupNameSharedWith2 = "unit-test-group-sharedWith2";
+        final Group group = groupManager.createGroup(groupName);
+        final Group groupSharedWith1 = groupManager.createGroup(groupNameSharedWith1);
+        final Group groupSharedWith2 = groupManager.createGroup(groupNameSharedWith2);
+
+        // Execute system under test.
+        group.shareWithUsersInGroups(
+            List.of(groupSharedWith1.getName(), groupSharedWith2.getName()),
+            "TestGroupSharing");
+
+        // Verify results.
+        List<String> sharedWithGroups = group.getSharedWithUsersInGroupNames();
+        assertEquals( sharedWithGroups.size(), 3);
+        assertTrue(sharedWithGroups.contains(groupName));
+        assertTrue(sharedWithGroups.contains(groupNameSharedWith1));
+        assertTrue(sharedWithGroups.contains(groupNameSharedWith2));
+    }
+
     /**
      * A {@link GroupEventListener} that records its last invocation.
      */

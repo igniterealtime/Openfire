@@ -23,12 +23,12 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
           cache: maven
-      - name: Build with Maven
+      - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
         run: |
           if [[ ${{ github.ref_name }} == 'main' ]]; then            
-            ./mvnw -B package -Pcoverage --file pom.xml
+            ./mvnw -B install -Pcoverage --file pom.xml
           else
-            ./mvnw -B package
+            ./mvnw -B install
           fi
       - name: Upload failed test reports
         uses: actions/upload-artifact@v4
@@ -58,6 +58,14 @@ jobs:
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
+      - name: Temporarily save mvn repo for later jobs
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository
+          retention-days: 1
+
 
   aioxmpp:
 
@@ -207,6 +215,11 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
+      - name: Restore mvn repo from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository
       - name: Set up JDK 11 Zulu
         uses: actions/setup-java@v4
         with:
@@ -243,6 +256,11 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
+      - name: Restore mvn repo from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository
       - name: Set up JDK 11 Zulu
         uses: actions/setup-java@v4
         with:
@@ -279,6 +297,11 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
+      - name: Restore mvn repo from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository
       - name: Set up JDK 11 Zulu
         uses: actions/setup-java@v4
         with:

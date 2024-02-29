@@ -113,8 +113,8 @@ public class WebSocketClientConnectionHandler
         }
 
         final Duration maxIdleTime = getMaxIdleTime();
+        xmppSessionIdleTask = new XmppSessionIdleTask();
         if (!maxIdleTime.isNegative() && !maxIdleTime.isZero()) {
-            xmppSessionIdleTask = new xmppSessionIdleTask();
             TaskEngine.getInstance().schedule(xmppSessionIdleTask, maxIdleTime.dividedBy(10), maxIdleTime.dividedBy(10));
         }
 
@@ -280,7 +280,7 @@ public class WebSocketClientConnectionHandler
     /**
      * Task that, on prolonged inactivity, sends an XMPP ping, to ensure that the remote entity is still responsive.
      */
-    private final class xmppSessionIdleTask extends TimerTask {
+    private final class XmppSessionIdleTask extends TimerTask {
         private Instant pendingPingSentAt = null;
 
         @Override

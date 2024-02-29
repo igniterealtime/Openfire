@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,8 +111,13 @@ public class WebSocketClientConnectionHandler
             final Duration taskInterval = KEEP_ALIVE_FRAME_PING_INTERVAL_PROPERTY.getValue().dividedBy(10);
             TaskEngine.getInstance().schedule(websocketFramePingTask, taskInterval, taskInterval);
         }
-        xmppSessionIdleTask = new xmppSessionIdleTask();
-        TaskEngine.getInstance().schedule(xmppSessionIdleTask, getMaxIdleTime().dividedBy(10), getMaxIdleTime().dividedBy(10));
+
+        final Duration maxIdleTime = getMaxIdleTime();
+        xmppSessionIdleTask = new XmppSessionIdleTask();
+        if (!maxIdleTime.isNegative() && !maxIdleTime.isZero()) {
+            TaskEngine.getInstance().schedule(xmppSessionIdleTask, maxIdleTime.dividedBy(10), maxIdleTime.dividedBy(10));
+        }
+
         wsConnection.setStanzaHandler(new WebSocketClientStanzaHandler(XMPPServer.getInstance().getPacketRouter(), wsConnection));
     }
 
@@ -275,13 +280,13 @@ public class WebSocketClientConnectionHandler
     /**
      * Task that, on prolonged inactivity, sends an XMPP ping, to ensure that the remote entity is still responsive.
      */
-    private final class xmppSessionIdleTask extends TimerTask {
+    private final class XmppSessionIdleTask extends TimerTask {
         private Instant pendingPingSentAt = null;
 
         @Override
         public void run()
         {
-            if (!isWebSocketOpen()) {
+            if (!isWebSocketOpen() || getMaxIdleTime().isNegative() || getMaxIdleTime().isZero()) {
                 TaskEngine.getInstance().cancelScheduledTask(websocketFramePingTask);
                 TaskEngine.getInstance().cancelScheduledTask(xmppSessionIdleTask);
                 return;

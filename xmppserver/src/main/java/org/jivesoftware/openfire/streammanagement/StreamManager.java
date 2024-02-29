@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,7 +376,7 @@ public class StreamManager {
             Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
             assert oldConnection != null; // If the other session is not detached, the connection can't be null.
-            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
+            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."), true);
         }
         Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
         // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.

@@ -189,7 +189,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v4
       - name: Check for differences
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |

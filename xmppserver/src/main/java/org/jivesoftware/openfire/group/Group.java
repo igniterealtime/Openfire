@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,7 +341,23 @@ public class Group implements Cacheable, Externalizable {
             return result;
         }
 
-        result.addAll(provider.getVisibleGroupNames(this.name));
+        final String value = properties.get(SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY);
+        if (value == null) {
+            // When in this getSharedWith, I don't think that the value can be null. I'm not confident enough to add this as an 'assert' though.
+            Log.warn("Unable to get shared-with-users-in-group-names for group, as property '{}' unexpectedly has a null value for group: {}", SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, this);
+            return result;
+        }
+
+        // Value is a comma-seperated list of group-names
+        for (final String groupName : value.split(",")) {
+            if (!groupName.trim().isEmpty()) {
+                result.add(groupName.trim());
+            }
+        }
+        // A group is always shared with itself when it's shared with other groups.
+        if (!result.contains(this.name)) {
+            result.add(this.name);
+        }
         return result;
     }
 

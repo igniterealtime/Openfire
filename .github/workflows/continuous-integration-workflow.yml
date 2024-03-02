@@ -58,12 +58,12 @@ jobs:
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
-      - name: Temporarily save mvn repo for later jobs
+      - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 }}
         uses: actions/upload-artifact@v4
         with:
           name: mvn-repo
-          path: ~/.m2/repository
+          path: ~/.m2/repository/org/igniterealtime/openfire/
           retention-days: 1
 
 
@@ -215,17 +215,17 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
-      - name: Restore mvn repo from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: mvn-repo
-          path: ~/.m2/repository
       - name: Set up JDK 11 Zulu
         uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: zulu
           cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:sqlserver://localhost:1433;databaseName=openfire;applicationName=Openfire" >> $GITHUB_ENV
@@ -256,17 +256,17 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
-      - name: Restore mvn repo from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: mvn-repo
-          path: ~/.m2/repository
       - name: Set up JDK 11 Zulu
         uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: zulu
           cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:postgresql://localhost:5432/openfire" >> $GITHUB_ENV
@@ -297,17 +297,17 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
-      - name: Restore mvn repo from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: mvn-repo
-          path: ~/.m2/repository
       - name: Set up JDK 11 Zulu
         uses: actions/setup-java@v4
         with:
           java-version: 11
           distribution: zulu
           cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:mysql://localhost:3306/openfire?rewriteBatchedStatements=true&characterEncoding=UTF-8&characterSetResults=UTF-8&serverTimezone=UTC" >> $GITHUB_ENV

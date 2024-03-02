@@ -160,6 +160,47 @@ hr {
     
     <div id="pageBody">
 
+<h2>4.8.1 -- <span style="font-weight: normal;">March 2, 2024</span></h2>
+
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2651">OF-2651</a>] - Give explict names to Netty's threads</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2788">OF-2788</a>] - Have distinct thread pools for each type of connection</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2791">OF-2791</a>] - Announce support for PubSub delete-item</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2798">OF-2798</a>] - Admin Console should warn end-user if plugin installation failed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2800">OF-2800</a>] - Guard against a surplus of database connection errors being logged</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2802">OF-2802</a>] - Upgrade postgresql database driver for CVE-2024-1597</li>
+</ul>
+
+<h2>New Feature</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-284">OF-284</a>] - Add service administration support</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2166">OF-2166</a>] - When deleting a user, remove it from transient MUC rooms</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2310">OF-2310</a>] - Cache data inconsistency: MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2758">OF-2758</a>] - Deleting an admin user does not remove the name from \`admin.authorizedJIDs\`</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2768">OF-2768</a>] - Do not use default value for user's creation / last modified date</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2774">OF-2774</a>] - 4.8.0 not counting "whitespace ping" as session activity</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2775">OF-2775</a>] - RSS News Feed appears empty</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2777">OF-2777</a>] - Misbehaving Shared-With-Group option for Contact List sharing</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2778">OF-2778</a>] - Duplicate \(group\)chat messages are received</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2781">OF-2781</a>] - SerializableCache appears to be unusable \(ClassCastException on creation\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2782">OF-2782</a>] - SerializableCache instances do not get recreated on cluster switch</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2792">OF-2792</a>] - Cache-summary page shows wrong stats when using Clustering</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2795">OF-2795</a>] - Delete MUC-based authorization when deleting user</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2799">OF-2799</a>] - OccupantManager doesn't remove all items when clustering</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2805">OF-2805</a>] - Session details shows 'resource' column, but does not show resources</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2806">OF-2806</a>] - Routing Servers cache inconsistency doesn't list the missing items</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2807">OF-2807</a>] - Contact List \(Roster\) Sharing changes are not immediately applied</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2808">OF-2808</a>] - Stream Management Resume fails</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2809">OF-2809</a>] - Disabling client idle time breaks websockets</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2810">OF-2810</a>] - Resumed stream is no longer resumable</li>
+</ul>
+
+
 <h2>4.8.0 -- <span style="font-weight: normal;">Jan 12, 2024</span></h2>
 
 <h2>Improvement</h2>

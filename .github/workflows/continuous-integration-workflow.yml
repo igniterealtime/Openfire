@@ -76,9 +76,6 @@ jobs:
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
-      - name: Fix file permissions
-        run: |
-          chmod +x distribution/target/distribution-base/bin/openfire.sh
       - name: Checkout aioxmpp devel/head
         uses: actions/checkout@v4
         with:
@@ -168,9 +165,6 @@ jobs:
         with:
           java-version: 11
           distribution: zulu
-      - name: Fix file permissions
-        run: |
-          chmod +x distribution/target/distribution-base/bin/openfire.sh
       - name: Create connectivity tests
         run: |
           mkdir -p ./conntest/src/test/java
@@ -358,9 +352,6 @@ jobs:
         with:
           java-version: 11
           distribution: zulu
-      - name: Fix file permissions
-        run: |
-          chmod +x distribution/target/distribution-base/bin/openfire.sh
       - name: Start CI server from distribution
         id: startCIServer
         uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.

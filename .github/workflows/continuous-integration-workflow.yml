@@ -69,6 +69,11 @@ jobs:
     steps:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
@@ -108,7 +113,7 @@ jobs:
           EOL
       - name: Start CI server from distribution
         id: startCIServer
-        uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: ./.github/actions/startserver-action
       - name: Run aioxmpp tests
         working-directory: ./aioxmpp
         run: |
@@ -122,7 +127,7 @@ jobs:
           path: aioxmpp/output
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        uses: guusdk/openfire-stopserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: ./.github/actions/stopserver-action
       - name: Expose openfire output
         if: always()
         uses: actions/upload-artifact@v4
@@ -153,6 +158,11 @@ jobs:
     steps:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
@@ -325,12 +335,12 @@ jobs:
           popd
       - name: Start CI server from distribution
         id: startCIServer
-        uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: ./.github/actions/startserver-action
       - name: Build with Maven
         run: mvn clean test --file ./conntest/pom.xml
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        uses: guusdk/openfire-stopserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: ./.github/actions/stopserver-action
   smack:
 
     name: Execute Smack-based CI tests
@@ -340,6 +350,11 @@ jobs:
     steps:
       - name: Set JAVA_HOME to use Java 11
         run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+           .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
@@ -354,7 +369,7 @@ jobs:
           distribution: zulu
       - name: Start CI server from distribution
         id: startCIServer
-        uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: ./.github/actions/startserver-action
       - name: Run Smack tests against server
         uses: guusdk/sint-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
         with:
@@ -364,7 +379,7 @@ jobs:
           disabledTests: 'EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest'
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        uses: guusdk/openfire-stopserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: ./.github/actions/stopserver-action
 
   should-do-database-upgrade-tests:
     name: Check if database upgrade tests should be run

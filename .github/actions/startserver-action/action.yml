@@ -1,0 +1,26 @@
+name: 'Openfire Start Server'
+description: 'Start CI server from distribution'
+inputs:
+  distBaseDir:
+    description: 'The base directory of the Openfire installation that is to be started.'
+    required: false
+    default: './distribution/target/distribution-base'
+  domain:
+    description: 'XMPP domain name of server.'
+    required: false
+    default: 'example.org'
+  ip:
+    description: 'Set a hosts file for the given IP and host (or for example.com if running locally)'
+    required: false
+    default: '127.0.0.1'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+    - run: startCIServer.sh -i ${{ inputs.ip }} -h ${{ inputs.domain }} -b ${{ inputs.distBaseDir }}
+      shell: bash

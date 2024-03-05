@@ -2,7 +2,7 @@ name: 'Openfire Stop Server'
 description: 'Stops an Openfire server (used in Continuous integration testing)'
 inputs:
   domain:
-    description: 'XMPP domain name of server.'
+    description: 'The network name for the Openfire under test, which will be used for both the hostname as the XMPP domain name'
     required: false
     default: 'example.org'
   ip:

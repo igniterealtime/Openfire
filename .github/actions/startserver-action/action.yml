@@ -6,7 +6,7 @@ inputs:
     required: false
     default: './distribution/target/distribution-base'
   domain:
-    description: 'XMPP domain name of server.'
+    description: 'The network name for the Openfire under test, which will be used for both the hostname as the XMPP domain name.'
     required: false
     default: 'example.org'
   ip:

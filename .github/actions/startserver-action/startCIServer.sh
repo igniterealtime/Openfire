@@ -8,7 +8,7 @@ usage()
 {
 	echo "Usage: $0 [-i IPADDRESS] [-h HOST] [-b BASEDIR]"
 	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
-	echo "    -h: The hostname for the Openfire under test (default: example.org)"
+	echo "    -h: The network name for the Openfire under test, which will be used for both the hostname as the XMPP domain name (default: example.org)"
 	echo "    -b: The base directory of the distribution that is to be started"
 	exit 2
 }
@@ -42,7 +42,6 @@ function launchOpenfire {
 
 	if [[ ! -f "${OPENFIRE_SHELL_SCRIPT}" ]]; then
 		echo "Unable to find Openfire distribution in ${BASEDIR} (this file did not exist: ${OPENFIRE_SHELL_SCRIPT} )"
-		ls
 		exit 1
 	fi
 
@@ -53,6 +52,9 @@ function launchOpenfire {
 	rm -f ${BASEDIR}/conf/openfire.xml
 	cp ${BASEDIR}/conf/openfire-demoboot.xml \
 		${BASEDIR}/conf/openfire.xml
+
+	# Replace the default XMPP domain name ('example.org') that's in the demoboot config with the configured domain name.
+	sed -i -e 's/example.org/'"${HOST}"'/g' ${BASEDIR}/conf/openfire.xml
 
 	echo "Starting Openfire…"
 	"${OPENFIRE_SHELL_SCRIPT}" &

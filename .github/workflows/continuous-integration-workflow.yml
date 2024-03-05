@@ -45,15 +45,6 @@ jobs:
         with:
           name: distribution-java${{ matrix.java }}
           path: distribution-artifact.tar
-      - name: Upload test files
-        if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-files-java${{ matrix.java }}
-          path: |
-            startCIServer
-            stopCIServer
-            runConnectivityIntegrationTests
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
         uses: actions/upload-artifact@v4
@@ -85,15 +76,9 @@ jobs:
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: test-files-java11
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./startCIServer
-          chmod +x ./stopCIServer
       - name: Checkout aioxmpp devel/head
         uses: actions/checkout@v4
         with:
@@ -126,7 +111,7 @@ jobs:
           EOL
       - name: Start CI server from distribution
         id: startCIServer
-        run: ./startCIServer -d -l -i 127.0.0.1
+        uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
       - name: Run aioxmpp tests
         working-directory: ./aioxmpp
         run: |
@@ -140,7 +125,7 @@ jobs:
           path: aioxmpp/output
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        run: ./stopCIServer -d -l -i 127.0.0.1
+        uses: guusdk/openfire-stopserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
       - name: Expose openfire output
         if: always()
         uses: actions/upload-artifact@v4
@@ -178,10 +163,6 @@ jobs:
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: test-files-java11
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -190,8 +171,6 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./startCIServer
-          chmod +x ./stopCIServer
       - name: Create connectivity tests
         run: |
           mkdir -p ./conntest/src/test/java
@@ -352,12 +331,12 @@ jobs:
           popd
       - name: Start CI server from distribution
         id: startCIServer
-        run: ./startCIServer -d -l -i 127.0.0.1
+        uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
       - name: Build with Maven
         run: mvn clean test --file ./conntest/pom.xml
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        run: ./stopCIServer -d -l -i 127.0.0.1
+        uses: guusdk/openfire-stopserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
   smack:
 
     name: Execute Smack-based CI tests
@@ -374,10 +353,6 @@ jobs:
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: test-files-java11
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -386,11 +361,9 @@ jobs:
       - name: Fix file permissions
         run: |
           chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./startCIServer
-          chmod +x ./stopCIServer
       - name: Start CI server from distribution
         id: startCIServer
-        run: ./startCIServer -d -l -i 127.0.0.1
+        uses: guusdk/openfire-startserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
       - name: Run Smack tests against server
         uses: guusdk/sint-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
         with:
@@ -400,7 +373,7 @@ jobs:
           disabledTests: 'EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest'
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
-        run: ./stopCIServer -d -l -i 127.0.0.1
+        uses: guusdk/openfire-stopserver-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
 
   should-do-database-upgrade-tests:
     name: Check if database upgrade tests should be run

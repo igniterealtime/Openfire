@@ -67,8 +67,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Set JAVA_HOME to use Java 11
-        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
         uses: actions/checkout@v4
         with:
@@ -156,8 +154,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Set JAVA_HOME to use Java 11
-        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
         uses: actions/checkout@v4
         with:
@@ -170,11 +166,6 @@ jobs:
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 11
-          distribution: zulu
       - name: Start CI server from distribution
         id: startCIServer
         uses: ./.github/actions/startserver-action
@@ -190,8 +181,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Set JAVA_HOME to use Java 11
-        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
         uses: actions/checkout@v4
         with:
@@ -204,11 +193,6 @@ jobs:
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 11
-          distribution: zulu
       - name: Start CI server from distribution
         id: startCIServer
         uses: ./.github/actions/startserver-action

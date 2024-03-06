@@ -22,5 +22,13 @@ runs:
       shell: bash
       env:
         GITHUB_ACTION_PATH: ${{ github.action_path }}
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: 11
+        distribution: zulu
+    - name: Set JAVA_HOME to use Java 11
+      run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      shell: bash
     - run: startCIServer.sh -i ${{ inputs.ip }} -h ${{ inputs.domain }} -b ${{ inputs.distBaseDir }}
       shell: bash

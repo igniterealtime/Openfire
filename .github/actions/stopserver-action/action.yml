@@ -1,0 +1,22 @@
+name: 'Openfire Stop Server'
+description: 'Stops an Openfire server (used in Continuous integration testing)'
+inputs:
+  domain:
+    description: 'The network name for the Openfire under test, which will be used for both the hostname as the XMPP domain name'
+    required: false
+    default: 'example.org'
+  ip:
+    description: 'Set a hosts file for the given IP and host (or for example.com if running locally)'
+    required: false
+    default: '127.0.0.1'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+    - run: stopCIServer.sh -i ${{ inputs.ip }} -h ${{ inputs.domain }}
+      shell: bash

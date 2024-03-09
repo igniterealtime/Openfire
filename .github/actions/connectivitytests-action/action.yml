@@ -1,0 +1,28 @@
+name: 'Openfire Start Server'
+description: 'Start CI server from distribution'
+inputs:
+  distBaseDir:
+    description: 'The base directory of the Openfire installation that is to be started.'
+    required: false
+    default: './distribution/target/distribution-base'
+  domain:
+    description: 'The network name for the Openfire under test, which will be used for both the hostname as the XMPP domain name.'
+    required: false
+    default: 'example.org'
+  ip:
+    description: 'Set a hosts file for the given IP and host (or for example.com if running locally)'
+    required: false
+    default: '127.0.0.1'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: 11
+        distribution: zulu
+    - name: Build with Maven
+      run: |
+        mvn clean test --file $GITHUB_ACTION_PATH/conntest/pom.xml
+      shell: bash

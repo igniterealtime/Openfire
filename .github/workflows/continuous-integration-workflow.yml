@@ -36,22 +36,15 @@ jobs:
         with:
           name: surefire-reports_java${{ matrix.java }}
           path: xmppserver/target/surefire-reports
+      - name: tar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        if: ${{ matrix.distribution == 'zulu' }}
+        run: tar -cf distribution-artifact.tar distribution/target/distribution-base
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v4
         with:
           name: distribution-java${{ matrix.java }}
-          path: distribution/target/distribution-base
-      - name: Upload test files
-        if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-files-java${{ matrix.java }}
-          path: |
-            runIntegrationTests
-            runAioxmppIntegrationTests
-            runConnectivityIntegrationTests
-            test.gradle
+          path: distribution-artifact.tar
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
         uses: actions/upload-artifact@v4
@@ -74,38 +67,65 @@ jobs:
     needs: build
 
     steps:
-      - name: Set JAVA_HOME to use Java 11
-        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/distribution-base
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v4
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
+      - name: Checkout aioxmpp devel/head
+        uses: actions/checkout@v4
         with:
-          name: test-files-java11
-      - name: Fix file permissions
-        run: |
-          chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./runAioxmppIntegrationTests
-
+          repository: horazont/aioxmpp
+          ref: devel
+          path: aioxmpp
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
           check-latest: true # attempt to prevent to use 3.11.3 by enticing the runner to update (to something later)
-
+      - name: Install aoixmpp dependencies
+        run: python -m pip install setuptools pytest pytest-cov coveralls pyOpenSSL pytz
+      - name: Build aioxmpp
+        working-directory: ./aioxmpp
+        run: python -m pip install .
+      - name: Create Openfire config file for aioxmpp
+        working-directory: ./aioxmpp
+        run: |
+          cat >"openfire-config.ini" <<EOL
+          [global]
+          provisioner=aioxmpp.e2etest.provision.AnonymousProvisioner
+          
+          [aioxmpp.e2etest.provision.AnonymousProvisioner]
+          domain=example.org
+          host=localhost
+          port=5222
+          no_verify=true
+          quirks=["https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-adhoc-ping", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#no-xep-0049", "https://zombofant.net/xmlns/aioxmpp/e2etest/quirks#muc-no-333"]
+          EOL
+      - name: Start CI server from distribution
+        id: startCIServer
+        uses: ./.github/actions/startserver-action
       - name: Run aioxmpp tests
-        run: ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 || ./runAioxmppIntegrationTests -d -l -h example.org -i 127.0.0.1 # Try tests a few times, in case of flakiness
-            
+        working-directory: ./aioxmpp
+        run: |
+          mkdir output
+          python -m pytest -p aioxmpp.e2etest --e2etest-config="openfire-config.ini" --e2etest-only -k 'not test_set_topic and not test_publish_and_purge and not test_publish_multiple_and_get_by_id' tests 2>&1 | tee output/aioxmpp.test.output.txt
       - name: Expose test output
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: aioxmpp test output
           path: aioxmpp/output
-
+      - name: Stop CI server
+        if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        uses: ./.github/actions/stopserver-action
       - name: Expose openfire output
         if: always()
         uses: actions/upload-artifact@v4
@@ -134,28 +154,26 @@ jobs:
     needs: build
 
     steps:
-      - name: Set JAVA_HOME to use Java 11
-        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/distribution-base
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: test-files-java11
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 11
-          distribution: zulu
-      - name: Fix file permissions
-        run: |
-          chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./runConnectivityIntegrationTests
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
+      - name: Start CI server from distribution
+        id: startCIServer
+        uses: ./.github/actions/startserver-action
       - name: Run connectivity tests
-        run: ./runConnectivityIntegrationTests -d -l -i 127.0.0.1
+        uses: ./.github/actions/connectivitytests-action
+      - name: Stop CI server
+        if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        uses: ./.github/actions/stopserver-action
   smack:
 
     name: Execute Smack-based CI tests
@@ -163,28 +181,31 @@ jobs:
     needs: build
 
     steps:
-      - name: Set JAVA_HOME to use Java 11
-        run: echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+      - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+           .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/distribution-base
-      - name: Download test files from build job.
-        uses: actions/download-artifact@v4
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
+      - name: Start CI server from distribution
+        id: startCIServer
+        uses: ./.github/actions/startserver-action
+      - name: Run Smack tests against server
+        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
         with:
-          name: test-files-java11
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: 11
-          distribution: zulu
-      - name: Fix file permissions
-        run: |
-          chmod +x distribution/target/distribution-base/bin/openfire.sh
-          chmod +x ./runIntegrationTests
-      - name: Run smack tests
-        run: ./runIntegrationTests -d -l -i 127.0.0.1
+          domain: 'example.org'
+          adminAccountUsername: 'admin'
+          adminAccountPassword: 'admin'
+          disabledTests: 'EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest'
+      - name: Stop CI server
+        if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
+        uses: ./.github/actions/stopserver-action
 
   should-do-database-upgrade-tests:
     name: Check if database upgrade tests should be run

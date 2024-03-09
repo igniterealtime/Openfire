@@ -230,9 +230,9 @@ jobs:
 
   sqlserver:
     name: Test SQL Server Upgrades
-    needs: [build, should-do-database-upgrade-tests]
+    needs: [build, should-do-database-upgrade-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' }}
+    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -271,9 +271,9 @@ jobs:
 
   postgres:
     name: Test Postgres Upgrades
-    needs: [build, should-do-database-upgrade-tests]
+    needs: [build, should-do-database-upgrade-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' }}
+    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -312,9 +312,9 @@ jobs:
 
   mysql:
     name: Test MySQL Upgrades
-    needs: [build, should-do-database-upgrade-tests]
+    needs: [build, should-do-database-upgrade-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' }}
+    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -351,10 +351,9 @@ jobs:
           java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
   publish-maven:
-
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver, postgres, mysql]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:

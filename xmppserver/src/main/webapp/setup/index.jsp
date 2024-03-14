@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2010 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2010 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -295,6 +295,11 @@
                             <label for="fr">
                                 <input type="radio" name="localeCode" value="fr" ${locale eq 'fr' ? 'checked' : ''} id="fr" />
                                 <b>Fran&ccedil;ais</b> (fr)
+                            </label><br>
+
+                            <label for="he">
+                                <input type="radio" name="localeCode" value="he" ${locale eq 'he' ? 'checked' : ''} id="he" />
+                                <b>עברית</b> (he)
                             </label><br>
 
                             <label for="ja_JP">

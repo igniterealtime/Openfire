@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,6 +343,18 @@ public class LocaleUtils {
     public static ResourceBundle getResourceBundle(String baseName,
                                                    Locale locale) {
         return ResourceBundle.getBundle(baseName, locale);
+    }
+
+    /**
+     * Checks if the current locale (the one specified by JiveGlobals.getLocale()) uses the 'right-to-left' text
+     * orientation.
+     *
+     * @return true if the current locale uses right-to-left orientation.
+     */
+    public static boolean isLocalizedTextRTL() {
+        // This is obviously not something that's re-usable outside of Openfire. However, this includes all languages
+        // for which we provide translations.
+        return JiveGlobals.getLocale().getLanguage().equals("he");
     }
 
     /**

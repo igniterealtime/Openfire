@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -53,7 +53,11 @@
 <!DOCTYPE html>
 
 <fmt:setBundle basename="openfire_i18n"/>
+<% if (LocaleUtils.isLocalizedTextRTL()) { %>
+<html dir="rtl">
+<% } else {%>
 <html>
+<% }%>
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">

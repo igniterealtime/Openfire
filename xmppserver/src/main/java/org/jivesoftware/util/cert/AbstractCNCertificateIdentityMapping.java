@@ -23,18 +23,41 @@ import java.util.regex.Pattern;
 
 /**
  * Certificate identity mapping that uses the CommonName as the
- * identity credentials
- * 
- * @author Victor Hong
+ * identity credentials and provides possibility to add optional prefix and suffix
  *
+ * @author Victor Hong
  */
-public class CNCertificateIdentityMapping implements CertificateIdentityMapping {
+public abstract class AbstractCNCertificateIdentityMapping implements CertificateIdentityMapping {
 
-    private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
-    
+    private Pattern cnPattern;
+    private String cnPrefix;
+    private String cnSuffix;
+
+    protected void setCnPattern(String cnPattern) {
+        if (cnPattern == null || cnPattern.isEmpty()) {
+            throw new IllegalArgumentException("CN Pattern can't be null or empty");
+        }
+        this.cnPattern = Pattern.compile(cnPattern);
+    }
+
+    protected void setCnPrefix(String cnPrefix) {
+        if (cnPrefix == null) {
+            throw new IllegalArgumentException("CN Prefix can't be null");
+        }
+        this.cnPrefix = cnPrefix;
+    }
+
+    protected void setCnSuffix(String cnSuffix) {
+        if (cnSuffix == null) {
+            throw new IllegalArgumentException("CN Suffix can't be null");
+        }
+        this.cnSuffix = cnSuffix;
+    }
+
     /**
-     * Maps certificate CommonName as identity credentials
-     * 
+     * Maps certificate CommonName as identity credentials with optional prefix and/or suffix.
+     * Prefix and suffix are specified by properties. Default value is an empty string.
+     *
      * @param certificate the certificates to map
      * @return A List of names.
      */
@@ -45,20 +68,9 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
         // Create an array with the detected identities
         List<String> names = new ArrayList<>();
         while (matcher.find()) {
-            names.add(matcher.group(2));
+            names.add(cnPrefix + matcher.group(2) + cnSuffix);
         }
-        
+
         return names;
     }
-
-    /**
-     * Returns the short name of mapping
-     * 
-     * @return The short name of the mapping
-     */
-    @Override
-    public String name() {
-        return "Common Name Mapping";
-    }
-
 }

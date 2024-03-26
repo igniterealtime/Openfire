@@ -52,9 +52,7 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.keystore.CertificateStore;
-import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
-import org.jivesoftware.util.cert.CertificateIdentityMapping;
-import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
+import org.jivesoftware.util.cert.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,12 +81,22 @@ public class CertificateManager {
 
     private static Pattern valuesPattern = Pattern.compile("(?i)(=)([^,]*)");
 
-    private static List<CertificateEventListener> listeners = new CopyOnWriteArrayList<>();
+    private static final List<CertificateEventListener> listeners = new CopyOnWriteArrayList<>();
 
-    private static List<CertificateIdentityMapping> serverCertMapping = new ArrayList<>();
+    private static final List<CertificateIdentityMapping> serverCertMapping = new ArrayList<>();
     
-    private static List<CertificateIdentityMapping> clientCertMapping = new ArrayList<>();
-    
+    private static final List<CertificateIdentityMapping> clientCertMapping = new ArrayList<>();
+
+    public static final SystemProperty<String> SERVER_CERT_IDENTITY_MAP_LIST = SystemProperty.Builder.ofType(String.class)
+        .setKey("provider.serverCertIdentityMap.classList")
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> CLIENT_CERT_IDENTITY_MAP_LIST = SystemProperty.Builder.ofType(String.class)
+        .setKey("provider.clientCertIdentityMap.classList")
+        .setDynamic(false)
+        .build();
+
     static {
 
         if ( Security.getProvider( BouncyCastleProvider.PROVIDER_NAME ) == null )
@@ -96,9 +104,8 @@ public class CertificateManager {
             java.security.Security.addProvider( new BouncyCastleProvider() );
         }
 
-        String serverCertIdentityMapList = JiveGlobals.getProperty("provider.serverCertIdentityMap.classList");
-        if (serverCertIdentityMapList != null) {
-            StringTokenizer st = new StringTokenizer(serverCertIdentityMapList, " ,\t\n\r\f");
+        if (SERVER_CERT_IDENTITY_MAP_LIST.getValue() != null) {
+            StringTokenizer st = new StringTokenizer(SERVER_CERT_IDENTITY_MAP_LIST.getValue(), " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
@@ -117,12 +124,11 @@ public class CertificateManager {
         if (serverCertMapping.isEmpty()) {
             Log.debug("CertificateManager: No server CertificateIdentityMapping's found. Loading default mappings");
             serverCertMapping.add(new SANCertificateIdentityMapping());
-            serverCertMapping.add(new CNCertificateIdentityMapping());   	
+            serverCertMapping.add(new ServerCNCertificateIdentityMapping());
         }
                 
-        String clientCertMapList = JiveGlobals.getProperty("provider.clientCertIdentityMap.classList");
-        if (clientCertMapList != null) {
-            StringTokenizer st = new StringTokenizer(clientCertMapList, " ,\t\n\r\f");
+        if (CLIENT_CERT_IDENTITY_MAP_LIST.getValue() != null) {
+            StringTokenizer st = new StringTokenizer(CLIENT_CERT_IDENTITY_MAP_LIST.getValue(), " ,\t\n\r\f");
             while (st.hasMoreTokens()) {
                 String s_provider = st.nextToken();
                 try {
@@ -140,7 +146,7 @@ public class CertificateManager {
         
         if (clientCertMapping.isEmpty()) {
             Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
-            clientCertMapping.add(new CNCertificateIdentityMapping());
+            clientCertMapping.add(new ClientCNCertificateIdentityMapping());
         }
     }
 

@@ -41,7 +41,7 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * A subscription to a node. Entities may subscribe to a node to be notified when new events
  * are published to the node. Published events may contain a {@link PublishedItem}. Only
  * nodes that are configured to not deliver payloads with event notifications and to not
- * persist items will let publishers to publish events without items thus not including
+ * persist items will let publishers publish events without items thus not including
  * items in the notifications sent to subscribers.<p>
  *
  * Node subscriptions may need to be configured by the subscriber or approved by a node owner
@@ -648,6 +648,9 @@ public class NodeSubscription {
                 return false;
             }
         }
+        if (!leafNode.getAccessModel().canAccessItems(leafNode, this.owner, this.getJID())) {
+            return false;
+        }
 
         Log.trace("Can send publication node event.");
         return true;
@@ -685,6 +688,10 @@ public class NodeSubscription {
         // Check if added/deleted node is a descendant child of the subscribed node
         if (getDepth() == 0 && !node.isDescendantNode(originatingNode)) {
             Log.trace("Cannot send child node event: node is not a descendant child of the subscribed node.");
+            return false;
+        }
+
+        if (!originatingNode.getAccessModel().canAccessItems(originatingNode, this.owner, this.getJID())) {
             return false;
         }
 

@@ -436,5 +436,12 @@
                 <xmpp:note xml:lang='en'>Provided by the 'Agent Information' plugin</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0478.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>Advertises applicable limits, does not use limits advertised by others.</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
     </Project>
 </rdf:RDF>

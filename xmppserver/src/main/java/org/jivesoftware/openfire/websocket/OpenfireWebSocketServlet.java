@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,6 @@ public class OpenfireWebSocketServlet extends JettyWebSocketServlet {
             factory.getAvailableExtensionNames().remove("permessage-deflate");
         }
         final int messageSize = JiveGlobals.getIntProperty("xmpp.parser.buffer.size", 1048576);
-        factory.setInputBufferSize(messageSize * 5);
-        factory.setOutputBufferSize(messageSize * 5);
         factory.setMaxTextMessageSize(messageSize);
 
         // Jetty's idle policy cannot be modified - it will bluntly kill the connection. Ensure that it's longer than

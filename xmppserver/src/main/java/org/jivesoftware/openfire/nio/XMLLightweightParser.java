@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,17 @@
 
 package org.jivesoftware.openfire.nio;
 
+import io.netty.buffer.ByteBuf;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,6 +105,10 @@ public class XMLLightweightParser {
 
     protected boolean insideChildrenTag = false;
 
+    CharsetDecoder encoder = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE);
+
     /*
     * true if the parser has found some complete xml message.
     */
@@ -158,7 +169,7 @@ public class XMLLightweightParser {
         return maxBufferSizeExceeded;
     }
 
-    public void read(char[] buf) throws Exception {
+    public void read(ByteBuf in) throws Exception {
         invalidateBuffer();
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
@@ -172,6 +183,8 @@ public class XMLLightweightParser {
             throw new InboundBufferSizeException("Stopped parsing never ending stanza");
         }
 
+        // OF-458 / OF-2814: Prevent issues with multi-byte characters: reads all decodable bytes, leaving the others in the buffer.
+        final char[] buf = decode(in);
         int readChar = buf.length;
 
         // Just return if nothing was read
@@ -362,6 +375,33 @@ public class XMLLightweightParser {
                 foundMsg("</stream:stream>");
             }
         }
+    }
+
+    /**
+     * Reads from the provided byte buffer all bytes that can be decoded as UTF-8 characters, and returns those
+     * characters. The position (reader-index) of the input buffer is updated to the first byte that's not decoded.
+     * This should allow the data to be decoded again, after additional bytes are added to the buffer. This intends
+     * to prevent issues with multi-byte characters.
+     *
+     * @param in The buffer from which to read.
+     * @return UTF-8 characters that were read from the buffer.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-458">issue OF-458: XMPPDecoder has a decode problem for UTF-8</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2814">issue OF-2814: Issue with cyrilic (any multi-byte?) characters in messages</a>
+     */
+    char[] decode(final ByteBuf in)
+    {
+        final CharBuffer charBuffer = CharBuffer.allocate(in.capacity());
+        encoder.reset();
+        final ByteBuffer nioBuffer = in.nioBuffer();
+        encoder.decode(nioBuffer, charBuffer, false);
+        final char[] buf = new char[charBuffer.position()];
+        charBuffer.flip();
+        charBuffer.get(buf);
+
+        // Netty won't update the reader-index of the original buffer when its nio-buffer representation is read from. Adjust the position of the original buffer.
+        in.readerIndex(nioBuffer.position());
+
+        return buf;
     }
 
     /**

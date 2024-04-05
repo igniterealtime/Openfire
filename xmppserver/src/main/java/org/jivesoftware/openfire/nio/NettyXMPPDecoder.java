@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,7 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         }
 
         // Parse as many stanzas as possible from the received data
-        char[] readChars = in.readCharSequence(in.readableBytes(), CharsetUtil.UTF_8).toString().toCharArray();
-        parser.read(readChars);
+        parser.read(in);
 
         // Add any decoded messages to our outbound list to be processed by subsequent channelRead() events
         if (parser.areThereMsgs()) {

@@ -258,35 +258,30 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public boolean addClientRoute(JID route, LocalClientSession destination) {
+    public void addClientRoute(JID route, LocalClientSession destination) {
         if (route.getResource() == null) {
             throw new IllegalArgumentException("Route is not a full JID: " + route);
         }
-        boolean added;
-        boolean available = destination.getPresence().isAvailable();
         Log.debug("Adding client route {}", route);
         localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
-        final ClientRoute newClientRoute = new ClientRoute(server.getNodeID(), available);
+        final ClientRoute newClientRoute = new ClientRoute(server.getNodeID(), destination.getPresence().isAvailable());
         if (destination.getAuthToken().isAnonymous()) {
             Lock lockAn = anonymousUsersCache.getLock(route.toString());
             lockAn.lock();
             try {
-                added = anonymousUsersCache.put(route.toString(), newClientRoute) ==
-                        null;
+                anonymousUsersCache.put(route.toString(), newClientRoute);
             }
             finally {
                 lockAn.unlock();
             }
             // Add the session to the list of user sessions
-            if (!available || added) {
-                Lock lock = usersSessionsCache.getLock(route.toBareJID());
-                lock.lock();
-                try {
-                    usersSessionsCache.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
-                }
-                finally {
-                    lock.unlock();
-                }
+            Lock lock = usersSessionsCache.getLock(route.toBareJID());
+            lock.lock();
+            try {
+                usersSessionsCache.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
+            }
+            finally {
+                lock.unlock();
             }
         }
         else {
@@ -294,29 +289,26 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             lockU.lock();
             try {
                 Log.debug("Adding client route {} to users cache under key {}", newClientRoute, route);
-                added = usersCache.put(route.toString(), newClientRoute) == null;
+                usersCache.put(route.toString(), newClientRoute);
             }
             finally {
                 lockU.unlock();
             }
             // Add the session to the list of user sessions
-            if (!available || added) {
-                Lock lock = usersSessionsCache.getLock(route.toBareJID());
-                lock.lock();
-                try {
-                    HashSet<String> jids = usersSessionsCache.get(route.toBareJID());
-                    if (jids == null) {
-                        jids = new HashSet<>();
-                    }
-                    jids.add(route.toString());
-                    usersSessionsCache.put(route.toBareJID(), jids);
+            Lock lock = usersSessionsCache.getLock(route.toBareJID());
+            lock.lock();
+            try {
+                HashSet<String> jids = usersSessionsCache.get(route.toBareJID());
+                if (jids == null) {
+                    jids = new HashSet<>();
                 }
-                finally {
-                    lock.unlock();
-                }
+                jids.add(route.toString());
+                usersSessionsCache.put(route.toBareJID(), jids);
+            }
+            finally {
+                lock.unlock();
             }
         }
-        return added;
     }
 
     @Override

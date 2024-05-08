@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
@@ -571,7 +572,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * @param auth the authentication token obtained from the AuthFactory.
      * @param resource the resource this session authenticated under.
      */
-    public void setAuthToken(AuthToken auth, String resource) {
+    public void setAuthToken(AuthToken auth, @Nonnull String resource) {
         final JID jid;
         if (auth.isAnonymous()) {
             jid = new JID(resource, getServerName(), resource);
@@ -588,6 +589,14 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
         // Add session to the session manager. The session will be added to the routing table as well
         sessionManager.addSession(this);
+    }
+
+    @Override
+    public void setAddress(@Nonnull JID address){
+        if (address.getResource() == null) {
+            throw new IllegalArgumentException("Address is not a full JID: " + address);
+        }
+        super.setAddress(address);
     }
 
     /**

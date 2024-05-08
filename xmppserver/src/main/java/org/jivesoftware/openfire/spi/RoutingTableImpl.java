@@ -158,6 +158,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds sessions of user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
      *
+     * <em>Note:</em> access to this cache is to be guarded by a lock acquired from {@link #usersSessionsCache}, using
+     * the <em>bare JID</em> representation of the key.
+     *
      * @see LocalRoutingTable#getClientRoutes() which holds content added by the local cluster node.
      * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
      */
@@ -166,6 +169,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     /**
      * Cache (unlimited, never expire) that holds sessions of anonymous user that have authenticated with the server.
      * Key: full JID, Value: {nodeID, available/unavailable}
+     *
+     * <em>Note:</em> access to this cache is to be guarded by a lock acquired from {@link #usersSessionsCache}, using
+     * the <em>bare JID</em> representation of the key.
      *
      * @see LocalRoutingTable#getClientRoutes() which holds content added by the local cluster node.
      * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
@@ -199,6 +205,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      *
      * Note: unlike the other caches in this implementation, this cache does not explicitly have supporting data
      * structures. Instead, it implicitly uses the supporting data structures of {@link #usersCache} and {@link #anonymousUsersCache}.
+     *
+     * Note: locks from this cache are used to guard access to entries of {@link #usersCache} and {@link #anonymousUsersCache}.
      */
     private final Cache<String, HashSet<String>> usersSessionsCache;
 
@@ -263,51 +271,28 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             throw new IllegalArgumentException("Route is not a full JID: " + route);
         }
         Log.debug("Adding client route {}", route);
-        localRoutingTable.addRoute(new DomainPair("", route.toString()), destination);
+
+        Log.trace("Adding client route {} to local routing table", route);
+        localRoutingTable.addRoute(new DomainPair("", route.toFullJID()), destination);
+
         final ClientRoute newClientRoute = new ClientRoute(server.getNodeID(), destination.getPresence().isAvailable());
-        if (destination.getAuthToken().isAnonymous()) {
-            Lock lockAn = anonymousUsersCache.getLock(route.toString());
-            lockAn.lock();
-            try {
-                anonymousUsersCache.put(route.toString(), newClientRoute);
+        final Lock lock = usersSessionsCache.getLock(route.toBareJID());
+        lock.lock();
+        try {
+            if (destination.getAuthToken().isAnonymous()) {
+                Log.trace("Adding client route {} to anonymous users cache under key {}", newClientRoute, route);
+                anonymousUsersCache.put(route.toFullJID(), newClientRoute);
+            } else {
+                Log.trace("Adding client route {} to users cache under key {}", newClientRoute, route);
+                usersCache.put(route.toFullJID(), newClientRoute);
             }
-            finally {
-                lockAn.unlock();
-            }
-            // Add the session to the list of user sessions
-            Lock lock = usersSessionsCache.getLock(route.toBareJID());
-            lock.lock();
-            try {
-                usersSessionsCache.put(route.toBareJID(), new HashSet<>(Collections.singletonList(route.toString())));
-            }
-            finally {
-                lock.unlock();
-            }
+
+            Log.trace("Adding client full JID {} to users sessions cache under key {}", route, route.toBareJID());
+            // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's as Hazelcast's) is reentrant.
+            CacheUtil.addValueToMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID(), HashSet::new);
         }
-        else {
-            Lock lockU = usersCache.getLock(route.toString());
-            lockU.lock();
-            try {
-                Log.debug("Adding client route {} to users cache under key {}", newClientRoute, route);
-                usersCache.put(route.toString(), newClientRoute);
-            }
-            finally {
-                lockU.unlock();
-            }
-            // Add the session to the list of user sessions
-            Lock lock = usersSessionsCache.getLock(route.toBareJID());
-            lock.lock();
-            try {
-                HashSet<String> jids = usersSessionsCache.get(route.toBareJID());
-                if (jids == null) {
-                    jids = new HashSet<>();
-                }
-                jids.add(route.toString());
-                usersSessionsCache.put(route.toBareJID(), jids);
-            }
-            finally {
-                lock.unlock();
-            }
+        finally {
+            lock.unlock();
         }
     }
 
@@ -485,11 +470,17 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     private ClientRoute getClientRouteForLocalUser(JID jid) {
-        ClientRoute clientRoute = usersCache.get(jid.toString());
-        if (clientRoute == null) {
-            clientRoute = anonymousUsersCache.get(jid.toString());
+        final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
+        lock.lock();
+        try {
+            ClientRoute clientRoute = usersCache.get(jid.toFullJID());
+            if (clientRoute == null) {
+                clientRoute = anonymousUsersCache.get(jid.toFullJID());
+            }
+            return clientRoute;
+        } finally {
+            lock.unlock();
         }
-        return clientRoute;
     }
 
     /**
@@ -921,17 +912,29 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean hasClientRoute(JID jid) {
-        return usersCache.containsKey(jid.toString()) || isAnonymousRoute(jid);
+        final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
+        lock.lock();
+        try {
+            return usersCache.containsKey(jid.toFullJID()) || isAnonymousRoute(jid);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public boolean isAnonymousRoute(JID jid) {
-        if ( jid.getResource() != null ) {
-            // Check if there's a anonymous route for the JID.
-            return anonymousUsersCache.containsKey( jid.toString() );
-        } else {
-            // Anonymous routes are mapped by full JID. if there's no full JID, check for any route for the node-part.
-            return anonymousUsersCache.keySet().stream().anyMatch( key -> key.startsWith( jid.toString() ) );
+        final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
+        lock.lock();
+        try {
+            if (jid.getResource() != null) {
+                // Check if there's a anonymous route for the JID.
+                return anonymousUsersCache.containsKey(jid.toFullJID());
+            } else {
+                // Anonymous routes are mapped by full JID. if there's no full JID, check for any route for the node-part.
+                return anonymousUsersCache.keySet().stream().anyMatch(key -> key.startsWith(jid.toString()));
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -967,20 +970,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
             else {
                 // Address is a bare JID so return all AVAILABLE resources of user
-                Lock lock = usersSessionsCache.getLock(route.toBareJID());
+                final Map<String, ClientRoute> clientRoutes = new HashMap<>();
+                final Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock(); // temporarily block new sessions for this JID
                 try {
-                    Collection<String> sessions = usersSessionsCache.get(route.toBareJID());
-                    if (sessions != null) {
-                        // Select only available sessions
-                        for (String jid : sessions) {
-                            ClientRoute clientRoute = usersCache.get(jid);
+                    Set<String> sessionFullJids = usersSessionsCache.get(route.toBareJID());
+                    if (sessionFullJids != null) {
+                        for (String sessionFullJid : sessionFullJids) {
+                            ClientRoute clientRoute = usersCache.get(sessionFullJid);
                             if (clientRoute == null) {
-                                clientRoute = anonymousUsersCache.get(jid);
+                                clientRoute = anonymousUsersCache.get(sessionFullJid);
                             }
-                            if (clientRoute != null && (clientRoute.isAvailable() ||
-                                    presenceUpdateHandler.hasDirectPresence(new JID(jid), requester))) {
-                                jids.add(new JID(jid));
+                            if (clientRoute != null) {
+                                clientRoutes.put(sessionFullJid, clientRoute);
                             }
                         }
                     }
@@ -988,6 +990,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 finally {
                     lock.unlock();
                 }
+
+                // Filter routes to only those that are accessible to the requester.
+                jids.addAll(clientRoutes.entrySet().stream()
+                    .filter(entry -> (entry.getValue().isAvailable() || presenceUpdateHandler.hasDirectPresence(new JID(entry.getKey()), requester)))
+                    .map(entry -> new JID(entry.getKey()))
+                    .collect(Collectors.toList()));
             }
         }
         else if (route.getDomain().contains(serverName)) {
@@ -1004,70 +1012,42 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public boolean removeClientRoute(JID route) {
-
+    public boolean removeClientRoute(JID route)
+    {
         if (route.getResource() == null) {
             throw new IllegalArgumentException("For removing a client route, the argument 'route' must be a full JID, but was " + route);
         }
 
-        boolean anonymous = false;
+        Log.debug("Removing client route {}", route);
         boolean sessionRemoved = false;
-        String address = route.toString();
-        ClientRoute clientRoute;
-        Lock lockU = usersCache.getLock(address);
-        lockU.lock();
-        int cacheSizeBefore = usersCache.size();
+        final Lock lock = usersSessionsCache.getLock(route.toBareJID());
+        lock.lock();
         try {
-            clientRoute = usersCache.remove(address);
-        }
-        finally {
-            lockU.unlock();
-        }
-        Log.debug("Removed users cache entry for {} / {}, changing entry count from {} to {}", route, clientRoute, cacheSizeBefore, usersCache.size());
-        if (clientRoute == null) {
-            Lock lockA = anonymousUsersCache.getLock(address);
-            lockA.lock();
-            try {
-                clientRoute = anonymousUsersCache.remove(address);
+            ClientRoute clientRoute = usersCache.remove(route.toFullJID());
+            if (clientRoute != null) {
+                Log.trace("Removed client route {} from users cache under key {}", route, clientRoute);
+            } else {
+                clientRoute = anonymousUsersCache.remove(route.toFullJID());
                 if (clientRoute != null) {
-                    anonymous = true;
+                    Log.trace("Removed client route {} from anonymous users cache under key {}", route, clientRoute);
                 }
             }
-            finally {
-                lockA.unlock();
-            }
-        }
 
-        final String bareJID = route.toBareJID();
-
-        if (usersSessionsCache.containsKey(bareJID)) {
-            // The user session still needs to be removed
-            if (clientRoute == null) {
-                Log.warn("Client route not found for route {}, while user session still exists, Current content of users cache is {}", bareJID, usersCache);
-            }
-
-            Lock lock = usersSessionsCache.getLock(bareJID);
-            lock.lock();
-            try {
-                if (anonymous) {
-                    sessionRemoved = usersSessionsCache.remove(bareJID) != null;
-                } else {
-                    HashSet<String> jids = usersSessionsCache.get(bareJID);
-                    if (jids != null) {
-                        sessionRemoved = jids.remove(route.toString());
-                        if (!jids.isEmpty()) {
-                            usersSessionsCache.put(bareJID, jids);
-                        } else {
-                            usersSessionsCache.remove(bareJID);
-                        }
-                    }
+            if (usersSessionsCache.containsKey(route.toBareJID())) {
+                // The user session still needs to be removed
+                if (clientRoute == null) {
+                    Log.warn("Client route not found for route {}, while user session still exists, Current content of users cache: {}. Current content of anonymous users cache: {}", route.toBareJID(), usersCache, anonymousUsersCache);
                 }
-            } finally {
-                lock.unlock();
+
+                Log.trace("Removing client full JID {} from users sessions cache under key {}", route.toFullJID(), route.toBareJID());
+                CacheUtil.removeValueFromMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID());
             }
+
+        } finally {
+            lock.unlock();
         }
 
-        Log.debug("Removing client route {} from local routing table", route);
+        Log.trace("Removing client route {} from local routing table", route);
         localRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return sessionRemoved;
     }

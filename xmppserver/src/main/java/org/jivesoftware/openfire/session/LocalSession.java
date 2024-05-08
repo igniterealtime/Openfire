@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public abstract class LocalSession implements Session {
     /**
      * The Address this session is authenticated as.
      */
+    @Nonnull
     protected JID address;
 
     /**
@@ -199,13 +200,14 @@ public abstract class LocalSession implements Session {
     }
 
     /**
-      * Obtain the address of the user. The address is used by services like the core
+      * Obtain the address of the session. The address is used by services like the core
       * server packet router to determine if a packet should be sent to the handler.
       * Handlers that are working on behalf of the server should use the generic server
       * hostname address (e.g. server.com).
       *
       * @return the address of the packet handler.
       */
+    @Nonnull
     @Override
     public JID getAddress() {
         return address;
@@ -219,7 +221,7 @@ public abstract class LocalSession implements Session {
      *
      * @param address the new address of this session.
      */
-    public void setAddress(JID address){
+    public void setAddress(@Nonnull JID address){
         this.address = address;
     }
 

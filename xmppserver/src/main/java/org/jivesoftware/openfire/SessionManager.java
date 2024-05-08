@@ -805,8 +805,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param session the session that received an unavailable presence.
      */
     public void sessionUnavailable(LocalClientSession session) {
-        if (session.getAddress() != null && routingTable != null &&
-                session.getAddress().toBareJID().trim().length() != 0) {
+        if (routingTable != null && session.getAddress().toBareJID().trim().length() != 0) {
             // Update route to unavailable session (anonymous or not)
             routingTable.addClientRoute(session.getAddress(), session); // Note that _adding_ the route is not a typo, as previously assumed. See OF-2210 and OF-2012.
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software, 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jivesoftware.util.cache.ClusterTask;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 
 /**
@@ -48,6 +49,7 @@ public class RemoteIncomingServerSession extends RemoteSession implements Incomi
         return authenticationMethod;
     }
 
+    @Nonnull
     public JID getAddress() {
         if (address == null) {
             RemoteSessionTask task = getRemoteSessionTask(RemoteSessionTask.Operation.getAddress);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public interface RoutingTable {
      * get updated again. When running inside of a cluster this message {@code must} be sent
      * from the cluster node that is actually holding the client session.
      *
-     * @param route the address associated to the route.
+     * @param route the address (a full JID) associated to the route.
      * @param destination the client session.
      * @return true if route was added to the table or false if already present.
      */

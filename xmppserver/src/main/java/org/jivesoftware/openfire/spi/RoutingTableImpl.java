@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,6 +259,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean addClientRoute(JID route, LocalClientSession destination) {
+        if (route.getResource() == null) {
+            throw new IllegalArgumentException("Route is not a full JID: " + route);
+        }
         boolean added;
         boolean available = destination.getPresence().isAvailable();
         Log.debug("Adding client route {}", route);
@@ -275,7 +278,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 lockAn.unlock();
             }
             // Add the session to the list of user sessions
-            if (route.getResource() != null && (!available || added)) {
+            if (!available || added) {
                 Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock();
                 try {
@@ -297,7 +300,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 lockU.unlock();
             }
             // Add the session to the list of user sessions
-            if (route.getResource() != null && (!available || added)) {
+            if (!available || added) {
                 Lock lock = usersSessionsCache.getLock(route.toBareJID());
                 lock.lock();
                 try {

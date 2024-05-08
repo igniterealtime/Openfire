@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software, 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jivesoftware.util.cache.ClusterTask;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
@@ -42,7 +43,7 @@ import java.util.Map;
 public abstract class RemoteSession implements Session {
 
     protected byte[] nodeID;
-    protected JID address;
+    protected JID address; // Expected to be mostly non-null, but at least one subclass lazily initializes this!
 
     // Cache content that never changes
     protected StreamID streamID;
@@ -56,6 +57,7 @@ public abstract class RemoteSession implements Session {
         this.address = address;
     }
 
+    @Nonnull
     public JID getAddress() {
         return address;
     }

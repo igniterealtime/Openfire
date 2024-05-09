@@ -288,7 +288,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
 
             Log.trace("Adding client full JID {} to users sessions cache under key {}", route, route.toBareJID());
-            // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's as Hazelcast's) is reentrant.
+            // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
             CacheUtil.addValueToMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID(), HashSet::new);
         }
         finally {

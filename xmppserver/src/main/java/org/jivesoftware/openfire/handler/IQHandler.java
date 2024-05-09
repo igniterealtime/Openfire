@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
+
+import java.util.Optional;
 
 /**
  * Base class whose main responsibility is to handle IQ packets. Subclasses may
@@ -72,30 +74,52 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         return true;
     }
 
-    @Override
-    public void process(Packet packet) throws PacketException {
-        IQ iq = (IQ) packet;
-        JID recipientJID = iq.getTo();
+    /**
+     * Performs the check as defined in RFC 6121 8.5.1. "No Such User":
+     * <blockquote>If the 'to' address specifies a bare JID <localpart@domainpart> or full JID
+     * <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced
+     * by the server itself, the server MUST proceed as follows. [...] If the user account identified by the 'to'
+     * attribute does not exist, how the stanza is processed depends on the stanza type. [...] For an IQ stanza, the
+     * server MUST return a <service-unavailable/> stanza error to the sender.</blockquote>
+     *
+     * @see <a href="http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser">RFC 6121 8.5.1. "No Such User"</a>
+     */
+    public Optional<IQ> processNoSuchUserCheck(IQ iq)
+    {
+        if (iq.isResponse()) {
+            return Optional.empty();
+        }
 
-        // RFC 6121 8.5.1.  No Such User http://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser
-        // If the 'to' address specifies a bare JID <localpart@domainpart> or full JID <localpart@domainpart/resourcepart> where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.
-        // If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.
-        // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
-        if (performNoSuchUserCheck()
-            && iq.isRequest() && recipientJID != null && recipientJID.getNode() != null
+        final JID recipientJID = iq.getTo();
+
+        if (iq.isRequest() && recipientJID != null && recipientJID.getNode() != null
             && !XMPPServer.getInstance().isRemote(recipientJID)
             && !UserManager.getInstance().isRegisteredUser(recipientJID, false)
             && !UserManager.isPotentialFutureLocalUser(recipientJID) && sessionManager.getSession(recipientJID) == null
-            && !(recipientJID.asBareJID().equals(packet.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(packet.getFrom())) // A pre-authenticated session queries the server about itself.
+            && !(recipientJID.asBareJID().equals(iq.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(iq.getFrom())) // A pre-authenticated session queries the server about itself.
         )
         {
-            Log.trace("Responding with 'service-unavailable' since the intended recipient isn't a local user ('no-such-user' check) to: {}", iq);
             // For an IQ stanza, the server MUST return a <service-unavailable/> stanza error to the sender.
             IQ response = IQ.createResultIQ(iq);
             response.setChildElement(iq.getChildElement().createCopy());
             response.setError(PacketError.Condition.service_unavailable);
-            sessionManager.getSession(iq.getFrom()).process(response);
-            return;
+            return Optional.of(response);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public void process(Packet packet) throws PacketException {
+        IQ iq = (IQ) packet;
+
+        // Check for 'no such user' as per RFC 6121 8.5.1.
+        if (performNoSuchUserCheck()) {
+            final Optional<IQ> noSuchUserResponse = processNoSuchUserCheck(iq);
+            if (noSuchUserResponse.isPresent()) {
+                Log.trace("Responding with 'no such user' defined response, since the intended recipient isn't a local user ('no-such-user' check) to: {}", iq);
+                sessionManager.getSession(iq.getFrom()).process(noSuchUserResponse.get());
+                return;
+            }
         }
 
         try {

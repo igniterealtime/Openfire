@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,13 +99,37 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         return info;
     }
 
+    /**
+     * XEP-0030 Section 8 contradict RFC 6121 8.5.1. "No Such User" in its definition on how the server must
+     * respond to a request made against a non-existing user. This method overrides the default implementation of
+     * RFC 6121's definition (from the super class) with that of XEP-0030:
+     *
+     * <blockquote>The following rules apply to the handling of service discovery requests sent to bare JIDs: [...] In
+     * response to a disco#items request, the server MUST return an empty result set if: [...] The target entity does
+     * not exist (no matter if the request specifies a node or not).</blockquote>
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0030.html#security">XEP-0030 8 "Security Considerations"</a>
+     * @see <a href="https://xmpp.org/rfcs/rfc6121.html#rules-localpart-nosuchuser">RFC 6121 8.5.1. "No Such User"</a>
+     * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-880">OF-880</a>
+     */
+    public Optional<IQ> processNoSuchUserCheck(final IQ stanza)
+    {
+        // Use the detection mechanism as implemented by the superclass, but use our own result stanza.
+        if (super.processNoSuchUserCheck(stanza).isPresent()) {
+            final IQ response = IQ.createResultIQ(stanza);
+            response.setChildElement(stanza.getChildElement().createCopy());
+            return Optional.of(response);
+        }
+        return Optional.empty();
+    }
+
     @Override
     public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested items to the reply if any otherwise add 
         // a not found error
         IQ reply = IQ.createResultIQ(packet);
-        
+
         // TODO Implement publishing client items
         if (IQ.Type.set == packet.getType()) {
             reply.setChildElement(packet.getChildElement().createCopy());

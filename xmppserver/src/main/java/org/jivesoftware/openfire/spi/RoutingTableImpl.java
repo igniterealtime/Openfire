@@ -915,6 +915,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
         lock.lock();
         try {
+            // isAnonymousRoute() acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
             return usersCache.containsKey(jid.toFullJID()) || isAnonymousRoute(jid);
         } finally {
             lock.unlock();
@@ -1040,9 +1041,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 }
 
                 Log.trace("Removing client full JID {} from users sessions cache under key {}", route.toFullJID(), route.toBareJID());
+                // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
                 CacheUtil.removeValueFromMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID());
             }
-
         } finally {
             lock.unlock();
         }

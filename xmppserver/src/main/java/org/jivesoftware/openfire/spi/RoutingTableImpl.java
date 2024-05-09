@@ -470,6 +470,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     private ClientRoute getClientRouteForLocalUser(JID jid) {
+        if (jid.getNode() == null || jid.getResource() == null) {
+            Log.trace("getClientRouteForLocalUser() invoked with a JID that's not a full JID: {}", jid);
+            return null;
+        }
+
         final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
         lock.lock();
         try {
@@ -912,6 +917,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean hasClientRoute(JID jid) {
+        if (jid.getNode() == null || jid.getResource() == null) {
+            Log.trace("hasClientRoute() invoked with a JID that's not a full JID: {}", jid);
+            return false;
+        }
         final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
         lock.lock();
         try {
@@ -924,6 +933,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean isAnonymousRoute(JID jid) {
+        if (jid.getNode() == null || jid.getResource() == null) {
+            Log.trace("isAnonymousRoute() invoked with a JID that's not a full JID: {}", jid);
+            return false;
+        }
         final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
         lock.lock();
         try {

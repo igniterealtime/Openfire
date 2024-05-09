@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.handler.IQBlockingHandler;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPrivateHandler;
+import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
@@ -141,6 +143,31 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
         IQ reply = IQ.createResultIQ(packet);
+
+        // XEP-0030, Section 8 "Security Considerations": <blockquote>The following rules apply to the handling of
+        // service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return
+        // a <service-unavailable/> error if [...] The requesting entity is not authorized to receive presence from the
+        // target entity (i.e., via the target having a presence subscription to the requesting entity of type "both" or
+        // "from") or is not otherwise trusted (e.g., another server in a trusted network).</blockquote>
+        if (packet.getTo() != null && packet.getTo().getNode() != null && packet.getTo().getResource() == null) {
+            boolean isRequestingEntityAuthorized;
+            try {
+                final User user = UserManager.getInstance().getUser(packet.getTo().getNode());
+                RosterItem item = user.getRoster().getRosterItem(packet.getFrom());
+                isRequestingEntityAuthorized = item.getSubStatus() == RosterItem.SUB_FROM || item.getSubStatus() == RosterItem.SUB_BOTH;
+            } catch (UserNotFoundException e) {
+                // Not an existing user or no subscription. Response should be indistinguishable from response to a
+                // non-subscribed user.
+                isRequestingEntityAuthorized = false;
+            }
+
+            if (!isRequestingEntityAuthorized) {
+                Log.trace("Responding with a <service-unavailable/> error since the requesting entity is not authorized to receive presence from the target entity, to: {}", packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.service_unavailable);
+                return reply;
+            }
+        }
 
         // Look for a DiscoInfoProvider associated with the requested entity.
         // We consider the host of the recipient JID of the packet as the entity. It's the 

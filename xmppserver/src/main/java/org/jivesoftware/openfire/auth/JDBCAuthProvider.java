@@ -212,7 +212,6 @@ public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
         if (username == null || password == null) {
             throw new UnauthorizedException();
         }
-        username = username.trim().toLowerCase();
         if (username.contains("@")) {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");

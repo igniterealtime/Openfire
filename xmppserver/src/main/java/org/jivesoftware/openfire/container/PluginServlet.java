@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -481,25 +481,29 @@ public class PluginServlet extends HttpServlet {
      */
     private GenericServlet getServlet(String pathInfo) {
         pathInfo = pathInfo.substring(1).toLowerCase();
+        final GenericServlet servlet = getWildcardMappedObject(servlets, pathInfo);
+        Log.trace("Found servlet {} for path {}", servlet != null ? servlet.getServletName() : "(none)", pathInfo);
+        return servlet;
+    }
 
-        GenericServlet servlet = servlets.get(pathInfo);
-        if (servlet == null) {
-            for (String key : servlets.keySet()) {
+    // Package protected to facilitate unit testing
+    static <T> T getWildcardMappedObject(final Map<String, T> mapping, final String query) {
+        T value = mapping.get(query);
+        if (value == null) {
+            for (String key : mapping.keySet()) {
                 int index = key.indexOf("/*");
                 String searchkey = key;
                 if (index != -1) {
                     searchkey = key.substring(0, index);
                 }
-                if (searchkey.startsWith(pathInfo) || pathInfo.startsWith(searchkey)) {
-                    servlet = servlets.get(key);
+                if (searchkey.startsWith(query) || query.startsWith(searchkey)) {
+                    value = mapping.get(key);
                     break;
                 }
             }
         }
-        Log.trace("Found servlet {} for path {}", servlet != null ? servlet.getServletName() : "(none)", pathInfo);
-        return servlet;
+        return value;
     }
-
 
     /**
      * Handles a request for other web items (images, etc.)

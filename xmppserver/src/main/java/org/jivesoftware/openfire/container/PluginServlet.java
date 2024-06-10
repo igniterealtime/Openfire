@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -491,12 +493,14 @@ public class PluginServlet extends HttpServlet {
         T value = mapping.get(query);
         if (value == null) {
             for (String key : mapping.keySet()) {
-                int index = key.indexOf("/*");
-                String searchkey = key;
-                if (index != -1) {
-                    searchkey = key.substring(0, index);
+                // Turn the search key into a regex, using all characters but the * as a literal.
+                String regex = Arrays.stream(key.split("\\*")) // split in parts that do not have a wildcard in them
+                    .map(Pattern::quote) // each part should be used as a literal (not as a regex or partial regex)
+                    .collect(Collectors.joining(".*")); // join all literal parts with a regex representation on the wildcard.
+                if (key.endsWith("*")) { // the 'split' will have removed any trailing wildcard characters. Correct for that.
+                    regex += ".*";
                 }
-                if (searchkey.startsWith(query) || query.startsWith(searchkey)) {
+                if (query.matches(regex)) {
                     value = mapping.get(key);
                     break;
                 }

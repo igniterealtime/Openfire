@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -274,7 +274,8 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         Map<String, String> map = getLdapAttributes(username);
         Log.debug("LdapVCardProvider: Retrieving LDAP mapped vcard for " + username);
         if (map.isEmpty()) {
-            return null;
+            // No vcard for this user in LDAP? Return the to-be-merged data as-is.
+            return mergeVCard;
         }
         Element vcard = new VCard(template).getVCard(map);
         if (mergeVCard == null) {

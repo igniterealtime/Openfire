@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.ldap;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.jivesoftware.openfire.vcard.PhotoResizer;
 import org.jivesoftware.openfire.vcard.VCardManager;
@@ -207,8 +208,12 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             }
             return map;
         }
+        catch (UserNotFoundException e) {
+            Log.info("Unable to find LDAP data as user '{}' is not found in the directory service.", username, e);
+            return Collections.emptyMap();
+        }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            Log.warn("Unexpected exception while tyring to find LDAP data for user '{}'", username, e);
             return Collections.emptyMap();
         }
         finally {

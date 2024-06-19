@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -531,8 +531,10 @@ public class User implements Cacheable, Externalizable, Result {
         if (email != null) {
             ExternalizableUtil.getInstance().writeSafeUTF(out, email);
         }
-        ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
-        ExternalizableUtil.getInstance().writeLong(out, modificationDate.getTime());
+
+        // OF-2833/OF-1768: Handle null values. Here, we represent null with a zero (instead of the customary boolean) to retain backwards compatibility with cluster nodes that assume that these values are never null.
+        ExternalizableUtil.getInstance().writeLong(out, creationDate == null ? 0 : creationDate.getTime());
+        ExternalizableUtil.getInstance().writeLong(out, modificationDate == null ? 0 : modificationDate.getTime());
     }
 
     @Override
@@ -542,8 +544,10 @@ public class User implements Cacheable, Externalizable, Result {
         if (ExternalizableUtil.getInstance().readBoolean(in)) {
             email = ExternalizableUtil.getInstance().readSafeUTF(in);
         }
-        creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
-        modificationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
+        final long creation = ExternalizableUtil.getInstance().readLong(in);
+        creationDate = creation == 0 ? null: new Date(creation);
+        final long modification = ExternalizableUtil.getInstance().readLong(in);
+        modificationDate = modification == 0 ? null : new Date(modification);
     }
 
     /*

@@ -208,14 +208,14 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         // 'ver', and 'ext' combinations as specified in the archived version
         // 1.3 of the specification, and cache the results. See JM-1447
         final String hashAttribute = capsElement.attributeValue("hash");
-        if (hashAttribute == null || hashAttribute.trim().length() == 0) {
+        if (hashAttribute == null || hashAttribute.trim().isEmpty()) {
             return;
         }
         
         // Examine the packet and check if it has and a 'ver' hash
         // if not -- do nothing by returning.
         final String newVerAttribute = capsElement.attributeValue("ver");
-        if (newVerAttribute == null || newVerAttribute.trim().length() == 0) {
+        if (newVerAttribute == null || newVerAttribute.trim().isEmpty()) {
             return;
         }
 
@@ -287,14 +287,14 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     }
 
     /**
-     * Determines whether or not the packet received from a disco#info result
-     * was valid by comparing its 'ver' hash (identites+features encapsulated
+     * Determines whether the packet received from a disco#info result
+     * was valid by comparing its 'ver' hash (identities+features encapsulated
      * hash) with the 'ver' hash of the original caps packet that the
      * disco#info query was sent on behalf of.
      * 
      * @param packet the disco#info result packet.
      * @return true if the packet's generated 'ver' hash matches the 'ver'
-     *         hash of the original caps packet.
+     *         hash of the original CAPS packet.
      */
     private boolean isValid(IQ packet) {
         if (packet.getType() != IQ.Type.result)
@@ -686,18 +686,11 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             }
         }
         final Set<EntityCapabilitiesListener> userSpecificListeners = userSpecificCapabilitiesListener.get(entity);
-        if ( userSpecificListeners != null )
-        {
-            for ( final EntityCapabilitiesListener listener : userSpecificListeners )
-            {
-                try
-                {
-                    listener.entityCapabilitiesChanged( entity, updatedEntityCapabilities, featuresAdded, featuresRemoved, identitiesAdded, identitiesRemoved );
-                }
-                catch ( Exception e )
-                {
-                    Log.warn("An exception occurred while dispatching entity capabilities changed event for entity '{}' to listener '{}'.", entity, listener, e);
-                }
+        for (final EntityCapabilitiesListener listener : userSpecificListeners) {
+            try {
+                listener.entityCapabilitiesChanged(entity, updatedEntityCapabilities, featuresAdded, featuresRemoved, identitiesAdded, identitiesRemoved);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching entity capabilities changed event for entity '{}' to listener '{}'.", entity, listener, e);
             }
         }
     }
@@ -709,13 +702,13 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
 
         final Set<String> deletedUserVerHashes = new HashSet<>();
 
-        // Remember: Cache's are not regular maps. The EntrySet is immutable.
+        // Remember: Caches are not regular maps. The EntrySet is immutable.
         // We'll first find the keys, then remove them in a separate call.
         final Lock lock = entityCapabilitiesUserMap.getLock(bareJid);
         lock.lock();
         try {
             // Iterating over the entire set is not ideal from a performance perspective. Note that this is a
-            // local cache. Things would have been much worse if this would have been a clustered cache.
+            // local cache. Things would have been much worse if this had been a clustered cache.
             final Set<JID> jidsToRemove = entityCapabilitiesUserMap.keySet().stream()
                 .filter(jid -> jid.asBareJID().equals(bareJid))
                 .collect(Collectors.toSet());

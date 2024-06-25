@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.IQRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.user.User;
@@ -61,9 +62,19 @@ import java.util.stream.Collectors;
  * @author Armando Jagucki
  * @see <a href="https://xmpp.org/extensions/xep-0115.html>XEP-0115: Entity Capabilities</a>
  */
-public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener {
-
+public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener, ServerFeaturesProvider
+{
     private static final Logger Log = LoggerFactory.getLogger( EntityCapabilitiesManager.class );
+
+    /**
+     * XML namespace that identifies the 'entity capabilities' feature as defined in XEP-0115.
+     */
+    public static final String NAMESPACE = "http://jabber.org/protocol/caps";
+
+    /**
+     * XML element name of a 'entity capabilities' child element.
+     */
+    public static final String ELEMENT = "c";
 
     /**
      * A XEP-0115 described identifier for the Openfire server software,
@@ -186,7 +197,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
 
         // Examine the packet and check if it has caps info,
         // if not -- do nothing by returning.
-        Element capsElement = packet.getChildElement("c", "http://jabber.org/protocol/caps");
+        Element capsElement = packet.getChildElement(ELEMENT, NAMESPACE);
         if (capsElement == null) {
             return;
         }
@@ -775,5 +786,11 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         entityCapabilitiesUserMap.clear();
         verAttributes.clear();
         capabilitiesBeingUpdated.clear();
+    }
+
+    @Override
+    public Iterator<String> getFeatures()
+    {
+        return Collections.singletonList(NAMESPACE).iterator();
     }
 }

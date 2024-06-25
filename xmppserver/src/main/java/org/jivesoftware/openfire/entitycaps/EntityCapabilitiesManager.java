@@ -360,11 +360,11 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             // no need to add '<', this is done in #getExtendedDataForms()
         }
         
-        // Compute ver by hashing S using the SHA-1 algorithm as specified in
+        // Compute ver by hashing S using the algorithm as specified in
         // RFC 3174 (with binary output) and encoding the hash using Base64 as
         // specified in Section 4 of RFC 4648 (note: the Base64 output
         // MUST NOT include whitespace and MUST set padding bits to zero).
-        final String hashed = StringUtils.hash(s.toString(), "SHA-1");
+        final String hashed = StringUtils.hash(s.toString(), algorithm);
         return StringUtils.encodeBase64(StringUtils.decodeHex(hashed));
     }
 

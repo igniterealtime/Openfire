@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,15 @@ public class IQvCardHandler extends IQHandler {
     public IQ handleIQ(IQ packet) throws UnauthorizedException, PacketException {
         IQ result = IQ.createResultIQ(packet);
         IQ.Type type = packet.getType();
+        final Locale localeForSession = SessionManager.getInstance().getLocaleForSession(packet.getFrom());
         if (type.equals(IQ.Type.set)) {
             try {
+                // OF-2838: Return an error when entity is trying to update another entity's VCard.
+                if (packet.getTo() != null && !packet.getTo().asBareJID().equals(packet.getFrom().asBareJID())) {
+                    result.setError(PacketError.Condition.forbidden);
+                    result.getError().setText(LocaleUtils.getLocalizedString("vcard.forbidden_entity", localeForSession), localeForSession != null ? localeForSession.getLanguage() : null);
+                    return result;
+                }
                 User user = userManager.getUser(packet.getFrom().getNode());
                 Element vcard = packet.getChildElement();
                 if (vcard != null) {

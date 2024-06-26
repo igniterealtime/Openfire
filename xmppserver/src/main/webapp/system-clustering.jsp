@@ -408,23 +408,20 @@
                           <tr>
                               <%  if (percent == 0) { %>
 
-                                  <td style="width: 100%"><img src="images/percent-bar-left.gif" width="30" height="4" alt=""></td>
+                                  <td style="height: 8px; width: 100%; background-image: url('images/percent-bar-left.gif')"></td>
 
                               <%  } else { %>
 
                                   <%  if (percent >= 90) { %>
 
-                                      <td style="width: <%= percent %>%; background-image: url('images/percent-bar-used-high.gif')"
-                                          ><img src="images/blank.gif" width="1" height="4" alt=""></td>
+                                      <td style="height: 8px; width: <%= percent %>%; background-image: url('images/percent-bar-used-high.gif')"></td>
 
                                   <%  } else { %>
 
-                                      <td style="width: <%= percent %>%; background-image: url('images/percent-bar-used-low.gif')"
-                                          ><img src="images/blank.gif" width="1" height="4" alt=""></td>
+                                      <td style="height: 8px; width: <%= percent %>%; background-image: url('images/percent-bar-used-low.gif')"></td>
 
                                   <%  } %>
-                                  <td style="width: <%= (100-percent) %>%; background-image: url('images/percent-bar-left.gif')"
-                                      ><img src="images/blank.gif" width="1" height="4" alt=""></td>
+                                  <td style="height: 8px; width: <%= (100-percent) %>%; background-image: url('images/percent-bar-left.gif')"></td>
                               <%  } %>
                           </tr>
                           </table>

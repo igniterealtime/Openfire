@@ -74,7 +74,7 @@ public class IQvCardHandler extends IQHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(IQvCardHandler.class);
 
-    private IQHandlerInfo info;
+    private final IQHandlerInfo info;
     private XMPPServer server;
     private UserManager userManager;
 
@@ -107,13 +107,7 @@ public class IQvCardHandler extends IQHandler {
                         // result.setChildElement( packet.getChildElement().createCopy() );
 
                         result.setError( PacketError.Condition.not_allowed );
-
-                        Locale locale = JiveGlobals.getLocale(); // default to server locale.
-                        final Session session = SessionManager.getInstance().getSession( result.getTo() );
-                        if ( session != null && session.getLanguage() != null ) {
-                            locale = session.getLanguage(); // use client locale if one is available.
-                        }
-                        result.getError().setText( LocaleUtils.getLocalizedString( "vcard.read_only", locale ), locale.getLanguage() );
+                        result.getError().setText( LocaleUtils.getLocalizedString( "vcard.read_only", localeForSession ), localeForSession != null ? localeForSession.getLanguage() : null);
                     }
                 }
             }
@@ -149,9 +143,9 @@ public class IQvCardHandler extends IQHandler {
                             // Create a copy so we don't modify the original vCard
                             userVCard = userVCard.createCopy();
                             // Ignore fields requested by the user
-                            for (Iterator toFilter = filter.elementIterator(); toFilter.hasNext();)
+                            for (Iterator<Element> toFilter = filter.elementIterator(); toFilter.hasNext();)
                             {
-                                Element field = (Element) toFilter.next();
+                                Element field = toFilter.next();
                                 Element fieldToRemove = userVCard.element(field.getName());
                                 if (fieldToRemove != null) {
                                     fieldToRemove.detach();

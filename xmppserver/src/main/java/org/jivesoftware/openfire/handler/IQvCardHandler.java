@@ -126,44 +126,49 @@ public class IQvCardHandler extends IQHandler {
             JID recipient = packet.getTo();
             // If no TO was specified then get the vCard of the sender of the packet
             if (recipient == null) {
+                if (packet.getFrom() == null) {
+                    Log.warn("Unable to process a stanza that has no 'to' and 'from' attribute values: {}", packet.toXML(), new Throwable());
+                    result.setChildElement(packet.getChildElement().createCopy());
+                    result.setError(PacketError.Condition.internal_server_error);
+                    result.getError().setText("Unable to process a stanza that has no 'to' and 'from' attribute values.");
+                    return result;
+                }
                 recipient = packet.getFrom();
             }
-            // By default return an empty vCard
-            result.setChildElement("vCard", "vcard-temp");
             // Only try to get the vCard values of non-anonymous users
-            if (recipient != null) {
-                if (recipient.getNode() != null && server.isLocal(recipient)) {
-                    VCardManager vManager = VCardManager.getInstance();
-                    Element userVCard = vManager.getVCard(recipient.getNode());
-                    if (userVCard != null) {
-                        // Check if the requester wants to ignore some vCard's fields
-                        Element filter = packet.getChildElement()
-                                .element(QName.get("filter", "vcard-temp-filter"));
-                        if (filter != null) {
-                            // Create a copy so we don't modify the original vCard
-                            userVCard = userVCard.createCopy();
-                            // Ignore fields requested by the user
-                            for (Iterator<Element> toFilter = filter.elementIterator(); toFilter.hasNext();)
-                            {
-                                Element field = toFilter.next();
-                                Element fieldToRemove = userVCard.element(field.getName());
-                                if (fieldToRemove != null) {
-                                    fieldToRemove.detach();
-                                }
+            if (recipient.getNode() != null && server.isLocal(recipient)) {
+                VCardManager vManager = VCardManager.getInstance();
+                Element userVCard = vManager.getVCard(recipient.getNode());
+                if (userVCard != null) {
+                    // Check if the requester wants to ignore some vCard's fields
+                    Element filter = packet.getChildElement()
+                            .element(QName.get("filter", "vcard-temp-filter"));
+                    if (filter != null) {
+                        // Create a copy so we don't modify the original vCard
+                        userVCard = userVCard.createCopy();
+                        // Ignore fields requested by the user
+                        for (Iterator<Element> toFilter = filter.elementIterator(); toFilter.hasNext();)
+                        {
+                            Element field = toFilter.next();
+                            Element fieldToRemove = userVCard.element(field.getName());
+                            if (fieldToRemove != null) {
+                                fieldToRemove.detach();
                             }
                         }
-                        result.setChildElement(userVCard);
+                    }
+                    result.setChildElement(userVCard);
+                } else {
+                    if (recipient.getNode().equals(packet.getFrom().getNode())) {
+                        // When requesting your _own_ vcard, a valid response is either an empty card or an error (per XEP-0054 section 3.1). Openfire traditionally used an empty vcard.
+                        result.setChildElement("vCard", "vcard-temp");
+                    } else {
+                        // OF-2839: When requesting another entities vcard, an error must be returned (per XEP-0054 section 3.3)
+                        // RFC 6121 section 8.5.1 mandates '<service-unavailable/> while XEP-0054 suggests either <service-unavailable/> or <item-not-found/>. Let's go with the common term.
+                        result = IQ.createResultIQ(packet);
+                        result.setChildElement(packet.getChildElement().createCopy());
+                        result.setError(PacketError.Condition.service_unavailable);
                     }
                 }
-                else {
-                    result = IQ.createResultIQ(packet);
-                    result.setChildElement(packet.getChildElement().createCopy());
-                    result.setError(PacketError.Condition.item_not_found);
-                }
-            } else {
-                result = IQ.createResultIQ(packet);
-                result.setChildElement(packet.getChildElement().createCopy());
-                result.setError(PacketError.Condition.item_not_found);
             }
         }
         else {

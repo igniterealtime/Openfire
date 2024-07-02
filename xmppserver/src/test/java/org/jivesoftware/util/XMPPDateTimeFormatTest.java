@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,49 @@ public class XMPPDateTimeFormatTest {
         df.setTimeZone(TimeZone.getTimeZone("utc"));
         String date = df.format(parsedDate);
         assertEquals(date, "2013-01-25T18:07:22.768+0000");
+    }
+
+    @Test
+    public void testNull() throws Exception
+    {
+        // Setup fixture
+        final String testValue = null;
+
+        // Execute system under test
+        final Date result = xmppDateTimeFormat.parseString(testValue);
+
+        // Verify results
+        assertNull(result);
+    }
+
+    @Test
+    public void testEmpty() throws Exception
+    {
+        // Setup fixture
+        final String testValue = "";
+
+        // Execute system under test
+        final Date result = xmppDateTimeFormat.parseString(testValue);
+
+        // Verify results
+        assertNull(result);
+    }
+
+    @Test
+    public void testExceptionContainsOffendingValue() throws Exception
+    {
+        // Setup fixture
+        final String testValue = "This is not a valid date value";
+
+        // Execute system under test
+        try {
+            xmppDateTimeFormat.parseString(testValue);
+
+            // Verify results
+            fail("An exception should have been thrown (but was not).");
+        } catch (ParseException e) {
+            assertTrue(e.getMessage().contains(testValue));
+        }
     }
 
     @Test

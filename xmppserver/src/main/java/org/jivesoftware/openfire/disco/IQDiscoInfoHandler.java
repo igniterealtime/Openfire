@@ -149,7 +149,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // a <service-unavailable/> error if [...] The requesting entity is not authorized to receive presence from the
         // target entity (i.e., via the target having a presence subscription to the requesting entity of type "both" or
         // "from") or is not otherwise trusted (e.g., another server in a trusted network).</blockquote>
-        if (packet.getTo() != null && packet.getTo().getNode() != null && packet.getTo().getResource() == null) {
+        if (packet.getTo() != null && packet.getTo().getNode() != null && packet.getTo().getResource() == null && !packet.getTo().asBareJID().equals(packet.getFrom().asBareJID())) {
             boolean isRequestingEntityAuthorized;
             try {
                 final User user = UserManager.getInstance().getUser(packet.getTo().getNode());

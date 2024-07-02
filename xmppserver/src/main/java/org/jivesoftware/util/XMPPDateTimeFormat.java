@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Florian Schmaus, 2017-2019 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2013 Florian Schmaus, 2017-2024 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,9 @@ public class XMPPDateTimeFormat {
      * @throws ParseException if the date could not be parsed
      */
     public Date parseString(String dateString) throws ParseException {
+        if (dateString == null || dateString.isEmpty()) {
+            return null;
+        }
         Matcher xep82WoMillisMatcher = xep80DateTimeWoMillisPattern.matcher(dateString);
         Matcher xep82Matcher = xep80DateTimePattern.matcher(dateString);
 
@@ -121,7 +124,7 @@ public class XMPPDateTimeFormat {
                 }
             }
         }
-        throw new ParseException("Date String could not be parsed", 0);
+        throw new ParseException("Date String could not be parsed: \"" + dateString + "\"", 0);
     }
 
     /**

@@ -23,6 +23,7 @@ import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -144,31 +145,6 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         // a not found error
         IQ reply = IQ.createResultIQ(packet);
 
-        // XEP-0030, Section 8 "Security Considerations": <blockquote>The following rules apply to the handling of
-        // service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return
-        // a <service-unavailable/> error if [...] The requesting entity is not authorized to receive presence from the
-        // target entity (i.e., via the target having a presence subscription to the requesting entity of type "both" or
-        // "from") or is not otherwise trusted (e.g., another server in a trusted network).</blockquote>
-        if (packet.getTo() != null && packet.getTo().getNode() != null && packet.getTo().getResource() == null && !packet.getTo().asBareJID().equals(packet.getFrom().asBareJID())) {
-            boolean isRequestingEntityAuthorized;
-            try {
-                final User user = UserManager.getInstance().getUser(packet.getTo().getNode());
-                RosterItem item = user.getRoster().getRosterItem(packet.getFrom());
-                isRequestingEntityAuthorized = item.getSubStatus() == RosterItem.SUB_FROM || item.getSubStatus() == RosterItem.SUB_BOTH;
-            } catch (UserNotFoundException e) {
-                // Not an existing user or no subscription. Response should be indistinguishable from response to a
-                // non-subscribed user.
-                isRequestingEntityAuthorized = false;
-            }
-
-            if (!isRequestingEntityAuthorized) {
-                Log.trace("Responding with a <service-unavailable/> error since the requesting entity is not authorized to receive presence from the target entity, to: {}", packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.service_unavailable);
-                return reply;
-            }
-        }
-
         // Look for a DiscoInfoProvider associated with the requested entity.
         // We consider the host of the recipient JID of the packet as the entity. It's the 
         // DiscoInfoProvider responsibility to provide information about the JID's name together 
@@ -194,67 +170,77 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 node = null;
             }
 
-            // Check if we have information about the requested name and node
-            if (infoProvider.hasInfo(name, node, packet.getFrom())) {
-                reply.setChildElement(iq.createCopy());
-                Element queryElement = reply.getChildElement();
+            try {
+                // Check if we have information about the requested name and node
+                if (infoProvider.hasInfo(name, node, packet.getFrom())) {
+                    reply.setChildElement(iq.createCopy());
+                    Element queryElement = reply.getChildElement();
 
-                // Add to the reply all the identities provided by the DiscoInfoProvider
-                Element identity;
-                Iterator<Element> identities = infoProvider.getIdentities(name, node, packet.getFrom());
-                while (identities.hasNext()) {
-                    identity = identities.next();
-                    identity.setQName(new QName(identity.getName(), queryElement.getNamespace()));
-                    queryElement.add((Element)identity.clone());
-                }
-
-                // Add to the reply all the features provided by the DiscoInfoProvider
-                Iterator<String> features = infoProvider.getFeatures(name, node, packet.getFrom());
-                boolean hasDiscoInfoFeature = false;
-                boolean hasDiscoItemsFeature = false;
-                boolean hasResultSetManagementFeature = false;
-
-                while (features.hasNext()) {
-                    final String feature = features.next();
-                    queryElement.addElement("feature").addAttribute("var", feature);
-                    if (feature.equals(NAMESPACE_DISCO_INFO)) {
-                        hasDiscoInfoFeature = true;
-                    } else if (feature.equals("http://jabber.org/protocol/disco#items")) {
-                        hasDiscoItemsFeature = true;
-                    } else if (feature.equals(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)) {
-                        hasResultSetManagementFeature = true;
+                    // Add to the reply all the identities provided by the DiscoInfoProvider
+                    Element identity;
+                    Iterator<Element> identities = infoProvider.getIdentities(name, node, packet.getFrom());
+                    while (identities.hasNext()) {
+                        identity = identities.next();
+                        identity.setQName(new QName(identity.getName(), queryElement.getNamespace()));
+                        queryElement.add((Element) identity.clone());
                     }
-                }
 
-                if (hasDiscoItemsFeature && !hasResultSetManagementFeature) {
-                    // IQDiscoItemsHandler provides result set management
-                    // support.
-                    queryElement.addElement("feature").addAttribute("var",
+                    // Add to the reply all the features provided by the DiscoInfoProvider
+                    Iterator<String> features = infoProvider.getFeatures(name, node, packet.getFrom());
+                    boolean hasDiscoInfoFeature = false;
+                    boolean hasDiscoItemsFeature = false;
+                    boolean hasResultSetManagementFeature = false;
+
+                    while (features.hasNext()) {
+                        final String feature = features.next();
+                        queryElement.addElement("feature").addAttribute("var", feature);
+                        if (feature.equals(NAMESPACE_DISCO_INFO)) {
+                            hasDiscoInfoFeature = true;
+                        } else if (feature.equals("http://jabber.org/protocol/disco#items")) {
+                            hasDiscoItemsFeature = true;
+                        } else if (feature.equals(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)) {
+                            hasResultSetManagementFeature = true;
+                        }
+                    }
+
+                    if (hasDiscoItemsFeature && !hasResultSetManagementFeature) {
+                        // IQDiscoItemsHandler provides result set management
+                        // support.
+                        queryElement.addElement("feature").addAttribute("var",
                             ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
-                }
-
-                if (!hasDiscoInfoFeature) {
-                    // XEP-0030 requires that every entity that supports service
-                    // discovery broadcasts the disco#info feature.
-                    queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
-                    // XEP-0411 requires that every entity that supports service
-                    // dicovery broadcasts the conversion between 'PEP' and 'Private Storage' feature
-                    if(XMPPServer.getInstance().getPrivateStorage().isEnabled()){ 
-                        //allow only if private storage is enabled
-                       queryElement.addElement("feature").addAttribute("var", "urn:xmpp:bookmarks-conversion:0");
                     }
+
+                    if (!hasDiscoInfoFeature) {
+                        // XEP-0030 requires that every entity that supports service
+                        // discovery broadcasts the disco#info feature.
+                        queryElement.addElement("feature").addAttribute("var", NAMESPACE_DISCO_INFO);
+                        // XEP-0411 requires that every entity that supports service
+                        // dicovery broadcasts the conversion between 'PEP' and 'Private Storage' feature
+                        if (XMPPServer.getInstance().getPrivateStorage().isEnabled()) {
+                            //allow only if private storage is enabled
+                            queryElement.addElement("feature").addAttribute("var", "urn:xmpp:bookmarks-conversion:0");
+                        }
+                    }
+                    // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
+                    final Set<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
+                    if (dataForms != null) {
+                        dataForms.forEach(dataForm -> queryElement.add(dataForm.getElement()));
+                    }
+                } else {
+                    // If the DiscoInfoProvider has no information for the requested name and node
+                    // then answer a not found error
+                    reply.setChildElement(packet.getChildElement().createCopy());
+                    reply.setError(PacketError.Condition.item_not_found);
                 }
-                // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
-                final Set<DataForm> dataForms = infoProvider.getExtendedInfos( name, node, packet.getFrom() );
-                if ( dataForms != null ) {
-                    dataForms.forEach( dataForm -> queryElement.add( dataForm.getElement() ) );
-                }
-            }
-            else {
-                // If the DiscoInfoProvider has no information for the requested name and node 
-                // then answer a not found error
+            } catch (UnauthorizedException e) {
+                Log.debug("Entity '{}' attempted to query '{}' for disco#info, but is not authorized.", packet.getFrom(), packet.getTo(), e);
+                // XEP-0030, Section 8 "Security Considerations": <blockquote>The following rules apply to the handling of
+                // service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return
+                // a <service-unavailable/> error if [...] The requesting entity is not authorized to receive presence from the
+                // target entity (i.e., via the target having a presence subscription to the requesting entity of type "both" or
+                // "from") or is not otherwise trusted (e.g., another server in a trusted network).</blockquote>
                 reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.item_not_found);
+                reply.setError(PacketError.Condition.service_unavailable);
             }
         }
         else {
@@ -717,7 +703,8 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
             }
 
             @Override
-            public boolean hasInfo(String name, String node, JID senderJID) {
+            public boolean hasInfo(String name, String node, JID senderJID) throws UnauthorizedException
+            {
                 if (node != null) {
                     if (serverNodeProviders.get(node) != null) {
                         // Redirect the request to the disco info provider of the specified node
@@ -730,22 +717,34 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     return false;
                 }
 
-                // True if it is an info request of the server, a registered user or an
-                // anonymous user. We now support disco of user's bare JIDs
-                if (name == null) {
-                    return true;
-                }
-                if (SessionManager.getInstance().isAnonymousRoute(name)) {
-                    return true;
-                }
-                try {
-                    if ( UserManager.getInstance().getUser(name) != null ) {
-                        return true;
+                // XEP-0030, Section 8 "Security Considerations": <blockquote>The following rules apply to the handling of
+                // service discovery requests sent to bare JIDs: In response to a disco#info request, the server MUST return
+                // a <service-unavailable/> error if [...] The requesting entity is not authorized to receive presence from the
+                // target entity (i.e., via the target having a presence subscription to the requesting entity of type "both" or
+                // "from") or is not otherwise trusted (e.g., another server in a trusted network).</blockquote>
+                boolean isRequestingEntityAuthorized;
+
+                if (name == null || name.equals(senderJID.getNode())) {
+                    // Entities are always authorized when querying themselves.
+                    isRequestingEntityAuthorized = true;
+                } else {
+                    // when the target entity is an end-user, check for presence subscription state.
+                    try {
+                        final User user = UserManager.getInstance().getUser(name);
+                        RosterItem item = user.getRoster().getRosterItem(senderJID);
+                        isRequestingEntityAuthorized = item.getSubStatus() == RosterItem.SUB_FROM || item.getSubStatus() == RosterItem.SUB_BOTH;
+                    } catch (UserNotFoundException e) {
+                        // Not an existing user or no subscription. Response should be indistinguishable from response to a
+                        // non-subscribed user.
+                        isRequestingEntityAuthorized = false;
                     }
-                } catch (UserNotFoundException e) {
-                    return false;
                 }
-                return false;
+
+                if (!isRequestingEntityAuthorized) {
+                    throw new UnauthorizedException();
+                }
+
+                return true;
             }
 
             @Override

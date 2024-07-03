@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -815,12 +816,32 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
     }
 
     @Override
-    public boolean hasInfo(String name, String node, JID senderJID) {
+    public boolean hasInfo(String name, String node, JID senderJID) throws UnauthorizedException
+    {
         if (node == null) return true;
         JID recipientJID = XMPPServer.getInstance().createJID(name, null, true).asBareJID();
         PEPService pepService = pepServiceManager.getPEPService(recipientJID);
 
-        return pepService.getNode(node) != null;
+        final Node pubsubNode = pepService.getNode(node);
+        if (pubsubNode == null) {
+            // XEP-0163 defines the default access model to be 'presence'
+            try {
+                final Roster roster = XMPPServer.getInstance().getRosterManager().getRoster(recipientJID.getNode());
+                final RosterItem rosterItem = roster.getRosterItem(senderJID);
+                if (rosterItem == null || rosterItem.getSubStatus().equals(RosterItem.SubType.NONE) || rosterItem.getSubStatus().equals(RosterItem.SubType.TO)) {
+                    throw new UnauthorizedException();
+                }
+            } catch (UserNotFoundException e) {
+                throw new UnauthorizedException();
+            }
+
+            // Authorized, but non-existing node.
+            return false;
+        } else if (!pubsubNode.getAccessModel().canAccessItems(pubsubNode, senderJID, senderJID)) {
+            throw new UnauthorizedException();
+        } else {
+            return true;
+        }
     }
 
     private class GetNotificationsOnInitialPresence implements Runnable {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.disco;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.xmpp.forms.DataForm;
 import org.xmpp.packet.JID;
 
@@ -82,6 +83,7 @@ public interface DiscoInfoProvider {
      * @param node      the requested disco node.
      * @param senderJID the XMPPAddress of user that sent the disco info request.
      * @return true if we can provide information related to the requested name and node.
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException When senderJID is not authorized to discover information
      */
-    boolean hasInfo( String name, String node, JID senderJID );
+    boolean hasInfo( String name, String node, JID senderJID ) throws UnauthorizedException;
 }

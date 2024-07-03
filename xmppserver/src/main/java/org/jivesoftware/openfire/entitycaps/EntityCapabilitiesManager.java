@@ -755,14 +755,30 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     }
 
     /**
-     * Returns the 'ver' hash for this server.
+     * Returns the 'ver' hash for this server, returning capabilities that are available to anyone (including anonymous
+     * users)
      *
      * @return A 'ver' hash, or null if none could be generated.
      */
-    public static String getLocalDomainVerHash()
+    public static String getLocalDomainVerHash() {
+        return getLocalDomainVerHash(null);
+    }
+
+    /**
+     * Returns the 'ver' hash for this server, returning capabilities that are avilable to the user identified by the
+     * provided username.
+     *
+     * @param username user for which to return capabilities.
+     * @return A 'ver' hash, or null if none could be generated.
+     */
+    public static String getLocalDomainVerHash(final String username)
     {
         // TODO Cache results to increase performance.
         final IQ discoInfoRequest = new IQ( IQ.Type.get );
+        if (username != null) {
+            // Needed to get user-specific capabilities (which may differ for users that are or are not authenticated, for example).
+            discoInfoRequest.setFrom(XMPPServer.getInstance().createJID(username, null));
+        }
         discoInfoRequest.setChildElement( "query", "http://jabber.org/protocol/disco#info" );
         final IQ discoInfoResponse = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ( discoInfoRequest );
         if ( discoInfoResponse.getType() == IQ.Type.result )

@@ -850,8 +850,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
          }
 
-        // Add XEP-0115 entity capabilities for the server, so that peer can skip service discovery.
-        final String ver = EntityCapabilitiesManager.getLocalDomainVerHash();
+        // Add XEP-0115 entity capabilities for the server, so that peer can skip service discovery. Make this user-specific (OF-2841).
+        final String ver = EntityCapabilitiesManager.getLocalDomainVerHash(this.authToken != null && !this.authToken.isAnonymous() ? this.authToken.getUsername() : null);
         if ( ver != null ) {
             final Element c = DocumentHelper.createElement(QName.get("c", "http://jabber.org/protocol/caps"));
             c.addAttribute("hash", "sha-1");

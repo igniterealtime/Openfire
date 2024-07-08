@@ -226,18 +226,24 @@ public class NettyConnection extends AbstractConnection
                     .addListener(ChannelFutureListener.CLOSE)
                     .addListener(e -> {
                         Log.trace("Notifying close listeners.");
-                        notifyCloseListeners();
-                        closeListeners.clear();
-                        latch.countDown();
+                        try {
+                            notifyCloseListeners();
+                            closeListeners.clear();
+                        } finally {
+                            latch.countDown();
+                        }
                     })
                     .addListener(e -> Log.trace("Finished closing connection."))
                     .sync(); // TODO: OF-2811 Remove this blocking operation (which may have been made redundant by the fix for OF-2808 anyway).
-            } catch (Exception e) {
-                Log.error("Problem during connection close or cleanup", e);
+            } catch (Throwable t) {
+                Log.error("Problem during connection close or cleanup", t);
+                latch.countDown(); // Ensure we're not kept waiting! OF-2845
             }
             try {
                 // TODO: OF-2811 Remove this blocking operation, by allowing the invokers of this method to use a Future.
-                latch.await(10, TimeUnit.MINUTES);
+                if (!latch.await(10, TimeUnit.MINUTES)) {
+                    Log.warn("Timed out waiting for close listeners to complete.");
+                }
             } catch (InterruptedException e) {
                 Log.debug("Stopped waiting on connection being closed, as an interrupt happened.", e);
             }

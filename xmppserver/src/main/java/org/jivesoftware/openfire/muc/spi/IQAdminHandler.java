@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package org.jivesoftware.openfire.muc.spi;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupJID;
@@ -28,6 +30,7 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -334,8 +337,21 @@ public class IQAdminHandler {
                                 break;
 
                             case "outcast":
-                                // Add the user as an outcast of the room based on the bare JID
-                                presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), senderRole));
+                                JID sender = reply.getTo();
+                                if (sender != null && sender.asBareJID().equals(jid.asBareJID())) {
+                                    // Admins/owners cannot ban themselves (OF-2844)
+                                    final Locale localeForSession = SessionManager.getInstance().getLocaleForSession(sender);
+                                    reply.setError(PacketError.Condition.conflict);
+                                    reply.getError().setText(LocaleUtils.getLocalizedString("muc.room.affiliations.error_banning_self", localeForSession), localeForSession != null ? localeForSession.getLanguage() : null);
+                                } else if (senderRole.getAffiliation() == MUCRole.Affiliation.admin && room.getAffiliation(jid) == MUCRole.Affiliation.owner) {
+                                    // Admins cannot ban owners (OF-2843)
+                                    final Locale localeForSession = SessionManager.getInstance().getLocaleForSession(sender);
+                                    reply.setError(PacketError.Condition.not_allowed);
+                                    reply.getError().setText(LocaleUtils.getLocalizedString("muc.room.affiliations.error_banning_owner_by_admin", localeForSession), localeForSession != null ? localeForSession.getLanguage() : null);
+                                } else {
+                                    // Add the user as an outcast of the room based on the bare JID
+                                    presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), senderRole));
+                                }
                                 break;
 
                             case "none":

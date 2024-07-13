@@ -116,7 +116,8 @@ jobs:
           # OF-2849 test_publish_and_purge
           # OF-2850 test_publish_multiple_and_get_by_id
           # OF-2851 test_convert_field_datetime_default_locale
-          python -m pytest -p aioxmpp.e2etest --e2etest-config="openfire-config.ini" -k 'not test_publish_and_purge and not test_publish_multiple_and_get_by_id and not test_convert_field_datetime_default_locale' tests 2>&1 | tee output/aioxmpp.test.output.txt
+          # OF-2853 test_set_topic
+          python -m pytest -p aioxmpp.e2etest --e2etest-config="openfire-config.ini" -k 'not (test_set_topic or test_publish_and_purge or test_publish_multiple_and_get_by_id or test_convert_field_datetime_default_locale)' tests 2>&1 | tee output/aioxmpp.test.output.txt
           if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
       - name: Expose test output
         if: always()

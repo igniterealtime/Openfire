@@ -1304,15 +1304,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 final Element item = fragment.addElement("item");
                 item.addAttribute("affiliation", "none");
                 item.addAttribute("role", "none");
+                final Element destroy = fragment.addElement("destroy");
                 if (alternateJID != null) {
-                    fragment.addElement("destroy").addAttribute("jid", alternateJID.toString());
+                    destroy.addAttribute("jid", alternateJID.toString());
                 }
-                if (reason != null && reason.length() > 0) {
-                    Element destroy = fragment.element("destroy");
-                    if (destroy == null) {
-                        destroy = fragment.addElement("destroy");
-                    }
-                    destroy.addElement("reason").setText(reason);
+                if (reason != null && !reason.isBlank()) {
+                    destroy.addElement("reason").setText(reason.trim());
                 }
 
                 // Not needed to create a defensive copy of the stanza. It's not used anywhere else.

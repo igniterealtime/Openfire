@@ -80,11 +80,7 @@ jobs:
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
       - name: Checkout aioxmpp devel/head
-        uses: actions/checkout@v4
-        with:
-          repository: horazont/aioxmpp
-          ref: devel
-          path: aioxmpp
+        run: git clone https://codeberg.org/jssfr/aioxmpp.git aioxmpp
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

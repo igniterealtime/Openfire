@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
@@ -481,25 +483,31 @@ public class PluginServlet extends HttpServlet {
      */
     private GenericServlet getServlet(String pathInfo) {
         pathInfo = pathInfo.substring(1).toLowerCase();
-
-        GenericServlet servlet = servlets.get(pathInfo);
-        if (servlet == null) {
-            for (String key : servlets.keySet()) {
-                int index = key.indexOf("/*");
-                String searchkey = key;
-                if (index != -1) {
-                    searchkey = key.substring(0, index);
-                }
-                if (searchkey.startsWith(pathInfo) || pathInfo.startsWith(searchkey)) {
-                    servlet = servlets.get(key);
-                    break;
-                }
-            }
-        }
+        final GenericServlet servlet = getWildcardMappedObject(servlets, pathInfo);
         Log.trace("Found servlet {} for path {}", servlet != null ? servlet.getServletName() : "(none)", pathInfo);
         return servlet;
     }
 
+    // Package protected to facilitate unit testing
+    static <T> T getWildcardMappedObject(final Map<String, T> mapping, final String query) {
+        T value = mapping.get(query);
+        if (value == null) {
+            for (String key : mapping.keySet()) {
+                // Turn the search key into a regex, using all characters but the * as a literal.
+                String regex = Arrays.stream(key.split("\\*")) // split in parts that do not have a wildcard in them
+                    .map(Pattern::quote) // each part should be used as a literal (not as a regex or partial regex)
+                    .collect(Collectors.joining(".*")); // join all literal parts with a regex representation on the wildcard.
+                if (key.endsWith("*")) { // the 'split' will have removed any trailing wildcard characters. Correct for that.
+                    regex += ".*";
+                }
+                if (query.matches(regex)) {
+                    value = mapping.get(key);
+                    break;
+                }
+            }
+        }
+        return value;
+    }
 
     /**
      * Handles a request for other web items (images, etc.)

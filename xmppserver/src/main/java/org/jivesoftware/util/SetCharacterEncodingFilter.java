@@ -16,7 +16,7 @@
 
 package org.jivesoftware.util;
 
-import javax.servlet.*;
+import jakarta.servlet.*;
 import java.io.IOException;
 
 

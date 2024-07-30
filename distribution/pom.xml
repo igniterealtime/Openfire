@@ -32,6 +32,7 @@
                     <descriptors>
                         <descriptor>src/assembly/basic-distribution.xml</descriptor>
                     </descriptors>
+                    <attach>false</attach>
                 </configuration>
                 <executions>
                     <execution>

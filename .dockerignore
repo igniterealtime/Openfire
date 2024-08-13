@@ -10,13 +10,10 @@ Dockerfile
 
 build
 !build/docker
-distribution
-!distribution/target/distribution-base
 documentation
-i18n
-plugins
-starter
-xmppserver
+
+# Any intermediate build stuff.
+**/target
 
 # Deeper stuff
 **/.DS_Store
@@ -26,3 +23,4 @@ xmppserver
 **/.project
 **/.settings
 **/*.iml
+**/*.class

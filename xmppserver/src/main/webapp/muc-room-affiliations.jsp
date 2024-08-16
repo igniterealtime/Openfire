@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@
                     item.addAttribute("nick", nickName != null ? nickName : memberJID.getNode());
                 }
                 // Send the IQ packet that will modify the room's configuration
-                room.getIQAdminHandler().handleIQ(iq, room.getRole());
+                room.getIQAdminHandler().handleIQ(iq, room.getSelfRepresentation());
                 webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
                 // Log the event
@@ -157,7 +157,7 @@
         item.addAttribute("jid", userJID);
         try {
         // Send the IQ packet that will modify the room's configuration
-        room.getIQAdminHandler().handleIQ(iq, room.getRole());
+        room.getIQAdminHandler().handleIQ(iq, room.getSelfRepresentation());
         webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
         // done, return

@@ -450,7 +450,7 @@ public class IQOwnerHandler {
 
         // Send the updated presences to the room occupants
         for (Presence presence : presences) {
-            room.send(presence, room.getRole());
+            room.send(presence, room.getSelfRepresentation());
         }
 
         // XEP-0045 section 10.2.1 "Notification of Configuration Changes: A room MUST send notification to all occupants
@@ -463,7 +463,7 @@ public class IQOwnerHandler {
             final Element x = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
             statusCodes.forEach(code -> x.addElement("status").addAttribute("code", String.valueOf(code)));
 
-            room.send(message, room.getRole());
+            room.send(message, room.getSelfRepresentation());
         }
     }
 

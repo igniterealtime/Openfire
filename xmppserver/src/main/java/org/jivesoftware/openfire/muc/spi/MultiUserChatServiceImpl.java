@@ -1947,7 +1947,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         if (created) {
             // Fire event that a new room has been created
-            MUCEventDispatcher.roomCreated(room.getRole().getRoleAddress());
+            MUCEventDispatcher.roomCreated(room.getSelfRepresentation().getRoleAddress());
         }
         if (loaded || created) {
             // Initiate FMUC, when enabled.
@@ -3140,7 +3140,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             {
                 if (canDiscoverRoom(room, senderJID))
                 {
-                    answer.add(new DiscoItem(room.getRole().getRoleAddress(),
+                    answer.add(new DiscoItem(room.getSelfRepresentation().getRoleAddress(),
                         room.getNaturalLanguageName(), null, null));
                 }
             }

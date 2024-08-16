@@ -513,10 +513,24 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
+     * Obtain the occupant data representing the chat service itself (mainly for addressing messages and presence).
+     *
+     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
+     * release of Openfire, as the type of the returned class will be modified in that release.
+     *
+     * @return The representation of the chat room itself
+     */
+    public MUCRole getSelfRepresentation() {
+        return selfOccupantData;
+    }
+
+    /**
      * Obtain the occupant data of the chat server itself (mainly for addressing messages and presence).
      *
      * @return The role for the chat room itself
+     * @deprecated Replaced by {@link #getSelfRepresentation()}
      */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
     public MUCRole getRole() {
         return selfOccupantData;
     }
@@ -1326,7 +1340,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
         // Fire event that the room has been destroyed
-        MUCEventDispatcher.roomDestroyed(getRole().getRoleAddress());
+        MUCEventDispatcher.roomDestroyed(getSelfRepresentation().getRoleAddress());
     }
 
     /**
@@ -1378,7 +1392,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
         send(message, sender);
         // Fire event that message was received by the room
-        MUCEventDispatcher.messageReceived(getRole().getRoleAddress(), sender.getUserAddress(),
+        MUCEventDispatcher.messageReceived(getSelfRepresentation().getRoleAddress(), sender.getUserAddress(),
             sender.getNickname(), message);
     }
 
@@ -1727,7 +1741,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
         }
         if (isLogEnabled()) {
-            JID senderAddress = getRole().getRoleAddress(); // default to the room being the sender of the message.
+            JID senderAddress = getSelfRepresentation().getRoleAddress(); // default to the room being the sender of the message.
 
             // convert the MUC nickname/role JID back into a real user JID
             if (message.getFrom() != null && message.getFrom().getResource() != null) {
@@ -1736,7 +1750,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                     senderAddress = getOccupantsByNickname(message.getFrom().getResource()).get(0).getUserAddress();
                 } catch (UserNotFoundException e) {
                     // The room itself is sending the message
-                    senderAddress = getRole().getRoleAddress();
+                    senderAddress = getSelfRepresentation().getRoleAddress();
                 }
             }
             // Log the conversation
@@ -1916,7 +1930,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(getRole(), bareJID, null);
+        return applyAffiliationChange(getSelfRepresentation(), bareJID, null);
     }
 
     private boolean removeOwner(JID jid) {
@@ -1971,7 +1985,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(getRole(), bareJID, null);
+        return applyAffiliationChange(getSelfRepresentation(), bareJID, null);
     }
 
     private boolean removeAdmin(JID bareJID) {
@@ -2051,7 +2065,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(getRole(), bareJID, null);
+        return applyAffiliationChange(getSelfRepresentation(), bareJID, null);
     }
 
     private boolean removeMember(JID jid) {
@@ -2352,7 +2366,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             occ.changeNickname(newNick);
 
             // Fire event that user changed his nickname
-            MUCEventDispatcher.nicknameChanged(getRole().getRoleAddress(), occ.getUserAddress(), oldNick, newNick);
+            MUCEventDispatcher.nicknameChanged(getSelfRepresentation().getRoleAddress(), occ.getUserAddress(), oldNick, newNick);
         }
 
         // Broadcast new presence of occupant
@@ -2700,11 +2714,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // Determine the occupant data of the actor that initiates the kick.
         MUCRole sender;
         if ( actorJID == null ) {
-            sender = getRole(); // originates from the room itself (eg: through admin console changes).
+            sender = getSelfRepresentation(); // originates from the room itself (eg: through admin console changes).
         } else {
             sender = getOccupantByFullJID(actorJID);
             if ( sender == null ) {
-                sender = getRole();
+                sender = getSelfRepresentation();
             }
         }
 
@@ -3759,7 +3773,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // remove the group from this room's affiliations
         GroupJID groupJID = group.getJID();
         try {
-            addNone(groupJID, getRole());
+            addNone(groupJID, getSelfRepresentation());
         } catch (Exception ex) {
             Log.error("Failed to remove deleted group from affiliation lists: " + groupJID, ex);
         }
@@ -3773,15 +3787,15 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             GroupJID newJID = group.getJID();
             try {
                 if (owners.contains(originalJID)) {
-                    addOwner(newJID, getRole());
+                    addOwner(newJID, getSelfRepresentation());
                 } else if (admins.contains(originalJID)) {
-                    addAdmin(newJID, getRole());
+                    addAdmin(newJID, getSelfRepresentation());
                 } else if (outcasts.contains(originalJID)) {
-                    addOutcast(newJID, null, getRole());
+                    addOutcast(newJID, null, getSelfRepresentation());
                 } else if (members.containsKey(originalJID)) {
-                    addMember(newJID, null, getRole());
+                    addMember(newJID, null, getSelfRepresentation());
                 }
-                addNone(originalJID, getRole());
+                addNone(originalJID, getSelfRepresentation());
             } catch (Exception ex) {
                 Log.error("Failed to update group affiliation for " + newJID, ex);
             }
@@ -3809,9 +3823,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     private void applyAffiliationChangeAndSendPresence(JID groupMember) {
-        List<Presence> presences = applyAffiliationChange(getRole(), groupMember, null);
+        List<Presence> presences = applyAffiliationChange(getSelfRepresentation(), groupMember, null);
         for (Presence presence : presences) {
-            send(presence, this.getRole());
+            send(presence, this.getSelfRepresentation());
         }
     }
 
@@ -3845,11 +3859,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             if (getOwners().contains(userJid) && getOwners().size() == 1) {
                 final JID adminJid = XMPPServer.getInstance().getAdmins().iterator().next();
                 Log.info("User '{}' is being deleted, but is also the only owner of MUC room '{}'. To prevent having a room without owner, server admin '{}' was made owner of the room.", user.getUsername(), getJID(), adminJid);
-                addOwner(adminJid, getRole());
+                addOwner(adminJid, getSelfRepresentation());
             }
 
             // Remove the affiliation of the deleted user with the room
-            addNone(userJid, getRole());
+            addNone(userJid, getSelfRepresentation());
             getMUCService().syncChatRoom(this);
         } catch (Throwable t) {
             Log.warn("A problem occurred while trying to update room '{}' as a result of user '{}' being deleted from Openfire.", getJID(), user);

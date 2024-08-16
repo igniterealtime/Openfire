@@ -381,7 +381,7 @@ public class IQAdminHandler {
 
             // Send the updated presences to the room occupants
             for (Presence presence : presences) {
-                room.send(presence, room.getRole());
+                room.send(presence, room.getSelfRepresentation());
             }
         }
     }

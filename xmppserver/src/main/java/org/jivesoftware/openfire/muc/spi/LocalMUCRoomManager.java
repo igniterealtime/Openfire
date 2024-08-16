@@ -456,7 +456,7 @@ public class LocalMUCRoomManager
             Log.trace("Kick presence to be sent to room: {}", kickedPresence);
 
             // Send the updated presence to the room occupants, but only those on this local node.
-            room.send(kickedPresence, room.getRole());
+            room.send(kickedPresence, room.getSelfRepresentation());
 
             Log.debug("Kicked occupant '{}' out of room '{}'.", userToBeKicked, room.getName());
         } catch (final NotAllowedException e) {

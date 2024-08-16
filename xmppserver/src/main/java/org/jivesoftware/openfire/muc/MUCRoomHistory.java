@@ -75,7 +75,7 @@ public final class MUCRoomHistory implements Externalizable {
         // unless the message is changing the room's subject
         if (!isSubjectChangeRequest &&
             (fromJID == null || fromJID.toString().length() == 0 ||
-             fromJID.equals(getRoom().getRole().getRoleAddress()))) {
+             fromJID.equals(getRoom().getSelfRepresentation().getRoleAddress()))) {
             return;
         }
         // Do not store regular messages if there is no message strategy (keep subject change requests)
@@ -230,13 +230,13 @@ public final class MUCRoomHistory implements Externalizable {
         message.setBody(body);
         // Set the sender of the message
         if (nickname != null && nickname.trim().length() > 0) {
-            JID roomJID = getRoom().getRole().getRoleAddress();
+            JID roomJID = getRoom().getSelfRepresentation().getRoleAddress();
             // Recreate the sender address based on the nickname and room's JID
             message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(), nickname, true));
         }
         else {
             // Set the room as the sender of the message
-            message.setFrom(getRoom().getRole().getRoleAddress());
+            message.setFrom(getRoom().getSelfRepresentation().getRoleAddress());
         }
 
         // Add the delay information to the message
@@ -248,7 +248,7 @@ public final class MUCRoomHistory implements Externalizable {
         }
         else {
             // Set the Room JID as the "from" attribute
-            delayInformation.addAttribute("from", getRoom().getRole().getRoleAddress().toString());
+            delayInformation.addAttribute("from", getRoom().getSelfRepresentation().getRoleAddress().toString());
         }
         return message;
     }

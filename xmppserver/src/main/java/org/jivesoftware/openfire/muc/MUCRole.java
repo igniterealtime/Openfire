@@ -498,7 +498,7 @@ public class MUCRole implements Cacheable, Externalizable {
         final JID reportingFmucAddress;
         if (packet.getFrom().getResource() == null) {
             Log.trace( "Sender is the room itself: '{}'", packet.getFrom() );
-            reportingFmucAddress = this.getChatRoom().getRole().getRoleAddress();
+            reportingFmucAddress = this.getChatRoom().getSelfRepresentation().getRoleAddress();
         } else {
             Log.trace( "Sender is an occupant of the room: '{}'", packet.getFrom() );
 

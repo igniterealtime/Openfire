@@ -191,7 +191,7 @@ public class MUCRoomTest {
         assertEquals(input.getCreationDate(), ((MUCRoom) result).getCreationDate());
         assertEquals(input.getModificationDate(), ((MUCRoom) result).getModificationDate());
         assertEquals(input.getEmptyDate(), ((MUCRoom) result).getEmptyDate());
-        assertEquals(input.getRole(), ((MUCRoom) result).getRole());
+        assertEquals(input.getSelfRepresentation(), ((MUCRoom) result).getSelfRepresentation());
         assertEquals(input.getChatLength(), ((MUCRoom) result).getChatLength());
         assertEquals(input.isLocked(), ((MUCRoom) result).isLocked());
         assertEquals(input.isManuallyLocked(), ((MUCRoom) result).isManuallyLocked());

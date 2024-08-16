@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -262,9 +262,9 @@
                 Message message = new Message();
                 message.setType(Message.Type.groupchat);
                 message.setSubject(roomSubject);
-                message.setFrom(room.getRole().getRoleAddress());
-                message.setTo(room.getRole().getRoleAddress());
-                room.changeSubject(message, room.getRole());
+                message.setFrom(room.getSelfRepresentation().getRoleAddress());
+                message.setTo(room.getSelfRepresentation().getRoleAddress());
+                room.changeSubject(message, room.getSelfRepresentation());
             }
 
             // Create an IQ packet and set the dataform as the main fragment
@@ -272,7 +272,7 @@
             Element element = iq.setChildElement("query", "http://jabber.org/protocol/muc#owner");
             element.add(dataForm.getElement());
             // Send the IQ packet that will modify the room's configuration
-            room.getIQOwnerHandler().handleIQ(iq, room.getRole());
+            room.getIQOwnerHandler().handleIQ(iq, room.getSelfRepresentation());
 
             webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 

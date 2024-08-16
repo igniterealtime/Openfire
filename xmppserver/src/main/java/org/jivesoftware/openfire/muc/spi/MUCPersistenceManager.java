@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -324,13 +324,13 @@ public class MUCPersistenceManager {
                 try {
                     switch (affiliation) {
                         case owner:
-                            room.addOwner(affiliationJID, room.getRole());
+                            room.addOwner(affiliationJID, room.getSelfRepresentation());
                             break;
                         case admin:
-                            room.addAdmin(affiliationJID, room.getRole());
+                            room.addAdmin(affiliationJID, room.getSelfRepresentation());
                             break;
                         case outcast:
-                            room.addOutcast(affiliationJID, null, room.getRole());
+                            room.addOutcast(affiliationJID, null, room.getSelfRepresentation());
                             break;
                         default:
                             Log.error("Unknown affiliation value {} for user {} in persistent room {}", affiliation, affiliationJID.toBareJID(), room.getID());
@@ -348,7 +348,7 @@ public class MUCPersistenceManager {
             while (rs.next()) {
                 try {
                     final JID jid = GroupJID.fromString(rs.getString("jid"));
-                    room.addMember(jid, rs.getString("nickname"), room.getRole());
+                    room.addMember(jid, rs.getString("nickname"), room.getSelfRepresentation());
                 }
                 catch (Exception e) {
                     Log.error("Unable to load member for room: {}", room.getName(), e);
@@ -817,7 +817,7 @@ public class MUCPersistenceManager {
             // possible
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
                 room.getSubject().length() > 0) {
-                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getRole().getRoleAddress().toString(),
+                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getRoleAddress().toString(),
                     null, room.getModificationDate(), room.getSubject(), null, null);
                 room.getRoomHistory().addOldMessages(subject);
             }
@@ -879,7 +879,7 @@ public class MUCPersistenceManager {
                 && loadedRoom.getSubject().length() > 0)
             {
                 final Message message = loadedRoom.getRoomHistory().parseHistoricMessage(
-                                                            loadedRoom.getRole().getRoleAddress().toString(),
+                                                            loadedRoom.getSelfRepresentation().getRoleAddress().toString(),
                                                             null,
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),
@@ -927,13 +927,13 @@ public class MUCPersistenceManager {
                     try {
                         switch (affiliation) {
                             case owner:
-                                room.addOwner(affiliationJID, room.getRole());
+                                room.addOwner(affiliationJID, room.getSelfRepresentation());
                                 break;
                             case admin:
-                                room.addAdmin(affiliationJID, room.getRole());
+                                room.addAdmin(affiliationJID, room.getSelfRepresentation());
                                 break;
                             case outcast:
-                                room.addOutcast(affiliationJID, null, room.getRole());
+                                room.addOutcast(affiliationJID, null, room.getSelfRepresentation());
                                 break;
                             default:
                                 Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
@@ -972,7 +972,7 @@ public class MUCPersistenceManager {
                     try {
                         // might be a group JID
                         affiliationJID = GroupJID.fromString(resultSet.getString("jid"));
-                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getRole());
+                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getSelfRepresentation());
                     } catch (ForbiddenException | ConflictException e) {
                         Log.warn("Unable to add member to room.", e);
                     }

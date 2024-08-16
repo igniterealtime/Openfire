@@ -179,9 +179,25 @@ public class MUCRole implements Cacheable, Externalizable {
      * An empty instance that represents the room itself in the chatroom. Chatrooms need to be able to
      * speak (server messages) and so must have data representing their own 'occupancy' in the chatroom.
      *
+     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
+     * release of Openfire, as the type of the returned class will be modified in that release.
+     *
      * @param room The room for which to return an instance.
      * @return The representation of the room.
      */
+    public static MUCRole createRoomSelfRepresentation(@Nonnull final MUCRoom room) {
+        return new MUCRole(room);
+    }
+
+    /**
+     * An empty instance that represents the room itself in the chatroom. Chatrooms need to be able to
+     * speak (server messages) and so must have data representing their own 'occupancy' in the chatroom.
+     *
+     * @param room The room for which to return an instance.
+     * @return The representation of the room.
+     * @deprecated Replaced by {@link #createRoomSelfRepresentation(MUCRoom)}
+     */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
     public static MUCRole createRoomRole(@Nonnull final MUCRoom room) {
         return new MUCRole(room);
     }

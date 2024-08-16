@@ -1001,7 +1001,7 @@ public class FMUCHandler
             }
 
             // Use a room role that can be used to identify the remote fmuc node (to prevent data from being echo'd back)
-            final MUCRole occupantData = MUCRole.createRoomRole(room);
+            final MUCRole occupantData = MUCRole.createRoomSelfRepresentation(room);
             occupantData.setReportedFmucAddress( outboundJoin.getPeer() );
 
             // Use received data to augment state of the local room.

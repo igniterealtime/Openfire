@@ -383,7 +383,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         rolesToBroadcastPresence.add(MUCRole.Role.moderator);
         rolesToBroadcastPresence.add(MUCRole.Role.participant);
         rolesToBroadcastPresence.add(MUCRole.Role.visitor);
-        selfOccupantData = MUCRole.createRoomRole(this);
+        selfOccupantData = MUCRole.createRoomSelfRepresentation(this);
     }
 
     /**

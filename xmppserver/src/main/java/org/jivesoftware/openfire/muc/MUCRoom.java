@@ -825,7 +825,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             Log.debug( "User '{}' attempts to join room '{}' that is locked (pending configuration confirmation). Sending an error.", realAddress, this.getJID() );
             final Presence presenceItemNotFound = new Presence(Presence.Type.error);
             presenceItemNotFound.setError(PacketError.Condition.item_not_found);
-            presenceItemNotFound.setFrom(selfOccupantData.getRoleAddress());
+            presenceItemNotFound.setFrom(selfOccupantData.getOccupantJID());
 
             // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
             joiningOccupant.send(presenceItemNotFound);
@@ -1172,7 +1172,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         occupants.add(occupant);
 
         // Fire event that occupant joined the room.
-        MUCEventDispatcher.occupantJoined(occupant.getRoleAddress().asBareJID(), occupant.getUserAddress(), occupant.getNickname());
+        MUCEventDispatcher.occupantJoined(occupant.getOccupantJID().asBareJID(), occupant.getUserAddress(), occupant.getNickname());
     }
 
     /**
@@ -1276,7 +1276,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     public void removeOccupantRole(@Nonnull final MUCRole occupant) {
         Log.trace( "Remove occupant from room {}: {}", this.getJID(), occupant );
         occupants.remove(occupant);
-        MUCEventDispatcher.occupantLeft(occupant.getRoleAddress(), occupant.getUserAddress(), occupant.getNickname());
+        MUCEventDispatcher.occupantLeft(occupant.getOccupantJID(), occupant.getUserAddress(), occupant.getNickname());
     }
 
     /**
@@ -1311,7 +1311,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             try {
                 // Send a presence stanza of type "unavailable" to the occupant
                 final Presence presence = createPresence(Presence.Type.unavailable);
-                presence.setFrom(removedOccupant.getRoleAddress());
+                presence.setFrom(removedOccupant.getOccupantJID());
 
                 // A fragment containing the x-extension for room destruction.
                 final Element fragment = presence.addChildElement("x","http://jabber.org/protocol/muc#user");
@@ -1340,7 +1340,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
         // Fire event that the room has been destroyed
-        MUCEventDispatcher.roomDestroyed(getSelfRepresentation().getRoleAddress());
+        MUCEventDispatcher.roomDestroyed(getSelfRepresentation().getOccupantJID());
     }
 
     /**
@@ -1352,7 +1352,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     public Presence createPresence(Presence.Type presenceType) {
         Presence presence = new Presence();
         presence.setType(presenceType);
-        presence.setFrom(selfOccupantData.getRoleAddress());
+        presence.setFrom(selfOccupantData.getOccupantJID());
         return presence;
     }
 
@@ -1366,7 +1366,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         Message message = new Message();
         message.setType(Message.Type.groupchat);
         message.setBody(msg);
-        message.setFrom(selfOccupantData.getRoleAddress());
+        message.setFrom(selfOccupantData.getOccupantJID());
         broadcast(message, selfOccupantData);
     }
 
@@ -1386,13 +1386,13 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             throw new ForbiddenException();
         }
         // Send the message to all occupants
-        message.setFrom(sender.getRoleAddress());
+        message.setFrom(sender.getOccupantJID());
         if (canAnyoneDiscoverJID) {
             addRealJidToMessage(message, sender);
         }
         send(message, sender);
         // Fire event that message was received by the room
-        MUCEventDispatcher.messageReceived(getSelfRepresentation().getRoleAddress(), sender.getUserAddress(),
+        MUCEventDispatcher.messageReceived(getSelfRepresentation().getOccupantJID(), sender.getUserAddress(),
             sender.getNickname(), message);
     }
 
@@ -1444,7 +1444,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         if (canAnyoneDiscoverJID && stanza instanceof Message) {
             addRealJidToMessage((Message)stanza, sender);
         }
-        stanza.setFrom(sender.getRoleAddress());
+        stanza.setFrom(sender.getOccupantJID());
 
         // Sending the stanza will modify it. Make sure that the event listeners that are triggered after sending
         // the stanza don't get the 'real' address from the recipient.
@@ -1530,8 +1530,8 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         final Presence stanza = presence.createCopy();
 
         // Some clients send a presence update to the room, rather than to their own nickname.
-        if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && stanza.getTo() != null && stanza.getTo().getResource() == null && sender.getRoleAddress() != null) {
-            stanza.setTo( sender.getRoleAddress() );
+        if ( JiveGlobals.getBooleanProperty("xmpp.muc.presence.overwrite-to-room", true) && stanza.getTo() != null && stanza.getTo().getResource() == null && sender.getOccupantJID() != null) {
+            stanza.setTo( sender.getOccupantJID() );
         }
 
         if (!canBroadcastPresence(sender.getRole())) {
@@ -1741,7 +1741,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
         }
         if (isLogEnabled()) {
-            JID senderAddress = getSelfRepresentation().getRoleAddress(); // default to the room being the sender of the message.
+            JID senderAddress = getSelfRepresentation().getOccupantJID(); // default to the room being the sender of the message.
 
             // convert the MUC nickname/role JID back into a real user JID
             if (message.getFrom() != null && message.getFrom().getResource() != null) {
@@ -1750,7 +1750,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                     senderAddress = getOccupantsByNickname(message.getFrom().getResource()).get(0).getUserAddress();
                 } catch (UserNotFoundException e) {
                     // The room itself is sending the message
-                    senderAddress = getSelfRepresentation().getRoleAddress();
+                    senderAddress = getSelfRepresentation().getOccupantJID();
                 }
             }
             // Log the conversation
@@ -2366,7 +2366,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             occ.changeNickname(newNick);
 
             // Fire event that user changed his nickname
-            MUCEventDispatcher.nicknameChanged(getSelfRepresentation().getRoleAddress(), occ.getUserAddress(), oldNick, newNick);
+            MUCEventDispatcher.nicknameChanged(getSelfRepresentation().getOccupantJID(), occ.getUserAddress(), oldNick, newNick);
         }
 
         // Broadcast new presence of occupant
@@ -2391,7 +2391,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             subject = packet.getSubject();
             MUCPersistenceManager.updateRoomSubject(this);
             // Notify all the occupants that the subject has changed
-            packet.setFrom(actor.getRoleAddress());
+            packet.setFrom(actor.getOccupantJID());
             send(packet, actor);
 
             // Fire event signifying that the room's subject has changed.
@@ -2444,7 +2444,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             // If the room is not members-only OR if the room is members-only and anyone can send
             // invitations or the sender is an admin or an owner, then send the invitation
             Message message = new Message();
-            message.setFrom(selfOccupantData.getRoleAddress());
+            message.setFrom(selfOccupantData.getOccupantJID());
             message.setTo(to);
 
             if (mucService.getMUCDelegate() != null) {
@@ -2485,7 +2485,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
             // Include the jabber:x:conference information for backward compatibility
             frag = message.addChildElement("x", "jabber:x:conference");
-            frag.addAttribute("jid", selfOccupantData.getRoleAddress().toBareJID());
+            frag.addAttribute("jid", selfOccupantData.getOccupantJID().toBareJID());
 
             // Send the message with the invitation
             XMPPServer.getInstance().getPacketRouter().route(message);
@@ -2519,7 +2519,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
 
         Message message = new Message();
-        message.setFrom(selfOccupantData.getRoleAddress());
+        message.setFrom(selfOccupantData.getOccupantJID());
         message.setTo(to);
         Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
         frag.addElement("decline").addAttribute("from", sender.toBareJID());
@@ -2951,7 +2951,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             for (MUCRole occupant : getOccupants()) {
                 if (occupant.getAffiliation().compareTo(MUCRole.Affiliation.member) > 0) {
                     try {
-                        presences.add(kickOccupant(occupant.getRoleAddress(), null, null,
+                        presences.add(kickOccupant(occupant.getOccupantJID(), null, null,
                             LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
                     }
                     catch (NotAllowedException e) {

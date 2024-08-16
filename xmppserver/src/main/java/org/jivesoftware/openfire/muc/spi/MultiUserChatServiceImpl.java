@@ -1618,7 +1618,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                     // Send a presence stanza of type "unavailable" to the occupant
                     final Presence presence = room.createPresence( Presence.Type.unavailable );
-                    presence.setFrom( occupant.getRoleAddress() );
+                    presence.setFrom( occupant.getOccupantJID() );
 
                     // A fragment containing the x-extension.
                     final Element fragment = presence.addChildElement( "x", "http://jabber.org/protocol/muc#user" );
@@ -1947,7 +1947,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         if (created) {
             // Fire event that a new room has been created
-            MUCEventDispatcher.roomCreated(room.getSelfRepresentation().getRoleAddress());
+            MUCEventDispatcher.roomCreated(room.getSelfRepresentation().getOccupantJID());
         }
         if (loaded || created) {
             // Initiate FMUC, when enabled.
@@ -3140,7 +3140,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             {
                 if (canDiscoverRoom(room, senderJID))
                 {
-                    answer.add(new DiscoItem(room.getSelfRepresentation().getRoleAddress(),
+                    answer.add(new DiscoItem(room.getSelfRepresentation().getOccupantJID(),
                         room.getNaturalLanguageName(), null, null));
                 }
             }
@@ -3151,7 +3151,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             if (room != null && canDiscoverRoom(room, senderJID)) {
                 for (final org.jivesoftware.openfire.muc.MUCRole occupant : room.getOccupants()) {
                     // TODO Should we filter occupants that are invisible (presence is not broadcasted)?
-                    answer.add(new DiscoItem(occupant.getRoleAddress(), null, null, null));
+                    answer.add(new DiscoItem(occupant.getOccupantJID(), null, null, null));
                 }
             }
         }

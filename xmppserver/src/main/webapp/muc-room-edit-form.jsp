@@ -262,8 +262,8 @@
                 Message message = new Message();
                 message.setType(Message.Type.groupchat);
                 message.setSubject(roomSubject);
-                message.setFrom(room.getSelfRepresentation().getRoleAddress());
-                message.setTo(room.getSelfRepresentation().getRoleAddress());
+                message.setFrom(room.getSelfRepresentation().getOccupantJID());
+                message.setTo(room.getSelfRepresentation().getOccupantJID());
                 room.changeSubject(message, room.getSelfRepresentation());
             }
 

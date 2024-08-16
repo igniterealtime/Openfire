@@ -354,7 +354,7 @@ public class LocalMUCRoomManager
                                     // entirely a local affair. Therefore perform two separate steps instead, without invoking
                                     // occupant joined events.
                                     roomInCluster.occupants.add(localOccupant);
-                                    occupantManager.registerOccupantJoinedLocally(localOccupant.getRoleAddress().asBareJID(), localOccupant.getUserAddress(), localOccupant.getNickname());
+                                    occupantManager.registerOccupantJoinedLocally(localOccupant.getOccupantJID().asBareJID(), localOccupant.getUserAddress(), localOccupant.getNickname());
 
                                     // Just added. Now kick out.
                                     kickOccupantBecauseOfNicknameCollision(roomInCluster, nickBeingAddedToRoom, localUserToBeKickedFullJid, occupantManager);

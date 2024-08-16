@@ -228,7 +228,7 @@ public class MUCRole implements Cacheable, Externalizable {
 
         synchronized (this) {
             this.presence = newPresence;
-            this.presence.setFrom(getRoleAddress());
+            this.presence.setFrom(getOccupantJID());
             updatePresence();
         }
     }
@@ -356,13 +356,25 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @return The Jabber ID that represents this occupant in the room.
      */
+    public JID getOccupantJID() {
+        return occupantJID;
+    }
+
+    /**
+     * Returns the 'room@service/nick' by which the occupant is identified within the context of the room; contrast with
+     * {@link #getUserAddress()}.
+     *
+     * @return The Jabber ID that represents this occupant in the room.
+     * @deprecated Replaced by {@link #getOccupantJID()}
+     */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
     public JID getRoleAddress() {
         return occupantJID;
     }
 
     /**
      * The JID of the user (the real JID, eg: 'user@domain/desktop`) that is the occupant of a room (as represented by
-     * this instance); contrast with {@link #getRoleAddress()}.
+     * this instance); contrast with {@link #getOccupantJID()}.
      *
      * A {@code null} null value is returned when this instance is a self-representation of the room.
      *
@@ -514,7 +526,7 @@ public class MUCRole implements Cacheable, Externalizable {
         final JID reportingFmucAddress;
         if (packet.getFrom().getResource() == null) {
             Log.trace( "Sender is the room itself: '{}'", packet.getFrom() );
-            reportingFmucAddress = this.getChatRoom().getSelfRepresentation().getRoleAddress();
+            reportingFmucAddress = this.getChatRoom().getSelfRepresentation().getOccupantJID();
         } else {
             Log.trace( "Sender is an occupant of the room: '{}'", packet.getFrom() );
 

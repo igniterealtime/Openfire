@@ -817,7 +817,7 @@ public class MUCPersistenceManager {
             // possible
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
                 room.getSubject().length() > 0) {
-                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getRoleAddress().toString(),
+                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
                     null, room.getModificationDate(), room.getSubject(), null, null);
                 room.getRoomHistory().addOldMessages(subject);
             }
@@ -879,7 +879,7 @@ public class MUCPersistenceManager {
                 && loadedRoom.getSubject().length() > 0)
             {
                 final Message message = loadedRoom.getRoomHistory().parseHistoricMessage(
-                                                            loadedRoom.getSelfRepresentation().getRoleAddress().toString(),
+                                                            loadedRoom.getSelfRepresentation().getOccupantJID().toString(),
                                                             null,
                                                             loadedRoom.getModificationDate(),
                                                             loadedRoom.getSubject(),

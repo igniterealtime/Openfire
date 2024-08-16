@@ -336,7 +336,7 @@ public class FMUCHandler
                     final Presence leave = occupantToLeave.getPresence(); // This returns a copy. Modifications will not be applied to the original.
                     leave.setType(Presence.Type.unavailable);
                     leave.setTo(new JID(peer.getNode(), peer.getDomain(), occupantToLeave.getNickname()));
-                    leave.setFrom(occupantToLeave.getRoleAddress());
+                    leave.setFrom(occupantToLeave.getOccupantJID());
 
                     // Change (or add) presence information about roles and affiliations
                     Element childElement = leave.getChildElement("x", "http://jabber.org/protocol/muc#user");
@@ -500,7 +500,7 @@ public class FMUCHandler
             return CompletableFuture.completedFuture(null);
         }
 
-        Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), occupantData.getUserAddress(), occupantData.getRoleAddress() );
+        Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), occupantData.getUserAddress(), occupantData.getOccupantJID() );
 
         final CompletableFuture<?> propagateToOutbound;
         if ( !includeOutbound ) {
@@ -560,7 +560,7 @@ public class FMUCHandler
      */
     private CompletableFuture<?> initiateFederationOutbound( @Nonnull MUCRole occupantData )
     {
-        Log.debug("(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), occupantData.getUserAddress(), occupantData.getRoleAddress() );
+        Log.debug("(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), occupantData.getUserAddress(), occupantData.getOccupantJID() );
 
         final Presence joinStanza = enrichWithFMUCElement( generateJoinStanza( occupantData ), occupantData );
         joinStanza.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), occupantData.getNickname() ) );
@@ -626,7 +626,7 @@ public class FMUCHandler
 
     private void doPropagateOutbound(@Nonnull Packet stanza, @Nonnull MUCRole sender, @Nonnull CompletableFuture<?> result )
     {
-        Log.debug("(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joined FMUC node {}.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), outboundJoin.getPeer() );
+        Log.debug("(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joined FMUC node {}.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getOccupantJID(), outboundJoin.getPeer() );
 
         final Packet enriched = enrichWithFMUCElement( stanza, sender );
         enriched.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), sender.getNickname() ) );
@@ -636,10 +636,10 @@ public class FMUCHandler
         // to echo back the presence data, before we can distribute it in the local room.
         final boolean mustBlock = outboundJoin.getMode() == FMUCMode.MasterSlave;
         if ( !mustBlock ) {
-            Log.trace("(room: '{}'): No need to wait for an echo back from joined FMUC node {} of the propagation of stanza sent by user '{}' (as '{}').", room.getJID(), outboundJoin.getPeer(), sender.getUserAddress(), sender.getRoleAddress() );
+            Log.trace("(room: '{}'): No need to wait for an echo back from joined FMUC node {} of the propagation of stanza sent by user '{}' (as '{}').", room.getJID(), outboundJoin.getPeer(), sender.getUserAddress(), sender.getOccupantJID() );
             result.complete( null );
         } else {
-            Log.debug("(room: '{}'): An echo back from joined FMUC node {} of the propagation of stanza snet by user '{}' (as '{}') needs to be received before the join event can be propagated locally.", room.getJID(), outboundJoin.getPeer(), sender.getUserAddress(), sender.getRoleAddress() );
+            Log.debug("(room: '{}'): An echo back from joined FMUC node {} of the propagation of stanza snet by user '{}' (as '{}') needs to be received before the join event can be propagated locally.", room.getJID(), outboundJoin.getPeer(), sender.getUserAddress(), sender.getOccupantJID() );
 
             // register callback to complete this future when echo is received back.
             outboundJoin.registerEchoCallback( enriched, result );
@@ -668,7 +668,7 @@ public class FMUCHandler
             return CompletableFuture.completedFuture(null);
         }
 
-        Log.trace( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the all {} joining FMUC nodes.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), inboundJoins.size() );
+        Log.trace( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the all {} joining FMUC nodes.", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getOccupantJID(), inboundJoins.size() );
 
         for( final InboundJoin inboundJoin : inboundJoins.values() )
         {
@@ -677,9 +677,9 @@ public class FMUCHandler
                 continue;
             }
 
-            Log.trace( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joining FMUC node '{}'", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getRoleAddress(), inboundJoin.getPeer() );
+            Log.trace( "(room: '{}'): Propagating a stanza (type '{}') from user '{}' (as '{}') to the joining FMUC node '{}'", room.getJID(), stanza.getClass().getSimpleName(), sender.getUserAddress(), sender.getOccupantJID(), inboundJoin.getPeer() );
             final Packet enriched = enrichWithFMUCElement( stanza, sender );
-            enriched.setFrom( sender.getRoleAddress());
+            enriched.setFrom( sender.getOccupantJID() );
             enriched.setTo( inboundJoin.getPeer() );
             XMPPServer.getInstance().getPacketRouter().route( enriched );
         }
@@ -707,9 +707,9 @@ public class FMUCHandler
         }
 
         final JID from;
-        if ( sender.getRoleAddress().getResource() == null ) {
+        if ( sender.getOccupantJID().getResource() == null ) {
             // This role represents the room itself as the sender. Rooms do not have a 'user' address.
-            from = sender.getRoleAddress();
+            from = sender.getOccupantJID();
         } else {
             from = sender.getUserAddress();
         }
@@ -771,7 +771,7 @@ public class FMUCHandler
     // TODO this does not have any FMUC specifics. Must this exist in this class?
     private Presence generateJoinStanza( @Nonnull MUCRole occupantData )
     {
-        Log.debug( "(room: '{}'): Generating a stanza that represents the joining of local user '{}' (as '{}').", room.getJID(), occupantData.getUserAddress(), occupantData.getRoleAddress() );
+        Log.debug( "(room: '{}'): Generating a stanza that represents the joining of local user '{}' (as '{}').", room.getJID(), occupantData.getUserAddress(), occupantData.getOccupantJID() );
         final Presence joinStanza = new Presence();
         joinStanza.getElement().addElement(QName.get("x", "http://jabber.org/protocol/muc"));
         final Element mucUser = joinStanza.getElement().addElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
@@ -961,7 +961,7 @@ public class FMUCHandler
 
             // The 'stripped' stanza is going to be distributed locally. Act as if it originates from a local user, instead of the remote FMUC one.
             final JID from;
-            from = senderOccupantData.getRoleAddress();
+            from = senderOccupantData.getOccupantJID();
             stripped.setFrom( from );
             stripped.setTo( room.getJID() );
 
@@ -1211,7 +1211,7 @@ public class FMUCHandler
 
                 final Presence leave = new Presence();
                 leave.setType(Presence.Type.unavailable);
-                leave.setTo(occupantData.getRoleAddress());
+                leave.setTo(occupantData.getOccupantJID());
                 leave.setFrom(occupantData.getUserAddress());
                 leave.setStatus("FMUC node disconnect");
                 final Presence enriched = enrichWithFMUCElement( leave, occupantData.getReportedFmucAddress() );
@@ -1340,13 +1340,13 @@ public class FMUCHandler
             // TODO can we use occupant.getPresence() for this?
             // TODO do we need to worry about who we're exposing data to?
             final Presence presence = new Presence();
-            presence.setFrom( occupant.getRoleAddress() );
+            presence.setFrom( occupant.getOccupantJID() );
             presence.setTo( joiningPeer );
             final Presence enriched = enrichWithFMUCElement( presence, occupant );
             final Element xitem = enriched.addChildElement( "x", "http://jabber.org/protocol/muc#user" ).addElement( "item" );
             xitem.addAttribute( "affiliation", occupant.getAffiliation().toString() );
             xitem.addAttribute( "role", occupant.getRole().toString() );
-            xitem.addAttribute( "jid", occupant.getRoleAddress().toString() );
+            xitem.addAttribute( "jid", occupant.getOccupantJID().toString() );
 
             XMPPServer.getInstance().getPacketRouter().route( enriched );
         }

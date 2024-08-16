@@ -742,7 +742,7 @@ public class ConsistencyChecks {
             .collect(Collectors.toList());
         final List<String> allMucRolesOccupantsJids = allMucOccupants
             .stream()
-            .map(mucRole -> mucRole.getUserAddress().toFullJID() + " (in room '" + mucRole.getRoleAddress().getNode() + "' with nickname '" + mucRole.getNickname() + "')")
+            .map(mucRole -> mucRole.getUserAddress().toFullJID() + " (in room '" + mucRole.getOccupantJID().getNode() + "' with nickname '" + mucRole.getNickname() + "')")
             .sorted()
             .collect(Collectors.toList());
 

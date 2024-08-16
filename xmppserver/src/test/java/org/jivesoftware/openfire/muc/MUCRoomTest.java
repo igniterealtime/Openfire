@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,25 +79,25 @@ public class MUCRoomTest {
     {
         // Setup test fixture.
 
-        final MUCRole roomRole = new MUCRole();
-        populateField(roomRole, "roomJid", new JID("room-test-role-jid@example.org"));
-        populateField(roomRole, "role", MUCRole.Role.visitor);
-        populateField(roomRole, "affiliation", MUCRole.Affiliation.member);
-        populateField(roomRole, "rJID", new JID("room-test-jid@conference.example.org"));
+        final MUCRole roomSelfOccupant = new MUCRole();
+        populateField(roomSelfOccupant, "roomJid", new JID("room-test-role-jid@example.org"));
+        populateField(roomSelfOccupant, "role", MUCRole.Role.visitor);
+        populateField(roomSelfOccupant, "affiliation", MUCRole.Affiliation.member);
+        populateField(roomSelfOccupant, "occupantJID", new JID("room-test-jid@conference.example.org"));
 
         final List<MUCRole> occupants = new ArrayList<>();
         final MUCRole occupantA = new MUCRole();
         populateField(occupantA, "roomJid", new JID("occupantA@example.org"));
         populateField(occupantA, "role", MUCRole.Role.participant);
         populateField(occupantA, "affiliation", MUCRole.Affiliation.member);
-        populateField(occupantA, "rJID", new JID("room-test-jid@conference.example.org/occupantA"));
+        populateField(occupantA, "occupantJID", new JID("room-test-jid@conference.example.org/occupantA"));
         occupants.add(occupantA);
 
         final MUCRole occupantB = new MUCRole();
         populateField(occupantB, "roomJid", new JID("occupantBA@example.org"));
         populateField(occupantB, "role", MUCRole.Role.none);
         populateField(occupantB, "affiliation", MUCRole.Affiliation.member);
-        populateField(occupantB, "rJID", new JID("room-test-jid@conference.example.org/occupantB"));
+        populateField(occupantB, "occupantJID", new JID("room-test-jid@conference.example.org/occupantB"));
         occupants.add(occupantB);
 
         final ConcurrentGroupList<JID> owners = new ConcurrentGroupList<>();
@@ -125,7 +125,7 @@ public class MUCRoomTest {
         populateField(input, "mucService", mockService);
         populateField(input, "name", "test-room-name");
         populateField(input, "occupants", occupants);
-        populateField(input, "role", roomRole);
+        populateField(input, "selfOccupantData", roomSelfOccupant);
         populateField(input, "startTime", Instant.now().minus(Duration.ofDays(4)).toEpochMilli());
         populateField(input, "endTime", Instant.now().minus(Duration.ofHours(23)).toEpochMilli());
         populateField(input, "isDestroyed", true);

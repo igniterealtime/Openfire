@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,16 +74,16 @@ public class IQOwnerHandler {
      * </ul>
      *
      * @param packet the IQ packet sent by an owner of the room.
-     * @param role the role of the user that sent the packet.
+     * @param sender the occupant data of the user that sent the packet.
      * @throws ForbiddenException if the user does not have enough permissions (ie. is not an owner).
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws CannotBeInvitedException never
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    public void handleIQ(IQ packet, MUCRole role) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
+    public void handleIQ(IQ packet, MUCRole sender) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
     {
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
-        if (MUCRole.Affiliation.owner != role.getAffiliation()) {
+        if (MUCRole.Affiliation.owner != sender.getAffiliation()) {
             throw new ForbiddenException();
         }
 
@@ -93,13 +93,13 @@ public class IQOwnerHandler {
         // Analyze the action to perform based on the included element
         Element formElement = element.element(QName.get("x", "jabber:x:data"));
         if (formElement != null) {
-            handleDataFormElement(role, formElement);
+            handleDataFormElement(sender, formElement);
         }
         else {
             Element destroyElement = element.element("destroy");
             if (destroyElement != null) {
                 if (room.getMUCService().getMUCDelegate() != null) {
-                    if (!room.getMUCService().getMUCDelegate().destroyingRoom(room.getName(), role.getUserAddress())) {
+                    if (!room.getMUCService().getMUCDelegate().destroyingRoom(room.getName(), sender.getUserAddress())) {
                         // Delegate said no, reject destroy request.
                         throw new ForbiddenException();
                     }
@@ -138,13 +138,13 @@ public class IQOwnerHandler {
      * Handles packets that includes a data form. The data form was sent using an element with name
      * "x" and namespace "jabber:x:data".
      *
-     * @param senderRole  the role of the user that sent the data form.
+     * @param sender  the occupant data of the user that sent the data form.
      * @param formElement the element that contains the data form specification.
      * @throws ForbiddenException    if the user does not have enough privileges.
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    private void handleDataFormElement(MUCRole senderRole, Element formElement)
+    private void handleDataFormElement(MUCRole sender, Element formElement)
             throws ForbiddenException, ConflictException, NotAcceptableException {
         DataForm completedForm = new DataForm(formElement);
 
@@ -164,12 +164,12 @@ public class IQOwnerHandler {
             }
             // The owner is requesting a reserved room or is changing the current configuration
             else {
-                processConfigurationForm(completedForm, senderRole);
+                processConfigurationForm(completedForm, sender);
             }
             // If the room was locked, unlock it and send to the owner the "room is now unlocked"
             // message
             if (room.isLocked() && !room.isManuallyLocked()) {
-                room.unlock(senderRole);
+                room.unlock(sender);
             }
             break;
             
@@ -184,12 +184,12 @@ public class IQOwnerHandler {
      * configuration as well as the list of owners and admins.
      *
      * @param completedForm the completed form sent by an owner of the room.
-     * @param senderRole the role of the user that sent the completed form.
+     * @param sender the occupant data of the user that sent the completed form.
      * @throws ForbiddenException if the user does not have enough privileges.
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    private void processConfigurationForm(DataForm completedForm, MUCRole senderRole)
+    private void processConfigurationForm(DataForm completedForm, MUCRole sender)
             throws ForbiddenException, ConflictException, NotAcceptableException
     {
         List<String> values;
@@ -411,8 +411,8 @@ public class IQOwnerHandler {
         room.getFmucHandler().applyConfigurationChanges();
 
         // Set the new owners and admins of the room
-        presences.addAll(room.addOwners(owners, senderRole));
-        presences.addAll(room.addAdmins(admins, senderRole));
+        presences.addAll(room.addOwners(owners, sender));
+        presences.addAll(room.addAdmins(admins, sender));
 
         if (ownersSent) {
             // Change the affiliation to "member" for the current owners that won't be neither
@@ -423,7 +423,7 @@ public class IQOwnerHandler {
             for (JID jid : ownersToRemove) {
                 // ignore group jids
                 if (!GroupJID.isGroup(jid)) {
-                    presences.addAll(room.addMember(jid, null, senderRole));
+                    presences.addAll(room.addMember(jid, null, sender));
                 }
             }
         }
@@ -437,7 +437,7 @@ public class IQOwnerHandler {
             for (JID jid : adminsToRemove) {
                 // ignore group jids
                 if (!GroupJID.isGroup(jid)) {
-                    presences.addAll(room.addMember(jid, null, senderRole));
+                    presences.addAll(room.addMember(jid, null, sender));
                 }
             }
         }

@@ -103,9 +103,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     private String name;
 
     /**
-     * The role of the room itself.
+     * The occupant data representing the room itself.
      */
-    private MUCRole role;
+    private MUCRole selfOccupantData;
 
     /**
      * The start time of the chat.
@@ -383,7 +383,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         rolesToBroadcastPresence.add(MUCRole.Role.moderator);
         rolesToBroadcastPresence.add(MUCRole.Role.participant);
         rolesToBroadcastPresence.add(MUCRole.Role.visitor);
-        role = MUCRole.createRoomRole(this);
+        selfOccupantData = MUCRole.createRoomRole(this);
     }
 
     /**
@@ -513,12 +513,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
-     * Obtain the role of the chat server (mainly for addressing messages and presence).
+     * Obtain the occupant data of the chat server itself (mainly for addressing messages and presence).
      *
      * @return The role for the chat room itself
      */
     public MUCRole getRole() {
-        return role;
+        return selfOccupantData;
     }
 
     /**
@@ -533,14 +533,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             throw new UserNotFoundException();
         }
 
-        final List<MUCRole> roles = occupants.stream()
+        final List<MUCRole> filteredOccupants = occupants.stream()
             .filter(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname))
             .collect(Collectors.toList());
 
-        if (roles.isEmpty()) {
+        if (filteredOccupants.isEmpty()) {
             throw new UserNotFoundException("Unable to find occupant with nickname '" + nickname + "' in room '" + name + "'");
         }
-        return roles;
+        return filteredOccupants;
     }
 
     /**
@@ -553,36 +553,36 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     public List<MUCRole> getOccupantsByBareJID(JID jid) throws UserNotFoundException
     {
-        final List<MUCRole> roles = occupants.stream()
+        final List<MUCRole> filteredOccupants = occupants.stream()
             .filter(mucRole -> mucRole.getUserAddress().asBareJID().equals(jid))
             .collect(Collectors.toList());
 
-        if (roles.isEmpty()) {
+        if (filteredOccupants.isEmpty()) {
             throw new UserNotFoundException();
         }
 
-        return Collections.unmodifiableList(roles);
+        return Collections.unmodifiableList(filteredOccupants);
     }
 
     /**
-     * Returns the role of a given user in the room by his full JID or {@code null}
-     * if no role was found for the specified user.
+     * Returns the occupant data of a given user in the room by his full JID or {@code null}
+     * if no occupant data was found for the specified user.
      *
-     * @param jid The full jid of the user you'd like to obtain  (cannot be {@code null}).
-     * @return The user's role in the room or null if not found.
+     * @param jid The full jid of the user you'd like to obtain (cannot be {@code null}).
+     * @return The user's occupant data in the room or null if not found.
      */
     public MUCRole getOccupantByFullJID(JID jid)
     {
-        final List<MUCRole> roles = occupants.stream()
+        final List<MUCRole> filteredOccupants = occupants.stream()
             .filter(mucRole -> mucRole.getUserAddress().equals(jid))
             .collect(Collectors.toList());
 
-        switch (roles.size()) {
+        switch (filteredOccupants.size()) {
             case 0: return null;
             default:
-                Log.warn("Room '{}' has more than one role with full JID '{}'!", getJID(), jid);
+                Log.warn("Room '{}' has more than one occupant with full JID '{}'!", getJID(), jid);
                 // Intended fall-through: return the first one.
-            case 1: return roles.iterator().next();
+            case 1: return filteredOccupants.iterator().next();
         }
     }
 
@@ -712,7 +712,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @param historyRequest The amount of history that the user request or null meaning default.
      * @param realAddress    The 'real' (non-room) JID of the user that is joining (cannot be {@code null}).
      * @param presence       The presence sent by the user to join the room (cannot be {@code null}).
-     * @return The role created for the user.
+     * @return The occupant data created for the user.
      * @throws UnauthorizedException         If the user doesn't have permission to join the room.
      * @throws UserAlreadyExistsException    If the nickname is already taken.
      * @throws RoomLockedException           If the user is trying to join a locked room.
@@ -734,7 +734,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         RegistrationRequiredException, ConflictException, ServiceUnavailableException, NotAcceptableException
     {
         Log.debug( "User '{}' attempts to join room '{}' using nickname '{}'.", realAddress, this.getJID(), nickname );
-        MUCRole joinRole;
+        MUCRole joiningOccupant;
         boolean clientOnlyJoin; // A "client only join" here is one where the client is already joined, but has re-joined.
 
         synchronized (this) {
@@ -761,11 +761,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             {
                 Log.debug( "Adding user '{}' as an occupant of room '{}' using nickname '{}'.", realAddress, this.getJID(), nickname );
 
-                // Create a new role for this user in this room.
-                joinRole = new MUCRole(this, nickname, role, affiliation, realAddress, presence);
+                // Create a new occupant for this user in this room.
+                joiningOccupant = new MUCRole(this, nickname, role, affiliation, realAddress, presence);
 
                 // See if we need to join a federated room. Note that this can be blocking!
-                final Future<?> join = fmucHandler.join(joinRole);
+                final Future<?> join = fmucHandler.join(joiningOccupant);
                 try
                 {
                     // FIXME make this properly asynchronous, instead of blocking the thread!
@@ -773,33 +773,33 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 }
                 catch ( InterruptedException | ExecutionException | TimeoutException e )
                 {
-                    Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joinRole.getUserAddress(), this.getJID(), e);
+                    Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joiningOccupant.getUserAddress(), this.getJID(), e);
                 }
 
-                addOccupantRole(joinRole);
+                addOccupantRole(joiningOccupant);
 
             } else {
                 // Grab the existing one.
                 Log.debug( "Skip adding user '{}' as an occupant of room '{}' using nickname '{}', as it already is. Updating occupancy with its latest presence information.", realAddress, this.getJID(), nickname );
-                joinRole = getOccupantByFullJID(realAddress);
-                joinRole.setPresence(presence); // OF-1581: Use the latest presence information.
+                joiningOccupant = getOccupantByFullJID(realAddress);
+                joiningOccupant.setPresence(presence); // OF-1581: Use the latest presence information.
             }
         }
 
         // Exchange initial presence information between occupants of the room.
-        sendInitialPresencesToNewOccupant( joinRole );
+        sendInitialPresencesToNewOccupant( joiningOccupant );
 
         // OF-2042: XEP dictates an order of events. Wait for the presence exchange to finish, before progressing.
-        final CompletableFuture<Void> future = sendInitialPresenceToExistingOccupants(joinRole);
+        final CompletableFuture<Void> future = sendInitialPresenceToExistingOccupants(joiningOccupant);
         try {
             final Duration timeout = SELF_PRESENCE_TIMEOUT.getValue();
             future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch ( InterruptedException e ) {
-            Log.debug( "Presence broadcast has been interrupted before it completed. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), this.getJID(), e);
+            Log.debug( "Presence broadcast has been interrupted before it completed. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joiningOccupant.getUserAddress(), this.getJID(), e);
         } catch ( TimeoutException e ) {
-            Log.warn( "Presence broadcast has not yet been completed within the allocated period. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), this.getJID(), e);
+            Log.warn( "Presence broadcast has not yet been completed within the allocated period. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joiningOccupant.getUserAddress(), this.getJID(), e);
         } catch ( ExecutionException e ) {
-            Log.warn( "Presence broadcast caused an exception. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joinRole.getUserAddress(), this.getJID(), e);
+            Log.warn( "Presence broadcast caused an exception. Will continue to process the join of occupant '{}' to room '{}' as if it has.", joiningOccupant.getUserAddress(), this.getJID(), e);
         }
 
         // If the room has just been created send the "room locked until configuration is confirmed" message.
@@ -811,26 +811,26 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             Log.debug( "User '{}' attempts to join room '{}' that is locked (pending configuration confirmation). Sending an error.", realAddress, this.getJID() );
             final Presence presenceItemNotFound = new Presence(Presence.Type.error);
             presenceItemNotFound.setError(PacketError.Condition.item_not_found);
-            presenceItemNotFound.setFrom(role.getRoleAddress());
+            presenceItemNotFound.setFrom(selfOccupantData.getRoleAddress());
 
             // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
-            joinRole.send(presenceItemNotFound);
+            joiningOccupant.send(presenceItemNotFound);
         }
 
-        sendRoomHistoryAfterJoin( realAddress, joinRole, historyRequest );
-        sendRoomSubjectAfterJoin( realAddress, joinRole );
+        sendRoomHistoryAfterJoin( realAddress, joiningOccupant, historyRequest );
+        sendRoomSubjectAfterJoin( realAddress, joiningOccupant );
 
         if (!clientOnlyJoin) {
             // Update the date when the last occupant left the room
             setEmptyDate(null);
         }
-        return joinRole;
+        return joiningOccupant;
     }
 
     /**
      * Sends the room history to a user that just joined the room.
      */
-    private void sendRoomHistoryAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCRole joinRole, @Nullable HistoryRequest historyRequest )
+    private void sendRoomHistoryAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCRole joiningOccupant, @Nullable HistoryRequest historyRequest )
     {
         if (historyRequest == null) {
             Log.trace( "Sending default room history to user '{}' that joined room '{}'.", realAddress, this.getJID() );
@@ -839,18 +839,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 // OF-2163: Prevent modifying the original history stanza (that can be retrieved by others later) by making a defensive copy.
                 //          This prevents the stanzas in the room history to have a 'to' address for the last user that it was sent to.
                 final Message message = history.next().createCopy();
-                joinRole.send(message);
+                joiningOccupant.send(message);
             }
         } else {
             Log.trace( "Sending user-requested room history to user '{}' that joined room '{}'.", realAddress, this.getJID() );
-            historyRequest.sendHistory(joinRole, roomHistory);
+            historyRequest.sendHistory(joiningOccupant, roomHistory);
         }
     }
 
     /**
      * Sends the room subject to a user that just joined the room.
      */
-    private void sendRoomSubjectAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCRole joinRole )
+    private void sendRoomSubjectAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCRole joiningOccupant )
     {
         Log.trace( "Sending room subject to user '{}' that joined room '{}'.", realAddress, this.getJID() );
 
@@ -867,7 +867,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             roomSubject.setID( UUID.randomUUID().toString() );
             roomSubject.getElement().addElement( "subject" );
         }
-        joinRole.send(roomSubject);
+        joiningOccupant.send(roomSubject);
     }
 
     public boolean alreadyJoinedWithThisNick(@Nonnull final JID realJID, @Nonnull final String nickname)
@@ -1112,17 +1112,17 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     /**
      * Sends presence of existing occupants to new occupant.
      *
-     * @param joinRole the role of the new occupant in the room.
+     * @param joinedOccupant the occupant data of the new occupant in the room.
      */
-    void sendInitialPresencesToNewOccupant(MUCRole joinRole) {
+    void sendInitialPresencesToNewOccupant(MUCRole joinedOccupant) {
         if (!JOIN_PRESENCE_ENABLE.getValue()) {
-            Log.debug( "Skip exchanging presence between existing occupants of room '{}' and new occupant '{}' as it is disabled by configuration.", this.getJID(), joinRole.getUserAddress() );
+            Log.debug( "Skip exchanging presence between existing occupants of room '{}' and new occupant '{}' as it is disabled by configuration.", this.getJID(), joinedOccupant.getUserAddress() );
             return;
         }
 
-        Log.trace( "Send presence of existing occupants of room '{}' to new occupant '{}'.", this.getJID(), joinRole.getUserAddress() );
+        Log.trace( "Send presence of existing occupants of room '{}' to new occupant '{}'.", this.getJID(), joinedOccupant.getUserAddress() );
         for ( final MUCRole occupant : getOccupants() ) {
-            if (occupant == joinRole) {
+            if (occupant == joinedOccupant) {
                 continue;
             }
 
@@ -1132,45 +1132,45 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
 
             final Presence occupantPresence = occupant.getPresence(); // This returns a copy. Modifications will not be applied to the original.
-            if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinRole.getRole()) {
+            if (!canAnyoneDiscoverJID() && MUCRole.Role.moderator != joinedOccupant.getRole()) {
                 // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
                 final Element frag = occupantPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 frag.element("item").addAttribute("jid", null);
             }
-            joinRole.send(occupantPresence);
+            joinedOccupant.send(occupantPresence);
         }
     }
 
     /**
-     * Adds the role of the occupant from all the internal occupants collections.
+     * Adds an occupant to all the internal occupants collections.
      *
-     * @param role the role to add.
+     * @param occupant the occupant to add.
      */
-    public void addOccupantRole(@Nonnull final MUCRole role)
+    public void addOccupantRole(@Nonnull final MUCRole occupant)
     {
-        if (occupants.contains(role)) {
+        if (occupants.contains(occupant)) {
             // Ignore a data consistency problem. This indicates that a bug exists somewhere, so log it verbosely.
-            Log.warn("Not re-adding an occupant {} that already exists in room {}!", role, this.getJID(), new IllegalStateException("Duplicate occupant: " + role));
+            Log.warn("Not re-adding an occupant {} that already exists in room {}!", occupant, this.getJID(), new IllegalStateException("Duplicate occupant: " + occupant));
             return;
         }
 
-        Log.trace( "Add occupant to room {}: {}", this.getJID(), role );
-        occupants.add(role);
+        Log.trace( "Add occupant to room {}: {}", this.getJID(), occupant);
+        occupants.add(occupant);
 
         // Fire event that occupant joined the room.
-        MUCEventDispatcher.occupantJoined(role.getRoleAddress().asBareJID(), role.getUserAddress(), role.getNickname());
+        MUCEventDispatcher.occupantJoined(occupant.getRoleAddress().asBareJID(), occupant.getUserAddress(), occupant.getNickname());
     }
 
     /**
      * Sends presence of a leaving occupant to applicable occupants of the room that is being left.
      *
-     * @param leaveRole the role of the occupant that is leaving.
+     * @param leavingOccupant the occupant that is leaving.
      */
-    public CompletableFuture<Void> sendLeavePresenceToExistingOccupants(MUCRole leaveRole) {
+    public CompletableFuture<Void> sendLeavePresenceToExistingOccupants(MUCRole leavingOccupant) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leaveRole.getUserAddress(), this.getJID() );
+        Log.trace( "Send presence of leaving occupant '{}' to existing occupants of room '{}'.", leavingOccupant.getUserAddress(), this.getJID() );
         try {
-            final Presence presence = leaveRole.getPresence(); // This returns a copy. Modifications will not be applied to the original.
+            final Presence presence = leavingOccupant.getPresence(); // This returns a copy. Modifications will not be applied to the original.
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
             // Change (or add) presence information about roles and affiliations
@@ -1184,22 +1184,22 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
             item.addAttribute("role", "none");
 
-            // Check to see if the user's original role is one we should broadcast a leave packet for,
-            // or if the leaving role is using multi-session nick (in which case _only_ the leaving client should be informed).
-            if(!canBroadcastPresence(leaveRole.getRole()) || getOccupantsByNickname(leaveRole.getNickname()).size() > 1){
+            // Check to see if the user's original occupant data is one we should broadcast a leave packet for,
+            // or if the leaving occupant is using multi-session nick (in which case _only_ the leaving client should be informed).
+            if(!canBroadcastPresence(leavingOccupant.getRole()) || getOccupantsByNickname(leavingOccupant.getNickname()).size() > 1){
                 // Inform the leaving user that he/she has left the room
-                leaveRole.send(createSelfPresenceCopy(presence, false));
+                leavingOccupant.send(createSelfPresenceCopy(presence, false));
                 return CompletableFuture.completedFuture(null);
             }
             else {
                 // Inform all room occupants that the user has left the room
                 if (JOIN_PRESENCE_ENABLE.getValue()) {
-                    return broadcastPresence(presence, false, leaveRole);
+                    return broadcastPresence(presence, false, leavingOccupant);
                 }
             }
         }
         catch (Exception e) {
-            Log.error( "An exception occurred while sending leave presence of occupant '{}' to the other occupants of room: '{}'.", leaveRole.getUserAddress(), this.getJID(), e);
+            Log.error( "An exception occurred while sending leave presence of occupant '{}' to the other occupants of room: '{}'.", leavingOccupant.getUserAddress(), this.getJID(), e);
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -1207,14 +1207,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     /**
      * Remove a member from the chat room.
      *
-     * @param leaveRole The role that the user that left the room has prior to the user leaving.
+     * @param leavingOccupant The occupant data that the user that left the room has prior to the user leaving.
      */
-    public void leaveRoom(@Nonnull final MUCRole leaveRole) {
-        sendLeavePresenceToExistingOccupants(leaveRole)
+    public void leaveRoom(@Nonnull final MUCRole leavingOccupant) {
+        sendLeavePresenceToExistingOccupants(leavingOccupant)
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun( () -> {
                 // Remove occupant from room and destroy room if empty and not persistent
-                removeOccupantRole(leaveRole);
+                removeOccupantRole(leavingOccupant);
 
                 // TODO Implement this: If the room owner becomes unavailable for any reason before
                 // submitting the form (e.g., a lost connection), the service will receive a presence
@@ -1239,30 +1239,30 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     /**
      * Sends presence of new occupant to existing occupants.
      *
-     * @param joinRole the role of the new occupant in the room.
+     * @param joinedOccupant the occupant data of the new user in the room.
      */
-    public CompletableFuture<Void> sendInitialPresenceToExistingOccupants( MUCRole joinRole) {
+    public CompletableFuture<Void> sendInitialPresenceToExistingOccupants(MUCRole joinedOccupant) {
         // Send the presence of this new occupant to existing occupants
-        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinRole.getUserAddress(), this.getJID() );
+        Log.trace( "Send presence of new occupant '{}' to existing occupants of room '{}'.", joinedOccupant.getUserAddress(), this.getJID() );
         try {
-            final Presence joinPresence = joinRole.getPresence();
-            return broadcastPresence(joinPresence, true, joinRole);
+            final Presence joinPresence = joinedOccupant.getPresence();
+            return broadcastPresence(joinPresence, true, joinedOccupant);
         } catch (Exception e) {
-            Log.error( "An exception occurred while sending initial presence of new occupant '{}' to the existing occupants of room: '{}'", joinRole.getUserAddress(), this.getJID(), e);
+            Log.error( "An exception occurred while sending initial presence of new occupant '{}' to the existing occupants of room: '{}'", joinedOccupant.getUserAddress(), this.getJID(), e);
         }
         return CompletableFuture.completedFuture(null);
     }
 
     /**
-     * Removes the role of the occupant from all the internal occupants collections. The role will
-     * also be removed from the user's roles.
+     * Removes the occupant from all the internal occupants collections. The occupant data will
+     * also be removed from the user's occupant-data collection.
      *
-     * @param leaveRole the role to remove.
+     * @param occupant the occupant to remove.
      */
-    public void removeOccupantRole(@Nonnull final MUCRole leaveRole) {
-        Log.trace( "Remove occupant from room {}: {}", this.getJID(), leaveRole );
-        occupants.remove(leaveRole);
-        MUCEventDispatcher.occupantLeft(leaveRole.getRoleAddress(), leaveRole.getUserAddress(), leaveRole.getNickname());
+    public void removeOccupantRole(@Nonnull final MUCRole occupant) {
+        Log.trace( "Remove occupant from room {}: {}", this.getJID(), occupant );
+        occupants.remove(occupant);
+        MUCEventDispatcher.occupantLeft(occupant.getRoleAddress(), occupant.getUserAddress(), occupant.getNickname());
     }
 
     /**
@@ -1274,16 +1274,16 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @param reason an optional reason why the room was destroyed (can be {@code null}).
      */
     public void destroyRoom(JID alternateJID, String reason) {
-        Collection<MUCRole> removedRoles = new CopyOnWriteArrayList<>();
+        Collection<MUCRole> removedOccupants = new CopyOnWriteArrayList<>();
 
         fmucHandler.stop();
 
         // Remove each occupant from a copy of the list of occupants (to prevent ConcurrentModificationException).
-        for (MUCRole leaveRole : getOccupants()) {
-            if (leaveRole != null) {
+        for (MUCRole leavingOccupant : getOccupants()) {
+            if (leavingOccupant != null) {
                 // Add the removed occupant to the list of removed occupants. We are keeping a
                 // list of removed occupants to process later outside the lock.
-                removedRoles.add(leaveRole);
+                removedOccupants.add(leavingOccupant);
             }
         }
         endTime = System.currentTimeMillis();
@@ -1293,11 +1293,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         mucService.removeChatRoom(name);
 
         // Send an unavailable presence to each removed occupant
-        for (MUCRole removedRole : removedRoles) {
+        for (MUCRole removedOccupant : removedOccupants) {
             try {
                 // Send a presence stanza of type "unavailable" to the occupant
                 final Presence presence = createPresence(Presence.Type.unavailable);
-                presence.setFrom(removedRole.getRoleAddress());
+                presence.setFrom(removedOccupant.getRoleAddress());
 
                 // A fragment containing the x-extension for room destruction.
                 final Element fragment = presence.addChildElement("x","http://jabber.org/protocol/muc#user");
@@ -1313,11 +1313,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 }
 
                 // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
-                removedRole.send(presence);
-                removeOccupantRole(removedRole);
+                removedOccupant.send(presence);
+                removeOccupantRole(removedOccupant);
             }
             catch (Exception e) {
-                Log.error("An exception occurred while tyring to inform occupant '{}' that room '{}' was destroyed.", removedRole, name, e);
+                Log.error("An exception occurred while tyring to inform occupant '{}' that room '{}' was destroyed.", removedOccupant, name, e);
             }
         }
 
@@ -1338,7 +1338,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     public Presence createPresence(Presence.Type presenceType) {
         Presence presence = new Presence();
         presence.setType(presenceType);
-        presence.setFrom(role.getRoleAddress());
+        presence.setFrom(selfOccupantData.getRoleAddress());
         return presence;
     }
 
@@ -1352,8 +1352,8 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         Message message = new Message();
         message.setType(Message.Type.groupchat);
         message.setBody(msg);
-        message.setFrom(role.getRoleAddress());
-        broadcast(message, role);
+        message.setFrom(selfOccupantData.getRoleAddress());
+        broadcast(message, selfOccupantData);
     }
 
     /**
@@ -1362,24 +1362,24 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * send a message to all other occupants.
      *
      * @param message The message to send (cannot be {@code null}).
-     * @param senderRole the role of the user that is trying to send a public message (cannot be {@code null}).
+     * @param sender the occupant data of the user that is trying to send a public message (cannot be {@code null}).
      * @throws ForbiddenException If the user is not allowed to send a public message (i.e. does not
      *             have voice in the room).
      */
-    public void sendPublicMessage(Message message, MUCRole senderRole) throws ForbiddenException {
+    public void sendPublicMessage(Message message, MUCRole sender) throws ForbiddenException {
         // Check that if the room is moderated then the sender of the message has to have voice
-        if (isModerated() && senderRole.getRole().compareTo(MUCRole.Role.participant) > 0) {
+        if (isModerated() && sender.getRole().compareTo(MUCRole.Role.participant) > 0) {
             throw new ForbiddenException();
         }
         // Send the message to all occupants
-        message.setFrom(senderRole.getRoleAddress());
+        message.setFrom(sender.getRoleAddress());
         if (canAnyoneDiscoverJID) {
-            addRealJidToMessage(message, senderRole);
+            addRealJidToMessage(message, sender);
         }
-        send(message, senderRole);
+        send(message, sender);
         // Fire event that message was received by the room
-        MUCEventDispatcher.messageReceived(getRole().getRoleAddress(), senderRole.getUserAddress(),
-            senderRole.getNickname(), message);
+        MUCEventDispatcher.messageReceived(getRole().getRoleAddress(), sender.getUserAddress(),
+            sender.getNickname(), message);
     }
 
     /**
@@ -1395,15 +1395,15 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * the occupant. See {@link MultiUserChatServiceImpl#processVCardResponse(IQ)} for details.
      *
      * @param packet The packet to send.
-     * @param senderRole the role of the user that is trying to send a public message.
+     * @param sender the occupant data of the user that is trying to send a public message.
      * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
      * @throws ForbiddenException If a user of this role is not permitted to send private messages in this room.
      */
-    public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException, ForbiddenException {
+    public void sendPrivatePacket(Packet packet, MUCRole sender) throws NotFoundException, ForbiddenException {
 
         if (packet instanceof Message || ALLOWPM_BLOCKALL.getValue()){
             //If the packet is a message, check that the user has permissions to send
-            switch (senderRole.getRole()) { // intended fall-through
+            switch (sender.getRole()) { // intended fall-through
                 case none:
                     throw new ForbiddenException();
                 default:
@@ -1428,9 +1428,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // OF-2163: Prevent modifying the original stanza (that can be used by unrelated code, after this method returns) by making a defensive copy.
         final Packet stanza = packet.createCopy();
         if (canAnyoneDiscoverJID && stanza instanceof Message) {
-            addRealJidToMessage((Message)stanza, senderRole);
+            addRealJidToMessage((Message)stanza, sender);
         }
-        stanza.setFrom(senderRole.getRoleAddress());
+        stanza.setFrom(sender.getRoleAddress());
 
         // Sending the stanza will modify it. Make sure that the event listeners that are triggered after sending
         // the stanza don't get the 'real' address from the recipient.
@@ -1456,7 +1456,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             occupant.send(stanza); // Use the stanza copy to send data. The 'to' address of this object will be changed by sending it.
             if (stanza instanceof Message) {
                 // Use an unmodified copy of the stanza (with the original 'to' address) when invoking event listeners (OF-2163)
-                MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), senderRole.getUserAddress(), (Message) immutable);
+                MUCEventDispatcher.privateMessageRecieved(occupant.getUserAddress(), sender.getUserAddress(), (Message) immutable);
             }
         }
     }
@@ -1497,7 +1497,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param presence the presence to broadcast.
      * @param isJoinPresence If the presence is sent in the context of joining the room.
-     * @param sender The role of the entity that initiated the presence broadcast
+     * @param sender The occupant that initiated the presence broadcast
      */
     private CompletableFuture<Void> broadcastPresence( Presence presence, boolean isJoinPresence, @Nonnull MUCRole sender) {
         if (presence == null) {
@@ -1751,11 +1751,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Extended Stanza Addressing (XEP-0033) [16] element that notes the original
      * full JID of the sender by means of the "ofrom" address type
      */
-    public void addRealJidToMessage(Message message, MUCRole role) {
+    public void addRealJidToMessage(Message message, MUCRole sender) {
         Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
         Element address = addresses.addElement("address");
         address.addAttribute("type", "ofrom");
-        address.addAttribute("jid", role.getUserAddress().toBareJID());
+        address.addAttribute("jid", sender.getUserAddress().toBareJID());
         message.addExtension(new PacketExtension(addresses));
     }
 
@@ -1781,29 +1781,29 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin or
      *         if trying to ban an owner or an administrator.
      */
-    private List<Presence> changeOccupantAffiliation(MUCRole senderRole, JID jid, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole)
+    private List<Presence> changeOccupantAffiliation(MUCRole sender, JID jid, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole)
         throws NotAllowedException {
         List<Presence> presences = new ArrayList<>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
         JID bareJID = jid.asBareJID();
-        List<MUCRole> roles;
+        List<MUCRole> occupants;
         try {
-            roles = getOccupantsByBareJID(bareJID);
+            occupants = getOccupantsByBareJID(bareJID);
         } catch (UserNotFoundException e) {
             return presences;
         }
         // Collect all the updated presences of these roles
-        for (MUCRole role : roles) {
+        for (MUCRole occupant : occupants) {
 // TODO
-//            if (!isPrivilegedToChangeAffiliationAndRole(senderRole.getAffiliation(), senderRole.getRole(), role.getAffiliation(), role.getRole(), newAffiliation, newRole)) {
+//            if (!isPrivilegedToChangeAffiliationAndRole(sender.getAffiliation(), sender.getRole(), occupant.getAffiliation(), occupant.getRole(), newAffiliation, newRole)) {
 //                throw new NotAllowedException();
 //            }
             // Update the presence with the new affiliation and role
-            role.setAffiliation(newAffiliation);
-            role.setRole(newRole);
+            occupant.setAffiliation(newAffiliation);
+            occupant.setRole(newRole);
 
             // Prepare a new presence to be sent to all the room occupants
-            presences.add(role.getPresence());
+            presences.add(occupant.getPresence());
         }
         // Answer all the updated presences
         return presences;
@@ -1820,16 +1820,16 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     private Presence changeOccupantRole(JID jid, MUCRole.Role newRole) throws NotAllowedException {
         // Try looking the role in the bare JID list
-        MUCRole role = getOccupantByFullJID(jid);
+        MUCRole occupant = getOccupantByFullJID(jid);
 // TODO
 //            if (!isPrivilegedToChangeAffiliationAndRole(senderRole.getAffiliation(), senderRole.getRole(), role.getAffiliation(), role.getRole(), newAffiliation, newRole)) {
 //                throw new NotAllowedException();
 //            }
-        if (role != null) {
+        if (occupant != null) {
             // Update the presence with the new role
-            role.setRole(newRole);
+            occupant.setRole(newRole);
             // Prepare a new presence to be sent to all the room occupants
-            return role.getPresence();
+            return occupant.getPresence();
         }
         return null;
     }
@@ -1876,18 +1876,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Adds a new user to the list of owners.
      *
      * @param jid The JID of the user to add as owner (cannot be {@code null}).
-     * @param sendRole the role of the user that is trying to modify the owners list (cannot be {@code null}).
+     * @param actor the occupant data of the user that is trying to modify the owners list (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public List<Presence> addOwner(JID jid, MUCRole sendRole) throws ForbiddenException {
+    public List<Presence> addOwner(JID jid, MUCRole actor) throws ForbiddenException {
 
         final JID bareJID = jid.asBareJID();
 
         synchronized (this) {
             MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-            if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+            if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
                 throw new ForbiddenException();
             }
             // Check if user is already an owner (explicitly)
@@ -1927,18 +1927,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Adds a new user to the list of admins.
      *
      * @param jid The JID of the user to add as admin (cannot be {@code null}).
-     * @param sendRole The role of the user that is trying to modify the admins list (cannot be {@code null}).
+     * @param actor The occupant data of the user that is trying to modify the admins list (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addAdmin(JID jid, MUCRole sendRole) throws ForbiddenException,
+    public List<Presence> addAdmin(JID jid, MUCRole actor) throws ForbiddenException,
         ConflictException {
         final JID bareJID = jid.asBareJID();
         synchronized (this) {
             MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-            if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+            if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
                 throw new ForbiddenException();
             }
             // Check that the room always has an owner
@@ -1983,14 +1983,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param jid The JID of the user to add as a member (cannot be {@code null}).
      * @param nickname The reserved nickname of the member for the room or null if none.
-     * @param sendRole the role of the user that is trying to modify the members list (cannot be {@code null}).
+     * @param actor the occupant data of the user that is trying to modify the members list (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the members list.
      * @throws ConflictException If the desired room nickname is already reserved for the room or if
      *             the room was going to lose all its owners.
      */
-    public List<Presence> addMember(JID jid, String nickname, MUCRole sendRole)
+    public List<Presence> addMember(JID jid, String nickname, MUCRole actor)
         throws ForbiddenException, ConflictException {
         final JID bareJID = jid.asBareJID();
         synchronized (this) {
@@ -1998,15 +1998,15 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 MUCRole.Affiliation.member : MUCRole.Affiliation.none);
             if (isMembersOnly()) {
                 if (!canOccupantsInvite()) {
-                    if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
-                        && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+                    if (MUCRole.Affiliation.admin != actor.getAffiliation()
+                        && MUCRole.Affiliation.owner != actor.getAffiliation()) {
                         throw new ForbiddenException();
                     }
                 }
             }
             else {
-                if (MUCRole.Affiliation.admin != sendRole.getAffiliation()
-                    && MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
+                if (MUCRole.Affiliation.admin != actor.getAffiliation()
+                    && MUCRole.Affiliation.owner != actor.getAffiliation()) {
                     throw new ForbiddenException();
                 }
             }
@@ -2063,21 +2063,21 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param jid The JID of the user to add as an outcast (cannot be {@code null}).
      * @param reason an optional reason why the user was banned (can be {@code null}).
-     * @param senderRole The role of the user that initiated the ban (cannot be {@code null}).
+     * @param actor The occupant data of the user that initiated the ban (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws ForbiddenException If the user is not allowed to modify the outcast list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addOutcast(JID jid, String reason, MUCRole senderRole)
+    public List<Presence> addOutcast(JID jid, String reason, MUCRole actor)
         throws NotAllowedException, ForbiddenException, ConflictException {
         final JID bareJID = jid.asBareJID();
 
         synchronized (this) {
             MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-            if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
-                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+            if (MUCRole.Affiliation.admin != actor.getAffiliation()
+                && MUCRole.Affiliation.owner != actor.getAffiliation()) {
                 throw new ForbiddenException();
             }
             // Check that the room always has an owner
@@ -2112,7 +2112,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(senderRole, bareJID, reason);
+        return applyAffiliationChange(actor, bareJID, reason);
     }
 
     private boolean removeOutcast(JID bareJID) {
@@ -2123,20 +2123,20 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Removes the user from all the other affiliation list thus giving the user a NONE affiliation.
      *
      * @param jid The JID of the user to keep with a NONE affiliation (cannot be {@code null}).
-     * @param senderRole The role of the user that set the affiliation to none (cannot be {@code null}).
+     * @param actor The occupant data of the user that set the affiliation to none (cannot be {@code null}).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room or null if none was updated.
      * @throws ForbiddenException If the user is not allowed to modify the none list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addNone(JID jid, MUCRole senderRole) throws ForbiddenException, ConflictException {
+    public List<Presence> addNone(JID jid, MUCRole actor) throws ForbiddenException, ConflictException {
 
         final JID bareJID = jid.asBareJID();
         MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
         boolean jidWasAffiliated = false;
         synchronized (this) {
-            if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
-                && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+            if (MUCRole.Affiliation.admin != actor.getAffiliation()
+                && MUCRole.Affiliation.owner != actor.getAffiliation()) {
                 throw new ForbiddenException();
             }
             // Check that the room always has an owner
@@ -2165,7 +2165,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         if (jidWasAffiliated) {
             // apply the affiliation change, assigning a new affiliation
             // based on the group(s) of the affected user(s)
-            return applyAffiliationChange(senderRole, bareJID, null);
+            return applyAffiliationChange(actor, bareJID, null);
         } else {
             // no presence updates needed
             return Collections.emptyList();
@@ -2181,12 +2181,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * each user in the group is evaluated to determine what their new affiliations will
      * be. The returned presence updates will be broadcast to the occupants of the room.
      *
-     * @param senderRole Typically the room itself, or an owner/admin
+     * @param actor Typically the room itself, or an owner/admin
      * @param affiliationJID The JID for the user or group that has been changed
      * @param reason An optional reason to explain why a user was kicked from the room
      * @return List of presence updates to be delivered to the room's occupants
      */
-    private List<Presence> applyAffiliationChange(MUCRole senderRole, final JID affiliationJID, String reason) {
+    private List<Presence> applyAffiliationChange(MUCRole actor, final JID affiliationJID, String reason) {
 
         // Update the presence(s) for the new affiliation and inform all occupants
         List<JID> affectedOccupants = new ArrayList<>();
@@ -2249,7 +2249,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
             Log.info("New affiliation: " + newAffiliation);
             try {
-                List<Presence> thisOccupant = changeOccupantAffiliation(senderRole, occupantJID, newAffiliation, newRole);
+                List<Presence> thisOccupant = changeOccupantAffiliation(actor, occupantJID, newAffiliation, newRole);
                 if (kickMember) {
                     // If the room is members-only, remove the user from the room including a status
                     // code of 321 to indicate that the user was removed because of an affiliation change
@@ -2265,7 +2265,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
                         // This removes the kicked occupant from the room. The presenceUpdates returned by this method
                         // (that will be broadcast to all occupants by the caller) won't reach it.
-                        kickPresence(presence, senderRole.getUserAddress(), senderRole.getNickname());
+                        kickPresence(presence, actor.getUserAddress(), actor.getNickname());
                     }
                 }
                 updatedPresences.addAll(thisOccupant);
@@ -2305,16 +2305,16 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * availability in the room changes. This method should not be called to handle other presence related updates, such
      * as nickname changes.
      *
-     * @param occupantRole occupant that changed his presence in the room (cannot be {@code null}).
+     * @param occupant occupant that changed his presence in the room (cannot be {@code null}).
      * @param newPresence presence sent by the occupant (cannot be {@code null}).
      */
-    public void presenceUpdated(final MUCRole occupantRole, final Presence newPresence) {
-        final String occupantNickName = occupantRole.getNickname();
+    public void presenceUpdated(final MUCRole occupant, final Presence newPresence) {
+        final String occupantNickName = occupant.getNickname();
 
         try {
             List<MUCRole> occupants = getOccupantsByNickname(occupantNickName);
-            for (MUCRole occupant : occupants) {
-                occupant.setPresence(newPresence.createCopy());
+            for (MUCRole occ : occupants) {
+                occ.setPresence(newPresence.createCopy());
             }
         } catch (UserNotFoundException e) {
             Log.debug("Failed to update presence of room occupant. Occupant nickname: {}", occupantNickName, e);
@@ -2322,41 +2322,41 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
         // Get the new, updated presence for the occupant in the room. The presence reflects the occupant's updated
         // availability and their existing association.
-        final Presence updatedPresence = occupantRole.getPresence();
+        final Presence updatedPresence = occupant.getPresence();
 
         // Broadcast updated presence of occupant.
-        broadcastPresence(updatedPresence, false, occupantRole);
+        broadcastPresence(updatedPresence, false, occupant);
     }
 
     /**
      * An event callback fired whenever an occupant changes his nickname within the chatroom.
      *
-     * @param occupantRole occupant that changed his nickname in the room (cannot be {@code null}).
+     * @param occupant occupant that changed his nickname in the room (cannot be {@code null}).
      * @param newPresence presence sent by the occupant with the new nickname (cannot be {@code null}).
      * @param oldNick old nickname within the room (cannot be {@code null}).
      * @param newNick new nickname within the room (cannot be {@code null}).
      */
-    public void nicknameChanged(MUCRole occupantRole, Presence newPresence, String oldNick, String newNick)
+    public void nicknameChanged(MUCRole occupant, Presence newPresence, String oldNick, String newNick)
     {
         List<MUCRole> occupants;
         try {
             occupants = getOccupantsByNickname(oldNick);
         } catch (UserNotFoundException e) {
-            Log.debug("Unable to process nickname change from old '{}' to new '{}' for occupant '{}' as no occupant with the old nickname is found.", oldNick, newNick, occupantRole, e);
+            Log.debug("Unable to process nickname change from old '{}' to new '{}' for occupant '{}' as no occupant with the old nickname is found.", oldNick, newNick, occupant, e);
             return;
         }
 
-        for (MUCRole occupant : occupants) {
+        for (MUCRole occ : occupants) {
             // Update the role with the new info
-            occupant.setPresence(newPresence);
-            occupant.changeNickname(newNick);
+            occ.setPresence(newPresence);
+            occ.changeNickname(newNick);
 
             // Fire event that user changed his nickname
-            MUCEventDispatcher.nicknameChanged(getRole().getRoleAddress(), occupant.getUserAddress(), oldNick, newNick);
+            MUCEventDispatcher.nicknameChanged(getRole().getRoleAddress(), occ.getUserAddress(), oldNick, newNick);
         }
 
         // Broadcast new presence of occupant
-        broadcastPresence(occupantRole.getPresence(), false, occupantRole);
+        broadcastPresence(occupant.getPresence(), false, occupant);
     }
 
     /**
@@ -2367,21 +2367,21 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * The new subject will be added to the history of the room.
      *
      * @param packet the stanza used to change the room's subject (cannot be {@code null}).
-     * @param role the role of the user that is trying to change the subject (cannot be {@code null}).
+     * @param actor the occupant that is trying to change the subject (cannot be {@code null}).
      * @throws ForbiddenException If the user is not allowed to change the subject.
      */
-    public void changeSubject(Message packet, MUCRole role) throws ForbiddenException {
-        if ((canOccupantsChangeSubject() && role.getRole().compareTo(MUCRole.Role.visitor) < 0) ||
-            MUCRole.Role.moderator == role.getRole()) {
+    public void changeSubject(Message packet, MUCRole actor) throws ForbiddenException {
+        if ((canOccupantsChangeSubject() && actor.getRole().compareTo(MUCRole.Role.visitor) < 0) ||
+            MUCRole.Role.moderator == actor.getRole()) {
             // Set the new subject to the room
             subject = packet.getSubject();
             MUCPersistenceManager.updateRoomSubject(this);
             // Notify all the occupants that the subject has changed
-            packet.setFrom(role.getRoleAddress());
-            send(packet, role);
+            packet.setFrom(actor.getRoleAddress());
+            send(packet, actor);
 
             // Fire event signifying that the room's subject has changed.
-            MUCEventDispatcher.roomSubjectChanged(getJID(), role.getUserAddress(), subject);
+            MUCEventDispatcher.roomSubjectChanged(getJID(), actor.getUserAddress(), subject);
         }
         else {
             throw new ForbiddenException();
@@ -2416,25 +2416,25 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param to the JID of the user that is being invited.
      * @param reason the reason of the invitation or null if none.
-     * @param senderRole the role of the occupant that sent the invitation.
+     * @param sender the occupant data of the user that sent the invitation.
      * @param extensions the list of extensions sent with the original message invitation or null
      *        if none.
      * @throws ForbiddenException If the user is not allowed to send the invitation.
      * @throws CannotBeInvitedException (Optionally) If the user being invited does not have access to the room
      */
-    public void sendInvitation(JID to, String reason, MUCRole senderRole, List<Element> extensions)
+    public void sendInvitation(JID to, String reason, MUCRole sender, List<Element> extensions)
         throws ForbiddenException, CannotBeInvitedException {
         if (!isMembersOnly() || canOccupantsInvite()
-            || MUCRole.Affiliation.admin == senderRole.getAffiliation()
-            || MUCRole.Affiliation.owner == senderRole.getAffiliation()) {
+            || MUCRole.Affiliation.admin == sender.getAffiliation()
+            || MUCRole.Affiliation.owner == sender.getAffiliation()) {
             // If the room is not members-only OR if the room is members-only and anyone can send
             // invitations or the sender is an admin or an owner, then send the invitation
             Message message = new Message();
-            message.setFrom(role.getRoleAddress());
+            message.setFrom(selfOccupantData.getRoleAddress());
             message.setTo(to);
 
             if (mucService.getMUCDelegate() != null) {
-                switch(mucService.getMUCDelegate().sendingInvitation(this, to, senderRole.getUserAddress(), reason)) {
+                switch(mucService.getMUCDelegate().sendingInvitation(this, to, sender.getUserAddress(), reason)) {
                     case HANDLED_BY_DELEGATE:
                         //if the delegate is taking care of it, there's nothing for us to do
                         return;
@@ -2456,7 +2456,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
             Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
             // ChatUser will be null if the room itself (i.e. via admin console) made the request. In that case, use the room JID. See OF-2486.
-            final JID from = senderRole.getUserAddress() != null ? senderRole.getUserAddress() : getJID();
+            final JID from = sender.getUserAddress() != null ? sender.getUserAddress() : getJID();
             frag.addElement("invite").addAttribute("from", from.toBareJID());
             if (reason != null && reason.length() > 0) {
                 Element invite = frag.element("invite");
@@ -2471,7 +2471,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
             // Include the jabber:x:conference information for backward compatibility
             frag = message.addChildElement("x", "jabber:x:conference");
-            frag.addAttribute("jid", role.getRoleAddress().toBareJID());
+            frag.addAttribute("jid", selfOccupantData.getRoleAddress().toBareJID());
 
             // Send the message with the invitation
             XMPPServer.getInstance().getPacketRouter().route(message);
@@ -2505,7 +2505,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
 
         Message message = new Message();
-        message.setFrom(role.getRoleAddress());
+        message.setFrom(selfOccupantData.getRoleAddress());
         message.setTo(to);
         Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
         frag.addElement("decline").addAttribute("from", sender.toBareJID());
@@ -2583,26 +2583,28 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
     /**
      * Returns a collection with the current list of room moderators. The collection contains the
-     * MUCRole of the occupants with moderator role.
+     * data of the occupants with moderator role.
      *
      * @return a collection with the current list of moderators.
      */
     public Collection<MUCRole> getModerators() {
-        final List<MUCRole> roles = occupants.stream()
+        final List<MUCRole> filteredOccupants = occupants.stream()
             .filter(mucRole -> mucRole.getRole() == MUCRole.Role.moderator)
             .collect(Collectors.toList());
-        return Collections.unmodifiableList(roles);
+        return Collections.unmodifiableList(filteredOccupants);
     }
 
     /**
      * Returns a collection with the current list of room participants. The collection contains the
-     * MUCRole of the occupants with participant role.
+     * data of the occupants with participant role.
      *
      * @return a collection with the current list of moderators.
      */
     public Collection<MUCRole> getParticipants() {
-        final List<MUCRole> roles = occupants.stream().filter(mucRole -> mucRole.getRole() == MUCRole.Role.participant).collect(Collectors.toList());
-        return Collections.unmodifiableList(roles);
+        final List<MUCRole> filteredOccupants = occupants.stream()
+            .filter(mucRole -> mucRole.getRole() == MUCRole.Role.participant)
+            .collect(Collectors.toList());
+        return Collections.unmodifiableList(filteredOccupants);
     }
 
     /**
@@ -2610,14 +2612,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * occupants as well as granting/revoking voice from occupants.
      *
      * @param jid The full JID of the occupant to give moderator privileges (cannot be {@code null}).
-     * @param senderRole The role of the user that is granting moderator privileges to an occupant (cannot be {@code null}).
+     * @param actor The occupant data of the user that is granting moderator privileges to an occupant (cannot be {@code null}).
      * @return the updated presence of the occupant or {@code null} if the JID does not belong to
      *         an existing occupant.
      * @throws ForbiddenException If the user is not allowed to grant moderator privileges.
      */
-    public Presence addModerator(JID jid, MUCRole senderRole) throws ForbiddenException {
-        if (MUCRole.Affiliation.admin != senderRole.getAffiliation()
-            && MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+    public Presence addModerator(JID jid, MUCRole actor) throws ForbiddenException {
+        if (MUCRole.Affiliation.admin != actor.getAffiliation()
+            && MUCRole.Affiliation.owner != actor.getAffiliation()) {
             throw new ForbiddenException();
         }
         // Update the presence with the new role and inform all occupants
@@ -2636,14 +2638,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param jid The full JID of the occupant to give participant privileges (cannot be {@code null}).
      * @param reason The reason why participant privileges were given to the user or {@code null} if none.
-     * @param senderRole The role of the user that is granting participant privileges to an occupant (cannot be {@code null}).
+     * @param actor The occupant data of the user that is granting participant privileges to an occupant (cannot be {@code null}).
      * @return the updated presence of the occupant or {@code null} if the JID does not belong to an existing occupant.
      * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
      * @throws ForbiddenException If the user is not allowed to grant participant privileges.
      */
-    public Presence addParticipant(JID jid, String reason, MUCRole senderRole)
+    public Presence addParticipant(JID jid, String reason, MUCRole actor)
         throws NotAllowedException, ForbiddenException {
-        if (MUCRole.Role.moderator != senderRole.getRole()) {
+        if (MUCRole.Role.moderator != actor.getRole()) {
             throw new ForbiddenException();
         }
         // Update the presence with the new role and inform all occupants
@@ -2665,15 +2667,15 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * to the room.
      *
      * @param jid the full JID of the occupant to change to visitor (cannot be {@code null}).
-     * @param senderRole the role of the user that is changing the role to visitor (cannot be {@code null}).
+     * @param actor the occupant data of the user that is changing the role to visitor (cannot be {@code null}).
      * @return the updated presence of the occupant or {@code null} if the JID does not belong to
      *         an existing occupant.
      * @throws NotAllowedException if trying to change the moderator role to an owner or an admin.
      * @throws ForbiddenException if the user is not a moderator.
      */
-    public Presence addVisitor(JID jid, MUCRole senderRole) throws NotAllowedException,
+    public Presence addVisitor(JID jid, MUCRole actor) throws NotAllowedException,
         ForbiddenException {
-        if (MUCRole.Role.moderator != senderRole.getRole()) {
+        if (MUCRole.Role.moderator != actor.getRole()) {
             throw new ForbiddenException();
         }
         return changeOccupantRole(jid, MUCRole.Role.visitor);
@@ -2695,7 +2697,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // Update the presence with the new role and inform all occupants
         Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.none);
 
-        // Determine the role of the actor that initiates the kick.
+        // Determine the occupant data of the actor that initiates the kick.
         MUCRole sender;
         if ( actorJID == null ) {
             sender = getRole(); // originates from the room itself (eg: through admin console changes).
@@ -2742,10 +2744,10 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
         // Get the role(s) to kick
-        final List<MUCRole> kickedRoles;
+        final List<MUCRole> kickedOccupants;
         try {
-            kickedRoles = getOccupantsByNickname(kickPresence.getFrom().getResource());
-            for (MUCRole kickedRole : kickedRoles) {
+            kickedOccupants = getOccupantsByNickname(kickPresence.getFrom().getResource());
+            for (MUCRole kickedOccupant : kickedOccupants) {
                 // Add the actor's JID that kicked this user from the room
                 if (actorJID!=null && actorJID.toString().length() > 0) {
                     Element frag = kickPresence.getChildElement(
@@ -2762,10 +2764,10 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 final Presence kickSelfPresence = kickPresence.createCopy();
                 Element fragKickSelfPresence = kickSelfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 fragKickSelfPresence.addElement("status").addAttribute("code", "110");
-                kickedRole.send(kickSelfPresence);
+                kickedOccupant.send(kickSelfPresence);
 
                 // Remove the occupant from the room's occupants lists
-                removeOccupantRole(kickedRole);
+                removeOccupantRole(kickedOccupant);
             }
         } catch (UserNotFoundException e) {
             Log.debug("Unable to kick '{}' from room '{}' as there's no occupant with that nickname.", kickPresence.getFrom().getResource(), getJID(), e);
@@ -3310,11 +3312,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Locks the room so that users cannot join the room. Only the owner of the room can lock/unlock
      * the room.
      *
-     * @param senderRole the role of the occupant that locked the room.
+     * @param actor the occupant data of the user that locked the room.
      * @throws ForbiddenException If the user is not an owner of the room.
      */
-    public void lock(MUCRole senderRole) throws ForbiddenException {
-        if (MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+    public void lock(MUCRole actor) throws ForbiddenException {
+        if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
             throw new ForbiddenException();
         }
         if (isLocked()) {
@@ -3329,11 +3331,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * the owner of the room can unlock it by sending the configuration form to the Multi-User Chat
      * service.
      *
-     * @param senderRole the role of the occupant that unlocked the room.
+     * @param actor the occupant data of the user that unlocked the room.
      * @throws ForbiddenException If the user is not an owner of the room.
      */
-    public void unlock(MUCRole senderRole) throws ForbiddenException {
-        if (MUCRole.Affiliation.owner != senderRole.getAffiliation()) {
+    public void unlock(MUCRole actor) throws ForbiddenException {
+        if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
             throw new ForbiddenException();
         }
         if (!isLocked()) {
@@ -3381,19 +3383,19 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Adds a list of users to the list of admins.
      *
      * @param newAdmins the list of bare JIDs of the users to add to the list of existing admins (cannot be {@code null}).
-     * @param senderRole the role of the user that is trying to modify the admins list (cannot be {@code null}).
+     * @param actor the occupant data of the user that is trying to modify the admins list (cannot be {@code null}).
      * @return the list of updated presences of all the clients resources that the clients used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addAdmins(List<JID> newAdmins, MUCRole senderRole)
+    public List<Presence> addAdmins(List<JID> newAdmins, MUCRole actor)
         throws ForbiddenException, ConflictException {
         List<Presence> answer = new ArrayList<>(newAdmins.size());
         for (JID newAdmin : newAdmins) {
             final JID bareJID = newAdmin.asBareJID();
             if (!admins.contains(bareJID)) {
-                answer.addAll(addAdmin(bareJID, senderRole));
+                answer.addAll(addAdmin(bareJID, actor));
             }
         }
         return answer;
@@ -3403,18 +3405,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Adds a list of users to the list of owners.
      *
      * @param newOwners the list of bare JIDs of the users to add to the list of existing owners (cannot be {@code null}).
-     * @param senderRole the role of the user that is trying to modify the owners list (cannot be {@code null}).
+     * @param actor the occupant data of the user that is trying to modify the owners list (cannot be {@code null}).
      * @return the list of updated presences of all the clients resources that the clients used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public List<Presence> addOwners(List<JID> newOwners, MUCRole senderRole)
+    public List<Presence> addOwners(List<JID> newOwners, MUCRole actor)
         throws ForbiddenException {
         List<Presence> answer = new ArrayList<>(newOwners.size());
         for (JID newOwner : newOwners) {
             final JID bareJID = newOwner.asBareJID();
             if (!owners.contains(newOwner)) {
-                answer.addAll(addOwner(bareJID, senderRole));
+                answer.addAll(addOwner(bareJID, actor));
             }
         }
         return answer;
@@ -3472,7 +3474,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         size += CacheSizes.sizeOfObject();      // overhead of object
         size += CacheSizes.sizeOfCollection(occupants);
         size += CacheSizes.sizeOfString(name);
-        size += CacheSizes.sizeOfAnything(role);
+        size += CacheSizes.sizeOfAnything(selfOccupantData);
         size += CacheSizes.sizeOfLong();        // startTime
         size += CacheSizes.sizeOfLong();        // endTime
         size += CacheSizes.sizeOfBoolean();     // isDestroyed
@@ -3576,7 +3578,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         ExternalizableUtil.getInstance().writeBoolean(out, savedToDB);
         ExternalizableUtil.getInstance().writeSafeUTF(out, mucService.getServiceName());
         ExternalizableUtil.getInstance().writeSerializable(out, roomHistory);
-        ExternalizableUtil.getInstance().writeSerializable(out, role);
+        ExternalizableUtil.getInstance().writeSerializable(out, selfOccupantData);
     }
 
     @Override
@@ -3645,7 +3647,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         this.fmucHandler = new FMUCHandler(this);
 
         roomHistory = (MUCRoomHistory) ExternalizableUtil.getInstance().readSerializable(in);
-        role = (MUCRole) ExternalizableUtil.getInstance().readSerializable(in);
+        selfOccupantData = (MUCRole) ExternalizableUtil.getInstance().readSerializable(in);
     }
 
     public void updateConfiguration(MUCRoom otherRoom) {

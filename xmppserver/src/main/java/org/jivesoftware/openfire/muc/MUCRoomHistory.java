@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,9 +102,9 @@ public final class MUCRoomHistory implements Externalizable {
                 if (getRoom().canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
                     try {
-                        List<MUCRole> role = getRoom().getOccupantsByNickname(message.getFrom().getResource());
-                        if (!role.isEmpty()) {
-                            delayElement.addAttribute("from", role.get(0).getUserAddress().toString());
+                        List<MUCRole> occupants = getRoom().getOccupantsByNickname(message.getFrom().getResource());
+                        if (!occupants.isEmpty()) {
+                            delayElement.addAttribute("from", occupants.get(0).getUserAddress().toString());
                         }
                     }
                     catch (UserNotFoundException e) {
@@ -126,9 +126,9 @@ public final class MUCRoomHistory implements Externalizable {
         if (getRoom().canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
             try {
-                List<MUCRole> role = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
-                if (!role.isEmpty()) {
-                    delayInformation.addAttribute("from", role.get(0).getUserAddress().toString());
+                List<MUCRole> occupants = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
+                if (!occupants.isEmpty()) {
+                    delayInformation.addAttribute("from", occupants.get(0).getUserAddress().toString());
                 }
             }
             catch (UserNotFoundException e) {

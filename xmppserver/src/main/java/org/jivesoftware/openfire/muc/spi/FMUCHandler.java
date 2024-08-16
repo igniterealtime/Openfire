@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -441,7 +441,7 @@ public class FMUCHandler
      * When FMUC is not active, this method will return a completed Future instance.
      *
      * @param stanza the stanza to be propagated through FMUC.
-     * @param sender the role of the sender that is the original author of the stanza.
+     * @param sender the occupant data of the sender that is the original author of the stanza.
      * @return A future object that completes when the stanza can be propagated locally.
      */
     public synchronized CompletableFuture<?> propagate( @Nonnull Packet stanza, @Nonnull MUCRole sender )
@@ -485,22 +485,22 @@ public class FMUCHandler
      *
      * If the local room is not configured to federate with another room, an invocation of this method will do nothing.
      *
-     * @param mucRole The role in which the user is joining the room.
+     * @param occupantData The occupant data in which the user is joining the room.
      * @return A future object that completes when the stanza can be propagated locally.
      */
-    public synchronized Future<?> join( @Nonnull MUCRole mucRole )
+    public synchronized Future<?> join( @Nonnull MUCRole occupantData )
     {
-        return join( mucRole, true, true );
+        return join( occupantData, true, true );
     }
 
-    protected synchronized Future<?> join(@Nonnull MUCRole mucRole, final boolean includeInbound, final boolean includeOutbound )
+    protected synchronized Future<?> join(@Nonnull MUCRole occupantData, final boolean includeInbound, final boolean includeOutbound )
     {
         if ( !(room.isFmucEnabled() && FMUC_ENABLED.getValue()) ) {
             Log.debug( "(room: '{}'): FMUC disabled, skipping FMUC join.", room.getJID() );
             return CompletableFuture.completedFuture(null);
         }
 
-        Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
+        Log.debug( "(room: '{}'): user '{}' (as '{}') attempts to join.", room.getJID(), occupantData.getUserAddress(), occupantData.getRoleAddress() );
 
         final CompletableFuture<?> propagateToOutbound;
         if ( !includeOutbound ) {
@@ -513,10 +513,10 @@ public class FMUCHandler
                     if ( outboundJoinProgress == null ) {
                         Log.trace("(room: '{}'): FMUC configuration contains configuration for a remote MUC that needs to be joined: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
                         // When a new federation is established, there's no need to explicitly propagate the join too - that's implicitly done as part of the initialization of the new federation.
-                        propagateToOutbound = initiateFederationOutbound( mucRole );
+                        propagateToOutbound = initiateFederationOutbound( occupantData );
                     } else {
                         Log.debug("(room: '{}'): Received a FMUC 'join' request for a remote MUC that we're already in process of joining: {}", room.getJID(), outboundJoinConfiguration.getPeer() );
-                        return outboundJoinProgress.addToQueue( generateJoinStanza( mucRole ), mucRole ); // queue a new join stanza to be sent after the ongoing join completes.
+                        return outboundJoinProgress.addToQueue( generateJoinStanza( occupantData ), occupantData ); // queue a new join stanza to be sent after the ongoing join completes.
                     }
                 }
                 else
@@ -524,7 +524,7 @@ public class FMUCHandler
                     // TODO Doesn't this imply some kind of problem - why would we be joining a MUC that we've already joined?
                     Log.warn("(room: '{}'): FMUC configuration contains configuration for a remote MUC: {}. Federation with this MUC has already been established.", room.getJID(), outboundJoin.getPeer() );
                     // propagate to existing the existing joined FMUC node (be blocking if master/slave mode!)
-                    propagateToOutbound = propagateOutbound( generateJoinStanza( mucRole ), mucRole );
+                    propagateToOutbound = propagateOutbound( generateJoinStanza( occupantData ), occupantData );
                 }
             } else {
                 // Nothing to do!
@@ -544,7 +544,7 @@ public class FMUCHandler
             Log.trace( "(room: '{}'): skip propagating to inbound, as instructed.", room.getJID() );
             propagateToInbound = CompletableFuture.completedFuture(null);
         } else {
-            propagateToInbound = propagateInbound( generateJoinStanza( mucRole ), mucRole );
+            propagateToInbound = propagateInbound( generateJoinStanza( occupantData ), occupantData );
         }
 
         // Return a Future that completes when all of the Futures constructed above complete.
@@ -555,16 +555,16 @@ public class FMUCHandler
      * Attempt to establish a federation with a remote MUC room. In this relation 'our' room will take the role of
      * 'joining FMUC node'.
      *
-     * @param mucRole Occupant that joined the room, triggering the federation to be initiated.
+     * @param occupantData Occupant that joined the room, triggering the federation to be initiated.
      * @return A future object that completes when the join can be propagated locally.
      */
-    private CompletableFuture<?> initiateFederationOutbound( @Nonnull MUCRole mucRole )
+    private CompletableFuture<?> initiateFederationOutbound( @Nonnull MUCRole occupantData )
     {
-        Log.debug("(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
+        Log.debug("(room: '{}'): Attempting to establish federation by joining '{}', triggered by user '{}' (as '{}').", room.getJID(), outboundJoinConfiguration.getPeer(), occupantData.getUserAddress(), occupantData.getRoleAddress() );
 
-        final Presence joinStanza = enrichWithFMUCElement( generateJoinStanza( mucRole ), mucRole );
-        joinStanza.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), mucRole.getNickname() ) );
-        joinStanza.setTo( new JID(outboundJoinConfiguration.getPeer().getNode(), outboundJoinConfiguration.getPeer().getDomain(), mucRole.getNickname() ) );
+        final Presence joinStanza = enrichWithFMUCElement( generateJoinStanza( occupantData ), occupantData );
+        joinStanza.setFrom( new JID(room.getName(), room.getMUCService().getServiceDomain(), occupantData.getNickname() ) );
+        joinStanza.setTo( new JID(outboundJoinConfiguration.getPeer().getNode(), outboundJoinConfiguration.getPeer().getDomain(), occupantData.getNickname() ) );
 
         Log.trace("(room: '{}'): Registering a callback to be used when the federation request to '{}' has completed.", room.getJID(), outboundJoinConfiguration.getPeer() );
         final CompletableFuture<List<Packet>> result = new CompletableFuture<>();
@@ -766,23 +766,23 @@ public class FMUCHandler
     /**
      * Creates a stanza that represents a room 'join' in a MUC room.
      *
-     * @param mucRole Representation of the (local) user that caused the join to be initiated.
+     * @param occupantData Representation of the (local) user that caused the join to be initiated.
      */
     // TODO this does not have any FMUC specifics. Must this exist in this class?
-    private Presence generateJoinStanza( @Nonnull MUCRole mucRole )
+    private Presence generateJoinStanza( @Nonnull MUCRole occupantData )
     {
-        Log.debug( "(room: '{}'): Generating a stanza that represents the joining of local user '{}' (as '{}').", room.getJID(), mucRole.getUserAddress(), mucRole.getRoleAddress() );
+        Log.debug( "(room: '{}'): Generating a stanza that represents the joining of local user '{}' (as '{}').", room.getJID(), occupantData.getUserAddress(), occupantData.getRoleAddress() );
         final Presence joinStanza = new Presence();
         joinStanza.getElement().addElement(QName.get("x", "http://jabber.org/protocol/muc"));
         final Element mucUser = joinStanza.getElement().addElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
         final Element mucUserItem = mucUser.addElement("item");
-        mucUserItem.addAttribute("affiliation", mucRole.getAffiliation().toString());
-        mucUserItem.addAttribute("role", mucRole.getRole().toString());
+        mucUserItem.addAttribute("affiliation", occupantData.getAffiliation().toString());
+        mucUserItem.addAttribute("role", occupantData.getRole().toString());
 
         // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
         if (!room.canAnyoneDiscoverJID()) {
-            if (MUCRole.Role.moderator == mucRole.getRole()) {
-                mucUserItem.addAttribute("jid", mucRole.getUserAddress().toString());
+            if (MUCRole.Role.moderator == occupantData.getRole()) {
+                mucUserItem.addAttribute("jid", occupantData.getUserAddress().toString());
             }
             else {
                 mucUserItem.addAttribute("jid", null);
@@ -910,7 +910,7 @@ public class FMUCHandler
 
         final JID remoteMUC = stanza.getFrom().asBareJID();
         final JID author = new JID( fmuc.attributeValue("from") ); // TODO input validation.
-        final MUCRole senderRole = room.getOccupantByFullJID( author );
+        final MUCRole senderOccupantData = room.getOccupantByFullJID( author );
         Log.trace("(room: '{}'): Processing stanza from remote FMUC peer '{}' as regular room traffic. Sender of stanza: {}", room.getJID(), remoteMUC, author );
 
         // Distribute. Note that this will distribute both to the local node, as well as to all FMUC nodes in the the FMUC set.
@@ -961,11 +961,11 @@ public class FMUCHandler
 
             // The 'stripped' stanza is going to be distributed locally. Act as if it originates from a local user, instead of the remote FMUC one.
             final JID from;
-            from = senderRole.getRoleAddress();
+            from = senderOccupantData.getRoleAddress();
             stripped.setFrom( from );
             stripped.setTo( room.getJID() );
 
-            room.send( stripped, senderRole );
+            room.send( stripped, senderOccupantData );
         }
     }
 
@@ -1001,8 +1001,8 @@ public class FMUCHandler
             }
 
             // Use a room role that can be used to identify the remote fmuc node (to prevent data from being echo'd back)
-            final MUCRole roomRole = MUCRole.createRoomRole(room);
-            roomRole.setReportedFmucAddress( outboundJoin.getPeer() );
+            final MUCRole occupantData = MUCRole.createRoomRole(room);
+            occupantData.setReportedFmucAddress( outboundJoin.getPeer() );
 
             // Use received data to augment state of the local room.
             for ( final Packet response : outboundJoinProgress.getResponses() ) {
@@ -1016,7 +1016,7 @@ public class FMUCHandler
                     } else if ( response instanceof Message && response.getElement().element("subject") != null) {
                         // When the subject is received, all historic messages must have already been received.
                         addRemoteHistoryToRoom(history);
-                        applyRemoteSubjectToRoom((Message) response, roomRole);
+                        applyRemoteSubjectToRoom((Message) response, occupantData);
                     }
                 } catch ( Exception e ) {
                     Log.error( "(room: '{}'): An unexpected exception occurred while processing FMUC join response stanzas.", room.getJID(), e );
@@ -1037,12 +1037,12 @@ public class FMUCHandler
         }
     }
 
-    private void applyRemoteSubjectToRoom( @Nonnull final Message message, @Nonnull final MUCRole mucRole )
+    private void applyRemoteSubjectToRoom( @Nonnull final Message message, @Nonnull final MUCRole occupantData )
     {
         try
         {
-            Log.trace("(room: '{}'): Received subject from joined FMUC node '{}'. Applying it locally.", room.getJID(), mucRole.getReportedFmucAddress() );
-            room.changeSubject(createCopyWithoutFMUC(message), mucRole);
+            Log.trace("(room: '{}'): Received subject from joined FMUC node '{}'. Applying it locally.", room.getJID(), occupantData.getReportedFmucAddress() );
+            room.changeSubject(createCopyWithoutFMUC(message), occupantData);
         }
         catch ( ForbiddenException e ) {
             // This should not be possible, as we're using a role above that should bypass the auth checks that throw this exception!
@@ -1168,9 +1168,9 @@ public class FMUCHandler
 
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCRole joinRole = new MUCRole(room, nickname, role, affiliation, userJID, createCopyWithoutFMUC(presence));
+        final MUCRole joinOccupantData = new MUCRole(room, nickname, role, affiliation, userJID, createCopyWithoutFMUC(presence));
 
-        joinRole.setReportedFmucAddress( userJID );
+        joinOccupantData.setReportedFmucAddress( userJID );
 
         final boolean clientOnlyJoin = room.alreadyJoinedWithThisNick( userJID, nickname );
         if (clientOnlyJoin)
@@ -1180,11 +1180,11 @@ public class FMUCHandler
         else
         {
             // Update the (local) room state to now include this occupant.
-            room.addOccupantRole(joinRole);
+            room.addOccupantRole(joinOccupantData);
 
             // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
             // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).
-            room.sendInitialPresenceToExistingOccupants(joinRole);
+            room.sendInitialPresenceToExistingOccupants(joinOccupantData);
         }
     }
 
@@ -1203,18 +1203,18 @@ public class FMUCHandler
             try
             {
                 Log.trace("(room: '{}'): Removing occupant '{}' that was joined through a (now presumably disconnected) remote node.", room.getJID(), removedRemoteOccupant);
-                final MUCRole role = room.getOccupantByFullJID( removedRemoteOccupant );
-                if ( role == null ) {
+                final MUCRole occupantData = room.getOccupantByFullJID( removedRemoteOccupant );
+                if ( occupantData == null ) {
                     Log.warn("(room: '{}'): Unable to remove '{}' as it currently is not registered as an occupant of this room.", room.getJID(), removedRemoteOccupant);
                     continue;
                 }
 
                 final Presence leave = new Presence();
                 leave.setType(Presence.Type.unavailable);
-                leave.setTo(role.getRoleAddress());
-                leave.setFrom(role.getUserAddress());
+                leave.setTo(occupantData.getRoleAddress());
+                leave.setFrom(occupantData.getUserAddress());
                 leave.setStatus("FMUC node disconnect");
-                final Presence enriched = enrichWithFMUCElement( leave, role.getReportedFmucAddress() );
+                final Presence enriched = enrichWithFMUCElement( leave, occupantData.getReportedFmucAddress() );
 
                 makeRemoteOccupantLeaveRoom( enriched );
             }
@@ -1246,15 +1246,15 @@ public class FMUCHandler
         }
         final JID userJID = getFMUCFromJID( presence );
 
-        final MUCRole leaveRole = room.getOccupantByFullJID( userJID );
-        leaveRole.setPresence( createCopyWithoutFMUC(presence) ); // update presence to reflect the 'leave' - this is used later to broadcast to other occupants.
+        final MUCRole leaveOccupantData = room.getOccupantByFullJID( userJID );
+        leaveOccupantData.setPresence( createCopyWithoutFMUC(presence) ); // update presence to reflect the 'leave' - this is used later to broadcast to other occupants.
 
         // Send presence to inform all occupants of the room that the user has left.
-        room.sendLeavePresenceToExistingOccupants( leaveRole )
+        room.sendLeavePresenceToExistingOccupants( leaveOccupantData )
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
             .thenRun( () -> {
                 // Update the (local) room state to no longer include this occupant.
-                room.removeOccupantRole(leaveRole);
+                room.removeOccupantRole(leaveOccupantData);
             });
     }
 

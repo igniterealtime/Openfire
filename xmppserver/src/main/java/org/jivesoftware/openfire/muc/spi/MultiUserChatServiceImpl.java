@@ -919,7 +919,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         catch ( NotFoundException e )
         {
             Log.debug("Rejecting private message from occupant '{}' to room '{}'. User addressing a non-existent recipient.", packet.getFrom(), room.getName(), e);
-            sendErrorPacket(packet, PacketError.Condition.recipient_unavailable, "The intended recipient of your private message is not available.");
+            sendErrorPacket(packet, PacketError.Condition.item_not_found, "The intended recipient of your private message is not available.");
         }
     }
 

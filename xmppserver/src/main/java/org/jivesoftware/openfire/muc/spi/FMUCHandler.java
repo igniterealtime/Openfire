@@ -1254,7 +1254,7 @@ public class FMUCHandler
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil.
             .thenRun( () -> {
                 // Update the (local) room state to no longer include this occupant.
-                room.removeOccupantRole(leaveOccupantData);
+                room.removeOccupant(leaveOccupantData);
             });
     }
 

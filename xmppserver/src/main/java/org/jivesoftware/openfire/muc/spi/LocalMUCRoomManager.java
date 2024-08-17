@@ -502,7 +502,7 @@ public class LocalMUCRoomManager
                             Log.trace("Trying to remove occupant '{}' but no role for that occupant exists in the room. Data inconsistency?", occupantToRemove.getRealJID());
                             continue;
                         }
-                        room.removeOccupantRole(occupant);
+                        room.removeOccupant(occupant);
                     }
                 }
 

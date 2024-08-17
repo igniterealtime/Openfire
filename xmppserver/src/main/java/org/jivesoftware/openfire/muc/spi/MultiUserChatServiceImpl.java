@@ -1632,7 +1632,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     occupant.send( presence );
 
                     // Let all other cluster nodes know!
-                    room.removeOccupantRole(occupant);
+                    room.removeOccupant(occupant);
                 }
                 catch ( final Exception e )
                 {
@@ -3371,7 +3371,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 // at all if federated users are in play. Hence the null check here: if the occupant is
                 // no longer in the room, we don't need to remove it.
                 if (occupantData != null) {
-                    room.removeOccupantRole(occupantData);
+                    room.removeOccupant(occupantData);
                     this.syncChatRoom(room);
                     Log.debug("Removed occupant role {} from room {}.", occupantData, room.getJID());
                 } else {

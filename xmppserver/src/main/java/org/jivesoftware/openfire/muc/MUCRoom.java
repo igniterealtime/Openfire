@@ -1228,7 +1228,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             // DO NOT use 'thenRunAsync', as that will cause issues with clustering (it uses an executor that overrides the contextClassLoader, causing ClassNotFound exceptions in ClusterExternalizableUtil).
             .thenRun( () -> {
                 // Remove occupant from room and destroy room if empty and not persistent
-                removeOccupantRole(leavingOccupant);
+                removeOccupant(leavingOccupant);
 
                 // TODO Implement this: If the room owner becomes unavailable for any reason before
                 // submitting the form (e.g., a lost connection), the service will receive a presence
@@ -1271,12 +1271,27 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Removes the occupant from all the internal occupants collections. The occupant data will
      * also be removed from the user's occupant-data collection.
      *
+     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
+     * release of Openfire, as the type of the returned class will be modified in that release.
+     *
      * @param occupant the occupant to remove.
      */
-    public void removeOccupantRole(@Nonnull final MUCRole occupant) {
+    public void removeOccupant(@Nonnull final MUCRole occupant) {
         Log.trace( "Remove occupant from room {}: {}", this.getJID(), occupant );
         occupants.remove(occupant);
         MUCEventDispatcher.occupantLeft(occupant.getOccupantJID(), occupant.getUserAddress(), occupant.getNickname());
+    }
+
+    /**
+     * Removes the occupant from all the internal occupants collections. The occupant data will
+     * also be removed from the user's occupant-data collection.
+     *
+     * @param occupant the occupant to remove.
+     * @deprecated replaced by {@link #removeOccupant(MUCRole)}
+     */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
+    public void removeOccupantRole(@Nonnull final MUCRole occupant) {
+        removeOccupant(occupant);
     }
 
     /**
@@ -1328,7 +1343,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
                 // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
                 removedOccupant.send(presence);
-                removeOccupantRole(removedOccupant);
+                removeOccupant(removedOccupant);
             }
             catch (Exception e) {
                 Log.error("An exception occurred while tyring to inform occupant '{}' that room '{}' was destroyed.", removedOccupant, name, e);
@@ -2781,7 +2796,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 kickedOccupant.send(kickSelfPresence);
 
                 // Remove the occupant from the room's occupants lists
-                removeOccupantRole(kickedOccupant);
+                removeOccupant(kickedOccupant);
             }
         } catch (UserNotFoundException e) {
             Log.debug("Unable to kick '{}' from room '{}' as there's no occupant with that nickname.", kickPresence.getFrom().getResource(), getJID(), e);

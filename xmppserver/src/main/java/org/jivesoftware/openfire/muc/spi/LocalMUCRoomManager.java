@@ -369,7 +369,7 @@ public class LocalMUCRoomManager
                             }
 
                             if (!occupantWasKicked) {
-                                roomInCluster.addOccupantRole(localOccupant);
+                                roomInCluster.addOccupant(localOccupant);
                             } else {
                                 occupantsToRetain.remove(localOccupantToRestore);
                             }

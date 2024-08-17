@@ -1180,7 +1180,7 @@ public class FMUCHandler
         else
         {
             // Update the (local) room state to now include this occupant.
-            room.addOccupantRole(joinOccupantData);
+            room.addOccupant(joinOccupantData);
 
             // Send out presence stanzas that signal all other occupants that this occupant has now joined. Unlike a 'regular' join we MUST
             // _not_ sent back presence for all other occupants (that has already been covered by the FMUC protocol implementation).

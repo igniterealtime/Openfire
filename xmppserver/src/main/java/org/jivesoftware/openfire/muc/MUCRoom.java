@@ -790,7 +790,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                     Log.error( "An exception occurred while processing FMUC join for user '{}' in room '{}'", joiningOccupant.getUserAddress(), this.getJID(), e);
                 }
 
-                addOccupantRole(joiningOccupant);
+                addOccupant(joiningOccupant);
 
             } else {
                 // Grab the existing one.
@@ -1158,9 +1158,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     /**
      * Adds an occupant to all the internal occupants collections.
      *
+     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
+     * release of Openfire, as the type of the returned class will be modified in that release.
+     *
      * @param occupant the occupant to add.
      */
-    public void addOccupantRole(@Nonnull final MUCRole occupant)
+    public void addOccupant(@Nonnull final MUCRole occupant)
     {
         if (occupants.contains(occupant)) {
             // Ignore a data consistency problem. This indicates that a bug exists somewhere, so log it verbosely.
@@ -1173,6 +1176,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
         // Fire event that occupant joined the room.
         MUCEventDispatcher.occupantJoined(occupant.getOccupantJID().asBareJID(), occupant.getUserAddress(), occupant.getNickname());
+    }
+
+    /**
+     * Adds an occupant to all the internal occupants collections.
+     *
+     * @param occupant the occupant to add.
+     * @deprecated Replaced by {@link #addOccupant(MUCRole)}
+     */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
+    public void addOccupantRole(@Nonnull final MUCRole occupant)
+    {
+        addOccupant(occupant);
     }
 
     /**

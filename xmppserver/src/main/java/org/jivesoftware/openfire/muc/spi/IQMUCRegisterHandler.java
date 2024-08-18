@@ -81,7 +81,7 @@ class IQMUCRegisterHandler {
             }
             else if (!room.isRegistrationEnabled() ||
                      (packet.getFrom() != null &&
-                      MUCRole.Affiliation.outcast == room.getAffiliation(packet.getFrom().asBareJID()))) {
+                      Affiliation.outcast == room.getAffiliation(packet.getFrom().asBareJID()))) {
                 // The room does not accept users to register or
                 // the user is an outcast and is not allowed to register
                 reply = IQ.createResultIQ(packet);

@@ -84,10 +84,10 @@ public class IQOwnerHandler {
      */
     public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCRole actorOccupant) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
     {
-        final MUCRole.Affiliation actorAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
+        final Affiliation actorAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
 
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
-        if (MUCRole.Affiliation.owner != actorAffiliation) {
+        if (Affiliation.owner != actorAffiliation) {
             throw new ForbiddenException();
         }
 
@@ -149,7 +149,7 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    private void handleDataFormElement(@Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final JID actorJid, @Nonnull final Element formElement)
+    private void handleDataFormElement(@Nonnull final Affiliation actorAffiliation, @Nullable final JID actorJid, @Nonnull final Element formElement)
             throws ForbiddenException, ConflictException, NotAcceptableException {
         DataForm completedForm = new DataForm(formElement);
 
@@ -195,7 +195,7 @@ public class IQOwnerHandler {
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    private void processConfigurationForm(@Nonnull final DataForm completedForm, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final JID actorJid)
+    private void processConfigurationForm(@Nonnull final DataForm completedForm, @Nonnull final Affiliation actorAffiliation, @Nullable final JID actorJid)
             throws ForbiddenException, ConflictException, NotAcceptableException
     {
         List<String> values;
@@ -268,7 +268,7 @@ public class IQOwnerHandler {
         field = completedForm.getField("muc#roomconfig_presencebroadcast");
         if (field != null) {
             values = new ArrayList<>(field.getValues());
-            room.setRolesToBroadcastPresence(values.stream().map(MUCRole.Role::valueOf).collect(Collectors.toList()));
+            room.setRolesToBroadcastPresence(values.stream().map(Role::valueOf).collect(Collectors.toList()));
         }
 
         field = completedForm.getField("muc#roomconfig_publicroom");
@@ -617,7 +617,7 @@ public class IQOwnerHandler {
 
             field = configurationForm.getField("muc#roomconfig_presencebroadcast");
             field.clearValues();
-            for (MUCRole.Role roleToBroadcast : room.getRolesToBroadcastPresence()) {
+            for (Role roleToBroadcast : room.getRolesToBroadcastPresence()) {
                 field.addValue(roleToBroadcast.toString());
             }
 

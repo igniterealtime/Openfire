@@ -810,7 +810,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // An occupant is trying to send a private message, send public message, invite someone to the room or reject an invitation.
         final Message.Type type = packet.getType();
         String nickname = packet.getTo().getResource();
-        if ( nickname == null || nickname.trim().length() == 0 )
+        if ( nickname == null || nickname.trim().isEmpty())
         {
             nickname = null;
         }
@@ -928,6 +928,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             Log.debug("Rejecting private message from occupant '{}' to room '{}'. User addressing a non-existent recipient.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.item_not_found, "The intended recipient of your private message is not available.");
         }
+        catch ( NotAcceptableException e )
+        {
+            Log.debug("Rejecting private message from user '{}' to room '{}'. User is not in that room.", packet.getFrom(), room.getName(), e);
+            sendErrorPacket(packet, PacketError.Condition.forbidden, "You are not allowed to send a private messages in the room.");
+        }
     }
 
     /**
@@ -961,11 +966,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 // Add the user as a member of the room if the room is members only
                 if (room.isMembersOnly())
                 {
-                    room.addMember(jid, null, preExistingOccupantData);
+                    room.addMember(jid, null, preExistingOccupantData.getAffiliation());
                 }
 
                 // Send the invitation to the invitee
-                room.sendInvitation(jid, info.elementTextTrim("reason"), preExistingOccupantData, extensions);
+                room.sendInvitation(jid, info.elementTextTrim("reason"), preExistingOccupantData.getAffiliation(), preExistingOccupantData.getUserAddress(), extensions);
             }
         }
         catch ( ForbiddenException e )
@@ -1014,14 +1019,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         @Nullable final MUCRole occupantData )
     {
         // Packets to a specific node/group/room
-        if ( occupantData == null || room == null)
+        if (packet.isRequest() && packet.getTo().getResource() != null && occupantData == null && packet.getChildElement().getNamespace().getURI().startsWith("http://jabber.org/protocol/disco#"))
         {
-            Log.debug("Ignoring stanza received from a non-occupant of a room (room might not even exist): {}", packet.toXML());
-            if ( packet.isRequest() )
-            {
-                // If a non-occupant sends a disco to an address of the form <room@service/nick>, a MUC service MUST
-                // return a <bad-request/> error. http://xmpp.org/extensions/xep-0045.html#disco-occupant
-                sendErrorPacket(packet, PacketError.Condition.bad_request, "You are not an occupant of this room.");
+            // If a non-occupant sends a disco to an address of the form <room@service/nick>, a MUC service MUST
+            // return a <bad-request/> error. http://xmpp.org/extensions/xep-0045.html#disco-occupant
+            sendErrorPacket(packet, PacketError.Condition.bad_request, "You are not an occupant of this room.");
+            return;
+        }
+
+        if (room == null)
+        {
+            Log.debug("Ignoring IQ stanza received for a room room (room might not even exist): {}", packet.toXML());
+            if (packet.isRequest()) {
+                sendErrorPacket(packet, PacketError.Condition.item_not_found, "The room does not exist.");
             }
             return;
         }
@@ -1036,7 +1046,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     // User is sending an IQ result packet to another room occupant
                     room.sendPrivatePacket(packet, occupantData);
                 }
-                catch ( NotFoundException | ForbiddenException e )
+                catch (NotFoundException | ForbiddenException | NotAcceptableException e)
                 {
                     // Do nothing. No error will be sent to the sender of the IQ result packet
                     Log.debug("Silently ignoring an IQ response sent to the room as a private message that caused an exception while being processed: {}", packet.toXML(), e);
@@ -1049,14 +1059,6 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else
         {
-            // Check and reject conflicting packets with conflicting roles In other words, another user already has this nickname
-            if ( !occupantData.getUserAddress().equals(packet.getFrom()) )
-            {
-                Log.debug("Rejecting conflicting stanza with conflicting roles: {}", packet.toXML());
-                sendErrorPacket(packet, PacketError.Condition.conflict, "Another user uses this nickname.");
-                return;
-            }
-
             try
             {
                 // TODO Analyze if it is correct for these first two blocks to be processed without evaluating if they're addressed to the room or if they're a PM.
@@ -1076,7 +1078,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     {
                         // User is sending to a room occupant.
                         final boolean selfPingEnabled = JiveGlobals.getBooleanProperty("xmpp.muc.self-ping.enabled", true);
-                        if ( selfPingEnabled && toNickname.equals(occupantData.getNickname()) && packet.isRequest()
+                        if ( selfPingEnabled && occupantData != null && toNickname.equals(occupantData.getNickname()) && packet.isRequest()
                             && packet.getElement().element(QName.get(IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE)) != null )
                         {
                             Log.trace("User '{}' is sending an IQ 'ping' to itself. See XEP-0410: MUC Self-Ping (Schrödinger's Chat).", packet.getFrom());
@@ -1300,7 +1302,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             // unlock the room thus creating an "instant" room
             if ( mucInfo == null && room.isLocked() && !room.isManuallyLocked() )
             {
-                room.unlock(occupantData);
+                room.unlock(occupantData.getAffiliation());
             }
         }
         catch ( UnauthorizedException e )
@@ -1729,11 +1731,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // Kick the user from the room that he/she had previously joined.
             Log.debug("Removing/kicking {}: {}", occupant, reason);
-            room.kickOccupant(occupant.getRealJID(), null, null, reason);
+            room.kickOccupant(occupant.getRealJID(), room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole(), null, null, reason);
 
             // Ensure that other cluster nodes see any changes that might have been applied.
             syncChatRoom(room);
-        } catch (final NotAllowedException e) {
+        } catch (final ForbiddenException e) {
             // Do nothing since we cannot kick owners or admins
             Log.debug("Skip removing {}, because it's not allowed (this user likely is an owner of admin of the room).", occupant, e);
         } finally {

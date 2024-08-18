@@ -21,10 +21,7 @@ import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.UserEventDispatcher;
-import org.jivesoftware.openfire.muc.MUCRole;
-import org.jivesoftware.openfire.muc.MUCRoom;
-import org.jivesoftware.openfire.muc.MultiUserChatService;
-import org.jivesoftware.openfire.muc.NotAllowedException;
+import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.cache.Cache;
@@ -451,15 +448,17 @@ public class LocalMUCRoomManager
 
         // Kick the user from all the rooms that he/she had previously joined.
         try {
-            final Presence kickedPresence = room.kickOccupant(userToBeKicked, null, null, "Nickname clash with other user in the same room.");
+            final List<Presence> kickedPresences = room.kickOccupant(userToBeKicked, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole(), null, null,"Nickname clash with other user in the same room.");
 
-            Log.trace("Kick presence to be sent to room: {}", kickedPresence);
+            for(final Presence kickedPresence : kickedPresences) {
+                Log.trace("Kick presence to be sent to room: {}", kickedPresence);
 
-            // Send the updated presence to the room occupants, but only those on this local node.
-            room.send(kickedPresence, room.getSelfRepresentation());
+                // Send the updated presence to the room occupants, but only those on this local node.
+                room.send(kickedPresence, room.getSelfRepresentation());
+            }
 
             Log.debug("Kicked occupant '{}' out of room '{}'.", userToBeKicked, room.getName());
-        } catch (final NotAllowedException e) {
+        } catch (final ForbiddenException e) {
             // Do nothing since we cannot kick owners or admins
             Log.debug("Occupant '{}' not kicked out of room '{}' because of '{}'.", userToBeKicked, room.getName(), e.getMessage());
         }

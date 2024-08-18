@@ -133,16 +133,16 @@ public abstract class MUCEventDelegate {
             
             final String property = roomConfig.get("muc#roomconfig_roomowners");
             if (property != null) {
-                String jids[] = property.split(",");
+                String[] jids = property.split(",");
                 for (String jid : jids) {
-                    if (jid != null && jid.trim().length() != 0) {
+                    if (jid != null && !jid.trim().isEmpty()) {
                         room.addFirstOwner(new JID(jid.trim().toLowerCase()).asBareJID());
                     }
                 }
             }
             
             try {
-                room.unlock(room.getSelfRepresentation());
+                room.unlock(room.getSelfRepresentation().getAffiliation());
             } catch (ForbiddenException e) {
                 return false;
             }

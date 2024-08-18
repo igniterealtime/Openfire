@@ -249,7 +249,11 @@ public class MUCPersistenceManager {
             room.setMaxUsers(rs.getInt("maxUsers"));
             room.setPublicRoom(rs.getInt("publicRoom") == 1);
             room.setModerated(rs.getInt("moderated") == 1);
-            room.setMembersOnly(rs.getInt("membersOnly") == 1);
+            try {
+                room.setMembersOnly(rs.getInt("membersOnly") == 1, MUCRole.Affiliation.owner, null);
+            } catch (ForbiddenException e) {
+                Log.error("Unable to set members-only when loading room from database (this is likely a bug in Openfire). Room: {}", room.getJID(), e);
+            }
             room.setCanOccupantsInvite(rs.getInt("canInvite") == 1);
             room.setPassword(rs.getString("roomPassword"));
             room.setCanAnyoneDiscoverJID(rs.getInt("canDiscoverJID") == 1);
@@ -324,13 +328,13 @@ public class MUCPersistenceManager {
                 try {
                     switch (affiliation) {
                         case owner:
-                            room.addOwner(affiliationJID, room.getSelfRepresentation());
+                            room.addOwner(affiliationJID, room.getSelfRepresentation().getAffiliation());
                             break;
                         case admin:
-                            room.addAdmin(affiliationJID, room.getSelfRepresentation());
+                            room.addAdmin(affiliationJID, room.getSelfRepresentation().getAffiliation());
                             break;
                         case outcast:
-                            room.addOutcast(affiliationJID, null, room.getSelfRepresentation());
+                            room.addOutcast(affiliationJID, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
                             break;
                         default:
                             Log.error("Unknown affiliation value {} for user {} in persistent room {}", affiliation, affiliationJID.toBareJID(), room.getID());
@@ -348,7 +352,7 @@ public class MUCPersistenceManager {
             while (rs.next()) {
                 try {
                     final JID jid = GroupJID.fromString(rs.getString("jid"));
-                    room.addMember(jid, rs.getString("nickname"), room.getSelfRepresentation());
+                    room.addMember(jid, rs.getString("nickname"), room.getSelfRepresentation().getAffiliation());
                 }
                 catch (Exception e) {
                     Log.error("Unable to load member for room: {}", room.getName(), e);
@@ -665,7 +669,11 @@ public class MUCPersistenceManager {
                     room.setMaxUsers(resultSet.getInt("maxUsers"));
                     room.setPublicRoom(resultSet.getInt("publicRoom") == 1);
                     room.setModerated(resultSet.getInt("moderated") == 1);
-                    room.setMembersOnly(resultSet.getInt("membersOnly") == 1);
+                    try {
+                        room.setMembersOnly(resultSet.getInt("membersOnly") == 1, MUCRole.Affiliation.owner, null);
+                    } catch (ForbiddenException e) {
+                        Log.error("Unable to set members-only when loading room from database (this is likely a bug in Openfire). Room: {}", room.getJID(), e);
+                    }
                     room.setCanOccupantsInvite(resultSet.getInt("canInvite") == 1);
                     room.setPassword(resultSet.getString("roomPassword"));
                     room.setCanAnyoneDiscoverJID(resultSet.getInt("canDiscoverJID") == 1);
@@ -927,13 +935,13 @@ public class MUCPersistenceManager {
                     try {
                         switch (affiliation) {
                             case owner:
-                                room.addOwner(affiliationJID, room.getSelfRepresentation());
+                                room.addOwner(affiliationJID, room.getSelfRepresentation().getAffiliation());
                                 break;
                             case admin:
-                                room.addAdmin(affiliationJID, room.getSelfRepresentation());
+                                room.addAdmin(affiliationJID, room.getSelfRepresentation().getAffiliation());
                                 break;
                             case outcast:
-                                room.addOutcast(affiliationJID, null, room.getSelfRepresentation());
+                                room.addOutcast(affiliationJID, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
                                 break;
                             default:
                                 Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
@@ -972,7 +980,7 @@ public class MUCPersistenceManager {
                     try {
                         // might be a group JID
                         affiliationJID = GroupJID.fromString(resultSet.getString("jid"));
-                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getSelfRepresentation());
+                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getSelfRepresentation().getAffiliation());
                     } catch (ForbiddenException | ConflictException e) {
                         Log.warn("Unable to add member to room.", e);
                     }

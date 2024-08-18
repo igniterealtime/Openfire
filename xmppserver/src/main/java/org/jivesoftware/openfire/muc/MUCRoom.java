@@ -561,14 +561,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Obtain the roles of a given user in the room by his bare JID. A user can have several roles,
      * one for each client resource from which the user has joined the room.
      *
-     * @param jid The bare jid of the user you'd like to obtain  (cannot be {@code null}).
+     * @param userAddress The (real) JID of the user you'd like to obtain.
      * @return The user's roles in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
-    public List<MUCRole> getOccupantsByBareJID(JID jid) throws UserNotFoundException
+    public List<MUCRole> getOccupantsByBareJID(@Nonnull final JID userAddress) throws UserNotFoundException
     {
         final List<MUCRole> filteredOccupants = occupants.stream()
-            .filter(mucRole -> mucRole.getUserAddress().asBareJID().equals(jid))
+            .filter(mucRole -> mucRole.getUserAddress().asBareJID().equals(userAddress.asBareJID()))
             .collect(Collectors.toList());
 
         if (filteredOccupants.isEmpty()) {
@@ -582,19 +582,19 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Returns the occupant data of a given user in the room by his full JID or {@code null}
      * if no occupant data was found for the specified user.
      *
-     * @param jid The full jid of the user you'd like to obtain (cannot be {@code null}).
+     * @param userAddress The full JID of the user you'd like to obtain.
      * @return The user's occupant data in the room or null if not found.
      */
-    public MUCRole getOccupantByFullJID(JID jid)
+    public MUCRole getOccupantByFullJID(@Nonnull final JID userAddress)
     {
         final List<MUCRole> filteredOccupants = occupants.stream()
-            .filter(mucRole -> mucRole.getUserAddress().equals(jid))
+            .filter(mucRole -> mucRole.getUserAddress().equals(userAddress))
             .collect(Collectors.toList());
 
         switch (filteredOccupants.size()) {
             case 0: return null;
             default:
-                Log.warn("Room '{}' has more than one occupant with full JID '{}'!", getJID(), jid);
+                Log.warn("Room '{}' has more than one occupant with full JID '{}'!", getJID(), userAddress);
                 // Intended fall-through: return the first one.
             case 1: return filteredOccupants.iterator().next();
         }
@@ -630,22 +630,52 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             .anyMatch(mucRole -> mucRole.getNickname().equalsIgnoreCase(nickname));
     }
 
-    public boolean hasOccupant(JID jid)
+    public boolean hasOccupant(final JID jid)
     {
         return occupants.stream()
             .anyMatch(mucRole -> mucRole.getUserAddress().equals(jid) || mucRole.getUserAddress().asBareJID().equals(jid));
     }
 
     /**
+     * Attempts to find a nickname for a user.
+     *
+     * This method will first check if there's an occupant that matches the provided user address. If none is found,
+     * then any reserved nickname for the user address is returned.
+     *
+     * When no nickname can be found, null is returned.
+     *
+     * @param userAddress The (real) address for which to return a nickname
+     * @return a nickname for the user, or null.
+     */
+    public String findNickname(@Nullable final JID userAddress)
+    {
+        if (userAddress == null) {
+            return null;
+        }
+
+        final MUCRole fullJidOccupant = occupants.stream().filter(occupant -> occupant.getUserAddress().equals(userAddress)).findAny().orElse(null);
+        if (fullJidOccupant != null) {
+            return fullJidOccupant.getNickname();
+        }
+
+        final MUCRole bareJidOccupant = occupants.stream().filter(occupant -> occupant.getUserAddress().asBareJID().equals(userAddress)).findAny().orElse(null);
+        if (bareJidOccupant != null) {
+            return bareJidOccupant.getNickname();
+        }
+
+        return getReservedNickname(userAddress);
+    }
+
+    /**
      * Returns the reserved room nickname for the bare JID or null if none.
      *
-     * @param jid The bare jid of the user of which you'd like to obtain his reserved nickname (cannot be {@code null}).
-     * @return the reserved room nickname for the bare JID or null if none.
+     * @param userAddress The (real) JID of the user of which you'd like to obtain his reserved nickname .
+     * @return the reserved room nickname for the user, or null if none.
      */
-    public String getReservedNickname(JID jid) {
-        final JID bareJID = jid.asBareJID();
+    public String getReservedNickname(@Nonnull final JID userAddress) {
+        final JID bareJID = userAddress.asBareJID();
         String answer = members.get(bareJID);
-        if (answer == null || answer.trim().length() == 0) {
+        if (answer == null || answer.trim().isEmpty()) {
             return null;
         }
         return answer;
@@ -655,10 +685,10 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Returns the bare JID of the member for which a nickname is reserved. Returns null if no member registered the
      * nickname.
      *
-     * @param nickname The nickname for which to look up a member. Cannot be {@code null}.
+     * @param nickname The nickname for which to look up a member.
      * @return the bare JID of the member that has registered this nickname, or null if none.
      */
-    public JID getMemberForReservedNickname(String nickname) {
+    public JID getMemberForReservedNickname(@Nonnull final String nickname) {
         for (final Map.Entry<JID, String> entry : members.entrySet()) {
             if (entry.getValue().equalsIgnoreCase(nickname)) {
                 return entry.getKey();
@@ -673,11 +703,17 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * Note: Prerequisite - A lock must already be obtained before sending this message.
      *
-     * @param jid The bare jid of the user of which you'd like to obtain his affiliation (cannot be {@code null}).
+     * @param userAddress The (real) JID of the user of which you'd like to obtain his affiliation.
      * @return the affiliation state of the user in the room.
      */
-    public MUCRole.Affiliation getAffiliation(@Nonnull JID jid) {
-        final JID bareJID = jid.asBareJID();
+    public MUCRole.Affiliation getAffiliation(@Nonnull final JID userAddress) {
+        final JID bareJID = userAddress.asBareJID();
+
+        if (mucService.isSysadmin(bareJID)) {
+            // The user is a system administrator of the MUC service. Treat him as an owner, although he won't appear in the list of owners.
+            Log.debug( "User '{}' is a sysadmin. Treat as owner.", userAddress);
+            return MUCRole.Affiliation.owner;
+        }
 
         if (owners.includes(bareJID)) {
             return MUCRole.Affiliation.owner;
@@ -695,9 +731,15 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         return MUCRole.Affiliation.none;
     }
 
-    public MUCRole.Role getRole(@Nonnull JID jid)
+    public MUCRole.Role getRole(@Nonnull JID userAddress)
     {
-        final JID bareJID = jid.asBareJID();
+        final JID bareJID = userAddress.asBareJID();
+
+        if (mucService.isSysadmin(bareJID)) {
+            // The user is a system administrator of the MUC service. Treat him as an owner, although he won't appear in the list of owners.
+            Log.debug( "User '{}' is a sysadmin. Treat as owner.", userAddress);
+            return MUCRole.Role.moderator;
+        }
 
         if (owners.includes(bareJID)) {
             return MUCRole.Role.moderator;
@@ -756,12 +798,6 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             final JID bareJID = realAddress.asBareJID();
             MUCRole.Role role = getRole( bareJID );
             MUCRole.Affiliation affiliation = getAffiliation( bareJID );
-            if (affiliation != MUCRole.Affiliation.owner && mucService.isSysadmin(bareJID)) {
-                // The user is a system administrator of the MUC service. Treat him as an owner, although he won't appear in the list of owners.
-                Log.debug( "User '{}' is a sysadmin. Treat as owner.", realAddress);
-                role = MUCRole.Role.moderator;
-                affiliation = MUCRole.Affiliation.owner;
-            }
             Log.debug( "User '{}' role and affiliation in room '{} are determined to be: {}, {}", realAddress, this.getJID(), role, affiliation );
 
             // Verify that the attempt meets all preconditions for joining the room.
@@ -1443,13 +1479,17 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @throws NotFoundException If the user is sending a packet to a room JID that does not exist.
      * @throws ForbiddenException If a user of this role is not permitted to send private messages in this room.
      */
-    public void sendPrivatePacket(Packet packet, MUCRole sender) throws NotFoundException, ForbiddenException {
+    public void sendPrivatePacket(@Nonnull final Packet packet, final @Nullable MUCRole sender) throws NotFoundException, ForbiddenException, NotAcceptableException
+    {
+        if (sender == null) {
+            throw new NotAcceptableException();
+        }
 
         if (packet instanceof Message || ALLOWPM_BLOCKALL.getValue()){
             //If the packet is a message, check that the user has permissions to send
             switch (sender.getRole()) { // intended fall-through
                 case none:
-                    throw new ForbiddenException();
+                    throw new NotAcceptableException();
                 default:
                 case visitor:
                     if (canSendPrivateMessage().equals( "participants" )) throw new ForbiddenException();
@@ -1799,7 +1839,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         Element addresses = DocumentHelper.createElement(QName.get("addresses", "http://jabber.org/protocol/address"));
         Element address = addresses.addElement("address");
         address.addAttribute("type", "ofrom");
-        address.addAttribute("jid", sender.getUserAddress().toBareJID());
+        address.addAttribute("jid", sender.getUserAddress().toString());
         message.addExtension(new PacketExtension(addresses));
     }
 
@@ -1813,37 +1853,31 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
-     * Updates all the presences of the given user with the new affiliation and role information. Do
-     * nothing if the given jid is not present in the room. If the user has joined the room from
-     * several client resources, all his/her occupants' presences will be updated.
+     * Updates the internal state of a given occupant after a role change has been applied.
      *
-     * @param jid the bare jid of the user to update his/her role.
-     * @param newAffiliation the new affiliation for the JID.
-     * @param newRole the new role for the JID.
-     * @return the list of updated presences of all the client resources that the client used to
-     *         join the room.
-     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin or
-     *         if trying to ban an owner or an administrator.
+     * Do nothing if the given jid is not present in the room.
+     *
+     * If the user has joined the room from several client resources, all his/her occupants' presences will be updated.
+     *
+     * @param userAddress the (real) JID of the occupant that is affected.
+     * @param newRole the new role for the occupant.
+     * @return the list of updated presences of all the client resources that the occupant has used to join the room.
      */
-    private List<Presence> changeOccupantAffiliation(MUCRole sender, JID jid, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole)
-        throws NotAllowedException {
-        List<Presence> presences = new ArrayList<>();
+    private List<Presence> applyRoleChange(@Nonnull final JID userAddress, @Nonnull final MUCRole.Role newRole)
+    {
+        final List<Presence> presences = new ArrayList<>();
         // Get all the roles (i.e. occupants) of this user based on his/her bare JID
-        JID bareJID = jid.asBareJID();
-        List<MUCRole> occupants;
+        final List<MUCRole> occupants;
         try {
-            occupants = getOccupantsByBareJID(bareJID);
+            occupants = getOccupantsByBareJID(userAddress);
         } catch (UserNotFoundException e) {
             return presences;
         }
+
         // Collect all the updated presences of these roles
-        for (MUCRole occupant : occupants) {
-// TODO
-//            if (!isPrivilegedToChangeAffiliationAndRole(sender.getAffiliation(), sender.getRole(), occupant.getAffiliation(), occupant.getRole(), newAffiliation, newRole)) {
-//                throw new NotAllowedException();
-//            }
-            // Update the presence with the new affiliation and role
-            occupant.setAffiliation(newAffiliation);
+        for (final MUCRole occupant : occupants)
+        {
+            // Update the presence with the new role
             occupant.setRole(newRole);
 
             // Prepare a new presence to be sent to all the room occupants
@@ -1854,240 +1888,255 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
-     * Updates the presence of the given user with the new role information. Do nothing if the given
-     * jid is not present in the room.
+     * Adds a new user to the list of owners. The user is the actual creator of the room. Only the
+     * MultiUserChatServer should use this method. Regular owners list maintenance MUST be done
+     * through {@link #addOwner(JID jid,MUCRole.Affiliation)}.
      *
-     * @param jid the full jid of the user to update his/her role.
-     * @param newRole the new role for the JID.
-     * @return the updated presence of the user or null if none.
-     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
+     * @param targetUserAddress The (real) JID of the user to add as owner.
      */
-    private Presence changeOccupantRole(JID jid, MUCRole.Role newRole) throws NotAllowedException {
-        // Try looking the role in the bare JID list
-        MUCRole occupant = getOccupantByFullJID(jid);
-// TODO
-//            if (!isPrivilegedToChangeAffiliationAndRole(senderRole.getAffiliation(), senderRole.getRole(), role.getAffiliation(), role.getRole(), newAffiliation, newRole)) {
-//                throw new NotAllowedException();
-//            }
-        if (occupant != null) {
-            // Update the presence with the new role
-            occupant.setRole(newRole);
-            // Prepare a new presence to be sent to all the room occupants
-            return occupant.getPresence();
-        }
-        return null;
-    }
-
-    public static boolean isPrivilegedToChangeAffiliationAndRole(MUCRole.Affiliation actorAffiliation, MUCRole.Role actorRole, MUCRole.Affiliation occupantAffiliation, MUCRole.Role occupantRole, MUCRole.Affiliation newAffiliation, MUCRole.Role newRole) {
-        switch (actorAffiliation) {
-            case owner:
-                // An owner has all privileges
-                return true;
-            case admin:
-                // If affiliation has not changed
-                if (occupantAffiliation == newAffiliation) {
-                    // Only check, if the admin wants to modify an owner (e.g. revoke an owner's moderator role).
-                    return occupantAffiliation != MUCRole.Affiliation.owner;
-                } else {
-                    // An admin is not allowed to modify the admin or owner list.
-                    return occupantAffiliation != MUCRole.Affiliation.owner && newAffiliation != MUCRole.Affiliation.admin && newAffiliation != MUCRole.Affiliation.owner;
-                }
-            default:
-                // Every other affiliation (member, none, outcast) is not allowed to change anything, except he's a moderator and he doesn't want to change affiliations.
-                if (actorRole == MUCRole.Role.moderator && occupantAffiliation == newAffiliation) {
-                    // A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than themselves
-                    // (i.e., an unaffiliated moderator SHOULD NOT be allowed to revoke moderation privileges from an admin or an owner, and an admin SHOULD NOT be allowed to revoke moderation privileges from an owner).
-                    if (occupantRole == MUCRole.Role.moderator && newRole != MUCRole.Role.moderator) {
-                        return occupantAffiliation != MUCRole.Affiliation.owner && occupantAffiliation != MUCRole.Affiliation.admin;
-                    }
-                }
-                return false;
-        }
+    public void addFirstOwner(@Nonnull final JID targetUserAddress) {
+        owners.add( targetUserAddress.asBareJID() );
     }
 
     /**
-     * Adds a new user to the list of owners. The user is the actual creator of the room. Only the
-     * MultiUserChatServer should use this method. Regular owners list maintenance MUST be done
-     * through {@link #addOwner(JID jid,MUCRole)}.
+     * Adds a list of users to the list of owners.
      *
-     * @param bareJID The bare JID of the user to add as owner (cannot be {@code null}).
+     * @param targetUserAddresses the list of (real) JIDs of the users to add to the list of existing owners.
+     * @param actorAffiliation the room affiliation of the user that is trying to modify the owners list.
+     * @return the list of updated presences of all the clients resources that the clients used to
+     *         join the room.
+     * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public void addFirstOwner(JID bareJID) {
-        owners.add( bareJID.asBareJID() );
+    public List<Presence> addOwners(@Nonnull final List<JID> targetUserAddresses, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+
+        synchronized (this) {
+            final List<Presence> answer = new ArrayList<>(targetUserAddresses.size());
+            for (final JID targetUserAddress : targetUserAddresses) {
+                final JID targetUserAddressBare = targetUserAddress.asBareJID();
+                if (!owners.contains(targetUserAddress)) {
+                    // TODO if this throws an exception for any one new entry, then some, but not all data is processed. Instead, ensure that either all, or none of the data is processed.
+                    answer.addAll(addOwner(targetUserAddressBare, actorAffiliation));
+                }
+            }
+            return answer;
+        }
     }
 
     /**
      * Adds a new user to the list of owners.
      *
-     * @param jid The JID of the user to add as owner (cannot be {@code null}).
-     * @param actor the occupant data of the user that is trying to modify the owners list (cannot be {@code null}).
+     * @param targetUserAddress the (real) JID of the user to add as owner.
+     * @param actorAffiliation the room affiliation of the user that is trying to modify the owners list.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the owner list.
      */
-    public List<Presence> addOwner(JID jid, MUCRole actor) throws ForbiddenException {
+    public List<Presence> addOwner(@Nonnull final JID targetUserAddress, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
 
-        final JID bareJID = jid.asBareJID();
+        final JID targetUserAddressBare = targetUserAddress.asBareJID();
 
         synchronized (this) {
-            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-            if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
-                throw new ForbiddenException();
-            }
             // Check if user is already an owner (explicitly)
-            if (owners.contains(bareJID)) {
+            if (owners.contains(targetUserAddressBare)) {
                 // Do nothing
                 return Collections.emptyList();
             }
-            owners.add(bareJID);
+
             // Remove the user from other affiliation lists
-            if (removeAdmin(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.admin;
+            final MUCRole.Affiliation oldAffiliation = getAffiliation(targetUserAddressBare);
+            switch (oldAffiliation) {
+                case admin:
+                    removeAdmin(targetUserAddressBare, actorAffiliation);
+                    break;
+                case member:
+                    removeMember(targetUserAddressBare, actorAffiliation, null); // No need to calculate actor role, as the 'owner' affiliation is guaranteed to be allowed to perform this action.
+                    break;
+                case outcast:
+                    removeOutcast(targetUserAddressBare, actorAffiliation, null); // No need to calculate actor role, as the 'owner' affiliation is guaranteed to be allowed to perform this action.
+                    break;
             }
-            else if (removeMember(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.member;
-            }
-            else if (removeOutcast(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.outcast;
-            }
+            owners.add(targetUserAddressBare);
+
             // Update the DB if the room is persistent
             MUCPersistenceManager.saveAffiliationToDB(
                 this,
-                bareJID,
+                targetUserAddressBare,
                 null,
                 MUCRole.Affiliation.owner,
                 oldAffiliation);
         }
-        // apply the affiliation change, assigning a new affiliation
-        // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(getSelfRepresentation(), bareJID, null);
+        // apply the affiliation change, assigning a new affiliation based on the group(s) of the affected user(s)
+        return applyAffiliationChange(targetUserAddressBare);
     }
 
-    private boolean removeOwner(JID jid) {
-        return owners.remove(jid.asBareJID());
+    private boolean removeOwner(@Nonnull final JID userAddress, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+
+        return owners.remove(userAddress.asBareJID());
+    }
+
+    /**
+     * Adds a list of users to the list of admins.
+     *
+     * @param targetUserAddresses the list of (real) JIDs of the users to add to the list of existing admins.
+     * @param actorAffiliation the room affiliation of the user that is trying to modify the admins list.
+     * @return the list of updated presences of all the clients resources that the clients used to
+     *         join the room.
+     * @throws ForbiddenException If the user is not allowed to modify the admin list.
+     * @throws ConflictException If the room was going to lose all its owners.
+     */
+    public List<Presence> addAdmins(@Nonnull final List<JID> targetUserAddresses, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException, ConflictException
+    {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+
+        synchronized(this) {
+            final List<Presence> answer = new ArrayList<>(targetUserAddresses.size());
+            for (final JID newAdmin : targetUserAddresses) {
+                final JID bareJID = newAdmin.asBareJID();
+                if (!admins.contains(bareJID)) {
+                    // TODO if this throws an exception for any one new entry, then some, but not all data is processed. Instead, ensure that either all, or none of the data is processed.
+                    answer.addAll(addAdmin(bareJID, actorAffiliation));
+                }
+            }
+            return answer;
+        }
     }
 
     /**
      * Adds a new user to the list of admins.
      *
-     * @param jid The JID of the user to add as admin (cannot be {@code null}).
-     * @param actor The occupant data of the user that is trying to modify the admins list (cannot be {@code null}).
+     * @param targetUserAddress the (real) JID of the user to add as admin.
+     * @param actorAffiliation The room affiliation the user that is trying to modify the admins list.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the admin list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addAdmin(JID jid, MUCRole actor) throws ForbiddenException,
-        ConflictException {
-        final JID bareJID = jid.asBareJID();
+    public List<Presence> addAdmin(@Nonnull final JID targetUserAddress, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException, ConflictException
+    {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+
+        final JID targetUserAddressBare = targetUserAddress.asBareJID();
         synchronized (this) {
-            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-            if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
-                throw new ForbiddenException();
-            }
             // Check that the room always has an owner
-            if (owners.contains(bareJID) && owners.size() == 1) {
+            if (owners.contains(targetUserAddressBare) && owners.size() == 1) {
                 throw new ConflictException();
             }
             // Check if user is already an admin
-            if (admins.contains(bareJID)) {
+            if (admins.contains(targetUserAddressBare)) {
                 // Do nothing
                 return Collections.emptyList();
             }
-            admins.add(bareJID);
+            admins.add(targetUserAddressBare);
+
             // Remove the user from other affiliation lists
-            if (removeOwner(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.owner;
-            }
-            else if (removeMember(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.member;
-            }
-            else if (removeOutcast(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.outcast;
+            final MUCRole.Affiliation oldAffiliation = getAffiliation(targetUserAddressBare);
+            switch (oldAffiliation) {
+                case owner:
+                    removeOwner(targetUserAddressBare, actorAffiliation);
+                    break;
+                case member:
+                    removeMember(targetUserAddressBare, actorAffiliation, null); // No need to calculate actor role, as the 'owner' affiliation is guaranteed to be allowed to perform this action.
+                    break;
+                case outcast:
+                    removeOutcast(targetUserAddressBare, actorAffiliation, null);  // No need to calculate actor role, as the 'owner' affiliation is guaranteed to be allowed to perform this action.
+                    break;
             }
             // Update the DB if the room is persistent
             MUCPersistenceManager.saveAffiliationToDB(
                 this,
-                bareJID,
+                targetUserAddressBare,
                 null,
                 MUCRole.Affiliation.admin,
                 oldAffiliation);
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(getSelfRepresentation(), bareJID, null);
+        return applyAffiliationChange(targetUserAddressBare);
     }
 
-    private boolean removeAdmin(JID bareJID) {
-        return admins.remove( bareJID.asBareJID() );
+    private boolean removeAdmin(@Nonnull final JID userAddress, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+        return admins.remove( userAddress.asBareJID() );
     }
 
     /**
      * Adds a new user to the list of members.
      *
-     * @param jid The JID of the user to add as a member (cannot be {@code null}).
+     * @param targetUserAddress The (real) JID of the user to add as a member.
      * @param nickname The reserved nickname of the member for the room or null if none.
-     * @param actor the occupant data of the user that is trying to modify the members list (cannot be {@code null}).
+     * @param actorAffiliation the room affiliation of the user that is trying to modify the members list.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws ForbiddenException If the user is not allowed to modify the members list.
      * @throws ConflictException If the desired room nickname is already reserved for the room or if
      *             the room was going to lose all its owners.
      */
-    public List<Presence> addMember(JID jid, String nickname, MUCRole actor)
-        throws ForbiddenException, ConflictException {
-        final JID bareJID = jid.asBareJID();
+    public List<Presence> addMember(@Nonnull final JID targetUserAddress, @Nullable final String nickname, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException, ConflictException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+
+        final JID targetUserAddressBare = targetUserAddress.asBareJID();
         synchronized (this) {
-            MUCRole.Affiliation oldAffiliation = (members.containsKey(bareJID) ?
-                MUCRole.Affiliation.member : MUCRole.Affiliation.none);
-            if (isMembersOnly()) {
-                if (!canOccupantsInvite()) {
-                    if (MUCRole.Affiliation.admin != actor.getAffiliation()
-                        && MUCRole.Affiliation.owner != actor.getAffiliation()) {
-                        throw new ForbiddenException();
-                    }
-                }
-            }
-            else {
-                if (MUCRole.Affiliation.admin != actor.getAffiliation()
-                    && MUCRole.Affiliation.owner != actor.getAffiliation()) {
-                    throw new ForbiddenException();
-                }
-            }
             // Check if the desired nickname is already reserved for another member
-            if (nickname != null && nickname.trim().length() > 0 && members.containsValue(nickname.toLowerCase())) {
-                if (!nickname.equals(members.get(bareJID))) {
+            if (nickname != null && !nickname.trim().isEmpty() && members.containsValue(nickname.toLowerCase())) {
+                if (!nickname.equals(members.get(targetUserAddressBare))) {
                     throw new ConflictException();
                 }
-            } else if (isLoginRestrictedToNickname() && (nickname == null || nickname.trim().length() == 0)) {
+            } else if (isLoginRestrictedToNickname() && (nickname == null || nickname.trim().isEmpty())) {
                 throw new ConflictException();
             }
             // Check that the room always has an owner
-            if (owners.contains(bareJID) && owners.size() == 1) {
+            if (owners.contains(targetUserAddressBare) && owners.size() == 1) {
                 throw new ConflictException();
             }
             // Check if user is already a member
-            if (members.containsKey(bareJID)) {
+            if (members.containsKey(targetUserAddressBare)) {
                 // Do nothing
                 return Collections.emptyList();
             }
-            // Associate the reserved nickname with the bareJID. If nickname is null then associate an
-            // empty string
-            members.put(bareJID, (nickname == null ? "" : nickname.toLowerCase()));
-            // Remove the user from other affiliation lists
-            if (removeOwner(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.owner;
+
+            // Remove the user from other affiliation lists. This can throw a 'forbidden' when the actor tries to demote a higher-up!
+            final MUCRole.Affiliation oldAffiliation = getAffiliation(targetUserAddressBare);
+            switch (oldAffiliation) {
+                case owner:
+                    removeOwner(targetUserAddressBare, actorAffiliation);
+                    break;
+                case admin:
+                    removeAdmin(targetUserAddressBare, actorAffiliation);
+                    break;
+                case outcast:
+                    removeOutcast(targetUserAddressBare, actorAffiliation, null);  // No need to calculate actor role, as both the 'owner' and 'admin' affiliation is guaranteed to be allowed to perform this action.
+                    break;
             }
-            else if (removeAdmin(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.admin;
-            }
-            else if (removeOutcast(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.outcast;
-            }
+
+            // Associate the reserved nickname with the bareJID. If nickname is null then associate an empty string
+            members.put(targetUserAddressBare, (nickname == null ? "" : nickname.toLowerCase()));
+
             // Update the DB if the room is persistent
             MUCPersistenceManager.saveAffiliationToDB(
                 this,
-                bareJID,
+                targetUserAddressBare,
                 nickname,
                 MUCRole.Affiliation.member,
                 oldAffiliation);
@@ -2095,121 +2144,142 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(getSelfRepresentation(), bareJID, null);
+        return applyAffiliationChange(targetUserAddressBare);
     }
 
-    private boolean removeMember(JID jid) {
-        return members.remove(jid.asBareJID()) != null;
+    private boolean removeMember(@Nonnull final JID userAddress, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation && actorRole != MUCRole.Role.moderator) {
+            throw new ForbiddenException();
+        }
+
+        return members.remove(userAddress.asBareJID()) != null;
     }
 
     /**
      * Adds a new user to the list of outcast users.
      *
-     * @param jid The JID of the user to add as an outcast (cannot be {@code null}).
-     * @param reason an optional reason why the user was banned (can be {@code null}).
-     * @param actor The occupant data of the user that initiated the ban (cannot be {@code null}).
+     * @param targetUserAddress The (real) JID of the user to add as an outcast.
+     * @param reason an optional reason why the user was banned.
+     * @param actorAffiliation The room affiliation of the user that initiated the ban.
+     * @param actorRole The room role of the user that initiated the ban (can be null when the user is currently not an occupant).
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws ForbiddenException If the user is not allowed to modify the outcast list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addOutcast(JID jid, String reason, MUCRole actor)
-        throws NotAllowedException, ForbiddenException, ConflictException {
-        final JID bareJID = jid.asBareJID();
+    public List<Presence> addOutcast(@Nonnull final JID targetUserAddress, @Nullable final String reason, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole) throws NotAllowedException, ForbiddenException, ConflictException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation && MUCRole.Role.moderator != actorRole) {
+            throw new ForbiddenException();
+        }
+
+        final JID targetUserAddressBare = targetUserAddress.asBareJID();
 
         synchronized (this) {
-            MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
-            if (MUCRole.Affiliation.admin != actor.getAffiliation()
-                && MUCRole.Affiliation.owner != actor.getAffiliation()) {
-                throw new ForbiddenException();
-            }
             // Check that the room always has an owner
-            if (owners.contains(bareJID) && owners.size() == 1) {
+            if (owners.contains(targetUserAddressBare) && owners.size() == 1) {
                 throw new ConflictException();
             }
             // Check if user is already an outcast
-            if (outcasts.contains(bareJID)) {
+            if (outcasts.contains(targetUserAddressBare)) {
                 // Do nothing
                 return Collections.emptyList();
             }
 
+            // Remove the user from other affiliation lists. This can throw a 'forbidden' when the actor tries to demote a higher-up!
+            final MUCRole.Affiliation oldAffiliation = getAffiliation(targetUserAddressBare);
+            switch (oldAffiliation) {
+                case owner:
+                    removeOwner(targetUserAddressBare, actorAffiliation);
+                    break;
+                case admin:
+                    removeAdmin(targetUserAddressBare, actorAffiliation);
+                    break;
+                case member:
+                    removeMember(targetUserAddressBare, actorAffiliation, actorRole);
+                    break;
+            }
+
             // Update the affiliation lists
-            outcasts.add(bareJID);
-            // Remove the user from other affiliation lists
-            if (removeOwner(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.owner;
-            }
-            else if (removeAdmin(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.admin;
-            }
-            else if (removeMember(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.member;
-            }
+            outcasts.add(targetUserAddressBare);
+
             // Update the DB if the room is persistent
             MUCPersistenceManager.saveAffiliationToDB(
                 this,
-                bareJID,
+                targetUserAddressBare,
                 null,
                 MUCRole.Affiliation.outcast,
                 oldAffiliation);
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(actor, bareJID, reason);
+        return applyAffiliationChange(targetUserAddressBare);
     }
 
-    private boolean removeOutcast(JID bareJID) {
-        return outcasts.remove( bareJID.asBareJID() );
+    private boolean removeOutcast(@Nonnull final JID userAddress, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation && actorRole != MUCRole.Role.moderator) {
+            throw new ForbiddenException();
+        }
+        return outcasts.remove( userAddress.asBareJID() );
     }
 
     /**
      * Removes the user from all the other affiliation list thus giving the user a NONE affiliation.
      *
-     * @param jid The JID of the user to keep with a NONE affiliation (cannot be {@code null}).
-     * @param actor The occupant data of the user that set the affiliation to none (cannot be {@code null}).
+     * When kicking a user from the room, use {@link #kickOccupant(JID, MUCRole.Affiliation, MUCRole.Role, JID, String, String)}
+     * instead, which causes the <em>role</em> of the occupant to be changed (instead of the <em>affiliation</em>, which is modified
+     * by this method).
+     *
+     * @param targetUserAddress The (real) JID of the user to give a NONE affiliation.
+     * @param actorAffiliation The room affiliation of the user that set the affiliation to none.
      * @return the list of updated presences of all the client resources that the client used to
      *         join the room or null if none was updated.
      * @throws ForbiddenException If the user is not allowed to modify the none list.
      * @throws ConflictException If the room was going to lose all its owners.
+     * @see #kickOccupant(JID, MUCRole.Affiliation, MUCRole.Role, JID, String, String)
      */
-    public List<Presence> addNone(JID jid, MUCRole actor) throws ForbiddenException, ConflictException {
+    public List<Presence> addNone(@Nonnull final JID targetUserAddress, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException, ConflictException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation) {
+            throw new ForbiddenException();
+        }
+        final JID targetUserAddressBare = targetUserAddress.asBareJID();
 
-        final JID bareJID = jid.asBareJID();
-        MUCRole.Affiliation oldAffiliation = MUCRole.Affiliation.none;
         boolean jidWasAffiliated = false;
         synchronized (this) {
-            if (MUCRole.Affiliation.admin != actor.getAffiliation()
-                && MUCRole.Affiliation.owner != actor.getAffiliation()) {
-                throw new ForbiddenException();
-            }
             // Check that the room always has an owner
-            if (owners.contains(bareJID) && owners.size() == 1) {
+            if (owners.contains(targetUserAddressBare) && owners.size() == 1) {
                 throw new ConflictException();
             }
-            // Remove the jid from ALL the affiliation lists
-            if (removeOwner(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.owner;
-                jidWasAffiliated = true;
-            }
-            else if (removeAdmin(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.admin;
-                jidWasAffiliated = true;
-            }
-            else if (removeMember(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.member;
-                jidWasAffiliated = true;
-            }
-            else if (removeOutcast(bareJID)) {
-                oldAffiliation = MUCRole.Affiliation.outcast;
+            // Remove the jid from ALL the affiliation lists. This can throw a 'forbidden' when the actor tries to demote a higher-up!
+            final MUCRole.Affiliation oldAffiliation = getAffiliation(targetUserAddressBare);
+            switch (oldAffiliation) {
+                case owner:
+                    removeOwner(targetUserAddressBare, actorAffiliation);
+                    jidWasAffiliated = true;
+                    break;
+                case admin:
+                    removeAdmin(targetUserAddressBare, actorAffiliation);
+                    jidWasAffiliated = true;
+                    break;
+                case member:
+                    removeMember(targetUserAddressBare, actorAffiliation, null); // No need to calculate actor role, as both the 'owner' and 'admin' affiliation is guaranteed to be allowed to perform this action.
+                    jidWasAffiliated = true;
+                    break;
+                case outcast:
+                    removeOutcast(targetUserAddressBare, actorAffiliation, null); // No need to calculate actor role, as both the 'owner' and 'admin' affiliation is guaranteed to be allowed to perform this action.
+                    break;
             }
             // Remove the affiliation of this user from the DB if the room is persistent
-            MUCPersistenceManager.removeAffiliationFromDB(this, bareJID, oldAffiliation);
+            MUCPersistenceManager.removeAffiliationFromDB(this, targetUserAddressBare, oldAffiliation);
         }
         if (jidWasAffiliated) {
             // apply the affiliation change, assigning a new affiliation
             // based on the group(s) of the affected user(s)
-            return applyAffiliationChange(actor, bareJID, null);
+            return applyAffiliationChange(targetUserAddressBare);
         } else {
             // no presence updates needed
             return Collections.emptyList();
@@ -2217,52 +2287,137 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
+     * Kicks a user from the room. If the user was in the room, the returned updated presence will be sent to the
+     * remaining occupants.
+     *
+     * When attempting to remove the <em>affiliation</em> from a user from the room, use
+     * {@link #addNone(JID, MUCRole.Affiliation)} instead. Kicking a user will only cause the
+     * <em>role</em> of the occupant to be changed.
+     *
+     * The status code that is used in the presence stanzas that are sent as a result of the kick is '307'.
+     *
+     * @param userAddress the (real) JID of the occupant to change to visitor
+     * @param actorJID      The JID of the actor that initiated the kick.
+     * @param actorNickname The actor nickname.
+     * @param reason        An optional reason why the user was kicked (can be {@code null}).
+     * @return the list of updated presences of all the client resources that the occupant has used to join the room.
+     * @throws ForbiddenException Thrown if trying to ban an owner or an administrator.
+     */
+    public List<Presence> kickOccupant(@Nonnull final JID userAddress, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole, @Nullable final JID actorJID, @Nullable final String actorNickname, @Nullable final String reason) throws ForbiddenException
+    {
+        return kickOccupant(userAddress, actorAffiliation, actorRole, actorJID, actorNickname, reason, 307);
+    }
+
+    /**
+     * Kicks a user from the room. If the user was in the room, the returned updated presence will be sent to the
+     * remaining occupants.
+     *
+     * When attempting to remove the <em>affiliation</em> from a user from the room, use
+     * {@link #addNone(JID, MUCRole.Affiliation)} instead. Kicking a user will only cause the
+     * <em>role</em> of the occupant to be changed.
+     *
+     * @param userAddress the (real) JID of the occupant to change to visitor
+     * @param actorJID      The JID of the actor that initiated the kick.
+     * @param actorNickname The actor nickname.
+     * @param reason        An optional reason why the user was kicked (can be {@code null}).
+     * @param status        The status code that references the reason for the kick (typically 307).
+     * @return the list of updated presences of all the client resources that the occupant has used to join the room.
+     * @throws ForbiddenException Thrown if trying to ban an owner or an administrator.
+     */
+    public List<Presence> kickOccupant(@Nonnull final JID userAddress, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole, @Nullable final JID actorJID, @Nullable final String actorNickname, @Nullable final String reason, final int status) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation && MUCRole.Role.moderator != actorRole) {
+            throw new ForbiddenException();
+        }
+
+        // Update the presence with the new role and inform all occupants
+        final List<Presence> updatedPresences = applyRoleChange(userAddress, MUCRole.Role.none);
+
+        // Determine the occupant data of the actor that initiates the kick.
+        MUCRole sender;
+        if ( actorJID == null ) {
+            sender = getSelfRepresentation(); // originates from the room itself (eg: through admin console changes).
+        } else {
+            sender = getOccupantByFullJID(actorJID);
+            if ( sender == null ) {
+                sender = getSelfRepresentation();
+            }
+        }
+
+        Log.debug("Kicking '{}' from '{}' by '{}' because of: {} ", userAddress, getJID(), sender, reason);
+
+        for (final Presence updatedPresence : updatedPresences)
+        {
+            final Element frag = updatedPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+
+            // Add the status code that indicates why user was kicked
+            frag.addElement("status").addAttribute("code", String.valueOf(status));
+
+            // Add the reason why the user was kicked
+            if (reason != null && !reason.trim().isEmpty()) {
+                frag.element("item").addElement("reason").setText(reason);
+            }
+
+            // Effectively kick the occupant from the room
+            kickPresence(updatedPresence, actorJID, actorNickname);
+
+            //Inform the other occupants that user has been kicked
+            broadcastPresence(updatedPresence, false, sender);
+        }
+        // TODO should this return presence/should callers distribute this stanza (alternatively: should this stanza be broadcast in this method)?
+        return updatedPresences;
+    }
+
+    /**
+     * Updates the internal state of a given occupant after an affiliation change has been applied.
+     *
      * Evaluate the given JID to determine what the appropriate affiliation should be
      * after a change has been made. Each affected user will be granted the highest
      * affiliation they now possess, either explicitly or implicitly via membership
-     * in one or more groups. If the JID is a user, the effective affiliation is
+     * in one or more groups.
+     *
+     * If the JID is a user, the effective affiliation is
      * applied to each presence corresponding to that user. If the given JID is a group,
      * each user in the group is evaluated to determine what their new affiliations will
-     * be. The returned presence updates will be broadcast to the occupants of the room.
+     * be.
      *
-     * @param actor Typically the room itself, or an owner/admin
-     * @param affiliationJID The JID for the user or group that has been changed
-     * @param reason An optional reason to explain why a user was kicked from the room
+     * The returned presence updates will be broadcast to the occupants of the room.
+     *
+     * @param target The JID for the user or group for which the affiliation has been changed
      * @return List of presence updates to be delivered to the room's occupants
      */
-    private List<Presence> applyAffiliationChange(MUCRole actor, final JID affiliationJID, String reason) {
-
+    private List<Presence> applyAffiliationChange(@Nonnull final JID target)
+    {
         // Update the presence(s) for the new affiliation and inform all occupants
-        List<JID> affectedOccupants = new ArrayList<>();
+        final List<JID> affectedOccupants = new ArrayList<>();
 
         // first, determine which actual (user) JIDs are affected by the affiliation change
-        if (GroupJID.isGroup(affiliationJID)) {
+        if (GroupJID.isGroup(target)) {
             try {
-                Group group = GroupManager.getInstance().getGroup(affiliationJID);
+                final Group group = GroupManager.getInstance().getGroup(target);
                 // check each occupant to see if they are in the group that was changed
                 // if so, calculate a new affiliation (if any) for the occupant(s)
-                for (JID groupMember : group.getAll()) {
+                for (final JID groupMember : group.getAll()) {
                     if (hasOccupant(groupMember)) {
                         affectedOccupants.add(groupMember);
                     }
                 }
             } catch (GroupNotFoundException gnfe) {
-                Log.error("Error updating group presences for " + affiliationJID , gnfe);
+                Log.error("Error updating group presences for " + target , gnfe);
             }
         } else {
-            if (hasOccupant(affiliationJID)) {
-                affectedOccupants.add(affiliationJID);
+            if (hasOccupant(target)) {
+                affectedOccupants.add(target);
             }
         }
 
         // now update each of the affected occupants with a new role/affiliation
-        MUCRole.Role newRole;
-        MUCRole.Affiliation newAffiliation;
-        List<Presence> updatedPresences = new ArrayList<>();
+        final List<Presence> updatedPresences = new ArrayList<>();
         // new role/affiliation may be granted via group membership
-        for (JID occupantJID : affectedOccupants) {
-            Log.info("Applying affiliation change for " + occupantJID);
+        for (final JID occupantJID : affectedOccupants) {
             boolean kickMember = false, isOutcast = false;
+            final MUCRole.Role newRole;
+            final MUCRole.Affiliation newAffiliation;
             if (owners.includes(occupantJID)) {
                 newRole = MUCRole.Role.moderator;
                 newAffiliation = MUCRole.Affiliation.owner;
@@ -2291,31 +2446,43 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 newRole = isModerated() ? MUCRole.Role.visitor : MUCRole.Role.participant;
                 newAffiliation = MUCRole.Affiliation.none;
             }
-            Log.info("New affiliation: " + newAffiliation);
-            try {
-                List<Presence> thisOccupant = changeOccupantAffiliation(actor, occupantJID, newAffiliation, newRole);
-                if (kickMember) {
-                    // If the room is members-only, remove the user from the room including a status
-                    // code of 321 to indicate that the user was removed because of an affiliation change
-                    // a status code of 301 indicates the user was removed as an outcast
-                    for (Presence presence : thisOccupant) {
-                        presence.setType(Presence.Type.unavailable);
-                        presence.setStatus(null);
-                        Element x = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                        if (reason != null && reason.trim().length() > 0) {
-                            x.element("item").addElement("reason").setText(reason);
-                        }
-                        x.addElement("status").addAttribute("code", isOutcast ? "301" : "321");
+            Log.debug("Applying affiliation change for {}. New affiliation: {}", occupantJID, newAffiliation);
 
-                        // This removes the kicked occupant from the room. The presenceUpdates returned by this method
-                        // (that will be broadcast to all occupants by the caller) won't reach it.
-                        kickPresence(presence, actor.getUserAddress(), actor.getNickname());
-                    }
+            final List<Presence> presences = new ArrayList<>();
+            // Get all the roles (i.e. occupants) of this user based on his/her bare JID
+            final List<MUCRole> occupants;
+            try {
+                occupants = getOccupantsByBareJID(occupantJID);
+                // Collect all the updated presences of these roles
+                for (final MUCRole occupant : occupants) {
+                    // Update the presence with the new affiliation and role
+                    occupant.setAffiliation(newAffiliation);
+                    occupant.setRole(newRole);
+
+                    // Prepare a new presence to be sent to all the room occupants
+                    presences.add(occupant.getPresence());
                 }
-                updatedPresences.addAll(thisOccupant);
-            } catch (NotAllowedException e) {
-                Log.error("Error updating presences for " + occupantJID, e);
+            } catch (UserNotFoundException e) {
+                return presences;
             }
+
+            if (kickMember) {
+                // If the room is members-only, remove the user from the room including a status
+                // code of 321 to indicate that the user was removed because of an affiliation change
+                // a status code of 301 indicates the user was removed as an outcast
+                for (final Presence presence : presences) {
+                    presence.setType(Presence.Type.unavailable);
+                    presence.setStatus(null);
+
+                    final Element x = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                    x.addElement("status").addAttribute("code", isOutcast ? "301" : "321");
+
+                    // This removes the kicked occupant from the room. The presenceUpdates returned by this method
+                    // (that will be broadcast to all occupants by the caller) won't reach it.
+                    kickPresence(presence, null, null);
+                }
+            }
+            updatedPresences.addAll(presences);
         }
         return updatedPresences;
     }
@@ -2460,17 +2627,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param to the JID of the user that is being invited.
      * @param reason the reason of the invitation or null if none.
-     * @param sender the occupant data of the user that sent the invitation.
+     * @param senderAffiliation the room affiliation the user that sent the invitation.
+     * @param senderUserAddress the (real) user address of the user that sent the invitation.
      * @param extensions the list of extensions sent with the original message invitation or null
      *        if none.
      * @throws ForbiddenException If the user is not allowed to send the invitation.
      * @throws CannotBeInvitedException (Optionally) If the user being invited does not have access to the room
      */
-    public void sendInvitation(JID to, String reason, MUCRole sender, List<Element> extensions)
+    public void sendInvitation(@Nonnull final JID to, @Nullable final String reason, @Nonnull final MUCRole.Affiliation senderAffiliation, @Nullable final JID senderUserAddress, @Nullable final List<Element> extensions)
         throws ForbiddenException, CannotBeInvitedException {
         if (!isMembersOnly() || canOccupantsInvite()
-            || MUCRole.Affiliation.admin == sender.getAffiliation()
-            || MUCRole.Affiliation.owner == sender.getAffiliation()) {
+            || MUCRole.Affiliation.admin == senderAffiliation
+            || MUCRole.Affiliation.owner == senderAffiliation) {
             // If the room is not members-only OR if the room is members-only and anyone can send
             // invitations or the sender is an admin or an owner, then send the invitation
             Message message = new Message();
@@ -2478,7 +2646,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             message.setTo(to);
 
             if (mucService.getMUCDelegate() != null) {
-                switch(mucService.getMUCDelegate().sendingInvitation(this, to, sender.getUserAddress(), reason)) {
+                switch(mucService.getMUCDelegate().sendingInvitation(this, to, senderUserAddress, reason)) {
                     case HANDLED_BY_DELEGATE:
                         //if the delegate is taking care of it, there's nothing for us to do
                         return;
@@ -2500,9 +2668,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             }
             Element frag = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
             // ChatUser will be null if the room itself (i.e. via admin console) made the request. In that case, use the room JID. See OF-2486.
-            final JID from = sender.getUserAddress() != null ? sender.getUserAddress() : getJID();
+            final JID from = senderUserAddress != null ? senderUserAddress : getJID();
             frag.addElement("invite").addAttribute("from", from.toBareJID());
-            if (reason != null && reason.length() > 0) {
+            if (reason != null && !reason.isEmpty()) {
                 Element invite = frag.element("invite");
                 if (invite == null) {
                     invite = frag.addElement("invite");
@@ -2655,54 +2823,54 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Changes the role of the user within the room to moderator. A moderator is allowed to kick
      * occupants as well as granting/revoking voice from occupants.
      *
-     * @param jid The full JID of the occupant to give moderator privileges (cannot be {@code null}).
-     * @param actor The occupant data of the user that is granting moderator privileges to an occupant (cannot be {@code null}).
-     * @return the updated presence of the occupant or {@code null} if the JID does not belong to
-     *         an existing occupant.
+     * @param targetUserAddress the (real) JID of the occupant to give moderator privileges.
+     * @param actorAffiliation The room affiliation of the user that is granting moderator privileges to an occupant.
+     * @return the list of updated presences of all the client resources that the occupant has used to join the room.
      * @throws ForbiddenException If the user is not allowed to grant moderator privileges.
      */
-    public Presence addModerator(JID jid, MUCRole actor) throws ForbiddenException {
-        if (MUCRole.Affiliation.admin != actor.getAffiliation()
-            && MUCRole.Affiliation.owner != actor.getAffiliation()) {
+    public List<Presence> addModerator(@Nonnull final JID targetUserAddress, @Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation&& MUCRole.Affiliation.owner != actorAffiliation) {
             throw new ForbiddenException();
         }
         // Update the presence with the new role and inform all occupants
-        try {
-            return changeOccupantRole(jid, MUCRole.Role.moderator);
-        }
-        catch (NotAllowedException e) {
-            // We should never receive this exception....in theory
-            return null;
-        }
+        return applyRoleChange(targetUserAddress, MUCRole.Role.moderator);
     }
 
     /**
      * Changes the role of the user within the room to participant. A participant is allowed to send
      * messages to the room (i.e. has voice) and may change the room's subject.
      *
-     * @param jid The full JID of the occupant to give participant privileges (cannot be {@code null}).
-     * @param reason The reason why participant privileges were given to the user or {@code null} if none.
-     * @param actor The occupant data of the user that is granting participant privileges to an occupant (cannot be {@code null}).
-     * @return the updated presence of the occupant or {@code null} if the JID does not belong to an existing occupant.
-     * @throws NotAllowedException If trying to change the moderator role to an owner or an admin.
+     * @param targetUserAddress the (real) JID of the occupant to give participant privileges.
+     * @param reason The reason why participant privileges were given to the user.
+     * @param actorAffiliation The room affiliation of the user that is granting participant privileges to an occupant.
+     * @param actorRole The room role of the user that is granting participant privileges to an occupant (can be null when the user is currently not an occupant).
+     * @return the list of updated presences of all the client resources that the occupant has used to join the room.
      * @throws ForbiddenException If the user is not allowed to grant participant privileges.
      */
-    public Presence addParticipant(JID jid, String reason, MUCRole actor)
-        throws NotAllowedException, ForbiddenException {
-        if (MUCRole.Role.moderator != actor.getRole()) {
+    public List<Presence> addParticipant(@Nonnull final JID targetUserAddress, @Nullable final String reason,
+                                   @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole) throws ForbiddenException
+    {
+        // Moderator grants voice, or Admin or owner changes role to participant or revokes moderator status
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation && MUCRole.Role.moderator != actorRole) {
             throw new ForbiddenException();
         }
+
+        // A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than
+        // themselves (i.e., an unaffiliated moderator SHOULD NOT be allowed to revoke moderation privileges from an
+        // admin or an owner, and an admin SHOULD NOT be allowed to revoke moderation privileges from an owner).
+
         // Update the presence with the new role and inform all occupants
-        Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.participant);
-        if (updatedPresence != null) {
-            Element frag = updatedPresence.getChildElement(
-                "x", "http://jabber.org/protocol/muc#user");
+        final List<Presence> updatedPresences = applyRoleChange(targetUserAddress, MUCRole.Role.participant);
+        for (final Presence updatedPresence : updatedPresences)
+        {
+            final Element frag = updatedPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
             // Add the reason why the user was granted voice
-            if (reason != null && reason.trim().length() > 0) {
+            if (reason != null && !reason.trim().isEmpty()) {
                 frag.element("item").addElement("reason").setText(reason);
             }
         }
-        return updatedPresence;
+        return updatedPresences;
     }
 
     /**
@@ -2710,67 +2878,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * is not allowed to send messages to the room (i.e. does not have voice) and may invite others
      * to the room.
      *
-     * @param jid the full JID of the occupant to change to visitor (cannot be {@code null}).
-     * @param actor the occupant data of the user that is changing the role to visitor (cannot be {@code null}).
-     * @return the updated presence of the occupant or {@code null} if the JID does not belong to
-     *         an existing occupant.
-     * @throws NotAllowedException if trying to change the moderator role to an owner or an admin.
-     * @throws ForbiddenException if the user is not a moderator.
+     * @param targetUserAddress the (real) JID of the occupant to change to visitor
+     * @param actorAffiliation The room affiliation of the user that is changing the role to visitor.
+     * @param actorRole The room role of the user that is changing the role to visitor (can be null when the user is currently not an occupant).
+     * @return the list of updated presences of all the client resources that the occupant has used to join the room.
+     * @throws ForbiddenException if the actor is allowed to change the role.
      */
-    public Presence addVisitor(JID jid, MUCRole actor) throws NotAllowedException,
-        ForbiddenException {
-        if (MUCRole.Role.moderator != actor.getRole()) {
+    public List<Presence> addVisitor(@Nonnull final JID targetUserAddress, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final MUCRole.Role actorRole) throws ForbiddenException
+    {
+        if (MUCRole.Affiliation.admin != actorAffiliation && MUCRole.Affiliation.owner != actorAffiliation && MUCRole.Role.moderator != actorRole) {
             throw new ForbiddenException();
         }
-        return changeOccupantRole(jid, MUCRole.Role.visitor);
-    }
-
-    /**
-     * Kicks a user from the room. If the user was in the room, the returned updated presence will
-     * be sent to the remaining occupants.
-     *
-     * @param jid       The full JID of the kicked user  (cannot be {@code null}).
-     * @param actorJID      The JID of the actor that initiated the kick (cannot be {@code null}).
-     * @param actorNickname The actor nickname.
-     * @param reason        An optional reason why the user was kicked (can be {@code null}).
-     * @return the updated presence of the kicked user or null if the user was not in the room.
-     * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
-     */
-    public Presence kickOccupant(JID jid, JID actorJID, String actorNickname, String reason)
-        throws NotAllowedException {
-        // Update the presence with the new role and inform all occupants
-        Presence updatedPresence = changeOccupantRole(jid, MUCRole.Role.none);
-
-        // Determine the occupant data of the actor that initiates the kick.
-        MUCRole sender;
-        if ( actorJID == null ) {
-            sender = getSelfRepresentation(); // originates from the room itself (eg: through admin console changes).
-        } else {
-            sender = getOccupantByFullJID(actorJID);
-            if ( sender == null ) {
-                sender = getSelfRepresentation();
-            }
-        }
-
-        if (updatedPresence != null) {
-            Element frag = updatedPresence.getChildElement(
-                "x", "http://jabber.org/protocol/muc#user");
-
-            // Add the status code 307 that indicates that the user was kicked
-            frag.addElement("status").addAttribute("code", "307");
-            // Add the reason why the user was kicked
-            if (reason != null && reason.trim().length() > 0) {
-                frag.element("item").addElement("reason").setText(reason);
-            }
-
-            // Effectively kick the occupant from the room
-            kickPresence(updatedPresence, actorJID, actorNickname);
-
-            //Inform the other occupants that user has been kicked
-            broadcastPresence(updatedPresence, false, sender);
-        }
-        // TODO should this return presence/should callers distribute this stanza (alternatively: should this stanza be broadcast in this method)?
-        return updatedPresence;
+        return applyRoleChange(targetUserAddress, MUCRole.Role.visitor);
     }
 
     /**
@@ -2782,31 +2901,39 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * of the caller to ensure that this occurs.
      *
      * @param kickPresence the presence of the occupant to kick from the room.
-     * @param actorJID The JID of the actor that initiated the kick or {@code null} if the info
-     * @param nick The actor nickname.
-     * was not provided.
+     * @param actorJID The (real) JID of the actor that initiated the kick.
+     * @param actorNickname The nickname in the room of the actor that initiated the kick.
      */
-    private void kickPresence(Presence kickPresence, JID actorJID, String nick) {
-        // Get the role(s) to kick
+    private void kickPresence(@Nonnull final Presence kickPresence, @Nullable final JID actorJID, @Nullable String actorNickname)
+    {
+        // When no nickname is provided, try to look it up.
+        final boolean hasActorJid = actorJID != null;
+        boolean hasActorNick = actorNickname != null && !actorNickname.isEmpty();
+        if (!hasActorNick && hasActorJid) {
+            actorNickname = findNickname(actorJID);
+        }
+        hasActorNick = actorNickname != null && !actorNickname.isEmpty();
+
         final List<MUCRole> kickedOccupants;
         try {
             kickedOccupants = getOccupantsByNickname(kickPresence.getFrom().getResource());
             for (MUCRole kickedOccupant : kickedOccupants) {
                 // Add the actor's JID that kicked this user from the room
-                if (actorJID!=null && actorJID.toString().length() > 0) {
-                    Element frag = kickPresence.getChildElement(
-                        "x", "http://jabber.org/protocol/muc#user");
-                    Element actor = frag.element("item").addElement("actor");
-                    actor.addAttribute("jid", actorJID.toBareJID());
-                    if (nick!=null) {
-                        actor.addAttribute("nick", nick);
+                if (hasActorJid || hasActorNick) {
+                    final Element frag = kickPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                    final Element actor = frag.element("item").addElement("actor");
+                    if (hasActorJid && canAnyoneDiscoverJID) {
+                        actor.addAttribute("jid", actorJID.toBareJID());
+                    }
+                    if (hasActorNick) {
+                        actor.addAttribute("nick", actorNickname);
                     }
                 }
 
                 // Send a defensive copy (to not leak a change to the 'to' address - this is possibly overprotective here,
                 // but we're erring on the side of caution) of the unavailable presence to the banned user.
                 final Presence kickSelfPresence = kickPresence.createCopy();
-                Element fragKickSelfPresence = kickSelfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                final Element fragKickSelfPresence = kickSelfPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
                 fragKickSelfPresence.addElement("status").addAttribute("code", "110");
                 kickedOccupant.send(kickSelfPresence);
 
@@ -2974,20 +3101,23 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @return the list of updated presences of all the occupants that aren't members of the room if
      *         the room is now members-only.
      */
-    public List<Presence> setMembersOnly(boolean membersOnly) {
-        List<Presence> presences = new CopyOnWriteArrayList<>();
+    public List<Presence> setMembersOnly(final boolean membersOnly, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final JID actorJid) throws ForbiddenException
+    {
+        if (actorAffiliation != MUCRole.Affiliation.owner) {
+            throw new ForbiddenException();
+        }
+
+        final List<Presence> presences = new CopyOnWriteArrayList<>();
+        final String actorNickname = findNickname(actorJid);
+
         if (membersOnly && !this.membersOnly) {
-            // If the room was not members-only and now it is, kick occupants that aren't member of the room.
-            for (MUCRole occupant : getOccupants()) {
-                if (occupant.getAffiliation().compareTo(MUCRole.Affiliation.member) > 0) {
-                    try {
-                        presences.add(kickOccupant(occupant.getOccupantJID(), null, null,
-                            LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly")));
-                    }
-                    catch (NotAllowedException e) {
-                        Log.error(e.getMessage(), e);
-                    }
-                }
+            Log.debug("Room '{}' was not members-only, but now is. Kick occupants that aren't a member.", getJID());
+            final Set<JID> userAddressesToKick = getOccupants().stream()
+                .filter(mucOccupant -> mucOccupant.getAffiliation().equals(MUCRole.Affiliation.none) || mucOccupant.getAffiliation().equals(MUCRole.Affiliation.outcast))
+                .map(MUCRole::getUserAddress)
+                .collect(Collectors.toSet());
+            for (final JID userAddressToKick : userAddressesToKick) {
+                presences.addAll(kickOccupant(userAddressToKick, actorAffiliation, null, actorJid, actorNickname, LocaleUtils.getLocalizedString("muc.roomIsNowMembersOnly"), 322));
             }
         }
         this.membersOnly = membersOnly;
@@ -3375,11 +3505,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * the owner of the room can unlock it by sending the configuration form to the Multi-User Chat
      * service.
      *
-     * @param actor the occupant data of the user that unlocked the room.
+     * @param actorAffiliation the room affiliation of the user that unlocked the room.
      * @throws ForbiddenException If the user is not an owner of the room.
      */
-    public void unlock(MUCRole actor) throws ForbiddenException {
-        if (MUCRole.Affiliation.owner != actor.getAffiliation()) {
+    public void unlock(@Nonnull final MUCRole.Affiliation actorAffiliation) throws ForbiddenException {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
             throw new ForbiddenException();
         }
         if (!isLocked()) {
@@ -3423,48 +3553,6 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         return new Date(lockedTime);
     }
 
-    /**
-     * Adds a list of users to the list of admins.
-     *
-     * @param newAdmins the list of bare JIDs of the users to add to the list of existing admins (cannot be {@code null}).
-     * @param actor the occupant data of the user that is trying to modify the admins list (cannot be {@code null}).
-     * @return the list of updated presences of all the clients resources that the clients used to
-     *         join the room.
-     * @throws ForbiddenException If the user is not allowed to modify the admin list.
-     * @throws ConflictException If the room was going to lose all its owners.
-     */
-    public List<Presence> addAdmins(List<JID> newAdmins, MUCRole actor)
-        throws ForbiddenException, ConflictException {
-        List<Presence> answer = new ArrayList<>(newAdmins.size());
-        for (JID newAdmin : newAdmins) {
-            final JID bareJID = newAdmin.asBareJID();
-            if (!admins.contains(bareJID)) {
-                answer.addAll(addAdmin(bareJID, actor));
-            }
-        }
-        return answer;
-    }
-
-    /**
-     * Adds a list of users to the list of owners.
-     *
-     * @param newOwners the list of bare JIDs of the users to add to the list of existing owners (cannot be {@code null}).
-     * @param actor the occupant data of the user that is trying to modify the owners list (cannot be {@code null}).
-     * @return the list of updated presences of all the clients resources that the clients used to
-     *         join the room.
-     * @throws ForbiddenException If the user is not allowed to modify the owner list.
-     */
-    public List<Presence> addOwners(List<JID> newOwners, MUCRole actor)
-        throws ForbiddenException {
-        List<Presence> answer = new ArrayList<>(newOwners.size());
-        for (JID newOwner : newOwners) {
-            final JID bareJID = newOwner.asBareJID();
-            if (!owners.contains(newOwner)) {
-                answer.addAll(addOwner(bareJID, actor));
-            }
-        }
-        return answer;
-    }
 
     /**
      * Saves the room configuration to the DB. After the room has been saved to the DB it will
@@ -3803,7 +3891,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // remove the group from this room's affiliations
         GroupJID groupJID = group.getJID();
         try {
-            addNone(groupJID, getSelfRepresentation());
+            addNone(groupJID, getSelfRepresentation().getAffiliation());
         } catch (Exception ex) {
             Log.error("Failed to remove deleted group from affiliation lists: " + groupJID, ex);
         }
@@ -3817,15 +3905,15 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             GroupJID newJID = group.getJID();
             try {
                 if (owners.contains(originalJID)) {
-                    addOwner(newJID, getSelfRepresentation());
+                    addOwner(newJID, getSelfRepresentation().getAffiliation());
                 } else if (admins.contains(originalJID)) {
-                    addAdmin(newJID, getSelfRepresentation());
+                    addAdmin(newJID, getSelfRepresentation().getAffiliation());
                 } else if (outcasts.contains(originalJID)) {
-                    addOutcast(newJID, null, getSelfRepresentation());
+                    addOutcast(newJID, null, getSelfRepresentation().getAffiliation(), getSelfRepresentation().getRole());
                 } else if (members.containsKey(originalJID)) {
-                    addMember(newJID, null, getSelfRepresentation());
+                    addMember(newJID, null, getSelfRepresentation().getAffiliation());
                 }
-                addNone(originalJID, getSelfRepresentation());
+                addNone(originalJID, getSelfRepresentation().getAffiliation());
             } catch (Exception ex) {
                 Log.error("Failed to update group affiliation for " + newJID, ex);
             }
@@ -3853,7 +3941,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     private void applyAffiliationChangeAndSendPresence(JID groupMember) {
-        List<Presence> presences = applyAffiliationChange(getSelfRepresentation(), groupMember, null);
+        final List<Presence> presences = applyAffiliationChange(groupMember);
         for (Presence presence : presences) {
             send(presence, this.getSelfRepresentation());
         }
@@ -3889,11 +3977,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             if (getOwners().contains(userJid) && getOwners().size() == 1) {
                 final JID adminJid = XMPPServer.getInstance().getAdmins().iterator().next();
                 Log.info("User '{}' is being deleted, but is also the only owner of MUC room '{}'. To prevent having a room without owner, server admin '{}' was made owner of the room.", user.getUsername(), getJID(), adminJid);
-                addOwner(adminJid, getSelfRepresentation());
+                addOwner(adminJid, getSelfRepresentation().getAffiliation());
             }
 
             // Remove the affiliation of the deleted user with the room
-            addNone(userJid, getSelfRepresentation());
+            addNone(userJid, getSelfRepresentation().getAffiliation());
             getMUCService().syncChatRoom(this);
         } catch (Throwable t) {
             Log.warn("A problem occurred while trying to update room '{}' as a result of user '{}' being deleted from Openfire.", getJID(), user);

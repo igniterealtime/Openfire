@@ -245,22 +245,9 @@ public class MUCRole implements Cacheable, Externalizable {
      * with the room. A role lasts only for the duration of an occupant's visit to a room.
      *
      * @param newRole The new role that the user will play.
-     * @throws NotAllowedException   Thrown if trying to change the moderator role to an owner or
-     *                               administrator.
      */
-    public void setRole(MUCRole.Role newRole) throws NotAllowedException {
-        // Don't allow to change the role to an owner or admin unless the new role is moderator
-        if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin == affiliation) {
-            if (MUCRole.Role.moderator != newRole) {
-                throw new NotAllowedException();
-            }
-        }
-        // A moderator cannot be kicked from a room unless there has also been an affiliation change
-        if (MUCRole.Role.moderator == role && MUCRole.Role.none == newRole && MUCRole.Affiliation.none != affiliation) {
-            throw new NotAllowedException();
-        }
-        // TODO OF-2288: A moderator MUST NOT be able to revoke voice from a user whose affiliation is at or above the moderator's level.
-
+    void setRole(MUCRole.Role newRole)
+    {
         role = newRole;
         synchronized (this) {
             if (MUCRole.Role.none == role) {
@@ -289,15 +276,8 @@ public class MUCRole implements Cacheable, Externalizable {
      * visits to a room.
      *
      * @param newAffiliation the new affiliation that the user will play.
-     * @throws NotAllowedException thrown if trying to ban an owner or an administrator.
      */
-    public void setAffiliation(MUCRole.Affiliation newAffiliation) throws NotAllowedException {
-        // Don't allow to ban an owner or an admin
-        if (MUCRole.Affiliation.owner == affiliation || MUCRole.Affiliation.admin== affiliation) {
-            if (MUCRole.Affiliation.outcast == newAffiliation) {
-                throw new NotAllowedException();
-            }
-        }
+    void setAffiliation(MUCRole.Affiliation newAffiliation) {
         affiliation = newAffiliation;
         // TODO The fragment is being calculated twice (1. setting the role & 2. setting the aff)
         synchronized (this) {

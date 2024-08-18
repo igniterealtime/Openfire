@@ -2129,7 +2129,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     @Override
-    public Collection<MUCRole> getMUCRoles(final JID user) {
+    public Collection<MUCRole> getOccupants(final JID user) {
         final List<MUCRole> userOccupants = new ArrayList<>();
         for (final MUCRoom room : localMUCRoomManager.getAll()) {
             final MUCRole occupant = room.getOccupantByFullJID(user);

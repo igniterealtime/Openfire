@@ -44,19 +44,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Defines the permissions and actions that a user currently may use in a particular room. Each MUCRole defines the
+ * Defines the permissions and actions that a user currently may use in a particular room. Each MUCOccupant defines the
  * relationship between a MUCRoom and a specific user that is joined to (is an occupant of) that room.
  *
- * Note that a MUCRole can exist only for a user that is currently an occupant of a room.
- *
- * The name 'MUCRole' can be confusing, as it clashes with the XEP-defined term 'role'. MUCRole is not an equivalent
- * of the XEP-defined term (although {@link Role} is).
+ * Note that a MUCOccupant can exist only for a user that is currently an occupant of a room.
  *
  * @author Gaston Dombiak
  */
-public class MUCRole implements Cacheable, Externalizable {
+public class MUCOccupant implements Cacheable, Externalizable {
 
-    private static final Logger Log = LoggerFactory.getLogger(MUCRole.class);
+    private static final Logger Log = LoggerFactory.getLogger(MUCOccupant.class);
 
     /**
      * The (bare) JID of the room (eg: 'room@service') in which this occupant is joined.
@@ -123,7 +120,7 @@ public class MUCRole implements Cacheable, Externalizable {
     /**
      * This constructor is provided to comply with the Externalizable interface contract. It should not be used directly.
      */
-    public MUCRole()
+    public MUCOccupant()
     {}
 
     /**
@@ -136,8 +133,8 @@ public class MUCRole implements Cacheable, Externalizable {
      * @param userJid the 'real' JID of the user.
      * @param presence the presence sent by the user to join the room.
      */
-    public MUCRole(MUCRoom chatroom, String nickname,
-                   Role role, Affiliation affiliation, JID userJid, Presence presence)
+    public MUCOccupant(MUCRoom chatroom, String nickname,
+                       Role role, Affiliation affiliation, JID userJid, Presence presence)
     {
         this.roomJid = chatroom.getJID();
         this.nick = nickname;
@@ -166,7 +163,7 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @param room the room the data is valid in.
      */
-    private MUCRole(MUCRoom room)
+    private MUCOccupant(MUCRoom room)
     {
         this.roomJid = room.getJID();
         this.role = Role.moderator;
@@ -179,27 +176,11 @@ public class MUCRole implements Cacheable, Externalizable {
      * An empty instance that represents the room itself in the chatroom. Chatrooms need to be able to
      * speak (server messages) and so must have data representing their own 'occupancy' in the chatroom.
      *
-     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
-     * release of Openfire, as the type of the returned class will be modified in that release.
-     *
      * @param room The room for which to return an instance.
      * @return The representation of the room.
      */
-    public static MUCRole createRoomSelfRepresentation(@Nonnull final MUCRoom room) {
-        return new MUCRole(room);
-    }
-
-    /**
-     * An empty instance that represents the room itself in the chatroom. Chatrooms need to be able to
-     * speak (server messages) and so must have data representing their own 'occupancy' in the chatroom.
-     *
-     * @param room The room for which to return an instance.
-     * @return The representation of the room.
-     * @deprecated Replaced by {@link #createRoomSelfRepresentation(MUCRoom)}
-     */
-    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
-    public static MUCRole createRoomRole(@Nonnull final MUCRoom room) {
-        return new MUCRole(room);
+    public static MUCOccupant createRoomSelfRepresentation(@Nonnull final MUCRoom room) {
+        return new MUCOccupant(room);
     }
 
     /**
@@ -337,18 +318,6 @@ public class MUCRole implements Cacheable, Externalizable {
      * @return The Jabber ID that represents this occupant in the room.
      */
     public JID getOccupantJID() {
-        return occupantJID;
-    }
-
-    /**
-     * Returns the 'room@service/nick' by which the occupant is identified within the context of the room; contrast with
-     * {@link #getUserAddress()}.
-     *
-     * @return The Jabber ID that represents this occupant in the room.
-     * @deprecated Replaced by {@link #getOccupantJID()}
-     */
-    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
-    public JID getRoleAddress() {
         return occupantJID;
     }
 
@@ -511,7 +480,7 @@ public class MUCRole implements Cacheable, Externalizable {
             Log.trace( "Sender is an occupant of the room: '{}'", packet.getFrom() );
 
             // Determine the occupant data of the entity that sent the message.
-            final Set<MUCRole> senders = new HashSet<>();
+            final Set<MUCOccupant> senders = new HashSet<>();
             try
             {
                 senders.addAll( this.getChatRoom().getOccupantsByNickname(packet.getFrom().getResource()) );
@@ -529,7 +498,7 @@ public class MUCRole implements Cacheable, Externalizable {
                     return;
 
                 case 1:
-                    final MUCRole sender = senders.iterator().next();
+                    final MUCOccupant sender = senders.iterator().next();
                     if ( sender.isRemoteFmuc() ) {
                         reportingFmucAddress = sender.getReportedFmucAddress();
                     } else {
@@ -614,7 +583,7 @@ public class MUCRole implements Cacheable, Externalizable {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        MUCRole other = (MUCRole) obj;
+        MUCOccupant other = (MUCOccupant) obj;
         if (nick == null) {
             if (other.nick != null)
                 return false;
@@ -641,7 +610,7 @@ public class MUCRole implements Cacheable, Externalizable {
     @Override
     public String toString()
     {
-        return "MUCRole{" +
+        return "MUCOccupant{" +
             "roomJid=" + roomJid +
             ", userJid=" + userJid +
             ", nick='" + nick + '\'' +

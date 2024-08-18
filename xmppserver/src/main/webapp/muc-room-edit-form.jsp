@@ -33,7 +33,7 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
-<%@ page import="org.jivesoftware.openfire.muc.MUCRole" %>
+<%@ page import="org.jivesoftware.openfire.muc.MUCOccupant" %>
 <%@ page import="org.jivesoftware.openfire.muc.Role" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>

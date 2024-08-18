@@ -22,7 +22,7 @@ import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.handler.IQHandler;
-import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCOccupant;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.session.Session;
@@ -253,7 +253,7 @@ public class IQMUCvCardHandler extends IQHandler
         final Element photo = x.addElement("photo");
         photo.setText(hash);
 
-        for ( final MUCRole occupant : room.getOccupants() )
+        for ( final MUCOccupant occupant : room.getOccupants() )
         {
             // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
             occupant.send(notification);
@@ -270,7 +270,7 @@ public class IQMUCvCardHandler extends IQHandler
         final Element status = x.addElement("status");
         status.addAttribute("code", "104");
 
-        for ( final MUCRole occupant : room.getOccupants() )
+        for ( final MUCOccupant occupant : room.getOccupants() )
         {
             // Not needed to create a defensive copy of the stanza. It's not used anywhere else.
             occupant.send(notification);

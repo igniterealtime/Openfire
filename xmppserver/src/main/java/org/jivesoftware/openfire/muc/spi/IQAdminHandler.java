@@ -86,7 +86,7 @@ public class IQAdminHandler {
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
-    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCRole actorOccupant) throws ForbiddenException, ConflictException,
+    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCOccupant actorOccupant) throws ForbiddenException, ConflictException,
             NotAllowedException, CannotBeInvitedException {
 
         final Affiliation senderAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
@@ -201,7 +201,7 @@ public class IQAdminHandler {
                             && Affiliation.owner != senderAffiliation) {
                         throw new ForbiddenException();
                     }
-                    for (MUCRole role : room.getModerators()) {
+                    for (MUCOccupant role : room.getModerators()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("role", "moderator");
                         metaData.addAttribute("jid", role.getUserAddress().toString());
@@ -213,7 +213,7 @@ public class IQAdminHandler {
                     if (Role.moderator != senderRole) {
                         throw new ForbiddenException();
                     }
-                    for (MUCRole role : room.getParticipants()) {
+                    for (MUCOccupant role : room.getParticipants()) {
                         metaData = result.addElement("item", "http://jabber.org/protocol/muc#admin");
                         metaData.addAttribute("role", "participant");
                         metaData.addAttribute("jid", role.getUserAddress().toString());
@@ -291,7 +291,7 @@ public class IQAdminHandler {
                         jids.add(GroupJID.fromString(item.attributeValue("jid")));
                     } else {
                         // Get the JID based on the requested nick
-                        for (MUCRole role : room.getOccupantsByNickname(nick)) {
+                        for (MUCOccupant role : room.getOccupantsByNickname(nick)) {
                             if (!jids.contains(role.getUserAddress())) {
                                 jids.add(role.getUserAddress());
                             }
@@ -404,8 +404,8 @@ public class IQAdminHandler {
         result.addAttribute("affiliation", affiliation);
         result.addAttribute("jid", jid.toString());
         try {
-            List<MUCRole> occupants = room.getOccupantsByBareJID(jid);
-            MUCRole occupant = occupants.get(0);
+            List<MUCOccupant> occupants = room.getOccupantsByBareJID(jid);
+            MUCOccupant occupant = occupants.get(0);
             result.addAttribute("role", occupant.getRole().toString());
             result.addAttribute("nick", occupant.getNickname());
         }

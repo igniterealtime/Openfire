@@ -82,7 +82,7 @@ public class IQOwnerHandler {
      * @throws CannotBeInvitedException never
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCRole actorOccupant) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
+    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCOccupant actorOccupant) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
     {
         final Affiliation actorAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
 

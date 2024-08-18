@@ -34,12 +34,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doReturn;
 
 /**
- * Unit tests that verify the implementation of {@link MUCRole}.
+ * Unit tests that verify the implementation of {@link MUCOccupant}.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 @ExtendWith(MockitoExtension.class)
-public class MUCRoleTest {
+public class MUCOccupantTest
+{
 
     @Mock
     private MUCRoom mockRoom;
@@ -50,7 +51,7 @@ public class MUCRoleTest {
     }
 
     /**
-     * Asserts that when a populated instance of MUCRole is serialized and the resulting data deserialized again, an
+     * Asserts that when a populated instance of MUCOccupant is serialized and the resulting data deserialized again, an
      * instance results that is equal to the original input.
      */
     @Test
@@ -66,7 +67,7 @@ public class MUCRoleTest {
         presence.setTo(mockRoom.getJID());
         presence.addChildElement("x", "http://jabber.org/protocol/muc");
         presence.addChildElement("x", "http://jivesoftware.org/protocol/muc").addElement("deaf-occupant");
-        final MUCRole input = new MUCRole(mockRoom, nickname, role, affiliation, userAddress, presence); // Set all fields to a non-default value, for a more specific test!
+        final MUCOccupant input = new MUCOccupant(mockRoom, nickname, role, affiliation, userAddress, presence); // Set all fields to a non-default value, for a more specific test!
 
         // Execute system under test.
         final byte[] serialized;
@@ -84,19 +85,19 @@ public class MUCRoleTest {
 
         // Verify results.
         assertNotNull(result);
-        assertTrue(result instanceof MUCRole);
+        assertTrue(result instanceof MUCOccupant);
         assertEquals(input, result);
-        assertEquals(input.getAffiliation(), ((MUCRole) result).getAffiliation());
-        assertEquals(input.getNickname(), ((MUCRole) result).getNickname());
-        assertEquals(input.getPresence().toXML(), ((MUCRole) result).getPresence().toXML());
-        assertEquals(input.getReportedFmucAddress(), ((MUCRole) result).getReportedFmucAddress());
-        assertEquals(input.getRole(), ((MUCRole) result).getRole());
-        assertEquals(input.getOccupantJID(), ((MUCRole) result).getOccupantJID());
-        assertEquals(input.getUserAddress(), ((MUCRole) result).getUserAddress());
-        assertEquals(input.isRemoteFmuc(), ((MUCRole) result).isRemoteFmuc());
-        assertEquals(input.isVoiceOnly(), ((MUCRole) result).isVoiceOnly());
+        assertEquals(input.getAffiliation(), ((MUCOccupant) result).getAffiliation());
+        assertEquals(input.getNickname(), ((MUCOccupant) result).getNickname());
+        assertEquals(input.getPresence().toXML(), ((MUCOccupant) result).getPresence().toXML());
+        assertEquals(input.getReportedFmucAddress(), ((MUCOccupant) result).getReportedFmucAddress());
+        assertEquals(input.getRole(), ((MUCOccupant) result).getRole());
+        assertEquals(input.getOccupantJID(), ((MUCOccupant) result).getOccupantJID());
+        assertEquals(input.getUserAddress(), ((MUCOccupant) result).getUserAddress());
+        assertEquals(input.isRemoteFmuc(), ((MUCOccupant) result).isRemoteFmuc());
+        assertEquals(input.isVoiceOnly(), ((MUCOccupant) result).isVoiceOnly());
 
-        final Field extendedInformationField = MUCRole.class.getDeclaredField("extendedInformation");
+        final Field extendedInformationField = MUCOccupant.class.getDeclaredField("extendedInformation");
         extendedInformationField.setAccessible(true);
         final Element expectedExtendedInformation = (Element) extendedInformationField.get(input);
         final Element actualExtendedInformation = (Element) extendedInformationField.get(result);
@@ -105,6 +106,6 @@ public class MUCRoleTest {
         assertEquals(expectedExtendedInformation.asXML(), actualExtendedInformation.asXML());
 
         // TODO Worry why the cached sizes differ (it's caused by the presence and extendedInformation element sizes).
-        // assertEquals(input.getCachedSize(), ((MUCRole) result).getCachedSize());
+        // assertEquals(input.getCachedSize(), ((MUCOccupant) result).getCachedSize());
     }
 }

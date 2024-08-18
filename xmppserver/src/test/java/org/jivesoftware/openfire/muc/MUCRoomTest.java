@@ -79,21 +79,21 @@ public class MUCRoomTest {
     {
         // Setup test fixture.
 
-        final MUCRole roomSelfOccupant = new MUCRole();
+        final MUCOccupant roomSelfOccupant = new MUCOccupant();
         populateField(roomSelfOccupant, "roomJid", new JID("room-test-role-jid@example.org"));
         populateField(roomSelfOccupant, "role", Role.visitor);
         populateField(roomSelfOccupant, "affiliation", Affiliation.member);
         populateField(roomSelfOccupant, "occupantJID", new JID("room-test-jid@conference.example.org"));
 
-        final List<MUCRole> occupants = new ArrayList<>();
-        final MUCRole occupantA = new MUCRole();
+        final List<MUCOccupant> occupants = new ArrayList<>();
+        final MUCOccupant occupantA = new MUCOccupant();
         populateField(occupantA, "roomJid", new JID("occupantA@example.org"));
         populateField(occupantA, "role", Role.participant);
         populateField(occupantA, "affiliation", Affiliation.member);
         populateField(occupantA, "occupantJID", new JID("room-test-jid@conference.example.org/occupantA"));
         occupants.add(occupantA);
 
-        final MUCRole occupantB = new MUCRole();
+        final MUCOccupant occupantB = new MUCOccupant();
         populateField(occupantB, "roomJid", new JID("occupantBA@example.org"));
         populateField(occupantB, "role", Role.none);
         populateField(occupantB, "affiliation", Affiliation.member);
@@ -206,7 +206,7 @@ public class MUCRoomTest {
         assertEquals(input.canAnyoneDiscoverJID(), ((MUCRoom) result).canAnyoneDiscoverJID());
         assertEquals(input.canSendPrivateMessage(), ((MUCRoom) result).canSendPrivateMessage());
 
-        //assertEquals(input.getCachedSize(), ((MUCRole) result).getCachedSize());
+        //assertEquals(input.getCachedSize(), ((MUCOccupant) result).getCachedSize());
     }
 
     public static <E> void populateField(final E object, final String fieldName, final Object value) throws NoSuchFieldException, IllegalAccessException {

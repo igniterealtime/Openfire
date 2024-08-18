@@ -67,23 +67,16 @@
         String consoleKickReason = JiveGlobals.getProperty("admin.mucRoom.consoleKickReason", null);
         List<MUCRole> occupants = room.getOccupantsByNickname(nickName);
         if (occupants != null && !occupants.isEmpty()) {
-            try {
-                for (MUCRole occupant : occupants) {
-                    room.kickOccupant(occupant.getUserAddress(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), null, consoleKickReason);
-                }
-                webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
+            for (MUCRole occupant : occupants) {
+                room.kickOccupant(occupant.getUserAddress(), room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole(), XMPPServer.getInstance().createJID(webManager.getUser().getUsername(), null), null, consoleKickReason);
+            }
+            webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
-                // Log the event
-                webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
-                // Done, so redirect
-                response.sendRedirect("muc-room-occupants.jsp?roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8")+"&nickName="+URLEncoder.encode(nickName, "UTF-8")+"&deletesuccess=true");
-                return;
-            }
-            catch (NotAllowedException e) {
-                // Done, so redirect
-                response.sendRedirect("muc-room-occupants.jsp?roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8")+"&nickName="+URLEncoder.encode(nickName, "UTF-8")+"&deletefailed=true");
-                return;
-            }
+            // Log the event
+            webManager.logEvent("kicked MUC occupant "+nickName+" from "+roomName, null);
+            // Done, so redirect
+            response.sendRedirect("muc-room-occupants.jsp?roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8")+"&nickName="+URLEncoder.encode(nickName, "UTF-8")+"&deletesuccess=true");
+            return;
         }
     }
 

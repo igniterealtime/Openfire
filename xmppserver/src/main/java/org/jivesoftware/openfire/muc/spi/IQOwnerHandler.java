@@ -35,6 +35,8 @@ import org.xmpp.forms.FormField;
 import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,16 +76,18 @@ public class IQOwnerHandler {
      * </ul>
      *
      * @param packet the IQ packet sent by an owner of the room.
-     * @param sender the occupant data of the user that sent the packet.
+     * @param actorOccupant the occupant that sent the packet, if it was sent by an occupant.
      * @throws ForbiddenException if the user does not have enough permissions (ie. is not an owner).
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws CannotBeInvitedException never
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    public void handleIQ(IQ packet, MUCRole sender) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
+    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCRole actorOccupant) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
     {
+        final MUCRole.Affiliation actorAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
+
         // Only owners can send packets with the namespace "http://jabber.org/protocol/muc#owner"
-        if (MUCRole.Affiliation.owner != sender.getAffiliation()) {
+        if (MUCRole.Affiliation.owner != actorAffiliation) {
             throw new ForbiddenException();
         }
 
@@ -93,13 +97,13 @@ public class IQOwnerHandler {
         // Analyze the action to perform based on the included element
         Element formElement = element.element(QName.get("x", "jabber:x:data"));
         if (formElement != null) {
-            handleDataFormElement(sender, formElement);
+            handleDataFormElement(actorAffiliation, packet.getFrom(), formElement);
         }
         else {
             Element destroyElement = element.element("destroy");
             if (destroyElement != null) {
                 if (room.getMUCService().getMUCDelegate() != null) {
-                    if (!room.getMUCService().getMUCDelegate().destroyingRoom(room.getName(), sender.getUserAddress())) {
+                    if (!room.getMUCService().getMUCDelegate().destroyingRoom(room.getName(), packet.getFrom())) {
                         // Delegate said no, reject destroy request.
                         throw new ForbiddenException();
                     }
@@ -138,13 +142,14 @@ public class IQOwnerHandler {
      * Handles packets that includes a data form. The data form was sent using an element with name
      * "x" and namespace "jabber:x:data".
      *
-     * @param sender  the occupant data of the user that sent the data form.
+     * @param actorAffiliation the room affiliation of the user that sent the data form.
+     * @param actorJid the (real) user address of the user that sent the data form.
      * @param formElement the element that contains the data form specification.
      * @throws ForbiddenException    if the user does not have enough privileges.
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    private void handleDataFormElement(MUCRole sender, Element formElement)
+    private void handleDataFormElement(@Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final JID actorJid, @Nonnull final Element formElement)
             throws ForbiddenException, ConflictException, NotAcceptableException {
         DataForm completedForm = new DataForm(formElement);
 
@@ -164,12 +169,12 @@ public class IQOwnerHandler {
             }
             // The owner is requesting a reserved room or is changing the current configuration
             else {
-                processConfigurationForm(completedForm, sender);
+                processConfigurationForm(completedForm, actorAffiliation, actorJid);
             }
             // If the room was locked, unlock it and send to the owner the "room is now unlocked"
             // message
             if (room.isLocked() && !room.isManuallyLocked()) {
-                room.unlock(sender);
+                room.unlock(actorAffiliation);
             }
             break;
             
@@ -184,12 +189,13 @@ public class IQOwnerHandler {
      * configuration as well as the list of owners and admins.
      *
      * @param completedForm the completed form sent by an owner of the room.
-     * @param sender the occupant data of the user that sent the completed form.
+     * @param actorAffiliation the room affiliation of the user that sent the completed form.
+     * @param actorJid the (real) user address of the user that sent the completed form.
      * @throws ForbiddenException if the user does not have enough privileges.
      * @throws ConflictException If the room was going to lose all of its owners.
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    private void processConfigurationForm(DataForm completedForm, MUCRole sender)
+    private void processConfigurationForm(@Nonnull final DataForm completedForm, @Nonnull final MUCRole.Affiliation actorAffiliation, @Nullable final JID actorJid)
             throws ForbiddenException, ConflictException, NotAcceptableException
     {
         List<String> values;
@@ -203,7 +209,7 @@ public class IQOwnerHandler {
             for (String value : field.getValues()) {
                 // XEP-0045: "Affiliations are granted, revoked, and 
                 // maintained based on the user's bare JID, (...)"
-                if (value != null && value.trim().length() != 0) {
+                if (value != null && !value.trim().isEmpty()) {
                     // could be a group jid
                     admins.add(GroupJID.fromString((value.trim())).asBareJID());
                 }
@@ -218,7 +224,7 @@ public class IQOwnerHandler {
             for(String value : field.getValues()) {
                 // XEP-0045: "Affiliations are granted, revoked, and 
                 // maintained based on the user's bare JID, (...)"
-                if (value != null && value.trim().length() != 0) {
+                if (value != null && !value.trim().isEmpty()) {
                     // could be a group jid
                     owners.add(GroupJID.fromString((value.trim())).asBareJID());
                 }
@@ -287,7 +293,7 @@ public class IQOwnerHandler {
 
         field = completedForm.getField("muc#roomconfig_membersonly");
         if (field != null) {
-            presences.addAll(room.setMembersOnly( parseFirstValueAsBoolean( field, true ) ) );
+            presences.addAll(room.setMembersOnly( parseFirstValueAsBoolean( field, true ), actorAffiliation, actorJid ) );
         }
 
         field = completedForm.getField("muc#roomconfig_allowinvites");
@@ -411,8 +417,8 @@ public class IQOwnerHandler {
         room.getFmucHandler().applyConfigurationChanges();
 
         // Set the new owners and admins of the room
-        presences.addAll(room.addOwners(owners, sender));
-        presences.addAll(room.addAdmins(admins, sender));
+        presences.addAll(room.addOwners(owners, actorAffiliation));
+        presences.addAll(room.addAdmins(admins, actorAffiliation));
 
         if (ownersSent) {
             // Change the affiliation to "member" for the current owners that won't be neither
@@ -423,7 +429,7 @@ public class IQOwnerHandler {
             for (JID jid : ownersToRemove) {
                 // ignore group jids
                 if (!GroupJID.isGroup(jid)) {
-                    presences.addAll(room.addMember(jid, null, sender));
+                    presences.addAll(room.addMember(jid, null, actorAffiliation));
                 }
             }
         }
@@ -437,7 +443,7 @@ public class IQOwnerHandler {
             for (JID jid : adminsToRemove) {
                 // ignore group jids
                 if (!GroupJID.isGroup(jid)) {
-                    presences.addAll(room.addMember(jid, null, sender));
+                    presences.addAll(room.addMember(jid, null, actorAffiliation));
                 }
             }
         }
@@ -465,9 +471,6 @@ public class IQOwnerHandler {
 
             room.send(message, room.getSelfRepresentation());
         }
-    }
-
-    private void refreshConfigurationFormValues() {
     }
 
     private Element generateProbeResult(Locale preferredLocale) {

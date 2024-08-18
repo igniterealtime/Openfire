@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.checkerframework.checker.units.qual.N;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -37,6 +38,9 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A handler for the IQ packet with namespace http://jabber.org/protocol/muc#admin. This kind of 
@@ -76,24 +80,27 @@ public class IQAdminHandler {
      * </ul>
      *
      * @param packet the IQ packet sent by an owner or admin of the room.
-     * @param sender the occupant data of the user that sent the request packet.
+     * @param actorOccupant the occupant data of the user that sent the request packet.
      * @throws ForbiddenException If the user is not allowed to perform his request.
      * @throws ConflictException If the desired room nickname is already reserved for the room or
      *                           if the room was going to lose all of its owners.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
-    public void handleIQ(IQ packet, MUCRole sender) throws ForbiddenException, ConflictException,
+    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCRole actorOccupant) throws ForbiddenException, ConflictException,
             NotAllowedException, CannotBeInvitedException {
+
+        final MUCRole.Affiliation senderAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
+        final MUCRole.Role senderRole = actorOccupant != null ? actorOccupant.getRole() : null;
+
         IQ reply = IQ.createResultIQ(packet);
         Element element = packet.getChildElement();
 
         // Analyze the action to perform based on the included element
-        @SuppressWarnings("unchecked")
         List<Element> itemsList = element.elements("item");
         
         if (!itemsList.isEmpty()) {
-            handleItemsElement(sender, itemsList, reply);
+            handleItemsElement(senderAffiliation, senderRole, itemsList, reply);
         }
         else {
             // An unknown and possibly incorrect element was included in the query
@@ -115,16 +122,16 @@ public class IQAdminHandler {
      * contains the affiliation together with a jid means that the client is changing the
      * affiliation of the requested jid.
      *
-     * @param sender     the occupant data of the user that sent the request packet.
-     * @param itemsList  the list of items sent by the client.
-     * @param reply      the iq packet that will be sent back as a reply to the client's request.
+     * @param senderAffiliation   the room affiliation of the user that sent the request packet.
+     * @param senderRole          the room orle of the user that sent the request packet.
+     * @param itemsList           the list of items sent by the client.
+     * @param reply               the iq packet that will be sent back as a reply to the client's request.
      * @throws ForbiddenException If the user is not allowed to perform his request.
-     * @throws ConflictException If the desired room nickname is already reserved for the room or
-     *                           if the room was going to lose all of its owners.
+     * @throws ConflictException  If the desired room nickname is already reserved for the room or if the room was going to lose all of its owners.
      * @throws NotAllowedException Thrown if trying to ban an owner or an administrator.
      * @throws CannotBeInvitedException If the user being invited as a result of being added to a members-only room still does not have permission
      */
-    private void handleItemsElement(MUCRole sender, List<Element> itemsList, IQ reply)
+    private void handleItemsElement(@Nonnull final MUCRole.Affiliation senderAffiliation, @Nullable final MUCRole.Role senderRole, @Nonnull final List<Element> itemsList, @Nonnull final IQ reply)
             throws ForbiddenException, ConflictException, NotAllowedException, CannotBeInvitedException {
         String affiliation;
         String roleAttribute;
@@ -145,8 +152,8 @@ public class IQAdminHandler {
                 Element metaData;
                 if ("outcast".equals(affiliation)) {
                     // The client is requesting the list of outcasts
-                    if (MUCRole.Affiliation.admin != sender.getAffiliation()
-                            && MUCRole.Affiliation.owner != sender.getAffiliation()) {
+                    if (MUCRole.Affiliation.admin != senderAffiliation
+                            && MUCRole.Affiliation.owner != senderAffiliation) {
                         throw new ForbiddenException();
                     }
                     for (JID jid : room.getOutcasts()) {
@@ -169,9 +176,9 @@ public class IQAdminHandler {
                     // The client is requesting the list of members
                     // In a members-only room members can get the list of members
                     if (room.isMembersOnly()
-                            && MUCRole.Affiliation.member != sender.getAffiliation()
-                            && MUCRole.Affiliation.admin != sender.getAffiliation()
-                            && MUCRole.Affiliation.owner != sender.getAffiliation()) {
+                            && MUCRole.Affiliation.member != senderAffiliation
+                            && MUCRole.Affiliation.admin != senderAffiliation
+                            && MUCRole.Affiliation.owner != senderAffiliation) {
                         throw new ForbiddenException();
                     }
                     for (JID jid : room.getMembers()) {
@@ -191,8 +198,8 @@ public class IQAdminHandler {
                     }
                 } else if ("moderator".equals(roleAttribute)) {
                     // The client is requesting the list of moderators
-                    if (MUCRole.Affiliation.admin != sender.getAffiliation()
-                            && MUCRole.Affiliation.owner != sender.getAffiliation()) {
+                    if (MUCRole.Affiliation.admin != senderAffiliation
+                            && MUCRole.Affiliation.owner != senderAffiliation) {
                         throw new ForbiddenException();
                     }
                     for (MUCRole role : room.getModerators()) {
@@ -204,7 +211,7 @@ public class IQAdminHandler {
                     }
                 } else if ("participant".equals(roleAttribute)) {
                     // The client is requesting the list of participants
-                    if (MUCRole.Role.moderator != sender.getRole()) {
+                    if (MUCRole.Role.moderator != senderRole) {
                         throw new ForbiddenException();
                     }
                     for (MUCRole role : room.getParticipants()) {
@@ -216,6 +223,10 @@ public class IQAdminHandler {
                     }
                 } else if ("owner".equals(affiliation)) {
                     // The client is requesting the list of owners
+                    if (!room.canAnyoneDiscoverJID() && MUCRole.Affiliation.owner != senderAffiliation) {
+                        throw new ForbiddenException();
+                    }
+
                     for (JID jid : room.getOwners()) {
                         if (GroupJID.isGroup(jid)) {
                             try {
@@ -233,6 +244,10 @@ public class IQAdminHandler {
                     }
                 } else if ("admin".equals(affiliation)) {
                     // The client is requesting the list of admins
+                    if (!room.canAnyoneDiscoverJID() && MUCRole.Affiliation.owner != senderAffiliation) {
+                        throw new ForbiddenException();
+                    }
+
                     for (JID jid : room.getAdmins()) {
                         if (GroupJID.isGroup(jid)) {
                             try {
@@ -288,33 +303,33 @@ public class IQAdminHandler {
                         switch (target) {
                             case "moderator":
                                 // Add the user as a moderator of the room based on the full JID
-                                presences.add(room.addModerator(jid, sender));
+                                presences.addAll(room.addModerator(jid, senderAffiliation));
                                 break;
 
                             case "owner":
-                                presences.addAll(room.addOwner(jid, sender));
+                                presences.addAll(room.addOwner(jid, senderAffiliation));
                                 break;
 
                             case "admin":
-                                presences.addAll(room.addAdmin(jid, sender));
+                                presences.addAll(room.addAdmin(jid, senderAffiliation));
                                 break;
 
                             case "participant":
                                 // Add the user as a participant of the room based on the full JID
-                                presences.add(room.addParticipant(jid,
+                                presences.addAll(room.addParticipant(jid,
                                     item.elementTextTrim("reason"),
-                                    sender));
+                                    senderAffiliation, senderRole));
                                 break;
 
                             case "visitor":
                                 // Add the user as a visitor of the room based on the full JID
-                                presences.add(room.addVisitor(jid, sender));
+                                presences.addAll(room.addVisitor(jid, senderAffiliation, senderRole));
                                 break;
 
                             case "member":
                                 // Add the user as a member of the room based on the bare JID
                                 boolean hadAffiliation = room.getAffiliation(jid) != MUCRole.Affiliation.none;
-                                presences.addAll(room.addMember(jid, nick, sender));
+                                presences.addAll(room.addMember(jid, nick, senderAffiliation));
                                 // If the user had an affiliation don't send an invitation. Otherwise
                                 // send an invitation if the room is members-only and skipping invites
                                 // are not disabled system-wide xmpp.muc.skipInvite
@@ -331,7 +346,7 @@ public class IQAdminHandler {
                                         invitees.add(jid);
                                     }
                                     for (JID invitee : invitees) {
-                                        room.sendInvitation(invitee, null, sender, null);
+                                        room.sendInvitation(invitee, null, senderAffiliation, reply.getTo(), null);
                                     }
                                 }
                                 break;
@@ -343,28 +358,27 @@ public class IQAdminHandler {
                                     final Locale localeForSession = SessionManager.getInstance().getLocaleForSession(originator);
                                     reply.setError(PacketError.Condition.conflict);
                                     reply.getError().setText(LocaleUtils.getLocalizedString("muc.room.affiliations.error_banning_self", localeForSession), localeForSession != null ? localeForSession.getLanguage() : null);
-                                } else if (sender.getAffiliation() == MUCRole.Affiliation.admin && room.getAffiliation(jid) == MUCRole.Affiliation.owner) {
+                                } else if (senderAffiliation == MUCRole.Affiliation.admin && room.getAffiliation(jid) == MUCRole.Affiliation.owner) {
                                     // Admins cannot ban owners (OF-2843)
                                     final Locale localeForSession = SessionManager.getInstance().getLocaleForSession(originator);
                                     reply.setError(PacketError.Condition.not_allowed);
                                     reply.getError().setText(LocaleUtils.getLocalizedString("muc.room.affiliations.error_banning_owner_by_admin", localeForSession), localeForSession != null ? localeForSession.getLanguage() : null);
                                 } else {
                                     // Add the user as an outcast of the room based on the bare JID
-                                    presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), sender));
+                                    presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), senderAffiliation, senderRole));
                                 }
                                 break;
 
                             case "none":
                                 if (hasAffiliation) {
                                     // Set that this jid has a NONE affiliation based on the bare JID
-                                    presences.addAll(room.addNone(jid, sender));
+                                    presences.addAll(room.addNone(jid, senderAffiliation));
                                 } else {
                                     // Kick the user from the room
-                                    if (MUCRole.Role.moderator != sender.getRole()) {
+                                    if (MUCRole.Role.moderator != senderRole) {
                                         throw new ForbiddenException();
                                     }
-                                    presences.add(room.kickOccupant(jid, sender.getUserAddress(), sender.getNickname(),
-                                        item.elementTextTrim("reason")));
+                                    presences.addAll(room.kickOccupant(jid, senderAffiliation, senderRole, reply.getTo(), null, item.elementTextTrim("reason")));
                                 }
                                 break;
 
